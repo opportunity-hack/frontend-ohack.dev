@@ -2,185 +2,55 @@ import { useAuth0 } from "@auth0/auth0-react";
 import React from "react";
 import { CodeSnippet } from "../components/code-snippet";
 import { LinkedInButton } from "../components/buttons/linkedin-button";
-import { DownloadCertificateButton } from "../components/buttons/download-certificate-button"
+import { AuthenticationButton } from "../components/buttons/authentication-button";
 
-import { useTable } from 'react-table'
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 // https://reactjs.org/docs/hooks-state.html
 
 import { useProfileApi } from "../hooks/use-profile-api.js";
+import { BadgeList } from "../components/badge-list";
+import { HackathonList } from "../components/hackathon-list";
+
+import './profile.styles.css'
 
 export const Profile = () => {
-
-    
   const { user } = useAuth0();  
-
   const { getUserInfo } = useProfileApi();
+  const userProfile = "temp";
 
-  const user1 = {
-    "updated_at": "2022-02-02 00:00:00",
-    "email":"something@something.com",
-    "picture": "http://localhost:4040/ohack.png",
-    "badges": [
-      {
-        "name": "Badge 1",
-        "link": "http://localhost:4040/ohack.png",
-        "description": "This badge is for X"
-      },
-      {
-        "name": "Badge 2",
-        "link": "http://localhost:4040/ohack.png",
-        "description": "This badge is for Y"
-      }
-    ],
-    "feedback": [
-      {
-        "feedback_id": 23,
-        "from": "Annie Developer",
-      },
-      {
-        "feedback_id": 24,
-        "from": "Pam Eveloper"
-      }
-    ],
-    "history": [
-      {
-        "event_id": 123,
-        "date_start": "07-Nov-2018",
-        "date_end": "08-Nov-2018",
-        "role": "Hacker",
-        "nonprofit": [
-          {
-            "name": "NMTSA",
-            "problem_id": 2,
-            "problem_title": "Effective Scheduling of Music Therapists"
-          },
-          {
-            "name": "Southwest Kidney",
-            "problem_id": 42,
-            "problem_title": "Digitize Paper Forms"
-          }
-        ],
-        "contributions": {
-          "standups": 2,
-          "pull_requests_submitted": 5,
-          "lines_added": 100,
-          "lines_removed": 100,
-          "builds_initiated": 2,
-          "pull_requests_reviewed": 2,
-          "average_pull_request_comment_length": 4,
-          "github_url": "https://github.com/OpportunityHack2018/Team2.git",
-          "project_submisson_url": "https://devpost.com/opportunity-hack-2018/projects/2"
-        }
-      },
-      {
-        "event_id": 124,
-        "date_start": "10-Nov-2019",
-        "date_end": "11-Nov-2019",
-        "role": "Hacker"
-      },
-      {
-        "event_id": 125,
-        "date_start": "11-Nov-2020",
-        "date_end": "12-Nov-2020",
-        "role": "Mentor",
-        "contributions": {
-          "teams_mentored": 2,
-          "builds_initiated": 2,
-          "pull_requests_reviewed": 2,
-          "average_pull_request_comment_length": 4,
-          "total_slack_calls": 4,
-          "total_slack_messages": 4
-        }
-      }
-    ]
-  };
+  const [badges, setBadges] = useState([])
+  const [hackathons, setHackathons] = useState([]);
 
 
-
-  let userProfile = "";
-  
-  const [badges, setBadges] = useState(
-    [{
-      "name": "Cool Thing",
-      link:"https://i.imgur.com/XP6l7wf.jpeg"
-    },
-    {
-      "name": "Cool Thing",
-      link: "https://i.imgur.com/XP6l7wf.jpeg"
-    }
-  ]
-    )
-
-
-  const data = [{
-      col1: "Test",
-      col2: "Test",
-      col3: "Test",
-      col4: <DownloadCertificateButton />,
-      col5: "sdad"
-    }];
-  
-
-
-  const data1 = user1.history.map(history => {
-    return {
-      col1: history.date_start,
-      col2: history.date_end,
-      col3: history.role,
-      col4: <DownloadCertificateButton />,
-      col5: "sdad"
-    };
-  });
-
-
-  // I don't think this is needed:
-  // const data = React.useMemo( () => ahist, [] )
-
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: 'Start',
-        accessor: 'col1', // accessor is the "key" in the data
-      },
-      {
-        Header: 'End',
-        accessor: 'col2', // accessor is the "key" in the data
-      },
-      {
-        Header: 'Type',
-        accessor: 'col3',
-      },
-      {
-        Header: 'Certificate',
-        accessor: 'col4',
-      },
-      {
-        Header: 'Stats',
-        accessor: 'col5',
-      },
-    ],
-    []
-  )
-
-  
-
-  const tableInstance = useTable({ columns, data })
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = tableInstance
+  useEffect(() => {
+    console.log("111----");
+    getUserInfo()
+      .then((response) => {
+        if(response)
+        {
+          setBadges(response.text.badges);
+          setHackathons(response.text.hackathons);
+        }        
+      })
+      
+    console.log("222----");
+  },
+    []  // Never trigger this again, don't give it any variables to watch
+  );
 
   if (!user) {
-    return null;
+    return (
+      <div className="content-layout">
+        <h1 className="content__title">Please login</h1>
+        <div className="content__body">  
+          <AuthenticationButton/>
+        </div>
+      </div>
+      );
   }
 
-  console.log("----");
-  getUserInfo();
-  console.log("----");
+ 
   
   /*
     1. Make call to get app_metadata for a given user
@@ -196,24 +66,18 @@ export const Profile = () => {
             <img src={user.picture} alt="Profile" className="profile__avatar" />
             
             <div className="profile__headline">
-              <h2 className="profile__title">{user.name}</h2>
-              <span className="profile__description">{userProfile}</span>
+              <h2 className="profile__title"><span class="material-symbols-outlined">verified_user</span>
+                {user.name}</h2>
+              <span className="profile__description">Hi</span>
               <span className="profile__description">{user.email}</span>
               <span className="profile__last_updated">Last Login: {user.updated_at}</span>              
             </div>
           </div>
 
           <div className="profile__details">
-            <h2 className="profile__title">Badges</h2>            
-            <p>
-            {
-              user1.badges.map(badge => {
-                return <div>{badge.name}<img alt="Badge" src={badge.link} className="profile__avatar" /></div>;
-              })
-            }
-            
-            </p>
-            <LinkedInButton />
+            <h2 className="profile__title">Badges</h2>                        
+            <BadgeList badges={badges}/>
+                                            
             <br /><br />
 
             <h1 className="profile__title">Volunteer History</h1>
@@ -224,50 +88,9 @@ export const Profile = () => {
               We've tried our best to keep track of each time you've volunteered, mentored, judged a hackathon.  If not, please send us a Slack!
             </p>
             
-            <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
-              <thead>
-                {headerGroups.map(headerGroup => (
-                  <tr {...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map(column => (
-                      <th
-                        {...column.getHeaderProps()}
-                        style={{
-                          borderBottom: 'solid 3px red',
-                          background: 'aliceblue',
-                          color: 'black',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {column.render('Header')}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody {...getTableBodyProps()}>
-                {rows.map(row => {
-                  prepareRow(row)
-                  return (
-                    <tr {...row.getRowProps()}>
-                      {row.cells.map(cell => {
-                        return (
-                          <td
-                            {...cell.getCellProps()}
-                            style={{
-                              padding: '10px',
-                              border: 'solid 1px gray',
-                              background: 'papayawhip',
-                            }}
-                          >
-                            {cell.render('Cell')}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <HackathonList hackathons={hackathons}/>
+          
+           
             
             <br />
 
