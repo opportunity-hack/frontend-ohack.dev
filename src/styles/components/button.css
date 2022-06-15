@@ -38,7 +38,7 @@
 }
 
 .button--secondary {
-  background-color: var(--white);
+  background-color: var(--red);
   color: var(--black);
 }
 

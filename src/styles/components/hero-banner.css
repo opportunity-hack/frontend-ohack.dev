@@ -5,8 +5,8 @@
 
   width: 100%;
 
-  background: var(--pink-yellow-gradient);
-
+  background: linear-gradient(to bottom right, #99ff33 23%, #800080 89%);
+  
   color: var(--black);
 
   /* responsive */
@@ -18,7 +18,7 @@
 .hero-banner__logo {
   /* responsive */
 
-  width: 12.8rem;
+  width: 26.752rem;
   height: 12.8rem;
 }
 
@@ -51,7 +51,7 @@
   }
 
   .hero-banner__logo {
-    width: 9.6rem;
+    width: 20.1rem;
     height: 9.6rem;
   }
 
