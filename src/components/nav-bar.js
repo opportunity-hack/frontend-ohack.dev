@@ -31,7 +31,7 @@ export const NavBar = () => {
             className="nav-bar__tab"
             activeClassName="nav-bar__tab--active"
           >
-            External API
+            Docs
           </NavLink>
         </div>
         <div className="nav-bar__actions">

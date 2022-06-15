@@ -5,7 +5,7 @@ export const HeroBanner = () => {
 
   const openCodeSample = () => {
     window.open(
-      "https://auth0.com/developers/hub/code-samples/spa/react-javascript/",
+      "https://www.ohack.org",
       "_blank",
       "noopener noreferrer"
     );
@@ -20,7 +20,7 @@ export const HeroBanner = () => {
       </p>
 
       <button onClick={openCodeSample} className="button button--secondary">
-        Check out the code sample →
+        Some call to action →
       </button>
     </div>
   );
