@@ -9,19 +9,46 @@ import { useTable } from 'react-table'
 import { NonProfitList } from "./non-profit-list";
 
 
+
 export const HackathonList = ({hackathons}) => {
-    
+    console.log("** [Hackathons]");
     console.log(hackathons);
 
-    const data = hackathons.map(hackathon => {
-        return {
-            col1: hackathon.start_date,
-            col2: hackathon.location,
-            col3: <a href={hackathon.devpost_url}>Link</a>,
-            col4: <DownloadCertificateButton />,
-            col5: <NonProfitList nonprofits={hackathon.nonprofits}/>
-        };
-    });
+    const hackathonInfo = ({ hackathons }) => {
+        if (hackathons === null) {
+            // We want to show the loading icons while we are waiting for the data to load
+            // https://codeflarelimited.com/blog/react-js-show-and-hide-loading-animation-on-button-click/
+            return(<p>Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" /></p>);
+        }
+        else if (hackathons.length === 0) {
+            return (<p><i>Nothing yet!</i></p>);
+        }
+        else{
+            return null;
+        }
+    };
+
+    var data = [{
+        col1: "",
+        col2: "",
+        col3: "",
+        col4: "",
+        col5: ""
+    }];
+    if( hackathons != null )
+    {
+        data = hackathons.map(hackathon => {
+            return {
+                col1: hackathon.start_date,
+                col2: hackathon.location,
+                col3: <a href={hackathon.devpost_url}>Link</a>,
+                col4: <DownloadCertificateButton />,
+                col5: <NonProfitList nonprofits={hackathon.nonprofits} />
+            };
+        });
+    }
+   
+    
 
     // I don't think this is needed:
     // const data = React.useMemo( () => ahist, [] )
@@ -63,13 +90,8 @@ export const HackathonList = ({hackathons}) => {
 
 
     return(
-        <div>
-        {
-            // We want to show the loading icons while we are waiting for the data to load
-            // https://codeflarelimited.com/blog/react-js-show-and-hide-loading-animation-on-button-click/
-            hackathons.length <= 0 ? <p>Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" /></p> : null 
-        }
-        
+        <div>  
+         {hackathonInfo({hackathons})}             
         <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
             <thead>
                 {headerGroups.map(headerGroup => (

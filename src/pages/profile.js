@@ -19,8 +19,8 @@ export const Profile = () => {
   const { getUserInfo } = useProfileApi();
   const userProfile = "temp";
 
-  const [badges, setBadges] = useState([])
-  const [hackathons, setHackathons] = useState([]);
+  const [badges, setBadges] = useState(null)
+  const [hackathons, setHackathons] = useState(null);
 
 
   useEffect(() => {
@@ -49,8 +49,8 @@ export const Profile = () => {
       </div>
       );
   }
+  
 
- 
   
   /*
     1. Make call to get app_metadata for a given user
@@ -87,11 +87,8 @@ export const Profile = () => {
             <p>
               We've tried our best to keep track of each time you've volunteered, mentored, judged a hackathon.  If not, please send us a Slack!
             </p>
-            
-            <HackathonList hackathons={hackathons}/>
-          
-           
-            
+            <HackathonList hackathons={hackathons} />                     
+
             <br />
 
             <h2 className="profile__title">Summer Internships</h2>
