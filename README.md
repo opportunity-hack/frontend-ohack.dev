@@ -7,7 +7,20 @@
 
 This code sample demonstrates how to implement authentication in a React Single-Page Application (SPA) and was copied as a boilerplate from [Auth0 here](https://github.com/auth0-developer-hub/spa_react_javascript_hello-world)
 
+First things first, you will need to get the code for this project via:
+```
+git clone git@github.com:opportunity-hack/backend-ohack.dev.git
+```
+Jump into that directory to get going with the steps below!
+
 ## Get Started
+First things first, you will need to get the code for this project via:
+```
+git clone git@github.com:opportunity-hack/frontend-ohack.dev.git
+```
+Jump into that directory to get going with the steps below!
+
+
 Install the project dependencies:
 
 ```bash
