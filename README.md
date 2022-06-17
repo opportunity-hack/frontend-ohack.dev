@@ -1,5 +1,5 @@
-[ohack.dev backend code is here](https://github.com/opportunity-hack/backend-ohack.dev)
-
+- [ohack.dev backend code is here](https://github.com/opportunity-hack/backend-ohack.dev)
+- Grab [VSCode](https://code.visualstudio.com/) as your IDE, we'll use this for both frontend and backend.
 
 This code sample demonstrates how to implement authentication in a React Single-Page Application (SPA) and was copied as a boilerplate from [Auth0 here](https://github.com/auth0-developer-hub/spa_react_javascript_hello-world)
 
