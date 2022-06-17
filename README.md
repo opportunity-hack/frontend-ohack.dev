@@ -41,8 +41,8 @@ It's not obvious here, but we had to upgrade our account to Hobbyist in order to
 https://devcenter.heroku.com/articles/custom-domains
 
 We have 3 CNAMES:
+- www.ohack.dev: we want everyone to land here
 - api.ohack.dev: for any API calls to 
-- www.ohack.dev: we want anyone to land here
 - frontend.ohack.dev: the same thing as www.ohack.com, but more for completeness
 
 ## Tips and Tricks
