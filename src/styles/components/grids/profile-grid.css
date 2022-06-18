@@ -36,6 +36,13 @@
   color: var(--black);
 }
 
+.profile__subtitle {
+  margin-top: 0;
+  margin-bottom: 0;
+
+  color:gray;
+}
+
 .profile__details {
   /* responsive */
 

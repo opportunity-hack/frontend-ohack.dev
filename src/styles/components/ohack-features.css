@@ -1,10 +1,10 @@
-.auth0-features {
+.ohack-features {
   /* responsive */
 
   padding: 3.2rem 6.4rem;
 }
 
-.auth0-features__title {
+.ohack-features__title {
   color: var(--black);
   font-weight: 600;
   text-align: center;
@@ -18,7 +18,7 @@
   line-height: 3.2rem;
 }
 
-.auth0-features__grid {
+.ohack-features__grid {
   display: grid;
 
   /* responsive */
@@ -28,7 +28,7 @@
   row-gap: 6.4rem;
 }
 
-.auth0-feature {
+.ohack-feature {
   background-color:deepskyblue;
 
   color: var(--black);
@@ -44,11 +44,11 @@
   border-radius: 1.6rem;
 }
 
-.auth0-feature:hover {
+.ohack-feature:hover {
   transform: scale(1.03);
 }
 
-.auth0-feature__headline {
+.ohack-feature__headline {
   display: flex;
   align-items: center;
 
@@ -64,20 +64,20 @@
   line-height: 3.2rem;
 }
 
-.auth0-feature__icon {
+.ohack-feature__icon {
   /* responsive */
 
   margin-right: 1.6rem;
 }
 
-.auth0-feature:hover .auth0-feature__headline {
+.ohack-feature:hover .ohack-feature__headline {
   text-decoration: underline solid 2px var(--black);
   text-underline-offset: 2px;
 
   transition: all 0.3s ease-in-out 0s;
 }
 
-.auth0-feature__description {
+.ohack-feature__description {
   margin: 0;
 
   color: rgb(36, 36, 36);
@@ -92,66 +92,66 @@
 }
 
 @media only screen and (max-width: 900px) {
-  .auth0-features__grid {
+  .ohack-features__grid {
     grid-template-columns: 1fr;
     row-gap: 3.2rem;
   }
 
-  .auth0-feature {
+  .ohack-feature {
     padding: 3.2rem;
     border-radius: 0.8rem;
   }
 
-  .auth0-feature__headline {
+  .ohack-feature__headline {
     font-size: 2rem;
     line-height: 2.4rem;
   }
 
-  .auth0-feature__icon {
+  .ohack-feature__icon {
     height: 3.6rem;
 
     margin-right: 1.6rem;
   }
 
-  .auth0-feature__description {
+  .ohack-feature__description {
     font-size: 1.4rem;
     line-height: 2.2rem;
   }
 }
 
 @media only screen and (max-width: 480px) {
-  .auth0-features {
+  .ohack-features {
     padding: 1.6rem;
   }
 
-  .auth0-features__title {
+  .ohack-features__title {
     font-size: 2rem;
     line-height: 2.8rem;
     margin-bottom: 2.4rem;
   }
 
-  .auth0-features__grid {
+  .ohack-features__grid {
     grid-template-columns: 1fr;
     row-gap: 1.6rem;
   }
 
-  .auth0-feature {
+  .ohack-feature {
     padding: 3.2rem;
     border-radius: 0.8rem;
   }
 
-  .auth0-feature__headline {
+  .ohack-feature__headline {
     font-size: 2rem;
     line-height: 2.4rem;
   }
 
-  .auth0-feature__icon {
+  .ohack-feature__icon {
     height: 3.6rem;
 
     margin-right: 1.6rem;
   }
 
-  .auth0-feature__description {
+  .ohack-feature__description {
     font-size: 1.4rem;
     line-height: 2.2rem;
   }

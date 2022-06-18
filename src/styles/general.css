@@ -118,10 +118,9 @@ textarea {
   font-size: inherit;
   line-height: inherit;
 }
-
 a {
   color: var(--black);
-  text-decoration: none;
+    text-decoration: none;
 }
 
 figure {

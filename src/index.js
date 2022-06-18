@@ -5,6 +5,7 @@ import { App } from "./app";
 import { Auth0ProviderWithHistory } from "./auth0-provider-with-history";
 import { EnvProvider } from "./context/env.context";
 import "./styles/styles.css";
+import CssBaseline from '@mui/material/CssBaseline';
 
 
 ReactDOM.render(
@@ -12,6 +13,7 @@ ReactDOM.render(
     <BrowserRouter>
       <EnvProvider>
         <Auth0ProviderWithHistory>
+          <CssBaseline />
           <App />
         </Auth0ProviderWithHistory>
       </EnvProvider>

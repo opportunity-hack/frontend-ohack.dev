@@ -13,6 +13,7 @@ import { BadgeList } from "../components/badge-list";
 import { HackathonList } from "../components/hackathon-list";
 
 import './profile.styles.css'
+import { FeedbackLite } from "./feedback-lite";
 
 export const Profile = () => {
   const { user } = useAuth0();  
@@ -22,7 +23,18 @@ export const Profile = () => {
   const [badges, setBadges] = useState(null)
   const [hackathons, setHackathons] = useState(null);
 
-
+  const public_profile_url = () => {
+    if(!user)
+    {
+      return "";
+    }
+    else
+    {
+      return window.location.href + "/" + user.sub;
+    }
+    
+  }
+  
   useEffect(() => {
     console.log("111----");
     getUserInfo()
@@ -66,9 +78,11 @@ export const Profile = () => {
             <img src={user.picture} alt="Profile" className="profile__avatar" />
             
             <div className="profile__headline">
-              <h2 className="profile__title"><span class="material-symbols-outlined">verified_user</span>
-                {user.name}</h2>
-              <span className="profile__description">Hi</span>
+              <h2 className="profile__title"><span className="material-symbols-outlined">verified_user</span>
+                {user.name}</h2>                
+              <span className="profile__description">
+                <a href={public_profile_url}><button>Your Public Profile</button></a>
+              </span>
               <span className="profile__description">{user.email}</span>
               <span className="profile__last_updated">Last Login: {user.updated_at}</span>              
             </div>
@@ -82,6 +96,10 @@ export const Profile = () => {
 
             <h1 className="profile__title">Volunteer History</h1>
             <br/>
+
+            <h1 className="profile__title">Feedback</h1>
+            
+            <FeedbackLite/>
 
             <h2 className="profile__title">Hackathons</h2>
             <p>
