@@ -2,6 +2,10 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { AuthenticationButton } from "./buttons/authentication-button";
 
+import NotificationsActive from '@mui/icons-material/NotificationsActive';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+
 export const NavBar = () => {
   return (
     <div className="nav-bar__container">
@@ -16,8 +20,10 @@ export const NavBar = () => {
             />
           </NavLink>
         </div>
+        
         <div className="nav-bar__tabs">
-          <NavLink
+        
+        <NavLink
             to="/profile"
             exact
             className="nav-bar__tab"
@@ -25,6 +31,31 @@ export const NavBar = () => {
           >
             Profile
           </NavLink>
+                    
+          <Tooltip title="You have 1 notification">
+            <IconButton>
+              <NotificationsActive className="alert-notification" />
+            </IconButton>
+          </Tooltip>   
+
+          <NavLink
+            to="/feedback"
+            exact
+            className="nav-bar__tab"
+            activeClassName="nav-bar__tab--active"
+          >
+            Feedback            
+          </NavLink>
+          
+          <NavLink
+            to="/nonprofits"
+            exact
+            className="nav-bar__tab"
+            activeClassName="nav-bar__tab--active"
+          >
+            Nonprofits
+          </NavLink>
+
           <NavLink
             to="/external-api"
             exact
@@ -34,6 +65,7 @@ export const NavBar = () => {
             Docs
           </NavLink>
         </div>
+
         <div className="nav-bar__actions">
           <AuthenticationButton />
         </div>
