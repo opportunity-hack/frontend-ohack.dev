@@ -12,9 +12,10 @@ import { NotFound } from "./pages/not-found";
 import { Profile } from "./pages/profile";
 import { PublicProfile } from "./pages/public-profile";
 import { Feedback } from "./pages/feedback";
-import {GiveFeedback } from "./pages/give-feedback"
+import { GiveFeedback } from "./pages/give-feedback"
 import { NonProfitList } from "./pages/nonprofit-list";
-import { NonProfitProfile } from "./pages/nonprofit-profile"
+import { NonProfitProfile } from "./pages/nonprofit-profile";
+import { Admin } from "./pages/admin/admin";
 
 export const App = () => {
   let { isLoading } = useAuth0();
@@ -51,6 +52,7 @@ export const App = () => {
           <Route path="/nonprofit/:nonprofit_id" component={NonProfitProfile} /> 
           <Route path="/nonprofits" component={NonProfitList} /> 
 
+          <Route path="/admin" component={Admin} /> 
 
           {
             // We'll get rid of this at some point, but it's nice to show how the role-based access works for now

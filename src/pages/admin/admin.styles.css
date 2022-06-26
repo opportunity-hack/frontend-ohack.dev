@@ -1,0 +1,37 @@
+.checklist-box-list{        
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 0px;
+    
+    background-color: rgb(150, 181, 214);
+    color: rgb(255, 255, 255);
+    
+    max-width: 300px;
+    
+    -webkit-font-smoothing: antialiased;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    -webkit-box-pack: center;
+}
+
+.checklist-box {    
+    color: white;
+    font-variation-settings:
+    'FILL' 1,
+    'wght' 300,
+    'GRAD' 0,
+    'opsz' 24
+
+}
+
+.checklist-box-text {
+    font-family: Arial;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 24px;
+    text-size-adjust: 100%;
+}
