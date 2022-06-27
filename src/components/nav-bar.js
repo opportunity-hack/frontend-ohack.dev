@@ -9,6 +9,7 @@ import Tooltip from '@mui/material/Tooltip';
 
 import { useState, useEffect } from "react";
 import { useAdmin } from '../hooks/use-admin-check'
+import { KeyboardReturnOutlined } from "@mui/icons-material";
 
 export const NavBar = () => {
   
@@ -18,6 +19,11 @@ export const NavBar = () => {
   useEffect(() => {    
     getIsAdmin()      
       .then((response) => {        
+        if(!response)
+        {
+          setIsAdmin(false);
+          return;
+        }
         if (response.status) {        
           if (response.status === 403) {
             setIsAdmin(false);

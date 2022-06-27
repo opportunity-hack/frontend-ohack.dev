@@ -57,9 +57,8 @@ export const useProfileApi = () => {
         };
 
         const data = await makeRequest({ config, authenticated: true });
-        console.log("====")
+        console.log("====~~")
         console.log(data);
-        console.log(data.text.badges);
         console.log("====")
         return data;
     };

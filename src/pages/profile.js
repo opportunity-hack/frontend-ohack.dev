@@ -39,11 +39,16 @@ export const Profile = () => {
     console.log("111----");
     getUserInfo()
       .then((response) => {
-        if(response)
+        if(response && response.text)
         {
           setBadges(response.text.badges);
           setHackathons(response.text.hackathons);
         }        
+        else
+        {
+          setBadges([]);
+          setHackathons([]);
+        }
       })
       
     console.log("222----");
