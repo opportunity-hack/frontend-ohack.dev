@@ -46,8 +46,8 @@ export const Profile = () => {
         }        
         else
         {
-          setBadges([]);
-          setHackathons([]);
+          setBadges(null);
+          setHackathons(null);
         }
       })
       
