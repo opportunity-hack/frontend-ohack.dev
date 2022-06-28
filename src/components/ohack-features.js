@@ -1,6 +1,5 @@
 import React from "react";
 import { OHackFeature } from "./ohack-feature";
-import { AccessControlLevel, useExternalApi } from "../hooks/use-external-api";
 
 
 export const OHackFeatures = () => (

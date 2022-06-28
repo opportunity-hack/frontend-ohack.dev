@@ -3,7 +3,6 @@ import React from "react";
 // https://www.npmjs.com/package/react-loading-icons
 import { Puff } from 'react-loading-icons'
 
-import { useState, useEffect } from "react";
 import { DownloadCertificateButton } from "./buttons/download-certificate-button"
 import { useTable } from 'react-table'
 import { NonProfitList } from "./non-profit-list";

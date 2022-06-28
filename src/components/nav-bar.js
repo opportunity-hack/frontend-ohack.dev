@@ -9,14 +9,15 @@ import Tooltip from '@mui/material/Tooltip';
 
 import { useState, useEffect } from "react";
 import { useAdmin } from '../hooks/use-admin-check'
-import { KeyboardReturnOutlined } from "@mui/icons-material";
 
 export const NavBar = () => {
   
   // The right way to do this is probably using React Redux to store the state more globally, but for now we'll do it this way
   const { getIsAdmin } = useAdmin();
   const [isAdmin, setIsAdmin] = useState(false);
-  useEffect(() => {    
+
+  useEffect(() => {   
+    /* 
     getIsAdmin()      
       .then((response) => {        
         if(!response)
@@ -33,6 +34,7 @@ export const NavBar = () => {
           setIsAdmin(true);
         }
         });    
+        */
   },
     []  // Never trigger this again, don't give it any variables to watch
   );

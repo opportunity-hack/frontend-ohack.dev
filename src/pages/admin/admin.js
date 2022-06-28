@@ -1,11 +1,8 @@
 import React from "react";
 
-import AdminPanelSettings from '@mui/icons-material/AdminPanelSettings';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
+
 import { EditNonProfit } from "./nonprofit-edit";
 import { AddNonProfit } from "./nonprofit-add";
-import { useEnv } from "../../context/env.context";
 
 import { useState, useEffect } from "react";
 import { useAdmin } from '../../hooks/use-admin-check'

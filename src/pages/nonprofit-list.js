@@ -6,7 +6,6 @@ import './profile.styles.css'
 import SearchIcon from '@mui/icons-material/Search';
 import { styled, alpha } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
-import { Link } from "react-router-dom";
 import { NonProfitListTile } from "./nonprofit-list-tile";
 
 

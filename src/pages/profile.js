@@ -1,7 +1,6 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import React from "react";
 import { CodeSnippet } from "../components/code-snippet";
-import { LinkedInButton } from "../components/buttons/linkedin-button";
 import { AuthenticationButton } from "../components/buttons/authentication-button";
 
 
@@ -18,7 +17,6 @@ import { FeedbackLite } from "./feedback-lite";
 export const Profile = () => {
   const { user } = useAuth0();  
   const { getUserInfo } = useProfileApi();
-  const userProfile = "temp";
 
   const [badges, setBadges] = useState(null)
   const [hackathons, setHackathons] = useState(null);

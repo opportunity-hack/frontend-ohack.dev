@@ -65,7 +65,7 @@ export const useExternalApi = () => {
       console.log(data.email_verified);
       console.log(data.name);
 
-      if( data.app_metadata["something"] == 123355 )
+      if( data.app_metadata["something"] === 123355 )
       {
         setBadges("pie");
       }
