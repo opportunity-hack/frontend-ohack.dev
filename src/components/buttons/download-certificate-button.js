@@ -1,8 +1,6 @@
-import { useAuth0 } from "@auth0/auth0-react";
 import React from "react";
 
-export const DownloadCertificateButton = () => {
-    const { loginWithRedirect } = useAuth0();
+export const DownloadCertificateButton = () => {    
 
     /**
      * Using the Signup feature requires you to enable

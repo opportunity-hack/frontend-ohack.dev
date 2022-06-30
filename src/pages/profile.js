@@ -4,9 +4,6 @@ import { CodeSnippet } from "../components/code-snippet";
 import { AuthenticationButton } from "../components/buttons/authentication-button";
 
 
-import { useState, useEffect } from "react";
-// https://reactjs.org/docs/hooks-state.html
-
 import { useProfileApi } from "../hooks/use-profile-api.js";
 import { BadgeList } from "../components/badge-list";
 import { HackathonList } from "../components/hackathon-list";
@@ -16,43 +13,8 @@ import { FeedbackLite } from "./feedback-lite";
 
 export const Profile = () => {
   const { user } = useAuth0();  
-  const { getUserInfo } = useProfileApi();
+  const { badges, hackathons, profile_url } = useProfileApi();
 
-  const [badges, setBadges] = useState(null)
-  const [hackathons, setHackathons] = useState(null);
-
-  const public_profile_url = () => {
-    if(!user)
-    {
-      return "";
-    }
-    else
-    {
-      return window.location.href + "/" + user.sub;
-    }
-    
-  }
-  
-  useEffect(() => {
-    console.log("111----");
-    getUserInfo()
-      .then((response) => {
-        if(response && response.text)
-        {
-          setBadges(response.text.badges);
-          setHackathons(response.text.hackathons);
-        }        
-        else
-        {
-          setBadges(null);
-          setHackathons(null);
-        }
-      })
-      
-    console.log("222----");
-  },
-    []  // Never trigger this again, don't give it any variables to watch
-  );
 
   if (!user) {
     return (
@@ -64,13 +26,6 @@ export const Profile = () => {
       </div>
       );
   }
-  
-
-  
-  /*
-    1. Make call to get app_metadata for a given user
-    2. Populate State for user details
-  */
 
   return (
     <div className="content-layout">
@@ -84,7 +39,7 @@ export const Profile = () => {
               <h2 className="profile__title"><span className="material-symbols-outlined">verified_user</span>
                 {user.name}</h2>                
               <span className="profile__description">
-                <a href={public_profile_url}><button>Your Public Profile</button></a>
+                <a href={profile_url}><button>Your Public Profile</button></a>
               </span>
               <span className="profile__description">{user.email}</span>
               <span className="profile__last_updated">Last Login: {user.updated_at}</span>              

@@ -1,15 +1,19 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
-import { useState } from "react";
 import { useEnv } from "../context/env.context";
 
 
-export const useProfileApi = () => {
-    const [badges, setBadges] = useState("");
+import { useState, useEffect } from "react";
 
+export const useProfileApi = () => {
     const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl } = useEnv();
 
+    const [badges, setBadges] = useState(null);
+    const [hackathons, setHackathons] = useState(null);
+    const [profile_url, setProfileUrl] = useState("");
+
+    
 
 
     const makeRequest = async (options) => {
@@ -38,33 +42,57 @@ export const useProfileApi = () => {
     };
 
     
-        /*
+    /*
     User is already signed in via Auth0 SDK
     Pass profile data to backend to save the fact that they have logged in
     Also allow backend to link together data from other sources like GitHub/DevPost, etc.
-
     */
-    const getUserInfo = async () => {
-        if(!user)
-            return null;
 
-        const config = {
-            url: `${apiServerUrl}/api/messages/profile/${user.sub}`,
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-            },
+    useEffect(() => {
+        const public_profile_url = () => {            
+            if (!user && !user.sub) {
+                setProfileUrl("");
+            }
+            else {
+                setProfileUrl(window.location.href + "/" + user.sub)                
+            }
+
         };
 
-        const data = await makeRequest({ config, authenticated: true });
-        console.log("====~~")
-        console.log(data);
-        console.log("====")
-        return data;
-    };
+        const getProfileDetails = async () => {
+            if (!user)
+                return null;
 
-    return {        
-        badges,        
-        getUserInfo
+            const config = {
+                url: `${apiServerUrl}/api/messages/profile/`,
+                method: "GET",
+                headers: {
+                    "content-type": "application/json",
+                },
+            };
+
+            const data = await makeRequest({ config, authenticated: true });
+
+            if (data) {
+                if (data.text && data.text.badges && data.text.hackathons) {                    
+                    setBadges(data.text.badges);
+                    setHackathons(data.text.hackathons);
+                }
+                else {
+                    setBadges(null);
+                    setHackathons(null);
+                }
+            }
+        };
+
+        public_profile_url();
+        getProfileDetails();
+    });
+    
+
+    return {              
+        badges,
+        hackathons,
+        profile_url
     };
 };

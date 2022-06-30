@@ -3,14 +3,10 @@ import { useAuth0 } from "@auth0/auth0-react";
 import '../profile.styles.css'
 
 import { AuthenticationButton } from "../../components/buttons/authentication-button";
-import { useParams } from "react-router-dom";
 
 import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 
 export const EditNonProfit = () => {
     const { user } = useAuth0();

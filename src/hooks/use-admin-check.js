@@ -1,12 +1,13 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import { useEnv } from "../context/env.context";
+import { useState, useEffect } from "react";
 
 
 export const useAdmin = () => {
-
-    const { apiServerUrl } = useEnv();
     const { getAccessTokenSilently, user } = useAuth0();
+    const { apiServerUrl } = useEnv();
+    const [isAdmin, setIsAdmin ] = useState(false);
 
     const makeRequest = async (options) => {
         try {
@@ -33,23 +34,45 @@ export const useAdmin = () => {
         }
     };
 
-    const getIsAdmin = async () => {
-        if (!user)
-            return null;
 
-        const config = {
-            url: `${apiServerUrl}/api/messages/admin`,
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-            },
+    useEffect(() => {
+      
+        const getIsAdmin = async () => {
+            if (!user)
+                return null;
+
+            const config = {
+                url: `${apiServerUrl}/api/messages/admin`,
+                method: "GET",
+                headers: {
+                    "content-type": "application/json",
+                },
+            };
+
+            const data = await makeRequest({ config, authenticated: true });
+
+            if (data) {      
+                if(data.status && data.status === 403)
+                {
+                    setIsAdmin(false);
+                }
+                else
+                {
+                    setIsAdmin(true);
+                }
+            }
+            else {
+                setIsAdmin(false);
+            }
         };
 
-        const data = await makeRequest({ config, authenticated: true });
-        return data;
-    };
+        getIsAdmin();
+    });
+
+
+   
 
     return{
-        getIsAdmin
+        isAdmin
     }
 }

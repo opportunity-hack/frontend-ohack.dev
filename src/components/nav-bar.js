@@ -7,40 +7,12 @@ import NotificationsActive from '@mui/icons-material/NotificationsActive';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 
-import { useState, useEffect } from "react";
 import { useAdmin } from '../hooks/use-admin-check'
 
 export const NavBar = () => {
   
-  // The right way to do this is probably using React Redux to store the state more globally, but for now we'll do it this way
-  const { getIsAdmin } = useAdmin();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {   
-    /* 
-    getIsAdmin()      
-      .then((response) => {        
-        if(!response)
-        {
-          setIsAdmin(false);
-          return;
-        }
-        if (response.status) {        
-          if (response.status === 403) {
-            setIsAdmin(false);
-          }          
-        }
-        else {
-          setIsAdmin(true);
-        }
-        });    
-        */
-  },
-    []  // Never trigger this again, don't give it any variables to watch
-  );
-
-
-
+  const { isAdmin } = useAdmin();
+ 
   return (
     <div className="nav-bar__container">
       <nav className="nav-bar">
