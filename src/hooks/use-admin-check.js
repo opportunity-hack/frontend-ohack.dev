@@ -1,7 +1,7 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import { useEnv } from "../context/env.context";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 
 export const useAdmin = () => {
@@ -9,7 +9,7 @@ export const useAdmin = () => {
     const { apiServerUrl } = useEnv();
     const [isAdmin, setIsAdmin ] = useState(false);
 
-    const makeRequest = async (options) => {
+    const fetchUser = useCallback(async (options) => {
         try {
             if (options.authenticated) {
                 const token = await getAccessTokenSilently();
@@ -32,11 +32,12 @@ export const useAdmin = () => {
 
             return error.message;
         }
-    };
+    }, [getAccessTokenSilently]);
+
+  
 
 
     useEffect(() => {
-      
         const getIsAdmin = async () => {
             if (!user)
                 return null;
@@ -49,7 +50,7 @@ export const useAdmin = () => {
                 },
             };
 
-            const data = await makeRequest({ config, authenticated: true });
+            const data = await fetchUser({ config, authenticated: true });
 
             if (data) {      
                 if(data.status && data.status === 403)
@@ -67,10 +68,9 @@ export const useAdmin = () => {
         };
 
         getIsAdmin();
-    });
+    }, [user, apiServerUrl, fetchUser]);
 
 
-   
 
     return{
         isAdmin

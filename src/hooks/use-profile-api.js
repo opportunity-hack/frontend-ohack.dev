@@ -3,7 +3,7 @@ import axios from "axios";
 import { useEnv } from "../context/env.context";
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export const useProfileApi = () => {
     const { getAccessTokenSilently, user } = useAuth0();
@@ -16,7 +16,7 @@ export const useProfileApi = () => {
     
 
 
-    const makeRequest = async (options) => {
+    const fetchUser = useCallback(async (options) => {
         try {
             if (options.authenticated) {
                 const token = await getAccessTokenSilently();
@@ -28,18 +28,19 @@ export const useProfileApi = () => {
             }
 
             const response = await axios(options.config);
-            console.log(response);
             const { data } = response;
 
             return data;
         } catch (error) {
+
             if (axios.isAxiosError(error) && error.response) {
-                return error.response.data;
+                return error.response;
             }
 
             return error.message;
         }
-    };
+    }, [getAccessTokenSilently]);
+
 
     
     /*
@@ -71,7 +72,7 @@ export const useProfileApi = () => {
                 },
             };
 
-            const data = await makeRequest({ config, authenticated: true });
+            const data = await fetchUser({ config, authenticated: true });
 
             if (data) {
                 if (data.text && data.text.badges && data.text.hackathons) {                    
@@ -87,7 +88,7 @@ export const useProfileApi = () => {
 
         public_profile_url();
         getProfileDetails();
-    });
+    }, [user, apiServerUrl, fetchUser]);
     
 
     return {              

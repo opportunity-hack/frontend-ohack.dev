@@ -20,7 +20,7 @@ export const useExternalApi = () => {
 
   const [badges, setBadges] = useState("");
 
-  const { getAccessTokenSilently, user } = useAuth0();
+  const { getAccessTokenSilently } = useAuth0();
   
   const { apiServerUrl } = useEnv();
 
