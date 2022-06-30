@@ -161,7 +161,7 @@ export const useExternalApi = () => {
     setApiEndpoint("GET /api/messages/profile");
 
     const config = {
-      url: `${apiServerUrl}/api/messages/profile/${user.sub}`,
+      url: `${apiServerUrl}/api/messages/profile`,
       method: "GET",
       headers: {
         "content-type": "application/json",

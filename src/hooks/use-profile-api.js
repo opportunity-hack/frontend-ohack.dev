@@ -64,7 +64,7 @@ export const useProfileApi = () => {
                 return null;
 
             const config = {
-                url: `${apiServerUrl}/api/messages/profile/`,
+                url: `${apiServerUrl}/api/messages/profile`,
                 method: "GET",
                 headers: {
                     "content-type": "application/json",
