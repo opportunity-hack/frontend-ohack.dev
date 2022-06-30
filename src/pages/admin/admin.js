@@ -1,8 +1,8 @@
 import React from "react";
 
 
-import { EditNonProfit } from "./nonprofit-edit";
-import { AddNonProfit } from "./nonprofit-add";
+import { EditNonProfit } from "../../components/nonprofit-edit";
+import { AddNonProfit } from "../../components/nonprofit-add";
 
 
 import { useAdmin } from '../../hooks/use-admin-check'

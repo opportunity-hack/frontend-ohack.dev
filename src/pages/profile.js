@@ -8,7 +8,7 @@ import { useProfileApi } from "../hooks/use-profile-api.js";
 import { BadgeList } from "../components/badge-list";
 import { HackathonList } from "../components/hackathon-list";
 
-import './profile.styles.css'
+import '../styles/profile.styles.css';
 import { FeedbackLite } from "./feedback-lite";
 
 export const Profile = () => {

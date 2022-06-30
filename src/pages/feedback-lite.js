@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import './profile.styles.css'
+import '../styles/profile.styles.css'
 
 export const FeedbackLite = () => {
     const { user } = useAuth0();

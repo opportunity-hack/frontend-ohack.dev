@@ -1,7 +1,7 @@
 import React from "react";
 
 
-import './profile.styles.css'
+import '../styles/profile.styles.css'
 import { useParams } from "react-router-dom";
 
 

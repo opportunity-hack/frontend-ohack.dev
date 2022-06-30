@@ -1,11 +1,11 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useEnv } from "../../context/env.context";
+import { useEnv } from "../context/env.context";
 import axios from "axios";
 
-import './admin.styles.css';
+import '../styles/admin.styles.css';
 
-import { AuthenticationButton } from "../../components/buttons/authentication-button";
+import { AuthenticationButton } from "./buttons/authentication-button";
 
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';

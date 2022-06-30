@@ -91,6 +91,20 @@
   line-height: 2.4rem;
 }
 
+.ohack-feature__callout {
+  margin: 0;
+
+  color: rgb(0, 0, 0);
+  font-weight: 500;
+
+  opacity: 0.7;
+
+  /* responsive */
+
+  font-size: 1.6rem;
+  line-height: 2.4rem;
+}
+
 @media only screen and (max-width: 900px) {
   .ohack-features__grid {
     grid-template-columns: 1fr;
