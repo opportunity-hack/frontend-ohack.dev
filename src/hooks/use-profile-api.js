@@ -50,7 +50,7 @@ export const useProfileApi = () => {
 
     useEffect(() => {
         const public_profile_url = () => {            
-            if (!user && !user.sub) {
+            if (user == null || !user.hasOwnProperty("sub"))  {
                 setProfileUrl("");
             }
             else {
