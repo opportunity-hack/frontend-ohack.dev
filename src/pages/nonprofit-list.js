@@ -84,6 +84,7 @@ export const NonProfitList = () => {
                                             key={npo.id}
                                             title={npo.name}
                                             description={npo.description}
+                                            count_problem_statements={ npo.problem_statements.length }
                                             slack_channel={npo.slack_channel}
                                             resourceUrl={`/nonprofit/${npo.id}`}
                                             icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"

@@ -3,47 +3,12 @@ import { useAuth0 } from "@auth0/auth0-react";
 import '../styles/profile.styles.css';
 
 import { AuthenticationButton } from "./buttons/authentication-button";
-
-import Slider from '@mui/material/Slider';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
+import { NonProfitListTile } from "../components/nonprofit-list-tile";
+import { useNonprofit } from "../hooks/use-nonprofit";
 
 export const EditNonProfit = () => {
     const { user } = useAuth0();
-    
-
-    const marks = [
-        {
-            value: 0,
-            label: 'Low',
-        },
-        {
-            value: 25,
-            label: 'Medium',
-        },
-        {
-            value: 50,
-            label: 'High',
-        }
-    ];
-
-    const marks_good_great = [
-        {
-            value: 0,
-            label: 'Good',
-        },
-        {
-            value: 25,
-            label: 'Great',
-        },
-        {
-            value: 50,
-            label: 'Best',
-        }
-    ];
-
-
-
+    const { nonprofits } = useNonprofit();
 
     if (!user) {
         return (
@@ -62,111 +27,28 @@ export const EditNonProfit = () => {
 
     return (
         <div className="content-layout">
-            <h1 className="content__title">Provide Feedback Profile</h1>
+            <h1 className="content__title">Edit Nonprofits</h1>
             <div className="content__body">
-                <div className="profile-grid">
-                    <div className="profile__header">
-                        <img src={user.picture} alt="Profile" className="profile__avatar" />
-
-                        <div className="profile__headline">
-                            <h2 className="profile__title">Hi {user.name}</h2>                            
-                        </div>
-                    </div>
-
-
-                    <div className="profile__details">
-                                                
-                        <h1 className="profile__title">The What</h1>
-                        <h3 className="profile__title">Code Quality</h3>
-                        <ul>
-                            <li>Unit Tests
-                                <Box sx={{ width: 300 }}>
-                                    <Slider
-                                        aria-label="Custom marks"
-                                        defaultValue={25}
-                                        step={25}
-                                        min={0}
-                                        max={50}
-                                        valueLabelDisplay="off"
-                                        marks={marks}
-                                    />
-                                </Box>
-                            </li>
-                            <li>Test Coverage
-                                <Box sx={{ width: 300 }}>
-                                    <Slider
-                                        aria-label="Custom marks"
-                                        defaultValue={25}
-                                        step={25}
-                                        min={0}
-                                        max={50}
-                                        valueLabelDisplay="off"
-                                        marks={marks}
-                                    />
-                                </Box>
-                            </li>
-                            <li>Reliability <Box sx={{ width: 300 }}>
-                                <Slider
-                                    aria-label="Custom marks"
-                                    defaultValue={25}
-                                    step={25}
-                                    min={0}
-                                    max={50}
-                                    valueLabelDisplay="off"
-                                    marks={marks}
-                                />
-                            </Box>
-                            </li>
-                            <li>...</li>
-                        </ul>
-                        <h1 className="profile__title">The How</h1>
-                        <h3 className="profile__title">Communication</h3>
-                        <Box
-                            component="form"
-                            sx={{
-                                '& .MuiTextField-root': { m: 1, width: '25ch' },
-                            }}
-                            noValidate
-                            autoComplete="off"
-                        >
-                            <TextField
-                                id="outlined-textarea"
-                                label="Multiline Placeholder"
-                                placeholder="Placeholder"
-                                multiline
-                            />
-                        </Box>
-                        <ul>
-                            <li># of Slacks per day
-                                <Box sx={{ width: 300 }}>
-                                    <Slider
-                                        aria-label="Custom marks"
-                                        defaultValue={25}
-                                        step={25}
-                                        min={0}
-                                        max={50}
-                                        valueLabelDisplay="off"
-                                        marks={marks_good_great}
-                                    />
-                                </Box>
-                            </li>
-                            <li># of Standups per week
-                                <Box sx={{ width: 300 }}>
-                                    <Slider
-                                        aria-label="Custom marks"
-                                        defaultValue={0}
-                                        step={25}
-                                        min={0}
-                                        max={50}
-                                        valueLabelDisplay="off"
-                                        marks={marks_good_great}
-                                    />
-                                </Box>
-                            </li>
-                            <li>...</li>
-                        </ul>
+                                   
+                <div className="ohack-features">
+                    <div className="ohack-features__grid">
+                        {
+                            nonprofits.map(npo => {
+                                return <NonProfitListTile
+                                    admin={true}
+                                    key={npo.id}
+                                    title={npo.name}
+                                    description={npo.description}
+                                    count_problem_statements={npo.problem_statements.length}
+                                    slack_channel={npo.slack_channel}
+                                    resourceUrl={`/nonprofit/${npo.id}`}
+                                    icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
+                                />;
+                            })
+                        }
                     </div>
                 </div>
+                
             </div>
         </div>
     );

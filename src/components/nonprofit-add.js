@@ -200,7 +200,7 @@ export const AddNonProfit = () => {
                                         />
                                     </ListItemIcon>
 
-                                    <ListItemText className="checklist-box-text" id={labelId} primary={`Line item ${value + 1}`} />
+                                    <ListItemText className="checklist-box-text" id={labelId} primary={`Problem Statement ${value + 1}`} />
                                 </ListItemButton>
                             </ListItem>
                         );

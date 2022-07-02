@@ -4,10 +4,17 @@ import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback } from "react";
 
 
-export const useNonprofit = () => {
+export const useNonprofit = ( nonprofit_id ) => {
+    
     const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl } = useEnv();
     const [nonprofits, setNonprofits] = useState([]);
+    const [nonprofit, setNonprofit] = useState({
+        "name":"",
+        "description":"",
+        "slack_channel":""
+    });
+
 
     const fetchNpoList = useCallback(async (options) => {
         try {
@@ -37,17 +44,29 @@ export const useNonprofit = () => {
 
 
 
-    useEffect(() => {
-        const getNonprofits = async () => {
+    useEffect(() => {        
+        const getNonprofits = async () => {        
+            var config = null;
+            if (nonprofit_id)
+            {
+                config = {
+                    url: `${apiServerUrl}/api/messages/npo/${nonprofit_id}`,                    
+                    method: "GET",
+                    headers: {
+                        "content-type": "application/json",
+                    },
+                };
+            }
+            else {
+                config = {
+                    url: `${apiServerUrl}/api/messages/npos`,
+                    method: "GET",
+                    headers: {
+                        "content-type": "application/json",
+                    },
+                };
+            }
             
-
-            const config = {
-                url: `${apiServerUrl}/api/messages/npos`,
-                method: "GET",
-                headers: {
-                    "content-type": "application/json",
-                },
-            };
 
             // Publically available, so authenticated: false here
             const data = await fetchNpoList({ config, authenticated: false });
@@ -59,20 +78,33 @@ export const useNonprofit = () => {
                 else {
                     console.log("data!!");
                     console.log(data);
-                    setNonprofits(data.nonprofits);
+                    if (nonprofit_id)
+                    {
+                        setNonprofit(data.nonprofits);
+                    }
+                    else {
+                        setNonprofits(data.nonprofits);
+                    }
+                    
                 }
             }
             else {
                 setNonprofits([])
+                setNonprofit({
+                    "name": "",
+                    "description": "",
+                    "slack_channel": ""
+                });
             }
         };
 
         getNonprofits();
-    }, [user, apiServerUrl, fetchNpoList]);
+    }, [user, apiServerUrl, fetchNpoList, nonprofit_id]);
 
 
 
     return {
-        nonprofits
+        nonprofits,
+        nonprofit
     }
 }
