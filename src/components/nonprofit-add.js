@@ -26,7 +26,8 @@ import SaveIcon from '@mui/icons-material/Save';
 
 
 
-export const AddNonProfit = () => {    
+export const AddNonProfit = ( {problem_statements} ) => {       
+
     const { apiServerUrl } = useEnv();
     const { getAccessTokenSilently, user } = useAuth0();
 
@@ -50,16 +51,15 @@ export const AddNonProfit = () => {
                     Authorization: `Bearer ${token}`,
                 };
             }
-
-            console.log(options.config);
+            
             const response = await axios(options.config);
             const { data } = response;
             setMessage("New NPO has been added");
-            console.log(data);
+            
             return data;
         } catch (error) {
             setMessage("Error adding NPO");
-            console.log(error);
+            
             if (axios.isAxiosError(error) && error.response) {
                 return error.response;
             }
@@ -158,7 +158,6 @@ export const AddNonProfit = () => {
                     placeholder="Add the description of the nonprofit here"
                     multiline
                 />
-                        
 
                 <TextField 
                     label="Primary Contact Name" 
@@ -175,12 +174,13 @@ export const AddNonProfit = () => {
                     
             <div className="checklist-box-list">
                 <List sx={{ width: '100%', maxWidth: 360 }}>
-                    {[0, 1, 2, 3].map((value) => {
-                        const labelId = `checkbox-list-label-${value}`;
+                    {
+                        problem_statements.map( (problem_statement) => {
+                        const labelId = `checkbox-list-label-${problem_statement.id}`;
 
                         return (
                             <ListItem
-                                key={value}
+                                key={problem_statement.id}
                                 secondaryAction={
                                     <IconButton edge="end" aria-label="comments">
                                         <CommentIcon className="checklist-box" />
@@ -188,23 +188,24 @@ export const AddNonProfit = () => {
                                 }
                                 disablePadding
                             >
-                                <ListItemButton role={undefined} onClick={handleToggle(value)} dense>
+                                <ListItemButton role={undefined} onClick={handleToggle(problem_statement.id)} dense>
                                     <ListItemIcon>
                                         <Checkbox
                                             className="checklist-box"
                                             edge="start"
-                                            checked={checked.indexOf(value) !== -1}
+                                            checked={checked.indexOf(problem_statement.id) !== -1}
                                             tabIndex={-1}
                                             disableRipple
                                             inputProps={{ 'aria-labelledby': labelId }}
                                         />
                                     </ListItemIcon>
 
-                                    <ListItemText className="checklist-box-text" id={labelId} primary={`Problem Statement ${value + 1}`} />
+                                    <ListItemText className="checklist-box-text" id={labelId} primary={`${problem_statement.title}`} />
                                 </ListItemButton>
                             </ListItem>
                         );
-                    })}
+                        })
+                    }
                 </List>                     
             </div> 
             <div>
