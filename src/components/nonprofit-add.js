@@ -31,7 +31,7 @@ export const AddNonProfit = ( {problem_statements} ) => {
     const { apiServerUrl } = useEnv();
     const { getAccessTokenSilently, user } = useAuth0();
 
-    const [checked, setChecked] = useState([0]);
+    const [checked, setChecked] = useState([]);
 
     const [npoName, setNpoName] = useState("");
     const [name, setName] = useState("");
@@ -85,7 +85,12 @@ export const AddNonProfit = ( {problem_statements} ) => {
                 npoName: npoName,
                 description: description,
                 website: website,
-                slack_channel: slack_channel
+                slack_channel: slack_channel,
+                // We send just the ID to the backend, it will convert this to an object
+                // Ref: https://stackoverflow.com/a/59394211
+                problem_statements: checked.map( item => {
+                    return `${item}`
+                })
             }
         };
 
@@ -104,7 +109,6 @@ export const AddNonProfit = ( {problem_statements} ) => {
         } else {
             newChecked.splice(currentIndex, 1);
         }
-
         setChecked(newChecked);
     };
 

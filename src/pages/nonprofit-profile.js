@@ -14,7 +14,6 @@ export const NonProfitProfile = () => {
 
     
     const problemStatements = () => {
-        console.log(nonprofit);
         if( nonprofit.problem_statements == null )
         {
             return <div>Loading</div>;
