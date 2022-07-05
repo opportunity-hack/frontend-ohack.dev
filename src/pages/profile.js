@@ -13,7 +13,7 @@ import { FeedbackLite } from "./feedback-lite";
 
 export const Profile = () => {
   const { user } = useAuth0();  
-  const { badges, hackathons, profile_url } = useProfileApi();
+  const { badges, hackathons, profile_url, feedback_url } = useProfileApi();
 
 
   if (!user) {
@@ -57,7 +57,7 @@ export const Profile = () => {
 
             <h1 className="profile__title">Feedback</h1>
             
-            <FeedbackLite/>
+            <FeedbackLite feedback_url={feedback_url} />
 
             <h2 className="profile__title">Hackathons</h2>
             <p>

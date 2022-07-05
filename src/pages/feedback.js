@@ -26,8 +26,26 @@ export const Feedback = () => {
 
     return (
         <div className="content-layout">
-            <h1 className="content__title">Public Profile</h1>
+            <h1 className="content__title">Your Feedback</h1>
+            
             <div className="content__body">
+                <p>
+                    If you are a new graduate, or currently in school:
+                    <ul>
+                        <li>Think of this as a an addendum to your resume.</li>
+                        <li>Something that you can use, alongside your experience with Opportunity Hack to already be able to speak to industry experience you have.</li>
+                    </ul>
+                    If you are currently working in a tech role in industry (as a software engineer, technical product manager, program manager, UX designer, etc.)
+                    <ul>
+                        <li>Think of this as a an addendum to your work experience that you aren't able to get from the opportunities currently available to you.  You likely are using Opportunity Hack to fill in experience gaps at your work.</li>
+                        <li>You can use what you learned or led here to justify your next assignment, and/or add this mentorship to your performance review</li>
+                    </ul>
+                    If you currently aren't working in a tech role, but are looking to gain experience to move roles at work
+                    <ul>
+                        <li>Think of this as a an addendum to your work experience that you aren't able to get from the opportunities currently available to you.  You likely are using Opportunity Hack to fill in experience gaps at your work.</li>
+                        <li>You can use what you learned or led here to justify your move to a tech role (e.g. Business Analyst to Software Engineer), and/or add this mentorship to your performance review</li>
+                    </ul>
+                </p>
                 <div className="profile-grid">
                     <div className="profile__header">
                         <img src={user.picture} alt="Profile" className="profile__avatar" />

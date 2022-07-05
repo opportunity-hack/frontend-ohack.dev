@@ -12,6 +12,7 @@ export const useProfileApi = () => {
     const [badges, setBadges] = useState(null);
     const [hackathons, setHackathons] = useState(null);
     const [profile_url, setProfileUrl] = useState("");
+    const [feedback_url, setFeedbackUrl] = useState("");
 
     
 
@@ -50,15 +51,7 @@ export const useProfileApi = () => {
     */
 
     useEffect(() => {
-        const public_profile_url = () => {            
-            if (user == null || !user.hasOwnProperty("sub"))  {
-                setProfileUrl("");
-            }
-            else {
-                setProfileUrl(window.location.href + "/" + user.sub)                
-            }
-
-        };
+        
 
         const getProfileDetails = async () => {
             if (!user)
@@ -75,18 +68,24 @@ export const useProfileApi = () => {
             const data = await fetchUser({ config, authenticated: true });
 
             if (data) {
+                console.log(data);
+
                 if (data.text && data.text.badges && data.text.hackathons) {                    
                     setBadges(data.text.badges);
                     setHackathons(data.text.hackathons);
+                    setProfileUrl(window.location.href + "/" + data.text.id);
+                    setFeedbackUrl(window.location.href.replace("profile", "feedback") + "/" + data.text.id);
+
                 }
                 else {
                     setBadges(null);
                     setHackathons(null);
+                    setProfileUrl("");
+                    setFeedbackUrl("");
                 }
             }
         };
 
-        public_profile_url();
         getProfileDetails();
     }, [user, apiServerUrl, fetchUser]);
     
@@ -94,6 +93,7 @@ export const useProfileApi = () => {
     return {              
         badges,
         hackathons,
-        profile_url
+        profile_url,
+        feedback_url
     };
 };

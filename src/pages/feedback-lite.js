@@ -2,15 +2,15 @@ import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import '../styles/profile.styles.css'
 
-export const FeedbackLite = () => {
+export const FeedbackLite = ( { feedback_url } ) => {
     const { user } = useAuth0();
 
 
     /*
     This is meant to be embedded on other pages which is why it's called "Lite"
-
+    The more correct term is likely Fragment
     */    
-    const feedback_url = window.location.href.replace("profile","feedback") + "/" + user.sub;
+    
 
     return (                 
         <div className="profile__details">            
