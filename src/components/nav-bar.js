@@ -4,7 +4,7 @@ import { AuthenticationButton } from "./buttons/authentication-button";
 import { NavBarAdmin } from "./nav-bar-admin";
 
 import NotificationsActive from '@mui/icons-material/NotificationsActive';
-import IconButton from '@mui/material/IconButton';
+import Badge from '@mui/material/Badge';
 import Tooltip from '@mui/material/Tooltip';
 
 import { useAdmin } from '../hooks/use-admin-check'
@@ -38,13 +38,7 @@ export const NavBar = () => {
             Profile
           </NavLink>
                     
-          <NavBarAdmin admin={isAdmin}/>
-
-          <Tooltip title="You have 1 notification">
-            <IconButton>
-              <NotificationsActive className="alert-notification" />
-            </IconButton>
-          </Tooltip>   
+          <NavBarAdmin admin={isAdmin}/>           
 
           <NavLink
             to="/feedback"
@@ -77,6 +71,12 @@ export const NavBar = () => {
         <div className="nav-bar__actions">
           <AuthenticationButton />
         </div>
+
+        <Tooltip title="You have 1 notification" >
+          <Badge badgeContent={4} color="secondary" >
+            <NotificationsActive className="alert-notification" />
+          </Badge>
+        </Tooltip>  
       </nav>
     </div>
   );

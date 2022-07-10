@@ -11,7 +11,14 @@ export const useProfileApi = () => {
 
     const [badges, setBadges] = useState(null);
     const [hackathons, setHackathons] = useState(null);
-    const [profile_url, setProfileUrl] = useState("");
+    
+    const default_profile = {
+        "profile_url": "",
+        "profile_image": "https://i.imgur.com/RdOsE7s.png"
+    };
+
+    const [profile, setProfile] = useState(default_profile);
+
     const [feedback_url, setFeedbackUrl] = useState("");
 
     
@@ -73,14 +80,19 @@ export const useProfileApi = () => {
                 if (data.text && data.text.badges && data.text.hackathons) {                    
                     setBadges(data.text.badges);
                     setHackathons(data.text.hackathons);
-                    setProfileUrl(window.location.href + "/" + data.text.id);
+                    setProfile(
+                        {
+                            "profile_url": window.location.href + "/" + data.text.id,
+                            "profile_image": data.text.profile_image
+                        }
+                        );
                     setFeedbackUrl(window.location.href.replace("profile", "feedback") + "/" + data.text.id);
 
                 }
                 else {
                     setBadges(null);
                     setHackathons(null);
-                    setProfileUrl("");
+                    setProfile(default_profile);
                     setFeedbackUrl("");
                 }
             }
@@ -93,7 +105,7 @@ export const useProfileApi = () => {
     return {              
         badges,
         hackathons,
-        profile_url,
+        profile,
         feedback_url
     };
 };

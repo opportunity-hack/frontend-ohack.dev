@@ -1,10 +1,28 @@
 import React from "react";
-import { useAuth0 } from "@auth0/auth0-react";
 import '../styles/profile.styles.css'
 
-export const FeedbackLite = ( { feedback_url } ) => {
-    const { user } = useAuth0();
 
+import Rating from '@mui/material/Rating';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import Typography from '@mui/material/Typography';
+import { styled } from '@mui/material/styles';
+import CopyAllIcon from '@mui/icons-material/CopyAll';
+import TextField from '@mui/material/TextField';
+import Box from '@mui/material/Box';
+
+
+
+export const FeedbackLite = ( { feedback_url } ) => {
+
+    const StyledRating = styled(Rating)({
+        '& .MuiRating-iconFilled': {
+            color: '#ff6d75',
+        },
+        '& .MuiRating-iconHover': {
+            color: '#ff3d47',
+        },
+    });
 
     /*
     This is meant to be embedded on other pages which is why it's called "Lite"
@@ -14,23 +32,156 @@ export const FeedbackLite = ( { feedback_url } ) => {
 
     return (                 
         <div className="profile__details">            
-            <a href={feedback_url}><button>Share to Get Feedback</button></a>
+            
+            <p className="indent">
+            <Box
+                sx={{                    
+                    width: 400,                                        
+                    '&:hover': {
+                        backgroundColor: 'primary.dark',
+                        opacity: [0.9, 0.8, 0.7],
+                    },
+                }}
+            >
+                <TextField sx={{width:350}} id="outlined-basic" label="Your feedback link" defaultValue="..." size="small" variant="outlined" value={feedback_url} />
+                <CopyAllIcon />                
+            </Box>
+            </p>
+
 
             <h2 className="profile__title">What</h2>
-            <h3 className="profile__title">Code Quality</h3>
-            <ul>
-                <li>Unit Tests</li>
-                <li>Test Coverage</li>
-                <li>Reliability</li>
-                <li>...</li>
-            </ul>
+            
+            <p className="indent">
+                <Typography component="legend"><b>Productionalized Projects:</b> The number of projects that have been operationalized.</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={1}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    max={20}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend"><b>Requirements Gathering:</b> The number of projects where you gathered requirements.</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={1}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    max={20}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend"><b>Documentation:</b> The number of projects where you wrote awesome documentation for developers and nonprofits.</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={1}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    max={20}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend">Design Architecture</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={4}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+                
+                <Typography component="legend">Code Quality</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={2}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend">Unit Test Writing</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={3}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend">Unit Test Coverage</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={2}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend"><b>Observability:</b> You added monitoring capabilities to your software.</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={2}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />  
+            </p>
+
+
+            
             <h2 className="profile__title">How</h2>
-            <h3 className="profile__title">Communication</h3>
-            <ul>
-                <li># of Slacks per day</li>
-                <li># of Standups per week</li>
-                <li>...</li>
-            </ul>
+            <p className="indent">
+                <Typography component="legend"><b>Standups Completed:</b> You provided updates on your work and communicated to your team.</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={4}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend"><b>Code Reliability:</b> the code you write doesn't crash and is available for people to use.</Typography>                
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={2}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend">Slack calls with Nonprofit: You have conversations with your customer.</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={5}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend"><b>Iterations of code pushed to production:</b> You iterated on the final product.</Typography>
+                <StyledRating
+                    name="customized-color"
+                    defaultValue={2}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+            </p>
+
+
         </div>
 
     );

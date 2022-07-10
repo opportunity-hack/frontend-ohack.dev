@@ -13,7 +13,11 @@ import { FeedbackLite } from "./feedback-lite";
 
 export const Profile = () => {
   const { user } = useAuth0();  
-  const { badges, hackathons, profile_url, feedback_url } = useProfileApi();
+  const { badges, hackathons, profile, feedback_url } = useProfileApi();
+
+  console.log("USER");
+  console.log(user);
+
 
 
   if (!user) {
@@ -33,13 +37,13 @@ export const Profile = () => {
       <div className="content__body">        
         <div className="profile-grid">
           <div className="profile__header">
-            <img src={user.picture} alt="Profile" className="profile__avatar" />
+            <img src={profile.profile_image} alt="Profile" className="profile__avatar" />
             
             <div className="profile__headline">
               <h2 className="profile__title"><span className="material-symbols-outlined">verified_user</span>
                 {user.name}</h2>                
               <span className="profile__description">
-                <a href={profile_url}><button>Your Public Profile</button></a>
+                <a href={profile.profile_url}><button>Your Public Profile</button></a>
               </span>
               <span className="profile__description">{user.email}</span>
               <span className="profile__last_updated">Last Login: {user.updated_at}</span>              
