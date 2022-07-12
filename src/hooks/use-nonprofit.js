@@ -102,7 +102,7 @@ export const useNonprofit = ( nonprofit_id ) => {
 
 
     return {
-        nonprofits,
+        nonprofits,        
         nonprofit
     }
 }

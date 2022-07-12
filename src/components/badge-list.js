@@ -12,7 +12,7 @@ export const BadgeList = ({ badges }) => {
     <div className="badge-list">        
         {
                 badges.map(badge => {
-                    return <div key={badge.id}>{badge.description}<img key={badge.id} alt="Badge" src={badge.image} className="profile__avatar" /></div>;
+                    return <div key={badge.id}><img key={badge.id} alt="Badge" src={badge.image} className="profile__avatar" />{badge.description}</div>;
                 })
         }
         {badges.length > 0 ? <LinkedInButton/> : null}        

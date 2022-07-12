@@ -9,10 +9,20 @@ import InputBase from '@mui/material/InputBase';
 import { NonProfitListTile } from "../components/nonprofit-list-tile";
 import { useNonprofit } from "../hooks/use-nonprofit";
 
+import Chip from '@mui/material/Chip';
+import BuildIcon from '@mui/icons-material/Build';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+
+import { useState, useCallback } from "react";
+
 
 export const NonProfitList = () => {
 
-    const { nonprofits } = useNonprofit();
+    let { nonprofits } = useNonprofit();
+
+    const [ needs_help_flag, setNeedsHelpFlag ] = useState(false);
+    const [ production_flag, setProductionFlag] = useState(false);
+
     
     const Search = styled('div')(({ theme }) => ({
         position: 'relative',
@@ -53,6 +63,87 @@ export const NonProfitList = () => {
         },
     }));
 
+
+    const needsHelpButton = () =>
+    {
+        if( needs_help_flag )
+        {
+            return (<Chip icon={<BuildIcon />} color="warning" onClick={showNeedsHelp} onDelete={showNeedsHelp} label="Needs Help" />);
+        }
+        else{
+            return (<Chip icon={<BuildIcon />} color="warning" onClick={showNeedsHelp}  label="Needs Help" />);
+        }
+    }
+
+    const productionButton = () => {
+        if (production_flag) {
+            return (<Chip icon={<WorkspacePremiumIcon />} color="success" onClick={showProduction} onDelete={showProduction}  label="Live" />);
+        }
+        else {
+            return (<Chip icon={<WorkspacePremiumIcon />} color="success" onClick={showProduction} label="Live" />);
+        }
+    }
+
+    const showNeedsHelp = (event) =>
+    {        
+        setNeedsHelpFlag(!needs_help_flag)        
+    }
+   
+    const showProduction = (event) => {
+        setProductionFlag(!production_flag)
+    }
+
+    const nonProfitList = useCallback( () => {
+        return(
+            nonprofits.map(npo => {
+                let display = true;
+
+                let production_counter = 0;
+                let needs_help_counter = 0;
+                npo.problem_statements.forEach(ps => {
+                    console.log(ps);
+
+                    if ( ps.status === "production") {
+                        production_counter++;
+                    }
+                    else{
+                        needs_help_counter++;
+                    }
+                });
+
+                
+                if( needs_help_counter === 0 && needs_help_flag )
+                {
+                    display = false;
+                }
+
+                if( production_counter === 0 && production_flag )
+                {
+                    display = false;
+                }
+
+                if( display )
+                {
+                    return(<NonProfitListTile
+                        key={npo.id}
+                        title={npo.name}
+                        description={npo.description}
+                        count_problem_statements={npo.problem_statements.length}
+                        need_help_problem_statement_count={needs_help_counter}
+                        in_production_problem_statement_count={production_counter}
+                        slack_channel={npo.slack_channel}
+                        resourceUrl={`/nonprofit/${npo.id}`}
+                        icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
+                    />);
+                }
+                else{
+                    return("");
+                }
+                
+            })
+        );
+    }, [nonprofits, needs_help_flag, production_flag]);
+
     return (
         <div className="content-layout">
             <h1 className="content__title">Nonprofits</h1>
@@ -74,23 +165,14 @@ export const NonProfitList = () => {
                                 inputProps={{ 'aria-label': 'search' }}
                             />
                         </Search>
-    
+                        
+                        {needsHelpButton()}
+                        {productionButton()}
+                        
 
                         <div className="ohack-features">                            
                             <div className="ohack-features__grid">
-                                {
-                                    nonprofits.map(npo => {
-                                        return <NonProfitListTile                                            
-                                            key={npo.id}
-                                            title={npo.name}
-                                            description={npo.description}
-                                            count_problem_statements={ npo.problem_statements.length }
-                                            slack_channel={npo.slack_channel}
-                                            resourceUrl={`/nonprofit/${npo.id}`}
-                                            icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
-                                        />;
-                                    })
-                                }                                                            
+                                {nonProfitList()}                                                            
                             </div>
                         </div>
                         

@@ -40,15 +40,20 @@ export const NavBar = () => {
                     
           <NavBarAdmin admin={isAdmin}/>           
 
+          {/*
+          TODO: Probably can just embed this within the profile with FeedbackLite fragment instead of a page
+          Trying to cut down on space usage in the nav bar
+          
           <NavLink
             to="/feedback"
             exact
             className="nav-bar__tab"
             activeClassName="nav-bar__tab--active"
           >
-            Feedback            
+            Feedback
           </NavLink>
-          
+        */}
+
           <NavLink
             to="/nonprofits"
             exact
@@ -58,6 +63,8 @@ export const NavBar = () => {
             Nonprofits
           </NavLink>
 
+          {/*
+          This isn't needed and is left over from Auth0 code, but it does force login upon navigation which can be helpful
           <NavLink
             to="/external-api"
             exact
@@ -66,6 +73,8 @@ export const NavBar = () => {
           >
             Docs
           </NavLink>
+        */}
+          
         </div>
 
         <div className="nav-bar__actions">

@@ -108,13 +108,37 @@
 .ohack-feature__callout {
   margin: 0;
 
-  color: rgb(0, 0, 0);
+  color: rgb(118, 0, 137);
   font-weight: 500;
 
   opacity: 0.7;
 
   /* responsive */
 
+  font-size: 1.6rem;
+  line-height: 2.4rem;
+}
+
+.ohack-feature__warning {
+  color: #ed6c02;
+}
+
+
+.ohack-feature__list {
+  /* Remove margins */
+  margin: 0;
+
+  /* Remove padding */
+  padding: 0;
+  padding-left: 10px;
+    
+    
+  font-weight: 500;
+
+  /* Remove bullets */
+  list-style-type: none;
+    
+  /* responsive */
   font-size: 1.6rem;
   line-height: 2.4rem;
 }
