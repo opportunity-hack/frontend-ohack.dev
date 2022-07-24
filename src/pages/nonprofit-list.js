@@ -100,9 +100,7 @@ export const NonProfitList = () => {
 
                 let production_counter = 0;
                 let needs_help_counter = 0;
-                npo.problem_statements.forEach(ps => {
-                    console.log(ps);
-
+                npo.problem_statements.forEach(ps => {                    
                     if ( ps.status === "production") {
                         production_counter++;
                     }
@@ -125,14 +123,10 @@ export const NonProfitList = () => {
                 if( display )
                 {
                     return(<NonProfitListTile
-                        key={npo.id}
-                        title={npo.name}
-                        description={npo.description}
-                        count_problem_statements={npo.problem_statements.length}
+                        npo={npo}
+                        key={npo.id}                                                                        
                         need_help_problem_statement_count={needs_help_counter}
-                        in_production_problem_statement_count={production_counter}
-                        slack_channel={npo.slack_channel}
-                        resourceUrl={`/nonprofit/${npo.id}`}
+                        in_production_problem_statement_count={production_counter}                                                
                         icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
                     />);
                 }

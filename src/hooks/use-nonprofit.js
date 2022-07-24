@@ -16,7 +16,7 @@ export const useNonprofit = ( nonprofit_id ) => {
     });
 
 
-    const fetchNpoList = useCallback(async (options) => {
+    const makeRequest = useCallback(async (options) => {
         try {
             if (options.authenticated) {
                 const token = await getAccessTokenSilently();
@@ -43,6 +43,62 @@ export const useNonprofit = ( nonprofit_id ) => {
 
 
 
+    const handle_new_npo_submission = async (name, email, npoName, description, website, slack_channel, checked, onComplete) => {
+        if (!user)
+            return null;
+
+        const config = {
+            url: `${apiServerUrl}/api/messages/npo`,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: {
+                name: name,
+                email: email,
+                npoName: npoName,
+                description: description,
+                website: website,
+                slack_channel: slack_channel,
+                // We send just the ID to the backend, it will convert this to an object
+                // Ref: https://stackoverflow.com/a/59394211
+                problem_statements: checked.map(item => {
+                    return `${item}`
+                })
+            }
+        };
+
+        const data = await makeRequest({ config, authenticated: true });
+        onComplete(data.text);
+        return data;
+    };
+
+    const handle_npo_problem_statement_edit = async (id, checked, onComplete) => {
+        if (!user)
+            return null;
+        
+        const config = {
+            url: `${apiServerUrl}/api/messages/npo/edit`,
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: {
+                id: id,               
+                // We send just the ID to the backend, it will convert this to an object
+                // Ref: https://stackoverflow.com/a/59394211
+                problem_statements: checked.map(item => {
+                    return `${item}`
+                })
+            }
+        };
+
+        const data = await makeRequest({ config, authenticated: true });
+        onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
+        return data;
+    };
 
     useEffect(() => {        
         const getNonprofits = async () => {        
@@ -69,9 +125,10 @@ export const useNonprofit = ( nonprofit_id ) => {
             
 
             // Publically available, so authenticated: false here
-            const data = await fetchNpoList({ config, authenticated: false });
+            const data = await makeRequest({ config, authenticated: false });
 
-            if (data) {
+            if (data) {              
+
                 if (data.status && data.status === 403) {
                     setNonprofits([]);
                 }
@@ -97,12 +154,14 @@ export const useNonprofit = ( nonprofit_id ) => {
         };
 
         getNonprofits();
-    }, [user, apiServerUrl, fetchNpoList, nonprofit_id]);
+    }, [user, apiServerUrl, makeRequest, nonprofit_id]);
 
 
 
     return {
         nonprofits,        
-        nonprofit
+        nonprofit,
+        handle_npo_problem_statement_edit,
+        handle_new_npo_submission
     }
 }

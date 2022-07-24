@@ -1,10 +1,8 @@
 import React from "react";
 
-
-import { EditNonProfit } from "../../components/nonprofit-edit";
-import { AddNonProfit } from "../../components/nonprofit-add";
-import { AddProblemStatement } from "../../components/problemstatement-add";
-
+import { AddNonProfit } from "../../components/admin/nonprofit-add";
+import { AddProblemStatement } from "../../components/admin/problemstatement-add";
+import { AddHackathon } from "../../components/admin/hackathon-add";
 
 import { useAdmin } from '../../hooks/use-admin-check'
 import { useProblemstatements } from "../../hooks/use-problem-statements";
@@ -21,10 +19,9 @@ export const Admin = ({ admin }) => {
 
     return(
         <div>
-            <AddNonProfit problem_statements={problem_statements}/>
-            <EditNonProfit/>
-            <AddProblemStatement/>
-
+            <AddProblemStatement />            
+            <AddHackathon problem_statements={problem_statements} />             
+            <AddNonProfit problem_statements={problem_statements} />            
         </div>
         );
 };
