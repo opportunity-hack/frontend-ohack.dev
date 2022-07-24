@@ -5,7 +5,7 @@ export const HeroBanner = () => {
 
   const openCodeSample = () => {
     window.open(
-      "https://www.ohack.org",
+      "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig",
       "_blank",
       "noopener noreferrer"
     );
@@ -19,8 +19,8 @@ export const HeroBanner = () => {
         Welcome to the place where Nonprofits, Hackers, Mentors, and Volunteers unite!
       </p>
 
-      <button onClick={openCodeSample} className="button button--secondary">
-        Some call to action →
+      <button onClick={openCodeSample} className="button button--primary">
+       Join us on Slack to get involved →
       </button>
     </div>
   );

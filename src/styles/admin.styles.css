@@ -4,10 +4,10 @@
     margin-right: 0px;
     margin-top: 0px;
     
-    background-color: rgb(150, 181, 214);
-    color: rgb(255, 255, 255);
+    background-color: rgb(187, 220, 252);
+    color: rgb(0, 0, 0);
     
-    max-width: 300px;
+    max-width: 500px;
     
     -webkit-font-smoothing: antialiased;
     border-bottom-left-radius: 10px;
@@ -17,21 +17,12 @@
     -webkit-box-pack: center;
 }
 
-.checklist-box {    
-    color: white;
+.checklist-box {        
+    color: rgb(83, 80, 252);
     font-variation-settings:
     'FILL' 1,
     'wght' 300,
     'GRAD' 0,
     'opsz' 24
 
-}
-
-.checklist-box-text {
-    font-family: Arial;
-    font-size: 16px;
-    font-weight: 400;
-    letter-spacing: normal;
-    line-height: 24px;
-    text-size-adjust: 100%;
 }

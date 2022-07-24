@@ -30,11 +30,11 @@
 }
 
 .button--primary {
-  background-color: var(--indigo);
+  background-color: chartreuse;
 }
 
 .button--primary:hover {
-  background: rgba(99, 93, 255, 0.85);
+  background: var(--blue);
 }
 
 .button--secondary {

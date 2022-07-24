@@ -5,10 +5,10 @@ export const Footer = () => {
   const resourceList = [
     {
       path: "https://www.ohack.org",
-      label: "What's Opportunity Hack",
+      label: "What's Opportunity Hack?",
     },
     {
-      path: "https://auth0.com/docs/get-started",
+      path: "https://www.ohack.org/projects",
       label: "Projects",
     },
     {
@@ -30,11 +30,7 @@ export const Footer = () => {
     <footer className="footer">
       <div className="footer-grid">
         <div className="footer-grid__info">
-          <div className="footer-info__message">
-            <p className="footer-message__headline">
-              <span>This sample application is brought to you by&nbsp;</span>
-              <FooterHyperlink path="https://www.ohack.org/">Opportunity Hack</FooterHyperlink>
-            </p>
+          <div className="footer-info__message">            
             <p className="footer-message__description">
               <FooterHyperlink path="https://auth0.com/docs/quickstarts/">
                 <span>
@@ -48,20 +44,7 @@ export const Footer = () => {
               </FooterHyperlink>
             </p>
           </div>
-          <div className="footer-info__button">
-            <button
-              className="button button--secondary"
-              onClick={() =>
-                window.open(
-                  "#",
-                  "_blank",
-                  "noopener noreferrer"
-                )
-              }
-            >
-              Join us in Slack community
-            </button>
-          </div>
+          
           <div className="footer-info__resource-list">
             {resourceList.map((resource) => (
               <div

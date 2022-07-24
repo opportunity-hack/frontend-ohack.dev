@@ -9,7 +9,7 @@ export const DownloadCertificateButton = () => {
      */
     return (
         <button
-            className="button button--secondary button--compact">
+            className="button button--primary">
             Download
         </button>
     );
