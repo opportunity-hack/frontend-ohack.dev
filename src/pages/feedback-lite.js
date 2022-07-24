@@ -85,7 +85,7 @@ export const FeedbackLite = ( { feedback_url } ) => {
                     emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
                 />
 
-                <Typography component="legend">Design Architecture</Typography>
+                <Typography component="legend"><b>Design Architecture:</b> UML-like diagrams like: sequence, deployment, ERD, etc.</Typography>
                 <StyledRating
                     name="customized-color"
                     defaultValue={4}
@@ -125,7 +125,7 @@ export const FeedbackLite = ( { feedback_url } ) => {
                     emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
                 />
 
-                <Typography component="legend"><b>Observability:</b> You added monitoring capabilities to your software.</Typography>
+                <Typography component="legend"><b>Observability:</b> You added monitoring capabilities to your software <a href="https://orangematter.solarwinds.com/2017/10/05/monitoring-and-observability-with-use-and-red/" rel="noreferrer" target="_black">like USE and RED.</a></Typography>
                 <StyledRating
                     name="customized-color"
                     defaultValue={2}
@@ -160,7 +160,7 @@ export const FeedbackLite = ( { feedback_url } ) => {
                     emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
                 />
 
-                <Typography component="legend">Slack calls with Nonprofit: You have conversations with your customer.</Typography>
+                <Typography component="legend"><b><a href="https://www.linkedin.com/pulse/cdi-customer-driven-innovation-fredrik-haren/" target="_blank">Customer Driven Innovation (CDI)</a> and <a href="https://designthinking.ideo.com/" rel="noreferrer" target="_blank">Design Thinking</a>:</b> You have consistent conversations with your customer to get feedback on what you're building.</Typography>
                 <StyledRating
                     name="customized-color"
                     defaultValue={5}
