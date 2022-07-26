@@ -173,7 +173,7 @@ export const AddHackathon = ({ problem_statements }) => {
                                 <ListItem
                                     key={problem_statement.id}
                                     secondaryAction={
-                                        <Tooltip title={<span style={{ fontSize: "15px" }}>{problem_statement.description}</span>} >
+                                        <Tooltip title={<span style={{ fontSize: "15px" }}>{problem_statement.description}</span>}>
                                             <IconButton edge="end" aria-label="comments">
                                                 <CommentIcon className="checklist-box" />
                                             </IconButton>

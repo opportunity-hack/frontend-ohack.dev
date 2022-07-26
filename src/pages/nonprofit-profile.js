@@ -49,14 +49,10 @@ export const NonProfitProfile = () => {
             else 
             {                
                 return nonprofit.problem_statements.map(ps => {
+                    console.log(ps);
                     return <ProblemStatement
-                        key={ps.title}
-                        title={ps.title}
-                        description={ps.description}
-                        status={ps.status}
-                        github={ps.github}
-                        references={ps.references}
-                        first_thought_of={ps.first_thought_of}
+                        key={ps.id}
+                        problem_statement={ps}                        
                     />;
                 });                
                 
@@ -100,7 +96,7 @@ export const NonProfitProfile = () => {
             <div className="content__body">
                 {renderAdminProblemStatements()}
 
-                <h3>Problem Statements</h3>
+                <h3>Projects</h3>
                 <div className="ohack-features__grid">                
                     {problemStatements()}                                    
                 </div>
