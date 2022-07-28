@@ -160,7 +160,7 @@ export const FeedbackLite = ( { feedback_url } ) => {
                     emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
                 />
 
-                <Typography component="legend"><b><a href="https://www.linkedin.com/pulse/cdi-customer-driven-innovation-fredrik-haren/" target="_blank">Customer Driven Innovation (CDI)</a> and <a href="https://designthinking.ideo.com/" rel="noreferrer" target="_blank">Design Thinking</a>:</b> You have consistent conversations with your customer to get feedback on what you're building.</Typography>
+                <Typography component="legend"><b><a href="https://www.linkedin.com/pulse/cdi-customer-driven-innovation-fredrik-haren/" rel="noreferrer" target="_blank">Customer Driven Innovation (CDI)</a> and <a href="https://designthinking.ideo.com/" rel="noreferrer" target="_blank">Design Thinking</a>:</b> You have consistent conversations with your customer to get feedback on what you're building.</Typography>
                 <StyledRating
                     name="customized-color"
                     defaultValue={5}

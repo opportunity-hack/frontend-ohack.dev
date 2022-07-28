@@ -16,8 +16,6 @@ export const AdminProblemStatementList = ({ problem_statements, selected, onSele
     const [checked, setChecked] = useState(default_selected);
 
     const handleToggle = (value) => () => {
-        console.log("Updateing..." + value);
-
         const currentIndex = checked.indexOf(value);
         const newChecked = [...checked];
 

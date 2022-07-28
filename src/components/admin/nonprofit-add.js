@@ -109,6 +109,7 @@ export const AddNonProfit = ( {problem_statements} ) => {
                 />
             </Box>
 
+            <h3 className="content__title">Link a project to a nonprofit</h3>
             <AdminProblemStatementList
                 problem_statements={problem_statements}
                 selected={checked}
