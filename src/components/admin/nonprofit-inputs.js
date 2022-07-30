@@ -15,7 +15,10 @@ import { useNonprofit } from "../../hooks/use-nonprofit";
 
 export const NonProfitInputs = ({ nonprofits, selected, onSelected, onDelete, default_selected }) => {    
     const [checkedNPO, setCheckedNPO] = useState(default_selected);
-    
+
+    // A hack - deep copy the original NPO list so we can remove items from it when we delete them
+    const [myNonprofits, setMyNonProfits] = useState(JSON.parse(JSON.stringify(nonprofits)));
+
     const { handle_npo_problem_statement_delete } = useNonprofit();
 
     const handleToggle = (value) => () => {
@@ -33,14 +36,15 @@ export const NonProfitInputs = ({ nonprofits, selected, onSelected, onDelete, de
 
     const handleDelete = ( npo_id ) => {
         handle_npo_problem_statement_delete(npo_id);
-        // TODO: Remove NPO from the list, since it will be deleted
         
+        const newNpoList = myNonprofits.filter( item => item.id !== npo_id );
+        setMyNonProfits(newNpoList);
     }
     
 
     return (<List>
         {
-            nonprofits.map((nonprofit) => {
+            myNonprofits.map((nonprofit) => {
                 const labelId = `checkbox-list-label-${nonprofit.id}`;
 
                 return (
