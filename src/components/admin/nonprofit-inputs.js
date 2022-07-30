@@ -9,13 +9,14 @@ import CommentIcon from '@mui/icons-material/Comment';
 import Tooltip from '@mui/material/Tooltip';
 import { useState } from "react";
 
-import { DeleteConfirmationButton } from './delete-confirm'
+import { DeleteConfirmationButton } from './delete-confirm';
 import '../../styles/admin.styles.css';
-
+import { useNonprofit } from "../../hooks/use-nonprofit";
 
 export const NonProfitInputs = ({ nonprofits, selected, onSelected, onDelete, default_selected }) => {    
     const [checkedNPO, setCheckedNPO] = useState(default_selected);
-
+    
+    const { handle_npo_problem_statement_delete } = useNonprofit();
 
     const handleToggle = (value) => () => {
         const currentIndex = checkedNPO.indexOf(value);
@@ -30,6 +31,11 @@ export const NonProfitInputs = ({ nonprofits, selected, onSelected, onDelete, de
         onSelected(newChecked);
     };
 
+    const handleDelete = ( npo_id ) => {
+        handle_npo_problem_statement_delete(npo_id);
+        // TODO: Remove NPO from the list, since it will be deleted
+        
+    }
     
 
     return (<List>
@@ -63,8 +69,8 @@ export const NonProfitInputs = ({ nonprofits, selected, onSelected, onDelete, de
 
                             <ListItemText primaryTypographyProps={{ fontSize: '12px' }} id={labelId} primary={`${nonprofit.name}`} />
                             <ListItemText primaryTypographyProps={{ fontSize: '10px' }} id={labelId} primary={`${nonprofit.slack_channel}`} />
-                           
-                            <DeleteConfirmationButton/>
+                            <DeleteConfirmationButton id={nonprofit.id} name={nonprofit.name} onDelete={handleDelete} />
+                            
                             
                         </ListItemButton>
                     </ListItem>

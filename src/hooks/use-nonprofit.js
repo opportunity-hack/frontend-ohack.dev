@@ -100,6 +100,27 @@ export const useNonprofit = ( nonprofit_id ) => {
         return data;
     };
 
+    const handle_npo_problem_statement_delete = async ( id ) => {
+        if (!user)
+            return null;
+
+        const config = {
+            url: `${apiServerUrl}/api/messages/npo`,
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: {
+                id: `${id}`
+            }
+        };
+                
+        const data = await makeRequest({ config, authenticated: true });
+        return data;
+    };
+
+
     useEffect(() => {        
         const getNonprofits = async () => {        
             var config = null;
@@ -162,6 +183,7 @@ export const useNonprofit = ( nonprofit_id ) => {
         nonprofits,        
         nonprofit,
         handle_npo_problem_statement_edit,
-        handle_new_npo_submission
+        handle_new_npo_submission,
+        handle_npo_problem_statement_delete
     }
 }

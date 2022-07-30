@@ -13,14 +13,22 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 
 
-export const DeleteConfirmationButton = () =>
-{
+
+export const DeleteConfirmationButton = ({id, name, onDelete}) =>
+{   
     const [open, setOpen] = React.useState(false);
     const handleClickOpen = () => {
         setOpen(true);
     };
 
-    const handleClose = () => {
+    const handleClose = (event) => {
+        const npo_id = event.target.value;
+        if (npo_id !== "cancel")
+        {
+            console.log("deleting: " + npo_id);
+            console.log(onDelete(npo_id));
+        }
+        
         setOpen(false);
     };
 
@@ -39,18 +47,17 @@ export const DeleteConfirmationButton = () =>
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle id="alert-dialog-title">
-                    {"Use Google's location service?"}
+                    Delete {name}?
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
-                        Let Google help apps determine location. This means sending anonymous
-                        location data to Google, even when no apps are running.
+                        Are you sure you want to delete this nonprofit?
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose}>Disagree</Button>
-                    <Button onClick={handleClose} autoFocus>
-                        Agree
+                    <Button onClick={handleClose} value="cancel" autoFocus>Cancel</Button>
+                    <Button onClick={handleClose} value={id}>
+                        Delete
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -90,7 +90,7 @@ export const useTeams = () => {
         const data = await makeRequest({ config, authenticated: true });
         onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
         return data;
-    };
+    };    
 
     useEffect(() => {
         const getTeams = async () => {
