@@ -14,10 +14,12 @@ import SaveIcon from '@mui/icons-material/Save';
 import { useAdmin } from '../hooks/use-admin-check'
 import { useState } from "react";
 import { useProblemstatements } from "../hooks/use-problem-statements";
-
+import { useAuth0 } from "@auth0/auth0-react";
 
 
 export const NonProfitProfile = () => {
+    const { user } = useAuth0();
+    console.log(user);
     
     const { isAdmin } = useAdmin();
     const [checked, setChecked] = useState([]);
@@ -48,11 +50,11 @@ export const NonProfitProfile = () => {
             }
             else 
             {                
-                return nonprofit.problem_statements.map(ps => {
-                    console.log(ps);
+                return nonprofit.problem_statements.map(ps => {                    
                     return <ProblemStatement
                         key={ps.id}
-                        problem_statement={ps}                        
+                        problem_statement={ps}
+                        user={user}
                     />;
                 });                
                 

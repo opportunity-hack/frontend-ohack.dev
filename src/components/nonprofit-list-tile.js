@@ -7,6 +7,8 @@ import Tooltip from '@mui/material/Tooltip';
 import BuildIcon from '@mui/icons-material/Build';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
+
+
 export const NonProfitListTile = ({
     onSelected,
     admin, 
@@ -16,9 +18,25 @@ export const NonProfitListTile = ({
     icon 
     }) => {
     
+    const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
     
+    const openCodeSample = (e) => {    
+        e.preventDefault();
+    window.open(
+        JOIN_SLACK_LINK,
+        "_blank",
+        "noopener noreferrer"
+        );
+    };
     
-
+    var slackDetails = "";
+    if( npo.slack_channel == null || npo.slack_channel === "" )
+    {                
+        slackDetails = <p className="ohack-feature__callout_mono"><Tooltip title={<span style={{ fontSize: "15px" }}>We don't have an official Slack channel, use this general one to get the dialog going.</span>}><span onClick={openCodeSample}><IconButton><TagIcon />npo-selection</IconButton></span></Tooltip></p>;
+    }
+    else {
+        slackDetails = <p className="ohack-feature__callout_mono"><Tooltip title={<span style={{ fontSize: "15px" }}>This is their dedicated channel in Slack</span>}><span onClick={openCodeSample}><IconButton><TagIcon />{npo.slack_channel}</IconButton></span></Tooltip></p>;
+    }
 
     const displayCountDetails = () => {
 
@@ -48,13 +66,10 @@ export const NonProfitListTile = ({
                 />
                    {npo.name}
             </h3>
-            <p className="ohack-feature__callout_mono"><Tooltip title="This is their dedicated channel in Slack">
-                <IconButton>
-                    <TagIcon />
-                </IconButton>
-               </Tooltip>{npo.slack_channel}</p>
-               <p className="ohack-feature__callout">{npo.problem_statements.length} Projects</p>
-               <p className="ohack-feature__description">{ npo.description }</p>
+            
+            {slackDetails}
+            <p className="ohack-feature__callout">{npo.problem_statements.length} Projects</p>
+            <p className="ohack-feature__description">{ npo.description }</p>
            
            </span>
        );
@@ -75,11 +90,7 @@ export const NonProfitListTile = ({
                 />
                     {npo.name}
             </h3>
-            <p className="ohack-feature__callout_mono"><Tooltip title="This is their dedicated channel in Slack">
-                <IconButton>
-                    <TagIcon />
-                </IconButton>
-                </Tooltip>{npo.slack_channel}</p>
+            {slackDetails}
 
             {displayCountDetails()}
 

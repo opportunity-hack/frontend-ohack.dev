@@ -119,7 +119,7 @@ textarea {
   line-height: inherit;
 }
 a {
-  color: var(--black);
+    color: var(--black);
     text-decoration: none;
 }
 

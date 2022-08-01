@@ -1,7 +1,8 @@
 import React from "react";
 
 
-import '../styles/profile.styles.css'
+
+import '../styles/nonprofit.styles.css'
 
 import SearchIcon from '@mui/icons-material/Search';
 import { styled, alpha } from '@mui/material/styles';
@@ -20,7 +21,7 @@ export const NonProfitList = () => {
 
     let { nonprofits } = useNonprofit();
 
-    const [ needs_help_flag, setNeedsHelpFlag ] = useState(false);
+    const [ needs_help_flag, setNeedsHelpFlag ] = useState(true);
     const [ production_flag, setProductionFlag] = useState(false);
 
     
@@ -68,19 +69,19 @@ export const NonProfitList = () => {
     {
         if( needs_help_flag )
         {
-            return (<Chip icon={<BuildIcon />} color="warning" onClick={showNeedsHelp} onDelete={showNeedsHelp} label="Needs Help" />);
+            return (<Chip icon={<BuildIcon />} color="warning" style={{ fontSize: "1.9rem" }} onClick={showNeedsHelp} onDelete={showNeedsHelp} label="Needs Help" />);
         }
         else{
-            return (<Chip icon={<BuildIcon />} color="warning" onClick={showNeedsHelp}  label="Needs Help" />);
+            return (<Chip icon={<BuildIcon />} color="warning" style={{ fontSize: "1.9rem" }}  onClick={showNeedsHelp}  label="Needs Help" />);
         }
     }
 
     const productionButton = () => {
         if (production_flag) {
-            return (<Chip icon={<WorkspacePremiumIcon />} color="success" onClick={showProduction} onDelete={showProduction}  label="Live" />);
+            return (<Chip icon={<WorkspacePremiumIcon />} color="success" style={{ fontSize: "1.9rem" }} onClick={showProduction} onDelete={showProduction}  label="Live" />);
         }
         else {
-            return (<Chip icon={<WorkspacePremiumIcon />} color="success" onClick={showProduction} label="Live" />);
+            return (<Chip icon={<WorkspacePremiumIcon />} color="success" style={{ fontSize: "1.9rem" }} onClick={showProduction} label="Live" />);
         }
     }
 
@@ -145,22 +146,28 @@ export const NonProfitList = () => {
                 <div className="profile-grid">
                     <div className="profile__header">
                         <div className="profile__headline">
-                            <h2 className="profile__title">This page will contain a list of nonprofits and the problem statements we have worked on</h2>                            
+                            <h3 className="profile__title">Review our catalog of nonprofit that need your help</h3>
+                            Here you'll find all nonprofits that we've worked with, if you're looking to offer help, use the filters to find something that you'll love to work on.
                         </div>
                     </div>
 
                     <div className="profile__details">
+                        { /* TODO: Get search working to make it easier to search all text for what the user is looking for
                         <Search>
                             <SearchIconWrapper>
-                                <SearchIcon />
+                                <SearchIcon style={{ fontSize: "1.9rem" }} />
                             </SearchIconWrapper>
                             <StyledInputBase
+                                style={{ fontSize: "1.9rem" }}
                                 placeholder="Search…"
                                 inputProps={{ 'aria-label': 'search' }}
                             />
                         </Search>
+                        */
+                        }
                         
                         {needsHelpButton()}
+                        &nbsp;
                         {productionButton()}
                         
 

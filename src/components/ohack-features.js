@@ -4,7 +4,7 @@ import { OHackFeature } from "./ohack-feature";
 
 export const OHackFeatures = () => (
   <div className="ohack-features">
-    <h2 className="ohack-features__title">Benefits of an ohack.dev Account</h2>
+    <h2 className="ohack-features__title">What do we do here?</h2>
     <div className="ohack-features__grid">
       <OHackFeature
         title="Make an impact"

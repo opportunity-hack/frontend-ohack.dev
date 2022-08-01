@@ -1,11 +1,13 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export const HeroBanner = () => {
   const logo = "https://i.imgur.com/Ih0mbYx.png";
-
+  
+  const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
   const openCodeSample = () => {
     window.open(
-      "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig",
+      JOIN_SLACK_LINK,
       "_blank",
       "noopener noreferrer"
     );
@@ -19,8 +21,14 @@ export const HeroBanner = () => {
         Welcome to the place where Nonprofits, Hackers, Mentors, and Volunteers unite!
       </p>
 
+      <Link to="/nonprofits">
+        <button className="button button--primary">
+          Step 1: Find a problem to work on →
+        </button>
+      </Link>
+      <br/>
       <button onClick={openCodeSample} className="button button--primary">
-       Join us on Slack to get involved →
+       Step 2: Join us on Slack to get involved →
       </button>
     </div>
   );
