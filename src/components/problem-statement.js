@@ -205,7 +205,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
                         <li>Are looking at the judging criteria (on DevPost)</li>
                         <li>Have a demo video that is 4 minutes that describes the problem and solution using tools like Loom or Quicktime.</li>
                     </ul>
-                    <a href="https://www.ohack.org/about/mentors" target="_blank">More details on mentoring</a>
+                    <a href="https://www.ohack.org/about/mentors" rel="noreferrer" target="_blank">More details on mentoring</a>
 
                 </DialogContentText>
             </DialogContent>

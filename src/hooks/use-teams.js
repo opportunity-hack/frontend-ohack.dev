@@ -38,6 +38,7 @@ export const useTeams = () => {
 
 
     // TODO: Finish this method
+    /*
     const handle_new_team_submission = async (name, team_number, active, slack_channel, github_links, checked_users, checked_problem_statements, onComplete) => {
         if (!user)
             return null;
@@ -91,6 +92,7 @@ export const useTeams = () => {
         onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
         return data;
     };    
+    */
 
     useEffect(() => {
         const getTeams = async () => {

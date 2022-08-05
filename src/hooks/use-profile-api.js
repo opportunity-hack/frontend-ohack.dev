@@ -3,7 +3,7 @@ import axios from "axios";
 import { useEnv } from "../context/env.context";
 
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 export const useProfileApi = () => {
     const { getAccessTokenSilently, user } = useAuth0();
@@ -11,11 +11,13 @@ export const useProfileApi = () => {
 
     const [badges, setBadges] = useState(null);
     const [hackathons, setHackathons] = useState(null);
-    
-    const default_profile = {
-        "profile_url": "",
-        "profile_image": "https://i.imgur.com/RdOsE7s.png"
-    };
+     
+    const default_profile = useMemo(() => {
+        return {
+            "profile_url": "",
+            "profile_image": "https://i.imgur.com/RdOsE7s.png"
+        }
+    }, []);
 
     const [profile, setProfile] = useState(default_profile);
 
@@ -99,7 +101,7 @@ export const useProfileApi = () => {
         };
 
         getProfileDetails();
-    }, [user, apiServerUrl, fetchUser]);
+    }, [user, apiServerUrl, fetchUser, default_profile]);
     
 
     return {              

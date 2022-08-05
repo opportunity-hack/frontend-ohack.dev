@@ -4,9 +4,12 @@ import React from "react";
 
 import '../styles/nonprofit.styles.css'
 
-import SearchIcon from '@mui/icons-material/Search';
+// TODO: When search is enabled below, use these:
+/*
 import { styled, alpha } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
+*/
+
 import { NonProfitListTile } from "../components/nonprofit-list-tile";
 import { useNonprofit } from "../hooks/use-nonprofit";
 
@@ -15,6 +18,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
 import { useState, useCallback } from "react";
+import { Puff } from 'react-loading-icons'
 
 
 export const NonProfitList = () => {
@@ -24,7 +28,9 @@ export const NonProfitList = () => {
     const [ needs_help_flag, setNeedsHelpFlag ] = useState(true);
     const [ production_flag, setProductionFlag] = useState(false);
 
-    
+
+    // TODO: When search is enabled below, use this theme
+    /*
     const Search = styled('div')(({ theme }) => ({
         position: 'relative',
         borderRadius: theme.shape.borderRadius,
@@ -63,6 +69,7 @@ export const NonProfitList = () => {
             },
         },
     }));
+    */
 
 
     const needsHelpButton = () =>
@@ -95,6 +102,10 @@ export const NonProfitList = () => {
     }
 
     const nonProfitList = useCallback( () => {
+        if (nonprofits == null || nonprofits.length === 0) {
+            return (<p>Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" /></p>);
+        }    
+
         return(
             nonprofits.map(npo => {
                 let display = true;
