@@ -25,7 +25,10 @@ export const AddProblemStatement = () => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [status, setStatus] = useState("");
-    const [references, setReferences] = useState("");
+    
+    const [referenceTitle, setReferenceTitle] = useState("");
+    const [referenceLink, setReferenceLink] = useState("");
+
     const [github, setGithub] = useState("");
     const [first_thought_of, setFirstThoughtof] = useState("");
 
@@ -62,6 +65,9 @@ export const AddProblemStatement = () => {
     const handleSubmit = async () => {
         if (!user)
             return null;
+        
+        const references = {}
+        references[referenceTitle] = referenceLink
 
         const config = {
             url: `${apiServerUrl}/api/messages/problem_statement`,
@@ -137,9 +143,15 @@ export const AddProblemStatement = () => {
 
 
                 <TextField
-                    label="References"
+                    label="Reference Title"
                     color="primary"
-                    onChange={(e) => setReferences(e.target.value)}
+                    onChange={(e) => setReferenceTitle(e.target.value)}
+                />
+
+                <TextField
+                    label="Reference Link"
+                    color="primary"
+                    onChange={(e) => setReferenceLink(e.target.value)}
                 />
 
                 <TextField

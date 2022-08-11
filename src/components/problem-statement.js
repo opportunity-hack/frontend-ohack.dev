@@ -90,6 +90,41 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         helpingSwitch = <FormControlLabel onChange={handleClickOpen} control={<Switch color="warning" />} label="I'm helping" />;
     }
 
+
+    var github_buttons = "";
+    if( problem_statement.github )
+    {
+        github_buttons = problem_statement.github.map(github => {
+            return (<a target="_blank"
+                rel="noopener noreferrer"
+                key={github.name}
+                className="button button--secondary"
+                href={github.link}>
+                {github.name}
+            </a>)
+        })
+    }
+    else {
+        github_buttons = <p>No Github links yet</p>
+    }
+
+    var references_buttons = "";
+    if( problem_statement.references )
+    {
+        references_buttons = problem_statement.references.map(reference => {
+            return (<a
+                target="_blank"
+                rel="noopener noreferrer"
+                key={reference.name}
+                className="button button--secondary"
+                href={reference.link}>
+                {reference.name}
+            </a>)
+        });
+    }
+    else{
+        references_buttons = <p>No references yet</p>
+    }
     
     return (
     <div className="ohack-feature">    
@@ -142,31 +177,10 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         </div>
 
         <h3>Code</h3>        
-        {
-            problem_statement.github.map(github => {
-                return (<a target="_blank"
-                    rel="noopener noreferrer"
-                    key={github.name}
-                    className="button button--secondary"
-                    href={github.link}>
-                    {github.name}
-                    </a>)
-            })
-        }
+        {github_buttons}
                 
         <h3>References</h3>
-        {
-            problem_statement.references.map(reference => {
-                return (<a 
-                    target="_blank"
-                    rel="noopener noreferrer" 
-                    key={reference.name} 
-                    className="button button--secondary" 
-                    href={reference.link}>
-                    {reference.name}
-                    </a>)
-            })
-        }
+        {references_buttons}
         
         <Dialog
             open={open}
