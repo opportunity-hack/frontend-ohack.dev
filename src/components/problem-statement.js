@@ -24,24 +24,43 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import { AuthenticationButton } from "./buttons/authentication-button";
 
-
-
-
 export const ProblemStatement = ({ problem_statement, user }) => {
     const [open, setOpen] = React.useState(false);
-    
+    const [openUnhelp, setOpenUnhelp] = React.useState(false);
+
+    const [help_checked, setHelpedChecked] = React.useState("");
+
     const handleClickOpen = (event) => {        
         if (event.target.checked) // Only when selecting yes
         {
             setOpen(true);
         }
+        else
+        {
+            setOpenUnhelp(true);
+        }
         
+        
+    };
+
+    const handleCloseUnhelp = (event) => {
+        setOpenUnhelp(false);
+        setHelpedChecked("")
+    };
+
+    const handleCloseUnhelpCancel = (event) => {
+        setOpenUnhelp(false);        
     };
 
     const handleClose = (event) => {           
         setOpen(false);
+        setHelpedChecked("checked")
     };
 
+    const handleCancel = (event) => {
+        setOpen(false);
+        setHelpedChecked("");
+    }
 
 
     var HackathonText;
@@ -87,12 +106,13 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     }
     else {
         callToAction = <button className="button button--compact button--primary">Join <TagIcon />{problem_statement.slack_channel} to help</button>;
-        helpingSwitch = <FormControlLabel onChange={handleClickOpen} control={<Switch color="warning" />} label="I'm helping" />;
+        helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} control={<Switch checked={help_checked} color="warning" />} label="I'm helping" />;
     }
 
 
-    var github_buttons = "";
-    if( problem_statement.github )
+    var github_buttons = "";    
+
+    if (problem_statement.github != null && problem_statement.github.length > 0 && typeof (problem_statement.github) !== "string" )
     {
         github_buttons = problem_statement.github.map(github => {
             return (<a target="_blank"
@@ -108,8 +128,37 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         github_buttons = <p>No Github links yet</p>
     }
 
+    const render_event_teams = (event) => {
+        if( event.teams != null && event.teams.length > 0 )
+        {
+            const details = event.teams.map((team) => (
+                <ul key={team.id}>
+                    <li>
+                        {team.active === "True" ? <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active! Jump into Slack to see if you can help out.</span>}><DirectionsRunIcon style={{ color: "green" }} /></Tooltip> : <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}><CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
+                        {(() => {
+                            if (team.team_number > 0) {
+                                return "Team " + team.team_number + " ";
+                            }
+                        })()}
+                        <b>{team.name}</b><br />
+                        <font face="Courier">#{team.slack_channel}</font></li>
+                </ul>
+            ));
+
+            return(
+                <p>
+                <h5><GroupIcon style={{ color: "blue" }} /> {event.teams.length} team{event.teams.length > 1 ? "s" : ""}</h5>
+                {details}
+                </p>
+            )
+        }
+        else {
+            return(<p>No Teams linked yet</p>)
+        }        
+    }
+
     var references_buttons = "";
-    if( problem_statement.references )
+    if( problem_statement.references != null && problem_statement.references.length > 0 )
     {
         references_buttons = problem_statement.references.map(reference => {
             return (<a
@@ -127,7 +176,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     }
     
     return (
-    <div className="ohack-feature">    
+    <div className="ohack-problemstatement-feature">    
         <h3 className="ohack-feature__headline">           
                 {problem_statement.title}&nbsp;&nbsp;<div align="center">{status}<Stack direction="row" spacing={1} alignItems="center">
                     {helpingSwitch}
@@ -153,24 +202,10 @@ export const ProblemStatement = ({ problem_statement, user }) => {
                 return (                    
                     <div key={event.id}>                        
                             <h3><EventIcon /> {event.location} {event.type}</h3>
-                            <h5>{event.start_date} <ArrowForwardIosIcon style={{ color: "gray" }} /> {event.end_date}</h5>
-                            <h5><GroupIcon style={{ color: "blue" }} /> {event.teams.length} team{event.teams.length > 1 ? "s" : ""}</h5>
+                            <h5>{event.start_date} <ArrowForwardIosIcon style={{ color: "gray" }} /> {event.end_date}</h5>                            
                             
-                                {event.teams.map((team) => (
-                                    <ul key={team.id}>
-                                        <li>
-                                            {team.active === "True" ? <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active! Jump into Slack to see if you can help out.</span>}><DirectionsRunIcon style={{ color: "green" }} /></Tooltip> : <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}><CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
-                                            {(() => {
-                                                if (team.team_number > 0) {
-                                                    return "Team " + team.team_number + " ";
-                                                }
-                                            })()}
-                                            <b>{team.name}</b><br/>
-                                        <font face="Courier">#{team.slack_channel}</font></li>
-                                    </ul>
-                                ))}                                
+                            {render_event_teams(event)}                               
                             
-
                     </div>)
             })}
             
@@ -224,7 +259,30 @@ export const ProblemStatement = ({ problem_statement, user }) => {
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose} autoFocus>Got it!</Button>                
+                <Button className="error" onClick={handleCancel}>Cancel</Button>          
+                <Button onClick={handleClose} autoFocus>Sounds good</Button>                          
+            </DialogActions>
+        </Dialog>
+
+        <Dialog
+            open={openUnhelp}
+            onClose={handleCloseUnhelp}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+        >
+            <DialogTitle id="alert-dialog-title">
+                Helping has completed!
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText component={'span'} id="alert-dialog-description">                    
+                    <h4>What this means</h4>
+                    You are recording the fact that you're no longer helping this nonprofit                    
+
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                <Button className="error" onClick={handleCloseUnhelpCancel}>Cancel</Button>
+                <Button onClick={handleCloseUnhelp} autoFocus>Withdrawl Help</Button>
             </DialogActions>
         </Dialog>
         

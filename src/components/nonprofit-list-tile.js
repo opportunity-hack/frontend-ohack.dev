@@ -80,7 +80,7 @@ export const NonProfitListTile = ({
         <Link
 
             to={`/nonprofit/${npo.id}`}
-            className="ohack-feature"
+            className="ohack-nonprofit-feature"
         >
             <h3 className="ohack-feature__headline">
                 <img

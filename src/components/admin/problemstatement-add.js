@@ -29,7 +29,9 @@ export const AddProblemStatement = () => {
     const [referenceTitle, setReferenceTitle] = useState("");
     const [referenceLink, setReferenceLink] = useState("");
 
-    const [github, setGithub] = useState("");
+    const [githubTitle, setGithubTitle] = useState("");
+    const [githubLink, setGithubLink] = useState("");
+
     const [first_thought_of, setFirstThoughtof] = useState("");
 
     const [message, setMessage] = useState("");
@@ -67,7 +69,13 @@ export const AddProblemStatement = () => {
             return null;
         
         const references = {}
-        references[referenceTitle] = referenceLink
+        references["name"] = referenceTitle
+        references["link"] = referenceLink
+        
+        const github = {}
+        github["name"] = githubTitle
+        github["link"] = githubLink
+
 
         const config = {
             url: `${apiServerUrl}/api/messages/problem_statement`,
@@ -105,7 +113,7 @@ export const AddProblemStatement = () => {
 
     return (
         <div className="content-layout">
-            <h1 className="content__title">Add a problem statement</h1>
+            <h1 className="content__title">Add a project (problem statement)</h1>
 
             <Box
                 component="form"
@@ -155,9 +163,15 @@ export const AddProblemStatement = () => {
                 />
 
                 <TextField
+                    label="Github Title"
+                    color="primary"
+                    onChange={(e) => setGithubTitle(e.target.value)}
+                />
+
+                <TextField
                     label="Github Link"
                     color="primary"
-                    onChange={(e) => setGithub(e.target.value)}
+                    onChange={(e) => setGithubLink(e.target.value)}
                 />
             </Box>
           

@@ -28,8 +28,28 @@
   row-gap: 6.4rem;
 }
 
+.ohack-nonprofit-feature {
+  background-color: rgb(187, 220, 252);
+  color: var(--black);
+  cursor: pointer;
+
+  /* responsive */
+  padding: 4.8rem;
+  border-radius: 1.6rem;
+}
+
+.ohack-problemstatement-feature {
+  background-color: rgb(187, 220, 252);
+  color: var(--black);
+  cursor: pointer;
+
+  /* responsive */
+  padding: 4.8rem;
+  border-radius: 1.6rem;
+}
+
 .ohack-feature {
-  background-color:deepskyblue;
+  background-color: rgb(187, 220, 252);
 
   color: var(--black);
 
