@@ -29,6 +29,12 @@
   line-height: 1.6rem;
 }
 
+.button--pad {
+  display: inline-block;
+  margin-bottom:10px;  
+  
+}
+
 .button--primary {
   background-color: chartreuse;
 }

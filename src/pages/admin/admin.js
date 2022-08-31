@@ -3,7 +3,7 @@ import React from "react";
 import { AddNonProfit } from "../../components/admin/nonprofit-add";
 import { AddProblemStatement } from "../../components/admin/problemstatement-add";
 import { AddHackathon } from "../../components/admin/hackathon-add";
-import { HackathonList } from "../../components/admin/hackathon-list";
+import { AdminHackathonList } from "../../components/admin/hackathon-list";
 
 import { useAdmin } from '../../hooks/use-admin-check'
 import { useNonprofit } from "../../hooks/use-nonprofit";
@@ -24,9 +24,11 @@ export const Admin = ({ admin }) => {
         return(<span></span>);
     } 
 
+    console.log("admin.js repaint");
+
     return(
         <div>
-            <HackathonList hackathons={hackathons} problem_statements={problem_statements} />
+            <AdminHackathonList hackathons={hackathons} problem_statements={problem_statements} />
             <AddProblemStatement />            
             <AddHackathon nonprofits={nonprofits} teams={teams} />             
             <AddNonProfit problem_statements={problem_statements} />            

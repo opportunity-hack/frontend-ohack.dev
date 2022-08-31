@@ -37,7 +37,7 @@ export const useHackathonEvents = () => {
     }, [getAccessTokenSilently]);
 
 
-    const handle_event_problem_statement_link_update = async (mapping, onComplete) => {
+    const handle_problem_statement_to_event_link_update = async (mapping, onComplete) => {
         if (!user)
             return null;
 
@@ -93,6 +93,6 @@ export const useHackathonEvents = () => {
 
     return {
         hackathons,
-        handle_event_problem_statement_link_update
+        handle_problem_statement_to_event_link_update
     }
 }

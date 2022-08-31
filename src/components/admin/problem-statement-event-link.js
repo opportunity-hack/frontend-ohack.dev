@@ -1,10 +1,4 @@
 
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import InputLabel from '@mui/material/InputLabel';
@@ -16,8 +10,16 @@ import Chip from '@mui/material/Chip';
 import '../../styles/admin.styles.css';
 import { useState } from "react";
 
-export const LinkedProblemStatements = ({ problemStatements, hackathonId, onChange, defaultSelected }) => {        
-    const [problemStatement, setProblemStatement] = useState(defaultSelected);
+export const LinkedProblemStatementsToEvents = ({ problemStatementId, events, all_events, onChange  }) => {
+    const getEventsAsString = (anEventObject) => {
+        return anEventObject.start_date + " " + anEventObject.type + "|" + anEventObject.id;
+    }
+
+    const [eventState, setEventState] = useState(events.map(event => {
+        return getEventsAsString(event);
+    }));
+
+    
 
     const ITEM_HEIGHT = 48;
     const ITEM_PADDING_TOP = 8;
@@ -32,45 +34,43 @@ export const LinkedProblemStatements = ({ problemStatements, hackathonId, onChan
 
     const handleChange = (event) => {
         const { target: { value } } = event;
-        
         const result = typeof value === 'string' ? value.split(',') : value;
-                    
-        setProblemStatement(result);
-        onChange(hackathonId, result);
-        console.log("CHANGE");
-        console.log(" " + hackathonId + " ->" + result);
+        setEventState(result);
+        onChange(problemStatementId, result);        
     };
 
-    const formProblemStatementSelectionId = `form-problem-list-label-${hackathonId}`;
-    const problemStatementSelectionId = `problem-list-label-${hackathonId}`;
-    const problemStatementSelectId = `select-problem-list-label-${hackathonId}`;
+    const formProblemStatementSelectionId = `form-problem-list-label-${problemStatementId}`;
+    const problemStatementSelectionId = `problem-list-label-${problemStatementId}`;
+    const problemStatementSelectId = `select-problem-list-label-${problemStatementId}`;
 
-    return(
+    return (
         <FormControl key={formProblemStatementSelectionId} id={formProblemStatementSelectionId} sx={{ m: 1, width: 300 }}>
-            <InputLabel key={problemStatementSelectionId} id={problemStatementSelectionId}>Projects</InputLabel>
+            <InputLabel key={problemStatementSelectionId} id={problemStatementSelectionId}>Events</InputLabel>
             <Select
                 labelId={problemStatementSelectionId}
                 id={problemStatementSelectId}
                 key={problemStatementSelectId}
                 multiple
-                value={problemStatement}
+                value={eventState}
                 onChange={handleChange}
                 input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
                 renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => (
-                            <Chip key={value} label={value} />
-                        ))}
+                        {                            
+                            selected.map((value) => (
+                                <Chip key={value} label={value} />
+                            ))
+                        }
                     </Box>
                 )}
                 MenuProps={MenuProps}
             >
-                {problemStatements.map((ps) => (
+                {all_events.map((event) => (
                     <MenuItem
-                        key={ps.id}                        
-                        value={`${ps.title}|${ps.id}`}
+                        key={getEventsAsString(event)}
+                        value={getEventsAsString(event)}
                     >
-                        {ps.title}|{ps.id}
+                        {getEventsAsString(event)}
                     </MenuItem>
                 ))}
             </Select>

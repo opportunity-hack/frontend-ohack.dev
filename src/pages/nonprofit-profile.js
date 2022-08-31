@@ -15,6 +15,8 @@ import { useAdmin } from '../hooks/use-admin-check'
 import { useState } from "react";
 import { useProblemstatements } from "../hooks/use-problem-statements";
 import { useAuth0 } from "@auth0/auth0-react";
+import { Puff } from 'react-loading-icons'
+import { SafetyCheck } from "@mui/icons-material";
 
 
 export const NonProfitProfile = () => {
@@ -29,6 +31,21 @@ export const NonProfitProfile = () => {
     let { nonprofit_id } = useParams();    
     const { handle_npo_problem_statement_edit, nonprofit } = useNonprofit(nonprofit_id);
 
+
+    var slack_details = "";
+
+    if ( nonprofit.slack_channel !== "" )
+    {
+        slack_details = <p className="ohack-feature__callout_mono"><Tooltip title="This is their dedicated channel in Slack">
+            <IconButton>
+                <TagIcon />
+            </IconButton>
+        </Tooltip>{nonprofit.slack_channel}</p>;
+    }
+    else {
+        slack_details = "";
+    }
+
     const onComplete = (amessage) => {
         setMessage(amessage);
     }
@@ -40,7 +57,7 @@ export const NonProfitProfile = () => {
     const problemStatements = () => {
         if( nonprofit.problem_statements == null )
         {
-            return <div>Loading</div>;
+            return <div><p>Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" /></p></div>;
         }
         else
         {
@@ -90,11 +107,8 @@ export const NonProfitProfile = () => {
         <div className="content-layout">            
             <h1 className="content__title">{nonprofit.name}</h1>
             <p className="ohack-feature__callout">{nonprofit.description}</p>            
-            <p className="ohack-feature__callout_mono"><Tooltip title="This is their dedicated channel in Slack">
-                <IconButton>
-                    <TagIcon />
-                </IconButton>
-            </Tooltip>{nonprofit.slack_channel}</p>      
+            {slack_details}   
+
             <div className="content__body">
                 {renderAdminProblemStatements()}
 

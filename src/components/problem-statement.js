@@ -2,7 +2,7 @@ import React from "react";
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Tooltip from '@mui/material/Tooltip';
-import EventIcon from '@mui/icons-material/Event';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import GroupIcon from '@mui/icons-material/Group';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Chip from '@mui/material/Chip';
@@ -44,20 +44,24 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     };
 
     const handleCloseUnhelp = (event) => {
+        // They wanted to stop helping
         setOpenUnhelp(false);
         setHelpedChecked("")
     };
 
     const handleCloseUnhelpCancel = (event) => {
+        // They didn't want to stop helping
         setOpenUnhelp(false);        
     };
 
     const handleClose = (event) => {           
+        // They wanted to start helping
         setOpen(false);
         setHelpedChecked("checked")
     };
 
     const handleCancel = (event) => {
+        // They didn't want to start helping
         setOpen(false);
         setHelpedChecked("");
     }
@@ -105,7 +109,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         helpingSwitch = <FormControlLabel onChange={handleClickOpen} disabled control={<Switch color="warning" />} label="Login first, then you can help." />;
     }
     else {
-        callToAction = <button className="button button--compact button--primary">Join <TagIcon />{problem_statement.slack_channel} to help</button>;
+        callToAction = <a href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`} target="_blank" rel="noreferrer"><button className="button button--compact button--primary">Join <TagIcon />{problem_statement.slack_channel} to help</button></a>;
         helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} control={<Switch checked={help_checked} color="warning" />} label="I'm helping" />;
     }
 
@@ -130,8 +134,8 @@ export const ProblemStatement = ({ problem_statement, user }) => {
 
     const render_event_teams = (event) => {
         if( event.teams != null && event.teams.length > 0 )
-        {
-            const details = event.teams.map((team) => (
+        {             
+            const details = event.teams.map((team) => (                
                 <ul key={team.id}>
                     <li>
                         {team.active === "True" ? <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active! Jump into Slack to see if you can help out.</span>}><DirectionsRunIcon style={{ color: "green" }} /></Tooltip> : <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}><CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
@@ -153,7 +157,8 @@ export const ProblemStatement = ({ problem_statement, user }) => {
             )
         }
         else {
-            return(<p>No Teams linked yet</p>)
+            // We don't have any teams linked to this event yet
+            return(<p></p>)
         }        
     }
 
@@ -161,18 +166,18 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     if( problem_statement.references != null && problem_statement.references.length > 0 )
     {
         references_buttons = problem_statement.references.map(reference => {
-            return (<a
+            return (<li><a
                 target="_blank"
                 rel="noopener noreferrer"
                 key={reference.name}
-                className="button button--secondary"
+                className="button button--pad button--secondary"
                 href={reference.link}>
                 {reference.name}
-            </a>)
+            </a></li>)
         });
     }
     else{
-        references_buttons = <p>No references yet</p>
+        references_buttons = <li>No references yet</li>
     }
     
     return (
@@ -201,7 +206,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
             {problem_statement.events.map(event => {
                 return (                    
                     <div key={event.id}>                        
-                            <h3><EventIcon /> {event.location} {event.type}</h3>
+                            <h3><EngineeringIcon /> {event.location} {event.type}</h3>
                             <h5>{event.start_date} <ArrowForwardIosIcon style={{ color: "gray" }} /> {event.end_date}</h5>                            
                             
                             {render_event_teams(event)}                               
@@ -215,7 +220,11 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         {github_buttons}
                 
         <h3>References</h3>
-        {references_buttons}
+        <div>
+            <ul className="ohack-feature__list">
+                {references_buttons}
+            </ul>
+        </div>
         
         <Dialog
             open={open}

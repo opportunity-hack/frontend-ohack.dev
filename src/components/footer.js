@@ -32,7 +32,7 @@ export const Footer = () => {
         <div className="footer-grid__info">
           <div className="footer-info__message">            
             <p className="footer-message__description">
-              <FooterHyperlink path="https://auth0.com/docs/quickstarts/">
+              <FooterHyperlink path="https://www.ohack.org">
                 <span>
                   We exist to create simple technical solutions for nonprofit organizations.  
                   We utilize volunteers, who are industry professionals or local students to the area in order 
