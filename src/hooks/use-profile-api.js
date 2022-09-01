@@ -20,11 +20,58 @@ export const useProfileApi = () => {
     }, []);
 
     const [profile, setProfile] = useState(default_profile);
-
     const [feedback_url, setFeedbackUrl] = useState("");
 
-    
 
+    const makeRequest = useCallback(async (options) => {
+        try {
+            if (options.authenticated) {
+                const token = await getAccessTokenSilently();
+
+                options.config.headers = {
+                    ...options.config.headers,
+                    Authorization: `Bearer ${token}`,
+                };
+            }
+
+            const response = await axios(options.config);
+            const { data } = response;
+
+            return data;
+        } catch (error) {
+
+            if (axios.isAxiosError(error) && error.response) {
+                return error.response;
+            }
+
+            return error.message;
+        }
+    }, [getAccessTokenSilently]);
+
+    const handle_help_toggle = async (status, problem_statement_id) => {
+        if (!user)
+            return null;
+        
+        console.log(user);
+
+        const config = {
+            url: `${apiServerUrl}/api/messages/profile/helping`,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: {
+                user_id: user.sub,
+                status: status,
+                problem_statement_id: problem_statement_id
+            }
+        };
+
+        const data = await makeRequest({ config, authenticated: true });
+        // onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
+        return data;
+    };
 
     const fetchUser = useCallback(async (options) => {
         try {
@@ -108,6 +155,7 @@ export const useProfileApi = () => {
         badges,
         hackathons,
         profile,
-        feedback_url
+        feedback_url,
+        handle_help_toggle
     };
 };

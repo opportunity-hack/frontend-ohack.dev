@@ -16,8 +16,6 @@ import { useState } from "react";
 import { useProblemstatements } from "../hooks/use-problem-statements";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Puff } from 'react-loading-icons'
-import { SafetyCheck } from "@mui/icons-material";
-
 
 export const NonProfitProfile = () => {
     const { user } = useAuth0();
@@ -106,7 +104,8 @@ export const NonProfitProfile = () => {
     return (
         <div className="content-layout">            
             <h1 className="content__title">{nonprofit.name}</h1>
-            <p className="ohack-feature__callout">{nonprofit.description}</p>            
+            <p className="ohack-feature__callout">{nonprofit.description}</p>   
+            
             {slack_details}   
 
             <div className="content__body">

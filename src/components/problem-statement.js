@@ -23,12 +23,13 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
 import { AuthenticationButton } from "./buttons/authentication-button";
+import { useProfileApi } from "../hooks/use-profile-api";
 
 export const ProblemStatement = ({ problem_statement, user }) => {
     const [open, setOpen] = React.useState(false);
     const [openUnhelp, setOpenUnhelp] = React.useState(false);
-
     const [help_checked, setHelpedChecked] = React.useState("");
+    const { handle_help_toggle } = useProfileApi();
 
     const handleClickOpen = (event) => {        
         if (event.target.checked) // Only when selecting yes
@@ -47,6 +48,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         // They wanted to stop helping
         setOpenUnhelp(false);
         setHelpedChecked("")
+        handle_help_toggle("not_helping", problem_statement.id)
     };
 
     const handleCloseUnhelpCancel = (event) => {
@@ -58,6 +60,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         // They wanted to start helping
         setOpen(false);
         setHelpedChecked("checked")
+        handle_help_toggle("helping", problem_statement.id)
     };
 
     const handleCancel = (event) => {

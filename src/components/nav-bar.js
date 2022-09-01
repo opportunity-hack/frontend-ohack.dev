@@ -3,9 +3,12 @@ import { NavLink } from "react-router-dom";
 import { AuthenticationButton } from "./buttons/authentication-button";
 import { NavBarAdmin } from "./nav-bar-admin";
 
+/*
+TODO: In the future we may want to show notifications using something like this
 import NotificationsActive from '@mui/icons-material/NotificationsActive';
 import Badge from '@mui/material/Badge';
 import Tooltip from '@mui/material/Tooltip';
+*/
 
 import { useAdmin } from '../hooks/use-admin-check'
 
@@ -60,7 +63,7 @@ export const NavBar = () => {
             className="nav-bar__tab"
             activeClassName="nav-bar__tab--active"
           >
-            Nonprofits
+            Projects
           </NavLink>
 
           {/*
@@ -81,11 +84,16 @@ export const NavBar = () => {
           <AuthenticationButton />
         </div>
 
+        {
+          /* 
+          TODO: In the future we may want to show notifications using something like this
         <Tooltip title="You have 1 notification" >
           <Badge badgeContent={4} color="secondary" >
             <NotificationsActive className="alert-notification" />
           </Badge>
         </Tooltip>  
+          */
+        }
       </nav>
     </div>
   );
