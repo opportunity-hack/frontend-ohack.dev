@@ -15,6 +15,7 @@ import Switch from '@mui/material/Switch';
 import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
+import ArticleIcon from '@mui/icons-material/Article';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -125,7 +126,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
             return (<a target="_blank"
                 rel="noopener noreferrer"
                 key={github.name}
-                className="button button--secondary"
+                className="button button--compact button--third"
                 href={github.link}>
                 {github.name}
             </a>)
@@ -133,6 +134,23 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     }
     else {
         github_buttons = <p>No Github links yet</p>
+    }
+
+    var github_issue_button = "";
+
+    if (problem_statement.github != null && problem_statement.github.length > 0 && typeof (problem_statement.github) !== "string") {
+        github_issue_button = problem_statement.github.map(github => {
+            return (<a target="_blank"
+                rel="noopener noreferrer"
+                key={github.name}
+                className="button button--compact button--third"
+                href={`${github.link}/issues`}>
+                {github.name} Tasks
+            </a>);
+        })
+    }
+    else {
+        github_issue_button = "";
     }
 
     const render_event_teams = (event) => {
@@ -169,18 +187,19 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     if( problem_statement.references != null && problem_statement.references.length > 0 )
     {
         references_buttons = problem_statement.references.map(reference => {
-            return (<li><a
-                target="_blank"
-                rel="noopener noreferrer"
-                key={reference.name}
-                className="button button--pad button--secondary"
-                href={reference.link}>
-                {reference.name}
-            </a></li>)
+            return (
+                <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={reference.link}>
+                        <Button key={reference.name} className="button button--pad button--third"><ArticleIcon/>&nbsp;
+                        {reference.name}
+                        </Button>
+                </a>);
         });
     }
     else{
-        references_buttons = <li>No references yet</li>
+        references_buttons = <p>No references yet</p>
     }
     
     return (
@@ -221,12 +240,14 @@ export const ProblemStatement = ({ problem_statement, user }) => {
 
         <h3>Code</h3>        
         {github_buttons}
-                
+        
+        <h3>Work Remaining</h3>
+        {github_issue_button}
+
+
         <h3>References</h3>
-        <div>
-            <ul className="ohack-feature__list">
-                {references_buttons}
-            </ul>
+        <div>            
+            {references_buttons}            
         </div>
         
         <Dialog
@@ -270,9 +291,10 @@ export const ProblemStatement = ({ problem_statement, user }) => {
 
                 </DialogContentText>
             </DialogContent>
-            <DialogActions>
-                <Button className="error" onClick={handleCancel}>Cancel</Button>          
-                <Button onClick={handleClose} autoFocus>Sounds good</Button>                          
+            <DialogActions>                          
+                <Button class="button button--compact button--third" onClick={handleClose} autoFocus>Help as Hacker</Button>
+                    <Button class="button button--compact button--third" onClick={handleClose}>Help as Mentor</Button>
+                    <Button class="button button--compact button--secondary" className="error" onClick={handleCancel}>Cancel</Button>
             </DialogActions>
         </Dialog>
 
@@ -293,8 +315,8 @@ export const ProblemStatement = ({ problem_statement, user }) => {
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button className="error" onClick={handleCloseUnhelpCancel}>Cancel</Button>
-                <Button onClick={handleCloseUnhelp} autoFocus>Withdrawl Help</Button>
+                    <Button class="button button--compact button--secondary" onClick={handleCloseUnhelpCancel}>Cancel</Button>
+                    <Button class="button button--compact button--red" onClick={handleCloseUnhelp} autoFocus>Withdrawl Help</Button>                    
             </DialogActions>
         </Dialog>
         

@@ -52,6 +52,24 @@
   background: rgba(148, 106, 255, 0.85);
 }
 
+.button--third {
+  background-color: rgb(124, 196, 0);
+  color: var(--black);
+}
+
+.button--third:hover {
+  background: rgba(148, 106, 255, 0.85);
+}
+
+.button--red {
+  background-color: rgba(249, 138, 138, 0.904);
+  color: var(--black);
+}
+
+.button--red:hover {
+  background: rgba(148, 106, 255, 0.85);
+}
+
 @media only screen and (max-width: 480px) {
   .button {
     /* responsive */

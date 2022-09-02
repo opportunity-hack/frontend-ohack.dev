@@ -152,13 +152,13 @@ export const NonProfitList = () => {
 
     return (
         <div className="content-layout">
-            <h1 className="content__title">Nonprofits</h1>
+            <h1 className="content__title">Nonprofit Projects</h1>
             <div className="content__body">
                 <div className="profile-grid">
                     <div className="profile__header">
                         <div className="profile__headline">
-                            <h3 className="profile__title">Review our catalog of nonprofit that need your help</h3>
-                            Here you'll find all nonprofits that we've worked with, if you're looking to offer help, use the filters to find something that you'll love to work on.
+                            <h3 className="profile__title">Review our catalog of nonprofit problems that need your help</h3>
+                            Here you'll find all nonprofits that we've worked with and those that need help, we hope that you find something that you'll love to work on.
                         </div>
                     </div>
 

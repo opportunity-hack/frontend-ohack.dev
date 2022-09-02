@@ -20,10 +20,10 @@ export const NonProfitListTile = ({
     
     const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
     
-    const openCodeSample = (e) => {    
+    const openCodeSample = (e, channel) => {    
         e.preventDefault();
     window.open(
-        JOIN_SLACK_LINK,
+        `https://opportunity-hack.slack.com/app_redirect?channel=${channel}`,
         "_blank",
         "noopener noreferrer"
         );
@@ -35,7 +35,15 @@ export const NonProfitListTile = ({
         slackDetails = <p className="ohack-feature__callout_mono"><Tooltip title={<span style={{ fontSize: "15px" }}>We don't have an official Slack channel, use this general one to get the dialog going.</span>}><span onClick={openCodeSample}><IconButton><TagIcon />npo-selection</IconButton></span></Tooltip></p>;
     }
     else {
-        slackDetails = <p className="ohack-feature__callout_mono"><Tooltip title={<span style={{ fontSize: "15px" }}>This is their dedicated channel in Slack</span>}><span onClick={openCodeSample}><IconButton><TagIcon />{npo.slack_channel}</IconButton></span></Tooltip></p>;
+        slackDetails = <p className="ohack-feature__callout_mono">
+            <Tooltip title={<span style={{ fontSize: "15px" }}>This is their dedicated channel in Slack</span>}>
+                <span onClick={ (event) => openCodeSample(event, npo.slack_channel)}>
+                    <IconButton>
+                        <TagIcon />{npo.slack_channel}
+                    </IconButton>
+                </span>
+            </Tooltip>
+            </p>;    
     }
 
     const displayCountDetails = () => {
