@@ -1,7 +1,8 @@
 
 import Chip from '@mui/material/Chip';
-import Avatar from '@mui/material/Avatar';
-
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
+import Tooltip from '@mui/material/Tooltip';
 
 export const ProjectProgress = ({ state }) => {
 
@@ -15,7 +16,12 @@ export const ProjectProgress = ({ state }) => {
 
     const states = ["concept", "hackathon", "post-hackathon", "production", "maintenance"];
 
-    const abbreviation = ["C", "H", "PH", "P", "M"];
+    const description = [
+        "This idea has not yet had anyone work on it, we need your help to make this a reality.",
+        "Project was worked on in at least one hackathon, top finisher also designated.",
+        "Coding continued after the hackathon. We don't have anything available for public in a production-ready system yet. Capstone projects: We work with university senior capstone (ASU, ASU Poly, UArizona, GCU) teams to advance our mission.  These teams have completed their capstone work.  ",
+        "Application is using Heroku (or similar) for ease of deployment, data import/export with CSV is supported.  This is the ultimate goal of any Opportunity Hack project.",
+        "Post-production security patching, feature enhancements."];
 
     const progressToRender = () => {
         const statusList = stateMapping[state];
@@ -24,10 +30,19 @@ export const ProjectProgress = ({ state }) => {
 
                 if( statusList[index] === 1 )
                 {
-                    return (<Chip key="mine" color="primary" label={name} avatar={<Avatar>{abbreviation[index]}</Avatar>} />)
+                    return (
+                        <Tooltip title={<span style={{ fontSize: "14px" }}>{description[index]}</span>}>
+                        <Chip key="mine" color="success" label={name} icon={<CheckCircleOutlineOutlinedIcon />} />
+                        </Tooltip >
+                        );
                 }
-                else{
-                    return (<Chip key="mine" color="default" label={name} avatar={<Avatar>{abbreviation[index]}</Avatar>} />)
+                else {
+                    
+                    return (
+                        <Tooltip title={<span style={{ fontSize: "14px" }}>{description[index]}</span>}>
+                        <Chip key="mine" color="default" variant="outlined" label={name} icon={<PendingOutlinedIcon />} />
+                        </Tooltip>
+                        );
                 }
                 
             
