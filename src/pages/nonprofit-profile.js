@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useProblemstatements } from "../hooks/use-problem-statements";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Puff } from 'react-loading-icons'
+import ReactTextCollapse from "react-text-collapse/dist/ReactTextCollapse";
 
 export const NonProfitProfile = () => {
     const { user } = useAuth0();
@@ -29,6 +30,18 @@ export const NonProfitProfile = () => {
     let { nonprofit_id } = useParams();    
     const { handle_npo_problem_statement_edit, nonprofit } = useNonprofit(nonprofit_id);
 
+
+    const TEXT_COLLAPSE_OPTIONS = {
+        collapse: false,
+        collapseText: 'show more',
+        expandText: 'show less',
+        minHeight: 80,
+        maxHeight: 200,
+        textStyle: {
+            color: 'blue',
+            fontSize: '20px',
+        },
+    }
 
     var slack_details = "";
 
@@ -104,9 +117,13 @@ export const NonProfitProfile = () => {
     return (
         <div className="content-layout">            
             <h1 className="content__title">{nonprofit.name}</h1>
-            <p className="ohack-feature__callout">{nonprofit.description}</p>   
+            <div className="ohack-feature__callout">
+                <ReactTextCollapse options={TEXT_COLLAPSE_OPTIONS}>{nonprofit.description}</ReactTextCollapse>        
+            </div>   
             
+            <div className="content__body">
             {slack_details}   
+            </div>
 
             <div className="content__body">
                 {renderAdminProblemStatements()}
