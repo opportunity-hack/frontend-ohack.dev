@@ -25,6 +25,9 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import { AuthenticationButton } from "./buttons/authentication-button";
 import { useProfileApi } from "../hooks/use-profile-api";
+import { ProjectProgress } from "./project-progress";
+
+
 
 export const ProblemStatement = ({ problem_statement, user }) => {
     const [open, setOpen] = React.useState(false);
@@ -32,6 +35,8 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     const [help_checked, setHelpedChecked] = React.useState("");
     const { handle_help_toggle } = useProfileApi();
 
+    
+    
     const handleClickOpen = (event) => {        
         if (event.target.checked) // Only when selecting yes
         {
@@ -209,21 +214,23 @@ export const ProblemStatement = ({ problem_statement, user }) => {
                     {helpingSwitch}
                 </Stack></div>
         </h3>            
-
+                    
         <p>                        
             {callToAction}
-        </p>            
+        </p>
             
         <div className="ohack-feature__description">
-                <AnimationIcon />{problem_statement.status} <ChildFriendlyIcon /> Born on <b>{problem_statement.first_thought_of}</b>
-            <br /><br />
+            <AnimationIcon />{problem_statement.status} <ChildFriendlyIcon /> Born on <b>{problem_statement.first_thought_of}</b>
+            <ProjectProgress state={problem_statement.status} />
+            <br />
+            <br />
             {problem_statement.description}
             <br />                        
         </div>        
 
         <div>
             <br/>
-                <h3>{HackathonText}</h3>
+                <h3>{HackathonText}</h3>                
             
             {problem_statement.events.map(event => {
                 return (                    
