@@ -48,7 +48,7 @@ export const useProfileApi = () => {
         }
     }, [getAccessTokenSilently]);
 
-    const handle_help_toggle = async (status, problem_statement_id) => {
+    const handle_help_toggle = async (status, problem_statement_id, mentor_or_hacker) => {
         if (!user)
             return null;
         
@@ -62,9 +62,10 @@ export const useProfileApi = () => {
                 "Accept": "application/json"
             },
             data: {
-                user_id: user.sub,
-                status: status,
-                problem_statement_id: problem_statement_id
+                user_id: user.sub, // Slack User ID (since we get this from the Auth0 Session)
+                status: status, // helping or not_helping
+                problem_statement_id: problem_statement_id,
+                type: mentor_or_hacker // mentor or hacker
             }
         };
 

@@ -7,11 +7,11 @@ import Tooltip from '@mui/material/Tooltip';
 export const ProjectProgress = ({ state }) => {
 
     const stateMapping = {
-        "concept": [1, 0, 0, 0, 0],
-        "hackathon": [1, 1, 0, 0, 0],
-        "post-hackathon": [1, 1, 1, 0, 0],
-        "production": [1, 1, 1, 1, 0],
-        "maintenance": [1, 1, 1, 1, 1]
+        "concept": [2, 0, 0, 0, 0],
+        "hackathon": [1, 2, 0, 0, 0],
+        "post-hackathon": [1, 1, 2, 0, 0],
+        "production": [1, 1, 1, 2, 0],
+        "maintenance": [1, 1, 1, 1, 2]
     }
 
     const states = ["concept", "hackathon", "post-hackathon", "production", "maintenance"];
@@ -28,15 +28,20 @@ export const ProjectProgress = ({ state }) => {
         
         return ( states.map( (name, index) => {
 
-                if( statusList[index] === 1 )
+                if( statusList[index] === 2 )
                 {
                     return (
                         <Tooltip title={<span style={{ fontSize: "14px" }}>{description[index]}</span>}>
-                        <Chip key="mine" color="success" label={name} icon={<CheckCircleOutlineOutlinedIcon />} />
+                        <Chip key="mine" color="primary" label={name} icon={<CheckCircleOutlineOutlinedIcon />} />
                         </Tooltip >
                         );
-                }
-                else {
+                } else if (statusList[index] === 1) {
+                return (
+                    <Tooltip title={<span style={{ fontSize: "14px" }}>{description[index]}</span>}>
+                        <Chip key="mine" color="success" label={name} icon={<CheckCircleOutlineOutlinedIcon />} />
+                    </Tooltip >
+                );
+                } else {
                     
                     return (
                         <Tooltip title={<span style={{ fontSize: "14px" }}>{description[index]}</span>}>

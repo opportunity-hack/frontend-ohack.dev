@@ -27,12 +27,17 @@ import { AuthenticationButton } from "./buttons/authentication-button";
 import { useProfileApi } from "../hooks/use-profile-api";
 import { ProjectProgress } from "./project-progress";
 
+import { useState, useMemo } from "react";
 
+import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
+import SupportIcon from '@mui/icons-material/Support';
 
 export const ProblemStatement = ({ problem_statement, user }) => {
-    const [open, setOpen] = React.useState(false);
-    const [openUnhelp, setOpenUnhelp] = React.useState(false);
-    const [help_checked, setHelpedChecked] = React.useState("");
+    const [open, setOpen] = useState(false);
+    const [openUnhelp, setOpenUnhelp] = useState(false);
+    const [help_checked, setHelpedChecked] = useState("");
+    const [helpingType, setHelpingType] = useState("");
+
     const { handle_help_toggle } = useProfileApi();
 
     
@@ -50,30 +55,37 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         
     };
 
+    const handleClose = (event) => {
+        // They wanted to start helping
+        setOpen(false);
+        setHelpedChecked("checked")
+        setHelpingType(event.target.value);
+        // event.target.value will be either "mentor" or "hacker"
+        handle_help_toggle("helping", problem_statement.id, event.target.value)        
+    };
+
+    const handleCancel = (event) => {
+        // They didn't want to start helping (cancel button pressed)
+        setOpen(false);
+        setHelpedChecked("");
+        setHelpingType("");
+    }
+
+
     const handleCloseUnhelp = (event) => {
         // They wanted to stop helping
         setOpenUnhelp(false);
         setHelpedChecked("")
-        handle_help_toggle("not_helping", problem_statement.id)
+        setHelpingType("");
+        handle_help_toggle("not_helping", problem_statement.id, "")
     };
 
     const handleCloseUnhelpCancel = (event) => {
-        // They didn't want to stop helping
+        // They didn't want to stop helping (cancel button pressed)
         setOpenUnhelp(false);        
     };
 
-    const handleClose = (event) => {           
-        // They wanted to start helping
-        setOpen(false);
-        setHelpedChecked("checked")
-        handle_help_toggle("helping", problem_statement.id)
-    };
-
-    const handleCancel = (event) => {
-        // They didn't want to start helping
-        setOpen(false);
-        setHelpedChecked("");
-    }
+    
 
 
     var HackathonText;
@@ -97,6 +109,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
 
     var callToAction = "";
     var helpingSwitch = "";
+    var helpingSwitchType = "";
     const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
     const createSlackAccount = () => {
         window.open(
@@ -105,6 +118,19 @@ export const ProblemStatement = ({ problem_statement, user }) => {
             "noopener noreferrer"
         );
     };
+
+    // Read the DB details passed into this component and update the state accordingly
+    useMemo(() => {
+        if (problem_statement.helping != null) {            
+            problem_statement.helping.forEach(help => {
+                if (help.slack_user === user.sub) {
+                    setHelpedChecked("checked")
+                    setHelpingType(help.type);
+                }
+            })
+        }
+    }, [problem_statement, user]);
+
     if( user == null)
     {
         callToAction = <div>
@@ -118,8 +144,20 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         helpingSwitch = <FormControlLabel onChange={handleClickOpen} disabled control={<Switch color="warning" />} label="Login first, then you can help." />;
     }
     else {
-        callToAction = <a href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`} target="_blank" rel="noreferrer"><button className="button button--compact button--primary">Join <TagIcon />{problem_statement.slack_channel} to help</button></a>;
-        helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} control={<Switch checked={help_checked} color="warning" />} label="I'm helping" />;
+        callToAction = <a href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`} target="_blank" rel="noreferrer"><button className="button button--compact button--primary">Join <TagIcon />{problem_statement.slack_channel} to help</button></a>;                        
+        if( helpingType === "hacker" )
+        {
+            helpingSwitchType = <div><DeveloperModeIcon />I'm helping as a hacker</div>
+        }
+        else if( helpingType === "mentor" )
+        {
+            helpingSwitchType = <div><SupportIcon /> I'm helping as a mentor</div>
+        }
+        else {
+            helpingSwitchType = <span>I want to help</span>
+        }
+
+        helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} control={<Switch checked={help_checked} color="warning" />} label={helpingSwitchType} />;
     }
 
 
@@ -210,23 +248,24 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     return (
     <div className="ohack-problemstatement-feature">    
         <h3 className="ohack-feature__headline">           
-                {problem_statement.title}&nbsp;&nbsp;<div align="center">{status}<Stack direction="row" spacing={1} alignItems="center">
+                {problem_statement.title}&nbsp;{status}                
+        </h3>   
+            <p>
+                <Stack direction="row" spacing={3} alignItems="center">
                     {helpingSwitch}
-                </Stack></div>
-        </h3>            
-                    
-        <p>                        
-            {callToAction}
-        </p>
-            
-        <div className="ohack-feature__description">
-            <AnimationIcon />{problem_statement.status} <ChildFriendlyIcon /> Born on <b>{problem_statement.first_thought_of}</b>
-            <ProjectProgress state={problem_statement.status} />
+                    {callToAction}
+                </Stack>
+            </p>                    
+        
+        <ProjectProgress state={problem_statement.status} />
+                        
+        <div className="ohack-feature__description">    
             <br />
-            <br />
-            {problem_statement.description}
-            <br />                        
+            <ChildFriendlyIcon /> Born on <b>{problem_statement.first_thought_of}</b>
+            <br />            
+            {problem_statement.description}                            
         </div>        
+        
 
         <div>
             <br/>
@@ -299,8 +338,8 @@ export const ProblemStatement = ({ problem_statement, user }) => {
                 </DialogContentText>
             </DialogContent>
             <DialogActions>                          
-                <Button class="button button--compact button--third" onClick={handleClose} autoFocus>Help as Hacker</Button>
-                    <Button class="button button--compact button--third" onClick={handleClose}>Help as Mentor</Button>
+                <Button class="button button--compact button--third" onClick={handleClose} value="hacker" autoFocus>Help as Hacker</Button>
+                    <Button class="button button--compact button--third" onClick={handleClose} value="mentor">Help as Mentor</Button>
                     <Button class="button button--compact button--secondary" className="error" onClick={handleCancel}>Cancel</Button>
             </DialogActions>
         </Dialog>
