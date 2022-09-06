@@ -31,7 +31,7 @@ import { useState, useMemo } from "react";
 import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
 import SupportIcon from '@mui/icons-material/Support';
 
-import DocumentMeta from 'react-document-meta';
+import Helmet from 'react-helmet';
 
 
 
@@ -268,8 +268,14 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     
     // More on meta tags
     // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
-    return (    
+    return (        
     <div className="ohack-problemstatement-feature">    
+        <Helmet>
+            <meta charSet="utf-8" />
+                <title>{problem_statement.title} | {problem_statement.status}</title>
+                <meta name="description" content={problem_statement.description} />
+        </Helmet>    
+        
         <h3 className="ohack-feature__headline">           
                 {problem_statement.title}&nbsp;{status}                
         </h3>   
