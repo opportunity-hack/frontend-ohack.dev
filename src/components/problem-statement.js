@@ -8,7 +8,6 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Chip from '@mui/material/Chip';
 import BuildIcon from '@mui/icons-material/Build';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import AnimationIcon from '@mui/icons-material/Animation';
 import ChildFriendlyIcon from '@mui/icons-material/ChildFriendly';
 import TagIcon from '@mui/icons-material/Tag';
 import Switch from '@mui/material/Switch';
@@ -233,15 +232,19 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     const meta = {
         title: problem_statement.title + " | " + problem_statement.status,
         description: problem_statement.description,
-        /*
-        canonical: 'http://example.com/path/to/page',
+        
+        //canonical: 'http://example.com/path/to/page',
         meta: {
             charset: 'utf-8',
+            /*
+            name: {
+                keywords: 'react,meta,document,html,tags'
+            },
+            */
             name: {
                 keywords: 'react,meta,document,html,tags'
             }
-        }
-        */
+        }        
     };
 
     var references_buttons = "";
