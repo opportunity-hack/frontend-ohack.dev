@@ -268,8 +268,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     
     // More on meta tags
     // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
-    return (
-    <DocumentMeta {...meta}>
+    return (    
     <div className="ohack-problemstatement-feature">    
         <h3 className="ohack-feature__headline">           
                 {problem_statement.title}&nbsp;{status}                
@@ -390,7 +389,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
             </DialogActions>
         </Dialog>    
     </div>
-    </DocumentMeta>
+
     
     );
 }
