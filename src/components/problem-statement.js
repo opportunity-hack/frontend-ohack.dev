@@ -32,6 +32,10 @@ import { useState, useMemo } from "react";
 import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
 import SupportIcon from '@mui/icons-material/Support';
 
+import DocumentMeta from 'react-document-meta';
+
+
+
 export const ProblemStatement = ({ problem_statement, user }) => {
     const [open, setOpen] = useState(false);
     const [openUnhelp, setOpenUnhelp] = useState(false);
@@ -121,7 +125,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
 
     // Read the DB details passed into this component and update the state accordingly
     useMemo(() => {
-        if (problem_statement.helping != null) {            
+        if (problem_statement.helping != null && user != null) {            
             problem_statement.helping.forEach(help => {
                 if (help.slack_user === user.sub) {
                     setHelpedChecked("checked")
@@ -141,7 +145,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
             </button>
             </div>;
 
-        helpingSwitch = <FormControlLabel onChange={handleClickOpen} disabled control={<Switch color="warning" />} label="Login first, then you can help." />;
+        helpingSwitch = <FormControlLabel onChange={handleClickOpen} disabled control={<Switch color="warning" />} labelPlacement="top" label="Login first, then you can help." />;
     }
     else {
         callToAction = <a href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`} target="_blank" rel="noreferrer"><button className="button button--compact button--primary">Join <TagIcon />{problem_statement.slack_channel} to help</button></a>;                        
@@ -157,7 +161,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
             helpingSwitchType = <span>I want to help</span>
         }
 
-        helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} control={<Switch checked={help_checked} color="warning" />} label={helpingSwitchType} />;
+        helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} labelPlacement="bottom" control={<Switch checked={help_checked} color="warning" />} label={helpingSwitchType} />;
     }
 
 
@@ -226,6 +230,20 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         }        
     }
 
+    const meta = {
+        title: problem_statement.title + " | " + problem_statement.status,
+        description: problem_statement.description,
+        /*
+        canonical: 'http://example.com/path/to/page',
+        meta: {
+            charset: 'utf-8',
+            name: {
+                keywords: 'react,meta,document,html,tags'
+            }
+        }
+        */
+    };
+
     var references_buttons = "";
     if( problem_statement.references != null && problem_statement.references.length > 0 )
     {
@@ -246,6 +264,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     }
     
     return (
+    <DocumentMeta {...meta}>
     <div className="ohack-problemstatement-feature">    
         <h3 className="ohack-feature__headline">           
                 {problem_statement.title}&nbsp;{status}                
@@ -364,10 +383,9 @@ export const ProblemStatement = ({ problem_statement, user }) => {
                     <Button class="button button--compact button--secondary" onClick={handleCloseUnhelpCancel}>Cancel</Button>
                     <Button class="button button--compact button--red" onClick={handleCloseUnhelp} autoFocus>Withdrawl Help</Button>                    
             </DialogActions>
-        </Dialog>
-        
-
+        </Dialog>    
     </div>
+    </DocumentMeta>
     
     );
 }

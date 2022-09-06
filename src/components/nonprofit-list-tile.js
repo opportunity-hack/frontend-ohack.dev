@@ -53,7 +53,7 @@ export const NonProfitListTile = ({
     }
 
 
-    if( npo.problem_statements != null && npo.problem_statements.length > 0 )
+    if( npo.problem_statements != null && user != null && npo.problem_statements.length > 0 )
     {
         npo.problem_statements.forEach(ps => {            
             if (ps.helping != null) {
