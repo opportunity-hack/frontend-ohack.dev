@@ -18,9 +18,10 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { Puff } from 'react-loading-icons'
 import ReactTextCollapse from "react-text-collapse/dist/ReactTextCollapse";
 
+import Helmet from 'react-helmet';
+
 export const NonProfitProfile = () => {
-    const { user } = useAuth0();
-    console.log(user);
+    const { user } = useAuth0();    
     
     const { isAdmin } = useAdmin();
     const [checked, setChecked] = useState([]);
@@ -64,7 +65,7 @@ export const NonProfitProfile = () => {
     const handleSubmit = async () => {        
         handle_npo_problem_statement_edit(nonprofit_id, checked, onComplete);
     };
-    
+    var metaDescription = "";
     const problemStatements = () => {
         if( nonprofit.problem_statements == null )
         {
@@ -78,17 +79,27 @@ export const NonProfitProfile = () => {
             }
             else 
             {                
-                return nonprofit.problem_statements.map(ps => {                    
+                return nonprofit.problem_statements.map(ps => {
+                    metaDescription += ps.title +  " | " + ps.status + ": " + ps.description;
+                                        
                     return <ProblemStatement
                         key={ps.id}
                         problem_statement={ps}
                         user={user}
+                        npo_id={nonprofit_id}
                     />;
                 });                
                 
             }
         }        
     };
+
+    var description = "";
+
+    if( nonprofit.description != null )
+    {
+        description = <ReactTextCollapse options={TEXT_COLLAPSE_OPTIONS}>{nonprofit.description}</ReactTextCollapse>        
+    }
 
     const renderAdminProblemStatements = () => {
         if (isAdmin && nonprofit.problem_statements != null)
@@ -116,9 +127,15 @@ export const NonProfitProfile = () => {
 
     return (
         <div className="content-layout">            
+            <Helmet>
+                <meta charSet="utf-8" />
+                <title>{nonprofit.name}</title>
+                <meta name="description" content={metaDescription} />
+            </Helmet>  
+
             <h1 className="content__title">{nonprofit.name}</h1>
             <div className="ohack-feature__callout">
-                <ReactTextCollapse options={TEXT_COLLAPSE_OPTIONS}>{nonprofit.description}</ReactTextCollapse>        
+                {description}
             </div>   
             
             <div className="content__body">

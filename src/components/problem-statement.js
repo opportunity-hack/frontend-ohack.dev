@@ -31,11 +31,10 @@ import { useState, useMemo } from "react";
 import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
 import SupportIcon from '@mui/icons-material/Support';
 
-import Helmet from 'react-helmet';
 
 
 
-export const ProblemStatement = ({ problem_statement, user }) => {
+export const ProblemStatement = ({ problem_statement, user, npo_id }) => {
     const [open, setOpen] = useState(false);
     const [openUnhelp, setOpenUnhelp] = useState(false);
     const [help_checked, setHelpedChecked] = useState("");
@@ -64,7 +63,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         setHelpedChecked("checked")
         setHelpingType(event.target.value);
         // event.target.value will be either "mentor" or "hacker"
-        handle_help_toggle("helping", problem_statement.id, event.target.value)        
+        handle_help_toggle("helping", problem_statement.id, event.target.value, npo_id)        
     };
 
     const handleCancel = (event) => {
@@ -80,7 +79,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         setOpenUnhelp(false);
         setHelpedChecked("")
         setHelpingType("");
-        handle_help_toggle("not_helping", problem_statement.id, "")
+        handle_help_toggle("not_helping", problem_statement.id, "", npo_id)
     };
 
     const handleCloseUnhelpCancel = (event) => {
@@ -229,24 +228,6 @@ export const ProblemStatement = ({ problem_statement, user }) => {
         }        
     }
 
-    const meta = {
-        title: problem_statement.title + " | " + problem_statement.status,
-        description: problem_statement.description,
-        
-        //canonical: 'http://example.com/path/to/page',
-        meta: {
-            charset: 'utf-8',
-            /*
-            name: {
-                keywords: 'react,meta,document,html,tags'
-            },
-            */
-            name: {
-                keywords: 'react,meta,document,html,tags'
-            }
-        }        
-    };
-
     var references_buttons = "";
     if( problem_statement.references != null && problem_statement.references.length > 0 )
     {
@@ -269,13 +250,7 @@ export const ProblemStatement = ({ problem_statement, user }) => {
     // More on meta tags
     // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
     return (        
-    <div className="ohack-problemstatement-feature">    
-        <Helmet>
-            <meta charSet="utf-8" />
-                <title>{problem_statement.title} | {problem_statement.status}</title>
-                <meta name="description" content={problem_statement.description} />
-        </Helmet>    
-        
+    <div className="ohack-problemstatement-feature">            
         <h3 className="ohack-feature__headline">           
                 {problem_statement.title}&nbsp;{status}                
         </h3>   

@@ -1,5 +1,6 @@
 import React from "react";
 import { FooterHyperlink } from "./footer-hyperlink";
+import GitHubIcon from '@mui/icons-material/GitHub';
 
 export const Footer = () => {
   const resourceList = [
@@ -22,6 +23,10 @@ export const Footer = () => {
     {
       path: "https://www.ohack.org/about/history",
       label: "Our history",
+    },
+    {
+      path: "https://github.com/opportunity-hack/frontend-ohack.dev",
+      label: <span><GitHubIcon /> Fork this on GitHub</span>,
     },
     
   ];
