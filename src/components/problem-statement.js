@@ -13,6 +13,12 @@ import TagIcon from '@mui/icons-material/Tag';
 import Switch from '@mui/material/Switch';
 import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import { styled } from '@mui/material/styles';
+
+
+
+import Badge from '@mui/material/Badge';
+import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
 
 import ArticleIcon from '@mui/icons-material/Article';
 import Button from '@mui/material/Button';
@@ -22,7 +28,6 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
-import { AuthenticationButton } from "./buttons/authentication-button";
 import { useProfileApi } from "../hooks/use-profile-api";
 import { ProjectProgress } from "./project-progress";
 
@@ -32,6 +37,7 @@ import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
 import SupportIcon from '@mui/icons-material/Support';
 
 
+import { useAuth0 } from "@auth0/auth0-react";
 
 
 export const ProblemStatement = ({ problem_statement, user, npo_id }) => {
@@ -42,8 +48,57 @@ export const ProblemStatement = ({ problem_statement, user, npo_id }) => {
 
     const { handle_help_toggle } = useProfileApi();
 
-    
-    
+    const { loginWithRedirect } = useAuth0();
+
+    const MaterialUISwitch = styled(Switch)(({ theme }) => ({
+        width: 62,
+        height: 34,
+        padding: 7,
+        '& .MuiSwitch-switchBase': {
+            margin: 1,
+            padding: 0,
+            transform: 'translateX(6px)',
+            '&.Mui-checked': {
+                color: '#fff',
+                transform: 'translateX(22px)',
+                '& .MuiSwitch-thumb:before': {
+                    backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+                        '#fff',
+                    )}" d="M4.375 17.542v-3.584h1.583v3.584Zm3.458 0v-9.25q-1.021.52-1.739 1.385-.719.865-.782 2.198H4.229q.063-1.937 1.427-3.448 1.365-1.51 3.302-1.51H10.5q1.708 0 2.938-1 1.229-1 1.27-2.667h1.084q-.021 1.729-1.052 2.927-1.032 1.198-2.573 1.615v9.75h-1.084v-4.959H8.917v4.959ZM10 5.396q-.688 0-1.156-.469-.469-.469-.469-1.156 0-.667.479-1.136.479-.468 1.146-.468.688 0 1.156.468.469.469.469 1.157 0 .666-.479 1.135T10 5.396Z"/></svg>')`,
+                },
+                '& + .MuiSwitch-track': {
+                    opacity: 1,
+                    backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#00AA00',
+                },
+            },
+        },
+        '& .MuiSwitch-thumb': {
+            backgroundColor: theme.palette.mode === 'dark' ? '#003892' : '#001e3c',
+            width: 32,
+            height: 32,
+            '&:before': {
+                content: "''",
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                left: 0,
+                top: 0,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20"><path fill="${encodeURIComponent(
+                    '#fff',
+                )}" d="m4.646 15.646-1.688-1.708L6.917 10 2.958 6.062l1.688-1.708L10.292 10Zm6.75 0-1.688-1.708L13.688 10l-3.98-3.938 1.688-1.708L17.042 10Z"/></svg>')`,
+            },
+        },
+        '& .MuiSwitch-track': {
+            opacity: 1,
+            backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be',
+            borderRadius: 20 / 2,
+        },
+    }));
+
+
+
     const handleClickOpen = (event) => {        
         if (event.target.checked) // Only when selecting yes
         {
@@ -121,10 +176,17 @@ export const ProblemStatement = ({ problem_statement, user, npo_id }) => {
         );
     };
 
+    var countOfPeopleHelping = 0;
+    if (problem_statement.helping != null) {
+        problem_statement.helping.forEach(help => {                
+            countOfPeopleHelping++;
+        });
+    }
+
     // Read the DB details passed into this component and update the state accordingly
     useMemo(() => {
         if (problem_statement.helping != null && user != null) {            
-            problem_statement.helping.forEach(help => {
+            problem_statement.helping.forEach(help => {                
                 if (help.slack_user === user.sub) {
                     setHelpedChecked("checked")
                     setHelpingType(help.type);
@@ -134,16 +196,28 @@ export const ProblemStatement = ({ problem_statement, user, npo_id }) => {
     }, [problem_statement, user]);
 
     if( user == null)
-    {
+    {        
         callToAction = <div>
-            <h4>You will need to login with Slack</h4><AuthenticationButton />
+            <h4>We use Slack to collaborate, if you already have an account, login with Slack</h4>
+            <button
+                className="button button--primary button--compact"
+                onClick={() => loginWithRedirect({
+                    appState: {
+                        returnTo: window.location.pathname,
+                        redirectUri: window.location.pathname
+                    }
+                })}
+            >
+                Log In
+            </button>
+            
             <h4>If you don't have an account, you will need to create an account</h4>
             <button onClick={createSlackAccount} className="button button--primary">
                 Create a Slack account
             </button>
             </div>;
 
-        helpingSwitch = <FormControlLabel onChange={handleClickOpen} disabled control={<Switch color="warning" />} labelPlacement="top" label="Login first, then you can help." />;
+        helpingSwitch = ""
     }
     else {
         callToAction = <a href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`} target="_blank" rel="noreferrer"><button className="button button--compact button--primary">Join <TagIcon />{problem_statement.slack_channel} to help</button></a>;                        
@@ -159,7 +233,7 @@ export const ProblemStatement = ({ problem_statement, user, npo_id }) => {
             helpingSwitchType = <span>I want to help</span>
         }
 
-        helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} labelPlacement="bottom" control={<Switch checked={help_checked} color="warning" />} label={helpingSwitchType} />;
+        helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} labelPlacement="bottom" control={<MaterialUISwitch sx={{ m: 1 }} checked={help_checked} />} label={helpingSwitchType} />;
     }
 
 
@@ -252,13 +326,23 @@ export const ProblemStatement = ({ problem_statement, user, npo_id }) => {
     return (        
     <div className="ohack-problemstatement-feature">            
         <h3 className="ohack-feature__headline">           
-                {problem_statement.title}&nbsp;{status}                
+                {problem_statement.title}&nbsp;{status} 
+                <Tooltip title={`${countOfPeopleHelping} people are helping`}>
+                    <Badge anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'right',
+                    }}
+                    badgeContent={countOfPeopleHelping} color="secondary" >                        
+                        <EmojiPeopleIcon fontSize="large" />
+                    </Badge>
+                </Tooltip>  
         </h3>   
             <p>
-                <Stack direction="row" spacing={3} alignItems="center">
+                <Stack direction="row" spacing={3} alignItems="center">                                        
                     {helpingSwitch}
-                    {callToAction}
+                    {callToAction}                    
                 </Stack>
+                
             </p>                    
         
         <ProjectProgress state={problem_statement.status} />
