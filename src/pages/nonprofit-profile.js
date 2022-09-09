@@ -125,12 +125,17 @@ export const NonProfitProfile = () => {
         
     };
 
+    // More on meta tags
+    // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
+
     return (
         <div className="content-layout">            
             <Helmet>
                 <meta charSet="utf-8" />
                 <title>{nonprofit.name}</title>
-                <meta name="description" content={metaDescription} />
+                <meta property="og:site_name" content="Opportunity Hack Portal" />
+                <meta property="og:title" content={nonprofit.name} />
+                <meta property="og:description" content={metaDescription} />
             </Helmet>  
 
             <h1 className="content__title">{nonprofit.name}</h1>
