@@ -133,9 +133,9 @@ export const NonProfitProfile = () => {
             <Helmet>
                 <meta charSet="utf-8" />
                 <title>{nonprofit.name}</title>
-                <meta property="og:site_name" content="Opportunity Hack Portal" />
-                <meta property="og:title" content={nonprofit.name} />
-                <meta property="og:description" content={metaDescription} />
+                <meta name="og:site_name" content="Opportunity Hack Portal" />
+                <meta name="og:title" content={nonprofit.name} />
+                <meta name="og:description" content={metaDescription} />
             </Helmet>  
 
             <h1 className="content__title">{nonprofit.name}</h1>

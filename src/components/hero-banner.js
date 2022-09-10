@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Helmet from 'react-helmet';
 
 export const HeroBanner = () => {
   const logo = "https://i.imgur.com/Ih0mbYx.png";
@@ -13,8 +14,14 @@ export const HeroBanner = () => {
     );
   };
 
-  return (
+  return (    
     <div className="hero-banner">
+      <Helmet>
+        <meta charSet="utf-8" />
+        <meta property="og:site_name" content="Opportunity Hack Portal" />
+        <meta name="description" content="TEST TEST" />
+        <meta property="description" content="A TEST TEST" />
+      </Helmet>  
       <img className="hero-banner__logo" src={logo} alt="Opportunity Hack logo" />
       <h1 className="hero-banner__headline">Hey there, it's a pleasure to meet you.</h1>
       <p className="hero-banner__description">
