@@ -1,14 +1,19 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 import AdminPanelSettings from '@mui/icons-material/AdminPanelSettings';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 
-export const NavBarAdmin = ({ admin }) => {    
-    if(admin)
+import useAdmin from '../hooks/use-admin-check'
+
+
+export default function NavBarAdmin(){    
+    const { isAdmin } = useAdmin();
+
+    if (isAdmin)
     {
-        return (<Link to="/admin"><Tooltip title="You are an admin">
+        return (<Link href="/admin"><Tooltip title="You are an admin">
             <IconButton>
                 <AdminPanelSettings className="admin-notification" />
             </IconButton>

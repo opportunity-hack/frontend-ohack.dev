@@ -4,7 +4,7 @@ import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
 
-export const useProblemstatements = (problem_statement_id) => {
+export default function useProblemstatements(problem_statement_id){
 
     const default_problem_statement = useMemo(()=>{
         return {

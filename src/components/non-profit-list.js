@@ -2,7 +2,9 @@ import React from "react";
 import { Puff } from 'react-loading-icons'
 
 
-export const NonProfitList = ({ nonprofits }) => (
+export default function NonProfitList({ nonprofits }){
+
+    return(
     <div className="badge-list">
 
         {nonprofits.length <= 0 ? <p>Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" /></p> : null}
@@ -18,7 +20,6 @@ export const NonProfitList = ({ nonprofits }) => (
             })
 
         }
-        
-
     </div>
-);
+    );
+}

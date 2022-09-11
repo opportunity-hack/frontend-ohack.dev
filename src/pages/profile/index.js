@@ -1,17 +1,16 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import React from "react";
-import { CodeSnippet } from "../components/code-snippet";
-import { AuthenticationButton } from "../components/buttons/authentication-button";
 
+import useProfileApi from "../../hooks/use-profile-api.js";
 
-import { useProfileApi } from "../hooks/use-profile-api.js";
-import { BadgeList } from "../components/badge-list";
-import { HackathonList } from "../components/hackathon-list";
+import BadgeList from "../../components/badge-list";
+import HackathonList from "../../components/hackathon-list";
+import FeedbackLite from "../../components/feedback-lite";
+import CodeSnippet from "../../components/code-snippet";
+import AuthenticationButton from "../../components/buttons/authentication-button";
+import Head from 'next/head';
 
-import '../styles/profile.styles.css';
-import { FeedbackLite } from "./feedback-lite";
-
-export const Profile = () => {
+export default function Profile(){
   const { user } = useAuth0();  
   const { badges, hackathons, profile, feedback_url } = useProfileApi();
 
@@ -33,6 +32,9 @@ export const Profile = () => {
 
   return (
     <div className="content-layout">
+    <Head>
+    <title>Profile - Opportunity Hack Developer Portal</title>
+    </Head>
       <h1 className="content__title">Profile</h1>
       <div className="content__body">        
         <div className="profile-grid">

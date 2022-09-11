@@ -13,10 +13,9 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import Chip from '@mui/material/Chip';
 
-import '../../styles/admin.styles.css';
 import { useState } from "react";
 
-export const LinkedProblemStatements = ({ problemStatements, hackathonId, onChange, defaultSelected }) => {        
+export default function LinkedProblemStatements ({ problemStatements, hackathonId, onChange, defaultSelected }){
     const [problemStatement, setProblemStatement] = useState(defaultSelected);
 
     const ITEM_HEIGHT = 48;

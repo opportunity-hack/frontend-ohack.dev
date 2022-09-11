@@ -5,7 +5,7 @@ import { useEnv } from "../context/env.context";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 
-export const useProfileApi = () => {
+export default function useProfileApi(){
     const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl } = useEnv();
 
@@ -109,8 +109,7 @@ export const useProfileApi = () => {
     */
 
     useEffect(() => {
-        
-
+    
         const getProfileDetails = async () => {
             if (!user)
                 return null;

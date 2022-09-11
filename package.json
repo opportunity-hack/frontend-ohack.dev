@@ -4,30 +4,26 @@
   "private": true,
   "dependencies": {
     "@auth0/auth0-react": "^1.10.2",
-    "@emotion/react": "^11.9.3",
+    "@emotion/react": "^11.10.4",
+    "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.9.3",
     "@mui/icons-material": "^5.8.4",
-    "@mui/material": "^5.8.6",
+    "@mui/material": "^5.10.4",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "axios": "^0.27.2",
+    "next": "^12.3.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-helmet": "^6.1.0",
     "react-loading-icons": "^1.1.0",
-    "react-motion": "^0.5.2",
-    "react-router-dom": "^5.3.0",
-    "react-scripts": "4.0.3",
     "react-table": "^7.7.0",
-    "react-text-collapse": "^0.6.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "engines": {
     "node": "14.x"
@@ -52,6 +48,7 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
+    "eslint": "^8.23.0",
     "prettier": "2.7.1"
   }
 }

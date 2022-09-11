@@ -1,4 +1,6 @@
 import React from "react";
+import { useState, useMemo } from "react";
+
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Tooltip from '@mui/material/Tooltip';
@@ -28,19 +30,19 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
-import { useProfileApi } from "../hooks/use-profile-api";
-import { ProjectProgress } from "./project-progress";
-
-import { useState, useMemo } from "react";
-
 import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
 import SupportIcon from '@mui/icons-material/Support';
 
-
 import { useAuth0 } from "@auth0/auth0-react";
 
+import useProfileApi from "../hooks/use-profile-api";
+import ProjectProgress from "./project-progress";
 
-export const ProblemStatement = ({ problem_statement, user, npo_id }) => {
+
+
+
+
+export default function ProblemStatement({ problem_statement, user, npo_id }){
     const [open, setOpen] = useState(false);
     const [openUnhelp, setOpenUnhelp] = useState(false);
     const [help_checked, setHelpedChecked] = useState("");

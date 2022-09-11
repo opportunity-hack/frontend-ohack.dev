@@ -1,25 +1,24 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 
-import '../../styles/admin.styles.css';
 
-import { AuthenticationButton } from "../buttons/authentication-button";
+import AuthenticationButton from "../buttons/authentication-button";
 
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 
 import { useState } from "react";
 
-import { useNonprofit } from "../../hooks/use-nonprofit";
+import useNonprofit from "../../hooks/use-nonprofit";
 
 
 import Button from '@mui/material/Button';
 import SaveIcon from '@mui/icons-material/Save';
-import { AdminProblemStatementList } from "./problemstatement-list";
+import AdminProblemStatementList from "./problemstatement-list";
 
 
 
-export const AddNonProfit = ( {problem_statements} ) => {           
+export default function AddNonProfit ( {problem_statements} ) {           
     const {  user } = useAuth0();
 
     const { handle_new_npo_submission } = useNonprofit();

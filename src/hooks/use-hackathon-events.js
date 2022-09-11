@@ -4,7 +4,7 @@ import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback } from "react";
 
 
-export const useHackathonEvents = () => {
+export default function useHackathonEvents(){
 
     const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl } = useEnv();

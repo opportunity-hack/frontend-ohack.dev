@@ -4,7 +4,7 @@ import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback } from "react";
 
 
-export const useAdmin = () => {
+export default function useAdmin() {
     const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl } = useEnv();
     const [isAdmin, setIsAdmin ] = useState(false);
@@ -72,7 +72,8 @@ export const useAdmin = () => {
 
 
 
-    return{
+    return {
         isAdmin
     }
 }
+

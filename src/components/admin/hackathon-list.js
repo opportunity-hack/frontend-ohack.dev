@@ -3,14 +3,13 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 
-import '../../styles/admin.styles.css';
 import { useState } from "react";
-import { LinkedProblemStatementsToEvents } from './problem-statement-event-link'
-import { useHackathonEvents } from '../../hooks/use-hackathon-events';
+import LinkedProblemStatementsToEvents from './problem-statement-event-link'
+import useHackathonEvents from '../../hooks/use-hackathon-events';
 import { Puff } from 'react-loading-icons'
 
 
-export const AdminHackathonList = ({ hackathons, problem_statements }) => {
+export default function AdminHackathonList({ hackathons, problem_statements }) {
     const [message, setMessage] = useState("");
 
     const [problemStatementToEventMap, setProblemStatementToEventMap] = useState([]);

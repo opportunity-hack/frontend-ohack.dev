@@ -4,7 +4,7 @@ import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback } from "react";
 
 
-export const useNonprofit = ( nonprofit_id ) => {
+export default function useNonprofit( nonprofit_id ){
     
     const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl } = useEnv();
@@ -165,7 +165,7 @@ export const useNonprofit = ( nonprofit_id ) => {
                 }
             }
             else {
-                setNonprofits([])
+                setNonprofits([]);
                 setNonprofit({
                     "name": "",
                     "description": "",

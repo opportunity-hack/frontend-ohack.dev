@@ -1,17 +1,13 @@
 import React from "react";
 
-
-
-import '../styles/nonprofit.styles.css'
-
 // TODO: When search is enabled below, use these:
 /*
 import { styled, alpha } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
 */
 
-import { NonProfitListTile } from "../components/nonprofit-list-tile";
-import { useNonprofit } from "../hooks/use-nonprofit";
+import NonProfitListTile from "../../components/nonprofit-list-tile";
+import useNonprofit from "../../hooks/use-nonprofit";
 
 import Chip from '@mui/material/Chip';
 import BuildIcon from '@mui/icons-material/Build';
@@ -20,8 +16,9 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useState, useCallback } from "react";
 import { Puff } from 'react-loading-icons'
 
+import Head from 'next/head';
 
-export const NonProfitList = () => {
+export default function NonProfitList() {
 
     let { nonprofits } = useNonprofit();
 
@@ -152,6 +149,10 @@ export const NonProfitList = () => {
 
     return (
         <div className="content-layout">
+        <Head>
+            <title>Nonprofit Project List - Opportunity Hack Developer Portal</title>            
+            <meta name="description" content="A listing of all of the nonprofits and projects we have worked on from hackathons, senior capstone projects, and internships - we need help from you to push to production!" />
+        </Head>
             <h1 className="content__title">Nonprofit Projects</h1>
             <div className="content__body">
                 <div className="profile-grid">

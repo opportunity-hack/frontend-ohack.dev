@@ -9,10 +9,9 @@ import IconButton from '@mui/material/IconButton';
 import CommentIcon from '@mui/icons-material/Comment';
 import Tooltip from '@mui/material/Tooltip';
 
-import '../../styles/admin.styles.css';
 import { useState } from "react";
 
-export const AdminProblemStatementList = ({ problem_statements, selected, onSelected, default_selected } ) => {
+export default function AdminProblemStatementList ({ problem_statements, selected, onSelected, default_selected } ) {
     const [checked, setChecked] = useState(default_selected);
 
     const handleToggle = (value) => () => {

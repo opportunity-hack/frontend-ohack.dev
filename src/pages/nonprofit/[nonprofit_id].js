@@ -1,34 +1,41 @@
 import React from "react";
-import '../styles/profile.styles.css'
-import { useParams } from "react-router-dom";
-import { useNonprofit } from "../hooks/use-nonprofit";
-import { ProblemStatement } from "../components/problem-statement";
+import { useState } from "react";
+
+import useNonprofit from "../../hooks/use-nonprofit";
+import useAdmin from '../../hooks/use-admin-check'
+import useProblemstatements from "../../hooks/use-problem-statements";
+
+import ProblemStatement from "../../components/problem-statement";
+import AdminProblemStatementList from "../../components/admin/problemstatement-list";
+
+
 import TagIcon from '@mui/icons-material/Tag';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import { AdminProblemStatementList } from "../components/admin/problemstatement-list";
+
 
 import Button from '@mui/material/Button';
 import SaveIcon from '@mui/icons-material/Save';
 
-import { useAdmin } from '../hooks/use-admin-check'
-import { useState } from "react";
-import { useProblemstatements } from "../hooks/use-problem-statements";
+import { useRouter } from 'next/router'
 import { useAuth0 } from "@auth0/auth0-react";
 import { Puff } from 'react-loading-icons'
-import ReactTextCollapse from "react-text-collapse/dist/ReactTextCollapse";
 
-import Helmet from 'react-helmet';
 
-export const NonProfitProfile = () => {
+import Head from 'next/head';
+
+export default function NonProfitProfile(){
     const { user } = useAuth0();    
+    const router = useRouter();
+    const { nonprofit_id } = router.query;
     
     const { isAdmin } = useAdmin();
     const [checked, setChecked] = useState([]);
     const { problem_statements } = useProblemstatements();
     const [message, setMessage] = useState("");
 
-    let { nonprofit_id } = useParams();    
+    
+    
     const { handle_npo_problem_statement_edit, nonprofit } = useNonprofit(nonprofit_id);
 
 
@@ -65,7 +72,16 @@ export const NonProfitProfile = () => {
     const handleSubmit = async () => {        
         handle_npo_problem_statement_edit(nonprofit_id, checked, onComplete);
     };
+    
     var metaDescription = "";
+    if (nonprofit.problem_statements != null  && nonprofit.problem_statements.length > 0) {
+        nonprofit.problem_statements.forEach(ps => {
+            metaDescription += ps.title + " | " + ps.status + ": " + ps.description;
+        });
+
+    }
+
+
     const problemStatements = () => {
         if( nonprofit.problem_statements == null )
         {
@@ -79,9 +95,7 @@ export const NonProfitProfile = () => {
             }
             else 
             {                
-                return nonprofit.problem_statements.map(ps => {
-                    metaDescription += ps.title +  " | " + ps.status + ": " + ps.description;
-                                        
+                return nonprofit.problem_statements.map(ps => {         
                     return <ProblemStatement
                         key={ps.id}
                         problem_statement={ps}
@@ -98,7 +112,7 @@ export const NonProfitProfile = () => {
 
     if( nonprofit.description != null )
     {
-        description = <ReactTextCollapse options={TEXT_COLLAPSE_OPTIONS}>{nonprofit.description}</ReactTextCollapse>        
+        description = nonprofit.description
     }
 
     const renderAdminProblemStatements = () => {
@@ -130,13 +144,14 @@ export const NonProfitProfile = () => {
 
     return (
         <div className="content-layout">            
-            <Helmet>
+            <Head>
                 <meta charSet="utf-8" />
                 <title>{nonprofit.name}</title>
                 <meta name="og:site_name" content="Opportunity Hack Portal" />
                 <meta name="og:title" content={nonprofit.name} />
                 <meta name="og:description" content={metaDescription} />
-            </Helmet>  
+                <meta name="description" content={metaDescription} />
+            </Head>  
 
             <h1 className="content__title">{nonprofit.name}</h1>
             <div className="ohack-feature__callout">

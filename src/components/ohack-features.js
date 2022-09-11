@@ -1,8 +1,9 @@
 import React from "react";
-import { OHackFeature } from "./ohack-feature";
+import OHackFeature from "./ohack-feature";
 
 
-export const OHackFeatures = () => (
+export default function OHackFeatures(){
+  return(
   <div className="ohack-features">
     <h2 className="ohack-features__title">What do we do here?</h2>
     <div className="ohack-features__grid">
@@ -38,4 +39,5 @@ export const OHackFeatures = () => (
       />
     </div>
   </div>
-);
+  );
+}

@@ -1,9 +1,7 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import '../styles/profile.styles.css'
 
-import { AuthenticationButton } from "../components/buttons/authentication-button";
-import { useParams } from "react-router-dom";
+import AuthenticationButton from "../../components/buttons/authentication-button";
 
 import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
@@ -11,10 +9,14 @@ import TextField from '@mui/material/TextField';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import { useRouter } from 'next/router'
 
-export const GiveFeedback = () => {
+import Head from 'next/head';
+
+export default function GiveFeedback() {
     const { user } = useAuth0();
-    let { giving_feedback_to_userid } = useParams();
+    const router = useRouter()
+    const { userid } = router.query;
 
     const marks = [
         {
@@ -66,6 +68,9 @@ export const GiveFeedback = () => {
 
     return (
         <div className="content-layout">
+        <Head>
+            <title>Feedback for {userid} - Opportunity Hack Developer Portal</title>
+        </Head>
             <h1 className="content__title">Provide Feedback Profile</h1>
             <div className="content__body">
                 <div className="profile-grid">
@@ -74,13 +79,13 @@ export const GiveFeedback = () => {
 
                         <div className="profile__headline">
                             <h2 className="profile__title">Hi {user.name}</h2>
-                            <h4 className="profile__subtitle">You are providing feedback for {giving_feedback_to_userid}</h4>
+                            <h4 className="profile__subtitle">You are providing feedback for {userid}</h4>
                         </div>
                     </div>
                     
 
                     <div className="profile__details">
-                        <h2 className="profile__title">How do you know {giving_feedback_to_userid}?</h2>
+                        <h2 className="profile__title">How do you know {userid}?</h2>
                         <FormGroup>
                             <FormControlLabel control={<Switch />} label="I mentored this person" />
                             <FormControlLabel control={<Switch />} label="I was on their team" />

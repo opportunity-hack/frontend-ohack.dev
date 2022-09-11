@@ -1,6 +1,6 @@
 import React from "react";
 
-export const FooterHyperlink = ({ children, path }) => {
+export default function FooterHyperlink({ children, path }){
   return (
     <a
       className="footer__hyperlink"

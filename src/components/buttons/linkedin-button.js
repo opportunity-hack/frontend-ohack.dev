@@ -1,6 +1,6 @@
 import React from "react";
 
-export const LinkedInButton = () => {
+export default function LinkedInButton(){
     /**
      * Using the Signup feature requires you to enable
      * the Auth0 New Universal Login Experience in your tenant.

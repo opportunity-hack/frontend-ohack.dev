@@ -3,8 +3,6 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useEnv } from "../../context/env.context";
 import axios from "axios";
 
-import '../../styles/admin.styles.css';
-
 import { AuthenticationButton } from "../buttons/authentication-button";
 
 import Box from '@mui/material/Box';
@@ -31,7 +29,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { NonProfitInputs } from './nonprofit-inputs';
 
 
-export const AddHackathon = ({ nonprofits, teams }) => {    
+export default function AddHackathon ({ nonprofits, teams }){    
 
     const { apiServerUrl } = useEnv();
     const { getAccessTokenSilently, user } = useAuth0();

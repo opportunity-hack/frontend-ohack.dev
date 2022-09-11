@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import TagIcon from '@mui/icons-material/Tag';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -10,14 +10,15 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useAuth0 } from "@auth0/auth0-react";
 
 
-export const NonProfitListTile = ({
+export default function NonProfitListTile({
     onSelected,
     admin, 
     npo,
     need_help_problem_statement_count,
     in_production_problem_statement_count,
     icon 
-    }) => {
+    })
+    {
     const { user } = useAuth0();
 
     const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
@@ -97,46 +98,33 @@ export const NonProfitListTile = ({
        return(
         <span>
             <button onClick={() => { onSelected(npo) }}>Edit</button>
-            <h3 className="ohack-feature__headline">
-                <img
+            <h3 className="ohack-feature__headline"><img
                     className="ohack-feature__icon"
                     src={icon}
-                    alt="external link icon"
-                />
+                    alt="external link icon"/>
                    {npo.name}
             </h3>
-            
             {slackDetails}
             <p className="ohack-feature__callout">{npo.problem_statements.length} Projects</p>
             <p className="ohack-feature__description">{ npo.description }</p>
-           
-           </span>
+            </span>
        );
     
     }
     else {
         return(
-        <Link
-            to={`/nonprofit/${npo.id}`}
-            className={helping_class}
-        >
+        <Link href={`/nonprofit/${npo.id}`}>
+            <span className={helping_class}>
             {helping_text}
-            <h3 className="ohack-feature__headline">
-                <img
+                
+            <h3 className="ohack-feature__headline"><img
                     className="ohack-feature__icon"
                     src={icon}
-                    alt="external link icon"
-                />
-                    {npo.name}
-            </h3>            
-            
-            {slackDetails}
-
-            {displayCountDetails()}
-                
-                
+                    alt="external link icon"/>{npo.name}</h3>
+            {slackDetails}{displayCountDetails()}
             <br/>
-                <p className="ohack-feature__description">{npo.description}</p>
+            <p className="ohack-feature__description">{npo.description}</p>
+            </span>
         </Link> 
         );   
     }

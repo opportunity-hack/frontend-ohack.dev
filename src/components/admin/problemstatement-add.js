@@ -3,9 +3,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useEnv } from "../../context/env.context";
 import axios from "axios";
 
-import '../../styles/admin.styles.css';
-
-import { AuthenticationButton } from "../buttons/authentication-button";
+import AuthenticationButton from "../buttons/authentication-button";
 
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -18,7 +16,7 @@ import SaveIcon from '@mui/icons-material/Save';
 
 
 
-export const AddProblemStatement = () => {
+export default function AddProblemStatement(){
     const { apiServerUrl } = useEnv();
     const { getAccessTokenSilently, user } = useAuth0();
 

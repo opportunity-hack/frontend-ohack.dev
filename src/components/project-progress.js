@@ -4,7 +4,7 @@ import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutli
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 import Tooltip from '@mui/material/Tooltip';
 
-export const ProjectProgress = ({ state }) => {
+export default function ProjectProgress({ state }){
 
     const stateMapping = {
         "concept": [2, 0, 0, 0, 0],

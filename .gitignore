@@ -2,3 +2,6 @@
 .flaskenv
 .DS_Store
 node_modules
+.next
+build/
+*.off

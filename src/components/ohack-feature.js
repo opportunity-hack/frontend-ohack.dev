@@ -1,6 +1,8 @@
 import React from "react";
 
-export const OHackFeature = ({ title, description, resourceUrl, icon }) => (
+export default function OHackFeature({ title, description, resourceUrl, icon }){
+
+  return(
   <a
     href={resourceUrl}
     className="ohack-feature"
@@ -17,4 +19,5 @@ export const OHackFeature = ({ title, description, resourceUrl, icon }) => (
     </h3>
     <p className="ohack-feature__description">{description}</p>
   </a>
-);
+  );
+}

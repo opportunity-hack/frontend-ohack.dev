@@ -1,11 +1,10 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import '../styles/profile.styles.css'
 
-import { AuthenticationButton } from "../components/buttons/authentication-button";
+import AuthenticationButton from "../../components/buttons/authentication-button";
 
-
-export const Feedback = () => { 
+import Head from 'next/head';
+export default function Feedback(){ 
     const { user } = useAuth0();  
 
     if (!user) {
@@ -26,6 +25,9 @@ export const Feedback = () => {
 
     return (
         <div className="content-layout">
+        <Head>
+            <title>Feedback - Opportunity Hack Developer Portal</title>
+        </Head>
             <h1 className="content__title">Your Feedback</h1>
             
             <div className="content__body">

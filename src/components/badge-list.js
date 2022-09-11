@@ -1,8 +1,8 @@
 import React from "react";
 import { Puff } from 'react-loading-icons'
-import { LinkedInButton } from "./buttons/linkedin-button";
+import LinkedInButton from "./buttons/linkedin-button";
 
-export const BadgeList = ({ badges }) => {
+export default function BadgeList({badges}){
     if( badges == null )
     {
         return (<p>Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" /></p>);

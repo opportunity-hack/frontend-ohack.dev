@@ -7,10 +7,9 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import Chip from '@mui/material/Chip';
 
-import '../../styles/admin.styles.css';
 import { useState } from "react";
 
-export const LinkedProblemStatementsToEvents = ({ problemStatementId, events, all_events, onChange  }) => {
+export default function LinkedProblemStatementsToEvents({ problemStatementId, events, all_events, onChange  }){
     const getEventsAsString = (anEventObject) => {
         return anEventObject.start_date + " " + anEventObject.type + "|" + anEventObject.id;
     }

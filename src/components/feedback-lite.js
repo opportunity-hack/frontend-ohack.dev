@@ -1,5 +1,4 @@
 import React from "react";
-import '../styles/profile.styles.css'
 
 
 import Rating from '@mui/material/Rating';
@@ -13,7 +12,7 @@ import Box from '@mui/material/Box';
 
 
 
-export const FeedbackLite = ( { feedback_url } ) => {
+export default function FeedbackLite (feedback_url){
 
     const StyledRating = styled(Rating)({
         '& .MuiRating-iconFilled': {

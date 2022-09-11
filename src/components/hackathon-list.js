@@ -3,16 +3,12 @@ import React from "react";
 // https://www.npmjs.com/package/react-loading-icons
 import { Puff } from 'react-loading-icons'
 
-import { DownloadCertificateButton } from "./buttons/download-certificate-button"
+import DownloadCertificateButton from "./buttons/download-certificate-button"
 import { useTable } from 'react-table'
-import { NonProfitList } from "./non-profit-list";
+import NonProfitList from "./non-profit-list";
 
 
-
-export const HackathonList = ({hackathons}) => {
-    console.log("** [Hackathons]");
-    console.log(hackathons);
-
+export default function HackathonList ({hackathons}){    
     const hackathonInfo = ({ hackathons }) => {
         if (hackathons === null) {
             // We want to show the loading icons while we are waiting for the data to load

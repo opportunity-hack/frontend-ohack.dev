@@ -1,6 +1,6 @@
 import React from "react";
 
-export const DownloadCertificateButton = () => {    
+export default function DownloadCertificateButton(){    
 
     /**
      * Using the Signup feature requires you to enable

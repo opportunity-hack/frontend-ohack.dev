@@ -1,7 +1,6 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 
-import '../../styles/admin.styles.css';
 
 import { AuthenticationButton } from "../buttons/authentication-button";
 
@@ -10,7 +9,7 @@ import TextField from '@mui/material/TextField';
 
 import { useState } from "react";
 
-import { useNonprofit } from "../../hooks/use-nonprofit";
+import useNonprofit from "../../hooks/use-nonprofit";
 
 
 import Button from '@mui/material/Button';
@@ -19,7 +18,7 @@ import { AdminProblemStatementList } from "./problemstatement-list";
 
 
 
-export const EditNonProfit = () => {           
+export default function EditNonProfit(){           
     const {  user } = useAuth0();
 
     const { handle_npo_problem_statement_edit } = useNonprofit();

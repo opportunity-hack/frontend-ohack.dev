@@ -9,11 +9,10 @@ import CommentIcon from '@mui/icons-material/Comment';
 import Tooltip from '@mui/material/Tooltip';
 import { useState } from "react";
 
-import { DeleteConfirmationButton } from './delete-confirm';
-import '../../styles/admin.styles.css';
-import { useNonprofit } from "../../hooks/use-nonprofit";
+import DeleteConfirmationButton from './delete-confirm';
+import useNonprofit from "../../hooks/use-nonprofit";
 
-export const NonProfitInputs = ({ nonprofits, selected, onSelected, onDelete, default_selected }) => {    
+export default function NonProfitInputs({ nonprofits, selected, onSelected, onDelete, default_selected }){    
     const [checkedNPO, setCheckedNPO] = useState(default_selected);
 
     // A hack - deep copy the original NPO list so we can remove items from it when we delete them

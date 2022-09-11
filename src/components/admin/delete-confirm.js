@@ -14,8 +14,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 
 
-export const DeleteConfirmationButton = ({id, name, onDelete}) =>
-{   
+export default function DeleteConfirmationButton({id, name, onDelete}){   
     const [open, setOpen] = React.useState(false);
     const handleClickOpen = () => {
         setOpen(true);

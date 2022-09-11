@@ -1,8 +1,8 @@
 import React from "react";
-import { FooterHyperlink } from "./footer-hyperlink";
+import FooterHyperlink from "./footer-hyperlink";
 import GitHubIcon from '@mui/icons-material/GitHub';
 
-export const Footer = () => {
+export default function Footer() {
   const resourceList = [
     {
       path: "https://www.ohack.org",

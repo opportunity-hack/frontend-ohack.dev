@@ -1,18 +1,20 @@
 import React from "react";
 
-import '../styles/profile.styles.css'
-import { useParams } from "react-router-dom";
+import { useRouter } from 'next/router'
+import Head from 'next/head';
 
-export const PublicProfile = () => {
-    let { userid } = useParams();
-    console.log("----------PUBLIC PROFILE-----------")
-    console.log(userid);    
-    console.log("----------PUBLIC PROFILE-----------")
+export default function PublicProfile(){
+    const router = useRouter()
+    const { userid } = router.query
+        
     // const { getPublicUserInfo } = useProfileApi();
 
 
     return (
         <div className="content-layout">
+        <Head>
+        <title>Profile for {userid} - Opportunity Hack Developer Portal</title>
+        </Head>
             <h1 className="content__title">Public Profile</h1>
             <div className="content__body">
                 <div className="profile-grid">

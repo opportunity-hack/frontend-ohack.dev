@@ -1,7 +1,8 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
-import { AuthenticationButton } from "./buttons/authentication-button";
-import { NavBarAdmin } from "./nav-bar-admin";
+import Link from 'next/link'
+
+import AuthenticationButton from "./buttons/authentication-button";
+import NavBarAdmin from "./nav-bar-admin";
 
 /*
 TODO: In the future we may want to show notifications using something like this
@@ -10,38 +11,36 @@ import Badge from '@mui/material/Badge';
 import Tooltip from '@mui/material/Tooltip';
 */
 
-import { useAdmin } from '../hooks/use-admin-check'
 
-export const NavBar = () => {
-  
-  const { isAdmin } = useAdmin();
- 
+export default function NavBar(){
   return (
     <div className="nav-bar__container">
-      <nav className="nav-bar">
+     
+    <nav className="nav-bar">
         <div className="nav-bar__brand">
-          <NavLink to="/">
+          <Link href="/">
             <img
               className="nav-bar__logo"
               src="https://i.imgur.com/Ff801O6.png"
               alt="Opportunity Hack logo"              
               width="100"
             />
-          </NavLink>
+          </Link>
         </div>
         
         <div className="nav-bar__tabs">
         
-        <NavLink
-            to="/profile"
+          <Link
+            href="/profile"
             exact
             className="nav-bar__tab"
             activeClassName="nav-bar__tab--active"
           >
             Profile
-          </NavLink>
+          </Link>
+          &nbsp; &nbsp; &nbsp;
                     
-          <NavBarAdmin admin={isAdmin}/>           
+          <NavBarAdmin />           
 
           {/*
           TODO: Probably can just embed this within the profile with FeedbackLite fragment instead of a page
@@ -57,14 +56,14 @@ export const NavBar = () => {
           </NavLink>
         */}
 
-          <NavLink
-            to="/nonprofits"
+          <Link
+            href="/nonprofits"
             exact
             className="nav-bar__tab"
             activeClassName="nav-bar__tab--active"
           >
             Projects
-          </NavLink>
+          </Link>
 
           {/*
           This isn't needed and is left over from Auth0 code, but it does force login upon navigation which can be helpful

@@ -1,6 +1,8 @@
 import React from "react";
 
-export const CodeSnippet = ({ title, code }) => (
+export default function CodeSnippet({ title, code }){
+
+  return(
   <div className="code-snippet">
     <span className="code-snippet__title">{title}</span>
     <div className="code-snippet__container">
@@ -9,4 +11,5 @@ export const CodeSnippet = ({ title, code }) => (
       </div>
     </div>
   </div>
-);
+  );
+}
