@@ -26,8 +26,6 @@ export default function Document() {
                     rel="shortcut icon"
                     href="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/wght500grad200fill1/48px.svg"
                 />
-                <meta name="theme-color" content="#000000" />
-                <meta name="description" content="We help nonprofits by writing code." />
 
 
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
