@@ -20,8 +20,10 @@ export default function MyApp({ Component, pageProps }) {
             <meta name="viewport" content="width=device-width, initial-scale=1" />
             
             {openGraphData.map((og) => (
-                <meta {...og} />
+                <meta {...og} />                
             ))}
+
+                <title>{pageProps.title}</title>
         </Head>
         <CssBaseline>            
                 <div className="page-layout">                                         

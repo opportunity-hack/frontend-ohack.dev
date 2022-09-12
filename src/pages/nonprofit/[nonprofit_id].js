@@ -180,17 +180,29 @@ export async function getStaticProps({ params = {} } = {} ){
 
     }
 
+    // Helpful Docs:
+    // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags
+    // https://github.com/vercel/next.js/issues/35172#issuecomment-1169362010
     return {
         props: {
-            openGraphData: [                               
+            title: data.nonprofits.name,
+            openGraphData: [   
                 {
                     name: "title",
+                    content: data.nonprofits.name,
+                    key: "title",
+                },                            
+                {
                     property: "og:title",
                     content: data.nonprofits.name,
                     key: "ogtitle",
                 },
                 {
                     name: "description",
+                    content: metaDescription,
+                    key: "desc",
+                },
+                {
                     property: "og:description",
                     content: metaDescription,
                     key: "ogdesc",
