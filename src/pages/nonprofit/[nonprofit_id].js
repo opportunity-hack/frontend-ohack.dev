@@ -173,7 +173,7 @@ export async function getServerSideProps({ params = {} } = {} ){
     var statusList = [];
     if (nonprofit.problem_statements != null && nonprofit.problem_statements.length > 0) {
         nonprofit.problem_statements.forEach(ps => {
-            metaDescription += ps.title + " | " + ps.status + ": " + ps.description + "\n";
+            metaDescription += ps.title + " | " + ps.status + ": " + ps.description + " ";
             countOfProjects++;
             statusList.push(ps.status);
 
