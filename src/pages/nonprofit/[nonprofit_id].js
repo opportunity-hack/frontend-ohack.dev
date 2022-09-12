@@ -158,9 +158,16 @@ export default function NonProfitProfile(){
 };
 
 export async function getStaticPaths() {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`);
+    const data = await res.json();
+    const nonprofits = data.nonprofits;
+
+    const paths = nonprofits.map( np => {
+        return { params : { nonprofit_id : np.id } }
+    })
 
     return {
-        paths: [], //indicates that no page needs be created at build time
+        paths: paths, //indicates that no page needs be created at build time
         fallback: 'blocking' //indicates the type of fallback
     }
 }
@@ -184,6 +191,7 @@ export async function getStaticProps({ params = {} } = {} ){
     // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags
     // https://github.com/vercel/next.js/issues/35172#issuecomment-1169362010
     return {
+        
         props: {
             title: data.nonprofits.name,
             openGraphData: [   
