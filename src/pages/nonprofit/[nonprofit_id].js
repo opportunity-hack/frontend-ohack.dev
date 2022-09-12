@@ -167,10 +167,7 @@ export async function getServerSideProps({ params = {} } = {} ){
     const nonprofit = data.nonprofits;
 
     var metaDescription = "";
-    if (nonprofit.slack_channel != null)
-    {
-        metaDescription += "#" + nonprofit.slack_channel + " ";
-    }
+    
 
     var countOfhelpingMentors = 0;
     var countOfhelpingHackers = 0;
@@ -196,7 +193,10 @@ export async function getServerSideProps({ params = {} } = {} ){
                 });
             }
         });
+    }
 
+    if (nonprofit.slack_channel != null && nonprofit.slack_channel !== "") {
+        metaDescription += " [Slack Channel: #" + nonprofit.slack_channel + "] ";
     }
 
     // Helpful Docs:
