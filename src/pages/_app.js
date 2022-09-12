@@ -23,7 +23,7 @@ export default function MyApp({ Component, pageProps }) {
                 <meta {...og} />                
             ))}
 
-                <title>{pageProps.title}</title>
+            <title>{pageProps.title}</title>
         </Head>
         <CssBaseline>            
                 <div className="page-layout">                                         

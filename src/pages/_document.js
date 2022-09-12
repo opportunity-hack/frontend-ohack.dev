@@ -28,7 +28,7 @@ export default function Document() {
                 />
 
 
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
                 <link
                     rel="preload"
                     as="style"
@@ -38,7 +38,7 @@ export default function Document() {
                     rel="stylesheet"
                     href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Inter&family=Space+Grotesk&display=swap"
                     media="print"
-                    onload="this.media='all'"
+                    onLoad="this.media='all'"
                 />
                 <link rel="stylesheet"
                     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,600,1,0" />

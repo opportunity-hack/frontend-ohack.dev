@@ -157,24 +157,11 @@ export default function NonProfitProfile(){
     );
 };
 
-export async function getStaticPaths() {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`);
-    const data = await res.json();
-    const nonprofits = data.nonprofits;
-
-    const paths = nonprofits.map( np => {
-        return { params : { nonprofit_id : np.id } }
-    })
-
-    return {
-        paths: paths, //indicates that no page needs be created at build time
-        fallback: 'blocking' //indicates the type of fallback
-    }
-}
 
 
 
-export async function getStaticProps({ params = {} } = {} ){    
+
+export async function getServerSideProps({ params = {} } = {} ){    
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${params.nonprofit_id}`);
     const data = await res.json();
     const nonprofit = data.nonprofits;
