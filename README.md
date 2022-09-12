@@ -31,9 +31,9 @@ Copy the `env_template` file to a `.env` file under the root project directory a
 
 Run the application:
 ```bash
-npm start
+npm run dev
 ```
-Visit [`http://localhost:4040/`](http://localhost:4040/) to access the application.
+Visit [`http://localhost:3000/`](http://localhost:3000/) to access the application.
 
 # References
 ## React UI Tools
