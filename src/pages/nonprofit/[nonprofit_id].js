@@ -229,6 +229,16 @@ export async function getServerSideProps({ params = {} } = {} ){
                     key: "website",
                 },
                 {
+                    property: "og:image",
+                    content: "https://i.imgur.com/Ff801O6.png",
+                    key: "ogimage",
+                },   
+                {
+                    property: "twitter:image",
+                    content: "https://i.imgur.com/Ff801O6.png",
+                    key: "twitterimage",
+                },             
+                {
                     property: "og:site_name",
                     content: "Opportunity Hack Developer Portal",
                     key: "ogsitename",
