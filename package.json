@@ -2,6 +2,9 @@
   "name": "frontend-ohack-dev",
   "version": "0.1.0",
   "private": true,
+  "cacheDirectories": [
+    ".next/cache"
+  ],
   "dependencies": {
     "@auth0/auth0-react": "^1.10.2",
     "@emotion/react": "^11.10.4",
@@ -49,6 +52,7 @@
   "devDependencies": {
     "cross-env": "^7.0.3",
     "eslint": "^8.23.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "2.7.1"
   }
 }

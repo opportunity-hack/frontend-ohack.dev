@@ -21,9 +21,6 @@ import { useRouter } from 'next/router'
 import { useAuth0 } from "@auth0/auth0-react";
 import { Puff } from 'react-loading-icons'
 
-
-import Head from 'next/head';
-
 export default function NonProfitProfile(){
     const { user } = useAuth0();    
     const router = useRouter();
@@ -73,13 +70,7 @@ export default function NonProfitProfile(){
         handle_npo_problem_statement_edit(nonprofit_id, checked, onComplete);
     };
     
-    var metaDescription = "";
-    if (nonprofit.problem_statements != null  && nonprofit.problem_statements.length > 0) {
-        nonprofit.problem_statements.forEach(ps => {
-            metaDescription += ps.title + " | " + ps.status + ": " + ps.description;
-        });
-
-    }
+   
 
 
     const problemStatements = () => {
@@ -144,15 +135,7 @@ export default function NonProfitProfile(){
 
     return (
         <div className="content-layout">            
-            <Head>
-                <meta charSet="utf-8" />
-                <title>{nonprofit.name}</title>
-                <meta name="og:site_name" content="Opportunity Hack Portal" />
-                <meta name="og:title" content={nonprofit.name} />
-                <meta name="og:description" content={metaDescription} />
-                <meta name="description" content={metaDescription} />
-            </Head>  
-
+           
             <h1 className="content__title">{nonprofit.name}</h1>
             <div className="ohack-feature__callout">
                 {description}
@@ -172,5 +155,58 @@ export default function NonProfitProfile(){
             </div>
         </div>
     );
+};
+
+export async function getStaticPaths() {
+
+    return {
+        paths: [], //indicates that no page needs be created at build time
+        fallback: 'blocking' //indicates the type of fallback
+    }
+}
+
+
+
+export async function getStaticProps({ params = {} } = {} ){    
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${params.nonprofit_id}`);
+    const data = await res.json();
+    const nonprofit = data.nonprofits;
+
+    var metaDescription = "";
+    if (nonprofit.problem_statements != null && nonprofit.problem_statements.length > 0) {
+        nonprofit.problem_statements.forEach(ps => {
+            metaDescription += ps.title + " | " + ps.status + ": " + ps.description;
+        });
+
+    }
+
+    return {
+        props: {
+            openGraphData: [                               
+                {
+                    name: "title",
+                    property: "og:title",
+                    content: data.nonprofits.name,
+                    key: "ogtitle",
+                },
+                {
+                    name: "description",
+                    property: "og:description",
+                    content: metaDescription,
+                    key: "ogdesc",
+                },
+                {
+                    property: "og:type",
+                    content: "website",
+                    key: "website",
+                },
+                {
+                    property: "og:site_name",
+                    content: "Opportunity Hack Developer Portal",
+                    key: "ogsitename",
+                },
+            ],
+        },
+    };
 };
     

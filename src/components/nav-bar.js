@@ -3,6 +3,8 @@ import Link from 'next/link'
 
 import AuthenticationButton from "./buttons/authentication-button";
 import NavBarAdmin from "./nav-bar-admin";
+import Image from 'next/image'
+
 
 /*
 TODO: In the future we may want to show notifications using something like this
@@ -19,11 +21,12 @@ export default function NavBar(){
     <nav className="nav-bar">
         <div className="nav-bar__brand">
           <Link href="/">
-            <img
+            <Image
               className="nav-bar__logo"
-              src="https://i.imgur.com/Ff801O6.png"
+              src="https://i.imgur.com/Ff801O6.png"              
               alt="Opportunity Hack logo"              
-              width="100"
+              width={100}
+              height={48}
             />
           </Link>
         </div>
