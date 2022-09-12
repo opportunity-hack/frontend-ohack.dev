@@ -167,6 +167,11 @@ export async function getServerSideProps({ params = {} } = {} ){
     const nonprofit = data.nonprofits;
 
     var metaDescription = "";
+    if (nonprofit.slack_channel != null)
+    {
+        metaDescription += "#" + nonprofit.slack_channel + " ";
+    }
+
     var countOfhelpingMentors = 0;
     var countOfhelpingHackers = 0;
     var countOfProjects = 0;
