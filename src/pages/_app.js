@@ -14,7 +14,7 @@ export default function MyApp({ Component, pageProps }) {
     const { openGraphData = [] } = pageProps;
 
     return(
-    <Auth0ProviderWithHistory>
+    <span>
         <Head>
             <meta http-equiv="X-UA-Compatible" content="IE=edge" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -24,7 +24,10 @@ export default function MyApp({ Component, pageProps }) {
             ))}
 
             <title>{pageProps.title}</title>
+
+
         </Head>
+    <Auth0ProviderWithHistory>        
         <CssBaseline>            
                 <div className="page-layout">                                         
                     <NavBar />     
@@ -33,5 +36,6 @@ export default function MyApp({ Component, pageProps }) {
                 </div>
         </CssBaseline>
     </Auth0ProviderWithHistory>
+    </span>
     );
 }
