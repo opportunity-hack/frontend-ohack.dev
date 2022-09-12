@@ -169,9 +169,13 @@ export async function getServerSideProps({ params = {} } = {} ){
     var metaDescription = "";
     var countOfhelpingMentors = 0;
     var countOfhelpingHackers = 0;
+    var countOfProjects = 0;
+    var statusList = [];
     if (nonprofit.problem_statements != null && nonprofit.problem_statements.length > 0) {
         nonprofit.problem_statements.forEach(ps => {
             metaDescription += ps.title + " | " + ps.status + ": " + ps.description + "\n";
+            countOfProjects++;
+            statusList.push(ps.status);
 
             if( ps.helping )
             {
@@ -241,13 +245,23 @@ export async function getServerSideProps({ params = {} } = {} ){
                 },
                 {
                     property: "twitter:label1",
-                    value: "🙌 Hackers/Mentors",
+                    value: "Projects/Status",
                     key: "twitterlabel1",
                 },
                 {
                     property: "twitter:data1",
-                    value: countOfhelpingHackers + "/" + countOfhelpingMentors,
+                    value: countOfProjects + "/" + statusList,
                     key: "twitterdata1",
+                },
+                {
+                    property: "twitter:label2",
+                    value: "🙌 Hackers/Mentors",
+                    key: "twitterlabel2",
+                },
+                {
+                    property: "twitter:data2",
+                    value: countOfhelpingHackers + "/" + countOfhelpingMentors,
+                    key: "twitterdata2",
                 },
             ],
         },
