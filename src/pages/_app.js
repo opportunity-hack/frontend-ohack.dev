@@ -13,10 +13,14 @@ export default function MyApp({ Component, pageProps }) {
     let { isLoading } = useAuth0();
     const { openGraphData = [] } = pageProps;
 
+
+    // Helpful Docs:
+    // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags
+    // https://github.com/vercel/next.js/issues/35172#issuecomment-1169362010
     return(
     <span>
         <Head>
-            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
             
             {openGraphData.map((og) => (

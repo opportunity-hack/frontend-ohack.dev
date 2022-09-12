@@ -167,14 +167,31 @@ export async function getServerSideProps({ params = {} } = {} ){
     const nonprofit = data.nonprofits;
 
     var metaDescription = "";
+    var countOfhelpingMentors = 0;
+    var countOfhelpingHackers = 0;
     if (nonprofit.problem_statements != null && nonprofit.problem_statements.length > 0) {
         nonprofit.problem_statements.forEach(ps => {
-            metaDescription += ps.title + " | " + ps.status + ": " + ps.description;
+            metaDescription += ps.title + " | " + ps.status + ": " + ps.description + "\n";
+
+            if( ps.helping )
+            {
+                ps.helping.forEach(help => {
+                    if( help.type === "hacker" ){
+                        countOfhelpingHackers++;
+                    } else if ( help.type === "mentor" ){
+                        countOfhelpingMentors++;
+                    }
+                    else {
+                        // Nada
+                    }
+                });
+            }
         });
 
     }
 
     // Helpful Docs:
+    // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
     // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags
     // https://github.com/vercel/next.js/issues/35172#issuecomment-1169362010
     return {
@@ -211,6 +228,26 @@ export async function getServerSideProps({ params = {} } = {} ){
                     property: "og:site_name",
                     content: "Opportunity Hack Developer Portal",
                     key: "ogsitename",
+                },
+                {
+                    property: "twitter:card",
+                    content: "summary_large_image",
+                    key: "twittercard",
+                },
+                {
+                    property: "twitter:domain",
+                    content: "ohack.dev",
+                    key: "twitterdomain",
+                },
+                {
+                    property: "twitter:label1",
+                    value: "🙌 Hackers/Mentors",
+                    key: "twitterlabel1",
+                },
+                {
+                    property: "twitter:data1",
+                    value: countOfhelpingHackers + "/" + countOfhelpingMentors,
+                    key: "twitterdata1",
                 },
             ],
         },
