@@ -109,12 +109,27 @@ export default function NonProfitList() {
 
                 let production_counter = 0;
                 let needs_help_counter = 0;
+                let hacker_counter = 0;
+                let mentor_counter = 0;
+
                 npo.problem_statements.forEach(ps => {                    
                     if ( ps.status === "production") {
                         production_counter++;
                     }
                     else{
                         needs_help_counter++;
+                    }
+
+                    if( ps.helping )
+                    {
+                        ps.helping.forEach(help => {
+                            if (help.type == "hacker")
+                            {
+                                hacker_counter++;
+                            } else if (help.type == "mentor") {
+                                mentor_counter++;
+                            }
+                        });
                     }
                 });
 
@@ -136,6 +151,8 @@ export default function NonProfitList() {
                         key={npo.id}                                                                        
                         need_help_problem_statement_count={needs_help_counter}
                         in_production_problem_statement_count={production_counter}                                                
+                        hacker_count={hacker_counter}
+                        mentor_count={mentor_counter}
                         icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
                     />);
                 }

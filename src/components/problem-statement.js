@@ -17,10 +17,8 @@ import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { styled } from '@mui/material/styles';
 
-
-
+import SupportIcon from '@mui/icons-material/Support';
 import Badge from '@mui/material/Badge';
-import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
 
 import ArticleIcon from '@mui/icons-material/Article';
 import Button from '@mui/material/Button';
@@ -31,7 +29,6 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
 import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
-import SupportIcon from '@mui/icons-material/Support';
 
 import { useAuth0 } from "@auth0/auth0-react";
 
@@ -39,7 +36,8 @@ import useProfileApi from "../hooks/use-profile-api";
 import ProjectProgress from "./project-progress";
 
 
-
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
 
 
 export default function ProblemStatement({ problem_statement, user, npo_id }){
@@ -178,10 +176,21 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         );
     };
 
+    var countOfHackers = 0;
+    var countOfMentors = 0;
     var countOfPeopleHelping = 0;
     if (problem_statement.helping != null) {
         problem_statement.helping.forEach(help => {                
             countOfPeopleHelping++;
+
+            if (help.type == "mentor" )
+            {
+                countOfMentors++;
+            }
+            else if( help.type == "hacker" )
+            {
+                countOfHackers++;
+            }
         });
     }
 
@@ -323,35 +332,81 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         references_buttons = <p>No references yet</p>
     }
     
+    var mentorsAddPlural = [];
+    var hackersAddPlural = [];
+
+    if (countOfHackers == 0 || countOfHackers > 1 )
+    {
+        hackersAddPlural[0] = "s";
+        hackersAddPlural[1] = "are";
+    } else {
+        hackersAddPlural[0] = "";
+        hackersAddPlural[1] = "is";
+    }
+
+    if (countOfMentors == 0 || countOfMentors > 1) {
+        mentorsAddPlural[0] = "s";
+        mentorsAddPlural[1] = "are";
+    } else {
+        mentorsAddPlural[0] = "";
+        mentorsAddPlural[1] = "is";
+    }
+
     
     return (        
     <div className="ohack-problemstatement-feature">            
         <h3 className="ohack-feature__headline">           
                 {problem_statement.title}&nbsp;{status} 
-                <Tooltip title={`${countOfPeopleHelping} people are helping`}>
+               
+                
+
+                <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>}>
                     <Badge anchorOrigin={{
                         vertical: 'bottom',
                         horizontal: 'right',
                     }}
-                    badgeContent={countOfPeopleHelping} color="secondary" >                        
-                        <EmojiPeopleIcon fontSize="large" />
+                        badgeContent={countOfHackers} color="secondary" >
+                        <DeveloperModeIcon fontSize="large" />
                     </Badge>
-                </Tooltip>  
+                </Tooltip> 
+                &nbsp;
+                <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>}>
+                    <Badge anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'right',
+                    }}
+                        badgeContent={countOfMentors} color="secondary" >
+                        <SupportIcon fontSize="large" />
+                    </Badge>
+                </Tooltip> 
         </h3>   
-            <p>
-                <Stack direction="row" spacing={3} alignItems="center">                                        
+            <Box sx={{ flexGrow: 1, marginTop: 3, marginBottom: 2 }}>
+                <Grid container spacing={2}>
+                    <Grid item xs={5}>
                     {helpingSwitch}
-                    {callToAction}                    
-                </Stack>
+                    </Grid>
+                    <Grid item xs={7}>
+                    {callToAction}   
+                    </Grid>
+                </Grid>
+            </Box>
+
+              
                 
-            </p>                    
+                            
         
         <ProjectProgress state={problem_statement.status} />
                         
-        <div className="ohack-feature__description">    
-            <br />
-            <ChildFriendlyIcon /> Born on <b>{problem_statement.first_thought_of}</b>
-            <br />            
+        <div className="ohack-feature__description">                                        
+            <Grid
+                container
+                direction="row"
+                justifyContent="flex-start"
+                alignItems="center"
+                sx={{ marginTop: 3, marginBottom: 1}}
+            >
+                <ChildFriendlyIcon /> Born in&nbsp;<b>{problem_statement.first_thought_of}</b>
+            </Grid>
             {problem_statement.description}                            
         </div>        
         
