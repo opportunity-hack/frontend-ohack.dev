@@ -3,7 +3,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useEnv } from "../../context/env.context";
 import axios from "axios";
 
-import { AuthenticationButton } from "../buttons/authentication-button";
+import AuthenticationButton from "../buttons/authentication-button";
 
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -26,7 +26,7 @@ import Tooltip from '@mui/material/Tooltip';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-import { NonProfitInputs } from './nonprofit-inputs';
+import NonProfitInputs from './nonprofit-inputs';
 
 
 export default function AddHackathon ({ nonprofits, teams }){    

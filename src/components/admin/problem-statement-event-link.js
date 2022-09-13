@@ -11,7 +11,7 @@ import { useState } from "react";
 
 export default function LinkedProblemStatementsToEvents({ problemStatementId, events, all_events, onChange  }){
     const getEventsAsString = (anEventObject) => {
-        return anEventObject.start_date + " " + anEventObject.type + "|" + anEventObject.id;
+        return anEventObject.start_date + " " + anEventObject.type + " " + anEventObject.location + "|" + anEventObject.id;
     }
 
     const [eventState, setEventState] = useState(events.map(event => {

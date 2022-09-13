@@ -68,12 +68,12 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                 },
                 '& + .MuiSwitch-track': {
                     opacity: 1,
-                    backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#00AA00',
+                    backgroundColor: '#00AA00',
                 },
             },
         },
         '& .MuiSwitch-thumb': {
-            backgroundColor: theme.palette.mode === 'dark' ? '#003892' : '#001e3c',
+            backgroundColor: '#FF0000',
             width: 32,
             height: 32,
             '&:before': {
@@ -92,7 +92,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         },
         '& .MuiSwitch-track': {
             opacity: 1,
-            backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be',
+            backgroundColor: '#FFFF00',
             borderRadius: 20 / 2,
         },
     }));
@@ -361,7 +361,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                 
 
                 <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>}>
-                    <Badge anchorOrigin={{
+                    <Badge showZero anchorOrigin={{
                         vertical: 'bottom',
                         horizontal: 'right',
                     }}
@@ -371,7 +371,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                 </Tooltip> 
                 &nbsp;
                 <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>}>
-                    <Badge anchorOrigin={{
+                    <Badge showZero anchorOrigin={{
                         vertical: 'bottom',
                         horizontal: 'right',
                     }}
@@ -382,11 +382,11 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         </h3>   
             <Box sx={{ flexGrow: 1, marginTop: 3, marginBottom: 2 }}>
                 <Grid container spacing={2}>
-                    <Grid item xs={5}>
-                    {helpingSwitch}
-                    </Grid>
                     <Grid item xs={7}>
-                    {callToAction}   
+                        {callToAction}                    
+                    </Grid>
+                    <Grid item xs={5}>
+                        {helpingSwitch}   
                     </Grid>
                 </Grid>
             </Box>

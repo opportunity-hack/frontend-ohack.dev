@@ -86,8 +86,8 @@ export default function AddProblemStatement(){
                 title: title,
                 description: description,
                 status: status,
-                references: references,
-                github: github,
+                references: [references],
+                github: [github],
                 first_thought_of: first_thought_of
             }
         };
