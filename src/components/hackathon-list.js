@@ -31,13 +31,14 @@ export default function HackathonList() {
     }
 
 
-    return (<div className="ohack-features">
-        <h2 className="ohack-features__title">Upcoming and Current Events</h2>
-        <div className="ohack-event__grid">
-            {currentEvents}
+    return (
+        <div className="ohack-features">
+            <h2 className="ohack-features__title">Upcoming and Current Events</h2>
+            <div className="ohack-features__grid">
+                {currentEvents}
+            </div>
         </div>
-    </div
-    >);
+        );
 
 
 };

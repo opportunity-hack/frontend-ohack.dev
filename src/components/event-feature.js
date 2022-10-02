@@ -136,7 +136,7 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
 
 
     return (
-        <Box className="ohack-event-feature">
+        <Box className="ohack-feature">
             <Image
                 className="ohack-feature__icon"
                 src={anIcon}

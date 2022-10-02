@@ -213,25 +213,6 @@ pre {
     'opsz' 24
 }
 
-.ohack-event__grid {
-  display: grid;
-
-  /* responsive */
-
-  grid-template-columns: 1fr 1fr;
-  column-gap: 6.4rem;
-  row-gap: 6.4rem;
-}
-
-.ohack-event-feature {
-  background-color: rgb(187, 220, 252);
-  color: var(--black);  
-
-  /* responsive */
-  padding: 4.8rem;
-  border-radius: 1.6rem;
-}
-
 
 .ohack-features {
   /* responsive */
