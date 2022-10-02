@@ -62,11 +62,12 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
         prizeCurrent = donationCurrent["prize"];
         prize = <Stack
             spacing={1}
+            alignItems="center"
             direction="row">
             <span>Prizes</span>
             <Box sx={{ width: '60%' }}>
                 <LinearProgressWithLabel value={prizePercent} />
-            </Box> Current: ${prizeCurrent}  Goal: ${prizeGoal}
+            </Box> Current: ${prizeCurrent}<br />Goal: ${prizeGoal}
         </Stack>
     }
 
@@ -76,12 +77,13 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
         swagCurrent = donationCurrent["swag"];
         swag = <Stack
             spacing={1}
+            alignItems="center"
             direction="row">
             <span>Swag</span>
             <Box sx={{ width: '60%' }}>
 
                 <LinearProgressWithLabel value={swagPercent} />
-            </Box> Current: ${swagCurrent}  Goal: ${swagGoal}
+            </Box> Current: ${swagCurrent}<br />Goal: ${swagGoal}
         </Stack>
     }
     if ("food" in donationGoals && "food" in donationCurrent) {
@@ -90,11 +92,12 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
         foodCurrent = donationCurrent["food"];
         food = <Stack
             spacing={1}
+            alignItems="center"
             direction="row">
             <span>Food</span>
             <Box sx={{ width: '60%' }}>
                 <LinearProgressWithLabel value={foodPercent} />
-            </Box> Current: ${foodCurrent}  Goal: ${foodGoal}
+            </Box> Current: ${foodCurrent}<br/>Goal: ${foodGoal}
 
         </Stack>
     }
@@ -110,9 +113,11 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
         </a>;
 
         donation = <span><h5>Funding Goals</h5>           
-            {prize}
+            <Stack spacing={2}>
+            {prize}            
             {swag}
             {food}
+            </Stack>
             </span>
             ;
     }
