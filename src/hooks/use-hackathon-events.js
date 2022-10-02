@@ -4,7 +4,7 @@ import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback } from "react";
 
 
-export default function useHackathonEvents(){
+export default function useHackathonEvents( currentOnly ){
 
     const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl } = useEnv();
@@ -63,6 +63,9 @@ export default function useHackathonEvents(){
             var config = {
                 url: `${apiServerUrl}/api/messages/hackathons`,
                 method: "GET",
+                params: {
+                    current: currentOnly
+                },
                 headers: {
                     "content-type": "application/json",
                 },

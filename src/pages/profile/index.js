@@ -4,7 +4,7 @@ import React from "react";
 import useProfileApi from "../../hooks/use-profile-api.js";
 
 import BadgeList from "../../components/badge-list";
-import HackathonList from "../../components/hackathon-list";
+import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
 import CodeSnippet from "../../components/code-snippet";
 import AuthenticationButton from "../../components/buttons/authentication-button";
@@ -69,7 +69,7 @@ export default function Profile(){
             <p>
               We've tried our best to keep track of each time you've volunteered, mentored, judged a hackathon.  If not, please send us a Slack!
             </p>
-            <HackathonList hackathons={hackathons} />                     
+            <ProfileHackathonList hackathons={hackathons} />                     
 
             <br />
 
