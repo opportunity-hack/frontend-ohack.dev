@@ -29,11 +29,12 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
                         </a>;
 
 
-    var prize, swag, food = ""
+    var prize, swag, food, thankYou = ""
     var prizePercent, prizeCurrent, prizeGoal = 0;
     var swagPercent, swagCurrent, swagGoal = 0;
     var foodPercent, foodCurrent, foodGoal = 0;
     var aTitle = "";
+    
     
     
     var nonProfitButtons = "";
@@ -112,6 +113,12 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
             <Button size="large" variant="contained">Donate</Button>
         </a>;
 
+        if( "thank_you" in donationCurrent )
+        {
+            const ty = donationCurrent["thank_you"];
+            thankYou = <div><b>Thank you</b> {ty}</div>;
+        }
+
         donation = <span><h5>Funding Goals</h5>           
             <Stack spacing={2}>
             {prize}            
@@ -166,16 +173,17 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
                 <Stack
                     direction="row"
                     spacing={2}>
-                {donationButton}
-            
+                {donationButton}                
    
                 <a
                 href={devpostUrl}            
                 target="_blank"
                 rel="noopener noreferrer">
                     <Button size="large" variant="outlined">More Details&nbsp;<OpenInNewIcon /></Button>
-                </a>
+                </a>                
                 </Stack>
+                
+                {thankYou}
             </Stack>
 
             
