@@ -39,6 +39,11 @@ import ProjectProgress from "./project-progress";
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Typography from '@mui/material/Typography';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export default function ProblemStatement({ problem_statement, user, npo_id }){
     const [open, setOpen] = useState(false);
@@ -49,6 +54,11 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     const { handle_help_toggle } = useProfileApi();
 
     const { loginWithRedirect } = useAuth0();
+
+    const [expanded, setExpanded] = useState(false);
+    const handleChange = (panel) => (event, isExpanded) => {
+        setExpanded(isExpanded ? panel : false);
+    };
 
     const MaterialUISwitch = styled(Switch)(({ theme }) => ({
         width: 62,
@@ -143,7 +153,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     };
 
     
-
+    function getWordStr(str) {
+        return str.split(/\s+/).slice(0, 50).join(" ");
+    }
 
     var HackathonText;
     if (problem_statement.events.length > 0)
@@ -209,23 +221,38 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     if( user == null)
     {        
         callToAction = <div>
-            <h4>We use Slack to collaborate, if you already have an account, login with Slack</h4>
-            <button
-                className="button button--primary button--compact"
-                onClick={() => loginWithRedirect({
-                    appState: {
-                        returnTo: window.location.pathname,
-                        redirectUri: window.location.pathname
-                    }
-                })}
-            >
-                Log In
-            </button>
+
+            <Stack spacing={2}>
+                <Stack alignItems="center" direction="row" spacing={2}>
+                    <Box sx={{ width: '60%' }}>
+                        <Typography>We use Slack to collaborate, if you already have an account, login with Slack</Typography>
+                    </Box>
+                    <button
+                        className="button button--primary button--compact"
+                        onClick={() => loginWithRedirect({
+                            appState: {
+                                returnTo: window.location.pathname,
+                                redirectUri: window.location.pathname
+                            }
+                        })}
+                    >
+                        Log In
+                    </button>
+                </Stack>
+                
+                <Stack alignItems="center" direction="row" spacing={2}>
+                    <Box sx={{ width: '60%' }}>
+                    <Typography>If you don't have an account, you will need to create an account</Typography>
+                    </Box>
+
+                    
+                    <button onClick={createSlackAccount} className="button button--primary">
+                        Create a Slack account
+                    </button>                
+                </Stack>
+            </Stack>
             
-            <h4>If you don't have an account, you will need to create an account</h4>
-            <button onClick={createSlackAccount} className="button button--primary">
-                Create a Slack account
-            </button>
+            
             </div>;
 
         helpingSwitch = ""
@@ -355,47 +382,50 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     
     return (        
     <div className="ohack-problemstatement-feature">            
-        <h3 className="ohack-feature__headline">           
-                {problem_statement.title}&nbsp;{status} 
-               
-                
+                   
+        <Stack spacing={3}>                    
+                <Stack justifyContent="flex-end" alignItems="flex-start" direction="row" spacing={2}>
+                    {status}
 
-                <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>}>
-                    <Badge showZero anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'right',
-                    }}
-                        badgeContent={countOfHackers} color="secondary" >
-                        <DeveloperModeIcon fontSize="large" />
-                    </Badge>
-                </Tooltip> 
-                &nbsp;
-                <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>}>
-                    <Badge showZero anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'right',
-                    }}
-                        badgeContent={countOfMentors} color="secondary" >
-                        <SupportIcon fontSize="large" />
-                    </Badge>
-                </Tooltip> 
-        </h3>   
-            <Box sx={{ flexGrow: 1, marginTop: 3, marginBottom: 2 }}>
-                <Grid container spacing={2}>
-                    <Grid item xs={7}>
-                        {callToAction}                    
-                    </Grid>
-                    <Grid item xs={5}>
-                        {helpingSwitch}   
-                    </Grid>
-                </Grid>
-            </Box>
+                    <Box>
+                        <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>}>
+                            <Badge showZero anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                                badgeContent={countOfHackers} color="secondary" >
+                                <DeveloperModeIcon fontSize="large" />
+                            </Badge>
+                        </Tooltip>
+                    </Box>
 
-              
-                
-                            
+                    <Box>
+                        <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>}>
+                            <Badge showZero anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                                badgeContent={countOfMentors} color="secondary" >
+                                <SupportIcon fontSize="large" />
+                            </Badge>
+                        </Tooltip>
+                    </Box>
+                </Stack>
+
+                    <h3 className="ohack-feature__headline">{problem_statement.title}</h3>
+                    
+                    <Stack spacing={2} direction="row">
+                        <Box sx={{ width: '75%' }}>
+                        {callToAction}
+                        </Box>
+
+                        {helpingSwitch}
+                    </Stack>
+
+                <ProjectProgress state={problem_statement.status} />
+        </Stack>
+
         
-        <ProjectProgress state={problem_statement.status} />
                         
         <div className="ohack-feature__description">                                        
             <Grid
@@ -407,7 +437,22 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
             >
                 <ChildFriendlyIcon /> Born in&nbsp;<b>{problem_statement.first_thought_of}</b>
             </Grid>
-            {problem_statement.description}                            
+            
+                <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel1bh-content"
+                        id="panel1bh-header"
+                    >
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            Project Description
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary' }}> {getWordStr(problem_statement.description)}...</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        {problem_statement.description}   
+                    </AccordionDetails>
+                </Accordion>                         
         </div>        
         
 

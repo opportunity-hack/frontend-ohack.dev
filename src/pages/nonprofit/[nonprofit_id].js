@@ -13,6 +13,13 @@ import TagIcon from '@mui/icons-material/Tag';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Typography from '@mui/material/Typography';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
+
 
 import Button from '@mui/material/Button';
 import SaveIcon from '@mui/icons-material/Save';
@@ -31,7 +38,11 @@ export default function NonProfitProfile(){
     const { problem_statements } = useProblemstatements();
     const [message, setMessage] = useState("");
 
-    
+    const [expanded, setExpanded] = useState(false);
+    const handleChange = (panel) => (event, isExpanded) => {
+        setExpanded(isExpanded ? panel : false);
+    };
+
     
     const { handle_npo_problem_statement_edit, nonprofit } = useNonprofit(nonprofit_id);
 
@@ -52,11 +63,9 @@ export default function NonProfitProfile(){
 
     if ( nonprofit.slack_channel !== "" )
     {
-        slack_details = <p className="ohack-feature__callout_mono"><Tooltip title="This is their dedicated channel in Slack">
-            <IconButton>
-                <TagIcon />
-            </IconButton>
-        </Tooltip>{nonprofit.slack_channel}</p>;
+        slack_details = <span className="ohack-feature__callout_mono"><Tooltip title="This is their dedicated channel in Slack">
+            <IconButton><TagIcon /></IconButton>
+        </Tooltip>{nonprofit.slack_channel}</span>;
     }
     else {
         slack_details = "";
@@ -101,9 +110,13 @@ export default function NonProfitProfile(){
 
     var description = "";
 
+    function getWordStr(str) {
+        return str.split(/\s+/).slice(0, 50).join(" ");
+    }
+
     if( nonprofit.description != null )
     {
-        description = nonprofit.description
+        description = nonprofit.description                                                    
     }
 
     const renderAdminProblemStatements = () => {
@@ -137,13 +150,44 @@ export default function NonProfitProfile(){
         <div className="content-layout">            
            
             <h1 className="content__title">{nonprofit.name}</h1>
+            
             <div className="ohack-feature__callout">
-                {description}
+                <Accordion sx={{ backgroundColor:"rgb(187, 220, 252)"}}  expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel1bh-content"
+                        id="panel1bh-header"
+                    >
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            About
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary' }}> {getWordStr(nonprofit.description)}...</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                    {description}
+                    </AccordionDetails>                    
+                </Accordion>
             </div>   
             
-            <div className="content__body">
-            {slack_details}   
-            </div>
+            
+             
+            <Accordion sx={{ backgroundColor: "rgb(187, 220, 252)" }}  expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel2bh-content"
+                        id="panel2bh-header"
+                    >
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            Slack channel
+                        </Typography>
+                    <Typography sx={{ color: 'text.secondary' }}> {slack_details}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        Looking to get involved? Join the {slack_details} channel on Slack to join in on the discussion!
+                    </AccordionDetails>
+                </Accordion>
+
+            
 
             <div className="content__body">
                 {renderAdminProblemStatements()}
