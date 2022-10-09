@@ -221,7 +221,6 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     if( user == null)
     {        
         callToAction = <div>
-
             <Stack spacing={2}>
                 <Stack alignItems="center" direction="row" spacing={2}>
                     <Box sx={{ width: '60%' }}>
@@ -465,7 +464,10 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                     <div key={event.id}>                        
                             <h3><EngineeringIcon /> {event.location} {event.type}</h3>
                             <h5>{event.start_date} <ArrowForwardIosIcon style={{ color: "gray" }} /> {event.end_date}</h5>                            
-                            
+                        
+                        <a href={event.devpost_url}><button className="button button--primary button--compact">
+                            Register
+                        </button></a>
                             {render_event_teams(event)}                               
                             
                     </div>)
