@@ -18,9 +18,7 @@ export default function HeroBanner(){
     <div className="hero-banner">
       <Head>
         <meta charSet="utf-8" />
-        <meta property="og:site_name" content="Opportunity Hack Portal" />
-        <meta name="description" content="TEST TEST" />
-        <meta property="description" content="A TEST TEST" />
+        <meta property="og:site_name" content="Opportunity Hack Portal" />        
       </Head>  
       <img className="hero-banner__logo" src={logo} alt="Opportunity Hack logo" />
       <h1 className="hero-banner__headline">Hey there, it's a pleasure to meet you.</h1>

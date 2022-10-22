@@ -27,6 +27,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import TextField from '@mui/material/TextField';
+
 
 import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
 
@@ -45,15 +47,34 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+import useTeams from "../hooks/use-teams";
+
+const StyledBadge = styled(Badge)(({ theme }) => ({
+    '& .MuiBadge-badge': {
+        right: 30,
+        top: 10,
+        border: `1px solid black`,
+        padding: '0 2px',
+    },
+}));
+
 export default function ProblemStatement({ problem_statement, user, npo_id }){
     const [open, setOpen] = useState(false);
     const [openUnhelp, setOpenUnhelp] = useState(false);
     const [help_checked, setHelpedChecked] = useState("");
     const [helpingType, setHelpingType] = useState("");
 
+    const [createTeamOpen, setCreateTeamOpen] = useState(false);
+    const [ableToCreateTeam, setAbleToCreateTeam] = useState(true);
+
+    const { handle_new_team_submission } = useTeams();
+    const [newTeamName, setNewTeamName] = useState("");
+    const [newTeamEventId, setNewTeamEventId] = useState("");
+    const [newTeamProblemStatementId, setNewTeamProblemStatementId] = useState("");
+
+
     const { handle_help_toggle } = useProfileApi();
 
-    const { loginWithRedirect } = useAuth0();
 
     const [expanded, setExpanded] = useState(false);
     const handleChange = (panel) => (event, isExpanded) => {
@@ -118,9 +139,40 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         {
             setOpenUnhelp(true);
         }
-        
-        
     };
+
+
+    const handleTeamCreate = (event) => {
+        const valueString = event.target.value; // ${ problemStatementId }| ${ eventId }| ${ user.sub }
+        console.log(valueString);
+        const valueArr = valueString.split("|");
+        const problemStatementId = valueArr[0];
+        const eventId = valueArr[1];
+
+        setNewTeamProblemStatementId(problemStatementId);
+        setNewTeamEventId(eventId);     
+
+        setCreateTeamOpen(true); // Open the modal
+    }
+
+    const handleUpdateTeamName = (event) => {
+        const value = event.target.value;
+        setNewTeamName(value);        
+    }
+
+    const handleConfirmTeamCreate = (event) => {
+        handle_new_team_submission(newTeamName, newTeamProblemStatementId, newTeamEventId, user.sub, handleTeamCreationResponse);
+        setCreateTeamOpen(false); // Submit button pressed to create team
+    }
+
+    const handleTeamCreationResponse = (data) => {
+        console.log(data);
+    }
+
+    const handleCloseTeamCreate = (event) => {
+        setCreateTeamOpen(false); // Cancel or close selected
+    }
+    
 
     const handleClose = (event) => {
         // They wanted to start helping
@@ -179,14 +231,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     var callToAction = "";
     var helpingSwitch = "";
     var helpingSwitchType = "";
-    const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
-    const createSlackAccount = () => {
-        window.open(
-            JOIN_SLACK_LINK,
-            "_blank",
-            "noopener noreferrer"
-        );
-    };
+   
 
     var countOfHackers = 0;
     var countOfMentors = 0;
@@ -219,41 +264,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     }, [problem_statement, user]);
 
     if( user == null)
-    {        
-        callToAction = <div>
-            <Stack spacing={2}>
-                <Stack alignItems="center" direction="row" spacing={2}>
-                    <Box sx={{ width: '60%' }}>
-                        <Typography>We use Slack to collaborate, if you already have an account, login with Slack</Typography>
-                    </Box>
-                    <button
-                        className="button button--primary button--compact"
-                        onClick={() => loginWithRedirect({
-                            appState: {
-                                returnTo: window.location.pathname,
-                                redirectUri: window.location.pathname
-                            }
-                        })}
-                    >
-                        Log In
-                    </button>
-                </Stack>
-                
-                <Stack alignItems="center" direction="row" spacing={2}>
-                    <Box sx={{ width: '60%' }}>
-                    <Typography>If you don't have an account, you will need to create an account</Typography>
-                    </Box>
-
-                    
-                    <button onClick={createSlackAccount} className="button button--primary">
-                        Create a Slack account
-                    </button>                
-                </Stack>
-            </Stack>
-            
-            
-            </div>;
-
+    {              
         helpingSwitch = ""
     }
     else {
@@ -271,6 +282,18 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         }
 
         helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} labelPlacement="bottom" control={<MaterialUISwitch sx={{ m: 1 }} checked={help_checked} />} label={helpingSwitchType} />;
+    }
+
+    
+
+
+    const createATeamButton = (problemStatementId, eventId) => {
+        if (helpingType == "hacker" && ableToCreateTeam) {
+            return <Button class="button button--primary" onClick={handleTeamCreate} value={`${problemStatementId}|${eventId}`}>Create a team</Button>
+        }
+        else{
+            return ""
+        }
     }
 
 
@@ -309,29 +332,88 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         github_issue_button = "";
     }
 
-    const render_event_teams = (event) => {
+    const render_event_teams = (problemStatementId, event) => {
+        console.log("===> I GET HERE");
         if( event.teams != null && event.teams.length > 0 )
-        {             
-            const details = event.teams.map((team) => (                
-                <ul key={team.id}>
-                    <li>
-                        {team.active === "True" ? <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active! Jump into Slack to see if you can help out.</span>}><DirectionsRunIcon style={{ color: "green" }} /></Tooltip> : <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}><CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
-                        {(() => {
-                            if (team.team_number > 0) {
-                                return "Team " + team.team_number + " ";
-                            }
-                        })()}
-                        <b>{team.name}</b><br />
-                        <font face="Courier">#{team.slack_channel}</font></li>
-                </ul>
-            ));
+        {                                     
+            var teamCounter = 0;
+            const details = event.teams.map((team) => {
+                const countOfPeopleOnTeam = team.users.length;
+                var peoplePersonString = "hacker";
+                if (countOfPeopleOnTeam >= 2)
+                {
+                    peoplePersonString = "hackers";
+                }
+                console.log(team);
 
-            return(
-                <p>
-                <h5><GroupIcon style={{ color: "blue" }} /> {event.teams.length} team{event.teams.length > 1 ? "s" : ""}</h5>
-                {details}
-                </p>
-            )
+                useMemo(() => {
+                    const isLoggedInUserAlreadyOnTeam = team.users.map(auser => {
+                        return user != null && (user.sub === auser.slack_id)
+                    });
+                    setAbleToCreateTeam(!isLoggedInUserAlreadyOnTeam);
+                
+                
+                }, [user]);
+                                
+
+                /* TODO: Need to show delete button if the user is on this team
+                var onTeam = false;
+                if( user != null )
+                {
+                    onTeam = team.users.map( auser => {
+                        if( auser === user.sub )
+                        {
+                            return true;
+                        }
+                    })
+                }
+                */
+                
+
+                if (team.problem_statements.length > 0 && team.problem_statements.includes(problemStatementId))
+                {
+                    teamCounter++; 
+            
+
+                    return (
+                        <ul key={team.id}>
+                            <li>
+                                {team.active === "True" ? 
+                                    <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active with {countOfPeopleOnTeam} {peoplePersonString}! Jump into Slack to see if you can help out.</span>}>
+                                        <StyledBadge badgeContent={countOfPeopleOnTeam} color="primary"><DirectionsRunIcon style={{ color: "green" }} /></StyledBadge></Tooltip> : 
+                                    <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}>
+                                    <CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
+                                {(() => {
+                                    if (team.team_number > 0) {
+                                        return "Team " + team.team_number + " ";
+                                    }
+                                })()}
+                                <b>{team.name}</b><br />
+                                <font face="Courier">#{team.slack_channel}</font></li>
+                        </ul>
+                    );
+                }
+                else 
+                {
+                    return ("");
+                }
+                
+            });
+
+            if (teamCounter > 0 )
+            {
+                return (
+                    <p>
+                        <h5><GroupIcon style={{ color: "blue" }} /> {event.teams.length} team{event.teams.length > 1 ? "s" : ""}</h5>
+                        {details}
+                    </p>
+                );
+            }
+            else 
+            {
+                return("");
+            }
+            
         }
         else {
             // We don't have any teams linked to this event yet
@@ -382,10 +464,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     return (        
     <div className="ohack-problemstatement-feature">            
                    
-        <Stack spacing={3}>                    
+        <Stack spacing={2}>                    
                 <Stack justifyContent="flex-end" alignItems="flex-start" direction="row" spacing={2}>
                     {status}
-
                     <Box>
                         <Tooltip title={<span style={{ fontSize: "14px" }}>{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>}>
                             <Badge showZero anchorOrigin={{
@@ -468,7 +549,16 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                         <a href={event.devpost_url}><button className="button button--primary button--compact">
                             Register
                         </button></a>
-                            {render_event_teams(event)}                               
+
+                            <Stack
+                                direction="column"                                
+                                alignItems="flex-start"
+                                spacing={2}
+                            >
+                            {render_event_teams(problem_statement.id, event)}
+
+                            {createATeamButton(problem_statement.id, event.id)}
+                            </Stack>
                             
                     </div>)
             })}
@@ -554,6 +644,29 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
             <DialogActions>
                     <Button class="button button--compact button--secondary" onClick={handleCloseUnhelpCancel}>Cancel</Button>
                     <Button class="button button--compact button--red" onClick={handleCloseUnhelp} autoFocus>Withdrawl Help</Button>                    
+            </DialogActions>
+        </Dialog>  
+        
+        <Dialog
+            open={createTeamOpen}
+            onClose={handleCloseTeamCreate}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+        >
+            <DialogTitle id="alert-dialog-title">
+                Create a new team
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText component={'span'} id="alert-dialog-description">
+                    
+                    <TextField id="filled-basic" label="Team Name" onChange={handleUpdateTeamName} variant="filled" />
+
+                       
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                <Button class="button button--compact button--secondary" onClick={handleCloseTeamCreate}>Cancel</Button>
+                <Button class="button button--compact button--third" onClick={handleConfirmTeamCreate} autoFocus>Submit</Button>
             </DialogActions>
         </Dialog>    
     </div>

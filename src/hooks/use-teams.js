@@ -37,9 +37,7 @@ export default function useTeams(){
     }, [getAccessTokenSilently]);
 
 
-    // TODO: Finish this method
-    /*
-    const handle_new_team_submission = async (name, team_number, active, slack_channel, github_links, checked_users, checked_problem_statements, onComplete) => {
+    const handle_new_team_submission = async (teamName, problemStatementId, eventId, userId, onComplete) => {
         if (!user)
             return null;
 
@@ -51,13 +49,10 @@ export default function useTeams(){
                 "Accept": "application/json"
             },
             data: {
-                name: name,
-                slack_channel: slack_channel,
-                // We send just the ID to the backend, it will convert this to an object
-                // Ref: https://stackoverflow.com/a/59394211
-                problem_statements: checked_problem_statements.map(item => {
-                    return `${item}`
-                })
+                name: teamName,
+                userId: userId,
+                eventId: eventId,
+                problemStatementId: problemStatementId                         
             }
         };
 
@@ -66,6 +61,7 @@ export default function useTeams(){
         return data;
     };
 
+    /*
     // TODO: Finish this method
     const handle_npo_problem_statement_edit = async (id, checked_problem_statements, onComplete) => {
         if (!user)
@@ -128,6 +124,7 @@ export default function useTeams(){
 
 
     return {
-        teams        
+        teams,
+        handle_new_team_submission
     }
 }
