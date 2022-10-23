@@ -8,11 +8,30 @@ import NavBar from "../components/nav-bar";
 import Footer from "../components/footer";
 import Head from 'next/head';
 
+import * as ga from '../lib/ga'
+import { useRouter } from 'next/router'
+import { useEffect } from 'react'
+
+
 // This default export is required in a new `pages/_app.js` file.
 export default function MyApp({ Component, pageProps }) {
     let { isLoading } = useAuth0();
     const { openGraphData = [] } = pageProps;
+    const router = useRouter()
+    useEffect(() => {
+        const handleRouteChange = (url) => {
+            ga.pageview(url)
+        }
+        //When the component is mounted, subscribe to router changes
+        //and log those page views
+        router.events.on('routeChangeComplete', handleRouteChange)
 
+        // If the component is unmounted, unsubscribe
+        // from the event with the `off` method
+        return () => {
+            router.events.off('routeChangeComplete', handleRouteChange)
+        }
+    }, [router.events])
 
     // Helpful Docs:
     // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags

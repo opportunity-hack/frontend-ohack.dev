@@ -13,6 +13,25 @@ export default function Document() {
                     />
                 </noscript>
 
+                {/* Global Site Tag (gtag.js) - Google Analytics */}
+                <script
+                    async
+                    src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
+                />
+                <script
+                            dangerouslySetInnerHTML={{
+                                __html: `
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}', {
+                    page_path: window.location.pathname,
+                    });
+                `,
+                            }}
+                />
+                        
+                
                 <script dangerouslySetInnerHTML={{
                     __html: `!function(f,b,e,v,n,t,s)
                     {if(f.fbq)return;n=f.fbq=function(){n.callMethod ?
@@ -27,18 +46,6 @@ export default function Document() {
                 }}
                 />
 
-                {/* <!-- Google tag (gtag.js) --> */}
-                <script async src="https://www.googletagmanager.com/gtag/js?id=G-EM3BV6M5EF"></script>
-                <script dangerouslySetInnerHTML={{
-                    __html: `
-                    window.dataLayer = window.dataLayer || [];
-                    function gtag() {dataLayer.push(arguments); }
-                    gtag('js', new Date());
-
-                    gtag('config', 'G-EM3BV6M5EF');
-                    `,
-                    }}
-                />
               
                 <link
                     rel="shortcut icon mask-icon"

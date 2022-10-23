@@ -2,17 +2,30 @@ import React from "react";
 import Link from 'next/link'
 import Head from 'next/head';
 
+import * as ga from '../lib/ga'
+
+
 export default function HeroBanner(){
   const logo = "https://i.imgur.com/Ih0mbYx.png";
   
   const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
   const openCodeSample = () => {
+    gaButton("open_code_sample");
     window.open(
       JOIN_SLACK_LINK,
       "_blank",
       "noopener noreferrer"
     );
   };
+
+  const gaButton = (actionName) => {
+    ga.event({
+      action: "button",
+      params: {
+        action_name: actionName
+      }
+    })
+  }
 
   return (    
     <div className="hero-banner">
@@ -27,7 +40,7 @@ export default function HeroBanner(){
       </p>
 
       <Link href="/nonprofits">
-        <button className="button button--primary">
+        <button onClick={gaButton("find_a_problem")}  className="button button--primary">
           Step 1: Find a problem to work on →
         </button>
       </Link>

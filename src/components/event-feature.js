@@ -2,6 +2,8 @@ import React from "react";
 import Image from 'next/image'
 import Link from "next/link";
 
+import * as ga from '../lib/ga'
+
 
 import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
@@ -19,6 +21,18 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
         anIcon = icon;
     }
 
+    const gaButton = (action, actionName) => {
+        ga.event({
+            action: action,
+            params: {
+                action_name: actionName,
+                event_title: title,
+                event_type: type,
+                event_start: start_date,
+                event_location: location
+            }
+        })
+    }
 
     var donation = "";
     var donationButton = <a
@@ -44,7 +58,7 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
             return(
                 <Link href={`/nonprofit/${npo.id}`}>
                     <Box sx={{ width: '60%' }}>
-                        <Button size="large" variant="contained">{npo.name}</Button>
+                        <Button onClick={() => gaButton("event_button_click", npo.name)} size="large" variant="contained">{npo.name}</Button>
                     </Box>
                 </Link>
             );
@@ -110,7 +124,7 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
             href={donationUrl}
             target="_blank"
             rel="noopener noreferrer">
-            <Button size="large" variant="contained">Donate</Button>
+            <Button onClick={() => gaButton("donation_button_click", donationUrl)} size="large" variant="contained">Donate</Button>
         </a>;
 
         if( "thank_you" in donationCurrent )
@@ -179,7 +193,7 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
                 href={devpostUrl}            
                 target="_blank"
                 rel="noopener noreferrer">
-                    <Button size="large" variant="outlined">More Details&nbsp;<OpenInNewIcon /></Button>
+                        <Button onClick={() => gaButton("more_details_button_click", devpostUrl)} size="large" variant="outlined">More Details&nbsp;<OpenInNewIcon /></Button>
                 </a>                
                 </Stack>
                 
