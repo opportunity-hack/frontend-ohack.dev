@@ -136,6 +136,7 @@ export default function NonProfitProfile(){
             }
             else 
             {                
+                console.log("NPO Rendering Problem Statement");
                 return nonprofit.problem_statements.map(ps => {         
                     return <ProblemStatement
                         key={ps.id}
@@ -243,7 +244,7 @@ export default function NonProfitProfile(){
 
     // More on meta tags
     // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
-
+    console.log("Nonprofit Page Render");
     return (
         <div className="content-layout">            
            

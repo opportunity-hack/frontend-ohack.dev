@@ -1,12 +1,8 @@
 import React from "react";
 import { useState, useMemo } from "react";
 
-import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
-import CancelIcon from '@mui/icons-material/Cancel';
+
 import Tooltip from '@mui/material/Tooltip';
-import EngineeringIcon from '@mui/icons-material/Engineering';
-import GroupIcon from '@mui/icons-material/Group';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Chip from '@mui/material/Chip';
 import BuildIcon from '@mui/icons-material/Build';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
@@ -29,10 +25,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
 
-
 import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
-
-import { useAuth0 } from "@auth0/auth0-react";
 
 import useProfileApi from "../hooks/use-profile-api";
 import ProjectProgress from "./project-progress";
@@ -48,15 +41,9 @@ import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import useTeams from "../hooks/use-teams";
+import Events from "./events";
 
-const StyledBadge = styled(Badge)(({ theme }) => ({
-    '& .MuiBadge-badge': {
-        right: 30,
-        top: 10,
-        border: `1px solid black`,
-        padding: '0 2px',
-    },
-}));
+
 
 export default function ProblemStatement({ problem_statement, user, npo_id }){
     const [open, setOpen] = useState(false);
@@ -235,11 +222,8 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
 
     var countOfHackers = 0;
     var countOfMentors = 0;
-    var countOfPeopleHelping = 0;
     if (problem_statement.helping != null) {
         problem_statement.helping.forEach(help => {                
-            countOfPeopleHelping++;
-
             if (help.type == "mentor" )
             {
                 countOfMentors++;
@@ -284,18 +268,6 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         helpingSwitch = <FormControlLabel onClick={handleClickOpen} onChange={handleClickOpen} labelPlacement="bottom" control={<MaterialUISwitch sx={{ m: 1 }} checked={help_checked} />} label={helpingSwitchType} />;
     }
 
-    
-
-
-    const createATeamButton = (problemStatementId, eventId) => {
-        if (helpingType == "hacker" && ableToCreateTeam) {
-            return <Button class="button button--primary" onClick={handleTeamCreate} value={`${problemStatementId}|${eventId}`}>Create a team</Button>
-        }
-        else{
-            return ""
-        }
-    }
-
 
     var github_buttons = "";    
 
@@ -332,94 +304,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         github_issue_button = "";
     }
 
-    const render_event_teams = (problemStatementId, event) => {
-        console.log("===> I GET HERE");
-        if( event.teams != null && event.teams.length > 0 )
-        {                                     
-            var teamCounter = 0;
-            const details = event.teams.map((team) => {
-                const countOfPeopleOnTeam = team.users.length;
-                var peoplePersonString = "hacker";
-                if (countOfPeopleOnTeam >= 2)
-                {
-                    peoplePersonString = "hackers";
-                }
-                console.log(team);
-
-                useMemo(() => {
-                    const isLoggedInUserAlreadyOnTeam = team.users.map(auser => {
-                        return user != null && (user.sub === auser.slack_id)
-                    });
-                    setAbleToCreateTeam(!isLoggedInUserAlreadyOnTeam);
-                
-                
-                }, [user]);
-                                
-
-                /* TODO: Need to show delete button if the user is on this team
-                var onTeam = false;
-                if( user != null )
-                {
-                    onTeam = team.users.map( auser => {
-                        if( auser === user.sub )
-                        {
-                            return true;
-                        }
-                    })
-                }
-                */
-                
-
-                if (team.problem_statements.length > 0 && team.problem_statements.includes(problemStatementId))
-                {
-                    teamCounter++; 
-            
-
-                    return (
-                        <ul key={team.id}>
-                            <li>
-                                {team.active === "True" ? 
-                                    <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active with {countOfPeopleOnTeam} {peoplePersonString}! Jump into Slack to see if you can help out.</span>}>
-                                        <StyledBadge badgeContent={countOfPeopleOnTeam} color="primary"><DirectionsRunIcon style={{ color: "green" }} /></StyledBadge></Tooltip> : 
-                                    <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}>
-                                    <CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
-                                {(() => {
-                                    if (team.team_number > 0) {
-                                        return "Team " + team.team_number + " ";
-                                    }
-                                })()}
-                                <b>{team.name}</b><br />
-                                <font face="Courier">#{team.slack_channel}</font></li>
-                        </ul>
-                    );
-                }
-                else 
-                {
-                    return ("");
-                }
-                
-            });
-
-            if (teamCounter > 0 )
-            {
-                return (
-                    <p>
-                        <h5><GroupIcon style={{ color: "blue" }} /> {event.teams.length} team{event.teams.length > 1 ? "s" : ""}</h5>
-                        {details}
-                    </p>
-                );
-            }
-            else 
-            {
-                return("");
-            }
-            
-        }
-        else {
-            // We don't have any teams linked to this event yet
-            return(<p></p>)
-        }        
-    }
+    
 
     var references_buttons = "";
     if( problem_statement.references != null && problem_statement.references.length > 0 )
@@ -460,10 +345,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         mentorsAddPlural[1] = "is";
     }
 
-    
+    console.log("Problem Statement Render");
     return (        
     <div className="ohack-problemstatement-feature">            
-                   
         <Stack spacing={2}>                    
                 <Stack justifyContent="flex-end" alignItems="flex-start" direction="row" spacing={2}>
                     {status}
@@ -504,8 +388,6 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
 
                 <ProjectProgress state={problem_statement.status} />
         </Stack>
-
-        
                         
         <div className="ohack-feature__description">                                        
             <Grid
@@ -513,8 +395,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                 direction="row"
                 justifyContent="flex-start"
                 alignItems="center"
-                sx={{ marginTop: 3, marginBottom: 1}}
-            >
+                sx={{ marginTop: 3, marginBottom: 1}}>
                 <ChildFriendlyIcon /> Born in&nbsp;<b>{problem_statement.first_thought_of}</b>
             </Grid>
             
@@ -522,67 +403,80 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
                         aria-controls="panel1bh-content"
-                        id="panel1bh-header"
-                    >
+                        id="panel1bh-header">
                         <Typography sx={{ width: '33%', flexShrink: 0 }}>
                             Project Description
                         </Typography>
                         <Typography sx={{ color: 'text.secondary' }}> {getWordStr(problem_statement.description)}...</Typography>
                     </AccordionSummary>
-                    <AccordionDetails>
+                    <AccordionDetails style={{ whiteSpace: "pre-wrap" }}>
                         {problem_statement.description}   
+                    </AccordionDetails>                
+                </Accordion>
+                <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel2bh-content"
+                        id="panel2bh-header">
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            Events
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary' }}>{HackathonText}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Events events={problem_statement.events} user={user} problemStatementId={problem_statement.id} />
                     </AccordionDetails>
-                </Accordion>                         
+                </Accordion> 
+                <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel3bh-content"
+                        id="panel3bh-header">
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            Code
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary' }}>GitHub repos associated with this project</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        {github_buttons}
+                    </AccordionDetails>
+                </Accordion>   
+                <Accordion expanded={expanded === 'panel4'} onChange={handleChange('panel4')}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel4bh-content"
+                        id="panel4bh-header">
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            Work Remaining
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary' }}>Tasks used to track progress</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        {github_issue_button}
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion expanded={expanded === 'panel5'} onChange={handleChange('panel5')}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel5bh-content"
+                        id="panel5bh-header">
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            References
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary' }}>Docs that will help you better understand the problem</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        {references_buttons} 
+                    </AccordionDetails>
+                </Accordion>    
         </div>        
-        
-
-        <div>
-            <br/>
-                <h3>{HackathonText}</h3>                
-            
-            {problem_statement.events.map(event => {
-                return (                    
-                    <div key={event.id}>                        
-                            <h3><EngineeringIcon /> {event.location} {event.type}</h3>
-                            <h5>{event.start_date} <ArrowForwardIosIcon style={{ color: "gray" }} /> {event.end_date}</h5>                            
-                        
-                        <a href={event.devpost_url}><button className="button button--primary button--compact">
-                            Register
-                        </button></a>
-
-                            <Stack
-                                direction="column"                                
-                                alignItems="flex-start"
-                                spacing={2}
-                            >
-                            {render_event_teams(problem_statement.id, event)}
-
-                            {createATeamButton(problem_statement.id, event.id)}
-                            </Stack>
-                            
-                    </div>)
-            })}
-            
-        </div>
-
-        <h3>Code</h3>        
-        {github_buttons}
-        
-        <h3>Work Remaining</h3>
-        {github_issue_button}
-
-
-        <h3>References</h3>
-        <div>            
-            {references_buttons}            
-        </div>
-        
+                
+                
         <Dialog
             open={open}
             onClose={handleClose}
             aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
-        >
+            aria-describedby="alert-dialog-description">
             <DialogTitle id="alert-dialog-title">
                 Thank you for helping a nonprofit with your talent!
             </DialogTitle>
@@ -651,8 +545,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
             open={createTeamOpen}
             onClose={handleCloseTeamCreate}
             aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
-        >
+            aria-describedby="alert-dialog-description">
             <DialogTitle id="alert-dialog-title">
                 Create a new team
             </DialogTitle>
