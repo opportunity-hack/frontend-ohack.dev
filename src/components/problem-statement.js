@@ -52,18 +52,19 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     const [helpingType, setHelpingType] = useState("");
 
     const [createTeamOpen, setCreateTeamOpen] = useState(false);
-    const [ableToCreateTeam, setAbleToCreateTeam] = useState(true);
+    const [createdTeamDetails, setCreatedTeamDetails] = useState();
 
-    const { handle_new_team_submission } = useTeams();
+    const { handle_new_team_submission, handle_join_team, handle_unjoin_a_team } = useTeams();
+        
+    const [newTeamSlackChannel, setNewTeamSlackChannel] = useState("");
     const [newTeamName, setNewTeamName] = useState("");
     const [newTeamEventId, setNewTeamEventId] = useState("");
     const [newTeamProblemStatementId, setNewTeamProblemStatementId] = useState("");
 
-
     const { handle_help_toggle } = useProfileApi();
 
 
-    const [expanded, setExpanded] = useState(false);
+    const [expanded, setExpanded] = useState("panel2");
     const handleChange = (panel) => (event, isExpanded) => {
         setExpanded(isExpanded ? panel : false);
     };
@@ -129,31 +130,56 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     };
 
 
-    const handleTeamCreate = (event) => {
-        const valueString = event.target.value; // ${ problemStatementId }| ${ eventId }| ${ user.sub }
-        console.log(valueString);
-        const valueArr = valueString.split("|");
-        const problemStatementId = valueArr[0];
-        const eventId = valueArr[1];
+    const handleLeavingTeam = (teamId) => {
+        handle_unjoin_a_team(teamId, handleTeamLeavingResponse);
+    }
 
+    const handleJoiningTeam = (teamId) => {
+        handle_join_team(teamId, handleTeamLeavingResponse);
+    }
+
+
+    const handleTeamCreate = (problemStatementId, eventId) => {            
         setNewTeamProblemStatementId(problemStatementId);
         setNewTeamEventId(eventId);     
-
         setCreateTeamOpen(true); // Open the modal
     }
+
 
     const handleUpdateTeamName = (event) => {
         const value = event.target.value;
         setNewTeamName(value);        
     }
 
+    const handleUpdateSlackChannel = (event) => {
+        const value = event.target.value;
+        setNewTeamSlackChannel(value); 
+    }
+
     const handleConfirmTeamCreate = (event) => {
-        handle_new_team_submission(newTeamName, newTeamProblemStatementId, newTeamEventId, user.sub, handleTeamCreationResponse);
+        handle_new_team_submission(newTeamName, newTeamSlackChannel, newTeamProblemStatementId, newTeamEventId, user.sub, handleTeamCreationResponse);
         setCreateTeamOpen(false); // Submit button pressed to create team
+        
+       
+    }
+
+    const handleTeamLeavingResponse = (data) => {
+        // console.log(data);
+        // We don't do anything when someone leaves
     }
 
     const handleTeamCreationResponse = (data) => {
-        console.log(data);
+        // We need to update our state to temporarily show the user that they have created a team
+        // This should be followed up on refresh of the page with a hit to grab the real version from the backend/DB
+        setCreatedTeamDetails({
+            name: data.team.name,
+            slack_channel: data.team.slack_channel,
+            active: "True",
+            users: [{
+                name: data.user.name,
+                profile_image: data.user.profile_image
+            }]
+        })
     }
 
     const handleCloseTeamCreate = (event) => {
@@ -197,6 +223,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     }
 
     var HackathonText;
+    
     if (problem_statement.events.length > 0)
     {
         var s = problem_statement.events.length > 1 ? "s" : "";
@@ -205,6 +232,24 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     else {
         HackathonText = "We haven't hacked on this project yet!";
     }
+
+    var TeamText = "";
+    if (problem_statement.events != null){
+        
+        var teamCounter = 0;
+        problem_statement.events.forEach(event => {
+            event.teams.forEach(ateam => {
+                if (ateam.problem_statements.includes(problem_statement.id))
+                {
+                    teamCounter++;
+                }
+            })
+        });
+        var s = teamCounter > 1 ? "s" : "";
+        var is_are = teamCounter > 1 ? " are " : " is ";
+        TeamText = "There" + is_are + teamCounter + " team" + s + " working on this";
+    }
+
 
     var status = "";
     if (problem_statement.status === "production" )
@@ -345,10 +390,10 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         mentorsAddPlural[1] = "is";
     }
 
-    console.log("Problem Statement Render");
+    console.log("== Problem Statement Render: " + problem_statement.id);
     return (        
-    <div className="ohack-problemstatement-feature">            
-        <Stack spacing={2}>                    
+        <div key={problem_statement.id} className="ohack-problemstatement-feature">  
+            <Stack spacing={2}>
                 <Stack justifyContent="flex-end" alignItems="flex-start" direction="row" spacing={2}>
                     {status}
                     <Box>
@@ -376,29 +421,29 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                     </Box>
                 </Stack>
 
-                    <h3 className="ohack-feature__headline">{problem_statement.title}</h3>
-                    
-                    <Stack spacing={2} direction="row">
-                        <Box sx={{ width: '75%' }}>
-                        {callToAction}
-                        </Box>
+                <h3 className="ohack-feature__headline">{problem_statement.title}</h3>
 
-                        {helpingSwitch}
-                    </Stack>
+                <Stack spacing={2} direction="row">
+                    <Box sx={{ width: '75%' }}>
+                        {callToAction}
+                    </Box>
+
+                    {helpingSwitch}
+                </Stack>
 
                 <ProjectProgress state={problem_statement.status} />
-        </Stack>
-                        
-        <div className="ohack-feature__description">                                        
-            <Grid
-                container
-                direction="row"
-                justifyContent="flex-start"
-                alignItems="center"
-                sx={{ marginTop: 3, marginBottom: 1}}>
-                <ChildFriendlyIcon /> Born in&nbsp;<b>{problem_statement.first_thought_of}</b>
-            </Grid>
-            
+            </Stack>
+
+            <div className="ohack-feature__description">
+                <Grid
+                    container
+                    direction="row"
+                    justifyContent="flex-start"
+                    alignItems="center"
+                    sx={{ marginTop: 3, marginBottom: 1 }}>
+                    <ChildFriendlyIcon /> Born in&nbsp;<b>{problem_statement.first_thought_of}</b>
+                </Grid>
+
                 <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
@@ -407,26 +452,37 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                         <Typography sx={{ width: '33%', flexShrink: 0 }}>
                             Project Description
                         </Typography>
-                        <Typography sx={{ color: 'text.secondary' }}> {getWordStr(problem_statement.description)}...</Typography>
+                        <Typography> {getWordStr(problem_statement.description)}...</Typography>
                     </AccordionSummary>
                     <AccordionDetails style={{ whiteSpace: "pre-wrap" }}>
-                        {problem_statement.description}   
-                    </AccordionDetails>                
+                        {problem_statement.description}
+                    </AccordionDetails>
                 </Accordion>
                 <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
                         aria-controls="panel2bh-content"
                         id="panel2bh-header">
-                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
-                            Events
-                        </Typography>
-                        <Typography sx={{ color: 'text.secondary' }}>{HackathonText}</Typography>
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>Events</Typography>
+                        <Stack>
+                            <Typography>{HackathonText}</Typography>
+                            <Typography>{TeamText}</Typography>
+                        </Stack>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <Events events={problem_statement.events} user={user} problemStatementId={problem_statement.id} />
+                        <Events
+                            events={problem_statement.events}
+                            onTeamCreate={handleTeamCreate}
+                            onTeamLeave={handleLeavingTeam}
+                            onTeamCreateComplete={createdTeamDetails}
+                            onTeamJoin={handleJoiningTeam}
+                            user={user}
+                            problemStatementId={problem_statement.id}
+                            isHelping={help_checked}
+                        />
+
                     </AccordionDetails>
-                </Accordion> 
+                </Accordion>
                 <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
@@ -435,12 +491,14 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                         <Typography sx={{ width: '33%', flexShrink: 0 }}>
                             Code
                         </Typography>
-                        <Typography sx={{ color: 'text.secondary' }}>GitHub repos associated with this project</Typography>
+                        <Typography>GitHub repos associated with this project</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        {github_buttons}
+                        <Stack direction="row" spacing={1}>
+                            {github_buttons}
+                        </Stack>
                     </AccordionDetails>
-                </Accordion>   
+                </Accordion>
                 <Accordion expanded={expanded === 'panel4'} onChange={handleChange('panel4')}>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
@@ -449,10 +507,12 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                         <Typography sx={{ width: '33%', flexShrink: 0 }}>
                             Work Remaining
                         </Typography>
-                        <Typography sx={{ color: 'text.secondary' }}>Tasks used to track progress</Typography>
+                        <Typography>Tasks used to track progress</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        {github_issue_button}
+                        <Stack direction="row" spacing={1}>
+                            {github_issue_button}
+                        </Stack>
                     </AccordionDetails>
                 </Accordion>
                 <Accordion expanded={expanded === 'panel5'} onChange={handleChange('panel5')}>
@@ -463,107 +523,110 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                         <Typography sx={{ width: '33%', flexShrink: 0 }}>
                             References
                         </Typography>
-                        <Typography sx={{ color: 'text.secondary' }}>Docs that will help you better understand the problem</Typography>
+                        <Typography>Docs that will help you better understand the problem</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        {references_buttons} 
+                        <Stack direction="row" spacing={1}>
+                            {references_buttons}
+                        </Stack>
                     </AccordionDetails>
-                </Accordion>    
-        </div>        
-                
-                
-        <Dialog
-            open={open}
-            onClose={handleClose}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description">
-            <DialogTitle id="alert-dialog-title">
-                Thank you for helping a nonprofit with your talent!
-            </DialogTitle>
-            <DialogContent>
-                <DialogContentText component={'span'} id="alert-dialog-description">    
-                    There are several ways to contibute, if you want, when you want.
-                    <h4>Hacker</h4>
-                    You'll be creating something that benefits nonprofits.
-                    Most of what you do will take place on:
-                    <ul>
-                        <li><b>Slack</b> - communication with your team,  non-profits, mentors</li>
-                        <li><b>DevPost</b> - for hackathons this is the main landing place for your project</li>
-                        <li><b>GitHub</b> - your code must be publically available and well documented so that others can use it</li>
-                        <li><b>Heroku</b> - when you productionalize your code, use Heroku as one of the easiest ways to make it available to the masses</li>
-                    </ul>
-                    
-                    <h4>Mentor</h4>  
-                    You'll be assisting hackers with their project.
-                    Most of what you do will take place on:
-                    <ul>
-                        <li>Slack - checking in on teams and jumping into a screenshare here and there</li>
-                    </ul>
+                </Accordion>
+            </div>
 
-                    Your goals are:
-                    <ul>
-                    <li>Make sure the team knows the problem they are solving</li>
-                        <li>...are solving that problem 👆</li>
-                        <li>Are using libraries and are not trying to reinvent the wheel</li>
-                        <li>Are looking at the judging criteria (on DevPost)</li>
-                        <li>Have a demo video that is 4 minutes that describes the problem and solution using tools like Loom or Quicktime.</li>
-                    </ul>
-                    <a href="https://www.ohack.org/about/mentors" rel="noreferrer" target="_blank">More details on mentoring</a>
 
-                </DialogContentText>
-            </DialogContent>
-            <DialogActions>                          
-                <Button class="button button--compact button--third" onClick={handleClose} value="hacker" autoFocus>Help as Hacker</Button>
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description">
+                <DialogTitle id="alert-dialog-title">
+                    Thank you for helping a nonprofit with your talent!
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText component={'span'} id="alert-dialog-description">
+                        There are several ways to contibute, if you want, when you want.
+                        <h4>Hacker</h4>
+                        You'll be creating something that benefits nonprofits.
+                        Most of what you do will take place on:
+                        <ul>
+                            <li><b>Slack</b> - communication with your team,  non-profits, mentors</li>
+                            <li><b>DevPost</b> - for hackathons this is the main landing place for your project</li>
+                            <li><b>GitHub</b> - your code must be publically available and well documented so that others can use it</li>
+                            <li><b>Heroku</b> - when you productionalize your code, use Heroku as one of the easiest ways to make it available to the masses</li>
+                        </ul>
+
+                        <h4>Mentor</h4>
+                        You'll be assisting hackers with their project.
+                        Most of what you do will take place on:
+                        <ul>
+                            <li>Slack - checking in on teams and jumping into a screenshare here and there</li>
+                        </ul>
+
+                        Your goals are:
+                        <ul>
+                            <li>Make sure the team knows the problem they are solving</li>
+                            <li>...are solving that problem 👆</li>
+                            <li>Are using libraries and are not trying to reinvent the wheel</li>
+                            <li>Are looking at the judging criteria (on DevPost)</li>
+                            <li>Have a demo video that is 4 minutes that describes the problem and solution using tools like Loom or Quicktime.</li>
+                        </ul>
+                        <a href="https://www.ohack.org/about/mentors" rel="noreferrer" target="_blank">More details on mentoring</a>
+
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button class="button button--compact button--third" onClick={handleClose} value="hacker" autoFocus>Help as Hacker</Button>
                     <Button class="button button--compact button--third" onClick={handleClose} value="mentor">Help as Mentor</Button>
                     <Button class="button button--compact button--secondary" className="error" onClick={handleCancel}>Cancel</Button>
-            </DialogActions>
-        </Dialog>
+                </DialogActions>
+            </Dialog>
 
-        <Dialog
-            open={openUnhelp}
-            onClose={handleCloseUnhelp}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
-        >
-            <DialogTitle id="alert-dialog-title">
-                Helping has completed!
-            </DialogTitle>
-            <DialogContent>
-                <DialogContentText component={'span'} id="alert-dialog-description">                    
-                    <h4>What this means</h4>
-                    You are recording the fact that you're no longer helping this nonprofit                    
+            <Dialog
+                open={openUnhelp}
+                onClose={handleCloseUnhelp}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">
+                    Helping has completed!
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText component={'span'} id="alert-dialog-description">
+                        <h4>What this means</h4>
+                        You are recording the fact that you're no longer helping this nonprofit
 
-                </DialogContentText>
-            </DialogContent>
-            <DialogActions>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
                     <Button class="button button--compact button--secondary" onClick={handleCloseUnhelpCancel}>Cancel</Button>
-                    <Button class="button button--compact button--red" onClick={handleCloseUnhelp} autoFocus>Withdrawl Help</Button>                    
-            </DialogActions>
-        </Dialog>  
-        
-        <Dialog
-            open={createTeamOpen}
-            onClose={handleCloseTeamCreate}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description">
-            <DialogTitle id="alert-dialog-title">
-                Create a new team
-            </DialogTitle>
-            <DialogContent>
-                <DialogContentText component={'span'} id="alert-dialog-description">
-                    
-                    <TextField id="filled-basic" label="Team Name" onChange={handleUpdateTeamName} variant="filled" />
+                    <Button class="button button--compact button--red" onClick={handleCloseUnhelp} autoFocus>Withdrawl Help</Button>
+                </DialogActions>
+            </Dialog>
 
-                       
-                </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-                <Button class="button button--compact button--secondary" onClick={handleCloseTeamCreate}>Cancel</Button>
-                <Button class="button button--compact button--third" onClick={handleConfirmTeamCreate} autoFocus>Submit</Button>
-            </DialogActions>
-        </Dialog>    
+            <Dialog
+                open={createTeamOpen}
+                onClose={handleCloseTeamCreate}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description">
+                <DialogTitle id="alert-dialog-title">
+                    Create a new team
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText component={'span'} id="alert-dialog-description">
+                        <Stack spacing={2}>
+                            <TextField id="filled-basic" label="Team Name" onChange={handleUpdateTeamName} variant="filled" />
+                            <TextField id="filled-basic" label="Slack Channel Name" onChange={handleUpdateSlackChannel} variant="filled" />
+                        </Stack>
+
+
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button class="button button--compact button--secondary" onClick={handleCloseTeamCreate}>Cancel</Button>
+                    <Button class="button button--compact button--third" onClick={handleConfirmTeamCreate} autoFocus>Submit</Button>
+                </DialogActions>
+            </Dialog>  
     </div>
 
-    
     );
 }

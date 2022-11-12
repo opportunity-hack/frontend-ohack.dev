@@ -10,9 +10,11 @@ import CommentIcon from '@mui/icons-material/Comment';
 import Tooltip from '@mui/material/Tooltip';
 
 import { useState } from "react";
+import useProblemstatements from "../../hooks/use-problem-statements";
 
-export default function AdminProblemStatementList ({ problem_statements, selected, onSelected, default_selected } ) {
+export default function AdminProblemStatementList ({ selected, onSelected, default_selected } ) {
     const [checked, setChecked] = useState(default_selected);
+    const { problem_statements } = useProblemstatements();
 
     const handleToggle = (value) => () => {
         const currentIndex = checked.indexOf(value);

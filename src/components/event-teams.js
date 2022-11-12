@@ -1,182 +1,162 @@
 
 import Tooltip from '@mui/material/Tooltip';
-import { styled } from '@mui/material/styles';
 import Badge from '@mui/material/Badge';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { styled } from '@mui/material/styles';
+
 import IconButton from '@mui/material/IconButton';
 import GroupIcon from '@mui/icons-material/Group';
 import Image from 'next/image'
 import Stack from '@mui/material/Stack';
+import { useState, useMemo, useEffect } from "react";
+import Button from '@mui/material/Button';
+import Team from './event-team';
+import next from 'next';
 
+/*
 
-const StyledBadge = styled(Badge)(({ theme }) => ({
-    '& .MuiBadge-badge': {
-        right: 30,
-        top: 10,
-        border: `1px solid black`,
-        padding: '0 2px',
-    },
-}));
+This component should render each team
 
-export default function EventTeams({ teams, user, problemStatementId }) {    
+problem-statement.js -> events.js -> event-teams.js
+
+Use Case 1: No teams
+[ Event ]
+ [ Create Team Button ]
+
+Use Case 2: One team created by the same person who is logged in
+[ Event ]
+ 1 Team
+ [ Team ] -
+Where - is the button to remove yourself from the team
+
+Use Case 3: One team not created by the person who is logged in
+[ Event ]
+ 1 Team
+ [ Team ] +
+ [ Create Team Button ]
+Where + is the button to add yourself to that team
+And [ Create Team button ] allows you to create a new team (and join that team)
+
+Use Case 4: There are three teams created, and the logged in user is on the first team
+[ Event ]
+  3 Teams
+  [ Team ] -
+  [ Team ]
+  [ Team ]
+
+*/
+
+/* 
+TODO: Potential Design Flaw
+1. Events have teams - hacker teams that are working during that event
+2. Teams have users - users are hackers working on a team
+3. Our nonprofit pages print problem statements, and we don't have a direct mapping from problem statement to team
+4. This means we have to print the events where we worked on that problem statement, and have to filter the teams from that event to only give us the teams that worked on that problem
+
+nonprofits -> problem_statements
+problem_statements -> events
+events -> teams 
+teams -> users
+
+teams -> problem_statements
+
+*/
+export default function EventTeams({ teams, user, problemStatementId, eventId, onTeamCreate, onTeamLeave, onTeamCreateComplete, onTeamJoin, isHelping }) { 
+    console.log("=== EventTeams ")
     var teamCounter = 0;
-
-    const handleDeleteClicked = () => {
-        console.log("Delete Button Clicked");
-    };
-
-
-    const allTeams = teams.map(team => {
-        const countOfPeopleOnTeam = team.users.length;
-        var peoplePersonString = "hacker";
-        if (countOfPeopleOnTeam >= 2) {
-            peoplePersonString = "hackers";
-        }
-
+    
+    var userId = "";
+    if( user != null )
+    {
+        userId = user.sub;
+    }
+    
+    const isUserInAnyTeamListTemp = teams.map(team =>{        
         const isTeamAssociatedToProblemStatement = team.problem_statements.includes(problemStatementId);
-        if ( !isTeamAssociatedToProblemStatement )
+        if (!isTeamAssociatedToProblemStatement )
         {
-            return("");
+                
+            return false;
         }
 
         teamCounter++;
         
-        const isUserOnTeam = team.users.map(auser => {
+        const result = team.users.map(auser => {
+            if( user == null )
+            {
+                return false;
+            }
+            else if (auser["slack_id"] === user.sub) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+        
+        return result;
+    });
+    
+    const isUserInAnyTeamList = [].concat.apply([], isUserInAnyTeamListTemp);
+    const isLoggedInUserAlreadyOnTeam = isUserInAnyTeamList.includes(true);
+       
+
+    const handleDeleteClicked = (team) => {
+        console.log("Delete Button Clicked");
+        console.log(team);
+        onTeamLeave(team.id)
+    };
+
+
+    const handleJoinClicked = (team) => {
+        console.log("Join Button Clicked");        
+        console.log(team);       
+        onTeamJoin(team.id);
+    };
+
+
+    const teamsToShow = teams.map(team => {
+            const users = team.users;
+
+            const isTeamAssociatedToProblemStatement = team.problem_statements.includes(problemStatementId);
+            if (!isTeamAssociatedToProblemStatement) {
+                return "";
+            }
+
+            
+            // This will give a result for each team, e.g. [true, false, false]
+            const isUserOnThisTeam = users.map( auser => {
                 if( user == null )
                 {
                     return false;
                 }
-
-                if (auser["slack_id"] === user.sub)
+                else if (auser["slack_id"] === user.sub )
                 {
-                    return (
-                        <IconButton onClick={handleDeleteClicked} edge="end" aria-label="comments">
-                            <PersonRemoveIcon />
-                        </IconButton>
-                        );
+                    return true;
                 }
-            });
+                else 
+                {
+                    return false;
+                }
+            })
+            const isOnTeam = isUserOnThisTeam.includes(true);            
 
-        const userIcons = team.users.map(auser => {
-           return(
-            <Stack direction="row" alignItems="center" spacing={1}>
-                <Image className="ohack-feature__icon"
-                   src={auser.profile_image}          
-                   width={50}
-                   height={50} />
-                
-                   <div>{auser.name}</div>
-            </Stack>
-           )          
-        });
-        
-        return(
-            <div>                              
-                <ul key={team.id}>
-                    <li>
-                        {team.active === "True" ?
-                            <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active with {countOfPeopleOnTeam} {peoplePersonString}! Jump into Slack to see if you can help out.</span>}>
-                                <StyledBadge badgeContent={countOfPeopleOnTeam} color="primary"><DirectionsRunIcon style={{ color: "green" }} /></StyledBadge></Tooltip> :
-                            <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}>
-                                <CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
-                        {(() => {
-                            if (team.team_number > 0) {
-                                return "Team " + team.team_number + " ";
-                            }
-                        })()}
-                        <b>{team.name}</b> <font face="Courier">#{team.slack_channel}</font> {isUserOnTeam}<br />
-                        <div>
-                        {userIcons}
-                        </div>
-                    </li>
-
-                        
-                </ul>
-            </div>
-        )
-    })
-
-/*
-const render_event_teams = (problemStatementId, event) => {
-    console.log("===> I GET HERE");
-    if (event.teams != null && event.teams.length > 0) {
-        var teamCounter = 0;
-        const details = event.teams.map((team) => {
-            const countOfPeopleOnTeam = team.users.length;
-            var peoplePersonString = "hacker";
-            if (countOfPeopleOnTeam >= 2) {
-                peoplePersonString = "hackers";
-            }
-            console.log(team);
-
-            useMemo(() => {
-                const isLoggedInUserAlreadyOnTeam = team.users.map(auser => {
-                    return user != null && (user.sub === auser.slack_id)
-                });
-                setAbleToCreateTeam(!isLoggedInUserAlreadyOnTeam);
-
-
-            }, [user]);
-
-
-    
             
+        return (<Team team={team} isHelping={isHelping} _isOnTeam={isOnTeam} _isOnAnyTeam={isLoggedInUserAlreadyOnTeam} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} />);
+    });
+    
 
-
-            if (team.problem_statements.length > 0 && team.problem_statements.includes(problemStatementId)) {
-                teamCounter++;
-
-
-                return (
-                    <ul key={team.id}>
-                        <li>
-                            {team.active === "True" ?
-                                <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active with {countOfPeopleOnTeam} {peoplePersonString}! Jump into Slack to see if you can help out.</span>}>
-                                    <StyledBadge badgeContent={countOfPeopleOnTeam} color="primary"><DirectionsRunIcon style={{ color: "green" }} /></StyledBadge></Tooltip> :
-                                <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}>
-                                    <CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
-                            {(() => {
-                                if (team.team_number > 0) {
-                                    return "Team " + team.team_number + " ";
-                                }
-                            })()}
-                            <b>{team.name}</b><br />
-                            <font face="Courier">#{team.slack_channel}</font></li>
-                    </ul>
-                );
-            }
-            else {
-                return ("");
-            }
-
-        });
-
-        if (teamCounter > 0) {
-            return (
-                <p>
-                    <h5><GroupIcon style={{ color: "blue" }} /> {event.teams.length} team{event.teams.length > 1 ? "s" : ""}</h5>
-                    {details}
-                </p>
-            );
-        }
-        else {
-            return ("");
-        }
-
-    }
-    else {
-        // We don't have any teams linked to this event yet
-        return (<p></p>)
-    }
-}
-*/
-
-return(
-    <div>
-        <h5><GroupIcon style={{ color: "blue" }} /> {teamCounter} team{teamCounter > 1 || teamCounter == 0 ? "s" : ""}</h5>
-        {allTeams}
-    </div>
-    );
-
-}
+    console.log("  == Event Teams Render")
+    return(                        
+            <Stack spacing={0.5}>
+            {isHelping && !isLoggedInUserAlreadyOnTeam && !onTeamCreateComplete && <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team</Button>}
+            {teamCounter > 0 && <div><GroupIcon style={{ color: "blue" }} /> {teamCounter} team{teamCounter > 1 || teamCounter == 0 ? "s" : ""}</div> }
+                        
+            {teamsToShow}
+            {onTeamCreateComplete && <Team team={onTeamCreateComplete} _isOnTeam={true} _isOnAnyTeam={true} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} /> }
+            </Stack>
+        
+    )
+}    

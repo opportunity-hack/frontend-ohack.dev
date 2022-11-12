@@ -3,7 +3,6 @@ import { useState } from "react";
 
 import useNonprofit from "../../hooks/use-nonprofit";
 import useAdmin from '../../hooks/use-admin-check'
-import useProblemstatements from "../../hooks/use-problem-statements";
 
 import ProblemStatement from "../../components/problem-statement";
 import AdminProblemStatementList from "../../components/admin/problemstatement-list";
@@ -13,9 +12,6 @@ import TagIcon from '@mui/icons-material/Tag';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
@@ -41,7 +37,6 @@ import { red } from '@mui/material/colors';
 import ShareIcon from '@mui/icons-material/Share';
 
 import Stack from '@mui/material/Stack';
-import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 
@@ -74,29 +69,14 @@ export default function NonProfitProfile(){
 
     const { isAdmin } = useAdmin();
     const [checked, setChecked] = useState([]);
-    const { problem_statements } = useProblemstatements();
     const [message, setMessage] = useState("");
 
     const [expanded, setExpanded] = useState(false);
     const handleExpandClick = () => {
         setExpanded(!expanded);
     };
-
     
     const { handle_npo_problem_statement_edit, nonprofit } = useNonprofit(nonprofit_id);
-
-
-    const TEXT_COLLAPSE_OPTIONS = {
-        collapse: false,
-        collapseText: 'show more',
-        expandText: 'show less',
-        minHeight: 80,
-        maxHeight: 200,
-        textStyle: {
-            color: 'blue',
-            fontSize: '20px',
-        },
-    }
 
     var slack_details, slack_details_plain = "";
 
@@ -121,7 +101,6 @@ export default function NonProfitProfile(){
     };
     
    
-
 
     const problemStatements = () => {
         if( nonprofit.problem_statements == null )
@@ -182,7 +161,6 @@ export default function NonProfitProfile(){
                 return ps.id
             });
             return <div><AdminProblemStatementList
-                    problem_statements={problem_statements} // All problem statements to choose from
                     selected={checked}
                     onSelected={setChecked}
                     default_selected={default_selected}
@@ -246,7 +224,7 @@ export default function NonProfitProfile(){
     // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
     console.log("Nonprofit Page Render");
     return (
-        <div className="content-layout">            
+        <div key={nonprofit_id} className="content-layout">            
            
             <h1 className="content__title">{nonprofit.name}</h1>
 
@@ -296,8 +274,6 @@ export default function NonProfitProfile(){
                 </Collapse>
             </Card>
             
-
-
            
 
             <div className="content__body">

@@ -37,7 +37,7 @@ export default function useTeams(){
     }, [getAccessTokenSilently]);
 
 
-    const handle_new_team_submission = async (teamName, problemStatementId, eventId, userId, onComplete) => {
+    const handle_new_team_submission = async (teamName, teamSlackChannel, problemStatementId, eventId, userId, onComplete) => {
         if (!user)
             return null;
 
@@ -52,7 +52,50 @@ export default function useTeams(){
                 name: teamName,
                 userId: userId,
                 eventId: eventId,
-                problemStatementId: problemStatementId                         
+                problemStatementId: problemStatementId,
+                slackChannel: teamSlackChannel                      
+            }
+        };
+
+        const data = await makeRequest({ config, authenticated: true });
+        onComplete(data);
+        return data;
+    };
+
+    const handle_join_team = async (teamId, onComplete) => {
+        if (!user)
+            return null;
+
+        const config = {
+            url: `${apiServerUrl}/api/messages/team`,
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: {
+                teamId: teamId                                       
+            }
+        };
+
+        const data = await makeRequest({ config, authenticated: true });
+        onComplete(data.text);
+        return data;
+    };
+
+    const handle_unjoin_a_team = async (teamId, onComplete) => {
+        if (!user)
+            return null;
+
+        const config = {
+            url: `${apiServerUrl}/api/messages/team`,
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: {
+                teamId: teamId                                       
             }
         };
 
@@ -125,6 +168,8 @@ export default function useTeams(){
 
     return {
         teams,
-        handle_new_team_submission
+        handle_new_team_submission,
+        handle_unjoin_a_team,
+        handle_join_team
     }
 }

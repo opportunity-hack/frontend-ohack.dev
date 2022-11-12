@@ -20,14 +20,16 @@ export default function NavBar(){
      
     <nav className="nav-bar">
         <div className="nav-bar__brand">
-          <Link href="/">
-            <Image
-              className="nav-bar__logo"
-              src="https://i.imgur.com/Ff801O6.png"              
-              alt="Opportunity Hack logo"              
-              width={100}
-              height={48}
-            />
+          <Link href="/" passHref>
+            <a>
+              <Image
+                className="nav-bar__logo"
+                src="https://i.imgur.com/Ff801O6.png"              
+                alt="Opportunity Hack logo"              
+                width={100}
+                height={48}
+              />
+            </a>
           </Link>
         </div>
         
