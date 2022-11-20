@@ -39,6 +39,8 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InputAdornment from '@mui/material/InputAdornment';
+
 
 import useTeams from "../hooks/use-teams";
 import Events from "./events";
@@ -614,8 +616,26 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                 <DialogContent>
                     <DialogContentText component={'span'} id="alert-dialog-description">
                         <Stack spacing={2}>
-                            <TextField id="filled-basic" label="Team Name" onChange={handleUpdateTeamName} variant="filled" />
-                            <TextField id="filled-basic" label="Slack Channel Name" onChange={handleUpdateSlackChannel} variant="filled" />
+                            <TextField
+                                id="team-name" 
+                                label="Team Name" 
+                                helperText="Any unique name you can use to identify your team" 
+                                onChange={handleUpdateTeamName} 
+                                margin="dense"
+                                FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
+                                variant="filled" />
+
+                            <TextField 
+                                id="slack-name" 
+                                label="Slack Channel Name" 
+                                helperText="Create this public channel first" 
+                                onChange={handleUpdateSlackChannel} 
+                                margin="dense"
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">#</InputAdornment>,
+                                }}
+                                FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
+                                variant="filled" />
                         </Stack>
 
 
