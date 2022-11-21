@@ -5,9 +5,9 @@
 
   width: 100%;
 
-  background: linear-gradient(to bottom right, #99ff33 23%, #800080 89%);
+  background: linear-gradient(to bottom right, var(--color1) 23%, var(--color2) 89%);
   
-  color: var(--black);
+  color: var(--color3);
 
   /* responsive */
 
