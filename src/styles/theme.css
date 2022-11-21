@@ -3,6 +3,14 @@
 /* Theme */
 
 :root {
+  /* attempts: 
+https://coolors.co/255957-a98743-58cffb-f0ff00-533747 
+  https://coolors.co/a54657-f1a66a-58cffb-f0ff00-003486 */
+  --color1: #F0FF00; 
+  --color2: #58CFFB; 
+  --color3: #003486;
+  --color4: #F1A66A;
+  --color5: #A54657;
   --orange: #ff4f40;
   --indigo: #635dff;
   --white: #fff;
@@ -61,8 +69,8 @@
 
   --emerald-yellow-gradient: linear-gradient(
     153.07deg,
-    var(--emerald) -2.47%,
-    var(--yellow) 102.78%
+    var(--color1) -2.47%,
+    var(--color2) 102.78%
   );
 
   --font-primary: "Inter", sans-serif;
