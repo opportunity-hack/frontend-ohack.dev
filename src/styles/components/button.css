@@ -36,11 +36,12 @@
 }
 
 .button--primary {
-  background-color: chartreuse;
+  background-color: var(--color3);
+  color: var(--white)
 }
 
 .button--primary:hover {
-  background: var(--blue);
+  background: var(--color2);
 }
 
 .button--secondary {
