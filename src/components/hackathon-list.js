@@ -21,6 +21,7 @@ export default function HackathonList() {
                     end_date={event.end_date}                    
                     location={event.location}
                     devpostUrl={event.devpost_url}
+                    eventLinks={event.links}
                     icon={event.image_url}
                     donationUrl={event.donation_url}
                     donationGoals={event.donation_goals}
