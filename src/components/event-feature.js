@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-export default function EventFeature({ title, type, nonprofits, start_date, end_date, location, devpostUrl, donationUrl, donationGoals, donationCurrent, icon }) {
+export default function EventFeature({ title, type, nonprofits, start_date, end_date, location, devpostUrl, eventLinks, donationUrl, donationGoals, donationCurrent, icon }) {
 
 
     var anIcon = "https://i.imgur.com/Ih0mbYx.png";
@@ -34,14 +34,7 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
         })
     }
 
-    var donation = "";
-    var donationButton = <a
-                            href="https://www.paypal.com/donate/?hosted_button_id=CUJRGJHUKST9L"
-                            target="_blank"
-                            rel="noopener noreferrer">
-                            <Button size="large" variant="contained">Support</Button>
-                        </a>;
-
+    var donation = "";    
 
     var prize, swag, food, thankYou = ""
     var prizePercent, prizeCurrent, prizeGoal = 0;
@@ -118,31 +111,20 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
     }
 
 
-    if (donationUrl != null && donationUrl != "")
-    {        
-        donationButton = <a
-            href={donationUrl}
-            target="_blank"
-            rel="noopener noreferrer">
-            <Button onClick={() => gaButton("donation_button_click", donationUrl)} size="large" variant="contained">Donate</Button>
-        </a>;
-
-        if( "thank_you" in donationCurrent )
-        {
-            const ty = donationCurrent["thank_you"];
-            thankYou = <div><b>Thank you</b> {ty}</div>;
-        }
+    if( "thank_you" in donationCurrent )
+    {
+        const ty = donationCurrent["thank_you"];
+        thankYou = <div><b>Thank you</b> {ty}</div>;
 
         donation = <span><h5>Funding Goals</h5>           
-            <Stack spacing={2}>
-            {prize}            
-            {swag}
-            {food}
-            </Stack>
-            </span>
-            ;
+        <Stack spacing={2}>
+        {prize}            
+        {swag}
+        {food}
+        </Stack>
+        </span>
+        ;
     }
-
 
     function LinearProgressWithLabel(props) {
         return (
@@ -157,6 +139,49 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
                 </Box>
             </Box>
         );
+    }
+
+    var linksContent = "";    
+
+    if( eventLinks != null && eventLinks.length > 0 )
+    {
+        linksContent = eventLinks.map( link => {
+            const alink = link.link;
+            const name = link.name;
+
+            var icon = "";
+            if( link.open_new != null && link.open_new === "True" )
+            {
+                icon = <span>&nbsp;<OpenInNewIcon /></span>
+            }
+
+            var size = "";
+            if( link.size != null )
+            {
+                size = link.size;
+            }
+
+            var variant = "";
+            if( link.variant != null )
+            {
+                variant = link.variant;
+            }
+
+            var color = "primary";
+            if( link.color != null )
+            {
+                color = link.color;
+            }
+
+            return(                
+                <a
+                href={link.link}            
+                target="_blank"
+                rel="noopener noreferrer">
+                        <Button onClick={() => gaButton("more_details_button_click", alink)} color={color} size={size} variant={variant}>{name}{icon}</Button>
+                </a> 
+            )
+        })
     }
 
 
@@ -186,15 +211,8 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
 
                 <Stack
                     direction="row"
-                    spacing={2}>
-                {donationButton}                
-   
-                <a
-                href={devpostUrl}            
-                target="_blank"
-                rel="noopener noreferrer">
-                        <Button onClick={() => gaButton("more_details_button_click", devpostUrl)} size="large" variant="outlined">More Details&nbsp;<OpenInNewIcon /></Button>
-                </a>                
+                    spacing={2}>                   
+                {linksContent}               
                 </Stack>
                 
                 {thankYou}
