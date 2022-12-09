@@ -4,7 +4,8 @@ import { Auth0ProviderWithHistory } from "../auth0-provider-with-history";
 import { useAuth0 } from "@auth0/auth0-react";
 
 import { Loader } from "../components/loader";
-import NavBar from "../components/nav-bar";
+// import NavBar from "../components/nav-bar";
+import NavBar from "../components/Navbar/Navbar";
 import Footer from "../components/footer";
 import Head from 'next/head';
 
