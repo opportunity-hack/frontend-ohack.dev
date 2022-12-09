@@ -9,7 +9,7 @@ export default function HackathonList() {
     
     var currentEvents = "";
 
-    if(hackathons.length > 0)
+    if(hackathons?.length > 0)
     {
         currentEvents = hackathons.map( event => {
             return(                

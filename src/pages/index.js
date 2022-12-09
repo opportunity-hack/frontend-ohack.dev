@@ -4,6 +4,7 @@ import OHackFeatures from "../components/ohack-features";
 import Head from 'next/head';
 import HackathonList from "../components/hackathon-list";
 
+
 export default function Home() {
 
   return(
