@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
 	MainContainer,
 	ButtonStyled,
@@ -10,11 +10,9 @@ import {
 	BlankContainer,
 } from "./styles";
 import Typewriter from "typewriter-effect";
-import { motion } from "framer-motion";
+import { Player } from "@lottiefiles/react-lottie-player";
 
 function HeroBanner() {
-	const logo = "https://i.imgur.com/Ih0mbYx.png";
-
 	const JOIN_SLACK_LINK =
 		"https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
 	const openCodeSample = () => {
@@ -31,8 +29,27 @@ function HeroBanner() {
 		});
 	};
 
+	const [width, setWidth] = useState();
+	const functionName = () => {
+		setInterval(() => {
+			setWidth(screen.width);
+		}, 500);
+	};
+
+	window.addEventListener("resize", functionName);
+
+	useEffect(() => {
+		setWidth(screen.width);
+	}, []);
+
+
 	return (
-		<GridStyled container direction="row">
+		<GridStyled
+			container
+			direction="row"
+			justifyContent="center"
+			alignItem="center"
+		>
 			{/* Left Container */}
 			<BlankContainer container xs={12} md={6} lg={6}>
 				<MainContainer container>
@@ -58,23 +75,12 @@ function HeroBanner() {
 
 				<MainContainer right={"true"} container>
 					<TextStyled>
-						Welcome to the place where Nonprofits, Hackers, Mentors,
-						and Volunteer unite!
+						Interested in joining? Clicks these to find out more!
 					</TextStyled>
 					<ButtonContainers container>
-						<ButtonStyled
-							component={motion.div}
-							whileHover={{ scale: 1.1 }}
-							whileTap={{ scale: 0.9 }}
-						>
-							Step 1: Find a problem to work on
-						</ButtonStyled>
-						<ButtonStyled
-							component={motion.div}
-							whileHover={{ scale: 1.1 }}
-							whileTap={{ scale: 0.9 }}
-						>
-							Step 2: Join us on slack to get involved
+						<ButtonStyled>Find a problem to work on </ButtonStyled>
+						<ButtonStyled>
+							Join us on slack to get involved
 						</ButtonStyled>
 					</ButtonContainers>
 				</MainContainer>
@@ -89,7 +95,18 @@ function HeroBanner() {
 				justifyContent="center"
 				alignItem="center"
 			>
-				Image
+				<Player
+					src="https://assets1.lottiefiles.com/packages/lf20_vnikrcia.json"
+					className="player"
+					loop
+					autoplay
+					speed={1}
+					style={{
+						width: "100%",
+						height: "100%",
+						padding: "0 5%",
+					}}
+				/>
 			</BlankContainer>
 		</GridStyled>
 	);
