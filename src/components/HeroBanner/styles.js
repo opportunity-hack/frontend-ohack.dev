@@ -19,7 +19,7 @@ export const ButtonStyled = styling(Button)({
 });
 
 // Grid
-export const GridStyled = styling(Grid) ((props) => ({
+export const GridStyled = styling(Grid)((props) => ({
   padding: "8rem 6rem 6rem 6rem",
   height: "100%",
   width: "80%",
@@ -48,9 +48,16 @@ export const TitleContainer = styling(Grid)((props) => ({
   },
 }));
 
-export const CaptionContainer = styling(Grid)({
+export const CaptionContainer = styling(Grid)((props) => ({
   color: "#425466",
-});
+  maxWidth: "300px",
+
+  [props.theme.breakpoints.down("md")]: {
+    // padding:
+    justifyContent: "center",
+    textAlign: "center",
+  },
+}));
 
 export const ButtonContainers = styling(Grid)((props) => ({
   display: "flex",
@@ -90,5 +97,5 @@ export const BackgroundGrid = styling(Grid)({
   top: "-20rem",
   transform: "skewY(-10deg)",
   background: "linear-gradient(to bottom right, #f0ff00 23%, #58cffb 89%)",
-  zIndex: "-100"
+  zIndex: "-100",
 });
