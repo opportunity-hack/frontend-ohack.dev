@@ -1,6 +1,8 @@
 import React from "react";
 import Link from 'next/link'
 import Head from 'next/head';
+import Stack from '@mui/material/Stack';
+import Image from 'next/image'
 
 import * as ga from '../lib/ga'
 
@@ -33,21 +35,24 @@ export default function HeroBanner(){
         <meta charSet="utf-8" />
         <meta property="og:site_name" content="Opportunity Hack Portal" />        
       </Head>  
-      <img className="hero-banner__logo" src={logo} alt="Opportunity Hack logo" />
-      <h1 className="hero-banner__headline">Hey there, it's a pleasure to meet you.</h1>
-      <p className="hero-banner__description">
-        Welcome to the place where Nonprofits, Hackers, Mentors, and Volunteers unite!
-      </p>
+      
+      <Image width={384} height={183} className="hero-banner__logo" src={logo} alt="Opportunity Hack logo" />
+      
+      <p className="hero-banner__description">Using technology that helps nonprofits succeed</p>
+      
+      
 
+      <Stack direction="row" spacing={2} marginTop={0}>
       <Link href="/nonprofits">
         <button onClick={gaButton("find_a_problem")}  className="button button--primary">
-          Step 1: Find a problem to work on →
+          Step 1: Join our Hackathon →
         </button>
       </Link>
-      <br/>
+      
       <button onClick={openCodeSample} className="button button--primary">
        Step 2: Join us on Slack to get involved →
       </button>
+      </Stack>
     </div>
   );
 };
