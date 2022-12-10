@@ -12,6 +12,7 @@ import {
   LogoutButton,
   NavbarList,
   NavbarLink,
+  NavbarListItem,
 } from "./styles";
 
 /*
@@ -39,12 +40,26 @@ export default function NavBar() {
           </a>
         </Link>
         <NavbarList container>
-          <NavbarLink href="https://www.ohack.org" exact>
-            About
-          </NavbarLink>
-          <NavbarLink href="/profile" exact>
-            Projects
-          </NavbarLink>
+          <NavbarListItem>
+            <NavbarLink href="https://www.ohack.org" exact>
+              About Us
+            </NavbarLink>
+          </NavbarListItem>
+          <NavbarListItem>
+            <NavbarLink href="https://www.ohack.org/about/history" exact>
+              Our History
+            </NavbarLink>
+          </NavbarListItem>
+          <NavbarListItem>
+            <NavbarLink href="/profile" exact>
+              Projects
+            </NavbarLink>
+          </NavbarListItem>
+          <NavbarListItem>
+            <NavbarLink href="https://github.com/opportunity-hack/" exact>
+              Github
+            </NavbarLink>
+          </NavbarListItem>
         </NavbarList>
         {isAuthenticated ? (
           <LogoutButton
