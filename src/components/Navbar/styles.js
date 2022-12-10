@@ -34,7 +34,7 @@ export const NavbarLink = styling(Link)({
   textDecoration: "none",
   fontSize: "1.5rem",
   fontWeight: 600,
-  color: "white",
+  color: "#222222",
   textTransform: "uppercase",
   transitionDuration: "0.3s",
   "&:hover": {
