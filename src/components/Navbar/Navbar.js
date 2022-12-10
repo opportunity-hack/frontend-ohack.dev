@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth0 } from "@auth0/auth0-react";
 
@@ -24,6 +24,7 @@ import {
   DropdownContainer,
   DropdownList,
   DropdownListItem,
+  DropdownDivider,
 } from "./styles";
 
 /*
@@ -37,6 +38,31 @@ export default function NavBar() {
   const { isAuthenticated, logout, loginWithRedirect, user } = useAuth0();
   const { badges, hackathons, profile, feedback_url } = useProfileApi();
   const [isOpen, setIsOpen] = useState(false);
+
+  // add close dropdown mouselistener to close on outside click
+  const dropdownRef = useRef(null);
+  const profileRef = useRef(null);
+
+  useEffect(() => {
+    // click outside handler
+    function clickOutsideHandler(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        profileRef.current &&
+        !profileRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    // bind event listener to entire document
+    document.addEventListener("mouseup", clickOutsideHandler);
+    return () => {
+      // remove event listener on cleanup
+      document.removeEventListener("mouseup", clickOutsideHandler);
+    };
+  }, [dropdownRef, profileRef]);
 
   return (
     <NavbarContainer container>
@@ -74,28 +100,14 @@ export default function NavBar() {
             </NavbarLink>
           </NavbarListItem>
           <NavbarListItem>
-            {/* {isAuthenticated && (
-              <DropdownContainer>
-                <DropdownList>
-                  <DropdownListItem>
-                    <AccountCircleIcon />
-                    Profile
-                  </DropdownListItem>
-                  <DropdownListItem>
-                    <LogoutIcon />
-                    Log Out
-                  </DropdownListItem>
-                </DropdownList>
-              </DropdownContainer>
-            )} */}
             {isAuthenticated ? (
-              <ProfileContainer>
+              <ProfileContainer ref={profileRef}>
                 <Profile container onClick={setIsOpen.bind(null, !isOpen)}>
                   <ProfileAvatar
                     src={user.picture}
                     alt="Profile"
-                    width={35}
-                    height={35}
+                    width={30}
+                    height={30}
                   />
                   <svg
                     fill="none"
@@ -145,6 +157,30 @@ export default function NavBar() {
               </LoginButton>
             )}
           </NavbarListItem>
+
+          {isOpen && (
+            <DropdownContainer ref={dropdownRef}>
+              <DropdownList>
+                <Link href="/profile" exact>
+                  <DropdownListItem onClick={setIsOpen.bind(null, false)}>
+                    <AccountCircleIcon style={{ marginRight: "1rem" }} />
+                    Profile
+                  </DropdownListItem>
+                </Link>
+                <DropdownDivider />
+                <DropdownListItem
+                  onClick={() =>
+                    logout({
+                      returnTo: window.location.origin,
+                    })
+                  }
+                >
+                  <LogoutIcon style={{ marginRight: "1rem" }} />
+                  Log Out
+                </DropdownListItem>
+              </DropdownList>
+            </DropdownContainer>
+          )}
         </NavbarList>
       </Navbar>
     </NavbarContainer>

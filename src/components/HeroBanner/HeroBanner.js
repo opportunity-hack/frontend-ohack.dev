@@ -10,7 +10,7 @@ import {
 	BlankContainer,
 } from "./styles";
 import Typewriter from "typewriter-effect";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 
 function HeroBanner() {
 	const logo = "https://i.imgur.com/Ih0mbYx.png";
@@ -63,14 +63,14 @@ function HeroBanner() {
 					</TextStyled>
 					<ButtonContainers container>
 						<ButtonStyled
-							component={motion.div}
+							// component={motion.div}
 							whileHover={{ scale: 1.1 }}
 							whileTap={{ scale: 0.9 }}
 						>
 							Step 1: Find a problem to work on
 						</ButtonStyled>
 						<ButtonStyled
-							component={motion.div}
+							// component={motion.div}
 							whileHover={{ scale: 1.1 }}
 							whileTap={{ scale: 0.9 }}
 						>
