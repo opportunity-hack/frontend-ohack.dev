@@ -97,7 +97,7 @@ export const TitleStyled = styling(Typography)({
 
 export const SectionTitle = styling(Typography)({
   fontSize: "3rem",
-  fontWeight: "bold",
+  fontWeight: "600",
 });
 
 export const NormalTextStyled = styling(Typography)({

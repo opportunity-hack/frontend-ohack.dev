@@ -8,6 +8,7 @@ import NavBarAdmin from "../nav-bar-admin";
 import Image from "next/image";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import Hamburger from "hamburger-react";
 
 import {
   NavbarContainer,
@@ -25,7 +26,10 @@ import {
   DropdownList,
   DropdownListItem,
   DropdownDivider,
+  DetailTypography,
+  DetailListItem,
 } from "./styles";
+import { Typography } from "@mui/material";
 
 /*
 TODO: In the future we may want to show notifications using something like this
@@ -64,6 +68,19 @@ export default function NavBar() {
     };
   }, [dropdownRef, profileRef]);
 
+  const [width, setWidth] = useState();
+  const functionName = () => {
+    setInterval(() => {
+      setWidth(screen.width);
+    }, 500);
+  };
+
+  window.addEventListener("resize", functionName);
+
+  useEffect(() => {
+    setWidth(screen.width);
+  }, []);
+
   return (
     <NavbarContainer container>
       <Navbar container>
@@ -79,26 +96,30 @@ export default function NavBar() {
           </a>
         </Link>
         <NavbarList container>
-          <NavbarListItem>
-            <NavbarLink href="https://www.ohack.org" exact>
-              About Us
-            </NavbarLink>
-          </NavbarListItem>
-          <NavbarListItem>
-            <NavbarLink href="https://www.ohack.org/about/history" exact>
-              Our History
-            </NavbarLink>
-          </NavbarListItem>
-          <NavbarListItem>
-            <NavbarLink href="/nonprofits" exact>
-              Projects
-            </NavbarLink>
-          </NavbarListItem>
-          <NavbarListItem>
-            <NavbarLink href="https://github.com/opportunity-hack/" exact>
-              Github
-            </NavbarLink>
-          </NavbarListItem>
+          {width >= 900 && (
+            <>
+              <NavbarListItem>
+                <NavbarLink href="https://www.ohack.org" exact>
+                  About Us
+                </NavbarLink>
+              </NavbarListItem>
+              <NavbarListItem>
+                <NavbarLink href="https://www.ohack.org/about/history" exact>
+                  Our History
+                </NavbarLink>
+              </NavbarListItem>
+              <NavbarListItem>
+                <NavbarLink href="/nonprofits" exact>
+                  Projects
+                </NavbarLink>
+              </NavbarListItem>
+              <NavbarListItem>
+                <NavbarLink href="https://github.com/opportunity-hack/" exact>
+                  Github
+                </NavbarLink>
+              </NavbarListItem>
+            </>
+          )}
           <NavbarListItem>
             {isAuthenticated ? (
               <ProfileContainer ref={profileRef}>
@@ -125,18 +146,6 @@ export default function NavBar() {
                 </Profile>
               </ProfileContainer>
             ) : (
-              // <LogoutButton
-              //   variant="contained"
-              //   disableElevation
-              //   onClick={() =>
-              //     logout({
-              //       returnTo: window.location.origin,
-              //     })
-              //   }
-              // >
-              //   Log Out
-              //   <LogoutIcon style={{ marginLeft: "1rem" }} />
-              // </LogoutButton>
               <LoginButton
                 variant="contained"
                 disableElevation
@@ -157,13 +166,23 @@ export default function NavBar() {
               </LoginButton>
             )}
           </NavbarListItem>
+          {width <= 900 && <Hamburger />}
 
           {isOpen && (
             <DropdownContainer ref={dropdownRef}>
               <DropdownList>
+                <DetailListItem>
+                  Logged in as:
+                  <DetailTypography variant="body">
+                    {user.nickname}
+                  </DetailTypography>
+                </DetailListItem>
+                <DropdownDivider />
                 <Link href="/profile" exact>
                   <DropdownListItem onClick={setIsOpen.bind(null, false)}>
-                    <AccountCircleIcon style={{ marginRight: "1rem" }} />
+                    <AccountCircleIcon
+                      style={{ marginRight: "1rem", marginTop: "-2px" }}
+                    />
                     Profile
                   </DropdownListItem>
                 </Link>
@@ -175,7 +194,9 @@ export default function NavBar() {
                     })
                   }
                 >
-                  <LogoutIcon style={{ marginRight: "1rem" }} />
+                  <LogoutIcon
+                    style={{ marginRight: "1rem", marginTop: "-2px" }}
+                  />
                   Log Out
                 </DropdownListItem>
               </DropdownList>

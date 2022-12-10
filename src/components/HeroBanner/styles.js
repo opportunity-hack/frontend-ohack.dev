@@ -26,23 +26,26 @@ export const GridStyled = styling(Grid)((props) => ({
   margin: "auto",
 
   [props.theme.breakpoints.down("lg")]: {
-    padding: "8rem 3rem 6rem 3rem",
+    padding: "8rem 0rem 6rem 0rem",
+  },
+
+  [props.theme.breakpoints.down("md")]: {
+    width: "100%",
   },
 }));
 
 export const BlankContainer = styling(Grid)({
-  // width: "100%",
-  // height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  position: "relative",
 });
 
 export const TitleContainer = styling(Grid)((props) => ({
-  display: "flex",
-  justifyContent: "flex-start",
-  alignItems: "center",
-  padding: "130px 5% 0px 0px",
+  padding: "9rem 5% 0px 0px",
+  marginTop: "5rem",
 
   [props.theme.breakpoints.down("md")]: {
-    padding: props.right === "true" ? "15% 5% 5% 5%" : "100px 10px 0 10px",
+    padding: props.right === "true" ? "15% 5% 5% 5%" : "3rem 10px 0 10px",
     justifyContent: "center",
     textAlign: "center",
   },
@@ -53,7 +56,8 @@ export const CaptionContainer = styling(Grid)((props) => ({
   maxWidth: "390px",
 
   [props.theme.breakpoints.down("md")]: {
-    // padding:
+    display: "flex",
+    minWidth: "100%",
     justifyContent: "center",
     textAlign: "center",
   },
@@ -69,21 +73,22 @@ export const ButtonContainers = styling(Grid)((props) => ({
 // Typography
 export const TitleStyled = styling(Typography)((props) => ({
   fontSize: "5vw",
-  lineHeight: "5.5vw",
+  lineHeight: "5.25vw",
   fontWeight: "bold",
   color: "#2c2c2c",
-  textShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
+  textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
   letterSpacing: "0.0001rem",
 
   [props.theme.breakpoints.down("md")]: {
-    fontSize: "6vw",
-    lineHeight: "6.5vw",
+    fontSize: "8vw",
+    lineHeight: "8.25vw",
   },
 }));
 
 export const TextStyled = styling(Typography)({
   fontSize: "1.5rem",
   margin: "2rem 0rem 1rem 0rem",
+  width: "100%",
 });
 
 export const SpanText = styling("span")({

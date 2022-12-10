@@ -54,7 +54,7 @@ function HeroBanner() {
     >
       <BackgroundGrid />
       {/* Left Container */}
-      <BlankContainer container xs={12} md={6} lg={7}>
+      <BlankContainer xs={12} md={7} lg={7}>
         <TitleContainer container>
           <TitleStyled variant="h1">
             The place where
@@ -83,13 +83,9 @@ function HeroBanner() {
       </BlankContainer>
       {/* Right Container */}
       <BlankContainer
-        container
-        item
         xs={12}
-        md={6}
+        md={5}
         lg={5}
-        justifyContent="center"
-        alignItem="center"
       >
         {width >= 900 && (
           <Player
@@ -99,9 +95,11 @@ function HeroBanner() {
             autoplay
             speed={1}
             style={{
-              width: width >= 1200 ? "50rem" : "100%",
+              width: width >= 1200 ? "100%" : "100%",
               height: "50rem",
               padding: "0 0",
+			  right: "0",
+			  position: "absolute",
             }}
           />
         )}
