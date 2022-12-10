@@ -102,7 +102,7 @@ function OHackFeatures() {
   return (
     <BlankContainer container>
       <TitleContainer>
-        <SectionTitle>What do we do?</SectionTitle>
+        <SectionTitle variant="h2">What do we do?</SectionTitle>
       </TitleContainer>
 
       <TabsContainer

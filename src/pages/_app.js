@@ -8,7 +8,7 @@ import theme from "../assets/theme";
 import { Loader } from "../components/loader";
 // import NavBar from "../components/nav-bar";
 import NavBar from "../components/Navbar/Navbar";
-import Footer from "../components/footer";
+import Footer from "../components/Footer/Footer";
 import Head from "next/head";
 
 import * as ga from "../lib/ga";

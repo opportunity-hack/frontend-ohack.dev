@@ -115,7 +115,7 @@ export default function NavBar() {
               </NavbarListItem>
               <NavbarListItem>
                 <NavbarLink href="https://github.com/opportunity-hack/" exact>
-                  Github
+                  GitHub
                 </NavbarLink>
               </NavbarListItem>
             </>
