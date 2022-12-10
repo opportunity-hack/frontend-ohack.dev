@@ -34,6 +34,8 @@ export const NavbarLink = styling(Link)({
   textDecoration: "none",
   fontSize: "1.5rem",
   fontWeight: 600,
+  color: "white",
+  textTransform: "uppercase",
   transitionDuration: "0.3s",
   "&:hover": {
     color: "#5c9bdb",
@@ -74,7 +76,6 @@ export const Profile = styling(Grid)({
   padding: "0.5rem 0.75rem",
   transition: "all 0.5s",
   fontWeight: 600,
-  color: "#1976d2",
   cursor: "pointer",
 });
 
@@ -93,7 +94,7 @@ export const DropdownContainer = styling(Grid)({
   borderRadius: "7px",
   backgroundColor: "white",
 //   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-  border: "0.1px solid #949494a9",
+  // border: "0.1px solid #949494a9",
   maxWidth: "12.5rem",
   width: "90%",
   fontSize: "1.4rem",
