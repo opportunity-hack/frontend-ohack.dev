@@ -64,8 +64,8 @@ export const TitleStyled = styling(Typography)((props) => ({
   fontSize: "5vw",
   lineHeight: "5.5vw",
   fontWeight: "bold",
-  color: "#222222",
-  textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
+  color: "#2c2c2c",
+  textShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
   letterSpacing: "0.0001rem",
 
   [props.theme.breakpoints.down("md")]: {
