@@ -21,13 +21,13 @@ export const ButtonStyled = styling(Button)({
 export const GridStyled = styling(Grid)({
 	paddingTop: "100px",
 	height: "100%",
-    width: "75%",
-    margin: "auto"
+	width: "80%",
+	margin: "auto",
 });
 
 export const BlankContainer = styling(Grid)({
 	// width: "100%",
-	height: "100%",
+	// height: "100%",
 });
 
 export const MainContainer = styling(Grid)((props) => ({
@@ -48,10 +48,7 @@ export const ButtonContainers = styling(Grid)((props) => ({
 	flexDirection: "column",
 	width: "auto",
 	gap: "25px",
-
-	[props.theme.breakpoints.down("md")]: {
-		marginTop: "5%",
-	},
+	marginTop: "5%",
 }));
 
 // Typography

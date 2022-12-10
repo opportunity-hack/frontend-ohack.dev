@@ -7,9 +7,12 @@
   ],
   "dependencies": {
     "@auth0/auth0-react": "^1.10.2",
+    "@babel/core": "^7.20.5",
     "@emotion/react": "^11.10.4",
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.9.3",
+    "@lottiefiles/lottie-interactivity": "^1.6.1",
+    "@lottiefiles/react-lottie-player": "^3.5.0",
     "@mui/icons-material": "^5.8.4",
     "@mui/material": "^5.10.4",
     "@testing-library/jest-dom": "^5.11.4",
