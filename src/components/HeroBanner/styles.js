@@ -50,7 +50,7 @@ export const TitleContainer = styling(Grid)((props) => ({
 
 export const CaptionContainer = styling(Grid)((props) => ({
   color: "#425466",
-  maxWidth: "300px",
+  maxWidth: "390px",
 
   [props.theme.breakpoints.down("md")]: {
     // padding:
