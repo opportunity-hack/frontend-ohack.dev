@@ -4,7 +4,7 @@ import shadows from "@mui/material/styles/shadows";
 
 export const NavbarContainer = styling(Grid)({
   justifyContent: "center",
-  height: "8rem",
+  height: "9rem",
   width: "100%",
   background: "transparent",
   position: "absolute",

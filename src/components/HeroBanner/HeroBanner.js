@@ -5,6 +5,8 @@ import {
 	GridStyled,
 	TextStyled,
 	TitleStyled,
+	TitleContainer,
+	CaptionContainer,
 	ButtonContainers,
 	SpanText,
 	BlankContainer,
@@ -52,9 +54,9 @@ function HeroBanner() {
 		>
 			{/* Left Container */}
 			<BlankContainer container xs={12} md={6} lg={6}>
-				<MainContainer container>
+				<TitleContainer container>
 					<TitleStyled>
-						Welcome to the place where
+						The place where
 						<SpanText>
 							<Typewriter
 								options={{
@@ -69,11 +71,11 @@ function HeroBanner() {
 								}}
 							/>
 						</SpanText>
-						unite!
+						unite
 					</TitleStyled>
-				</MainContainer>
+				</TitleContainer>
 
-				<MainContainer right={"true"} container>
+				<CaptionContainer right={"true"} container>
 					<TextStyled>
 						Interested in joining? Clicks these to find out more!
 					</TextStyled>
@@ -83,7 +85,7 @@ function HeroBanner() {
 							Join us on slack to get involved
 						</ButtonStyled>
 					</ButtonContainers>
-				</MainContainer>
+				</CaptionContainer>
 			</BlankContainer>
 			{/* Right Container */}
 			<BlankContainer
@@ -104,7 +106,7 @@ function HeroBanner() {
 					style={{
 						width: "100%",
 						height: "100%",
-						padding: "0 5%",
+						padding: "0 0",
 					}}
 				/>
 			</BlankContainer>

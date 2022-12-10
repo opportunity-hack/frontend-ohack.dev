@@ -90,7 +90,7 @@ export default function NavBar() {
             </NavbarLink>
           </NavbarListItem>
           <NavbarListItem>
-            <NavbarLink href="/profile" exact>
+            <NavbarLink href="/nonprofits" exact>
               Projects
             </NavbarLink>
           </NavbarListItem>
