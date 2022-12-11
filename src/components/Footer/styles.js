@@ -4,7 +4,7 @@ import { styled as styling } from "@mui/material";
 export const FooterContainer = styling(Grid)({
   marginTop: "10rem",
   width: "100%",
-  padding: "6rem 0rem",
+  padding: "5rem 0rem",
   // backgroundColor: "#003486",
   backgroundColor: "#353535",
   justifyContent: "center",

@@ -79,7 +79,7 @@ function HeroBanner() {
             Interested in joining? Click to find out more!
           </TextStyled>
           <ButtonContainers container>
-            <ButtonStyled onClick={gaButton("find_a_problem")}>Join our Hackathon </ButtonStyled>
+            <ButtonStyled onClick={gaButton("find_a_problem")} href="/nonprofit/tRK5YPrc8vpHQabMYIDO">Join our Hackathon </ButtonStyled>
             <ButtonStyled onClick={openCodeSample}>Join us on Slack to get involved</ButtonStyled>
           </ButtonContainers>
         </CaptionContainer>
