@@ -1,4 +1,4 @@
-import { Grid, Button, Link, Typography } from "@mui/material";
+import { Grid, Button, Link, Typography, Drawer, Box } from "@mui/material";
 import { styled as styling } from "@mui/material";
 
 export const NavbarContainer = styling(Grid)({
@@ -42,8 +42,9 @@ export const NavbarLink = styling(Link)({
   fontSize: "1.6rem",
   fontWeight: 700,
   letterSpacing: "0em",
-  color: "#2c2c2c",
+  color: "#333333",
   transitionDuration: "0.3s",
+  // textShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
   // textTransform: "uppercase",
   "&:hover": {
     color: "#6a6a6a",
@@ -83,7 +84,7 @@ export const ArrowPath = styling("path")({
   transition: "0.2s ease-in-out",
 });
 
-export const DropdownContainer = styling(Grid) ((props) => ({
+export const DropdownContainer = styling(Grid)((props) => ({
   position: "absolute",
   right: "1rem",
   top: "4.5rem",
@@ -127,7 +128,7 @@ export const DropdownList = styling("ul")({
   listStyle: "none",
   padding: 0,
   borderRadius: "1rem",
-  cursor: "default"
+  cursor: "default",
 });
 
 export const DropdownListItem = styling("li")({
@@ -154,4 +155,19 @@ export const DetailListItem = styling("li")({
 export const DetailTypography = styling(Typography)({
   fontWeight: 600,
   display: "block",
+});
+
+export const DrawerContainer = styling(Box)({
+  width: "20rem",
+
+  "& span": {
+    fontSize: "1.5rem",
+  },
+});
+
+export const LogoText = styling(Typography)({
+  position: "absolute",
+  bottom: "1rem",
+  left: "1rem",
+  color: "gray",
 });

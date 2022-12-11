@@ -8,7 +8,7 @@ import NavBarAdmin from "../nav-bar-admin";
 import Image from "next/image";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import Hamburger from "hamburger-react";
+import MenuIcon from "@mui/icons-material/Menu";
 
 import {
   NavbarContainer,
@@ -28,8 +28,20 @@ import {
   DropdownDivider,
   DetailTypography,
   DetailListItem,
+  DrawerContainer,
+  LogoText,
 } from "./styles";
-import { Typography } from "@mui/material";
+import {
+  Grid,
+  Typography,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+} from "@mui/material";
 
 /*
 TODO: In the future we may want to show notifications using something like this
@@ -81,11 +93,68 @@ export default function NavBar() {
     setWidth(screen.width);
   }, []);
 
+  // drawer code
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const toggleDrawer = (open) => (event) => {
+    if (
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
+      return;
+    }
+
+    setIsDrawerOpen(open);
+  };
+
   return (
     <NavbarContainer container>
+      <Drawer anchor="left" open={isDrawerOpen} onClose={toggleDrawer(false)}>
+        <DrawerContainer
+          onClick={toggleDrawer(false)}
+          onKeyDown={toggleDrawer(false)}
+        >
+          <List>
+            <Grid
+              container
+              style={{ justifyContent: "center", margin: "2rem 0 3rem 0" }}
+            >
+              <Link href="/" passHref>
+                <Image
+                  className="nav-bar__logo"
+                  src="https://i.imgur.com/Ih0mbYx.png"
+                  alt="Opportunity Hack logo"
+                  width={150}
+                  height={72}
+                />
+              </Link>
+            </Grid>
+            {["About Us", "Our History", "Projects", "GitHub"].map(
+              (text, index) => (
+                <>
+                  <Divider />
+                  <ListItem key={text} disablePadding>
+                    <ListItemButton>
+                      <ListItemText primary={text} />
+                    </ListItemButton>
+                  </ListItem>
+                </>
+              )
+            )}
+            <Divider />
+          </List>
+          <LogoText>Opportunity Hack Inc. EIN: 84-5113049</LogoText>
+        </DrawerContainer>
+      </Drawer>
       <Navbar container>
-        <Link href="/" passHref>
-          <a>
+        {width <= 900 ? (
+          <MenuIcon
+            onClick={toggleDrawer(true)}
+            fontSize="large"
+            style={{ transform: "scale(1.5)" }}
+          />
+        ) : (
+          <Link href="/" passHref>
             <Image
               className="nav-bar__logo"
               src="https://i.imgur.com/Ih0mbYx.png"
@@ -93,8 +162,8 @@ export default function NavBar() {
               width={100}
               height={48}
             />
-          </a>
-        </Link>
+          </Link>
+        )}
         <NavbarList container>
           {width >= 900 && (
             <>
@@ -166,7 +235,6 @@ export default function NavBar() {
               </LoginButton>
             )}
           </NavbarListItem>
-          {width <= 900 && <Hamburger />}
 
           {isOpen && (
             <DropdownContainer ref={dropdownRef}>
