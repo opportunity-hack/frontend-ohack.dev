@@ -1,0 +1,9 @@
+button {
+    text-align: left;
+}
+
+#newsletterForm {
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+}
