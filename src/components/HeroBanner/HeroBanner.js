@@ -15,6 +15,8 @@ import {
 import Typewriter from "typewriter-effect";
 import { Player } from "@lottiefiles/react-lottie-player";
 
+import * as ga from '../../lib/ga'
+
 function HeroBanner() {
   const JOIN_SLACK_LINK =
     "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
@@ -58,7 +60,7 @@ function HeroBanner() {
         <TitleContainer container>
           <TitleStyled variant="h1">
             The place where
-            <SpanText>
+            <SpanText variant="h1">
               <Typewriter
                 options={{
                   strings: ["Nonprofits", "Hackers", "Mentors", "Volunteers"],
@@ -73,20 +75,16 @@ function HeroBanner() {
 
         <CaptionContainer right={"true"} container>
           <TextStyled>
-            Interested in joining? Clicks these to find out more!
+            Interested in joining? Click to find out more!
           </TextStyled>
           <ButtonContainers container>
-            <ButtonStyled>Find a problem to work on </ButtonStyled>
-            <ButtonStyled>Join us on slack to get involved</ButtonStyled>
+            <ButtonStyled onClick={gaButton("find_a_problem")}>Join our Hackathon </ButtonStyled>
+            <ButtonStyled onClick={openCodeSample}>Join us on Slack to get involved</ButtonStyled>
           </ButtonContainers>
         </CaptionContainer>
       </BlankContainer>
       {/* Right Container */}
-      <BlankContainer
-        xs={12}
-        md={5}
-        lg={5}
-      >
+      <BlankContainer xs={12} md={5} lg={5}>
         {width >= 900 && (
           <Player
             src="https://assets1.lottiefiles.com/packages/lf20_vnikrcia.json"
@@ -98,8 +96,8 @@ function HeroBanner() {
               width: width >= 1200 ? "100%" : "100%",
               height: "50rem",
               padding: "0 0",
-			  right: "0",
-			  position: "absolute",
+              right: "0",
+              position: "absolute",
             }}
           />
         )}

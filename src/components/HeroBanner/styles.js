@@ -41,7 +41,7 @@ export const BlankContainer = styling(Grid)({
 });
 
 export const TitleContainer = styling(Grid)((props) => ({
-  padding: "9rem 5% 0px 0px",
+  padding: "6rem 5% 0px 0px",
   marginTop: "5rem",
 
   [props.theme.breakpoints.down("md")]: {
@@ -72,12 +72,12 @@ export const ButtonContainers = styling(Grid)((props) => ({
 
 // Typography
 export const TitleStyled = styling(Typography)((props) => ({
-  fontSize: "5vw",
-  lineHeight: "5.25vw",
-  fontWeight: "bold",
-  color: "#2c2c2c",
+  fontSize: "4vw",
+  lineHeight: "5.5vw",
+  fontWeight: "700",
+  color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-  letterSpacing: "0.0001rem",
+  letterSpacing: "-0.3rem",
 
   [props.theme.breakpoints.down("md")]: {
     fontSize: "8vw",
@@ -91,9 +91,18 @@ export const TextStyled = styling(Typography)({
   width: "100%",
 });
 
-export const SpanText = styling("span")({
+export const SpanText = styling("span") ((props) => ({
   color: `var(--blue)`,
-});
+  fontSize: "6.5vw",
+  "& .Typewriter": {
+    marginTop: "10px",
+  },
+
+  [props.theme.breakpoints.down("md")]: {
+    fontSize: "10vw",
+    lineHeight: "8.25vw",
+  },
+}));
 
 export const BackgroundGrid = styling(Grid)({
   position: "absolute",
@@ -101,6 +110,6 @@ export const BackgroundGrid = styling(Grid)({
   height: "70rem",
   top: "-20rem",
   transform: "skewY(-10deg)",
-  background: "linear-gradient(to bottom right, #f0ff00 23%, #58cffb 89%)",
+  background: "linear-gradient(to bottom right, #58cffb 23%, #CCCCFF 89%)",
   zIndex: "-100",
 });

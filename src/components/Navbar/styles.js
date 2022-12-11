@@ -40,13 +40,14 @@ export const NavbarListItem = styling("li")((props) => ({
 
 export const NavbarLink = styling(Link)({
   textDecoration: "none",
-  fontSize: "1.5rem",
-  fontWeight: 600,
+  fontSize: "1.6rem",
+  fontWeight: 700,
+  letterSpacing: "0em",
   color: "#2c2c2c",
-  textTransform: "uppercase",
   transitionDuration: "0.3s",
+  // textTransform: "uppercase",
   "&:hover": {
-    color: "#5c9bdb",
+    color: "#6a6a6a",
   },
 });
 
@@ -90,7 +91,7 @@ export const DropdownContainer = styling(Grid) ((props) => ({
   top: "4.5rem",
   borderRadius: "7px",
   backgroundColor: "white",
-  //   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
   // border: "0.1px solid #949494a9",
   maxWidth: "12.5rem",
   width: "90%",
