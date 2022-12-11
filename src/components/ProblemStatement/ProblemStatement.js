@@ -78,7 +78,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   const { handle_help_toggle } = useProfileApi();
 
-  const [expanded, setExpanded] = useState("panel2");
+  const [expanded, setExpanded] = useState("");
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
@@ -248,8 +248,8 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
         }
       });
     });
-    var s = teamCounter > 1 ? "s" : "";
-    var is_are = teamCounter > 1 ? " are " : " is ";
+    var s = teamCounter === 1 ? "" : "s";
+    var is_are = teamCounter === 1 ? " is " : " are ";
     TeamText =
       "There" + is_are + teamCounter + " team" + s + " working on this";
   }

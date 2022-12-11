@@ -196,7 +196,7 @@ export default function NonProfitProfile() {
   };
 
   var loginCallToAction = (
-    <Stack alignItems="flex-start" padding={2.5}>
+    <Stack alignItems="center" paddingTop={5}>
       <Alert variant="outlined" severity="warning">
         <AlertTitle>
           Whoa there - you need to login or create an account first.
@@ -266,7 +266,9 @@ export default function NonProfitProfile() {
             color="default"
             icon={<AccountTreeIcon />}
             label={`
-             ${nonprofit.problem_statements?.length} projects available`}
+             ${nonprofit.problem_statements?.length} project${
+              nonprofit.problem_statements?.length !== 1 ? "s" : ""
+            } available`}
           />
         </TitleChipContainer>
         <DescriptionStyled>{description}</DescriptionStyled>
@@ -293,8 +295,8 @@ export default function NonProfitProfile() {
       <ProjectsContainer>
         {renderAdminProblemStatements()}
 
-        <h3>Projects</h3>
         {!user && loginCallToAction}
+        <h3>Projects</h3>
         <ProjectsGrid container>{problemStatements()}</ProjectsGrid>
       </ProjectsContainer>
     </LayoutContainer>
