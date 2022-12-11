@@ -1,7 +1,7 @@
-import Chip from "@mui/material/Chip";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
 import Tooltip from "@mui/material/Tooltip";
+import { TagChip } from "./styles";
 
 export default function ProjectProgress({ state }) {
   const stateMapping = {
@@ -38,8 +38,9 @@ export default function ProjectProgress({ state }) {
             title={
               <span style={{ fontSize: "14px" }}>{description[index]}</span>
             }
+            arrow
           >
-            <Chip
+            <TagChip
               key="mine"
               color="primary"
               label={name}
@@ -53,8 +54,9 @@ export default function ProjectProgress({ state }) {
             title={
               <span style={{ fontSize: "14px" }}>{description[index]}</span>
             }
+            arrow
           >
-            <Chip
+            <TagChip
               key="mine"
               color="success"
               label={name}
@@ -68,8 +70,9 @@ export default function ProjectProgress({ state }) {
             title={
               <span style={{ fontSize: "14px" }}>{description[index]}</span>
             }
+            arrow
           >
-            <Chip
+            <TagChip
               key="mine"
               color="default"
               label={name}

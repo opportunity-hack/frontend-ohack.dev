@@ -4,7 +4,8 @@ import { useState } from "react";
 import useNonprofit from "../../hooks/use-nonprofit";
 import useAdmin from "../../hooks/use-admin-check";
 
-import ProblemStatement from "../../components/problem-statement";
+// import ProblemStatement from "../../components/problem-statement";
+import ProblemStatement from "../../components/ProblemStatement/ProblemStatement";
 import AdminProblemStatementList from "../../components/admin/problemstatement-list";
 
 import TagIcon from "@mui/icons-material/Tag";
@@ -48,7 +49,10 @@ import {
   LinkStyled,
   ProjectsChip,
   ProjectsContainer,
+  ProjectsGrid,
+  SlackTooltip,
   TitleBanner,
+  TitleChipContainer,
   TitleContainer,
   TitleStyled,
 } from "./styles";
@@ -240,33 +244,47 @@ export default function NonProfitProfile() {
   // More on meta tags
   // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
   console.log("Nonprofit Page Render");
-  console.log(nonprofit);
+  console.log(slack_details);
   return (
     <LayoutContainer key={nonprofit_id} container>
       <TitleBanner>
         <Parallax bgImage="/npo_placeholder.png" strength={300}></Parallax>
       </TitleBanner>
       <TitleContainer container>
-        <TitleStyled variant="h2">
-          <Avatar
-            sx={{ bgcolor: red[500] }}
-            aria-label="npo-avatar"
-            style={{ marginRight: "1.5rem" }}
-          >
-            {getTwoLetters(nonprofit.name)}
-          </Avatar>
-          {nonprofit.name}
+        <TitleChipContainer>
+          <TitleStyled variant="h2">
+            <Avatar
+              sx={{ bgcolor: red[500] }}
+              aria-label="npo-avatar"
+              style={{ marginRight: "1.5rem" }}
+            >
+              {getTwoLetters(nonprofit.name)}
+            </Avatar>
+            {nonprofit.name}
+          </TitleStyled>
           <ProjectsChip
             color="default"
             icon={<AccountTreeIcon />}
             label={`
              ${nonprofit.problem_statements?.length} projects available`}
           />
-        </TitleStyled>
+        </TitleChipContainer>
         <DescriptionStyled>{description}</DescriptionStyled>
         <DescriptionStyled>
           Looking to get involved? Join the{" "}
-          <ChannelChip label={`#${slack_details_plain}`} variant="outlined" />{" "}
+          <Tooltip
+            title={
+              <p style={{ fontSize: "1rem", margin: "0" }}>
+                This is their dedicated channel in Slack
+              </p>
+            }
+            arrow
+          >
+            <ChannelChip
+              label={`#${nonprofit.slack_channel}`}
+              variant="outlined"
+            />
+          </Tooltip>{" "}
           channel on <LinkStyled href="https://slack.com/">Slack</LinkStyled> to
           join in on the discussion!
         </DescriptionStyled>
@@ -277,7 +295,7 @@ export default function NonProfitProfile() {
 
         <h3>Projects</h3>
         {!user && loginCallToAction}
-        <div className="ohack-features__grid">{problemStatements()}</div>
+        <ProjectsGrid container>{problemStatements()}</ProjectsGrid>
       </ProjectsContainer>
     </LayoutContainer>
   );

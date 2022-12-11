@@ -91,7 +91,7 @@ export const DropdownContainer = styling(Grid) ((props) => ({
   top: "4.5rem",
   borderRadius: "7px",
   backgroundColor: "white",
-  //   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
   // border: "0.1px solid #949494a9",
   maxWidth: "12.5rem",
   width: "90%",
