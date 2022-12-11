@@ -34,7 +34,6 @@ function EventFeature(props) {
 		icon,
 	} = props;
 
-	console.log(props);
 	return (
 		<EventCards container direction="column">
 			<EventTitle variant="h3">{type}</EventTitle>
@@ -163,7 +162,9 @@ function EventFeature(props) {
 				justifyContent="space-around"
 			>
 				{eventLinks.map((Link) => {
-					return <EventButton href={Link.link}>{Link.name}</EventButton>;
+					return (
+						<EventButton href={Link.link}>{Link.name}</EventButton>
+					);
 				})}
 			</ButtonContainer>
 		</EventCards>

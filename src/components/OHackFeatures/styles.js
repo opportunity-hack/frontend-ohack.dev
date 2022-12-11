@@ -20,6 +20,7 @@ export const BlankContainer = styling(Grid)({
 export const TabsContainer = styling(Grid)({
 	margin: "auto",
 	width: "90%",
+  minHeight: "410px"
 });
 
 export const TabContainer = styling(Grid)({
