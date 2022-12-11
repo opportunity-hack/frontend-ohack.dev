@@ -37,10 +37,13 @@ export const MutedText = styling(Typography)({
   width: "100%",
 });
 
-export const IconLink = styling(Link) ({
+export const IconLink = styling(Link)({
+  color: "#c7c7c7",
+  transition: "0.25s",
+  "&:hover": {
     color: "white",
-
-})
+  },
+});
 
 export const LinkList = styling("ul")({
   listStyle: "none",
@@ -51,6 +54,7 @@ export const LinkList = styling("ul")({
 
 export const LinkListItem = styling("li")({
   padding: "0.5rem 2rem",
+  fontWeight: 700,
 });
 
 export const StyledLink = styling(Link)({
@@ -60,5 +64,5 @@ export const StyledLink = styling(Link)({
   transitionDuration: "0.3s",
   "&:hover": {
     color: "white",
-  }
+  },
 });

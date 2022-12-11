@@ -40,13 +40,14 @@ export const NavbarListItem = styling("li")((props) => ({
 
 export const NavbarLink = styling(Link)({
   textDecoration: "none",
-  fontSize: "1.5rem",
-  fontWeight: 600,
+  fontSize: "1.6rem",
+  fontWeight: 700,
+  letterSpacing: "0em",
   color: "#2c2c2c",
-  textTransform: "uppercase",
   transitionDuration: "0.3s",
+  // textTransform: "uppercase",
   "&:hover": {
-    color: "#5c9bdb",
+    color: "#6a6a6a",
   },
 });
 
