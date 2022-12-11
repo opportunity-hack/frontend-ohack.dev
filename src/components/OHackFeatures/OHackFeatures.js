@@ -3,15 +3,12 @@ import { BlankContainer } from "../HeroBanner/styles";
 import {
   InfoContainer,
   NormalTextStyled,
-  OuterGrid,
   SectionTitle,
   TabContainer,
   TabsContainer,
   TabsStyled,
   TabStyled,
-  TextContainer,
   TitleContainer,
-  TitleStyled,
 } from "./styles";
 import { useTheme } from "@mui/material/styles";
 import VolunteerActivismOutlinedIcon from "@mui/icons-material/VolunteerActivismOutlined";

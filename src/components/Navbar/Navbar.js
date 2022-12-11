@@ -80,6 +80,7 @@ export default function NavBar() {
     };
   }, [dropdownRef, profileRef]);
 
+  // get width of window on resize
   const [width, setWidth] = useState();
   const functionName = () => {
     setInterval(() => {
@@ -93,7 +94,7 @@ export default function NavBar() {
     setWidth(screen.width);
   }, []);
 
-  // drawer code
+  // drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const toggleDrawer = (open) => (event) => {
