@@ -205,20 +205,19 @@ export default function NonProfitList() {
       <InnerContainer container>
         <h1 className="content__title">Nonprofit Projects</h1>
         <div className="content__body">
-          <div className="profile-grid">
-            <div className="profile__header">
-              <div className="profile__headline">
-                <h3 className="profile__title">
-                  Review our catalog of nonprofit problems that need your help
-                </h3>
-                Here you'll find all nonprofits that we've worked with and those
-                that need help, we hope that you find something that you'll love
-                to work on.
-              </div>
+          <div className="profile__header">
+            <div className="profile__headline">
+              <h3 className="profile__title">
+                Review our catalog of nonprofit problems that need your help
+              </h3>
+              Here you'll find all nonprofits that we've worked with and those
+              that need help, we hope that you find something that you'll love
+              to work on.
             </div>
+          </div>
 
-            <div className="profile__details">
-              {/* TODO: Get search working to make it easier to search all text for what the user is looking for
+          <div className="profile__details">
+            {/* TODO: Get search working to make it easier to search all text for what the user is looking for
                         <Search>
                             <SearchIconWrapper>
                                 <SearchIcon style={{ fontSize: "1.9rem" }} />
@@ -230,13 +229,12 @@ export default function NonProfitList() {
                             />
                         </Search>
                         */}
-              {needsHelpButton()}
-              &nbsp;
-              {productionButton()}
-              <NonProfitContainer>
-                <NonProfitGrid>{nonProfitList()}</NonProfitGrid>
-              </NonProfitContainer>
-            </div>
+            {needsHelpButton()}
+            &nbsp;
+            {productionButton()}
+            <NonProfitContainer>
+              <NonProfitGrid>{nonProfitList()}</NonProfitGrid>
+            </NonProfitContainer>
           </div>
         </div>
       </InnerContainer>

@@ -129,18 +129,21 @@ export default function NavBar() {
                 />
               </Link>
             </Grid>
-            {["About Us", "Our History", "Projects", "GitHub"].map(
-              (text, index) => (
-                <>
-                  <Divider />
-                  <ListItem key={text} disablePadding>
-                    <ListItemButton>
-                      <ListItemText primary={text} />
-                    </ListItemButton>
-                  </ListItem>
-                </>
-              )
-            )}
+            {[
+              ["About Us", "https://www.ohack.org/"],
+              ["Our History", "https://www.ohack.org/about/history"],
+              ["Projects", "/nonprofits"],
+              ["GitHub", "https://github.com/opportunity-hack/"],
+            ].map((link) => (
+              <>
+                <Divider />
+                <ListItem key={link[0]} disablePadding>
+                  <ListItemButton href={link[1]}>
+                    <ListItemText primary={link[0]} />
+                  </ListItemButton>
+                </ListItem>
+              </>
+            ))}
             <Divider />
           </List>
           <LogoText>Opportunity Hack Inc. EIN: 84-5113049</LogoText>
