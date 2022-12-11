@@ -5,5 +5,19 @@ button {
 #newsletterForm {
     display: flex;
     flex-direction: column;
-    max-width: 300px;
+    max-width: 500px;
+}
+.title {
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif; 
+    font-style: bold; 
+    text-align: center;
+    font-size: large;
+}
+
+.contents{ 
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-style: bold;
+    text-align: center;
+    font-size: large;
+
 }
