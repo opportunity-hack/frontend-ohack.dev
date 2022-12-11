@@ -13,7 +13,6 @@ export const BlankContainer = styling(Grid)({
   alignItems: "center",
   margin: "auto",
   textAlign: "center",
-  // backgroundColor: "teal",
   width: "90%",
   minHeight: "100vh",
 });
@@ -21,16 +20,12 @@ export const BlankContainer = styling(Grid)({
 export const TabsContainer = styling(Grid)({
   margin: "auto",
   width: "90%",
-  // backgroundColor: "teal",
-  // minHeight: "400px",
-  // marginTop: "2%"
 });
 
 export const TabContainer = styling(Grid)({
   margin: "auto",
   width: "100%",
   height: "auto",
-  // backgroundColor: "red"
 });
 
 export const InfoContainer = styling(Grid)((props) => ({
@@ -41,8 +36,7 @@ export const InfoContainer = styling(Grid)((props) => ({
   marginTop: "5%",
   width: "100%",
   textAlign: "justify",
-  // marginLeft: "5%",
-  // marginRight: "5%",
+  minHeight: "200px",
 
   [props.theme.breakpoints.down("md")]: {
     padding: "0% 10%",
@@ -51,7 +45,6 @@ export const InfoContainer = styling(Grid)((props) => ({
 
 export const TitleContainer = styling(Grid)({
   width: "100%",
-  // backgroundColor: "green",
   justifyContent: "center",
   alignItems: "center",
   textAlign: "center",
@@ -63,7 +56,6 @@ export const TextContainer = styling(Grid)({
   width: "100%",
   textAlign: "justify",
   height: "100%",
-  // backgroundColor: "teal",
 });
 
 // Tab
