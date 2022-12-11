@@ -10,36 +10,28 @@ export default function newsletters(){
        <div class = "1a"> </div>
            <form id="newsletterForm">
                <label class="title"> Subject </label><br></br>
-                <input type= "Header" /><br></br>
+                <input class= "header" type="text" /><br></br>
                 <div class = "1b"> 
                 <button class = 'button'> HTML </button>
                 <button class = 'button'> Markup </button>
                 </div>
                 <label class="contents"> Contents <br></br></label>
                 <div class = "1c"> </div>
-                <textarea id="w3review" name="w3review" rows="4" cols="50"> </textarea>
+                <textarea id="textarea" name="textarea" class="text_area" rows="4" cols="50"> </textarea>
                 <div class = 'testing'> 
-                <button> Send </button>  
+                <button class='button'> Send </button>  
                 </div>
           
             </form> 
-            </div>
-            <div class="continer2">
-                <ol>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                </ol>
-
+            <div>  </div>
+            
+       </div>
+       <div class="continer2"> 
+                <h2 class = "users"> Subscribed Users </h2>
+                
+                    <textarea id="textarea" name="textarea" class="text_area_subs" rows="4" cols="50"> </textarea>
+                
             </div>
        </div>
-       
    )
-}
+   }
