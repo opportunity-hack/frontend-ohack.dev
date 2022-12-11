@@ -75,11 +75,11 @@ function HeroBanner() {
 
         <CaptionContainer right={"true"} container>
           <TextStyled>
-            Interested in joining? Click these to find out more!
+            Interested in joining? Click to find out more!
           </TextStyled>
           <ButtonContainers container>
             <ButtonStyled onClick={gaButton("find_a_problem")}>Join our Hackathon </ButtonStyled>
-            <ButtonStyled onClick={openCodeSample}>Join us on slack to get involved</ButtonStyled>
+            <ButtonStyled onClick={openCodeSample}>Join us on Slack to get involved</ButtonStyled>
           </ButtonContainers>
         </CaptionContainer>
       </BlankContainer>
