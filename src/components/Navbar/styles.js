@@ -1,6 +1,5 @@
 import { Grid, Button, Link, Typography } from "@mui/material";
 import { styled as styling } from "@mui/material";
-import shadows from "@mui/material/styles/shadows";
 
 export const NavbarContainer = styling(Grid)({
   justifyContent: "center",
@@ -51,7 +50,6 @@ export const NavbarLink = styling(Link)({
   },
 });
 
-// NEWTODO: Update colors to constants
 export const LoginButton = styling(Button)({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",
@@ -93,7 +91,7 @@ export const DropdownContainer = styling(Grid) ((props) => ({
   backgroundColor: "white",
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
   // border: "0.1px solid #949494a9",
-  maxWidth: "12.5rem",
+  maxWidth: "14rem",
   width: "90%",
   fontSize: "1.4rem",
   zIndex: 50,
@@ -129,6 +127,7 @@ export const DropdownList = styling("ul")({
   listStyle: "none",
   padding: 0,
   borderRadius: "1rem",
+  cursor: "default"
 });
 
 export const DropdownListItem = styling("li")({
@@ -140,6 +139,7 @@ export const DropdownListItem = styling("li")({
   transition: "0.25s",
   "&:hover": {
     color: "#494949",
+    backgroundColor: "#fafafa",
   },
 });
 

@@ -12,11 +12,16 @@ export const FooterContainer = styling(Grid)({
   // background: "linear-gradient(to top, #000000 23%, #222222 89%)",
 });
 
-export const InnerContainer = styling(Grid)({
+export const InnerContainer = styling(Grid)((props) => ({
   width: "80%",
   color: "white",
   fontSize: "1.5rem",
-});
+
+  [props.theme.breakpoints.down("md")]: {
+    width: "100%",
+    flexDirection: "column-reverse",
+  },
+}));
 
 export const TextContainer = styling(Grid)({
   padding: "0rem 5rem",
@@ -49,11 +54,12 @@ export const LinkList = styling("ul")({
   listStyle: "none",
   position: "relative",
   padding: "0",
+  paddingBottom: "2rem",
   margin: "0",
 });
 
 export const LinkListItem = styling("li")({
-  padding: "0.5rem 2rem",
+  padding: "0.5rem 0rem",
   fontWeight: 700,
 });
 
