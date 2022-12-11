@@ -11,7 +11,7 @@ import Head from 'next/head';
 import * as ga from '../lib/ga'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
-
+import "../styles/newsletter.style.css"
 
 // This default export is required in a new `pages/_app.js` file.
 export default function MyApp({ Component, pageProps }) {
