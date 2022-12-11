@@ -6,6 +6,12 @@ const theme = createTheme({
     h2: {
       fontFamily: `var(--font-secondary)`,
     },
+    h3: {
+      fontFamily: `var(--font-secondary)`,
+    },
+    h5: {
+      fontFamily: `var(--font-secondary)`,
+    },
     // body: {
     //   fontFamily: "'Nunito Sans', sans-serif"
     // },
