@@ -14,19 +14,9 @@
 
 
 ## Quickstart
-- [Use this doc to setup GitHub Codespaces](https://docs.google.com/document/d/1RDJsTLouF3S35mgFZptQv4DZXK0SC6P1mieCinFicDs/edit?usp=sharing): you won't need to download anything on your computer
-
-- Once you have Codespaces running, install the project dependencies:
-```bash
-npm install
-```
-
-- Copy the `env_template` file to a `.env` file under the root project directory and update the `<TODO>` portions with your values (these are listed [in our doc](https://docs.google.com/document/d/1RDJsTLouF3S35mgFZptQv4DZXK0SC6P1mieCinFicDs/edit#bookmark=id.3ha1trc3tfll) and will get everything running with our test backend)
-
-- Run the application:
-```bash
-npm run dev
-```
+See the 
+[Development Setup instructions](./docs/DevSetup.md) 
+to get up and running quickly.
 
 # References
 ## React UI Tools
@@ -50,3 +40,8 @@ As learned from the Udemy course, [this is a pretty easy way](https://fonts.goog
 
 ## IDE
 If you don't want to use GitHub Codespaces, we perfer to use VSCode to do our development. Grab [VSCode](https://code.visualstudio.com/) as your IDE, we'll use this for both frontend and backend.
+
+## git Comand Line Interface (CLI) cheet sheets
+Here are a couple git CLI references.
+* From [GitHub](https://education.github.com/git-cheat-sheet-education.pdf)
+* From [Atlassian](https://www.atlassian.com/git/tutorials/atlassian-git-cheatsheet)
