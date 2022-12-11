@@ -78,7 +78,7 @@ export default function NonProfitList() {
         <Chip
           icon={<BuildIcon />}
           color="warning"
-          style={{ fontSize: "1.9rem" }}
+          style={{ fontSize: "1.5rem" }}
           onClick={showNeedsHelp}
           onDelete={showNeedsHelp}
           label="Needs Help"
@@ -89,7 +89,7 @@ export default function NonProfitList() {
         <Chip
           icon={<BuildIcon />}
           color="warning"
-          style={{ fontSize: "1.9rem" }}
+          style={{ fontSize: "1.5rem" }}
           onClick={showNeedsHelp}
           label="Needs Help"
         />
@@ -103,7 +103,7 @@ export default function NonProfitList() {
         <Chip
           icon={<WorkspacePremiumIcon />}
           color="success"
-          style={{ fontSize: "1.9rem" }}
+          style={{ fontSize: "1.5rem", marginLeft: "0.5rem" }}
           onClick={showProduction}
           onDelete={showProduction}
           label="Live"
@@ -114,7 +114,7 @@ export default function NonProfitList() {
         <Chip
           icon={<WorkspacePremiumIcon />}
           color="success"
-          style={{ fontSize: "1.9rem" }}
+          style={{ fontSize: "1.5rem", marginLeft: "0.5rem" }}
           onClick={showProduction}
           label="Live"
         />

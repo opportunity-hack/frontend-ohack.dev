@@ -73,7 +73,7 @@ export const ButtonContainers = styling(Grid)((props) => ({
 // Typography
 export const TitleStyled = styling(Typography)((props) => ({
   fontSize: "4vw",
-  lineHeight: "5.5vw",
+  lineHeight: "5vw",
   fontWeight: "700",
   color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
