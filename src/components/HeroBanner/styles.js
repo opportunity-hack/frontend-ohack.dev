@@ -72,10 +72,10 @@ export const ButtonContainers = styling(Grid)((props) => ({
 
 // Typography
 export const TitleStyled = styling(Typography)((props) => ({
-  fontSize: "5vw",
+  fontSize: "4vw",
   lineHeight: "5.5vw",
-  fontWeight: "800",
-  color: "#2c2c2c",
+  fontWeight: "700",
+  color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
   letterSpacing: "-0.3rem",
 
@@ -110,6 +110,6 @@ export const BackgroundGrid = styling(Grid)({
   height: "70rem",
   top: "-20rem",
   transform: "skewY(-10deg)",
-  background: "linear-gradient(to bottom right, #f0ff00 23%, #58cffb 89%)",
+  background: "linear-gradient(to bottom right, #58cffb 23%, #CCCCFF 89%)",
   zIndex: "-100",
 });

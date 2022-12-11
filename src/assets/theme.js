@@ -2,7 +2,7 @@ import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
   typography: {
-    h1: { fontFamily: "'Manrope', sans-serif" },
+    h1: { fontFamily: "'Montserrat', monospace"},
     h2: {
       fontFamily: `var(--font-secondary)`,
     },
