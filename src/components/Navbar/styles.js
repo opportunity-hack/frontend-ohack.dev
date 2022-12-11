@@ -44,8 +44,7 @@ export const NavbarLink = styling(Link)({
   letterSpacing: "0em",
   color: "#333333",
   transitionDuration: "0.3s",
-  // textShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-  // textTransform: "uppercase",
+  
   "&:hover": {
     color: "#6a6a6a",
   },
