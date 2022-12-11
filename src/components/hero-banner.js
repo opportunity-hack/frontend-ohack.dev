@@ -43,7 +43,7 @@ export default function HeroBanner(){
       
 
       <Stack direction="row" spacing={2} marginTop={0}>
-      <Link href="/nonprofits">
+      <Link href="/nonprofit/tRK5YPrc8vpHQabMYIDO">
         <button onClick={gaButton("find_a_problem")}  className="button button--primary">
           Step 1: Join our Hackathon →
         </button>
