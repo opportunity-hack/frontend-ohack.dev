@@ -34,6 +34,7 @@ function HeroBanner() {
     });
   };
 
+  // get width of window on resize
   const [width, setWidth] = useState();
   const functionName = () => {
     setInterval(() => {
