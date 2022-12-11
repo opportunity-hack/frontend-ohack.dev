@@ -83,6 +83,12 @@ function EventFeature(props) {
 								100
 							).toFixed(0)}%`}
 						/>
+						<TypographyStyled
+							variant="body1"
+							sx={{ marginTop: "5%" }}
+						>
+							$ {donationCurrent.food}/{donationGoals.food}
+						</TypographyStyled>
 					</ProgressBarHolder>
 
 					<ProgressBarHolder container justifyContent="center">
@@ -114,6 +120,12 @@ function EventFeature(props) {
 								100
 							).toFixed(0)}%`}
 						/>
+						<TypographyStyled
+							variant="body1"
+							sx={{ marginTop: "5%" }}
+						>
+							$ {donationCurrent.prize}/{donationGoals.prize}
+						</TypographyStyled>
 					</ProgressBarHolder>
 
 					<ProgressBarHolder container justifyContent="center">
@@ -145,6 +157,12 @@ function EventFeature(props) {
 								100
 							).toFixed(0)}%`}
 						/>
+						<TypographyStyled
+							variant="body1"
+							sx={{ marginTop: "5%" }}
+						>
+							$ {donationCurrent.swag}/{donationGoals.swag}
+						</TypographyStyled>
 					</ProgressBarHolder>
 				</BlankContainer>
 
