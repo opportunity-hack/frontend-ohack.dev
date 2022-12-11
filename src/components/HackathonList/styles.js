@@ -21,18 +21,18 @@ export const OuterGrid = styling(Grid)((props) => ({
 export const EventCards = styling(Grid)((props) => ({
 	borderRadius: "20px",
 	backgroundColor: "white",
-	// width: "auto",
 	height: "auto",
 	padding: "2%",
-	marginTop: "3%",
 	maxWidth: "35%",
 	boxShadow: "10px",
 	backgroundColor: "#e6f7ff",
 	borderRadius: "15px",
+	margin: "3% 2% 2% 0%",
 
 	[props.theme.breakpoints.down("md")]: {
 		maxWidth: "100%",
 		width: "100%",
+		marginTop: "3%",
 	},
 }));
 
