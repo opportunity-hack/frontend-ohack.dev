@@ -1,10 +1,14 @@
-import { textAlign } from "@mui/system";
-import React from "react";
-import reactDom from "react-dom";
+import useNewsLetterAPI from "../../hooks/use-newsletter";
 
+import { useState, useEffect, useCallback } from "react";
 export default function newsletters(){
+    const { subscribers,submit_email } = useNewsLetterAPI();
+    const handle_submit  = () => {
+                    submit_email("Hello Leon testing here","#leon making random tests",false)
+    }
    return(
        <div class="parent">
+
 <div class = "container">
        
        <div class = "1a"> </div>
@@ -26,18 +30,16 @@ export default function newsletters(){
             </div>
             <div class="continer2">
                 <ol>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
-                <li>dfgdf</li>
+                {
+                    subscribers != undefined?subscribers.map((value)=>{
+                           return( 
+                           <li> {value.email}</li>
+                           ) 
+                    }
+                    ):null
+                }             
                 </ol>
-
+                <button style={{background: "red"}} onClick={handle_submit}>TESTING</button>
             </div>
        </div>
        
