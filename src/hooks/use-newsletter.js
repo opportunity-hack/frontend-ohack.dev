@@ -58,11 +58,13 @@ export default function useNewsLetterAPI(){
       
 
         if (data) {
-            console.log(data);
+            // console.log(data);
             // subscribers = data["active"]
             // console.log(subscribers)
+            console.log("successfully sent")
         }
         else{
+            console.log("error")
             // subscribers = []
         }
     };
