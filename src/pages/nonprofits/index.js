@@ -22,7 +22,7 @@ import {
   InnerContainer,
   NonProfitContainer,
   NonProfitGrid,
-} from "./styles";
+} from "../../styles/nonprofits/styles";
 
 export default function NonProfitList() {
   let { nonprofits } = useNonprofit();

@@ -89,17 +89,17 @@ function OHackFeatures() {
 		setValue(index);
 	};
 
-	const [width, setWidth] = useState(screen.width);
+	const [width, setWidth] = useState(window.screen.width);
 	const functionName = () => {
 		setInterval(() => {
-			setWidth(screen.width);
+			setWidth(window.screen.width);
 		}, 500);
 	};
 
 	window.addEventListener("resize", functionName);
 
 	useEffect(() => {
-		setWidth(screen.width);
+		setWidth(window.screen.width);
 	}, []);
 
 	return (

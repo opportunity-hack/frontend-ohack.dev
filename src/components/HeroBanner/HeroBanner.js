@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  MainContainer,
+import {  
   ButtonStyled,
   GridStyled,
   TextStyled,
@@ -38,14 +37,14 @@ function HeroBanner() {
   const [width, setWidth] = useState();
   const functionName = () => {
     setInterval(() => {
-      setWidth(screen.width);
+      setWidth(window.screen.width);
     }, 500);
   };
 
   window.addEventListener("resize", functionName);
 
   useEffect(() => {
-    setWidth(screen.width);
+    setWidth(window.screen.width);
   }, []);
 
   return (

@@ -55,7 +55,7 @@ import {
   TitleChipContainer,
   TitleContainer,
   TitleStyled,
-} from "./styles";
+} from "../../styles/nonprofit/styles";
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;

@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth0 } from "@auth0/auth0-react";
 
-import useProfileApi from "../../hooks/use-profile-api";
+// TODO: import useProfileApi from "../../hooks/use-profile-api";
 
-import NavBarAdmin from "../nav-bar-admin";
+// TODO: import NavBarAdmin from "../nav-bar-admin";
 import Image from "next/image";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
@@ -14,7 +14,7 @@ import {
   NavbarContainer,
   Navbar,
   LoginButton,
-  LogoutButton,
+  // LogoutButton,
   NavbarList,
   NavbarLink,
   NavbarListItem,
@@ -33,12 +33,12 @@ import {
 } from "./styles";
 import {
   Grid,
-  Typography,
+  // Typography,
   Drawer,
   List,
   ListItem,
   ListItemButton,
-  ListItemIcon,
+  // ListItemIcon,
   ListItemText,
   Divider,
 } from "@mui/material";
@@ -52,7 +52,7 @@ import Tooltip from '@mui/material/Tooltip';
 
 export default function NavBar() {
   const { isAuthenticated, logout, loginWithRedirect, user } = useAuth0();
-  const { badges, hackathons, profile, feedback_url } = useProfileApi();
+  // TODO: const { badges, hackathons, profile, feedback_url } = useProfileApi();
   const [isOpen, setIsOpen] = useState(false);
 
   // add close dropdown mouselistener to close on outside click
@@ -84,14 +84,14 @@ export default function NavBar() {
   const [width, setWidth] = useState();
   const functionName = () => {
     setInterval(() => {
-      setWidth(screen.width);
+      setWidth(window.screen.width);
     }, 500);
   };
 
   window.addEventListener("resize", functionName);
 
   useEffect(() => {
-    setWidth(screen.width);
+    setWidth(window.screen.width);
   }, []);
 
   // drawer
