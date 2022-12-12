@@ -21,7 +21,7 @@ import {
   ProfileDetailText,
   ProfileHeader,
   ProfileHeadline,
-} from "./styles.js";
+} from "../../styles/profile/styles";
 import { Link, Typography } from "@mui/material";
 
 export default function Profile() {

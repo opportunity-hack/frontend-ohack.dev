@@ -11,16 +11,15 @@ function HackathonList() {
 	const [width, setWidth] = useState();
 	const functionName = () => {
 		setInterval(() => {
-			setWidth(screen.width);
+			setWidth(window.screen.width);
 		}, 500);
 	};
-
-	const testing = ["asdfasf", "asdfasdfad", "asdfasdfad"];
+	
 
 	window.addEventListener("resize", functionName);
 
 	useEffect(() => {
-		setWidth(screen.width);
+		setWidth(window.screen.width);
 	}, []);
 
 	return (
