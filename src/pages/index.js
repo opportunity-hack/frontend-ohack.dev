@@ -1,20 +1,19 @@
 import React, { Fragment } from "react";
-import HeroBanner from "../components/hero-banner";
-import OHackFeatures from "../components/ohack-features";
-import Head from 'next/head';
-import HackathonList from "../components/hackathon-list";
+import Head from "next/head";
+import HeroBanner from "../components/HeroBanner/HeroBanner";
+import OHackFeatures from "../components/OHackFeatures/OHackFeatures";
+import HackathonList from "../components/HackathonList/HackathonList";
 
 export default function Home() {
-
-  return(
-  <Fragment>
-    <Head>
+  return (
+    <Fragment>
+      <Head>
         <title>Opportunity Hack Developer Portal</title>
-    </Head>
-      
-    <HeroBanner />
-    <HackathonList />    
-    <OHackFeatures />    
-  </Fragment>
+      </Head>
+
+      <HeroBanner />
+      <HackathonList />
+      <OHackFeatures />
+    </Fragment>
   );
 }

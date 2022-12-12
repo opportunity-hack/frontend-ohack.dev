@@ -30,7 +30,7 @@ export default function HeroBanner(){
   }
 
   return (    
-    <div className="hero-banner">
+    <div className="hero-banner" style={{paddingTop: 100, position: "relative"}}>
       <Head>
         <meta charSet="utf-8" />
         <meta property="og:site_name" content="Opportunity Hack Portal" />        
