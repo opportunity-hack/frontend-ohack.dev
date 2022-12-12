@@ -14,7 +14,7 @@ export default function newsletters(){
                 <div class = "1b"> 
                 <button class = 'button'> HTML </button>
                 <button class = 'button'> Markup </button>
-                </div>
+               </div>
                 <label class="contents"> Contents <br></br></label>
                 <div class = "1c"> </div>
                 <textarea id="textarea" name="textarea" class="text_area" rows="4" cols="50"> </textarea>

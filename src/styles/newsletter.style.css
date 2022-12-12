@@ -2,8 +2,7 @@
     display: grid;
     grid-template-columns: 70% 20%;
     width: 100%;
-    background-color: #7B68EE;
-    
+    background: radial-gradient(ellipse at top, #F0FF00, transparent), radial-gradient(ellipse at bottom, #58CFFB, transparent);
 }
 .header{
     height: 50px;
