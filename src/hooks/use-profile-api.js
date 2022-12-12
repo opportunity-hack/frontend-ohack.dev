@@ -157,6 +157,7 @@ export default function useProfileApi(){
         hackathons,
         profile,
         feedback_url,
-        handle_help_toggle
+        handle_help_toggle,
+        fetchUser
     };
 };
