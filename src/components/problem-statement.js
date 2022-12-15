@@ -44,6 +44,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 
 import useTeams from "../hooks/use-teams";
 import Events from "./events";
+import SkillSet from "./skill-set";
 
 
 
@@ -424,6 +425,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                 </Stack>
 
                 <h3 className="ohack-feature__headline">{problem_statement.title}</h3>
+                <SkillSet Skills={["skill 1", "skill 2"]} />
 
                 <Stack spacing={2} direction="row">
                     <Box sx={{ width: '75%' }}>
