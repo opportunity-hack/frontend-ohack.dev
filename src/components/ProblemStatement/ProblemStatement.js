@@ -5,7 +5,6 @@ import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
 import BuildIcon from "@mui/icons-material/Build";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-import ChildFriendlyIcon from "@mui/icons-material/ChildFriendly";
 import TagIcon from "@mui/icons-material/Tag";
 import Switch from "@mui/material/Switch";
 import Stack from "@mui/material/Stack";
@@ -30,7 +29,6 @@ import useProfileApi from "../../hooks/use-profile-api";
 import ProjectProgress from "../ProjectProgress/ProjectProgress";
 
 import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
 
 import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -39,7 +37,7 @@ import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import InputAdornment from "@mui/material/InputAdornment";
 
-import AbcIcon from "@mui/icons-material/Abc";
+import NotesIcon from '@mui/icons-material/Notes'; 
 import EventIcon from "@mui/icons-material/Event";
 import CodeIcon from "@mui/icons-material/Code";
 import EngineeringIcon from "@mui/icons-material/Engineering";
@@ -49,14 +47,18 @@ import Events from "../Events/Events";
 import {
   AccordionButton,
   AccordionContainer,
-  AccordionTitle,
-  BadgeContainer,
+  AccordionTitle,  
   ProjectCard,
   ProjectDescText,
   ShortDescText,
   TitleStyled,
   YearStyled,
 } from "./styles";
+
+
+import SkillSet from "../skill-set";
+
+
 
 export default function ProblemStatement({ problem_statement, user, npo_id }) {
   const [open, setOpen] = useState(false);
@@ -260,7 +262,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
       <Chip icon={<WorkspacePremiumIcon />} color="success" label="Live" />
     );
   } else {
-    status = <Chip icon={<BuildIcon />} color="warning" label="Needs Help" />;
+    status = <Chip icon={<BuildIcon />} color="warning" label="Needs Help" />
   }
 
   var callToAction = "";
@@ -271,9 +273,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   var countOfMentors = 0;
   if (problem_statement.helping != null) {
     problem_statement.helping.forEach((help) => {
-      if (help.type == "mentor") {
+      if (help.type === "mentor") {
         countOfMentors++;
-      } else if (help.type == "hacker") {
+      } else if (help.type === "hacker") {
         countOfHackers++;
       }
     });
@@ -360,7 +362,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   var mentorsAddPlural = [];
   var hackersAddPlural = [];
 
-  if (countOfHackers == 0 || countOfHackers > 1) {
+  if (countOfHackers === 0 || countOfHackers > 1) {
     hackersAddPlural[0] = "s";
     hackersAddPlural[1] = "are";
   } else {
@@ -368,7 +370,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
     hackersAddPlural[1] = "is";
   }
 
-  if (countOfMentors == 0 || countOfMentors > 1) {
+  if (countOfMentors === 0 || countOfMentors > 1) {
     mentorsAddPlural[0] = "s";
     mentorsAddPlural[1] = "are";
   } else {
@@ -376,10 +378,15 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
     mentorsAddPlural[1] = "is";
   }
 
-  console.log("== Problem Statement Render: " + problem_statement.id);
+  console.log("== Problem Statement Render: ", problem_statement);
   return (
     <ProjectCard key={problem_statement.id}>
-      <BadgeContainer>
+      <Stack direction="row" justifyContent="flex-start" alignItems="flex-start" spacing={1.5}>
+        {status}
+        <SkillSet Skills={problem_statement.skills} />      
+      </Stack>
+      <Stack direction="row" justifyContent="flex-end" marginTop={1.5}>
+        
         {/* {problem_statement.status === "production" ? (
           <Tooltip title="Needs help">
             <BuildIcon />
@@ -392,53 +399,55 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
           }>
             <BuildIcon fontSize="large" sx={{ color: "orange" }}/>
           </Tooltip>
-        )} */}
-        {status}
-        <Tooltip
-          title={
-            <span
-              style={{ fontSize: "14px" }}
-            >{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>
-          }
-          style={{ marginLeft: "2rem" }}
-        >
-          <Badge
-            showZero
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            badgeContent={countOfHackers}
-            color="secondary"
+        )} */}          
+          
+
+          
+          <Tooltip
+            title={
+              <span
+                style={{ fontSize: "14px" }}
+              >{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>
+            }
+            style={{ marginLeft: "2rem" }}
           >
-            <DeveloperModeIcon fontSize="large" />
-          </Badge>
-        </Tooltip>
-        <Tooltip
-          title={
-            <span
-              style={{ fontSize: "14px" }}
-            >{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>
-          }
-          style={{ marginLeft: "2rem" }}
-        >
-          <Badge
-            showZero
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            badgeContent={countOfMentors}
-            color="secondary"
+            <Badge
+              showZero
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              badgeContent={countOfHackers}
+              color="secondary"
+            >
+              <DeveloperModeIcon fontSize="large" />
+            </Badge>
+          </Tooltip>
+          <Tooltip
+            title={
+              <span
+                style={{ fontSize: "14px" }}
+              >{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>
+            }
+            style={{ marginLeft: "2rem" }}
           >
-            <SupportIcon fontSize="large" />
-          </Badge>
-        </Tooltip>
-      </BadgeContainer>
+            <Badge
+              showZero
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              badgeContent={countOfMentors}
+              color="secondary"
+            >
+              <SupportIcon fontSize="large" />
+            </Badge>
+          </Tooltip>
+      </Stack>
       <TitleStyled variant="h2">{problem_statement.title}</TitleStyled>
       <YearStyled>{problem_statement.first_thought_of}</YearStyled>
 
-      <ProjectProgress state={problem_statement.status} />
+      <ProjectProgress state={problem_statement.status} />      
 
       <AccordionContainer>
         <Accordion
@@ -451,7 +460,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
             id="panel1bh-header"
           >
             <AccordionTitle>
-              <AbcIcon />
+              <NotesIcon />
               Project Description
             </AccordionTitle>
             <Typography>

@@ -2,11 +2,11 @@ import { AccordionDetails, Grid, Typography, Link } from "@mui/material";
 import { styled as styling } from "@mui/material";
 
 export const ProjectCard = styling(Grid)({
-  padding: "3rem",
+  padding: "1.5rem",
   backgroundColor: "#f5f7f77f",
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.15)",
   borderRadius: "1rem",
-  position: "relative",
+  position: "relative",  
 });
 
 export const BadgeContainer = styling(Grid)((props) => ({
