@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {  
   ButtonStyled,
+  ButtonBasicStyle,
   GridStyled,
   TextStyled,
   TitleStyled,
@@ -20,13 +21,13 @@ function HeroBanner() {
   const JOIN_SLACK_LINK =
     "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
   const openCodeSample = () => {
-    gaButton("open_code_sample");
+    gaButton("slack_button", "open_join_slack");
     window.open(JOIN_SLACK_LINK, "_blank", "noopener noreferrer");
   };
 
-  const gaButton = (actionName) => {
+  const gaButton = (action, actionName) => {
     ga.event({
-      action: "button",
+      action: action,
       params: {
         action_name: actionName,
       },
@@ -78,8 +79,9 @@ function HeroBanner() {
             Interested in joining? Click to find out more!
           </TextStyled>
           <ButtonContainers container>
-            <ButtonStyled onClick={gaButton("find_a_problem")} href="/nonprofit/tRK5YPrc8vpHQabMYIDO">Join our Hackathon </ButtonStyled>
+            <ButtonStyled onClick={gaButton("button_build_ohack", "find_a_problem")} href="/nonprofit/tRK5YPrc8vpHQabMYIDO">Help us build ohack.dev</ButtonStyled>
             <ButtonStyled onClick={openCodeSample}>Join us on Slack to get involved</ButtonStyled>
+            <ButtonBasicStyle onClick={gaButton("button_see_all", "see_all_nonprofit_projects")} href="/nonprofits">See all nonprofit projects</ButtonBasicStyle>
           </ButtonContainers>
         </CaptionContainer>
       </BlankContainer>

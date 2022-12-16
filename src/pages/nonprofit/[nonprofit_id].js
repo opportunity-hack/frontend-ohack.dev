@@ -245,10 +245,17 @@ export default function NonProfitProfile() {
   // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
   console.log("Nonprofit Page Render");
   console.log(slack_details);
+
+  var image = "/npo_placeholder.png"
+  if( nonprofit.image !== undefined )
+  {
+    image = nonprofit.image;
+  }
+
   return (
     <LayoutContainer key={nonprofit_id} container>
       <TitleBanner>
-        <Parallax bgImage="/npo_placeholder.png" strength={300}></Parallax>
+        <Parallax bgImage={image} strength={300}></Parallax>
       </TitleBanner>
       <TitleContainer container>
         <TitleChipContainer>
