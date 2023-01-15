@@ -57,6 +57,7 @@ import {
 
 
 import SkillSet from "../skill-set";
+import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 
 
 
@@ -237,7 +238,14 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   };
 
   function getWordStr(str) {
-    return str.split(/\s+/).slice(0, 50).join(" ");
+    if( str != null )
+    {
+      return str.split(/\s+/).slice(0, 50).join(" ");
+    }
+    else {
+      return "";
+    }
+    
   }
 
   var TeamText = "";
@@ -245,7 +253,8 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
     var teamCounter = 0;
     problem_statement.events.forEach((event) => {
       event.teams.forEach((ateam) => {
-        if (ateam.problem_statements.includes(problem_statement.id)) {
+        if (ateam.problem_statements != null && 
+            ateam.problem_statements.includes(problem_statement.id)) {
           teamCounter++;
         }
       });
@@ -271,7 +280,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   var countOfHackers = 0;
   var countOfMentors = 0;
-  if (problem_statement.helping != null) {
+  if (problem_statement.helping != null && problem_statement.helping.length > 0) {
     problem_statement.helping.forEach((help) => {
       if (help.type === "mentor") {
         countOfMentors++;
@@ -283,7 +292,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   // Read the DB details passed into this component and update the state accordingly
   useMemo(() => {
-    if (problem_statement.helping != null && user != null) {
+    if (problem_statement.helping != null && user != null && problem_statement.helping.length > 0) {
       problem_statement.helping.forEach((help) => {
         if (help.slack_user === user.sub) {
           setHelpedChecked("checked");
@@ -378,11 +387,14 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
     mentorsAddPlural[1] = "is";
   }
 
+  const copyProjectLink = "project/"+problem_statement.id;
+
   console.log("== Problem Statement Render: ", problem_statement);
   return (
     <ProjectCard key={problem_statement.id}>
-      <Stack direction="row" justifyContent="flex-start" alignItems="flex-start" spacing={1.5}>
-        {status}
+      <Stack direction="row" justifyContent="flex-start" alignItems="flex-start" spacing={1.5}>        
+        <CopyToClipboardButton location={copyProjectLink} />
+        {status}        
         <SkillSet Skills={problem_statement.skills} />      
       </Stack>
       <Stack direction="row" justifyContent="flex-end" marginTop={1.5}>

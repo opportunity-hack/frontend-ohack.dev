@@ -78,7 +78,7 @@ export default function useProblemstatements(problem_statement_id){
                 }
                 else {
                     if (problem_statement_id) {
-                        setProblemStatement(data.problem_statements);
+                        setProblemStatement(data);
                     }
                     else {
                         setProblemStatements(data.problem_statements);
