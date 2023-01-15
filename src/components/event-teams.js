@@ -74,7 +74,7 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
     }
     
     const isUserInAnyTeamListTemp = teams.map(team =>{        
-        const isTeamAssociatedToProblemStatement = team.problem_statements.includes(problemStatementId);
+        const isTeamAssociatedToProblemStatement = team.problem_statements !=null && team.problem_statements.includes(problemStatementId);
         if (!isTeamAssociatedToProblemStatement )
         {
                 
@@ -120,7 +120,7 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
     const teamsToShow = teams.map(team => {
             const users = team.users;
 
-            const isTeamAssociatedToProblemStatement = team.problem_statements.includes(problemStatementId);
+            const isTeamAssociatedToProblemStatement = team.problem_statements != null && team.problem_statements.includes(problemStatementId);
             if (!isTeamAssociatedToProblemStatement) {
                 return "";
             }
