@@ -1,4 +1,5 @@
 # Opportunity Hack 2022
+
 ReactLovers worked on the project [Update our UX](https://github.com/opportunity-hack/frontend-ohack.dev/issues/13). Running the code can be done similarly as outlined in [Quickstart](#quickstart).
 
 
