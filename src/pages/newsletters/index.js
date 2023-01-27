@@ -6,8 +6,17 @@ import React from "react";
 
 export default function newsletters() {
   const { subscribers, submit_email } = useNewsLetterAPI();
+  const [is_HTML, setHtml] = React.useState(true);
+ 
+  // hooks
+  
+
+  function handleHtml() {
+    setHtml(!is_HTML);
+    console.log("is Html", is_HTML)
+  }[is_HTML]
   const handle_submit = (event) => {
-    console.log(event.target.header.value);
+    console.log(is_HTML);
     event.preventDefault();
     submit_email(
       event.target.header.value,
@@ -15,13 +24,6 @@ export default function newsletters() {
       is_HTML
     );
   };
-  // hooks
-  const [is_HTML, setHtml] = React.useState(true);
-
-  function handleHtml() {
-    setHtml(!is_HTML);
-    console.log(is_HTML);
-  }
 
   return (
     <div class="parent">
@@ -38,21 +40,21 @@ export default function newsletters() {
                 type="button"
                 class="button"
                 style={{ background: !is_HTML ? "green" : "white" }}
-                onClick={is_HTML ? handleHtml : null}
-                id="HTML"
+                onClick={!is_HTML ? null : handleHtml }
+                id="Markdown"
               >
                 {" "}
-                HTML{" "}
+                MarkDown{" "}
               </button>
               <button
                 type="button"
                 class="button"
                 style={{ background: is_HTML ? "green" : "white" }}
                 onClick={is_HTML ? null : handleHtml}
-                id="Markup"
+                id="HTML"
               >
                 {" "}
-                Markup{" "}
+                Html{" "}
               </button>
             </div>
           </div>
@@ -71,14 +73,13 @@ export default function newsletters() {
           </textarea>
           <div class="testing">
             <button class="button" type="submit">
-              {" "}
-              Send{" "}
+              Send
             </button>
           </div>
         </form>
         <div> </div>
       </div>
-      <div class="continer2">
+      <div class="container2">
         <h2 class="users"> Subscribed Users </h2>
 
         <textarea

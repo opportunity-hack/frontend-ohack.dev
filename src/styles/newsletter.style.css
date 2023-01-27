@@ -54,7 +54,7 @@
 .testing { 
     display: flex; 
     margin: 20px 0; 
-    justify-content: end;
+    justify-content: flex-end;
 }
 .users {
     font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
