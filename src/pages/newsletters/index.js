@@ -10,15 +10,18 @@ class Users{
     this.users  = users
   }
   get_list(item_name){
+    console.log(item_name)
     return this.users[item_name]
   }
 }
 export default function newsletters() {
-  const { users, submit_email } = useNewsLetterAPI();
+  const { subscribers, submit_email } = useNewsLetterAPI();
   const [is_HTML, setHtml] = React.useState(true);
-  const [item_name, selectRole] = React.useState('no_role')
+  const [item_name, selectRole] = React.useState('hacker')
   // hooks
-  
+  useEffect(()=>{
+    // get_subscriber_list()
+  })
 
   function handleHtml() {
     setHtml(!is_HTML);
@@ -33,22 +36,23 @@ export default function newsletters() {
       event.target.content.value,
       is_HTML
     );
+    console.log(subscribers)
   };
 
   return (
-    <div class="parent">
-      <div class="container">
-        <div class="1a"> </div>
+    <div className="parent">
+      <div className="container">
+        <div className="1a"> </div>
         <form id="newsletterForm" onSubmit={handle_submit}>
-          <label class="title"> Subject </label>
+          <label className="title"> Subject </label>
           <br></br>
-          <input class="header" name="header" type="text" />
+          <input className="header" name="header" type="text" />
           <br></br>
-          <div class="1b">
-            <div class="1b">
+          <div className="1b">
+            <div className="1b">
               <button
                 type="button"
-                class="button"
+                className="button"
                 style={{ background: !is_HTML ? "green" : "white" }}
                 onClick={!is_HTML ? null : handleHtml}
                 id="Markdown"
@@ -58,7 +62,7 @@ export default function newsletters() {
               </button>
               <button
                 type="button"
-                class="button"
+                className="button"
                 style={{ background: is_HTML ? "green" : "white" }}
                 onClick={is_HTML ? null : handleHtml}
                 id="HTML"
@@ -68,20 +72,20 @@ export default function newsletters() {
               </button>
             </div>
           </div>
-          <label class="contents">
+          <label className="contents">
             {" "}
             Contents <br></br>
           </label>
-          <div class="1c"> </div>
+          <div className="1c"> </div>
           <textarea
             id="textarea"
             name="content"
-            class="text_area"
+            className="text_area"
             rows="4"
             cols="50"
           ></textarea>
-          <div class="testing">
-            <button class="button" type="submit">
+          <div className="testing">
+            <button className="button" type="submit">
               Send
             </button>
           </div>
@@ -89,41 +93,41 @@ export default function newsletters() {
         <div> </div>
       </div>
       
-      <div class="container2">
-        <h2 class="users"> Subscribed Users </h2>
+      <div className="container2">
+        <h2 className="users"> Subscribed Users </h2>
 
         <textarea
           id="textarea"
           name="textarea"
-          class="text_area_subs"
+          className="text_area_subs"
           rows="3"
           cols="50"
+          readOnly
           value={
-            users != undefined
-              ? Users(users).get_list(item_name).map((value) => {
+            subscribers != undefined
+              ? subscribers[item_name]?.map((value) => {
+                console.log(value.email)
                   return value.email
                 })
-              : null
+              : ""
           }
         >
           {" "}
         </textarea>
         <div>
           <h2>Select group</h2>
-            <select onSelect={
+            <select
+             onChange={
               (e)=>{
-                console.log(e.target.value)
-                //TODO select role with that feature
+                selectRole(e.target.value)
               }
-            } >
+            } 
+            >
               {
-                ()=>{
-                  let roles = Object.keys(users)
-                  for (let role of roles){
-                    return <option >{role}</option>
-                  }
-                  
-                }
+                 subscribers != undefined? Object.keys(subscribers).map((role)=>{
+                    return (<option value={role}>{role}{subscribers[role].length}</option>)
+                  }):<option>loading</option>
+                 
               }
             </select>
 

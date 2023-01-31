@@ -21,7 +21,7 @@ export default function useNewsLetterAPI() {
       const data = await fetchUser({ config, authenticated: true });
 
       if (data) {
-        console.log(data.active)
+        console.log(data.active["no role"])
         setSubscribers(data.active);
       } else {
         setSubscribers([]);
@@ -76,7 +76,24 @@ export default function useNewsLetterAPI() {
       console.log("error");
     }
   }
+  async function get_subscriber_list(){
+    const config = {
+      url: `${apiServerUrl}/api/newsletter/`,
+      method: "GET",
+      headers: {
+        "content-type": "application/json"
+      }
+    };
 
+    const data = await fetchUser({ config, authenticated: true });
+
+    if (data) {
+      console.log(data.active)
+     return data.active;
+    } else {
+      return []
+    }
+  };
 
   async function submit_email(subject, message, is_html) {
     const email_data = {
@@ -113,6 +130,7 @@ export default function useNewsLetterAPI() {
     subscribers,
     submit_email,
     subscribe,
-    check_subscription_status
+    check_subscription_status,
+    get_subscriber_list
   };
 }
