@@ -4,10 +4,19 @@ import { useState, useEffect, useCallback } from "react";
 
 import React from "react";
 
+
+class Users{
+  constructor(users){
+    this.users  = users
+  }
+  get_list(item_name){
+    return this.users[item_name]
+  }
+}
 export default function newsletters() {
-  const { subscribers, submit_email } = useNewsLetterAPI();
+  const { users, submit_email } = useNewsLetterAPI();
   const [is_HTML, setHtml] = React.useState(true);
- 
+  const [item_name, selectRole] = React.useState('no_role')
   // hooks
   
 
@@ -15,6 +24,7 @@ export default function newsletters() {
     setHtml(!is_HTML);
     console.log("is Html", is_HTML)
   }[is_HTML]
+
   const handle_submit = (event) => {
     console.log(is_HTML);
     event.preventDefault();
@@ -40,7 +50,7 @@ export default function newsletters() {
                 type="button"
                 class="button"
                 style={{ background: !is_HTML ? "green" : "white" }}
-                onClick={!is_HTML ? null : handleHtml }
+                onClick={!is_HTML ? null : handleHtml}
                 id="Markdown"
               >
                 {" "}
@@ -69,8 +79,7 @@ export default function newsletters() {
             class="text_area"
             rows="4"
             cols="50"
-          >
-          </textarea>
+          ></textarea>
           <div class="testing">
             <button class="button" type="submit">
               Send
@@ -79,6 +88,7 @@ export default function newsletters() {
         </form>
         <div> </div>
       </div>
+      
       <div class="container2">
         <h2 class="users"> Subscribed Users </h2>
 
@@ -86,11 +96,11 @@ export default function newsletters() {
           id="textarea"
           name="textarea"
           class="text_area_subs"
-          rows="4"
+          rows="3"
           cols="50"
           value={
-            subscribers != undefined
-              ? subscribers.map((value) => {
+            users != undefined
+              ? Users(users).get_list(item_name).map((value) => {
                   return value.email
                 })
               : null
@@ -98,6 +108,27 @@ export default function newsletters() {
         >
           {" "}
         </textarea>
+        <div>
+          <h2>Select group</h2>
+            <select onSelect={
+              (e)=>{
+                console.log(e.target.value)
+                //TODO select role with that feature
+              }
+            } >
+              {
+                ()=>{
+                  let roles = Object.keys(users)
+                  for (let role of roles){
+                    return <option >{role}</option>
+                  }
+                  
+                }
+              }
+            </select>
+
+          
+        </div>
       </div>
     </div>
   );
