@@ -1,23 +1,25 @@
 .parent{
     display: grid;
-    grid-template-columns: 70% 20%;
+    grid-template-columns: 70% auto;
     width: 100%;
+    padding: 3% 10%;
     background: radial-gradient(ellipse at top, #F0FF00, transparent), radial-gradient(ellipse at bottom, #58CFFB, transparent);
+    min-height: 100vh;
 }
 .header{
     height: 50px;
     font-size: 24px;
     padding: 10px;
+    border:0;
 }
 .text_area{
-    height: 50vh;
+    height: 50vh;  
+    width: inherit;
+    border: 0;
 }
 .container { 
-    display: grid; 
-    grid-auto-flow: column;
-    grid-column-gap: 10px;
-    width: 80%;
-    height: 80%;
+    width: 90%;
+
 }
  .button {
     display: flex;
@@ -25,59 +27,59 @@
     justify-content: space-around;
     width: 47%;
     border: 5px solid rgba(10, 2, 2, 0);
+    color: white;
     padding: 1rem 1rem;
     margin: 1rem 1rem  1rem 0;
     vertical-align: middle;
 }
-
-#newsletterForm {
-    display: flex;
-    flex-direction: column;
-    max-width: 500px;
+.dark-text{
+    color: black
 }
-.title {
-    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;  
-    text-align: center;
-    font-size: x-large;
+.light-text{
+    color: white;
 }
 
-.contents{ 
-    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-    text-align: center;
-    padding: 20px;
-    font-size: x-large;
-    min-height: fit-content;
-    max-height: 100px;
-
-}
-
-.testing { 
-    display: flex; 
-    margin: 20px 0; 
-    justify-content: flex-end;
-}
-.users {
-    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-}
-.list {
-    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-    background-color: white;
-    border: 1px solid black;
-    height: 70%;
-    width: 90%;
-    padding: 0px;
-    padding-top: 20px;
-    padding-bottom: 30px;
-    padding-left: 70px;
-    list-style: disc;
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-}
 .text_area_subs{
-    height: 60vh;
+    height: 20vh;
     font-size: medium;
+    border: 0;
 }
 .text_area{
     font-size: 24px;
+}
+.full_width{
+    width: 100%;
+}
+.flex_space_between{
+    display: flex;
+    justify-content: space-between;
+    }
+.flex_center{
+    display: flex;
+    justify-content: center;
+    }
+.grid_auto_auto{
+    display: grid;
+    grid-template-columns: auto auto;
+}    
+.align_center{
+    align-items: center;
+}
+.padlock{
+    background-color: white;
+    width: 50px;
+    height: 50px;
+}
+.locked{
+    background-color: rgb(5, 72, 171);
+}
+.padlock :hover{
+    cursor: pointer;
+}
+.padlock svg{
+    width: 30px;
+    height: 30px;
+}
+h3{
+    margin: 20px 0;
 }

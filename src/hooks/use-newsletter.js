@@ -95,12 +95,12 @@ export default function useNewsLetterAPI() {
     }
   };
 
-  async function submit_email(subject, message, is_html) {
+  async function submit_email(subject, message, is_html,addresses) {
     const email_data = {
       body: message,
       is_html: is_html,
       subject: subject,
-      addresses: subscribers
+      addresses: addresses
     };
     console.log(email_data);
 
@@ -119,16 +119,38 @@ export default function useNewsLetterAPI() {
       // console.log(data);
       // subscribers = data["active"]
       // console.log(subscribers)
-      alert("successfully sent");
+      return true
     } else {
-      alert("error sending emails");
-      // subscribers = []
+      return false
     }
   }
+
+
+  async function preview_newsletter( message, is_html) {
+    const email_data = {
+      body: message,
+      is_html: is_html,
+    };
+
+    const config = {
+      url: `${apiServerUrl}/api/newsletter/preview_newsletter`,
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      data: email_data
+    };
+
+    const data = await fetchUser({ config, authenticated: true });
+
+    return data
+  }
+
 
   return {
     subscribers,
     submit_email,
+    preview_newsletter, 
     subscribe,
     check_subscription_status,
     get_subscriber_list
