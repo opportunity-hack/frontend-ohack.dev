@@ -20,6 +20,7 @@ export default function newsletters() {
   const [selected_component, selectCustomComponentType ] = useState('')
   const [edit_email_list, selectEditEmail] = useState(false)
   const [email_count, countEmails] = useState(0)
+  const [email_List, listEmails] = useState([])
  const [is_preview, changeView]= useState(false);
  const [preview, setPreview]= useState("")
 
@@ -44,7 +45,8 @@ export default function newsletters() {
        values = await submit_email(
           event.target.header.value,
            event.target.content.value,
-           is_HTML
+           is_HTML,
+           email_list
           ):
          preview_newsletter(
             event.target.content.value,
@@ -143,6 +145,7 @@ export default function newsletters() {
               (e)=>{
                 selectRole(e.target.value)
                 countEmails(subscribers[e.target.value].length)
+                listEmails(subscribers[e.target.value])
               }
             } 
             >
