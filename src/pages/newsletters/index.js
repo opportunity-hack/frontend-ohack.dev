@@ -40,13 +40,13 @@ export default function newsletters() {
     }
   
     else{
-      let values
-       !is_preview?
-       values = await submit_email(
+      // console.log(email_List) 
+       let send_email_result =  !is_preview?
+       await submit_email(
           event.target.header.value,
            event.target.content.value,
            is_HTML,
-           email_list
+           email_List
           ):
          preview_newsletter(
             event.target.content.value,
@@ -56,6 +56,10 @@ export default function newsletters() {
             handleHtmlChange(val)
             console.log(preview)
           });
+          
+          if(send_email_result){
+            notify("email successfully sent !!")
+          }
     }
    
   };
@@ -186,7 +190,7 @@ export default function newsletters() {
           
         </div>
         <h4>Email Count: {email_count}</h4>
-        <SubscriberList is_editable={edit_email_list}  subscribers={subscribers} item_name={item_name==undefined?"":item_name}></SubscriberList>
+        <SubscriberList is_editable={edit_email_list}  subscribers={subscribers} item_name={item_name==undefined?"":item_name} subscribers_list={listEmails}></SubscriberList>
       </div>
       <Toaster />
     </div>

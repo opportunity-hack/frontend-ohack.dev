@@ -103,6 +103,7 @@ export default function useNewsLetterAPI() {
       addresses: addresses
     };
     console.log(email_data);
+    // console.log(addresses)
 
     const config = {
       url: `${apiServerUrl}/api/newsletter/send_newsletter`,
