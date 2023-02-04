@@ -5,7 +5,6 @@
   width: 100%;
 
   box-shadow: rgb(90 95 102) 0-1.5px 0 inset;
-
   z-index: 300;
 }
 
@@ -87,6 +86,26 @@
 
 .nav-bar__actions {
   margin-left: 24px;
+}
+
+.login-button svg {
+  margin-left: 5px;
+}
+
+.login-button svg path {
+  transition: all 0.25s;
+}
+
+.login-button svg .line {
+  opacity: 0;
+}
+
+.login-button:hover svg .line {
+  opacity: 1;
+}
+
+.login-button:hover svg .arrow {
+  transform: translateX(2px);
 }
 
 @media only screen and (max-width: 480px) {

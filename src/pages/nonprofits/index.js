@@ -6,28 +6,32 @@ import { styled, alpha } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
 */
 
-import NonProfitListTile from "../../components/nonprofit-list-tile";
+import NonProfitListTile from "../../components/NonProfitListTile/NonProfitListTile";
 import useNonprofit from "../../hooks/use-nonprofit";
 
-import Chip from '@mui/material/Chip';
-import BuildIcon from '@mui/icons-material/Build';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import Chip from "@mui/material/Chip";
+import BuildIcon from "@mui/icons-material/Build";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 
 import { useState, useCallback } from "react";
-import { Puff } from 'react-loading-icons'
+import { Puff } from "react-loading-icons";
 
-import Head from 'next/head';
+import Head from "next/head";
+import {
+  ContentContainer,
+  InnerContainer,
+  NonProfitContainer,
+  NonProfitGrid,
+} from "../../styles/nonprofits/styles";
 
 export default function NonProfitList() {
+  let { nonprofits } = useNonprofit();
 
-    let { nonprofits } = useNonprofit();
+  const [needs_help_flag, setNeedsHelpFlag] = useState(true);
+  const [production_flag, setProductionFlag] = useState(false);
 
-    const [ needs_help_flag, setNeedsHelpFlag ] = useState(true);
-    const [ production_flag, setProductionFlag] = useState(false);
-
-
-    // TODO: When search is enabled below, use this theme
-    /*
+  // TODO: When search is enabled below, use this theme
+  /*
     const Search = styled('div')(({ theme }) => ({
         position: 'relative',
         borderRadius: theme.shape.borderRadius,
@@ -68,120 +72,152 @@ export default function NonProfitList() {
     }));
     */
 
+  const needsHelpButton = () => {
+    if (needs_help_flag) {
+      return (
+        <Chip
+          icon={<BuildIcon />}
+          color="warning"
+          style={{ fontSize: "1.5rem" }}
+          onClick={showNeedsHelp}
+          onDelete={showNeedsHelp}
+          label="Needs Help"
+        />
+      );
+    } else {
+      return (
+        <Chip
+          icon={<BuildIcon />}
+          color="warning"
+          style={{ fontSize: "1.5rem" }}
+          onClick={showNeedsHelp}
+          label="Needs Help"
+        />
+      );
+    }
+  };
 
-    const needsHelpButton = () =>
-    {
-        if( needs_help_flag )
-        {
-            return (<Chip icon={<BuildIcon />} color="warning" style={{ fontSize: "1.9rem" }} onClick={showNeedsHelp} onDelete={showNeedsHelp} label="Needs Help" />);
-        }
-        else{
-            return (<Chip icon={<BuildIcon />} color="warning" style={{ fontSize: "1.9rem" }}  onClick={showNeedsHelp}  label="Needs Help" />);
-        }
+  const productionButton = () => {
+    if (production_flag) {
+      return (
+        <Chip
+          icon={<WorkspacePremiumIcon />}
+          color="success"
+          style={{ fontSize: "1.5rem", marginLeft: "0.5rem" }}
+          onClick={showProduction}
+          onDelete={showProduction}
+          label="Live"
+        />
+      );
+    } else {
+      return (
+        <Chip
+          icon={<WorkspacePremiumIcon />}
+          color="success"
+          style={{ fontSize: "1.5rem", marginLeft: "0.5rem" }}
+          onClick={showProduction}
+          label="Live"
+        />
+      );
+    }
+  };
+
+  const showNeedsHelp = (event) => {
+    setNeedsHelpFlag(!needs_help_flag);
+  };
+
+  const showProduction = (event) => {
+    setProductionFlag(!production_flag);
+  };
+
+  const nonProfitList = useCallback(() => {
+    if (nonprofits == null || nonprofits.length === 0) {
+      return (
+        <p>
+          Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" />
+        </p>
+      );
     }
 
-    const productionButton = () => {
-        if (production_flag) {
-            return (<Chip icon={<WorkspacePremiumIcon />} color="success" style={{ fontSize: "1.9rem" }} onClick={showProduction} onDelete={showProduction}  label="Live" />);
+    return nonprofits.map((npo) => {
+      let display = true;
+
+      let production_counter = 0;
+      let needs_help_counter = 0;
+      let hacker_counter = 0;
+      let mentor_counter = 0;
+
+      npo.problem_statements.forEach((ps) => {
+        if (ps.status === "production") {
+          production_counter++;
+        } else {
+          needs_help_counter++;
         }
-        else {
-            return (<Chip icon={<WorkspacePremiumIcon />} color="success" style={{ fontSize: "1.9rem" }} onClick={showProduction} label="Live" />);
+
+        if (ps.helping) {
+          ps.helping.forEach((help) => {
+            if (help.type == "hacker") {
+              hacker_counter++;
+            } else if (help.type == "mentor") {
+              mentor_counter++;
+            }
+          });
         }
-    }
+      });
 
-    const showNeedsHelp = (event) =>
-    {        
-        setNeedsHelpFlag(!needs_help_flag)        
-    }
-   
-    const showProduction = (event) => {
-        setProductionFlag(!production_flag)
-    }
+      if (needs_help_counter === 0 && needs_help_flag) {
+        display = false;
+      }
 
-    const nonProfitList = useCallback( () => {
-        if (nonprofits == null || nonprofits.length === 0) {
-            return (<p>Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" /></p>);
-        }    
+      if (production_counter === 0 && production_flag) {
+        display = false;
+      }
 
-        return(
-            nonprofits.map(npo => {
-                let display = true;
-
-                let production_counter = 0;
-                let needs_help_counter = 0;
-                let hacker_counter = 0;
-                let mentor_counter = 0;
-
-                npo.problem_statements.forEach(ps => {                    
-                    if ( ps.status === "production") {
-                        production_counter++;
-                    }
-                    else{
-                        needs_help_counter++;
-                    }
-
-                    if( ps.helping )
-                    {
-                        ps.helping.forEach(help => {
-                            if (help.type == "hacker")
-                            {
-                                hacker_counter++;
-                            } else if (help.type == "mentor") {
-                                mentor_counter++;
-                            }
-                        });
-                    }
-                });
-
-                
-                if( needs_help_counter === 0 && needs_help_flag )
-                {
-                    display = false;
-                }
-
-                if( production_counter === 0 && production_flag )
-                {
-                    display = false;
-                }
-
-                if( display )
-                {
-                    return(<NonProfitListTile
-                        npo={npo}
-                        key={npo.id}                                                                        
-                        need_help_problem_statement_count={needs_help_counter}
-                        in_production_problem_statement_count={production_counter}                                                
-                        hacker_count={hacker_counter}
-                        mentor_count={mentor_counter}
-                        icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
-                    />);
-                }
-                else{
-                    return("");
-                }
-                
-            })
+      if (display) {
+        return (
+          <NonProfitListTile
+            npo={npo}
+            key={npo.id}
+            need_help_problem_statement_count={needs_help_counter}
+            in_production_problem_statement_count={production_counter}
+            hacker_count={hacker_counter}
+            mentor_count={mentor_counter}
+            icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
+          />
         );
-    }, [nonprofits, needs_help_flag, production_flag]);
+      } else {
+        return "";
+      }
+    });
+  }, [nonprofits, needs_help_flag, production_flag]);
 
-    return (
-        <div className="content-layout">
-        <Head>
-            <title>Nonprofit Project List - Opportunity Hack Developer Portal</title>            
-            <meta name="description" content="A listing of all of the nonprofits and projects we have worked on from hackathons, senior capstone projects, and internships - we need help from you to push to production!" />
-        </Head>
-            <h1 className="content__title">Nonprofit Projects</h1>
-            <div className="content__body">
-                <div className="profile-grid">
-                    <div className="profile__header">
-                        <div className="profile__headline">
-                            <h3 className="profile__title">Review our catalog of nonprofit problems that need your help</h3>
-                            Here you'll find all nonprofits that we've worked with and those that need help, we hope that you find something that you'll love to work on.
-                        </div>
-                    </div>
+  return (
+    <ContentContainer container>
+      <Head>
+        <title>
+          Nonprofit Project List - Opportunity Hack Developer Portal
+        </title>
+        <meta
+          name="description"
+          content="A listing of all of the nonprofits and projects we have worked on from hackathons, senior capstone projects, and internships - we need help from you to push to production!"
+        />
+      </Head>
+      <InnerContainer container>
+        <h1 className="content__title">Nonprofit Projects</h1>
+        <div className="content__body">
+          <div className="profile__header">
+            <div className="profile__headline">
+              <h3 className="profile__title">
+                Review our catalog of nonprofit problems that need your help
+              </h3>
+              Here you'll find all nonprofits that we've worked with and those
+              that need help, we hope that you find something that you'll love
+              to work on.
+            </div>
+          </div>
 
-                    <div className="profile__details">
-                        { /* TODO: Get search working to make it easier to search all text for what the user is looking for
+          <div className="profile__details">
+            {/* TODO: Get search working to make it easier to search all text for what the user is looking for
                         <Search>
                             <SearchIconWrapper>
                                 <SearchIcon style={{ fontSize: "1.9rem" }} />
@@ -192,24 +228,16 @@ export default function NonProfitList() {
                                 inputProps={{ 'aria-label': 'search' }}
                             />
                         </Search>
-                        */
-                        }
-                        
-                        {needsHelpButton()}
-                        &nbsp;
-                        {productionButton()}
-                        
-
-                        <div className="ohack-features">                            
-                            <div className="ohack-features__grid">
-                                {nonProfitList()}                                                            
-                            </div>
-                        </div>
-                        
-
-                    </div>
-                </div>
-            </div>
+                        */}
+            {needsHelpButton()}
+            &nbsp;
+            {productionButton()}
+            <NonProfitContainer>
+              <NonProfitGrid>{nonProfitList()}</NonProfitGrid>
+            </NonProfitContainer>
+          </div>
         </div>
-    );
-};
+      </InnerContainer>
+    </ContentContainer>
+  );
+}
