@@ -22,7 +22,7 @@ export default function CustomNewsletterText(){
                 <h3>Add Text</h3>
                 <select
                 name="selection"
-                className="button full_width dark-text"
+                className="button dark-text full_width border_padding"
                 onChange={
                     (e)=>{
                         selectText(e.target.value)

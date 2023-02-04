@@ -23,8 +23,9 @@ export default function newsletters() {
   const [email_List, listEmails] = useState([])
  const [is_preview, changeView]= useState(false);
  const [preview, setPreview]= useState("")
+ const [is_subscribed, setSubscribed] = useState("true")
 
-  const notify = (value) => toast(value);
+  const error = (value) => toast.error(value);
 
   function handleHtml() {
     setHtml(!is_HTML);
@@ -36,17 +37,17 @@ export default function newsletters() {
   const handle_submit = async (event) => {
     event.preventDefault();
     if(event.target.header.value == "" || event.target.content.value == ""){
-      notify(event.target.header.value == "" && event.target.content.value == ""?"Subject and content are empty":event.target.content.value == ""?"Subject is empty":"content is empty")
+      error(event.target.header.value == "" && event.target.content.value == ""?"Subject and content are empty":event.target.content.value == ""?"Subject is empty":"content is empty")
     }
   
     else{
       // console.log(email_List) 
        let send_email_result =  !is_preview?
-       await submit_email(
+        submit_email(
           event.target.header.value,
            event.target.content.value,
-           is_HTML,
-           email_List
+           email_List,
+           item_name
           ):
          preview_newsletter(
             event.target.content.value,
@@ -56,10 +57,13 @@ export default function newsletters() {
             handleHtmlChange(val)
             console.log(preview)
           });
-          
-          if(send_email_result){
-            notify("email successfully sent !!")
-          }
+
+          toast.promise(send_email_result, {
+            loading: 'Loading',
+            success: 'email successfully sent !!',
+            error: 'Error when sending data',
+          });
+        
     }
    
   };
@@ -69,59 +73,35 @@ export default function newsletters() {
     <div className="parent">
       <div className="container">
         <form className="full_width" onSubmit={handle_submit}>
-          <h3> Subject </h3>
-          <input className="header full_width" name="header" type="text" placeholder="type you email subject here"/>
-          <h3>  Contents </h3>
+          <div className=" flex_center_center flex_row title_row">
+            <h3>Subject </h3>
+            <input className="header full_width border_padding" name="header" type="text" placeholder="type you email subject here"/>
+          </div>
+
+         <br></br>
           <textarea
             id="textarea"
             name="content"
-            className="text_area"
+            className="text_area border_padding"
             rows="4"
             cols="50"
             placeholder="Type email here ..."
           ></textarea>
-          <div className="button">
+          <div className=" flex_center_center flex_row title_row flex_align_end">
             <button className="button dark-text locked light-text"  onClick={(event)=>{
-              changeView(false)
-            }} type="submit">
+                changeView(false)
+              }} type="submit">
               Send
             </button>
-            {/* <button className="button dark-text" onClick={(event)=>{
-              changeView(true)
-            }}  type="submit">
-              Preview
-            </button> */}
-          </div>
+         </div>
+       
         </form>
         <div> </div>
       </div>      
       <div  className="container">
-      <h3> Input type </h3>
-          <div className="flex_space_between full_width">
-            <button
-              type="button"
-              className="button dark-text"
-              style={{ background: !is_HTML ? "#003486" : "white", color: is_HTML ? "#003486" : "white"  }}
-              onClick={!is_HTML ? null : handleHtml}
-              id="Markdown"
-            >
-              {" "}
-              MarkDown{" "}
-            </button>
-            <button
-              type="button"
-              className="button dark-text"
-              style={{ background: is_HTML ? "#003486" : "white", color: !is_HTML ? "#003486" : "white" }}
-              onClick={is_HTML ? null : handleHtml}
-              id="HTML"
-            >
-              {" "}
-              Html{" "}
-            </button>
-          </div>
         <h3>Add Custom Component</h3>
         <select
-        className="button dark-text full_width"
+        className="button dark-text full_width border_padding"
         onChange={(e)=>{
           selectCustomComponentType(e.target.value)
           console.log((e.target.value))
@@ -142,14 +122,59 @@ export default function newsletters() {
 
         }
          <div>
-          <h3>Select group</h3>
+          <h3>Subscription status</h3>
             <select
-            className="button dark-text full_width"
+            className="button dark-text full_width border_padding"
              onChange={
               (e)=>{
-                selectRole(e.target.value)
-                countEmails(subscribers[e.target.value].length)
-                listEmails(subscribers[e.target.value])
+                setSubscribed(e.target.value)
+                let new_list = []
+                subscribers && item_name
+                ?subscribers[item_name]?.forEach((value)=>{
+                  if(String(value["subscribe"])==e.target.value){
+                    new_list.push(value) 
+                    }
+              }):undefined
+              
+                listEmails(new_list.length < 1?undefined:new_list)
+                countEmails(new_list.length)
+           
+              }
+            } 
+            >
+              <option value={true}>Subscribers</option>
+              <option  value={false}>Non Subscribers</option>
+            </select>
+        </div>
+
+         <div>
+          <h3>Select group</h3>
+            <select
+            className="button dark-text full_width border_padding"
+             onChange={
+              (e)=>{
+                const group_form_value = e.target.value
+                if(group_form_value){
+
+                  let new_list = []
+                  subscribers && group_form_value
+                  ?subscribers[group_form_value]?.forEach((value)=>{
+                    if(String(value["subscribe"])==is_subscribed){
+                      new_list.push(value) 
+                      }
+                }):undefined
+                  console.log(new_list)
+                  listEmails(new_list.length < 1?undefined:new_list)
+                  countEmails(new_list.length)
+
+                  selectRole(group_form_value)
+                  // countEmails(group_form_value.length)
+                  // listEmails(email_List[group_form_value])
+                }
+
+                // listEmails(new_list.length < 1?undefined:new_list)
+                // countEmails(new_list.length)
+                // console.log(group_form_value)
               }
             } 
             >
@@ -162,7 +187,7 @@ export default function newsletters() {
               }
             </select>
         </div>
-        <div className="grid_auto_auto align_center">
+        <div className="flex_space_between align_center">
           <div>
             <h3> Selected Group:  {item_name?item_name+"s":"None"} </h3>
           </div>
@@ -190,7 +215,7 @@ export default function newsletters() {
           
         </div>
         <h4>Email Count: {email_count}</h4>
-        <SubscriberList is_editable={edit_email_list}  subscribers={subscribers} item_name={item_name==undefined?"":item_name} subscribers_list={listEmails}></SubscriberList>
+        <SubscriberList is_editable={edit_email_list}  subscribers={subscribers} item_name={item_name==undefined?"":item_name} subscribers_list={listEmails} is_subscribed={is_subscribed}></SubscriberList>
       </div>
       <Toaster />
     </div>

@@ -1,26 +1,27 @@
-import { useState, setState, useEffect } from "react"
-
 export default function SubscriberList (props){
-    const [main_email_list,setEmailList]=useState(props.subscribers[props.item_name])
-
-    const value = props.subscribers != undefined ? 
-                  props.subscribers[props.item_name]?.map((value) => {
-                    return value.email
-                    })
-                : ""
-    // useEffect(()=>{
-    //   setEmailList(value)
-    // })
+    const value = []
+    
+    if(props.subscribers != undefined) {
+      props.subscribers[props.item_name]?.forEach((v) => {
+        // filter here
+        if(String(v.subscribe) == props.is_subscribed){
+          value.push(v.email)
+        }
+        
+        })
+    }
+                 
+                
 
     return(
        props.is_editable? <textarea
        id="textarea"
        name="textarea"
-       className="text_area_subs"
+       className="text_area text_area_subs full_width"
        rows="3"
        cols="50"
        placeholder={
-        value == ""?"Email list is empty": value
+        value == []?"Email list is empty": value
        }
        onChange={
         (e)=>{
@@ -31,6 +32,7 @@ export default function SubscriberList (props){
          })
          if(props.subscribers[props.item_name]){
           for(let item of props.subscribers[props.item_name]){
+            //filter here
           for(let address of new_list){
             if(item.email == address){
               final_list.push(item)
@@ -49,18 +51,13 @@ export default function SubscriberList (props){
      <textarea
       id="textarea"
       name="textarea"
-      className="text_area_subs"
+      className="text_area text_area_subs full_width"
       rows="3"
       cols="50"
       readOnly
       value= {value}
       placeholder={
        "Email list is empty"
-       }
-       onChange={
-        (e)=>{
-          props.subscribers_list(e.target.value)
-        }
        }
     ></textarea>
     )

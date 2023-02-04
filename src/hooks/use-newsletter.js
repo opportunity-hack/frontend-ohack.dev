@@ -6,9 +6,12 @@ export default function useNewsLetterAPI() {
   const { apiServerUrl } = useEnv();
   const [subscribers, setSubscribers] = useState([]);
   const { fetchUser } = useProfileApi();
-  useEffect(() => {
 
-    
+  // every time the newsletter API is called, fetch the list of subscribers 
+  useEffect(() => {
+    /**
+     * fetches all 
+     */
     const getSubscriptions = async () => {
       const config = {
         url: `${apiServerUrl}/api/newsletter/`,
@@ -19,9 +22,8 @@ export default function useNewsLetterAPI() {
       };
 
       const data = await fetchUser({ config, authenticated: true });
-
+      
       if (data) {
-        console.log(data.active["no role"])
         setSubscribers(data.active);
       } else {
         setSubscribers([]);
@@ -31,51 +33,7 @@ export default function useNewsLetterAPI() {
     getSubscriptions();
   }, []);
 
-/**
- * calls either the unsubscribe or subscribe based on the param
- * @param {subscribe, user_id} strings
- */
-  async function subscribe(subscription_state, user_id){
-    const config = {
-      url: `${apiServerUrl}/api/newsletter/${subscription_state}/${user_id}`,
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
-    };
-    const data = await fetchUser({ config, authenticated: true });
 
-    if (data) {
-      console.log(`successfully ${subscription_state}d >>>>>` + JSON.stringify(data));
-      var new_data = JSON.parse(JSON.stringify(data))
-      new_data["subscribed"] =  new_data["subscribed"] == "true"
-      return new_data
-      // TODO: return boolean to stop loader if any
-    } else {
-      console.log("error");
-      return undefined
-    }
-  }
-
-
-  async function check_subscription_status(user_id){
-    const config = {
-      url: `${apiServerUrl}/api/newsletter/verify/${user_id}`,
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
-    };
-    const data = await fetchUser({ config, authenticated: true });
-
-    if (data) {
-      var new_data = JSON.parse(JSON.stringify(data))
-      return new_data["is_subscribed"] == "true"
-      // TODO: return boolean to stop loader if any
-    } else {
-      console.log("error");
-    }
-  }
   async function get_subscriber_list(){
     const config = {
       url: `${apiServerUrl}/api/newsletter/`,
@@ -95,16 +53,13 @@ export default function useNewsLetterAPI() {
     }
   };
 
-  async function submit_email(subject, message, is_html,addresses) {
+  async function submit_email(subject, message,addresses, role) {
     const email_data = {
       body: message,
-      is_html: is_html,
       subject: subject,
-      addresses: addresses
+      addresses: addresses,
+      role: role
     };
-    console.log(email_data);
-    // console.log(addresses)
-
     const config = {
       url: `${apiServerUrl}/api/newsletter/send_newsletter`,
       method: "POST",
@@ -115,15 +70,9 @@ export default function useNewsLetterAPI() {
     };
 
     const data = await fetchUser({ config, authenticated: true });
-
-    if (data) {
-      // console.log(data);
-      // subscribers = data["active"]
-      // console.log(subscribers)
-      return true
-    } else {
-      return false
-    }
+    // the api returns either "True" or "False"
+    return data.toLowerCase() == String(true)
+   
   }
 
 
@@ -152,8 +101,8 @@ export default function useNewsLetterAPI() {
     subscribers,
     submit_email,
     preview_newsletter, 
-    subscribe,
-    check_subscription_status,
     get_subscriber_list
   };
 }
+
+

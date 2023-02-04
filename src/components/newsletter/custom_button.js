@@ -38,7 +38,7 @@ return(
             }}>
             <h3>Add Custom Button</h3>
             <select 
-             className="button full_width dark-text"
+             className="button dark-text full_width border_padding"
             onChange={
                 (e)=>{
                     selectType(valueOrUndefined(e.target.value))
@@ -52,8 +52,8 @@ return(
                     })
                 }
             </select>
-            <input className="button full_width dark-text" name="button_text" type="text" placeholder="text"/>
-            <input className="button full_width dark-text" name="button_link" type="link" placeholder="link"/>
+            <input className="button dark-text full_width border_padding" name="button_text" type="text" placeholder="text"/>
+            <input className="button dark-text full_width border_padding" name="button_link" type="link" placeholder="link"/>
             <button type="submit"  className="button full_width dark-text" >Copy Button To clipboard</button>
         </form>
         <Toaster />
