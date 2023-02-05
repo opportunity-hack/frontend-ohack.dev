@@ -53,10 +53,8 @@ export default function useNewsLetterSubscriptionAPI(){
     const data = await makeRequest({ config, authenticated: true });
   
     if (data) {
-      console.log(  `${apiServerUrl}/api/newsletter-subs/${subscription_state}/${user_id}`, data)
       var new_data = data.data
       new_data["subscribed"] =  new_data["subscribed"] == "true"
-      console.log(new_data)
       return new_data
     } else {
       return undefined
@@ -76,15 +74,12 @@ export default function useNewsLetterSubscriptionAPI(){
     if(data == "Login required"){
       return data
     }
-    console.log(".............",data.data)
     if (data) {
       
       var new_data = data.data
-      console.log(new_data["is_subscribed"] , "true")
       return new_data["is_subscribed"] == "true"
-      // TODO: return boolean to stop loader if any
     } else {
-      console.log("error");
+      console.log("error checking sub status");
     }
   }
   return{

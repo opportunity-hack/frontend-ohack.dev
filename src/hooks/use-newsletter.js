@@ -46,7 +46,6 @@ export default function useNewsLetterAPI() {
     const data = await fetchUser({ config, authenticated: true });
 
     if (data) {
-      console.log(data.active)
      return data.active;
     } else {
       return []
