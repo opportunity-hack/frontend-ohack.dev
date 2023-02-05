@@ -41,7 +41,6 @@ export default function newsletters() {
     }
   
     else{
-      // console.log(email_List) 
        let send_email_result =  !is_preview?
         submit_email(
           event.target.header.value,
@@ -53,9 +52,7 @@ export default function newsletters() {
             event.target.content.value,
             is_HTML
           ).then((val)=>{
-            console.log(val)
             handleHtmlChange(val)
-            console.log(preview)
           });
 
           toast.promise(send_email_result, {
@@ -104,7 +101,6 @@ export default function newsletters() {
         className="button dark-text full_width border_padding"
         onChange={(e)=>{
           selectCustomComponentType(e.target.value)
-          console.log((e.target.value))
         }}>
           <option>Select</option>
          {
@@ -162,19 +158,12 @@ export default function newsletters() {
                     if(String(value["subscribe"])==is_subscribed){
                       new_list.push(value) 
                       }
-                }):undefined
-                  console.log(new_list)
+                }):undefined;
                   listEmails(new_list.length < 1?undefined:new_list)
                   countEmails(new_list.length)
-
                   selectRole(group_form_value)
-                  // countEmails(group_form_value.length)
-                  // listEmails(email_List[group_form_value])
                 }
 
-                // listEmails(new_list.length < 1?undefined:new_list)
-                // countEmails(new_list.length)
-                // console.log(group_form_value)
               }
             } 
             >
