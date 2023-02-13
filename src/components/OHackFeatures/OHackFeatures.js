@@ -73,7 +73,7 @@ function OHackFeatures() {
 			index: 3,
 			title: "Engage with a community",
 			description:
-				"We're all taking time out of our lives to make the world a better place, you'll be with many similiar-minded people. Help your company with their Environmental, Social, and Governance (ESG) commiitment by donating a percentage of its profits to the local community and encourage employees to perform volunteer work. Validate a focus on diversity, inclusion, community-focus, and social justice.",
+				"We're all taking time out of our lives to make the world a better place, you'll be with many similiar-minded people. Help your company with their Environmental, Social, and Governance (ESG) commiitment by donating a percentage of its profits to the local community and encourage employees to perform volunteer work. Use community service to validate a focus on diversity, inclusion, community-focus, and social justice.",
 			icon: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/forum/default/48px.svg",
 		},
 	];
