@@ -65,12 +65,11 @@ export default function Profile() {
               </ProfileDetailText>
             </ProfileHeadline>
           </ProfileHeader>
-          <ProfileButton
-            href={profile.profile_url}
-            className="button button--compact button--primary"
-          >
-            Your Public Profile
+          <Link href={profile.profile_url}>
+          <ProfileButton className="button button--compact button--primary">
+              See Your Public Profile
           </ProfileButton>
+          </Link>
         </ProfileContainer>
 
         <div className="profile__details">
@@ -80,10 +79,11 @@ export default function Profile() {
           <h1 className="profile__title">Volunteer History</h1>
           <br />
 
-          <h1 className="profile__title">Feedback</h1>
+          <h2 className="profile__title">Feedback</h2>
+          Feedback you give and receive
+          <FeedbackLite feedback_url={feedback_url} history={profile.history} />
 
-          <FeedbackLite feedback_url={feedback_url} />
-
+          
           <h2 className="profile__title">Hackathons</h2>
           <p>
             We've tried our best to keep track of each time you've volunteered,
@@ -104,12 +104,7 @@ export default function Profile() {
             Feedback gathered from your mentors, peers, team members, nonprofits
           </p>
 
-          <div className="profile__details">
-            <CodeSnippet
-              title="Decoded ID Token"
-              code={JSON.stringify(user, null, 2)}
-            />
-          </div>
+         
         </div>
       </InnerContainer>
     </LayoutContainer>
