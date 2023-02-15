@@ -3,7 +3,7 @@ import { useState } from 'react'
 import ShareIcon from '@mui/icons-material/Share';
 export default function CopyToClipboardButton({ location }) 
 {
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(false);
     const handleClick = () => {
       setOpen(true);
 

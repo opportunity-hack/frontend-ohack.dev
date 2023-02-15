@@ -130,12 +130,10 @@ export default function useProfileApi(){
                 if (data.text && data.text.badges && data.text.hackathons) {                    
                     setBadges(data.text.badges);
                     setHackathons(data.text.hackathons);
-                    setProfile(
-                        {
-                            "profile_url": window.location.href + "/" + data.text.id,
-                            "profile_image": data.text.profile_image
-                        }
-                        );
+
+                    var profileData = data.text;
+                    profileData["profile_url"] = window.location.href + "/" + data.text.id;
+                    setProfile(profileData);
                     setFeedbackUrl(window.location.href.replace("profile", "feedback") + "/" + data.text.id);
 
                 }
