@@ -1,4 +1,5 @@
 import React from "react";
+import Button from '@mui/material/Button';
 
 export default function LinkedInButton(){
     /**
@@ -7,9 +8,6 @@ export default function LinkedInButton(){
      * Learn more: https://auth0.com/docs/universal-login/new-experience
      */
     return (
-        <button
-            className="button button--primary button--compact">
-            Share to LinkedIn
-        </button>
+        <Button disabled variant="contained">Share to LinkedIn</Button>        
     );
 };

@@ -1,7 +1,8 @@
 import React from "react";
 import { Puff } from 'react-loading-icons'
-
-
+import ContactPageIcon from '@mui/icons-material/ContactPage';
+import Link from 'next/link'
+import LanguageIcon from '@mui/icons-material/Language';
 export default function NonProfitList({ nonprofits }){
 
     return(
@@ -13,9 +14,10 @@ export default function NonProfitList({ nonprofits }){
             nonprofits.map(npo => {
                 return(
                     <div key={npo.name}>
-                    <a href={npo.website} className="nonprofit__website">{npo.name}</a>
-                    <pre>{npo.slack_channel}</pre>
-                    {npo.contact_people}            
+                        <Link href={`/nonprofit/${npo.id}`}>{npo.name}</Link><br/>
+                        <pre>#{npo.slack_channel}</pre>
+                        <LanguageIcon /> <a href={npo.website} className="nonprofit__website">{npo.website}</a><br />
+                        <ContactPageIcon/> {npo.contact_people}            
                     </div>);
             })
 
