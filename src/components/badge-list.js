@@ -10,12 +10,14 @@ export default function BadgeList({badges}){
     
     return(
     <div className="badge-list">        
+        <div>
+            {badges.length > 0 ? <LinkedInButton /> : null}
+        </div>
         {
                 badges.map(badge => {
                     return <div key={badge.id}><img key={badge.id} alt="Badge" src={badge.image} className="profile__avatar" />{badge.description}</div>;
                 })
-        }
-        {badges.length > 0 ? <LinkedInButton/> : null}        
+        }        
     </div>
     )
 };

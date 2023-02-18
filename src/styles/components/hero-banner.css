@@ -33,16 +33,17 @@
 }
 
 .hero-banner__description {
-  max-width: 58rem;
+  /* max-width: 58rem; */
 
   text-align: center;
 
   /* responsive */
 
   margin-bottom: 3.2rem;
-
-  font-size: 20px;
-  line-height: 3.2rem;
+  font-size: 3rem;
+  line-height: 2.4rem;
+  /* font-size: 20px; */
+  /* line-height: 3.2rem; */
 }
 
 @media only screen and (max-width: 540px) {
@@ -57,10 +58,5 @@
 
   .hero-banner__headline {
     font-size: 3.2rem;
-  }
-
-  .hero-banner__description {
-    font-size: 1.6rem;
-    line-height: 2.4rem;
   }
 }

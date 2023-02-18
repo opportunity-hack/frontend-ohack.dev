@@ -1,3 +1,8 @@
+# Opportunity Hack 2022
+
+ReactLovers worked on the project [Update our UX](https://github.com/opportunity-hack/frontend-ohack.dev/issues/13). Running the code can be done similarly as outlined in [Quickstart](#quickstart).
+
+
 # Are you here for Opportunity Hack 2022?
 
 - Hacker Signup [on DevPost](https://opportunity-hack-2022.devpost.com/)

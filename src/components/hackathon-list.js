@@ -1,5 +1,4 @@
 import React from "react";
-import { useAuth0 } from "@auth0/auth0-react";
 import EventFeature from "./event-feature";
 import useHackathonEvents from '../hooks/use-hackathon-events';
 
@@ -9,7 +8,7 @@ export default function HackathonList() {
     
     var currentEvents = "";
 
-    if(hackathons.length > 0)
+    if(hackathons?.length > 0)
     {
         currentEvents = hackathons.map( event => {
             return(                
