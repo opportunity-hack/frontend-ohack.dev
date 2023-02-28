@@ -1,5 +1,5 @@
 import { Grid, Button, Typography, Box } from "@mui/material";
-import { styled as styling, keyframes } from "@mui/material";
+import { styled as styling, keyframes, css } from "@mui/material";
 
 // Button
 export const ButtonStyled = styling(Button)({
@@ -150,29 +150,27 @@ export const AnimatedLine = styling("path")`
   stroke-dashoffset: 1010;
 `
 
-export const AnimatedHeart = styling("path")`
+const animatedIcon = css`
   stroke-width: 10;
   stroke-linecap: round;
   stroke-linejoin: round;
+  animation: ${offset} 3.5s forwards;
+`
+
+export const AnimatedHeart = styling("path")`
+  ${animatedIcon};
   stroke-dasharray: 1130;
   stroke-dashoffset: 1130;
-  animation: ${offset} 3.5s forwards;
 `
 
 export const AnimatedLaptop = styling("path")`
-  stroke-width: 10;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+${animatedIcon};
   stroke-dasharray: 2090;
   stroke-dashoffset: 2090;
-  animation: ${offset} 3.5s forwards;
 `
 
 export const AnimatedBulb = styling("path")`
-  stroke-width: 10;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  ${animatedIcon};
   stroke-dasharray: 1600;
   stroke-dashoffset: 1600;
-  animation: ${offset} 3.5s forwards;
 `
