@@ -149,7 +149,7 @@ export default function NonProfitListTile({
                 <Grid item>
                   <Chip
                     icon={<AddAlertIcon color='warning' fontSize='medium' />}
-                    color='warning'
+                    color={need_help_problem_statement_count ? 'warning' : 'primary'}
                     label={`${need_help_problem_statement_count} Project${
                       need_help_problem_statement_count === 1 ? '' : 's'
                     } 

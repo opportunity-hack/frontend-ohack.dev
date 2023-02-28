@@ -8,7 +8,7 @@ export const TileLink = styling(Link)({
   backgroundColor: "#fafbfb",
   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.15)",
   "&:hover": {
-    transform: "scale(1.025)",
+    transform: "scale(1.01)",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
   },
 });
