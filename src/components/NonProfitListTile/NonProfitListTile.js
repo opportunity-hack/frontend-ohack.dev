@@ -1,22 +1,28 @@
-import React from "react";
-import Link from "next/link";
-import TagIcon from "@mui/icons-material/Tag";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import Button from "@mui/material/Button";
+import React from 'react';
+import Link from 'next/link';
+import TagIcon from '@mui/icons-material/Tag';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Button from '@mui/material/Button';
 
-import AddAlertIcon from "@mui/icons-material/AddAlert";
-import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+import AddAlertIcon from '@mui/icons-material/AddAlert';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
-import SupportIcon from "@mui/icons-material/Support";
-import DeveloperModeIcon from "@mui/icons-material/DeveloperMode";
-import Badge from "@mui/material/Badge";
+import SupportIcon from '@mui/icons-material/Support';
+import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
+import Badge from '@mui/material/Badge';
 
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuth0 } from '@auth0/auth0-react';
 
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
-import { CountDetailsText, NonProfitDescText, NonProfitName, TileLink } from "./styles";
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import {
+  CountDetailsText,
+  NonProfitDescText,
+  NonProfitName,
+  TileLink,
+} from './styles';
+import { Chip } from '@mui/material';
 
 export default function NonProfitListTile({
   onSelected,
@@ -31,7 +37,7 @@ export default function NonProfitListTile({
   const { user } = useAuth0();
 
   const JOIN_SLACK_LINK =
-    "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
+    'https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig';
 
   var number_of_problem_statements_helping_with = 0;
 
@@ -39,28 +45,28 @@ export default function NonProfitListTile({
     e.preventDefault();
     window.open(
       `https://opportunity-hack.slack.com/app_redirect?channel=${channel}`,
-      "_blank",
-      "noopener noreferrer"
+      '_blank',
+      'noopener noreferrer'
     );
   };
 
-  var slackDetails = "";
-  if (npo.slack_channel == null || npo.slack_channel === "") {
+  var slackDetails = '';
+  if (npo.slack_channel == null || npo.slack_channel === '') {
     slackDetails = (
       <Tooltip
         title={
-          <span style={{ fontSize: "15px" }}>
+          <span style={{ fontSize: '15px' }}>
             We don't have an official Slack channel, join this general one to
             get the dialog going.
           </span>
         }
       >
         <Button
-          onClick={(event) => openCodeSample(event, "npo-selection")}
-          color="secondary"
+          onClick={(event) => openCodeSample(event, 'npo-selection')}
+          color='secondary'
           startIcon={<TagIcon />}
-          variant="outlined"
-          size="medium"
+          variant='outlined'
+          size='medium'
         >
           npo-selection
         </Button>
@@ -70,17 +76,17 @@ export default function NonProfitListTile({
     slackDetails = (
       <Tooltip
         title={
-          <span style={{ fontSize: "15px" }}>
+          <span style={{ fontSize: '15px' }}>
             Join their dedicated channel in Slack
           </span>
         }
       >
         <Button
           onClick={(event) => openCodeSample(event, npo.slack_channel)}
-          color="primary"
+          color='primary'
           startIcon={<TagIcon />}
-          variant="contained"
-          size="large"
+          variant='contained'
+          size='large'
         >
           {npo.slack_channel}
         </Button>
@@ -104,15 +110,15 @@ export default function NonProfitListTile({
     });
   }
 
-  var helping_text = "";
-  var helping_class = "ohack-nonprofit-feature";
+  var helping_text = '';
+  var helping_class = 'ohack-nonprofit-feature';
   if (number_of_problem_statements_helping_with > 0) {
     helping_text = (
       <center>
         <em>You're helping here!</em>
       </center>
     );
-    helping_class = "ohack-nonprofit-feature-helping";
+    helping_class = 'ohack-nonprofit-feature-helping';
   }
 
   const displayCountDetails = () => {
@@ -125,69 +131,136 @@ export default function NonProfitListTile({
     } else {
       return (
         <div>
-          <CountDetailsText variant="h2">
+          <CountDetailsText variant='h2'>
             {npo.problem_statements.length} Project
-            {npo.problem_statements.length > 1 ? "s" : ""}
+            {npo.problem_statements.length > 1 ? 's' : ''}
           </CountDetailsText>
 
-          <Box sx={{ flexGrow: 1, marginTop: 3, marginBottom: 2, color: "#383838" }}>
-            <Grid container spacing={2}>
-              <Grid item xs={7}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              marginTop: 3,
+              marginBottom: 2,
+              color: '#383838',
+            }}
+          >
+            <Grid container spacing={2} marginLeft='0px' marginTop='5px'>
+              <Grid container direction='row' spacing={1}>
+                <Grid item>
+                  <Chip
+                    icon={<AddAlertIcon color='warning' fontSize='medium' />}
+                    color='warning'
+                    label={`${need_help_problem_statement_count} Project${
+                      need_help_problem_statement_count === 1 ? '' : 's'
+                    } 
+                need${need_help_problem_statement_count === 1 ? 's' : ''} help`}
+                    style={{ fontSize: '1.5rem' }}
+                  />
+                </Grid>
+                <Grid item>
+                  <Chip
+                    icon={
+                      <WorkspacePremiumIcon color='success' fontSize='medium' />
+                    }
+                    color='success'
+                    variant='outlined'
+                    label={`${in_production_problem_statement_count} Project${
+                      in_production_problem_statement_count === 1 ? '' : 's'
+                    } 
+                ${
+                  in_production_problem_statement_count === 1 ? 'is' : 'are'
+                } live`}
+                    style={{ fontSize: '1.5rem' }}
+                  />
+                </Grid>
+                <Grid item>
+                  <Chip
+                    icon={
+                      <DeveloperModeIcon color='info' fontSize='medium' />
+                    }
+                    color='info'
+                    variant='outlined'
+                    label={`${hacker_count} Hacker${
+                      hacker_count === 1 ? '' : 's'
+                    } 
+                ${
+                  hacker_count === 1 ? 'is' : 'are'
+                } working on this`}
+                    style={{ fontSize: '1.5rem' }}
+                  />
+                </Grid>
+                <Grid item>
+                  <Chip
+                    icon={
+                      <SupportIcon color='info' fontSize='medium' />
+                    }
+                    color='info'
+                    variant='outlined'
+                    label={`${mentor_count} Mentor${
+                      mentor_count === 1 ? '' : 's'
+                    } 
+                ${
+                  mentor_count === 1 ? 'is' : 'are'
+                } assigned`}
+                    style={{ fontSize: '1.5rem' }}
+                  />
+                </Grid>
+              </Grid>
+              {/* <Grid item xs={6}>
                 <Badge
                   showZero
                   anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "left",
+                    vertical: 'top',
+                    horizontal: 'left',
                   }}
                   badgeContent={need_help_problem_statement_count}
-                  color="error"
+                  color='error'
                 >
-                  <AddAlertIcon color="error" fontSize="large" />
-                </Badge>
-                Need Help
-              </Grid>
-              <Grid item xs={5}>
+                  <AddAlertIcon color='error' fontSize='large' />
+                </Badge> 
+              </Grid> */}
+              {/* <Grid item xs={6}>
                 <Badge
                   showZero
                   anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "left",
+                    vertical: 'top',
+                    horizontal: 'left',
                   }}
                   badgeContent={hacker_count}
-                  color="secondary"
+                  color='secondary'
                 >
-                  <DeveloperModeIcon fontSize="large" />
+                  <DeveloperModeIcon fontSize='large' />
                 </Badge>
                 Hackers
-              </Grid>
-              <Grid item xs={7}>
+              </Grid> */}
+              {/* <Grid item xs={7}>
                 <Badge
                   showZero
                   anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "left",
+                    vertical: 'top',
+                    horizontal: 'left',
                   }}
                   badgeContent={in_production_problem_statement_count}
-                  color="success"
+                  color='success'
                 >
-                  <WorkspacePremiumIcon color="success" fontSize="large" />
+                  <WorkspacePremiumIcon color='success' fontSize='large' />
                 </Badge>
                 Live
-              </Grid>
-              <Grid item xs={5}>
+              </Grid> */}
+              {/* <Grid item xs={5}>
                 <Badge
                   showZero
                   anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "left",
+                    vertical: 'top',
+                    horizontal: 'left',
                   }}
                   badgeContent={mentor_count}
-                  color="secondary"
+                  color='secondary'
                 >
-                  <SupportIcon fontSize="large" />
+                  <SupportIcon fontSize='large' />
                 </Badge>
                 Mentors
-              </Grid>
+              </Grid> */}
             </Grid>
           </Box>
         </div>
@@ -205,35 +278,69 @@ export default function NonProfitListTile({
         >
           Edit
         </button>
-        <h3 className="ohack-feature__headline">
+        <h3 className='ohack-feature__headline'>
           <img
-            className="ohack-feature__icon"
+            className='ohack-feature__icon'
             src={icon}
-            alt="external link icon"
+            alt='external link icon'
           />
           {npo.name}
         </h3>
         {slackDetails}
-        <p className="ohack-feature__callout">
+        <p className='ohack-feature__callout'>
           {npo.problem_statements.length} Projects
         </p>
-        <p className="ohack-feature__description">{npo.description}</p>
+        <p className='ohack-feature__description'>{npo.description}</p>
       </span>
     );
   } else {
     return (
-      <TileLink href={`/nonprofit/${npo.id}`}>
+      <TileLink
+        href={`/nonprofit/${npo.id}`}
+        sx={{
+          borderTop: `4px solid ${
+            need_help_problem_statement_count ? '#e65100' : '#66cefb'
+          }`,
+          '&:hover': {
+            borderTop: `6px solid ${
+              need_help_problem_statement_count ? '#e65100' : '#66cefb'
+            }`,
+          },
+        }}
+      >
         {helping_text}
 
-        <NonProfitName variant="h3">{npo.name}</NonProfitName>
+        <Grid container direction='row' justifyContent='space-between'>
+          <NonProfitName variant='h3' flex='1'>
+            {npo.name}
+          </NonProfitName>
+          {need_help_problem_statement_count ? (
+            <Badge
+              showZero
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+              }}
+              badgeContent={need_help_problem_statement_count}
+              color='warning'
+              style={{
+                marginLeft: '2rem',
+              }}
+            >
+              <AddAlertIcon color='warning' fontSize='large' />
+            </Badge>
+          ) : (
+            ''
+          )}
+        </Grid>
         {displayCountDetails()}
 
         <NonProfitDescText>{npo.description}</NonProfitDescText>
         <Grid
           container
-          direction="row"
-          justifyContent="center"
-          alignItems="center"
+          direction='row'
+          justifyContent='center'
+          alignItems='center'
           sx={{ marginTop: 2 }}
         >
           {slackDetails}

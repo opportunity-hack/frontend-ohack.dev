@@ -6,11 +6,9 @@ export const TileLink = styling(Link)({
   textDecoration: "none",
   transition: "all 0.2s ease-out",
   backgroundColor: "#fafbfb",
-  borderTop: "2px solid #66cefb",
   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.15)",
   "&:hover": {
     transform: "scale(1.025)",
-    borderTop: "4px solid #66cefb",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
   },
 });
