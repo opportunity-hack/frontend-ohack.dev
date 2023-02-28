@@ -1,5 +1,5 @@
-import { Grid, Button, Typography } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { Grid, Button, Typography, Box } from "@mui/material";
+import { styled as styling, keyframes } from "@mui/material";
 
 // Button
 export const ButtonStyled = styling(Button)({
@@ -129,3 +129,26 @@ export const BackgroundGrid = styling(Grid)({
   background: "linear-gradient(to bottom right, #58cffb 23%, #CCCCFF 89%)",
   zIndex: "-100",
 });
+
+const offset = keyframes`
+  100% {
+    stroke-dashoffset: 0;
+  }
+`
+
+export const AnimatedLine = styling("path")`
+animation: ${offset} 2.5s forwards infinite;
+  stroke-width: 18;
+  stroke-linecap: square;
+  stroke-dasharray: 10,43,10;
+  stroke-dashoffset: 500;
+`
+
+export const AnimatedIcon = styling("path")`
+  animation: ${offset} 4s forwards linear infinite;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 15;
+  stroke-dashoffset: 400;
+`
