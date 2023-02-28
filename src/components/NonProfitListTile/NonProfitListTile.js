@@ -145,11 +145,13 @@ export default function NonProfitListTile({
             }}
           >
             <Grid container spacing={2} marginLeft='0px' marginTop='5px'>
-              <Grid container direction='row' spacing={1}>
+              <Grid container direction='row' spacing={1.5}>
                 <Grid item>
                   <Chip
                     icon={<AddAlertIcon color='warning' fontSize='medium' />}
-                    color={need_help_problem_statement_count ? 'warning' : 'primary'}
+                    color={
+                      need_help_problem_statement_count ? 'warning' : 'primary'
+                    }
                     label={`${need_help_problem_statement_count} Project${
                       need_help_problem_statement_count === 1 ? '' : 's'
                     } 
@@ -163,7 +165,6 @@ export default function NonProfitListTile({
                       <WorkspacePremiumIcon color='success' fontSize='medium' />
                     }
                     color='success'
-                    variant='outlined'
                     label={`${in_production_problem_statement_count} Project${
                       in_production_problem_statement_count === 1 ? '' : 's'
                     } 
@@ -175,33 +176,25 @@ export default function NonProfitListTile({
                 </Grid>
                 <Grid item>
                   <Chip
-                    icon={
-                      <DeveloperModeIcon color='info' fontSize='medium' />
-                    }
+                    icon={<DeveloperModeIcon color='info' fontSize='medium' />}
                     color='info'
                     variant='outlined'
                     label={`${hacker_count} Hacker${
                       hacker_count === 1 ? '' : 's'
                     } 
-                ${
-                  hacker_count === 1 ? 'is' : 'are'
-                } working on this`}
+                ${hacker_count === 1 ? 'is' : 'are'} working on this`}
                     style={{ fontSize: '1.5rem' }}
                   />
                 </Grid>
                 <Grid item>
                   <Chip
-                    icon={
-                      <SupportIcon color='info' fontSize='medium' />
-                    }
+                    icon={<SupportIcon color='info' fontSize='medium' />}
                     color='info'
                     variant='outlined'
                     label={`${mentor_count} Mentor${
                       mentor_count === 1 ? '' : 's'
                     } 
-                ${
-                  mentor_count === 1 ? 'is' : 'are'
-                } assigned`}
+                ${mentor_count === 1 ? 'is' : 'are'} assigned`}
                     style={{ fontSize: '1.5rem' }}
                   />
                 </Grid>
@@ -290,7 +283,9 @@ export default function NonProfitListTile({
         <p className='ohack-feature__callout'>
           {npo.problem_statements.length} Projects
         </p>
-        <p className='ohack-feature__description'>{npo.description}</p>
+        <p className='ohack-feature__description'>
+          {npo.description ? npo.description : 'No description available.'}
+        </p>
       </span>
     );
   } else {
@@ -335,7 +330,7 @@ export default function NonProfitListTile({
         </Grid>
         {displayCountDetails()}
 
-        <NonProfitDescText>{npo.description}</NonProfitDescText>
+        <NonProfitDescText>{npo.description ? npo.description : "No description available."}</NonProfitDescText>
         <Grid
           container
           direction='row'

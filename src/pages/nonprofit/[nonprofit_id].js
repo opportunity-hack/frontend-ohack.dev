@@ -249,46 +249,60 @@ export default function NonProfitProfile() {
       <TitleContainer container>
         {nonprofit.problem_statements ? (
           <>
-            <TitleChipContainer>
-              <TitleStyled variant='h2'>
-                <Avatar
-                  sx={{ bgcolor: red[500] }}
-                  aria-label='npo-avatar'
-                  style={{ marginRight: '1.5rem' }}
-                >
-                  {getTwoLetters(nonprofit.name)}
-                </Avatar>
-                {nonprofit.name}
-              </TitleStyled>
-              <ProjectsChip
-                color='default'
-                icon={<AccountTreeIcon />}
-                label={`
+            <Grid item>
+              <TitleChipContainer>
+                <TitleStyled variant='h2' style={{paddingBottom: "0"}}>
+                  <Avatar
+                    sx={{ bgcolor: red[500] }}
+                    aria-label='npo-avatar'
+                    style={{ marginRight: '1.5rem' }}
+                  >
+                    {getTwoLetters(nonprofit.name)}
+                  </Avatar>
+                  {nonprofit.name}
+                </TitleStyled>
+                <ProjectsChip
+                  color='default'
+                  icon={<AccountTreeIcon />}
+                  label={`
              ${nonprofit.problem_statements?.length} project${
-                  nonprofit.problem_statements?.length !== 1 ? 's' : ''
-                } available`}
-              />
-            </TitleChipContainer>
-            <DescriptionStyled>{description}</DescriptionStyled>
-            <DescriptionStyled>
-              Looking to get involved? Join the{' '}
-              <Tooltip
-                title={
-                  <p style={{ fontSize: '1rem', margin: '0' }}>
-                    This is their dedicated channel in Slack
-                  </p>
-                }
-                arrow
-              >
-                <ChannelChip
-                  label={`#${nonprofit.slack_channel}`}
-                  variant='outlined'
+                    nonprofit.problem_statements?.length !== 1 ? 's' : ''
+                  } available`}
                 />
-              </Tooltip>{' '}
-              channel on{' '}
-              <LinkStyled href='https://slack.com/'>Slack</LinkStyled> to join
-              in on the discussion!
-            </DescriptionStyled>
+              </TitleChipContainer>
+            </Grid>
+            <Grid item>
+              {description ? (
+                <DescriptionStyled>{description}</DescriptionStyled>
+              ) : (
+                ''
+              )}
+              {nonprofit.slack_channel ? (
+                <DescriptionStyled>
+                  Looking to get involved? Join the{' '}
+                  <Tooltip
+                    title={
+                      <p style={{ fontSize: '1rem', margin: '0' }}>
+                        This is their dedicated channel in Slack
+                      </p>
+                    }
+                    arrow
+                  >
+                    <ChannelChip
+                      label={`#${nonprofit.slack_channel}`}
+                      variant='outlined'
+                    />
+                  </Tooltip>{' '}
+                  channel on{' '}
+                  <LinkStyled href='https://slack.com/'>Slack</LinkStyled> to
+                  join in on the discussion!
+                </DescriptionStyled>
+              ) : (
+                <DescriptionStyled>
+                  No Slack channels available.
+                </DescriptionStyled>
+              )}
+            </Grid>
           </>
         ) : (
           <Grid container justifyContent='center' alignItems='center'>
