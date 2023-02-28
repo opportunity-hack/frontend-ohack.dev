@@ -135,20 +135,44 @@ const offset = keyframes`
     stroke-dashoffset: 0;
   }
 `
+const fadeIn = keyframes`
+  100% {
+    opacity: 1;
+  }
+`
 
 export const AnimatedLine = styling("path")`
-animation: ${offset} 7s forwards infinite;
+  animation: ${offset} 5s 3.75s forwards infinite, ${fadeIn} 0.75s 3.25s forwards;
+  opacity: 0;
   stroke-width: 18;
   stroke-linecap: square;
   stroke-dasharray: 10,43,10;
   stroke-dashoffset: 1010;
 `
 
-export const AnimatedIcon = styling("path")`
-  animation: ${offset} 4s forwards linear infinite;
+export const AnimatedHeart = styling("path")`
   stroke-width: 10;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 20;
-  stroke-dashoffset: 400;
+  stroke-dasharray: 1130;
+  stroke-dashoffset: 1130;
+  animation: ${offset} 3.5s forwards;
+`
+
+export const AnimatedLaptop = styling("path")`
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 2090;
+  stroke-dashoffset: 2090;
+  animation: ${offset} 3.5s forwards;
+`
+
+export const AnimatedBulb = styling("path")`
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+  animation: ${offset} 3.5s forwards;
 `
