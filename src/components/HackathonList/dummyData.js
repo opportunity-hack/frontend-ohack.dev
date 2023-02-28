@@ -45,8 +45,6 @@ export const hackathons = [
     donation_current: {
       food: 50,
       prize: 100,
-      swag: 30,
-      thank_you: "Anna, David, Karen",
     },
     donation_goals: {
       food: 500,
@@ -90,13 +88,11 @@ export const hackathons = [
   },
   {
     donation_current: {
-      food: 100,
       prize: 50,
       swag: 20,
       thank_you: "John, Mary, Bob",
     },
     donation_goals: {
-      food: 500,
       prize: 300,
       swag: 100,
     },
@@ -136,9 +132,7 @@ export const hackathons = [
   },
   {
     donation_current: {
-      food: 300,
       prize: 200,
-      swag: 80,
       thank_you: "Alice, David, Emily",
     },
     donation_goals: {

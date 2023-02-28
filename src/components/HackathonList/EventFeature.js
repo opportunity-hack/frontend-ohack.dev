@@ -136,7 +136,7 @@ function EventFeature(props) {
 
         <ThankYouContainer>
           <TypographyStyled variant="h6">
-            {donationCurrent?.thank_you.length > 0
+            {donationCurrent?.thank_you?.length > 0
               ? `Special Thanks to: ${donationCurrent?.thank_you} for donating!`
               : "Be the first to donate!"}
           </TypographyStyled>
