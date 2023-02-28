@@ -2,21 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { AnimatedBox, AnimatedIcon, AnimatedLine } from './styles';
 
 const Logo = () => {
-
-  const [stroke, setStroke] = useState('10,43,10');
-
-  useEffect(() => {
-    const timeoutId = setInterval(() => {
-      if (stroke === '40') {
-        setStroke('10,43,10')
-      } else {
-        setStroke('40')
-      };
-    }, 5000);
-
-    return () => clearTimeout(timeoutId)
-  }, []);
-
   return (
     <svg
       width='100%'

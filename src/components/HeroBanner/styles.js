@@ -137,11 +137,11 @@ const offset = keyframes`
 `
 
 export const AnimatedLine = styling("path")`
-animation: ${offset} 2.5s forwards infinite;
+animation: ${offset} 7s forwards infinite;
   stroke-width: 18;
   stroke-linecap: square;
   stroke-dasharray: 10,43,10;
-  stroke-dashoffset: 500;
+  stroke-dashoffset: 1010;
 `
 
 export const AnimatedIcon = styling("path")`
@@ -149,6 +149,6 @@ export const AnimatedIcon = styling("path")`
   stroke-width: 10;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 15;
+  stroke-dasharray: 20;
   stroke-dashoffset: 400;
 `

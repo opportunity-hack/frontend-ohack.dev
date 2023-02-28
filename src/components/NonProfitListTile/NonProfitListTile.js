@@ -63,7 +63,7 @@ export default function NonProfitListTile({
       >
         <Button
           onClick={(event) => openCodeSample(event, 'npo-selection')}
-          color='secondary'
+          color='primary'
           startIcon={<TagIcon />}
           variant='outlined'
           size='medium'
@@ -83,7 +83,7 @@ export default function NonProfitListTile({
       >
         <Button
           onClick={(event) => openCodeSample(event, npo.slack_channel)}
-          color='primary'
+          color={need_help_problem_statement_count ? 'warning' : 'primary'}
           startIcon={<TagIcon />}
           variant='contained'
           size='large'
@@ -298,11 +298,11 @@ export default function NonProfitListTile({
       <TileLink
         href={`/nonprofit/${npo.id}`}
         sx={{
-          borderTop: `4px solid ${
+          borderTop: `2px solid ${
             need_help_problem_statement_count ? '#e65100' : '#66cefb'
           }`,
           '&:hover': {
-            borderTop: `6px solid ${
+            borderTop: `4px solid ${
               need_help_problem_statement_count ? '#e65100' : '#66cefb'
             }`,
           },
