@@ -1,7 +1,7 @@
 import { AccordionDetails, Grid, Typography, Link } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { styled } from "@mui/material";
 
-export const ProjectCard = styling(Grid)({
+export const ProjectCard = styled(Grid)({
   padding: "1.5rem",
   backgroundColor: "#f5f7f77f",
   boxShadow: "0 2px 5px rgba(0, 0, 0, 0.15)",
@@ -9,7 +9,7 @@ export const ProjectCard = styling(Grid)({
   position: "relative",  
 });
 
-export const BadgeContainer = styling(Grid)((props) => ({
+export const BadgeContainer = styled(Grid)((props) => ({
   position: "absolute",
   right: "4rem",
 
@@ -18,7 +18,7 @@ export const BadgeContainer = styling(Grid)((props) => ({
   },
 }));
 
-export const TitleStyled = styling(Typography)((props) => ({
+export const TitleStyled = styled(Typography)((props) => ({
   fontSize: "3rem",
   fontWeight: "600",
   width: "calc(100% - 180px)",
@@ -29,14 +29,14 @@ export const TitleStyled = styling(Typography)((props) => ({
   },
 }));
 
-export const YearStyled = styling(Typography)({
+export const YearStyled = styled(Typography)({
   color: "#808080",
   fontWeight: "bold",
   fontSize: "1.5rem",
   margin: "0.5rem 0",
 });
 
-export const AccordionContainer = styling(Grid)((props) => ({
+export const AccordionContainer = styled(Grid)((props) => ({
   padding: "2.5rem 2rem",
 
   [props.theme.breakpoints.down("md")]: {
@@ -44,7 +44,7 @@ export const AccordionContainer = styling(Grid)((props) => ({
   },
 }));
 
-export const AccordionTitle = styling(Typography)((props) => ({
+export const AccordionTitle = styled(Typography)((props) => ({
   display: "flex",
   fontWeight: "bold",
   width: "25%",
@@ -68,15 +68,15 @@ export const AccordionTitle = styling(Typography)((props) => ({
   },
 }));
 
-export const ProjectDescText = styling(AccordionDetails)({
+export const ProjectDescText = styled(AccordionDetails)({
   fontSize: "1.3rem",
 });
 
-export const ShortDescText = styling(Typography)({
+export const ShortDescText = styled(Typography)({
   fontSize: "1.1rem",
 });
 
-export const AccordionButton = styling(Link)({
+export const AccordionButton = styled(Link)({
   fontSize: "1.5rem",
   textDecoration: "none",
   color: "white",

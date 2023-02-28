@@ -5,10 +5,10 @@ import {
   CircularProgress,
   Chip,
 } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { styled } from "@mui/material";
 
 // Grid
-export const OuterGrid = styling(Grid)((props) => ({
+export const OuterGrid = styled(Grid)((props) => ({
   width: "85%",
   margin: "auto",
   marginBottom: "5%",
@@ -18,12 +18,12 @@ export const OuterGrid = styling(Grid)((props) => ({
   },
 }));
 
-export const EmptyGrid = styling(Grid)({
+export const EmptyGrid = styled(Grid)({
   gap: "30px",
   marginTop: "5%",
 });
 
-export const EventCards = styling(Grid)((props) => ({
+export const EventCards = styled(Grid)((props) => ({
   borderRadius: "20px",
   backgroundColor: "white",
   height: "auto",
@@ -41,52 +41,52 @@ export const EventCards = styling(Grid)((props) => ({
   },
 }));
 
-export const ButtonContainer = styling(Grid)({
+export const ButtonContainer = styled(Grid)({
   width: "100%",
   // gap: "25px"
 });
 
-export const ProgressContainer = styling(Grid)({
+export const ProgressContainer = styled(Grid)({
   margin: "5% 0%",
 });
 
-export const ProgressBarHolder = styling(Grid)({
+export const ProgressBarHolder = styled(Grid)({
   width: "20%",
   height: "20%",
 });
 
-export const BlankContainer = styling(Grid)({});
+export const BlankContainer = styled(Grid)({});
 
-export const ThankYouContainer = styling(Grid)({
+export const ThankYouContainer = styled(Grid)({
   marginTop: "5%",
 });
 
 // Text
-export const SectionTitle = styling(Typography)({
+export const SectionTitle = styled(Typography)({
   fontSize: "3rem",
   fontWeight: "600",
 });
 
-export const EventTitle = styling(Typography)({
+export const EventTitle = styled(Typography)({
   // fontSize: "1.5rem",
   fontWeight: "bold",
 });
 
-export const EventText = styling(Typography)({
+export const EventText = styled(Typography)({
   fontSize: "1.5rem",
   textTransform: "none",
 });
 
-export const EventGreyText = styling(Typography)({
+export const EventGreyText = styled(Typography)({
   color: "grey",
   fontSize: "1.2rem",
   textTransform: "none",
 });
 
-export const TypographyStyled = styling(Typography)({});
+export const TypographyStyled = styled(Typography)({});
 
 // Button
-export const EventButton = styling(Button)({
+export const EventButton = styled(Button)({
   textTransform: "unset !important",
   backgroundColor: "#003486",
   color: "#ffffff",
@@ -101,7 +101,7 @@ export const EventButton = styling(Button)({
 });
 
 // Progress
-export const ProgressIndicator = styling(CircularProgress)({});
+export const ProgressIndicator = styled(CircularProgress)({});
 
 // Chip
-export const ChipStyled = styling(Chip)({});
+export const ChipStyled = styled(Chip)({});

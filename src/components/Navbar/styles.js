@@ -1,7 +1,7 @@
 import { Grid, Button, Link, Typography, Drawer, Box } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { styled } from "@mui/material";
 
-export const NavbarContainer = styling(Grid)({
+export const NavbarContainer = styled(Grid)({
   justifyContent: "center",
   height: "9rem",
   width: "100%",
@@ -10,7 +10,7 @@ export const NavbarContainer = styling(Grid)({
   zIndex: 300,
 });
 
-export const Navbar = styling(Grid)((props) => ({
+export const Navbar = styled(Grid)((props) => ({
   justifyContent: "space-between",
   alignItems: "center",
   width: "75%",
@@ -20,7 +20,7 @@ export const Navbar = styling(Grid)((props) => ({
   },
 }));
 
-export const NavbarList = styling("ul")({
+export const NavbarList = styled("ul")({
   listStyle: "none",
   display: "flex",
   alignItems: "center",
@@ -28,7 +28,7 @@ export const NavbarList = styling("ul")({
   position: "relative",
 });
 
-export const NavbarListItem = styling("li")((props) => ({
+export const NavbarListItem = styled("li")((props) => ({
   display: "inline-block",
   padding: "0 2rem",
 
@@ -37,7 +37,7 @@ export const NavbarListItem = styling("li")((props) => ({
   },
 }));
 
-export const NavbarLink = styling(Link)({
+export const NavbarLink = styled(Link)({
   textDecoration: "none",
   fontSize: "1.6rem",
   fontWeight: 700,
@@ -50,7 +50,7 @@ export const NavbarLink = styling(Link)({
   },
 });
 
-export const LoginButton = styling(Button)({
+export const LoginButton = styled(Button)({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",
   paddingRight: "1.5rem",
@@ -60,9 +60,9 @@ export const LoginButton = styling(Button)({
   backgroundColor: "#003486",
 });
 
-export const ProfileContainer = styling(Grid)({});
+export const ProfileContainer = styled(Grid)({});
 
-export const Profile = styling(Grid)({
+export const Profile = styled(Grid)({
   userSelect: "none",
   fontSize: "1.4rem",
   alignItems: "center",
@@ -75,15 +75,15 @@ export const Profile = styling(Grid)({
   cursor: "pointer",
 });
 
-export const ProfileAvatar = styling("img")({
+export const ProfileAvatar = styled("img")({
   borderRadius: "10rem",
 });
 
-export const ArrowPath = styling("path")({
+export const ArrowPath = styled("path")({
   transition: "0.2s ease-in-out",
 });
 
-export const DropdownContainer = styling(Grid)((props) => ({
+export const DropdownContainer = styled(Grid)((props) => ({
   position: "absolute",
   right: "1rem",
   top: "4.5rem",
@@ -123,14 +123,14 @@ export const DropdownContainer = styling(Grid)((props) => ({
   },
 }));
 
-export const DropdownList = styling("ul")({
+export const DropdownList = styled("ul")({
   listStyle: "none",
   padding: 0,
   borderRadius: "1rem",
   cursor: "default",
 });
 
-export const DropdownListItem = styling("li")({
+export const DropdownListItem = styled("li")({
   padding: "0.75rem 1.5rem",
   display: "flex",
   alignItems: "center",
@@ -143,20 +143,20 @@ export const DropdownListItem = styling("li")({
   },
 });
 
-export const DropdownDivider = styling("div")({
+export const DropdownDivider = styled("div")({
   borderBottom: "1px solid #9494944a",
 });
 
-export const DetailListItem = styling("li")({
+export const DetailListItem = styled("li")({
   padding: "0.75rem 1.5rem",
 });
 
-export const DetailTypography = styling(Typography)({
+export const DetailTypography = styled(Typography)({
   fontWeight: 600,
   display: "block",
 });
 
-export const DrawerContainer = styling(Box)({
+export const DrawerContainer = styled(Box)({
   width: "20rem",
 
   "& span": {
@@ -164,7 +164,7 @@ export const DrawerContainer = styling(Box)({
   },
 });
 
-export const LogoText = styling(Typography)({
+export const LogoText = styled(Typography)({
   position: "absolute",
   bottom: "1rem",
   left: "1rem",

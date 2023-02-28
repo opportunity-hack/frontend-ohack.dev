@@ -1,7 +1,7 @@
 import { Link, Typography } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { styled } from "@mui/material";
 
-export const TileLink = styling(Link)({
+export const TileLink = styled(Link)({
   padding: "4rem",
   textDecoration: "none",
   transition: "all 0.2s ease-out",
@@ -13,20 +13,20 @@ export const TileLink = styling(Link)({
   },
 });
 
-export const NonProfitName = styling(Typography)({
+export const NonProfitName = styled(Typography)({
   fontWeight: 600,
   letterSpacing: "-0.05rem",
   fontSize: "2.4rem",
 });
 
-export const CountDetailsText = styling(Typography)({
+export const CountDetailsText = styled(Typography)({
   marginTop: "0.75rem",
   fontSize: "1.75rem",
   fontWeight: 500,
   color: "gray",
 });
 
-export const NonProfitDescText = styling(Typography)({
+export const NonProfitDescText = styled(Typography)({
   color: "#383838",
   margin: "3rem 0",
   fontWeight: "500",

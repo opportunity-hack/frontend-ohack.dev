@@ -1,7 +1,7 @@
-import { Grid, Typography, Chip } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { Chip } from "@mui/material";
+import { styled } from "@mui/material";
 
-export const TagChip = styling(Chip) ({
+export const TagChip = styled(Chip) ({
     marginRight: "0.5rem",
     marginBottom: "0.5rem"
 })
