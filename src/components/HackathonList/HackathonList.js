@@ -29,7 +29,7 @@ function HackathonList() {
       direction="column"
       textAlign="center"
     >
-      <SectionTitle variant="h2">Upcoming and current events</SectionTitle>
+      <SectionTitle variant="h2">Upcoming and Current Events</SectionTitle>
 
       <EmptyGrid container justifyContent="center">
         {hackathons?.length > 0 ? (
@@ -66,7 +66,7 @@ function HackathonList() {
         )}
         {hackathons?.length > 0 ? null : (
           <TypographyStyled variant="h3">
-            Currently there are no event ongoing.
+            No events found!
           </TypographyStyled>
         )}
       </EmptyGrid>

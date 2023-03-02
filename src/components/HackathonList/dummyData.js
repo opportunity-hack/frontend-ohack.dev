@@ -216,4 +216,46 @@ export const hackathons = [
     title: "Help us improve the lives of underprivileged children",
     type: "hackathon",
   },
+  {
+    donation_current: {
+      food: 100,
+      prize: 200,
+      swag: 50,
+      thank_you: "John, Sarah, Michael",
+    },
+    donation_goals: { food: 1500, prize: 1200, swag: 400 },
+    end_date: "2023-06-30",
+    id: "a1234xyz56",
+    image_url: "",
+    links: [
+      {
+        color: "secondary",
+        link: "https://example.com",
+        name: "DevPost",
+        open_new: "False",
+        size: "large",
+        variant: "contained",
+      },
+      {
+        color: "primary",
+        link: "https://www.paypal.com/donate/?hosted_button_id=123456789",
+        name: "Donate",
+        open_new: "false",
+        size: "large",
+        variant: "contained",
+      },
+    ],
+    location: "New York, NY",
+    nonprofits: [
+      {
+        id: "np001",
+        name: "Charity for Children",
+        problem_statements: "",
+      },
+    ],
+    start_date: "2023-06-25",
+    teams: [],
+    title: "Help us improve the lives of underprivileged children",
+    type: "hackathon",
+  },
 ];
