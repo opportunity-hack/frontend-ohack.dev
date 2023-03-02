@@ -154,7 +154,7 @@ const animatedIcon = css`
   stroke-width: 10;
   stroke-linecap: round;
   stroke-linejoin: round;
-  animation: ${offset} 3.5s forwards;
+  animation: ${offset} 3s forwards;
 `
 
 export const AnimatedHeart = styled("path")`
