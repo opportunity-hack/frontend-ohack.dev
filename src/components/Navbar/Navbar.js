@@ -165,6 +165,7 @@ export default function NavBar() {
               alt="Opportunity Hack logo"
               width={100}
               height={48}
+              style={{cursor: "pointer"}}
             />
           </Link>
         )}

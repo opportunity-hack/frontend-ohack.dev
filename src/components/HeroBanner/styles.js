@@ -1,8 +1,8 @@
-import { Grid, Button, Typography } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { Grid, Button, Typography, Box } from "@mui/material";
+import { styled, keyframes, css } from "@mui/material";
 
 // Button
-export const ButtonStyled = styling(Button)({
+export const ButtonStyled = styled(Button)({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",
   paddingRight: "1.5rem",
@@ -18,7 +18,7 @@ export const ButtonStyled = styling(Button)({
   },
 });
 
-export const ButtonBasicStyle = styling(Button)({
+export const ButtonBasicStyle = styled(Button)({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",
   paddingRight: "1.5rem",
@@ -35,7 +35,7 @@ export const ButtonBasicStyle = styling(Button)({
 });
 
 // Grid
-export const GridStyled = styling(Grid)((props) => ({
+export const GridStyled = styled(Grid)((props) => ({
   padding: "8rem 6rem 6rem 6rem",
   height: "100%",
   width: "80%",
@@ -50,13 +50,13 @@ export const GridStyled = styling(Grid)((props) => ({
   },
 }));
 
-export const BlankContainer = styling(Grid)({
+export const BlankContainer = styled(Grid)({
   display: "flex",
   flexDirection: "column",
   position: "relative",
 });
 
-export const TitleContainer = styling(Grid)((props) => ({
+export const TitleContainer = styled(Grid)((props) => ({
   padding: "6rem 5% 0px 0px",
   marginTop: "5rem",
 
@@ -67,7 +67,7 @@ export const TitleContainer = styling(Grid)((props) => ({
   },
 }));
 
-export const CaptionContainer = styling(Grid)((props) => ({
+export const CaptionContainer = styled(Grid)((props) => ({
   color: "#425466",
   maxWidth: "390px",
 
@@ -79,7 +79,7 @@ export const CaptionContainer = styling(Grid)((props) => ({
   },
 }));
 
-export const ButtonContainers = styling(Grid)((props) => ({
+export const ButtonContainers = styled(Grid)((props) => ({
   display: "flex",
   flexDirection: "column",
   width: "auto",
@@ -87,7 +87,7 @@ export const ButtonContainers = styling(Grid)((props) => ({
 }));
 
 // Typography
-export const TitleStyled = styling(Typography)((props) => ({
+export const TitleStyled = styled(Typography)((props) => ({
   fontSize: "4vw",
   lineHeight: "5vw",
   fontWeight: "700",
@@ -101,13 +101,13 @@ export const TitleStyled = styling(Typography)((props) => ({
   },
 }));
 
-export const TextStyled = styling(Typography)({
+export const TextStyled = styled(Typography)({
   fontSize: "1.5rem",
   margin: "2rem 0rem 1rem 0rem",
   width: "100%",
 });
 
-export const SpanText = styling("span") ((props) => ({
+export const SpanText = styled("span") ((props) => ({
   color: `var(--blue)`,
   fontSize: "6.5vw",
   "& .Typewriter": {
@@ -120,7 +120,7 @@ export const SpanText = styling("span") ((props) => ({
   },
 }));
 
-export const BackgroundGrid = styling(Grid)({
+export const BackgroundGrid = styled(Grid)({
   position: "absolute",
   width: "100%",
   height: "70rem",
@@ -129,3 +129,48 @@ export const BackgroundGrid = styling(Grid)({
   background: "linear-gradient(to bottom right, #58cffb 23%, #CCCCFF 89%)",
   zIndex: "-100",
 });
+
+const offset = keyframes`
+  100% {
+    stroke-dashoffset: 0;
+  }
+`
+const fadeIn = keyframes`
+  100% {
+    opacity: 1;
+  }
+`
+
+export const AnimatedLine = styled("path")`
+  animation: ${offset} 5s 3.75s forwards infinite, ${fadeIn} 0.75s 3.25s forwards;
+  opacity: 0;
+  stroke-width: 18;
+  stroke-linecap: square;
+  stroke-dasharray: 10,43,10;
+  stroke-dashoffset: 1010;
+`
+
+const animatedIcon = css`
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: ${offset} 3s forwards;
+`
+
+export const AnimatedHeart = styled("path")`
+  ${animatedIcon};
+  stroke-dasharray: 1130;
+  stroke-dashoffset: 1130;
+`
+
+export const AnimatedLaptop = styled("path")`
+${animatedIcon};
+  stroke-dasharray: 2090;
+  stroke-dashoffset: 2090;
+`
+
+export const AnimatedBulb = styled("path")`
+  ${animatedIcon};
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+`

@@ -1,13 +1,13 @@
 import { Grid, Button, Link, Typography, Tabs, Tab } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { styled } from "@mui/material";
 
 // Grid
-export const OuterGrid = styling(Grid)({
+export const OuterGrid = styled(Grid)({
   width: "100%",
   margin: "auto",
 });
 
-export const BlankContainer = styling(Grid)({
+export const BlankContainer = styled(Grid)({
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
@@ -17,19 +17,19 @@ export const BlankContainer = styling(Grid)({
   minHeight: "100vh",
 });
 
-export const TabsContainer = styling(Grid)({
+export const TabsContainer = styled(Grid)({
   margin: "auto",
   width: "90%",
   minHeight: "410px",
 });
 
-export const TabContainer = styling(Grid)({
+export const TabContainer = styled(Grid)({
   margin: "auto",
   width: "100%",
   height: "auto",
 });
 
-export const InfoContainer = styling(Grid)((props) => ({
+export const InfoContainer = styled(Grid)((props) => ({
   borderRadius: "15px",
   padding: "2%",
   justifyContent: "center",
@@ -50,9 +50,9 @@ export const InfoContainer = styling(Grid)((props) => ({
   },
 }));
 
-export const GridStyled = styling(Grid)({});
+export const GridStyled = styled(Grid)({});
 
-export const TitleContainer = styling(Grid)({
+export const TitleContainer = styled(Grid)({
   width: "100%",
   justifyContent: "center",
   alignItems: "center",
@@ -61,19 +61,19 @@ export const TitleContainer = styling(Grid)({
   marginBottom: "2%",
 });
 
-export const TextContainer = styling(Grid)({
+export const TextContainer = styled(Grid)({
   width: "100%",
   textAlign: "justify",
   height: "100%",
 });
 
 // Tab
-export const TabsStyled = styling(Tabs)({
+export const TabsStyled = styled(Tabs)({
   backgroundColor: "#ffffff",
   borderRadius: "82px",
 });
 
-export const TabStyled = styling(Tab)((props) => ({
+export const TabStyled = styled(Tab)((props) => ({
   zIndex: "10",
   textTransform: "none",
   fontSize: "1.5rem",
@@ -91,17 +91,17 @@ export const TabStyled = styling(Tab)((props) => ({
 }));
 
 // Text
-export const TitleStyled = styling(Typography)({
+export const TitleStyled = styled(Typography)({
   fontSize: "1.5rem",
   fontWeight: "bold",
 });
 
-export const SectionTitle = styling(Typography)({
+export const SectionTitle = styled(Typography)({
   fontSize: "3rem",
   fontWeight: "600",
 });
 
-export const NormalTextStyled = styling(Typography)({
+export const NormalTextStyled = styled(Typography)({
   fontSize: "1.5rem",
   lineHeight: "3rem",
 });

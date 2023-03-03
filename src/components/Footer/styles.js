@@ -1,7 +1,7 @@
 import { Grid, Typography, Link } from "@mui/material";
-import { styled as styling } from "@mui/material";
+import { styled } from "@mui/material";
 
-export const FooterContainer = styling(Grid)({
+export const FooterContainer = styled(Grid)({
   marginTop: "10rem",
   width: "100%",
   padding: "5rem 0rem",
@@ -12,7 +12,7 @@ export const FooterContainer = styling(Grid)({
   // background: "linear-gradient(to top, #000000 23%, #222222 89%)",
 });
 
-export const InnerContainer = styling(Grid)((props) => ({
+export const InnerContainer = styled(Grid)((props) => ({
   width: "80%",
   color: "white",
   fontSize: "1.5rem",
@@ -23,11 +23,11 @@ export const InnerContainer = styling(Grid)((props) => ({
   },
 }));
 
-export const TextContainer = styling(Grid)({
+export const TextContainer = styled(Grid)({
   padding: "0rem 5rem",
 });
 
-export const StyledText = styling(Typography)({
+export const StyledText = styled(Typography)({
   fontSize: "1.5rem",
   textTransform: "uppercase",
   fontWeight: 600,
@@ -36,13 +36,13 @@ export const StyledText = styling(Typography)({
   width: "100%",
 });
 
-export const MutedText = styling(Typography)({
+export const MutedText = styled(Typography)({
   fontSize: "1.5rem",
   color: "#c7c7c7",
   width: "100%",
 });
 
-export const IconLink = styling(Link)({
+export const IconLink = styled(Link)({
   color: "#c7c7c7",
   transition: "0.25s",
   "&:hover": {
@@ -50,7 +50,7 @@ export const IconLink = styling(Link)({
   },
 });
 
-export const LinkList = styling("ul")({
+export const LinkList = styled("ul")({
   listStyle: "none",
   position: "relative",
   padding: "0",
@@ -58,12 +58,12 @@ export const LinkList = styling("ul")({
   margin: "0",
 });
 
-export const LinkListItem = styling("li")({
+export const LinkListItem = styled("li")({
   padding: "0.5rem 0rem",
   fontWeight: 700,
 });
 
-export const StyledLink = styling(Link)({
+export const StyledLink = styled(Link)({
   textDecoration: "none",
   fontSize: "1.5rem",
   color: "#c7c7c7",
