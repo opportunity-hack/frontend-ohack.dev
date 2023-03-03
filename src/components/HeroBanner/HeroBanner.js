@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ButtonStyled,
   ButtonBasicStyle,
+  ButtonGoldStyle,
   GridStyled,
   TextStyled,
   TitleStyled,
@@ -87,9 +88,9 @@ function HeroBanner() {
             >
               Help us build ohack.dev
             </ButtonStyled>
-            <ButtonStyled onClick={openCodeSample}>
+            <ButtonGoldStyle onClick={openCodeSample}>
               Join us on Slack to get involved
-            </ButtonStyled>
+            </ButtonGoldStyle>
             <ButtonBasicStyle
               onClick={gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'

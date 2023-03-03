@@ -4,10 +4,10 @@ import { EmptyGrid, OuterGrid, TypographyStyled } from './styles';
 import EventFeature from './EventFeature';
 import { SectionTitle } from './styles';
 import { Player } from '@lottiefiles/react-lottie-player';
-import { hackathons } from './dummyData';
+//import { hackathons } from './dummyData';
 
 function PreviousHackathonList() {
-  // const { hackathons } = useHackathonEvents("yes");
+  const { hackathons } = useHackathonEvents("no");
 
   const [width, setWidth] = useState();
   const functionName = () => {
