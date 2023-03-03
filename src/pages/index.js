@@ -14,7 +14,10 @@ export default function Home() {
 
       <HeroBanner />
       <HackathonList />
-      <PreviousHackathonList />
+      {
+        // <PreviousHackathonList />  
+      }
+      
       <OHackFeatures />
     </Fragment>
   );

@@ -18,6 +18,22 @@ export const ButtonStyled = styled(Button)({
   },
 });
 
+export const ButtonGoldStyle = styled(Button)({
+  borderRadius: "2rem",
+  paddingLeft: "1.5rem",
+  paddingRight: "1.5rem",
+  fontWeight: 600,
+  fontSize: "15px",
+  textTransform: "unset !important",
+  backgroundColor: "#FFD700",
+  color: "#000000",
+  minWidth: "25rem",
+
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },
+});
+
 export const ButtonBasicStyle = styled(Button)({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",
