@@ -3,6 +3,7 @@ import Head from "next/head";
 import HeroBanner from "../components/HeroBanner/HeroBanner";
 import OHackFeatures from "../components/OHackFeatures/OHackFeatures";
 import HackathonList from "../components/HackathonList/HackathonList";
+import PreviousHackathonList from "../components/HackathonList/PreviousHackathonList";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
 
       <HeroBanner />
       <HackathonList />
+      <PreviousHackathonList />
       <OHackFeatures />
     </Fragment>
   );

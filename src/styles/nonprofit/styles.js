@@ -30,6 +30,7 @@ export const TitleContainer = styling(Grid)((props) => ({
   backgroundColor: "#f5f7f7",
   padding: "3.5rem 12.5%",
   borderBottom: "1px solid #e7e7e7",
+  flexDirection: "column",
 
   [props.theme.breakpoints.down("md")]: {
     padding: "3.5rem 7.5%",
@@ -55,6 +56,7 @@ export const TitleStyled = styling(Typography)({
 export const TitleChipContainer = styling(Grid)((props) => ({
   display: "flex",
   alignItems: "center",
+  paddingBottom: "1rem",
   //   flexDirection: "column",
 
   [props.theme.breakpoints.down("sm")]: {
