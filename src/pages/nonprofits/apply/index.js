@@ -77,24 +77,13 @@ export default function NonProfitApply() {
                         <div className="profile__headline">
                         
                             <h4 className="profile__title">
-                                Each year, we gather 100+ people from locations around the world to solve technical problems 
-                                for 20+ public charities, non-profit organizations (NPOs), and non-government organizations (NGOs).
+                                Each year, we gather people from Arizona and around the world to solve technical problems 
+                                for public charities, non-profit organizations (NPOs), and non-government organizations (NGOs).
                             </h4>
                             
                             This form helps us to find the charities that are the right fit for our event. 
-                            <p>
-                            🥇We're able to sponsor top prizes for teams who are selected by the judges to 
-                            complete your project post-hackathon.  We only can sponsor teams if we have sponsors, 
-                            if you know of any companies would would be willing to sponsor a prize, please share 
-                            https://www.ohack.org/sponsorship within your network to help us complete as many projects
-                            as possible!                            
-                            </p>
-                            <p>
-                            Sponsorship allows us to incentivize teams to complete their hackathon projects.  
-                            From our previous experience over the last 9 years, in order for projects to reach completion 
-                            states, we need to provide a prize with monetary value that attracts the attention of the team 
-                            to follow-through.
-                            </p>
+
+                            
                             
                         </div>
                         
@@ -105,6 +94,20 @@ export default function NonProfitApply() {
                 
                 </DescriptionStyled>
                 <DescriptionStyled>
+
+                    <p>
+                        🥇We're able to sponsor top prizes for teams who are selected by the judges to
+                        complete your project post-hackathon.  We only can sponsor teams if we have sponsors,
+                        if you know of any companies would would be willing to sponsor a prize, please share
+                        https://www.ohack.org/sponsorship within your network to help us complete as many projects
+                        as possible!
+                    </p>
+                    <p>
+                        Sponsorship allows us to incentivize teams to complete their hackathon projects.
+                        From our previous experience over the last 9 years, in order for projects to reach completion
+                        states, we need to provide a prize with monetary value that attracts the attention of the team
+                        to follow-through.
+                    </p>
                 
                     <Autocomplete
                         disablePortal
