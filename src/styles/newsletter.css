@@ -1,0 +1,122 @@
+.parent{
+    display: grid;
+    grid-template-columns: 70% auto;
+    width: 100%;
+    padding: 3% 10%;
+    /* background: radial-gradient(ellipse at top, #F0FF00, transparent), radial-gradient(ellipse at bottom, #58CFFB, transparent); */
+    min-height: 100vh;
+    align-items: center;
+}
+.header{
+    height: 40px;
+    font-size: 14px;
+}
+.text_area{
+    min-height: 50vh;  
+    width: inherit;
+    font-size: 14px;
+    max-width: 100%;
+    resize: none;
+}
+.container { 
+    width: 90%;
+
+}
+ .button {
+    display: flex;
+    display: inline-block;
+    justify-content: space-around;
+    width: 10vw;
+    font-size: 14px;
+    color: white;
+    padding: 1rem 1rem;
+    margin: 1rem 1rem  1rem 0;
+    vertical-align: middle;
+    border: 0px solid transparent;
+    border-radius: 10px;
+}
+.border_padding{
+    padding: 10px;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+.dark-text{
+    color: black
+}
+.light-text{
+    color: white;
+}
+
+.text_area_subs{
+    min-height: 25vh;
+    max-width: 100%;
+    resize: none;
+}
+.text_area{
+    font-size: 14px;
+    padding: 10px;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+.full_width{
+    width: 100%;
+}
+.flex_space_between{
+    display: flex;
+    justify-content: space-between;
+    }
+.flex_center{
+    display: flex;
+    justify-content: center;
+    }
+.grid_auto_auto{
+    display: grid;
+    grid-template-columns: auto auto;
+}    
+.align_center{
+    align-items: center;
+}
+.padlock{
+    background-color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 10px;
+}
+.locked{
+    background-color: rgb(5, 72, 171);
+}
+.padlock :hover{
+    cursor: pointer;
+}
+.padlock svg{
+    width: 15px;
+    height: 15px;
+}
+h3{
+    margin:  0;
+    font-size: 16px;
+}
+h4{
+    margin:  0 0 20px 0;
+    font-size: 15px;
+}
+.full_height{
+    min-height: 100vh;
+}
+.flex_center_center{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.flex_row{
+    flex-direction: row;
+}
+.title_row h3{
+    margin-right: 2vw;
+}
+.flex_space_between{
+    justify-content: space-between;
+}
+.flex_align_end{
+    justify-content: flex-end;
+}
