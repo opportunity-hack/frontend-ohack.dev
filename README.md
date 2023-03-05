@@ -1,14 +1,10 @@
-# Opportunity Hack 2022
+This is the front-end for [ohack.dev](https://ohack.dev).
 
-ReactLovers worked on the project [Update our UX](https://github.com/opportunity-hack/frontend-ohack.dev/issues/13). Running the code can be done similarly as outlined in [Quickstart](#quickstart).
+Opportunity Hack is a 501c3 nonprofit and is a public good.  We encourage you to fork and help us!
 
+Follow us on [Instagram](https://www.instagram.com/opportunityhack/), [LinkedIn](https://www.linkedin.com/company/opportunity-hack/), [YouTube](https://www.youtube.com/@opportunityhack).
 
-# Are you here for Opportunity Hack 2022?
-
-- Hacker Signup [on DevPost](https://opportunity-hack-2022.devpost.com/)
-- Arizona [In-person RSVP form](https://docs.google.com/forms/d/e/1FAIpQLScTveAW1rOEN_YO-IgI0qmi3aPkFH71O5j1OElqgYUXScKysA/viewform)
-- Mentor [signup](https://docs.google.com/forms/d/e/1FAIpQLSdY352vtbNhNM5fyKozQ7HbuxCKfkU6xTO2aA7cKx7UpWRZog/viewform) and more about OHack [mentorship](https://www.ohack.org/about/mentors)
-- Follow us on [Instagram](https://www.instagram.com/opportunityhack/), [LinkedIn](https://www.linkedin.com/company/opportunity-hack/), [YouTube](https://www.youtube.com/@opportunityhack)
+For OHack'22, ReactLovers greatly improved our UX by working on [#13 update our UX](https://github.com/opportunity-hack/frontend-ohack.dev/issues/13). Running the code can be done similarly as outlined in [Quickstart](#quickstart).
 
 
 # Opportunity Hack Developer Portal (Frontend)
