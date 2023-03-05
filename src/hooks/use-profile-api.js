@@ -5,8 +5,11 @@ import { useEnv } from "../context/env.context";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 
-export default function useProfileApi(){
+export default function useProfileApi(props){
     const { getAccessTokenSilently, user } = useAuth0();
+    const user_id = props?.user_id ?? user?.sub; // Slack User ID (since we get this from the Auth0 Session)
+
+    
     const { apiServerUrl } = useEnv();
 
     const [badges, setBadges] = useState(null);
@@ -28,6 +31,7 @@ export default function useProfileApi(){
             if (options.authenticated) {
                 const token = await getAccessTokenSilently();
 
+                // TODO: auth is a cross-cutting concern. Add axios interceptor in _app.js get token out of localStorage and do this.
                 options.config.headers = {
                     ...options.config.headers,
                     Authorization: `Bearer ${token}`,
@@ -62,7 +66,7 @@ export default function useProfileApi(){
                 "Accept": "application/json"
             },
             data: {
-                user_id: user.sub, // Slack User ID (since we get this from the Auth0 Session)
+                user_id: user_id,
                 status: status, // helping or not_helping
                 problem_statement_id: problem_statement_id,
                 type: mentor_or_hacker, // mentor or hacker
@@ -80,6 +84,7 @@ export default function useProfileApi(){
             if (options.authenticated) {
                 const token = await getAccessTokenSilently();
 
+                // TODO: auth is a cross-cutting concern. Add axios interceptor in _app.js get token out of localStorage and do this.
                 options.config.headers = {
                     ...options.config.headers,
                     Authorization: `Bearer ${token}`,
@@ -147,7 +152,7 @@ export default function useProfileApi(){
         };
 
         getProfileDetails();
-    }, [user, apiServerUrl, fetchUser, default_profile]);
+    }, [user_id, apiServerUrl, fetchUser, default_profile]);
     
 
     return {              

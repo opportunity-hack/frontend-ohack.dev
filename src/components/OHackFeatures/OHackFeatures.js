@@ -17,7 +17,6 @@ import {
 import { useTheme } from "@mui/material/styles";
 import VolunteerActivismOutlinedIcon from "@mui/icons-material/VolunteerActivismOutlined";
 import BuildOutlinedIcon from "@mui/icons-material/BuildOutlined";
-import SwipeableViews from "react-swipeable-views";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import LibraryAddCheckOutlinedIcon from "@mui/icons-material/LibraryAddCheckOutlined";
 
@@ -180,11 +179,7 @@ function OHackFeatures() {
 					justifyContent="center"
 					alignItems="center"
 				>
-					<SwipeableViews
-						axis={theme.direction === "rtl" ? "x-reverse" : "x"}
-						index={value}
-						onChangeIndex={handleChangeIndex}
-					>
+					{/* TODO: Swiper */}
 						{details.map((detail) => {
 							return (
 								<TabPanel
@@ -211,7 +206,7 @@ function OHackFeatures() {
 								</TabPanel>
 							);
 						})}
-					</SwipeableViews>
+					{/* TODO: end swiper */}
 				</TabContainer>
 			</TabsContainer>
 		</BlankContainer>

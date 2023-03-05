@@ -1,4 +1,6 @@
 import "../styles/styles.css";
+import dynamic from 'next/dynamic'
+
 import CssBaseline from "@mui/material/CssBaseline";
 import { Auth0ProviderWithHistory } from "../auth0-provider-with-history";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -7,19 +9,28 @@ import theme from "../assets/theme";
 
 import { Loader } from "../components/loader";
 // import NavBar from "../components/nav-bar";
-import NavBar from "../components/Navbar/Navbar";
-import Footer from "../components/Footer/Footer";
+// import NavBar from "../components/Navbar/Navbar";
+
+// TODO: Set up MUI for server side rendering: https://github.com/mui/material-ui/tree/HEAD/examples/material-next
+const NavBar = dynamic(() => import('../components/Navbar/Navbar'), {
+  ssr: false,
+})
+
+const Footer = dynamic(() => import('../components/Footer/Footer'), {
+  ssr: false,
+});
 import Head from "next/head";
 
-import * as ga from "../lib/ga";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
+// import * as ga from "../lib/ga";
+// import { useRouter } from "next/router";
+// import { useEffect } from "react";
 
 // This default export is required in a new `pages/_app.js` file.
 export default function MyApp({ Component, pageProps }) {
   let { isLoading } = useAuth0();
   const { openGraphData = [] } = pageProps;
-  const router = useRouter();
+  // const router = useRouter();
+  /*
   useEffect(() => {
     const handleRouteChange = (url) => {
       ga.pageview(url);
@@ -34,6 +45,7 @@ export default function MyApp({ Component, pageProps }) {
       router.events.off("routeChangeComplete", handleRouteChange);
     };
   }, [router.events]);
+  */
 
   // Helpful Docs:
   // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags
