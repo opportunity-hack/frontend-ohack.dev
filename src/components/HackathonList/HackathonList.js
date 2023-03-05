@@ -7,7 +7,7 @@ import { Player } from "@lottiefiles/react-lottie-player";
 //import { hackathons } from "./dummyData";
 
 function HackathonList() {
-  const { hackathons } = useHackathonEvents("yes");
+  const { hackathons } = useHackathonEvents("current");
 
   const [width, setWidth] = useState();
   const functionName = () => {

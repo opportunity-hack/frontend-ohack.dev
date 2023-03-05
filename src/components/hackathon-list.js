@@ -4,7 +4,7 @@ import useHackathonEvents from '../hooks/use-hackathon-events';
 
 
 export default function HackathonList() {
-    const { hackathons } = useHackathonEvents( "yes" );
+    const { hackathons } = useHackathonEvents( "current" );
     
     var currentEvents = "";
 
