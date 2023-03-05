@@ -73,7 +73,7 @@ function EventFeature(props) {
                 ).toFixed(0)}%`}
               />
               <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-                $ {donationCurrent.food}/{donationGoals.food}
+                ${donationCurrent.food}/{donationGoals.food}
               </TypographyStyled>
             </ProgressBarHolder>
           )}
@@ -102,7 +102,7 @@ function EventFeature(props) {
               ).toFixed(0)}%`}
             />
             <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-              $ {donationCurrent?.prize}/{donationGoals?.prize}
+              ${donationCurrent?.prize}/{donationGoals?.prize}
             </TypographyStyled>
           </ProgressBarHolder>
           )}
@@ -131,7 +131,7 @@ function EventFeature(props) {
                 ).toFixed(0)}%`}
               />
               <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-                $ {donationCurrent.swag}/{donationGoals.swag}
+                ${donationCurrent.swag}/{donationGoals.swag}
               </TypographyStyled>
             </ProgressBarHolder>
           )}
