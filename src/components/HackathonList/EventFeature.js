@@ -15,6 +15,7 @@ import {
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { Typography } from "@mui/material";
+import Moment from 'moment';
 
 function EventFeature(props) {
   const {
@@ -34,9 +35,9 @@ function EventFeature(props) {
 
   return (
     <EventCards container direction="column">
-      <EventTitle variant="h3">{type}</EventTitle>
+      <EventTitle variant="h3">{Moment(start_date).format('MMMM YYYY')} {type}</EventTitle>
       <EventGreyText variant="button">
-        {start_date} - {end_date}
+        {Moment(start_date).format('MMM Do')} - {Moment(end_date).format('MMM Do')}
       </EventGreyText>
       <EventGreyText variant="button">{location}</EventGreyText>
 
@@ -77,6 +78,7 @@ function EventFeature(props) {
             </ProgressBarHolder>
           )}
 
+          {donationCurrent?.prize > 0 && (
           <ProgressBarHolder container justifyContent="center">
             <Typography variant="h5" marginBottom="12%" fontWeight="bold">
               Prize
@@ -103,6 +105,7 @@ function EventFeature(props) {
               $ {donationCurrent?.prize}/{donationGoals?.prize}
             </TypographyStyled>
           </ProgressBarHolder>
+          )}
 
           {donationCurrent?.swag > 0 && (
             <ProgressBarHolder container justifyContent="center">
@@ -137,8 +140,8 @@ function EventFeature(props) {
         <ThankYouContainer>
           <TypographyStyled variant="h6">
             {donationCurrent?.thank_you?.length > 0
-              ? `Special Thanks to: ${donationCurrent?.thank_you} for donating!`
-              : "Be the first to donate!"}
+              ? `Special thanks to: ${donationCurrent?.thank_you} for donating!`
+              : ""}
           </TypographyStyled>
         </ThankYouContainer>
       </ProgressContainer>
@@ -149,9 +152,12 @@ function EventFeature(props) {
         justifyContent="space-around"
         gap="5px"
       >
-        {eventLinks?.map((Link) => {
-          return <EventButton href={Link?.link}>{Link?.name}</EventButton>;
-        })}
+        {
+          
+            eventLinks?.map((Link) => {
+              return <EventButton href={Link?.link}>{Link?.name}</EventButton>;
+            })
+       }
       </ButtonContainer>
     </EventCards>
   );

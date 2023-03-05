@@ -7,7 +7,7 @@ import { Player } from '@lottiefiles/react-lottie-player';
 //import { hackathons } from './dummyData';
 
 function PreviousHackathonList() {
-  const { hackathons } = useHackathonEvents("no");
+  const { hackathons } = useHackathonEvents("previous");
 
   const [width, setWidth] = useState();
   const functionName = () => {
