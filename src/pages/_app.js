@@ -1,5 +1,6 @@
 import "../styles/styles.css";
 import dynamic from 'next/dynamic'
+import Head from "next/head";
 
 import CssBaseline from "@mui/material/CssBaseline";
 import { Auth0ProviderWithHistory } from "../auth0-provider-with-history";
@@ -19,7 +20,6 @@ const NavBar = dynamic(() => import('../components/Navbar/Navbar'), {
 const Footer = dynamic(() => import('../components/Footer/Footer'), {
   ssr: false,
 });
-import Head from "next/head";
 
 // import * as ga from "../lib/ga";
 // import { useRouter } from "next/router";

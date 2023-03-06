@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { register } from 'swiper/element/bundle';
 
-register();
+
 
 import { BlankContainer } from "../HeroBanner/styles";
 import {
@@ -23,6 +23,8 @@ import VolunteerActivismOutlinedIcon from "@mui/icons-material/VolunteerActivism
 import BuildOutlinedIcon from "@mui/icons-material/BuildOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import LibraryAddCheckOutlinedIcon from "@mui/icons-material/LibraryAddCheckOutlined";
+
+register(); // since this declares vars, do this after all imports
 
 function TabPanel(props) {
 	const { children, value, index, ...other } = props;
