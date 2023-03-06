@@ -1,24 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { register } from 'swiper/element/bundle';
-
-
-
 import { BlankContainer } from "../HeroBanner/styles";
 import {
 	GridStyled,
 	InfoContainer,
 	NormalTextStyled,
-	OuterGrid,
+	// OuterGrid,
 	SectionTitle,
 	TabContainer,
 	TabsContainer,
 	TabsStyled,
 	TabStyled,
-	TextContainer,
+	//TextContainer,
 	TitleContainer,
-	TitleStyled,
+	//TitleStyled,
 } from "./styles";
-import { useTheme } from "@mui/material/styles";
+// import { useTheme } from "@mui/material/styles";
 import VolunteerActivismOutlinedIcon from "@mui/icons-material/VolunteerActivismOutlined";
 import BuildOutlinedIcon from "@mui/icons-material/BuildOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
@@ -87,15 +84,12 @@ const OHackFeatures = () => {
 	const swiperElRef = useRef(null);
 
 	const [value, setValue] = React.useState(0);
-	const theme = useTheme();
+	
+	// TODO: Should be be using the theme here?
+	// const theme = useTheme();
 
 	const handleChange = (event, newValue) => {
 		setValue(newValue);
-	};
-
-	// Called by swiper
-	const handleChangeIndex = (index) => {
-		setValue(index);
 	};
 
 	const [width, setWidth] = useState(window.screen.width);
@@ -115,7 +109,7 @@ const OHackFeatures = () => {
 	useEffect(() => {
 		// listen for Swiper events using addEventListener
 		swiperElRef.current.addEventListener('progress', (e) => {
-		  const [swiper, progress] = e.detail;
+		  const progress = e.detail[1];
 		  console.log(progress);
 		});
 	
@@ -157,7 +151,7 @@ const OHackFeatures = () => {
 		return (<TabStyled
 			label={
 				width < 480
-					? value == feature.index
+					? value === feature.index
 						? feature.shortName
 						: ""
 					: feature.shortName

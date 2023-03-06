@@ -1,19 +1,20 @@
-
+/*
 import Tooltip from '@mui/material/Tooltip';
 import Badge from '@mui/material/Badge';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { styled } from '@mui/material/styles';
+*/
 
-import IconButton from '@mui/material/IconButton';
+// import IconButton from '@mui/material/IconButton';
 import GroupIcon from '@mui/icons-material/Group';
-import Image from 'next/image'
+// import Image from 'next/image'
 import Stack from '@mui/material/Stack';
-import { useState, useMemo, useEffect } from "react";
+// import { useState, useMemo, useEffect } from "react";
 import Button from '@mui/material/Button';
 import Team from './event-team';
-import next from 'next';
+// import next from 'next';
 
 /*
 
@@ -67,11 +68,14 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
     console.log("=== EventTeams ")
     var teamCounter = 0;
     
+    // TODO: Use?
+    /*
     var userId = "";
     if( user != null )
     {
         userId = user.sub;
     }
+    */
     
     const isUserInAnyTeamListTemp = teams.map(team =>{        
         const isTeamAssociatedToProblemStatement = team.problem_statements !=null && team.problem_statements.includes(problemStatementId);

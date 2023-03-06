@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import TagIcon from '@mui/icons-material/Tag';
-import IconButton from '@mui/material/IconButton';
+// import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 
@@ -33,7 +33,7 @@ export default function NonProfitListTile({
     {
     const { user } = useAuth0();
 
-    const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
+    // const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
     
 
 

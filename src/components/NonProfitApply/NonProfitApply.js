@@ -1,9 +1,12 @@
-import React from "react";
+// TODO: We should probably get away from importing the entire react module
+import React, { 
+    useState, 
+    // useCallback 
+} from "react";
 
 import useNonprofit from "../../hooks/use-nonprofit";
 
-import { useState, useCallback } from "react";
-import { Puff } from "react-loading-icons";
+// import { Puff } from "react-loading-icons";
 import { Parallax } from "react-parallax";
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -20,12 +23,12 @@ import Head from "next/head";
 import {
     LayoutContainer,
     DetailsContainer,   
-    TitleContainer,     
+    // TitleContainer,     
     TitleBanner,    
     DescriptionStyled
 } from "../../styles/nonprofits/apply/styles";
 
-import { Deck, Details } from "@mui/icons-material";
+// import { Deck, Details } from "@mui/icons-material";
 
 export default function NonProfitApply() {
     let { nonprofits } = useNonprofit();

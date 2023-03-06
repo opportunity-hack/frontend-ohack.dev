@@ -160,9 +160,10 @@ function NonProfitList() {
 
         if (ps.helping) {
           ps.helping.forEach((help) => {
-            if (help.type == "hacker") {
+            // TODO: "hacker" and "mentor" should probably be exported as consts from somewhere.
+            if (help.type === "hacker") {
               hacker_counter++;
-            } else if (help.type == "mentor") {
+            } else if (help.type === "mentor") {
               mentor_counter++;
             }
           });

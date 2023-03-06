@@ -116,7 +116,7 @@ export default function useProfileApi(props){
     useEffect(() => {
     
         const getProfileDetails = async () => {
-            if (!user)
+            if (!user_id)
                 return null;
 
             const config = {

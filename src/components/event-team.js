@@ -1,4 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { 
+    useState, 
+    // useMemo, 
+    useEffect } from "react";
 
 import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
@@ -44,7 +47,7 @@ export default function EventTeam({ team, _isOnTeam, _isOnAnyTeam, onJoin, onDel
     
 
     var peoplePersonString = "hacker";
-    if (countOfPeopleOnTeam == 0 || countOfPeopleOnTeam >= 2) {
+    if (countOfPeopleOnTeam === 0 || countOfPeopleOnTeam >= 2) {
         peoplePersonString = "hackers";
     }
 
@@ -61,26 +64,28 @@ export default function EventTeam({ team, _isOnTeam, _isOnAnyTeam, onJoin, onDel
     }
 
     useEffect(() => {                    
-    if (!isOnAnyTeam )
-    {        
-        if (isHelping)
-        {
-            setJoinOrLeaveTeam(<IconButton onClick={handleJoin} edge="end" aria-label="comments">
-                <PersonAddIcon fontSize="large" color="success" />
-            </IconButton>);
-        }
+
+        // TODO: Why are we caching markup here? We should probably disabling/enabling hiding/showing these buttons based on the values of isOnAnyTeam, isHelping, and isOnTeam
+        if (!isOnAnyTeam )
+        {        
+            if (isHelping)
+            {
+                setJoinOrLeaveTeam(<IconButton onClick={handleJoin} edge="end" aria-label="comments">
+                    <PersonAddIcon fontSize="large" color="success" />
+                </IconButton>);
+            }
+                
             
-        
-    }
-    else if (isOnTeam) {
-        if (isHelping) {
-        setJoinOrLeaveTeam(<IconButton value={team} onClick={handleLeave} edge="end" aria-label="comments">
-            <PersonRemoveIcon fontSize="large" color="error" />
-        </IconButton>);
         }
-    }
+        else if (isOnTeam) {
+            if (isHelping) {
+            setJoinOrLeaveTeam(<IconButton value={team} onClick={handleLeave} edge="end" aria-label="comments">
+                <PersonRemoveIcon fontSize="large" color="error" />
+            </IconButton>);
+            }
+        }
     
-    }, [isOnTeam, isOnAnyTeam, isHelping])
+    }, [team, isOnTeam, isOnAnyTeam, isHelping]);
 
     const userIcons = team.users.map(auser => {
         return (
