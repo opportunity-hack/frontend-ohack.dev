@@ -1,9 +1,19 @@
+import dynamic from 'next/dynamic'
 import React, { Fragment } from "react";
 import Head from "next/head";
-import HeroBanner from "../components/HeroBanner/HeroBanner";
-import OHackFeatures from "../components/OHackFeatures/OHackFeatures";
-import HackathonList from "../components/HackathonList/HackathonList";
-import PreviousHackathonList from "../components/HackathonList/PreviousHackathonList";
+const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), {
+  ssr: false,
+});
+const OHackFeatures = dynamic(() => import('../components/OHackFeatures/OHackFeatures'), { 
+  ssr: false
+});
+const HackathonList = dynamic(() => import('../components/HackathonList/HackathonList'), {
+  ssr: false
+});
+
+const PreviousHackathonList = dynamic(() =>  import('../components/HackathonList/PreviousHackathonList'), {
+  ssr: false
+});
 
 export default function Home() {
   return (
