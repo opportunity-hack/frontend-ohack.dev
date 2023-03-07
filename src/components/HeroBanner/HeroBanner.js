@@ -14,13 +14,14 @@ import {
   BackgroundGrid,
 } from './styles';
 import Typewriter from 'typewriter-effect';
-import { Player } from '@lottiefiles/react-lottie-player';
-import ohack from '../../../public/ohack.png'
+// import { Player } from '@lottiefiles/react-lottie-player';
+// import ohack from '../../../public/ohack.png'
 import Logo from './Logo'
 
 import * as ga from '../../lib/ga';
 
 function HeroBanner() {
+  // TODO: add function to join slack to lib. This code is repeated at least 4 times.
   const JOIN_SLACK_LINK =
     'https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig';
   const openCodeSample = () => {

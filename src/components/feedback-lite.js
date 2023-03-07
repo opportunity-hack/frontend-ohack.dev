@@ -9,15 +9,18 @@ import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 import TextField from '@mui/material/TextField';
-import Box from '@mui/material/Box';
+// import Box from '@mui/material/Box';
 
-import { Button, Snackbar } from '@mui/material'
-import FormGroup from '@mui/material/FormGroup';
+import { 
+//    Button, 
+    Snackbar 
+} from '@mui/material'
+// import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import { Puff } from 'react-loading-icons'
+// import { Puff } from 'react-loading-icons'
 
-
+// TODO: Is this part of a dead tree?
 export default function FeedbackLite ( {feedback_url, history} ){
     const [open, setOpen] = useState(false);
 

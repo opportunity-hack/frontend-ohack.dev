@@ -1,5 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { AnimatedBox, AnimatedBulb, AnimatedHeart, AnimatedIcon, AnimatedLaptop, AnimatedLine } from './styles';
+import React, { 
+  // useState, 
+  // useEffect 
+} from 'react';
+import { 
+  // AnimatedBox, 
+  AnimatedBulb, 
+  AnimatedHeart, 
+  // AnimatedIcon, 
+  AnimatedLaptop, 
+  AnimatedLine 
+} from './styles';
 
 const Logo = () => {
   return (

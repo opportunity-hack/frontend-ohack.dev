@@ -12,12 +12,16 @@ import {
   ThankYouContainer,
   TypographyStyled,
 } from "./styles";
-import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import { 
+  CircularProgressbar, 
+  // buildStyles 
+} from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { Typography } from "@mui/material";
 import Moment from 'moment';
 
 function EventFeature(props) {
+  // TODO: Fix unused variable warning here
   const {
     title,
     type,

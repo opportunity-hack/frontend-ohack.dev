@@ -1,7 +1,7 @@
 import React from 'react';
-import Link from 'next/link';
+// import Link from 'next/link';
 import TagIcon from '@mui/icons-material/Tag';
-import IconButton from '@mui/material/IconButton';
+// import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 
@@ -36,11 +36,15 @@ export default function NonProfitListTile({
 }) {
   const { user } = useAuth0();
 
+  // TODO: Use?
+  /*
   const JOIN_SLACK_LINK =
     'https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig';
+  */
 
   var number_of_problem_statements_helping_with = 0;
 
+  // TODO: add this to a lib. Preferrably slack related.
   const openCodeSample = (e, channel) => {
     e.preventDefault();
     window.open(
@@ -111,14 +115,17 @@ export default function NonProfitListTile({
   }
 
   var helping_text = '';
-  var helping_class = 'ohack-nonprofit-feature';
+
+  // TODO: Use ?
+  // var helping_class = 'ohack-nonprofit-feature';
+  
   if (number_of_problem_statements_helping_with > 0) {
     helping_text = (
       <center>
         <em>You're helping here!</em>
       </center>
     );
-    helping_class = 'ohack-nonprofit-feature-helping';
+    // helping_class = 'ohack-nonprofit-feature-helping';
   }
 
   const displayCountDetails = () => {

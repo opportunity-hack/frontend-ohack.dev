@@ -1,7 +1,7 @@
 import React from "react";
-import FooterHyperlink from "../footer-hyperlink";
+// import FooterHyperlink from "../footer-hyperlink";
 import Link from "next/link";
-import Image from "next/image";
+// import Image from "next/image";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import {
   FooterContainer,

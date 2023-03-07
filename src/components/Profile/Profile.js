@@ -1,14 +1,19 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import Router from "next/router.js";
-import React, { useEffect } from "react";
+import React, { 
+  // useEffect 
+} from "react";
 
 import useProfileApi from "../../hooks/use-profile-api.js";
 
 import BadgeList from "../../components/badge-list";
 import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
-import CodeSnippet from "../../components/code-snippet";
-import AuthenticationButton from "../../components/buttons/authentication-button";
+
+// TODO: Use?
+// import CodeSnippet from "../../components/code-snippet";
+// import AuthenticationButton from "../../components/buttons/authentication-button";
+
 import Head from "next/head";
 import Moment from "react-moment";
 

@@ -1,4 +1,11 @@
-import { Grid, Typography, Chip, Link, Tooltip } from "@mui/material";
+import { 
+  Grid, 
+  Typography, 
+  Chip, 
+  Link, 
+  // TODO: Are we planning on doing anything with Tooltip thematically?
+  // Tooltip 
+} from "@mui/material";
 import { styled as styling } from "@mui/material";
 
 export const LayoutContainer = styling(Grid)({

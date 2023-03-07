@@ -31,23 +31,24 @@ import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import {
-  CardContainer,
+  // CardContainer,
   ChannelChip,
-  ContentContainer,
+  // ContentContainer,
   DescriptionStyled,
-  DetailsContainer,
+  // DetailsContainer,
   LayoutContainer,
   LinkStyled,
   ProjectsChip,
   ProjectsContainer,
   ProjectsGrid,
-  SlackTooltip,
+  // SlackTooltip,
   TitleBanner,
   TitleChipContainer,
   TitleContainer,
   TitleStyled,
 } from '../../styles/nonprofit/styles';
 
+/*
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
   return <IconButton {...other} />;
@@ -58,6 +59,7 @@ const ExpandMore = styled((props) => {
     duration: theme.transitions.duration.shortest,
   }),
 }));
+*/
 
 const JOIN_SLACK_LINK =
   'https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig';
@@ -77,18 +79,23 @@ export default function NonProfit(props) {
   const [message, setMessage] = useState('');
 
   const [expanded, setExpanded] = useState(false);
+  
+  // TODO: Use?
+  /*
   const handleExpandClick = () => {
     setExpanded(!expanded);
   };
+  */
 
   const { handle_npo_problem_statement_edit, nonprofit } =
     useNonprofit(nonprofit_id);
 
-  var slack_details,
-    slack_details_plain = '';
+  var slack_details = '';
+  // var slack_details_plain = '';
 
   if (nonprofit.slack_channel !== '') {
-    slack_details_plain = nonprofit.slack_channel;
+    // TODO: Use?
+    // slack_details_plain = nonprofit.slack_channel;
     slack_details = (
       <Typography>
         <Tooltip title='This is their dedicated channel in Slack'>
@@ -140,7 +147,7 @@ export default function NonProfit(props) {
   var description = '';
 
   function getTwoLetters(str) {
-    if (str != null && str != '') {
+    if (typeof str === 'string' && str != '') {
       if (str.includes(' ')) {
         const strArr = str.split(' ');
         return strArr[0].charAt(0) + strArr[1].charAt(0);
@@ -150,9 +157,12 @@ export default function NonProfit(props) {
     }
   }
 
+  // TODO: Use?
+  /* 
   function getWordStr(str) {
     return str.split(/\s+/).slice(0, 50).join(' ');
   }
+  */
 
   if (nonprofit.description != null) {
     description = nonprofit.description;

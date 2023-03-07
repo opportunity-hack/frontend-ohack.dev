@@ -24,8 +24,6 @@ export const EmptyGrid = styled(Grid)({
 });
 
 export const EventCards = styled(Grid)((props) => ({
-  borderRadius: "20px",
-  backgroundColor: "white",
   height: "auto",
   padding: "2%",
   maxWidth: "30%",
