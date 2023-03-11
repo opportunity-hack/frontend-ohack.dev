@@ -60,7 +60,7 @@ export default function useNewsLetterAPI() {
       role: role
     };
     const config = {
-      url: `${apiServerUrl}/api/newsletter/send_newsletter`,
+      url: `${apiServerUrl}/api/newsletter/send`,
       method: "POST",
       headers: {
         "content-type": "application/json"
