@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth0 } from "@auth0/auth0-react";
+import GitHubIcon from '@mui/icons-material/GitHub';
 
 // TODO: import useProfileApi from "../../hooks/use-profile-api";
 
@@ -135,7 +136,7 @@ export default function NavBar() {
               ["Projects", "/nonprofits", ""],
               ["About Us", "https://www.ohack.org/about", <OpenInNewIcon />],
               ["Our History", "https://www.ohack.org/about/history", <OpenInNewIcon />],              
-              ["GitHub", "https://github.com/opportunity-hack/", <OpenInNewIcon />],
+              [<GitHubIcon/>, "https://github.com/opportunity-hack/", <OpenInNewIcon />],
             ].map((link) => (
               <>
                 <Divider />
@@ -179,18 +180,13 @@ export default function NavBar() {
                 </NavbarLink>
               </NavbarListItem>
               <NavbarListItem>
-                <NavbarLink href="https://www.ohack.org/abount" exact>
+                <NavbarLink href="https://www.ohack.org/about" exact>
                   About Us <OpenInNewIcon/>
-                </NavbarLink>
-              </NavbarListItem>
-              <NavbarListItem>
-                <NavbarLink href="https://www.ohack.org/about/history" exact>
-                  Our History <OpenInNewIcon />
                 </NavbarLink>
               </NavbarListItem>              
               <NavbarListItem>
                 <NavbarLink target={"_blank"} href="https://github.com/opportunity-hack/" exact>
-                  GitHub <OpenInNewIcon />
+                  <GitHubIcon fontSize="large"/>
                 </NavbarLink>
               </NavbarListItem>
             </>
