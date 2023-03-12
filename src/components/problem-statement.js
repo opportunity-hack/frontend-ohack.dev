@@ -248,9 +248,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
                 }
             })
         });
-        var s = teamCounter > 1 ? "s" : "";
+        var s1 = teamCounter > 1 ? "s" : "";
         var is_are = teamCounter > 1 ? " are " : " is ";
-        TeamText = "There" + is_are + teamCounter + " team" + s + " working on this";
+        TeamText = "There" + is_are + teamCounter + " team" + s1 + " working on this";
     }
 
 
@@ -272,11 +272,11 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     var countOfMentors = 0;
     if (problem_statement.helping != null) {
         problem_statement.helping.forEach(help => {                
-            if (help.type == "mentor" )
+            if (help.type === "mentor" )
             {
                 countOfMentors++;
             }
-            else if( help.type == "hacker" )
+            else if( help.type === "hacker" )
             {
                 countOfHackers++;
             }
@@ -376,7 +376,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
     var mentorsAddPlural = [];
     var hackersAddPlural = [];
 
-    if (countOfHackers == 0 || countOfHackers > 1 )
+    if (countOfHackers === 0 || countOfHackers > 1 )
     {
         hackersAddPlural[0] = "s";
         hackersAddPlural[1] = "are";
@@ -385,7 +385,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }){
         hackersAddPlural[1] = "is";
     }
 
-    if (countOfMentors == 0 || countOfMentors > 1) {
+    if (countOfMentors === 0 || countOfMentors > 1) {
         mentorsAddPlural[0] = "s";
         mentorsAddPlural[1] = "are";
     } else {

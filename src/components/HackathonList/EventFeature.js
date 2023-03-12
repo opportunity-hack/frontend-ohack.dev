@@ -12,12 +12,16 @@ import {
   ThankYouContainer,
   TypographyStyled,
 } from "./styles";
-import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import { 
+  CircularProgressbar, 
+  // buildStyles 
+} from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { Typography } from "@mui/material";
 import Moment from 'moment';
 
 function EventFeature(props) {
+  // TODO: Fix unused variable warning here
   const {
     title,
     type,
@@ -26,12 +30,15 @@ function EventFeature(props) {
     end_date,
     location,
     devpostUrl,
-    eventLinks,
+    rawEventLinks,
     donationUrl,
     donationGoals,
     donationCurrent,
     icon,
   } = props;
+
+  // TODO: Is the schema on the backend wrong? Or is the schema here wrong?
+  const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
 
   return (
     <EventCards container direction="column">

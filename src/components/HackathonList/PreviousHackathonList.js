@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { 
+  // useState, 
+  // useEffect 
+} from 'react';
 import useHackathonEvents from '../../hooks/use-hackathon-events';
-import { EmptyGrid, OuterGrid, TypographyStyled } from './styles';
+import { 
+  EmptyGrid, 
+  OuterGrid, 
+  // TypographyStyled 
+} from './styles';
 import EventFeature from './EventFeature';
 import { SectionTitle } from './styles';
-import { Player } from '@lottiefiles/react-lottie-player';
+// import { Player } from '@lottiefiles/react-lottie-player';
 //import { hackathons } from './dummyData';
 
 function PreviousHackathonList() {
   const { hackathons } = useHackathonEvents("previous");
 
+  // TODO: Use media queries, not widths in js
+  /*
   const [width, setWidth] = useState();
   const functionName = () => {
     setInterval(() => {
@@ -17,10 +26,12 @@ function PreviousHackathonList() {
   };
 
   window.addEventListener('resize', functionName);
-
+  */
+  /*
   useEffect(() => {
     setWidth(window.screen.width);
   }, []);
+  */
 
   return (
     <OuterGrid
@@ -52,7 +63,7 @@ function PreviousHackathonList() {
                   />
                 );
               } else {
-                return;
+                return null;
               }
             })
           : null}

@@ -16,7 +16,7 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
 
 
     var anIcon = "https://i.imgur.com/Ih0mbYx.png";
-    if (icon != null && icon != "")
+    if (typeof icon === 'string' && icon !== "")
     {
         anIcon = icon;
     }
@@ -45,7 +45,7 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
     
     
     var nonProfitButtons = "";
-    if( nonprofits != null && nonprofits.length > 0 )
+    if( typeof nonprofits !== 'string' && nonprofits.length > 0 )
     {                
         nonProfitButtons = nonprofits.map( npo => {
             return(
@@ -59,7 +59,7 @@ export default function EventFeature({ title, type, nonprofits, start_date, end_
 
     }
 
-    if( title != null && title != "" )
+    if( typeof title === 'string' && title != "" )
     {
         aTitle = <h5>{title}</h5>;
     }

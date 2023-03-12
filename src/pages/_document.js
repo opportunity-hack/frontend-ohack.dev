@@ -5,6 +5,7 @@ export default function Document() {
         <Html>
             <Head>
                 <noscript>
+                    {/* TODO: Alt text or skip alt text error in eslint. Also, what is this? */}
                     <img
                         height="1"
                         width="1"

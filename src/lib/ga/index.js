@@ -11,3 +11,12 @@ export const pageview = (url) => {
 export const event = ({ action, params }) => {
     window.gtag('event', action, params)
 }
+
+
+// associate user to session
+// https://support.google.com/google-ads/answer/12785474
+export const set = ({ email }) => {
+    window.gtag('set', 'user_data', {
+        "email" : email
+    })
+}

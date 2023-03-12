@@ -90,7 +90,7 @@ export default function useHackathonEvents( currentOnly ){
         };
 
         getHackathons();
-    }, [user, apiServerUrl, makeRequest]);
+    }, [currentOnly, user, apiServerUrl, makeRequest]);
 
 
 

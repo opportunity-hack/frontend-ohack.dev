@@ -9,6 +9,7 @@ import Image from "next/image";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import {
   NavbarContainer,
@@ -131,16 +132,16 @@ export default function NavBar() {
               </Link>
             </Grid>
             {[
-              ["About Us", "https://www.ohack.org/"],
-              ["Our History", "https://www.ohack.org/about/history"],
-              ["Projects", "/nonprofits"],
-              ["GitHub", "https://github.com/opportunity-hack/"],
+              ["Projects", "/nonprofits", ""],
+              ["About Us", "https://www.ohack.org/about", <OpenInNewIcon />],
+              ["Our History", "https://www.ohack.org/about/history", <OpenInNewIcon />],              
+              ["GitHub", "https://github.com/opportunity-hack/", <OpenInNewIcon />],
             ].map((link) => (
               <>
                 <Divider />
                 <ListItem key={link[0]} disablePadding>
                   <ListItemButton href={link[1]}>
-                    <ListItemText primary={link[0]} />
+                    <ListItemText primary={link[0]} /> {link[2]}
                   </ListItemButton>
                 </ListItem>
               </>
@@ -173,23 +174,23 @@ export default function NavBar() {
           {width >= 900 && (
             <>
               <NavbarListItem>
-                <NavbarLink href="https://www.ohack.org" exact>
-                  About Us
-                </NavbarLink>
-              </NavbarListItem>
-              <NavbarListItem>
-                <NavbarLink href="https://www.ohack.org/about/history" exact>
-                  Our History
-                </NavbarLink>
-              </NavbarListItem>
-              <NavbarListItem>
                 <NavbarLink href="/nonprofits" exact>
                   Projects
                 </NavbarLink>
               </NavbarListItem>
               <NavbarListItem>
-                <NavbarLink href="https://github.com/opportunity-hack/" exact>
-                  GitHub
+                <NavbarLink href="https://www.ohack.org/abount" exact>
+                  About Us <OpenInNewIcon/>
+                </NavbarLink>
+              </NavbarListItem>
+              <NavbarListItem>
+                <NavbarLink href="https://www.ohack.org/about/history" exact>
+                  Our History <OpenInNewIcon />
+                </NavbarLink>
+              </NavbarListItem>              
+              <NavbarListItem>
+                <NavbarLink target={"_blank"} href="https://github.com/opportunity-hack/" exact>
+                  GitHub <OpenInNewIcon />
                 </NavbarLink>
               </NavbarListItem>
             </>
