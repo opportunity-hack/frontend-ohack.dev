@@ -48,7 +48,7 @@ export default function newsletters() {
            email_List,
            item_name
           ):
-         preview_newsletter(
+         preview(
             event.target.content.value,
             is_HTML
           ).then((val)=>{

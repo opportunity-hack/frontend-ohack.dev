@@ -82,7 +82,7 @@ export default function useNewsLetterAPI() {
     };
 
     const config = {
-      url: `${apiServerUrl}/api/newsletter/preview_newsletter`,
+      url: `${apiServerUrl}/api/newsletter/preview`,
       method: "POST",
       headers: {
         "content-type": "application/json"
@@ -99,7 +99,7 @@ export default function useNewsLetterAPI() {
   return {
     subscribers,
     submit_email,
-    preview_newsletter, 
+    preview, 
     get_subscriber_list
   };
 }
