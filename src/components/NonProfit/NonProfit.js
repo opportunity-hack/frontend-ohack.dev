@@ -27,6 +27,9 @@ import Avatar from '@mui/material/Avatar';
 import { red } from '@mui/material/colors';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
+import ReactMarkdown from 'react-markdown'
+
+
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
@@ -165,7 +168,7 @@ export default function NonProfit(props) {
   */
 
   if (nonprofit.description != null) {
-    description = nonprofit.description;
+    description = nonprofit.description;    
   }
 
   const renderAdminProblemStatements = () => {
@@ -283,7 +286,7 @@ export default function NonProfit(props) {
             </Grid>
             <Grid item>
               {description ? (
-                <DescriptionStyled>{description}</DescriptionStyled>
+                <ReactMarkdown>{description}</ReactMarkdown>
               ) : (
                 ''
               )}

@@ -11,6 +11,9 @@ import Stack from "@mui/material/Stack";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { styled } from "@mui/material/styles";
 
+import ReactMarkdown from 'react-markdown'
+
+
 import SupportIcon from "@mui/icons-material/Support";
 import Badge from "@mui/material/Badge";
 
@@ -476,12 +479,15 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
               Project Description
             </AccordionTitle>
             <Typography>
-              {" "}
-              {getWordStr(problem_statement.description)}...
+              
+              {" "}              
+              {getWordStr(problem_statement.description)}...              
             </Typography>
           </AccordionSummary>
-          <ProjectDescText style={{ whiteSpace: "pre-wrap" }}>
-            {problem_statement.description}
+          <ProjectDescText>
+            <ReactMarkdown>
+              {problem_statement.description}
+            </ReactMarkdown>
           </ProjectDescText>
         </Accordion>
         <Accordion
