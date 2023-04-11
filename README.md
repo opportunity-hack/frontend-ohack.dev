@@ -1,6 +1,6 @@
-This is the front-end for [ohack.dev](https://ohack.dev).
+This is the front-end for [ohack.dev](https://ohack.dev) which is tied to our `main` branch, the `develop` branch auto-deploys to [test.ohack.dev](https://test.ohack.dev).
 
-Opportunity Hack is a 501c3 nonprofit and is a public good.  We encourage you to fork and help us!
+Opportunity Hack is a 501c3 nonprofit and is a public good.  We encourage you to fork and help us write code for social good!
 
 Follow us on [Instagram](https://www.instagram.com/opportunityhack/), [LinkedIn](https://www.linkedin.com/company/opportunity-hack/), [YouTube](https://www.youtube.com/@opportunityhack).
 

@@ -49,8 +49,7 @@ export default function NonProfitApply() {
         setTimeout(function () {            
             setLoading(false);            
             setSubmitStatus("This doesn't do anything yet");
-        }, 1111);
-        
+        }, 1111);        
     }
     
     return (        
@@ -81,26 +80,19 @@ export default function NonProfitApply() {
                     <div className="profile__header">
                       
                         <div className="profile__headline">
-                        
                             <h4 className="profile__title">
-                                Each year, we gather people from Arizona and around the world to solve technical problems 
-                                for public charities, non-profit organizations (NPOs), and non-government organizations (NGOs).
-                            </h4>
-                            
+                                Opportunity Hack is a 48-hour hackathon that brings together software developers,
+                                designers, and project managers to solve technical problems for public charities,
+                                non-profit organizations (NPOs), and non-government organizations (NGOs).                                
+                            </h4>                            
                             This form helps us to find the charities that are the right fit for our event. 
-
-                            
-                            
-                        </div>
-                        
-                    </div>    
-                                
+                        </div>                    
+                    </div>                                    
                 </div>       
                 
                 
                 </DescriptionStyled>
                 <DescriptionStyled>
-
                     <p>
                         🥇We're able to sponsor top prizes for teams who are selected by the judges to
                         complete your project post-hackathon.  We only can sponsor teams if we have sponsors,
@@ -114,6 +106,9 @@ export default function NonProfitApply() {
                         states, we need to provide a prize with monetary value that attracts the attention of the team
                         to follow-through.
                     </p>
+                    <p>
+                        We support charities including non-profits (NPOs) and non-government organizations (NGOs)
+                    </p>
                 
                     <Autocomplete
                         disablePortal
@@ -123,43 +118,12 @@ export default function NonProfitApply() {
                         sx={{ width: 300 }}
                         renderInput={(params) => <TextField {...params} label="Name of Charity Organization" />}
                     />
-                    We support charities including non-profits (NPOs) and non-government organizations (NGOs)
-
-
-                    Complete transparency: Not all projects will be completed after the hackathon
-                    *
-                    Sponsorship allows us to incentivize teams to complete their hackathon projects.  
-                    From our previous experience over the last 9 years, in order for projects to reach completion states, 
-                    we need to provide a prize with monetary value that attracts the attention of the team to 
-                    follow-through. Through our sponsors, we typically can award prizes for completion to the Top 4 teams.  
-                    Some teams, without any sponsorship, continue to work with their non-profit post-hackathon, 
-                    but those situations are rather rare.  In an effort to continue unfinished work, we do work through 
-                    local universities to sponsor follow-on projects as part of senior capstone programs.
-
-                    <DescriptionStyled>
+                                                        
+                    <p>
+                    Complete transparency: Not all projects will be completed after the hackathon <br/>
+                    </p>
                     <FormControlLabel control={<Checkbox/>} label="I understand that my project may not be completed during this hackathon" />                        
-                    </DescriptionStyled>
-                    How the hackathon works
-                    There are 3 steps to Opportunity Hack
-                    <p>
-                    Step 1: Proposal - Non-profit and social enterprises will prepare a problem statement for
-                     a technology project that they would like the hackathon participants to work on by completing
-                      the questionnaire below.  In order to ensure that you have at least one team to work with at
-                       the hackathon, we will review all submissions to select eight to ten organizations for Opportunity Hack.
-                        You will be notified by September 20th if you have been selected to pitch their ideas at the hackathon.
-                    </p>
-                    <p>
-                    Step 2: Pre-hackathon Workshop - PayPal and its partners will host Opportunity Hack workshops to
-                     help non-profits refine their problem statements and project pitches. These workshops will be conducted
-                      via phone and screenshare first and follow-up sessions will occur as needed either in virtually or in person.  
-                      We will reach out to you to schedule a time that works best for you.
-                    </p>
-                    <p>
-                    Step 3: Hackathon involvement - If your project is selected, at least one knowledgeable member of your staff must be available to pitch the project to the volunteers on the first day of the hackathon and then be available by phone, email, or Slack to consult with any hackers that choose to work on your project.  The more you are available, the better.
-                    </p>
-                    <p>
-                    During the hackathon, participants will create a prototype of a solution for your technology need.  The prototype will be created using open-source technologies and will be open-sourced to the public after the event.  The winning teams will have the majority of their prize money withheld until they fully complete their solution and you, the non-profit, agree that it meets their needs (you will typically tell us over Slack).
-                    </p>
+                    
                 </DescriptionStyled>
                 <DescriptionStyled>
                     Areas of focus for your non-profit?
@@ -234,8 +198,10 @@ export default function NonProfitApply() {
 
                 <DetailsContainer container>
                 <DescriptionStyled>
-                    Describe what technical problem would you like hackathon participants to solve?
-                    Try to think only about the problem you are trying to solve, and not how you want to solve it.  The more specific you can get with your problem(s), the better scoped your project will be.
+                    Describe what technical problem would you like hackathon participants to solve.
+                    Try to think only about the problem you are trying to solve, and not how you want to solve it. 
+                    The more specific you can get with your problem(s), the better scoped your project will be.
+                    Given that this problem is solved, how can it help you and your non-profit in terms of cost savings, people served, time saved, etc.?
                     <br/>
                     <TextField
                         fullWidth
@@ -249,23 +215,6 @@ export default function NonProfitApply() {
                 </DescriptionStyled>
                 </DetailsContainer>
                 
-                <DetailsContainer container>
-                <DescriptionStyled>
-                    How would a solution to these challenges help further your work, mission, strategy, or growth?
-                    Given that this problem is solved, how can it help you and your non-profit?
-                    
-                    <TextField
-                        fullWidth
-                        id="filled-textarea"
-                        label="How would a solution help you?"
-                        placeholder="If we gave you exactly what you wanted, how would it help?"
-                        multiline
-                        rows={4}
-                        variant="filled"
-                    />
-                </DescriptionStyled>
-                </DetailsContainer>
-
                 <DetailsContainer container>
                 <DescriptionStyled>                     
                     We use Slack as our only mechanism for communication for Opportunity Hack, we ask this question to better understand your knowledge of using Slack (see Slack.com for more info)
