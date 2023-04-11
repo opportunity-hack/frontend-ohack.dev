@@ -11,6 +11,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import * as ga from "../../lib/ga";
 
 import {
   NavbarContainer,
@@ -60,6 +61,12 @@ export default function NavBar() {
   // add close dropdown mouselistener to close on outside click
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
+
+  if (isAuthenticated )
+  {
+    ga.set(user.email);    
+  }
+
 
   useEffect(() => {
     // click outside handler

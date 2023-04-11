@@ -5,7 +5,6 @@ import React, {
 } from "react";
 
 import useProfileApi from "../../hooks/use-profile-api.js";
-import * as ga from "../../lib/ga";
 import BadgeList from "../../components/badge-list";
 import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
@@ -34,10 +33,7 @@ export default function Profile(props) {
   // TODO: Expose a user context that returns the current DB (not auth0) user and an accompanying useCurrentUser() hook
   const  user_id  = props?.user_id ?? user?.sub; // Slack User ID (since we get this from the Auth0 Session)
 
-  if( user && user.email )
-  {
-    ga.set(user.email);
-  }
+ 
   
   // TODO: Pass user_id prop to useProfileApi
   const { badges, hackathons, profile, feedback_url } = useProfileApi({ user_id });

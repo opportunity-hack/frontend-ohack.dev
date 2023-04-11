@@ -15,8 +15,8 @@ export const event = ({ action, params }) => {
 
 // associate user to session
 // https://support.google.com/google-ads/answer/12785474
-export const set = ({ email }) => {
+export const set = (email) => {
     window.gtag('set', 'user_data', {
         "email" : email
-    })
+    });
 }
