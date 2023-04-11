@@ -62,7 +62,7 @@ import {
 import SkillSet from "../skill-set";
 import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 
-
+import * as ga from '../../lib/ga';
 
 export default function ProblemStatement({ problem_statement, user, npo_id }) {
   const [open, setOpen] = useState(false);
@@ -86,6 +86,21 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   const [expanded, setExpanded] = useState("");
   const handleChange = (panel) => (event, isExpanded) => {
+    // Set user object and handle null
+    const user_id = user ? user.sub : null;
+    const params = {
+      action_name: isExpanded ? "open" : "close",
+      panel_id: panel,
+      npo_id: npo_id,
+      problem_statement_id: problem_statement.id,
+      problem_statement_title: problem_statement.title,
+      user_id: user_id
+    }    
+
+    ga.event({
+      action: "problem_statement_accordion",
+      params: params
+    })
     setExpanded(isExpanded ? panel : false);
   };
 
@@ -466,13 +481,13 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
       <AccordionContainer>
         <Accordion
-          expanded={expanded === "panel1"}
-          onChange={handleChange("panel1")}
+          expanded={expanded === "description"}
+          onChange={handleChange("description")}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1bh-content"
-            id="panel1bh-header"
+            aria-controls="descriptionbh-content"
+            id="descriptionbh-header"
           >
             <AccordionTitle>
               <NotesIcon />
@@ -491,13 +506,13 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
           </ProjectDescText>
         </Accordion>
         <Accordion
-          expanded={expanded === "panel2"}
-          onChange={handleChange("panel2")}
+          expanded={expanded === "events"}
+          onChange={handleChange("events")}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel2bh-content"
-            id="panel2bh-header"
+            aria-controls="eventsbh-content"
+            id="eventsbh-header"
           >
             <AccordionTitle>
               <EventIcon />
@@ -528,13 +543,13 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
           </AccordionDetails>
         </Accordion>
         <Accordion
-          expanded={expanded === "panel3"}
-          onChange={handleChange("panel3")}
+          expanded={expanded === "code"}
+          onChange={handleChange("code")}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel3bh-content"
-            id="panel3bh-header"
+            aria-controls="codebh-content"
+            id="codebh-header"
           >
             <AccordionTitle>
               <CodeIcon />
@@ -567,13 +582,13 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
           </AccordionDetails>
         </Accordion>
         <Accordion
-          expanded={expanded === "panel4"}
-          onChange={handleChange("panel4")}
+          expanded={expanded === "work_remaining"}
+          onChange={handleChange("work_remaining")}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel4bh-content"
-            id="panel4bh-header"
+            aria-controls="work_remainingbh-content"
+            id="work_remainingbh-header"
           >
             <AccordionTitle>
               <EngineeringIcon />
@@ -601,13 +616,13 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
           </AccordionDetails>
         </Accordion>
         <Accordion
-          expanded={expanded === "panel5"}
-          onChange={handleChange("panel5")}
+          expanded={expanded === "references"}
+          onChange={handleChange("references")}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel5bh-content"
-            id="panel5bh-header"
+            aria-controls="referencesbh-content"
+            id="referencesbh-header"
           >
             <AccordionTitle>
               <ArticleIcon />
