@@ -3,6 +3,8 @@ import React from "react";
 import Link from "next/link";
 // import Image from "next/image";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+
 import {
   FooterContainer,
   TextContainer,
@@ -62,13 +64,14 @@ export default function Footer() {
             <>
               <StyledText>Our Mission</StyledText>
               <MutedText>
-                We exist to create simple technical solutions for nonprofit
-                organizations. We utilize volunteers, who are industry
-                professionals or local students to the area in order to provide
-                them valuable experience as they create these solutions for
-                nonprofit organizations. We also look to create durable bonds
-                between volunteers, mentors, and their local communities as they
-                work together to create a meaningful change to society.<br></br>
+                <p>
+                We empower volunteers to make a difference by creating technical solutions for nonprofit organizations while fostering lasting connections within their communities.
+                </p>
+                We are driven by the desire to make a positive impact on the world. 
+                Our mission is to bring together skilled volunteers and passionate nonprofit organizations to create simple yet effective technological solutions. 
+                Through their dedicated work, our volunteers gain invaluable experience while making a tangible difference in the lives of those in need. 
+                Together, we build more than just software – we forge powerful bonds that transcend the project and enrich our communities for years to come.
+                Join us in our mission to create a brighter future for all.<br></br>
               </MutedText>
 
               <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
@@ -87,31 +90,31 @@ export default function Footer() {
               <IconLink href="https://github.com/opportunity-hack/">
                 <GitHub fontSize="large" style={{ marginRight: "2rem" }} />
               </IconLink>
+              <MutedText>              
+                #socialgood #nonprofit #volunteer #socialimpact #communitybuilding #technicalsolutions #skillsbasedvolunteering #makeadifference #givingback #changemakers #empowerment
+              </MutedText>
               <MutedText style={{ marginTop: "3rem" }}>
                 Opportunity Hack Inc. EIN: 84-5113049
-              </MutedText>
+              </MutedText>                            
             </>
           </Link>
         </TextContainer>
         <TextContainer container xs={12} md={5} lg={4}>
           <LinkList>
             <LinkListItem>
-              <StyledLink href="https://www.ohack.org/">What's Opportunity Hack?</StyledLink>
+              <StyledLink href="https://www.ohack.org/">What's Opportunity Hack?</StyledLink> <OpenInNewIcon />
+            </LinkListItem>            
+            <LinkListItem>
+              <StyledLink href="https://github.com/opportunity-hack/">GitHub</StyledLink> <GitHubIcon />
             </LinkListItem>
             <LinkListItem>
-              <StyledLink href="https://www.ohack.org/projects">Projects</StyledLink>
+              <StyledLink href="https://www.ohack.org/about/faq">FAQ</StyledLink> <OpenInNewIcon />
             </LinkListItem>
             <LinkListItem>
-              <StyledLink href="https://github.com/opportunity-hack/">GitHub</StyledLink>
+              <StyledLink href="https://www.ohack.org/about/history">Our History</StyledLink> <OpenInNewIcon />
             </LinkListItem>
             <LinkListItem>
-              <StyledLink href="https://www.ohack.org/about/faq">FAQ</StyledLink>
-            </LinkListItem>
-            <LinkListItem>
-              <StyledLink href="https://www.ohack.org/about/history">Our History</StyledLink>
-            </LinkListItem>
-            <LinkListItem>
-              <StyledLink href="https://github.com/opportunity-hack/frontend-ohack.dev">Fork on GitHub</StyledLink>
+              This website is a public good<br/><StyledLink href="https://github.com/opportunity-hack/frontend-ohack.dev">Fork this on GitHub</StyledLink>              
             </LinkListItem>
           </LinkList>
         </TextContainer>
