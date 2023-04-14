@@ -45,7 +45,7 @@ function PreviousHackathonList() {
       <EmptyGrid container justifyContent='center'>
         {hackathons?.length > 0
           ? hackathons.map((event, index) => {
-              if (index < 5) {
+              if (index <= 5) {
                 return (
                   <EventFeature
                     title={event.title}
