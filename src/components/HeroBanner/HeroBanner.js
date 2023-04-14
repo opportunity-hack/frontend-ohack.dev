@@ -80,7 +80,7 @@ function HeroBanner() {
 
         <CaptionContainer right={'true'} container>
           <TextStyled>
-            Interested in joining? Click to find out more!
+            Want to code for social good? Join us!
           </TextStyled>
           <ButtonContainers container>
             <ButtonStyled

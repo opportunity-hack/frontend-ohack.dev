@@ -363,11 +363,13 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
     );
   }
 
+  var reference_count = 0;
   var references_buttons = "";
   if (
     problem_statement.references != null &&
     problem_statement.references.length > 0
   ) {
+    reference_count = problem_statement.references.length;
     references_buttons = problem_statement.references.map((reference) => {
       return (
         <a target="_blank" rel="noopener noreferrer" href={reference.link}>
@@ -628,8 +630,12 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
               <ArticleIcon />
               References
             </AccordionTitle>
-            <ShortDescText>
-              Docs that will help you better understand the problem
+            <ShortDescText>            
+              {reference_count} doc{ 
+                // handle plural vs singular
+                (reference_count === 0 || reference_count > 1) ? "s" : ""
+                // handle zero records 
+               } that will help you better understand the problem
             </ShortDescText>
           </AccordionSummary>
           <AccordionDetails>

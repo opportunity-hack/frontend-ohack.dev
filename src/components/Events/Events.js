@@ -21,15 +21,43 @@ export default function Events({
           {event.location} {event.type}
         </Typography>
         <Typography variant="h5" style={{ color: "#808087", marginBottom: "1rem" }}>
-          {event.start_date} <ArrowForwardIosIcon style={{ color: "gray" }} />{" "}
-          {event.end_date}
+          {
+            // Convert start_date to readible format
+            new Date(event.start_date).toLocaleDateString("en-US", {
+              weekday: "short",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          }
+          <ArrowForwardIosIcon style={{ color: "gray" }} />{" "}
+          {
+            // Convert start_date to readible format
+            new Date(event.end_date).toLocaleDateString("en-US", {
+              weekday: "short",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          }
         </Typography>
 
         <Stack direction="column" alignItems="flex-start" spacing={2}>
+
           <a href={event.devpost_url}>
-            <button className="button button--primary button--compact">
-              Register on DevPost
-            </button>
+          {
+            // If event.start_date is in the past then show the button as View on DevPost instead
+            event.start_date < new Date().toISOString() ? (
+              <button className="button button--primary button--compact">
+                View on DevPost
+              </button>
+            ) : (
+              <button className="button button--primary button--compact">
+                Register on DevPost
+              </button>
+            )             
+          }
+            
           </a>
 
           <EventTeams
