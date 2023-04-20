@@ -42,6 +42,20 @@ export default function NonProfitApply() {
 
     const [loading, setLoading] = useState(false);
     const [submitStatus, setSubmitStatus] = useState("");
+    const [formState, setFormState] = useState({
+        charityName: "",
+        location: "",
+        understandProjectUncertainty: false, 
+        areasOfFocus: [], 
+        servedPopulations: [], 
+        contanctName: "",
+        contactPhone: "", 
+        organizationPurposeAndHistory: "", 
+        technicalProblem: "",
+        solutionBenefits: "",
+        familiarWithSlack: false, 
+        keyStaffAvailability: []
+    }); 
 
     function handleClick() {
         setLoading(true);
@@ -116,7 +130,22 @@ export default function NonProfitApply() {
                         freeSolo
                         options={nonProfitOptions}
                         sx={{ width: 300 }}
-                        renderInput={(params) => <TextField {...params} label="Name of Charity Organization" />}
+                        formState={formState}
+                        setFormState={setFormState}
+                        renderInput={(params) => (
+                            <TextField 
+                                {...params} 
+                                label="Name of Charity Organization"
+                                value={formState.charityName}
+                                onChange={(event) => {
+                                    console.log("onChange"); 
+                                    setFormState({
+                                        ...formState, 
+                                        charityName: event.target.value
+                                    }); 
+                                }} 
+                            />
+                        )}
                     />
                                                         
                     <p>
