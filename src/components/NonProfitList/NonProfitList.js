@@ -5,6 +5,7 @@ import Chip from "@mui/material/Chip";
 import BuildIcon from "@mui/icons-material/Build";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import NonProfitListTile from "../NonProfitListTile/NonProfitListTile";
+import SearchIcon from '@mui/icons-material/Search';
 
 import { useState, useCallback } from "react";
 import { Puff } from "react-loading-icons";
@@ -18,16 +19,15 @@ import {
 } from "../../styles/nonprofits/styles";
 
 // TODO: When search is enabled below, use these:
-/*
 import { styled, alpha } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
-*/
 
 
 function NonProfitList() {
 
     let { nonprofits } = useNonprofit();
 
+    const [searchString, setSearchString] = useState('');
     const [needs_help_flag, setNeedsHelpFlag] = useState(true);
     const [production_flag, setProductionFlag] = useState(false);
 
@@ -39,8 +39,11 @@ function NonProfitList() {
         setProductionFlag(!production_flag);
     };
 
+    const onChangeSearchHandler = (event) => {
+      setSearchString(event.target.value);
+    }
+
     // TODO: When search is enabled below, use this theme
-    /*
     const Search = styled('div')(({ theme }) => ({
         position: 'relative',
         borderRadius: theme.shape.borderRadius,
@@ -79,7 +82,6 @@ function NonProfitList() {
             },
         },
     }));
-    */
 
     const needsHelpButton = () => {
         if (needs_help_flag) {
@@ -135,66 +137,76 @@ function NonProfitList() {
     };
 
     const nonProfitList = useCallback(() => {
-        if (nonprofits == null || nonprofits.length === 0) {
+      let result = nonprofits;
+      
+      if (result == null || result.length === 0) {
         return (
             <p>
             Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" />
             </p>
         );
-    }
+      }
+      
+      if (searchString) {
+        result = result.filter(
+          nonprofit =>
+            nonprofit.name.toLowerCase().includes(searchString.toLowerCase()) ||
+            nonprofit.description.toLowerCase().includes(searchString.toLowerCase()) 
+        );
+      }
 
-    return nonprofits.map((npo) => {
-      let display = true;
+      return result.map((npo) => {
+        let display = true;
 
-      let production_counter = 0;
-      let needs_help_counter = 0;
-      let hacker_counter = 0;
-      let mentor_counter = 0;
+        let production_counter = 0;
+        let needs_help_counter = 0;
+        let hacker_counter = 0;
+        let mentor_counter = 0;
 
-      npo.problem_statements.forEach((ps) => {
-        if (ps.status === "production") {
-          production_counter++;
-        } else {
-          needs_help_counter++;
+        npo.problem_statements.forEach((ps) => {
+          if (ps.status === "production") {
+            production_counter++;
+          } else {
+            needs_help_counter++;
+          }
+
+          if (ps.helping) {
+            ps.helping.forEach((help) => {
+              // TODO: "hacker" and "mentor" should probably be exported as consts from somewhere.
+              if (help.type === "hacker") {
+                hacker_counter++;
+              } else if (help.type === "mentor") {
+                mentor_counter++;
+              }
+            });
+          }
+        });
+
+        if (needs_help_counter === 0 && needs_help_flag) {
+          display = false;
         }
 
-        if (ps.helping) {
-          ps.helping.forEach((help) => {
-            // TODO: "hacker" and "mentor" should probably be exported as consts from somewhere.
-            if (help.type === "hacker") {
-              hacker_counter++;
-            } else if (help.type === "mentor") {
-              mentor_counter++;
-            }
-          });
+        if (production_counter === 0 && production_flag) {
+          display = false;
+        }
+
+        if (display) {
+          return (
+            <NonProfitListTile
+              npo={npo}
+              key={npo.id}
+              need_help_problem_statement_count={needs_help_counter}
+              in_production_problem_statement_count={production_counter}
+              hacker_count={hacker_counter}
+              mentor_count={mentor_counter}
+              icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
+            />
+          );
+        } else {
+          return "";
         }
       });
-
-      if (needs_help_counter === 0 && needs_help_flag) {
-        display = false;
-      }
-
-      if (production_counter === 0 && production_flag) {
-        display = false;
-      }
-
-      if (display) {
-        return (
-          <NonProfitListTile
-            npo={npo}
-            key={npo.id}
-            need_help_problem_statement_count={needs_help_counter}
-            in_production_problem_statement_count={production_counter}
-            hacker_count={hacker_counter}
-            mentor_count={mentor_counter}
-            icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
-          />
-        );
-      } else {
-        return "";
-      }
-    });
-  }, [nonprofits, needs_help_flag, production_flag]);
+    }, [nonprofits, needs_help_flag, production_flag, searchString]);
 
     return(
         <ContentContainer container>
@@ -222,18 +234,21 @@ function NonProfitList() {
           </div>
         {/* TODO: Move everything above here and return to pages/nonprofits/index.js  once MUI has been set up to render server side. */}
         <div className="profile__details">
-            {/* TODO: Get search working to make it easier to search all text for what the user is looking for
-                        <Search>
-                            <SearchIconWrapper>
-                                <SearchIcon style={{ fontSize: "1.9rem" }} />
-                            </SearchIconWrapper>
-                            <StyledInputBase
-                                style={{ fontSize: "1.9rem" }}
-                                placeholder="Search…"
-                                inputProps={{ 'aria-label': 'search' }}
-                            />
-                        </Search>
-                        */}
+            {/* TODO: Get search working to make it easier to search all text for what the user is looking for */}
+          <Search>
+              <SearchIconWrapper>
+                  <SearchIcon style={{ fontSize: "1.9rem" }} />
+              </SearchIconWrapper>
+              <StyledInputBase
+                  style={{ fontSize: "1.9rem" }}
+                  placeholder="Search…"
+                  inputProps={{ 'aria-label': 'search' }}
+                  onChange={onChangeSearchHandler}
+                  value={searchString}
+                  autoFocus={true}
+              />
+          </Search>
+                       
             {needsHelpButton()}
             &nbsp;
             {productionButton()}
