@@ -34,6 +34,7 @@ export const StyledText = styled(Typography)({
   padding: "1rem 0",
   letterSpacing: "0.2em",
   width: "100%",
+  color: "white"
 });
 
 export const MutedText = styled(Typography)({
@@ -49,6 +50,16 @@ export const IconLink = styled(Link)({
     color: "white",
   },
 });
+
+export const Hashtag = styled(Typography)({
+  fontSize: "1.5rem",
+  color: "#c7c7c7",
+  display: "inline-block",
+  transitionDuration: "0.3s",
+  "&:hover": {
+    color: "white",
+  },
+})
 
 export const LinkList = styled("ul")({
   listStyle: "none",
