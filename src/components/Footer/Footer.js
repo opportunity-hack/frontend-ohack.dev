@@ -15,6 +15,7 @@ import {
   LinkListItem,
   StyledText,
   IconLink,
+  Hashtag,
 } from "./styles";
 import {
   Instagram,
@@ -56,6 +57,10 @@ export default function Footer() {
     },
   ];
 
+  const hashtags = [
+    "#socialgood", "#nonprofit", "#volunteer", "#socialimpact", "#communitybuilding", "#technicalsolutions", "#skillsbasedvolunteering", "#makeadifference", "#givingback", "#changemakers", "#empowerment"
+  ]
+
   return (
     <FooterContainer container>
       <InnerContainer container>
@@ -89,10 +94,11 @@ export default function Footer() {
               </IconLink>
               <IconLink href="https://github.com/opportunity-hack/">
                 <GitHub fontSize="large" style={{ marginRight: "2rem" }} />
+                <br></br>
               </IconLink>
-              <MutedText>              
-                #socialgood #nonprofit #volunteer #socialimpact #communitybuilding #technicalsolutions #skillsbasedvolunteering #makeadifference #givingback #changemakers #empowerment
-              </MutedText>
+              {hashtags.map((h) => {
+                return <><Hashtag>{h}</Hashtag> &nbsp;</>
+              })}
               <MutedText style={{ marginTop: "3rem" }}>
                 Opportunity Hack Inc. EIN: 84-5113049
               </MutedText>                            
