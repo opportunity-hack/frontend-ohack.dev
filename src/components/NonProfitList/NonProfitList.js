@@ -18,6 +18,7 @@ import {
   InnerContainer,
 } from "../../styles/nonprofits/styles";
 import { Search, SearchIconWrapper, StyledInputBase } from "./styles";
+import { Typography } from "@mui/material";
 
 function NonProfitList() {
     let { nonprofits } = useNonprofit();
@@ -108,6 +109,14 @@ function NonProfitList() {
             nonprofit.name.toLowerCase().includes(searchString.toLowerCase()) ||
             nonprofit.description.toLowerCase().includes(searchString.toLowerCase()) 
         );
+
+        if (result == null || result.length === 0) {
+          return (
+            <Typography variant="h3" color="var(--dark-aluminium)">
+              No matching Projects found!
+            </Typography>
+          )
+        }
       }
 
       return result.map((npo) => {
