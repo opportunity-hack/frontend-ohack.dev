@@ -1,6 +1,7 @@
 import React from "react";
 
 import Head from "next/head";
+import { Parallax } from 'react-parallax';
 
 import {
   LayoutContainer,
@@ -9,7 +10,9 @@ import {
   DescriptionStyled,
 } from "../../styles/nonprofits/apply/styles";
 
-export default function ApplicationSubmittedPage() {
+export default function ApplicationSubmittedPage() {  
+  const image = "https://images.pexels.com/photos/236603/pexels-photo-236603.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1";
+
   return (
     <LayoutContainer key="apply_form" container>
       <Head>

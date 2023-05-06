@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Puff } from "react-loading-icons";
 import useProblemstatements from "../../hooks/use-problem-statements";
-
+import Head from 'next/head';
 
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
@@ -92,9 +92,28 @@ export default function Project() {
     </Stack>
   );
 
+  var metaDescription = problem_statement.status + ": " + problem_statement.description + " ";
+  var title = "Project: " + problem_statement.title;
 
-  return(<LayoutContainer key="ham" container>           
-  <ProjectsContainer>        
+  return(
+    <LayoutContainer key="ham" container>           
+    <Head>
+      <title>{title}</title>
+      <meta name="description" content={metaDescription} />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={metaDescription} />
+      <meta property="og:image" content={problem_statement.image_url} />
+      <meta property="og:url" content={problem_statement.url} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:site" content="@opportunityhack" />
+      <meta name="twitter:creator" content="@opportunityhack" />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={metaDescription} />
+      <meta name="twitter:image" content={problem_statement.image_url} />
+      <meta property='twitter:domain' content='ohack.dev' />
+    </Head>
+
+    <ProjectsContainer>        
     {!user && loginCallToAction}
     <div>This project is just one of many! Head over to <Link href="/nonprofits">projects</Link> to see them all</div>
     <ProjectsGrid container>

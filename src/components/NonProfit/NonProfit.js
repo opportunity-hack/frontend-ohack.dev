@@ -281,6 +281,7 @@ export default function NonProfit(props) {
         content={`${nonprofit.name} - ${nonprofit.problem_statements?.length} projects.`}
       />
       <meta name='twitter:image' content={image} />
+      <meta name="twitter:creator" content="@opportunityhack" />
     </Head>
 
       <TitleBanner>
