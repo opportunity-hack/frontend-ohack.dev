@@ -8,6 +8,19 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material";
 
+export const LogoContainer = styled(Grid)({
+  width: "150px",
+  height: "32px",
+  "@media (min-width: 768px)": {  
+    width: "120px",
+    height: "72px"
+  },
+  "@media (min-width: 992px)": {
+    width: "90px",
+    height: "63px"
+  }
+});
+
 export const NavbarContainer = styled(Grid)({
   justifyContent: "center",
   height: "9rem",

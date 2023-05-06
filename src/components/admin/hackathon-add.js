@@ -224,7 +224,7 @@ export default function AddHackathon ({ nonprofits, teams }){
             <div className="checklist-box-list">
                 <List>
                     {
-                        teams.map((team) => {
+                        teams && teams.map((team) => {
                             const labelId = `checkbox-list-label-${team.id}`;
 
                             return (
