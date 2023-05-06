@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import useNonprofit from '../../hooks/use-nonprofit';
 import useAdmin from '../../hooks/use-admin-check';
-
+import Head from 'next/head';
 // import ProblemStatement from "../../components/problem-statement";
 import ProblemStatement from '../../components/ProblemStatement/ProblemStatement';
 import AdminProblemStatementList from '../../components/admin/problemstatement-list';
@@ -256,6 +256,33 @@ export default function NonProfit(props) {
 
   return (
     <LayoutContainer key={nonprofit_id} container>
+    <Head>
+      <title>{nonprofit.name} | Opportunity Hack</title>
+      <meta
+        name='description'
+        content={`${nonprofit.name} - ${nonprofit.problem_statements?.length} projects.`}
+      />
+      <meta property='og:title' content={`${nonprofit.name} | Opportunity Hack`} />
+      <meta
+        property='og:description'
+        content={`${nonprofit.name} - ${nonprofit.problem_statements?.length} projects.`}
+      />
+      <meta property='og:image' content={image} />
+      <meta property='og:url' content={`https://ohack.dev/nonprofit/${nonprofit_id}`} />
+      <meta name='twitter:card' content='summary_large_image' />
+      <meta property='twitter:domain' content='ohack.dev' />
+      <meta
+        property='twitter:url'
+        content={`https://ohack.dev/nonprofit/${nonprofit_id}`}
+      />
+      <meta name='twitter:title' content={`${nonprofit.name} | Opportunity Hack`} />
+      <meta
+        name='twitter:description'
+        content={`${nonprofit.name} - ${nonprofit.problem_statements?.length} projects.`}
+      />
+      <meta name='twitter:image' content={image} />
+    </Head>
+
       <TitleBanner>
         <Parallax bgImage={image} strength={300}></Parallax>
       </TitleBanner>
