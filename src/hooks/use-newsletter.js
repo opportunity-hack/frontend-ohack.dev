@@ -75,14 +75,14 @@ export default function useNewsLetterAPI() {
   }
 
 
-  async function preview_newsletter( message, is_html) {
+  async function preview( message, is_html) {
     const email_data = {
       body: message,
       is_html: is_html,
     };
 
     const config = {
-      url: `${apiServerUrl}/api/newsletter/preview_newsletter`,
+      url: `${apiServerUrl}/api/newsletter/preview`,
       method: "POST",
       headers: {
         "content-type": "application/json"
@@ -99,7 +99,7 @@ export default function useNewsLetterAPI() {
   return {
     subscribers,
     submit_email,
-    preview_newsletter, 
+    preview, 
     get_subscriber_list
   };
 }
