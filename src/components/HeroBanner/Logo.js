@@ -25,9 +25,9 @@ const Logo = () => {
       <g
         id='Cropped_Pay-Blue'
         stroke='none'
-        stroke-width='1'
+        strokeWidth='1'
         fill='none'
-        fill-rule='evenodd'
+        fillRule='evenodd'
       >
         <g
           id='Glyphs_Pay-Blue'
@@ -97,8 +97,8 @@ const Logo = () => {
             <text
               id='Opportunity'
               // font-family='PayPalSansSmall-Regular, PayPal Sans Small'
-              font-size='230'
-              font-weight='normal'
+              fontSize='230'
+              fontWeight='normal'
             >
               <tspan x='0.44140625' y='234'>
                 Opportunity
