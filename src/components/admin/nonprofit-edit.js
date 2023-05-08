@@ -21,7 +21,7 @@ import SaveIcon from '@mui/icons-material/Save';
 
 
 export default function EditNonProfit(){           
-    const {  user } = useAuth0();
+    const { user } = useAuth0();
 
     const { handle_npo_problem_statement_edit } = useNonprofit();
 

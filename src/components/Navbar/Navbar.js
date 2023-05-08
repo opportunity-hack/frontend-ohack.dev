@@ -129,6 +129,7 @@ export default function NavBar() {
             <Grid
               container
               style={{ justifyContent: "center", margin: "2rem 0 3rem 0" }}
+              key="logo"
             >
               <Link href="/" passHref>
                 <LogoContainer>

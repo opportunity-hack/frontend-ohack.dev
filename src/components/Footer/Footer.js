@@ -65,7 +65,7 @@ export default function Footer() {
     <FooterContainer container>
       <InnerContainer container>
         <TextContainer container xs={12} md={7} lg={8}>
-          <Link href="/">
+          <Link key="mission" href="/">
             <>
               <StyledText>Our Mission</StyledText>
               <MutedText>
@@ -107,19 +107,19 @@ export default function Footer() {
         </TextContainer>
         <TextContainer container xs={12} md={5} lg={4}>
           <LinkList>
-            <LinkListItem>
+            <LinkListItem key="whatisohack">
               <StyledLink href="https://www.ohack.org/">What's Opportunity Hack?</StyledLink> <OpenInNewIcon />
             </LinkListItem>            
-            <LinkListItem>
+            <LinkListItem key="githubohack">
               <StyledLink href="https://github.com/opportunity-hack/">GitHub</StyledLink> <GitHubIcon />
             </LinkListItem>
-            <LinkListItem>
+            <LinkListItem key="faqohack">
               <StyledLink href="https://www.ohack.org/about/faq">FAQ</StyledLink> <OpenInNewIcon />
             </LinkListItem>
-            <LinkListItem>
+            <LinkListItem key="historyohack">
               <StyledLink href="https://www.ohack.org/about/history">Our History</StyledLink> <OpenInNewIcon />
             </LinkListItem>
-            <LinkListItem>
+            <LinkListItem key="githubpublicgood">
               This website is a public good<br/><StyledLink href="https://github.com/opportunity-hack/frontend-ohack.dev">Fork this on GitHub</StyledLink>              
             </LinkListItem>
           </LinkList>

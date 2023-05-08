@@ -64,30 +64,21 @@ teams -> users
 teams -> problem_statements
 
 */
-export default function EventTeams({ teams, user, problemStatementId, eventId, onTeamCreate, onTeamLeave, onTeamCreateComplete, onTeamJoin, isHelping }) { 
-    console.log("=== EventTeams ")
-    var teamCounter = 0;
-    
-    // TODO: Use?
-    /*
-    var userId = "";
-    if( user != null )
-    {
-        userId = user.sub;
-    }
-    */
+export default function EventTeams({ teams, user, problemStatementId, eventId, onTeamCreate, onTeamLeave, onTeamCreateComplete, onTeamJoin, isHelping }) {     
+    var teamCounter = 0;    
     
     const isUserInAnyTeamListTemp = teams.map(team =>{        
         const isTeamAssociatedToProblemStatement = team.problem_statements !=null && team.problem_statements.includes(problemStatementId);
         if (!isTeamAssociatedToProblemStatement )
-        {
-                
+        {                
             return false;
         }
 
         teamCounter++;
         
         const result = team.users.map(auser => {
+            console.log("Event Teams User: ", auser);
+
             if( user == null )
             {
                 return false;
@@ -96,6 +87,7 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
                 return true;
             }
             else {
+                console.log("Event Teams: No Slack ID for user, not displaying.");
                 return false;
             }
         });
@@ -156,7 +148,7 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
     return(                        
             <Stack spacing={0.5}>
             {isHelping && !isLoggedInUserAlreadyOnTeam && !onTeamCreateComplete && <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team</Button>}
-            {teamCounter > 0 && <div><GroupIcon style={{ color: "blue" }} /> {teamCounter} team{teamCounter > 1 || teamCounter == 0 ? "s" : ""}</div> }
+            {teamCounter > 0 && <div><GroupIcon style={{ color: "blue" }} /> {teamCounter} team{teamCounter > 1 || teamCounter === 0 ? "s" : ""}</div> }
                         
             {teamsToShow}
             {onTeamCreateComplete && <Team team={onTeamCreateComplete} _isOnTeam={true} _isOnAnyTeam={true} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} /> }

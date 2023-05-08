@@ -48,6 +48,7 @@ function PreviousHackathonList() {
               if (index <= 5) {
                 return (
                   <EventFeature
+                    key={event.title}
                     title={event.title}
                     type={event.type}
                     nonprofits={event.nonprofits}
@@ -55,7 +56,7 @@ function PreviousHackathonList() {
                     end_date={event.end_date}
                     location={event.location}
                     devpostUrl={event.devpost_url}
-                    eventLinks={event.links}
+                    rawEventLinks={event.links}
                     icon={event.image_url}
                     donationUrl={event.donation_url}
                     donationGoals={event.donation_goals}
