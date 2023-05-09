@@ -9,7 +9,7 @@ import {
   DescriptionStyled,
 } from "../../styles/nonprofits/apply/styles";
 
-export default function ApplicationSubmittedPage() {
+export default function ErrorSubmittingApplication() {
   var image = "/npo_placeholder.png";
 
   return (
@@ -30,11 +30,14 @@ export default function ApplicationSubmittedPage() {
             <div className="profile__header">
               <div className="profile__headline">
                 <h4 className="profile__title">
-                  Your application was submitted successfully!
+                  Oops, there was an error submitting your application.
                   <br />
                   <br />
-                  We have received your request and will review it as soon as
-                  possible.
+                  Please try again.
+                  <br />
+                  <br />
+                  If the problem persists, please contact us at{" "}
+                  <span style={{ color: "blue" }}>help@ohack.org</span>.
                 </h4>
               </div>
             </div>
