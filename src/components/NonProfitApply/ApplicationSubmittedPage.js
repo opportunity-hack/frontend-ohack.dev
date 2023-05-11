@@ -1,7 +1,6 @@
 import React from "react";
 import { Parallax } from "react-parallax";
 import Head from "next/head";
-import { Parallax } from 'react-parallax';
 
 import {
   LayoutContainer,
