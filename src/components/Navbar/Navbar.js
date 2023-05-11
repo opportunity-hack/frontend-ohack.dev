@@ -33,6 +33,7 @@ import {
   DetailListItem,
   DrawerContainer,
   LogoText,
+  LogoContainer,
 } from "./styles";
 import {
   Grid,
@@ -126,15 +127,18 @@ export default function NavBar() {
             <Grid
               container
               style={{ justifyContent: "center", margin: "2rem 0 3rem 0" }}
+              key="logo"
             >
               <Link href="/" passHref>
+                <LogoContainer>
                 <Image
                   className="nav-bar__logo"
                   src="https://i.imgur.com/Ih0mbYx.png"
                   alt="Opportunity Hack logo"
                   width={150}
-                  height={72}
+                  height={72}                  
                 />
+                </LogoContainer>
               </Link>
             </Grid>
             {[

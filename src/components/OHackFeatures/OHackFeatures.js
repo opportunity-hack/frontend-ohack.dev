@@ -110,7 +110,7 @@ const OHackFeatures = () => {
 		// listen for Swiper events using addEventListener
 		swiperElRef.current.addEventListener('progress', (e) => {
 		  const progress = e.detail[1];
-		  console.log(progress);
+		  console.log("Progress:",progress);
 		});
 	
 		swiperElRef.current.addEventListener('slidechange', (e) => {
@@ -142,7 +142,7 @@ const OHackFeatures = () => {
 			case "volunteerism": return <VolunteerActivismOutlinedIcon/>;
 			case "experience": return <BuildOutlinedIcon />;
 			case "community": return <PeopleAltOutlinedIcon/>;
-			default: return <></>;
+			default: return <div></div>;
 		}
 	  }
 
@@ -158,6 +158,7 @@ const OHackFeatures = () => {
 			}
 			{...a11yProps(feature.index)}
 			icon={getIcon(feature.shortName)}
+			key={feature.shortName}
 		/>);
 	};
 
@@ -166,7 +167,7 @@ const OHackFeatures = () => {
 			<swiper-slide>
 				<TabPanel
 					value={value}
-					key={feature.title}
+					key={feature.index}
 					index={feature.index}
 				>
 					<GridStyled
@@ -207,6 +208,7 @@ const OHackFeatures = () => {
 				allowScrollButtonsMobile
 			>
 				<TabsStyled
+					key={value}
 					value={value}
 					onChange={handleChange}
 					TabIndicatorProps={{

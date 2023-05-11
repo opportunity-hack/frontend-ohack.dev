@@ -37,13 +37,14 @@ function HackathonList() {
             return (
               <EventFeature
                 title={event?.title}
+                key={event?.title}
                 type={event?.type}
                 nonprofits={event?.nonprofits}
                 start_date={event?.start_date}
                 end_date={event?.end_date}
                 location={event?.location}
                 devpostUrl={event?.devpost_url}
-                eventLinks={event?.links}
+                rawEventLinks={event?.links}
                 icon={event?.image_url}
                 donationUrl={event?.donation_url}
                 donationGoals={event?.donation_goals}

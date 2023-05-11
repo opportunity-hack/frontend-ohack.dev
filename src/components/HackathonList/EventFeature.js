@@ -31,15 +31,18 @@ function EventFeature(props) {
     location,
     devpostUrl,
     rawEventLinks,
-    donationUrl,
+    donationUrl,    
     donationGoals,
     donationCurrent,
     icon,
   } = props;
 
+  console.log("donationCurrent", donationCurrent);
+  console.log("donationGoals", donationGoals);
   // TODO: Is the schema on the backend wrong? Or is the schema here wrong?
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
-
+  console.log("eventLinks", eventLinks);
+  
   return (
     <EventCards container direction="column">
       <EventTitle variant="h3">{Moment(start_date).format('MMMM YYYY')} {type}</EventTitle>
