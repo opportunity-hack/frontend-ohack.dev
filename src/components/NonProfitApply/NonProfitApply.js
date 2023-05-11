@@ -5,6 +5,9 @@ import React, {
   // useCallback
 } from "react";
 
+import Link from "next/link";
+import { useRouter } from "next/router";
+
 import useNonprofit from "../../hooks/use-nonprofit";
 
 // import { Puff } from "react-loading-icons";
@@ -16,7 +19,6 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
-import Alert from "@mui/material/Alert";
 
 import Head from "next/head";
 
@@ -28,15 +30,11 @@ import {
 } from "../../styles/nonprofits/apply/styles";
 
 export default function NonProfitApply() {
+  const router = useRouter();
   let { nonprofits } = useNonprofit();
 
   var image = "/npo_placeholder.png";
-  var nonProfitOptions = [
-    "TBD",
-    "This is currently in development",
-    "One",
-    "Two",
-  ];
+  var nonProfitOptions = [];
 
   nonprofits.forEach((item) => {
     nonProfitOptions.push(item.name);
@@ -143,10 +141,12 @@ export default function NonProfitApply() {
 
     fetch("http://localhost:3001/submit-application", options)
       .then((response) => {
-        return response.json();
+        if (response.ok) {
+          router.push("http://localhost:3000/nonprofits/confirmation");
+        }
       })
       .catch((error) => {
-        console.log("There was a problem submitting the form:", error);
+        router.push("http://localhost:3000/nonprofits/errorOnSubmit");
       });
   };
 
@@ -168,10 +168,6 @@ export default function NonProfitApply() {
         <DescriptionStyled>
           <h1 className="content__title">Nonprofit Project Application</h1>
           <div className="content__body">
-            <Alert severity="error">
-              Don't use this yet! We're still working on it.
-            </Alert>
-
             <div className="profile__header">
               <div className="profile__headline">
                 <h4 className="profile__title">
@@ -180,6 +176,7 @@ export default function NonProfitApply() {
                   technical problems for public charities, non-profit
                   organizations (NPOs), and non-government organizations (NGOs).
                 </h4>
+                <br />
                 This form helps us to find the charities that are the right fit
                 for our event.
               </div>
@@ -188,12 +185,20 @@ export default function NonProfitApply() {
         </DescriptionStyled>
         <DescriptionStyled>
           <p>
-            🥇We're able to sponsor top prizes for teams who are selected by the
-            judges to complete your project post-hackathon. We only can sponsor
-            teams if we have sponsors, if you know of any companies would would
-            be willing to sponsor a prize, please share
-            https://www.ohack.org/sponsorship within your network to help us
-            complete as many projects as possible!
+            <br />
+            🥇 We're able to sponsor top prizes for teams who are selected by
+            the judges to complete your project post-hackathon. We only can
+            sponsor teams if we have sponsors, if you know of any companies
+            would would be willing to sponsor a prize, please share{" "}
+            <a
+              href="https://www.ohack.org/sponsorship"
+              target="_blank"
+              style={{ color: "#0000EE", textDecoration: "underline" }}
+            >
+              <b>www.ohack.org/sponsorship</b>
+            </a>{" "}
+            within your network to help us complete as many projects as
+            possible!
           </p>
           <p>
             Sponsorship allows us to incentivize teams to complete their
@@ -203,33 +208,41 @@ export default function NonProfitApply() {
             the team to follow-through.
           </p>
           <p>
+            <b>Name of Charity Organization:</b>
+            <br />
             We support charities including non-profits (NPOs) and non-government
-            organizations (NGOs)
+            organizations (NGOs).
           </p>
 
-          <Autocomplete
+          {/* <Autocomplete
             disablePortal
             id="combo-box-demo"
             freeSolo
             options={nonProfitOptions}
             sx={{ width: 300 }}
             required
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Name of Charity Organization"
-                defaultValue={formState.charityName}
-                onChange={(event) => {
-                  setFormState({
-                    ...formState,
-                    charityName: event.target.value,
-                  });
-                }}
-              />
-            )}
+            renderInput={(params) => ( */}
+          <TextField
+            // {...params}
+            sx={{ width: 300 }}
+            required
+            label="Name of Charity Organization"
+            defaultValue={formState.charityName}
+            onChange={(event) => {
+              setFormState({
+                ...formState,
+                charityName: event.target.value,
+              });
+              console.log(`Charity name changed to ${event.target.value}`);
+            }}
           />
           <br />
-          <p>Charity Location</p>
+          {/* )}
+          /> */}
+          <br />
+          <p>
+            <b>Charity Location:</b>
+          </p>
           <TextField
             label="City, State, Country"
             sx={{ width: 300 }}
@@ -244,8 +257,9 @@ export default function NonProfitApply() {
           />
 
           <p>
-            Complete transparency: Not all projects will be completed after the
-            hackathon <br />
+            <br />
+            <b>Complete transparency:</b> Not all projects will be completed
+            after the hackathon <br />
           </p>
           <FormControlLabel
             control={
@@ -266,7 +280,8 @@ export default function NonProfitApply() {
           />
         </DescriptionStyled>
         <DescriptionStyled>
-          Areas of focus for your non-profit?
+          <br />
+          <b>Areas of focus for your non-profit?</b>
           <FormGroup>
             <FormControlLabel
               control={
@@ -352,8 +367,11 @@ export default function NonProfitApply() {
         </DescriptionStyled>
 
         <DescriptionStyled>
-          Does your organization or program serve a majority (51% or more) of
-          any of the following populations?
+          <br />
+          <b>
+            Does your organization or program serve a majority (51% or more) of
+            any of the following populations?
+          </b>
           <FormGroup>
             <FormControlLabel
               control={
@@ -461,9 +479,11 @@ export default function NonProfitApply() {
 
       <DetailsContainer container>
         <DescriptionStyled>
-          Contact People Who is the best person we can contact to better
-          understand your problem statements? Feel free to include as many
-          people as possible.
+          <br />
+          <b>Contact Name:</b>
+          <br />
+          Who is the best person we can contact to better understand your
+          problem statements? Feel free to include multiple people.
           <br />
           <TextField
             sx={{ width: 250 }}
@@ -484,11 +504,14 @@ export default function NonProfitApply() {
 
       <DetailsContainer container>
         <DescriptionStyled>
-          Contact phone number(s) We'd like to ensure our hackers (the people
-          writing the code) have your contact information for any questions they
-          have, we'd also like to have this number so that we can reach out to
-          you before you are able to join us on Slack. Feel free to include as
-          many phone numbers as possible.
+          <br />
+          <b>Contact Phone Number(s):</b>
+          <br />
+          We'd like to ensure our hackers (the people writing the code) have
+          your contact information for any questions they have. We'd also like
+          to have this number so that we can reach out to you before you are
+          able to join us on Slack. Feel free to include multiple phone numbers
+          separated by a comma(,).
           <br />
           <TextField
             sx={{ width: 250 }}
@@ -509,9 +532,12 @@ export default function NonProfitApply() {
 
       <DetailsContainer container>
         <DescriptionStyled>
+          <br />
+          <b>Organization’s Purpose and History:</b>
+          <br />
           Please provide a brief summary or your organization’s purpose and
-          history. Feel free to include a link to this if it's easier for us to
-          read it on your website or social media account
+          history. Feel free to include a link to your website or social media
+          account.
           <br />
           <TextField
             fullWidth
@@ -521,6 +547,7 @@ export default function NonProfitApply() {
             multiline
             rows={2}
             variant="filled"
+            required
             defaultValue={formState.organizationPurposeAndHistory}
             onChange={(event) => {
               setFormState({
@@ -534,6 +561,9 @@ export default function NonProfitApply() {
 
       <DetailsContainer container>
         <DescriptionStyled>
+          <br />
+          <b>Technical Problem:</b>
+          <br />
           Describe what technical problem would you like hackathon participants
           to solve. Try to think only about the problem you are trying to solve,
           and not how you want to solve it. The more specific you can get with
@@ -549,6 +579,7 @@ export default function NonProfitApply() {
             multiline
             rows={4}
             variant="filled"
+            required
             defaultValue={formState.technicalProblem}
             onChange={(event) => {
               setFormState({
@@ -562,6 +593,9 @@ export default function NonProfitApply() {
 
       <DetailsContainer container>
         <DescriptionStyled>
+          <br />
+          <b>Benefit(s) to Organization:</b>
+          <br />
           How would a solution to these challenges help further your work,
           mission, strategy, or growth?
           <br />
@@ -573,6 +607,7 @@ export default function NonProfitApply() {
             multiline
             rows={4}
             variant="filled"
+            required
             defaultValue={formState.solutionBenefits}
             onChange={(event) => {
               setFormState({
@@ -586,9 +621,20 @@ export default function NonProfitApply() {
 
       <DetailsContainer container>
         <DescriptionStyled>
+          <br />
+          <b>Slack Familiarity:</b>
+          <br />
           We use Slack as our only mechanism for communication for Opportunity
           Hack, we ask this question to better understand your knowledge of
-          using Slack (see Slack.com for more info)
+          using Slack (see{" "}
+          <a
+            href="https://slack.com/"
+            target="_blank"
+            style={{ color: "#0000EE", textDecoration: "underline" }}
+          >
+            <b>Slack.com</b>
+          </a>{" "}
+          for more info).
           <FormControlLabel
             control={
               <Checkbox
@@ -609,13 +655,17 @@ export default function NonProfitApply() {
 
       <DetailsContainer container>
         <DescriptionStyled>
+          <br />
+          <b>Key Staff Availability:</b>
+          <br />
           Is at least one key staff person who is knowledgeable about the
-          project and your needs available to attend the event? This would
-          include providing an email and phone number for questions during times
-          when the staff isn't physically available. We use Slack.com as our
-          primary communication platform both before the hackathon starts and
-          during the hackathon. We'll send you a link with additional details a
-          few months leading up to the hackathon.
+          project and your needs available to attend the event?
+          <br />
+          This would include providing an email and phone number for questions
+          during times when the staff isn't physically available. We use
+          Slack.com as our primary communication platform both before the
+          hackathon starts and during the hackathon. We'll send you a link with
+          additional details a few months leading up to the hackathon.
           <FormGroup>
             <FormControlLabel
               control={
@@ -650,22 +700,23 @@ export default function NonProfitApply() {
           </FormGroup>
         </DescriptionStyled>
       </DetailsContainer>
-
       <DetailsContainer container>
         <DescriptionStyled>
           {
             // Loading/Save button with status uses MUI Lab
           }
-          <LoadingButton
-            color="secondary"
-            loading={loading}
-            loadingPosition="start"
-            startIcon={<SaveIcon />}
-            variant="contained"
-            onClick={handleSubmit}
-          >
-            <span>Save</span>
-          </LoadingButton>
+          <Link href="http://localhost:3001/nonprofits/confirmation">
+            <LoadingButton
+              color="secondary"
+              loading={loading}
+              loadingPosition="start"
+              startIcon={<SaveIcon />}
+              variant="contained"
+              onClick={handleSubmit}
+            >
+              <span>Submit</span>
+            </LoadingButton>
+          </Link>
           {submitStatus}
         </DescriptionStyled>
       </DetailsContainer>
