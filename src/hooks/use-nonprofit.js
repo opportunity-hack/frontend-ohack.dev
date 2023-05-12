@@ -42,6 +42,54 @@ export default function useNonprofit( nonprofit_id ){
     }, [getAccessTokenSilently]);
 
 
+    const handle_npo_form_submission = async (formData, onComplete) => {
+        if (!user)
+            return null;
+
+        const config = {
+            // url: `${apiServerUrl}/api/messages/npo`,
+            url: "http://localhost:3010/api/nonprofit-submit-application",
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: JSON.stringify(formData)
+        };
+
+        console.log(config);
+        const data = await makeRequest({ config, authenticated: true });
+        // Check if data.message exists 
+        // If it does, then we know that the submission was successful
+        // If it doesn't, then we know that the submission failed
+        if (data.message) {
+            onComplete(data.message, true);
+        } else {
+            onComplete(data.statusText, false);
+        }        
+        return data;
+    };
+
+    // Use memoization to prevent unnecessary re-renders
+    const handle_get_npo_form = async (onComplete) => {
+        if (!user)
+            return null;
+
+        const config = {
+            // url: `${apiServerUrl}/api/messages/npo`,
+            url: "http://localhost:3010/api/nonprofit-application",
+            method: "GET",
+            headers: {                
+                "Accept": "application/json"
+            }            
+        };
+
+        console.log(config);
+        const data = await makeRequest({ config, authenticated: true });        
+        onComplete(data);
+
+        return data;
+    };
 
     const handle_new_npo_submission = async (name, email, npoName, description, website, slack_channel, checked, onComplete) => {
         if (!user)
@@ -184,6 +232,8 @@ export default function useNonprofit( nonprofit_id ){
         nonprofit,
         handle_npo_problem_statement_edit,
         handle_new_npo_submission,
-        handle_npo_problem_statement_delete
+        handle_npo_problem_statement_delete,
+        handle_npo_form_submission,
+        handle_get_npo_form
     }
 }

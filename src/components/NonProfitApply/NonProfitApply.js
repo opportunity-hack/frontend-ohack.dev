@@ -1,26 +1,25 @@
-// TODO: We should probably get away from importing the entire react module
-import React, {
-  useEffect,
-  useState,
-  // useCallback
-} from "react";
 
-import Link from "next/link";
+import { useState, useCallback, useEffect, useMemo } from "react";
+
 import { useRouter } from "next/router";
 
-import useNonprofit from "../../hooks/use-nonprofit";
+
 
 // import { Puff } from "react-loading-icons";
 import { Parallax } from "react-parallax";
 import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/material/Autocomplete";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
-
 import Head from "next/head";
+import useNonprofit from "../../hooks/use-nonprofit";
+import { useAuth0 } from "@auth0/auth0-react";
+import Stack from "@mui/material/Stack";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Typography from "@mui/material/Typography";
 
 import {
   LayoutContainer,
@@ -31,15 +30,24 @@ import {
 
 export default function NonProfitApply() {
   const router = useRouter();
-  let { nonprofits } = useNonprofit();
+  let { nonprofits, handle_get_npo_form, handle_npo_form_submission } = useNonprofit();
 
+  const { user, loginWithRedirect } = useAuth0();
   var image = "/npo_placeholder.png";
   var nonProfitOptions = [];
+
+  const JOIN_SLACK_LINK =
+    "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
+  const createSlackAccount = () => {
+    window.open(JOIN_SLACK_LINK, "_blank", "noopener noreferrer");
+  };
 
   nonprofits.forEach((item) => {
     nonProfitOptions.push(item.name);
   });
 
+
+  
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState("");
   const [formState, setFormState] = useState({
@@ -56,6 +64,68 @@ export default function NonProfitApply() {
     familiarWithSlack: false,
     keyStaffAvailability: [],
   });
+
+
+
+  // Do this once on load with useEffect
+  useEffect(() => {        
+    const handleFormLoad = (data) => {
+      console.log("handleFormLoad data: ", data);
+      if (data) {
+        setFormState(data);
+      }
+    };
+
+    handle_get_npo_form(handleFormLoad);
+  }, [user]);  
+
+
+
+  var loginCallToAction = (
+    <Stack alignItems="center" paddingTop={5}>
+      <Alert variant="outlined" severity="warning">
+        <AlertTitle>
+          Whoa there - you need to login or create an account first.
+        </AlertTitle>
+
+        <Stack alignItems="center" spacing={2}>
+          <Stack direction="column" spacing={1}>
+            <button
+              className="button button--primary button--compact"
+              onClick={() =>
+                loginWithRedirect({
+                  appState: {
+                    returnTo: window.location.pathname,
+                    redirectUri: window.location.pathname,
+                  },
+                })
+              }
+            >
+              Log In
+            </button>
+
+            <Typography>
+              We use Slack to collaborate, if you already have an account, login
+              with Slack
+            </Typography>
+          </Stack>
+
+          <Stack direction="column" spacing={1}>
+            <button
+              onClick={createSlackAccount}
+              className="button button--primary"
+            >
+              Create a Slack account
+            </button>
+
+            <Typography>
+              If you don't have an account, you will need to create an account
+            </Typography>
+          </Stack>
+        </Stack>
+      </Alert>
+    </Stack>
+  );
 
   const areasOfFocusSetState = (event) => {
     if (event.target.checked) {
@@ -124,31 +194,25 @@ export default function NonProfitApply() {
     }
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const onComplete = (response, success) => {
+    console.log("Response",response);
+    setSubmitStatus(response);
 
-    const formData = {
-      form: formState,
-    };
+    if( success )
+    {
+     //  router.push("/nonprofits/confirmation");
+     console.log("success");
+    }
+    else
+    {
+      router.push("/nonprofits/errorOnSubmit");
+    }
+  }
 
-    const options = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    };
-
-    fetch("http://localhost:3001/submit-application", options)
-      .then((response) => {
-        if (response.ok) {
-          router.push("http://localhost:3000/nonprofits/confirmation");
-        }
-      })
-      .catch((error) => {
-        router.push("http://localhost:3000/nonprofits/errorOnSubmit");
-      });
+  const handleSubmit = async () => {
+    return handle_npo_form_submission(formState, onComplete)
   };
+  
 
   return (
     <LayoutContainer key="apply_form" container>
@@ -160,11 +224,13 @@ export default function NonProfitApply() {
         />
       </Head>
 
+      {!user && loginCallToAction}
+
+      { user && <div>
       <TitleBanner>
         <Parallax bgImage={image} strength={300}></Parallax>
       </TitleBanner>
-
-      <DetailsContainer container>
+      <DetailsContainer container>        
         <DescriptionStyled>
           <h1 className="content__title">Nonprofit Project Application</h1>
           <div className="content__body">
@@ -289,6 +355,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Economic Empowerment"
                   onChange={areasOfFocusSetState}
+                  checked={ formState.areasOfFocus.includes("Economic Empowerment") }                  
                 />
               }
               label="Economic Empowerment"
@@ -705,7 +772,6 @@ export default function NonProfitApply() {
           {
             // Loading/Save button with status uses MUI Lab
           }
-          <Link href="http://localhost:3001/nonprofits/confirmation">
             <LoadingButton
               color="secondary"
               loading={loading}
@@ -716,10 +782,10 @@ export default function NonProfitApply() {
             >
               <span>Submit</span>
             </LoadingButton>
-          </Link>
           {submitStatus}
         </DescriptionStyled>
       </DetailsContainer>
+      </div>}
     </LayoutContainer>
   );
 }

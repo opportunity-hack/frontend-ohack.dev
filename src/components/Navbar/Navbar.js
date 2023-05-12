@@ -192,7 +192,7 @@ export default function NavBar() {
           {width >= 900 && (
             <>
               <NavbarListItem>
-                <NavbarLink href="https://ohack.dev/nonprofits/apply" exact>
+                <NavbarLink href="/nonprofits/apply" exact>
                   Submit Project Request
                 </NavbarLink>
               </NavbarListItem>
