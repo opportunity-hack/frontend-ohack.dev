@@ -85,7 +85,7 @@ export default function NonProfitApply() {
     <Stack alignItems="center" paddingTop={5}>
       <Alert variant="outlined" severity="warning">
         <AlertTitle>
-          Whoa there - you need to login or create an account first.
+          Whoa there - in order to submit this nonprofit form, you need to login or create an account first.
         </AlertTitle>
 
         <Stack alignItems="center" spacing={2}>
@@ -366,6 +366,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Education"
                   onChange={areasOfFocusSetState}
+                  checked={ formState.areasOfFocus.includes("Education") }
                 />
               }
               label="Education"
@@ -376,6 +377,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Animals"
                   onChange={areasOfFocusSetState}
+                  checked={ formState.areasOfFocus.includes("Animals") }
                 />
               }
               label="Animals"
@@ -386,6 +388,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Environmental Sustainability"
                   onChange={areasOfFocusSetState}
+                  checked={ formState.areasOfFocus.includes("Environmental Sustainability") }
                 />
               }
               label="Environmental Sustainability"
@@ -396,6 +399,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Career Mentoring"
                   onChange={areasOfFocusSetState}
+                  checked={ formState.areasOfFocus.includes("Career Mentoring")}
                 />
               }
               label="Career Mentoring"
@@ -406,6 +410,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Arts & Culture"
                   onChange={areasOfFocusSetState}
+                  checked={ formState.areasOfFocus.includes("Arts & Culture")}
                 />
               }
               label="Arts & Culture"

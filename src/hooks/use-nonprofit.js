@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 export default function useNonprofit( nonprofit_id ){
     
     const { getAccessTokenSilently, user } = useAuth0();
-    const { apiServerUrl } = useEnv();
+    const { apiServerUrl, apiNodeJsServerUrl } = useEnv();
     const [nonprofits, setNonprofits] = useState([]);
     const [nonprofit, setNonprofit] = useState({
         "name":"",
@@ -47,8 +47,7 @@ export default function useNonprofit( nonprofit_id ){
             return null;
 
         const config = {
-            // url: `${apiServerUrl}/api/messages/npo`,
-            url: "http://localhost:3010/api/nonprofit-submit-application",
+            url: `${apiNodeJsServerUrl}/api/nonprofit-submit-application`,            
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -76,8 +75,7 @@ export default function useNonprofit( nonprofit_id ){
             return null;
 
         const config = {
-            // url: `${apiServerUrl}/api/messages/npo`,
-            url: "http://localhost:3010/api/nonprofit-application",
+            url: `${apiNodeJsServerUrl}/api/nonprofit-application`,            
             method: "GET",
             headers: {                
                 "Accept": "application/json"
@@ -223,7 +221,7 @@ export default function useNonprofit( nonprofit_id ){
         };
 
         getNonprofits();
-    }, [user, apiServerUrl, makeRequest, nonprofit_id]);
+    }, [user, apiServerUrl, apiNodeJsServerUrl, makeRequest, nonprofit_id]);
 
 
 
