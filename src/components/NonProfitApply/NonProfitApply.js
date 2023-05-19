@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 
 
-
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Puff } from "react-loading-icons";
 import { Parallax } from "react-parallax";
 import TextField from "@mui/material/TextField";
@@ -213,7 +213,14 @@ export default function NonProfitApply() {
 
   const onComplete = (response, success) => {
     console.log("Response",response);
-    setSubmitStatus(response);    
+    setSubmitStatus(<div><CheckCircleOutlineIcon/>Saved Successfully</div>);
+
+    // Remove the saved status after 5 seconds
+    setTimeout(() => {
+      setSubmitStatus("");
+    }, 5000);
+
+
     if( success )
     {
      //  router.push("/nonprofits/confirmation");
@@ -243,7 +250,7 @@ export default function NonProfitApply() {
       {!user && loginCallToAction}
 
       {
-        loading && (
+        user && loading && (
           <DetailsContainer container>
             Loading ...
             <Puff stroke="#0000FF" />
@@ -895,7 +902,7 @@ export default function NonProfitApply() {
             >
               <span>Submit</span>
             </LoadingButton>
-          {submitStatus}
+          &nbsp;{submitStatus}
         </DescriptionStyled>
       </DetailsContainer>
       </div>}
