@@ -83,9 +83,15 @@ export default function NonProfitApply() {
     const handleFormLoad = (data) => {
       console.log("Recevied handleFormLoad data: ", data);
       setLoading(false);
-      if (data) {        
+
+      if(data.status != null && data.status == 404)
+      {
+        console.log("No application yet.  Returning empty form.");
+      } else if(data) {
+        console.log("Found application.  Setting form state.");
         setFormState(data);
-      }
+      }      
+
     };
 
     handle_get_npo_form(handleFormLoad);
