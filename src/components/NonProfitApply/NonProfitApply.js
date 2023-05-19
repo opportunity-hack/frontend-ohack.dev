@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 
 
 
-// import { Puff } from "react-loading-icons";
+import { Puff } from "react-loading-icons";
 import { Parallax } from "react-parallax";
 import TextField from "@mui/material/TextField";
 import FormGroup from "@mui/material/FormGroup";
@@ -20,6 +20,10 @@ import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import Typography from "@mui/material/Typography";
+import Moment from 'moment';
+import Image from 'next/image';
+import PlaceIcon from '@mui/icons-material/Place';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 import {
   LayoutContainer,
@@ -36,6 +40,12 @@ export default function NonProfitApply() {
   var image = "/npo_placeholder.png";
   var nonProfitOptions = [];
 
+
+  const START_DATE = "Saturday, Oct 7th";
+  const END_DATE = "Sunday, Oct 8th 2023";
+  const LOCATION_ARIZONA = "Phoenix, Arizona (to be determined)"
+  const LOCATION = LOCATION_ARIZONA + " and virtual";
+
   const JOIN_SLACK_LINK =
     "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
   const createSlackAccount = () => {
@@ -48,12 +58,13 @@ export default function NonProfitApply() {
 
 
   
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitStatus, setSubmitStatus] = useState("");
   const [formState, setFormState] = useState({
     charityName: "",
     charityLocation: "",
     understandProjectUncertainty: false,
+    joiningInPerson: false,
     areasOfFocus: [],
     servedPopulations: [],
     contanctName: "",
@@ -70,8 +81,9 @@ export default function NonProfitApply() {
   // Do this once on load with useEffect
   useEffect(() => {        
     const handleFormLoad = (data) => {
-      console.log("handleFormLoad data: ", data);
-      if (data) {
+      console.log("Recevied handleFormLoad data: ", data);
+      setLoading(false);
+      if (data) {        
         setFormState(data);
       }
     };
@@ -79,6 +91,11 @@ export default function NonProfitApply() {
     handle_get_npo_form(handleFormLoad);
   }, [user]);  
 
+  var formSubmissionDate = null;
+  if( formState.timeStamp ){
+    console.log("formState.timeStamp: ", formState.timeStamp);
+    formSubmissionDate = new Date(formState.timeStamp._seconds * 1000);
+  }
 
 
   var loginCallToAction = (
@@ -196,8 +213,7 @@ export default function NonProfitApply() {
 
   const onComplete = (response, success) => {
     console.log("Response",response);
-    setSubmitStatus(response);
-
+    setSubmitStatus(response);    
     if( success )
     {
      //  router.push("/nonprofits/confirmation");
@@ -217,7 +233,7 @@ export default function NonProfitApply() {
   return (
     <LayoutContainer key="apply_form" container>
       <Head>
-        <title>Nonprofit Application</title>
+        <title>Nonprofit Application for Opportunity Hack 2023 {START_DATE} & {END_DATE}</title>
         <meta
           name="description"
           content="Have a problem where you think software could help? Submit your application today!"
@@ -226,17 +242,46 @@ export default function NonProfitApply() {
 
       {!user && loginCallToAction}
 
-      { user && <div>
+      {
+        loading && (
+          <DetailsContainer container>
+            Loading ...
+            <Puff stroke="#0000FF" />
+            <Puff stroke="#0000FF" />
+          </DetailsContainer>
+        )
+      }
+
+      { !loading && user && <div>
       <TitleBanner>
         <Parallax bgImage={image} strength={300}></Parallax>
       </TitleBanner>
       <DetailsContainer container>        
         <DescriptionStyled>
-          <h1 className="content__title">Nonprofit Project Application</h1>
+        
+        {
+          !loading && formSubmissionDate && 
+              <Alert severity="success">
+                <h3>You've already submitted this form  {formSubmissionDate.toLocaleString()}</h3>
+                  <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} width="480" height="400"/>
+                  
+                  <h4>Be sure to save any changes you make.</h4>
+                </Alert>          
+          
+        }      
+          <h1 className="content__title">Nonprofit Project Application</h1>          
+
           <div className="content__body">
             <div className="profile__header">
               <div className="profile__headline">
-                <h4 className="profile__title">
+                  <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
+                  <div className="profile__header"><PlaceIcon />{LOCATION}</div>             
+                  <a target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#0000EE", textDecoration: "underline" }}
+                    href="https://forms.gle/ByDbHo1eqEaxZB1v7">Suggest a location for the hackathon</a>
+                  <hr/>
+                  <h4 className="profile__title">
                   Opportunity Hack is a 48-hour hackathon that brings together
                   software developers, designers, and project managers to solve
                   technical problems for public charities, non-profit
@@ -257,11 +302,11 @@ export default function NonProfitApply() {
             sponsor teams if we have sponsors, if you know of any companies
             would would be willing to sponsor a prize, please share{" "}
             <a
-              href="https://www.ohack.org/sponsorship"
+                href="https://www.ohack.org/about/sponsorship"
               target="_blank"
               style={{ color: "#0000EE", textDecoration: "underline" }}
             >
-              <b>www.ohack.org/sponsorship</b>
+              <b>ohack.org/about/sponsorship</b>
             </a>{" "}
             within your network to help us complete as many projects as
             possible!
@@ -334,11 +379,13 @@ export default function NonProfitApply() {
                 name="understandProjectUncertainty"
                 formState={formState}
                 setFormState={setFormState}
+                checked={formState.understandProjectUncertainty}
                 onChange={(event) => {
                   setFormState({
                     ...formState,
                     understandProjectUncertainty: event.target.checked,
                   });
+                  
                 }}
               />
             }
@@ -421,6 +468,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Health and Human Services"
                   onChange={areasOfFocusSetState}
+                  checked={ formState.areasOfFocus.includes("Health and Human Services")}
                 />
               }
               label="Health and Human Services"
@@ -431,6 +479,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Other areas"
                   onChange={areasOfFocusSetState}
+                  checked={ formState.areasOfFocus.includes("Other areas")}
                 />
               }
               label="Other areas"
@@ -451,6 +500,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Women"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("Women") }
                 />
               }
               label="Women"
@@ -461,6 +511,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Black"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("Black") }
                 />
               }
               label="Black"
@@ -471,6 +522,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Indigenous"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("Indigenous") }
                 />
               }
               label="Indigenous"
@@ -481,6 +533,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Asian"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("Asian") }
                 />
               }
               label="Asian"
@@ -491,6 +544,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="LatinX"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("LatinX") }
                 />
               }
               label="LatinX"
@@ -501,6 +555,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Disabled"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("Disabled") }
                 />
               }
               label="Disabled"
@@ -511,6 +566,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="LGBTQUIA+"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("LGBTQUIA+") }
                 />
               }
               label="LGBTQIA+"
@@ -521,6 +577,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Veterans"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("Veterans") }
                 />
               }
               label="Veterans"
@@ -531,6 +588,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Immigrants/ Refugees"
                   onChange={servedPopulationsSetState}
+                  checked={formState.servedPopulations.includes("Immigrants/ Refugees")}
                 />
               }
               label="Immigrants/Refugees"
@@ -541,6 +599,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Other"
                   onChange={servedPopulationsSetState}
+                  checked={ formState.servedPopulations.includes("Other") }
                 />
               }
               label="Other"
@@ -560,9 +619,11 @@ export default function NonProfitApply() {
           <TextField
             sx={{ width: 250 }}
             id="outlined-basic"
-            label="Contact Name"
+            label="Contact Name(s)"
             variant="filled"
             required
+            multiline
+            rows={4}
             defaultValue={formState.contanctName}
             onChange={(event) => {
               setFormState({
@@ -577,20 +638,21 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <b>Contact Phone Number(s):</b>
+          <b>Contact Email(s) or Phone Number(s):</b>
           <br />
           We'd like to ensure our hackers (the people writing the code) have
           your contact information for any questions they have. We'd also like
           to have this number so that we can reach out to you before you are
-          able to join us on Slack. Feel free to include multiple phone numbers
-          separated by a comma(,).
+          able to join us on Slack. Feel free to include multiple email addresses and/or phone numbers.
           <br />
           <TextField
             sx={{ width: 250 }}
             id="outlined-basic"
-            label="Contact Phone"
+            label="Contact Phone Number(s) or Email(s)"
             variant="filled"
             required
+            multiline
+            rows={4}
             defaultValue={formState.contactPhone}
             onChange={(event) => {
               setFormState({
@@ -617,7 +679,7 @@ export default function NonProfitApply() {
             label="Tell us more"
             placeholder="Tell us more about your organization"
             multiline
-            rows={2}
+            rows={3}
             variant="filled"
             required
             defaultValue={formState.organizationPurposeAndHistory}
@@ -637,10 +699,14 @@ export default function NonProfitApply() {
           <b>Technical Problem:</b>
           <br />
           Describe what technical problem would you like hackathon participants
-          to solve. Try to think only about the problem you are trying to solve,
-          and not how you want to solve it. The more specific you can get with
-          your problem(s), the better scoped your project will be. Given that
-          this problem is solved, how can it help you and your non-profit in
+          to solve.
+          <br />
+          Try to think only about the problem you are trying to solve,
+            and <em><strong>not</strong> how you want to solve it</em>. 
+          <br />  
+          The more specific you can get with your problem(s), the better scoped your project will be. 
+          <br />
+          Given that this problem is solved, how can it help you and your non-profit in
           terms of cost savings, people served, time saved, etc.?
           <br />
           <TextField
@@ -702,6 +768,7 @@ export default function NonProfitApply() {
           <a
             href="https://slack.com/"
             target="_blank"
+            rel="noreferrer"
             style={{ color: "#0000EE", textDecoration: "underline" }}
           >
             <b>Slack.com</b>
@@ -712,6 +779,7 @@ export default function NonProfitApply() {
               <Checkbox
                 type="checkbox"
                 name="familiarWithSlack"
+                checked={formState.familiarWithSlack}
                 onChange={(event) => {
                   setFormState({
                     ...formState,
@@ -734,16 +802,18 @@ export default function NonProfitApply() {
           project and your needs available to attend the event?
           <br />
           This would include providing an email and phone number for questions
-          during times when the staff isn't physically available. We use
-          Slack.com as our primary communication platform both before the
-          hackathon starts and during the hackathon. We'll send you a link with
-          additional details a few months leading up to the hackathon.
+          during times when the staff isn't physically available. 
+          <br />
+          We use Slack as our primary communication platform both before the
+          hackathon starts and during the hackathon.
+          
           <FormGroup>
             <FormControlLabel
               control={
                 <Checkbox
                   type="checkbox"
                   name="They will be available remotely throughout the entire period by phone"
+                  checked={formState.keyStaffAvailability.includes("They will be available remotely throughout the entire period by phone")}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
@@ -754,6 +824,7 @@ export default function NonProfitApply() {
                 <Checkbox
                   type="checkbox"
                   name="They will be available remotely throughout the entire period by email and Slack"
+                  checked={formState.keyStaffAvailability.includes("They will be available remotely throughout the entire period by email and Slack")}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
@@ -763,12 +834,49 @@ export default function NonProfitApply() {
               control={
                 <Checkbox
                   type="checkbox"
-                  name="Yes, they will be able to attend the final presentations and judging on Monday October 25th"
+                  name="Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th"
+                    checked={formState.keyStaffAvailability.includes("Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th")}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
-              label="Yes, they will be able to attend the final presentations and judging on Monday October 25th"
+                label="Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th"
             />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  type="checkbox"
+                  name="Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th"
+                    checked={formState.keyStaffAvailability.includes("Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th")}
+                  onChange={keyStaffAvailabilitySetState}
+                />
+              }
+                label="Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th"
+            />
+          </FormGroup>
+          <br />
+          <b>Coming Onsite?</b>
+          <br />
+            Are you planning to join us in person at {LOCATION_ARIZONA}? <a target="_blank"
+              rel="noreferrer"
+              style={{ color: "#0000EE", textDecoration: "underline" }} 
+              href="https://forms.gle/ByDbHo1eqEaxZB1v7">Suggest a location for the hackathon here.</a>
+          <FormGroup>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    type="checkbox"
+                    name="Yes, either myself or a point of contact from our nonprofit is planning to attend in-person"
+                    checked={formState.joiningInPerson}
+                    onChange={(event) => {
+                      setFormState({
+                        ...formState,
+                        joiningInPerson: event.target.checked,
+                      });
+                    }}
+                  />
+                }
+                label="Yes, either myself or a point of contact from our nonprofit is planning to attend in-person"
+              />
           </FormGroup>
         </DescriptionStyled>
       </DetailsContainer>
