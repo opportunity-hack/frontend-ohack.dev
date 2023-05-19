@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth0 } from "@auth0/auth0-react";
-import GitHubIcon from '@mui/icons-material/GitHub';
+import GitHubIcon from "@mui/icons-material/GitHub";
 
 // TODO: import useProfileApi from "../../hooks/use-profile-api";
 
@@ -10,7 +10,7 @@ import Image from "next/image";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import * as ga from "../../lib/ga";
 
 import {
@@ -63,11 +63,9 @@ export default function NavBar() {
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
 
-  if (isAuthenticated )
-  {
-    ga.set(user.email);    
+  if (isAuthenticated) {
+    ga.set(user.email);
   }
-
 
   useEffect(() => {
     // click outside handler
@@ -146,8 +144,16 @@ export default function NavBar() {
             {[
               ["Projects", "/nonprofits", ""],
               ["About Us", "https://www.ohack.org/about", <OpenInNewIcon />],
-              ["Our History", "https://www.ohack.org/about/history", <OpenInNewIcon />],              
-              [<GitHubIcon/>, "https://github.com/opportunity-hack/", <OpenInNewIcon />],
+              [
+                "Our History",
+                "https://www.ohack.org/about/history",
+                <OpenInNewIcon />,
+              ],
+              [
+                <GitHubIcon />,
+                "https://github.com/opportunity-hack/",
+                <OpenInNewIcon />,
+              ],
             ].map((link) => (
               <>
                 <Divider />
@@ -178,7 +184,7 @@ export default function NavBar() {
               alt="Opportunity Hack logo"
               width={100}
               height={48}
-              style={{cursor: "pointer"}}
+              style={{ cursor: "pointer" }}
             />
           </Link>
         )}
@@ -186,18 +192,27 @@ export default function NavBar() {
           {width >= 900 && (
             <>
               <NavbarListItem>
+                <NavbarLink href="/nonprofits/apply" exact>
+                  Submit Project Request
+                </NavbarLink>
+              </NavbarListItem>
+              <NavbarListItem>
                 <NavbarLink href="/nonprofits" exact>
                   Projects
                 </NavbarLink>
               </NavbarListItem>
               <NavbarListItem>
                 <NavbarLink href="https://www.ohack.org/about" exact>
-                  About Us <OpenInNewIcon/>
+                  About Us <OpenInNewIcon />
                 </NavbarLink>
-              </NavbarListItem>              
+              </NavbarListItem>
               <NavbarListItem>
-                <NavbarLink target={"_blank"} href="https://github.com/opportunity-hack/" exact>
-                  <GitHubIcon fontSize="large"/>
+                <NavbarLink
+                  target={"_blank"}
+                  href="https://github.com/opportunity-hack/"
+                  exact
+                >
+                  <GitHubIcon fontSize="large" />
                 </NavbarLink>
               </NavbarListItem>
             </>

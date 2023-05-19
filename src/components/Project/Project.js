@@ -26,10 +26,9 @@ const createSlackAccount = () => {
 };
 
 export default function Project() {
-  const { user } = useAuth0();
+  const { user, loginWithRedirect } = useAuth0();
   const router = useRouter();
   const { project_id } = router.query;
-  const { loginWithRedirect } = useAuth0();
   const { problem_statement } = useProblemstatements(project_id);
   console.log("project_id", project_id);
   console.log("problem_statement", problem_statement);
