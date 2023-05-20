@@ -6,7 +6,6 @@ import { useRouter } from "next/router";
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Puff } from "react-loading-icons";
-import { Parallax } from "react-parallax";
 import TextField from "@mui/material/TextField";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -24,6 +23,8 @@ import Moment from 'moment';
 import Image from 'next/image';
 import PlaceIcon from '@mui/icons-material/Place';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import WarningIcon from '@mui/icons-material/Warning';
+import Autocomplete from "@mui/material/Autocomplete";
 
 import {
   LayoutContainer,
@@ -53,7 +54,10 @@ export default function NonProfitApply() {
   };
 
   nonprofits.forEach((item) => {
-    nonProfitOptions.push(item.name);
+    if( item.name )
+    {
+      nonProfitOptions.push(item.name);
+    }
   });
 
 
@@ -81,14 +85,14 @@ export default function NonProfitApply() {
   // Do this once on load with useEffect
   useEffect(() => {        
     const handleFormLoad = (data) => {
-      console.log("Recevied handleFormLoad data: ", data);
+      // console.log("Recevied handleFormLoad data: ", data);
       setLoading(false);
 
-      if(data.status != null && data.status == 404)
+      if(data.status != null && data.status === 404)
       {
         console.log("No application yet.  Returning empty form.");
       } else if(data) {
-        console.log("Found application.  Setting form state.");
+        // console.log("Found application.  Setting form state.");
         setFormState(data);
       }      
 
@@ -99,7 +103,7 @@ export default function NonProfitApply() {
 
   var formSubmissionDate = null;
   if( formState.timeStamp ){
-    console.log("formState.timeStamp: ", formState.timeStamp);
+    // console.log("formState.timeStamp: ", formState.timeStamp);
     formSubmissionDate = new Date(formState.timeStamp._seconds * 1000);
   }
 
@@ -217,24 +221,27 @@ export default function NonProfitApply() {
     }
   };
 
-  const onComplete = (response, success) => {
-    console.log("Response",response);
-    setSubmitStatus(<div><CheckCircleOutlineIcon/>Saved Successfully</div>);
-
+  const onComplete = (response, success) => {    
     // Remove the saved status after 5 seconds
     setTimeout(() => {
       setSubmitStatus("");
-    }, 5000);
-
+    }, 6000);
 
     if( success )
-    {
-     //  router.push("/nonprofits/confirmation");
-     console.log("success");
+    {    
+      setSubmitStatus(<div><CheckCircleOutlineIcon sx={{
+        color: 'green',
+        fontSize: 20        
+      }} /> Saved Successfully</div>);
+      // console.log("success");
     }
     else
     {
-      router.push("/nonprofits/errorOnSubmit");
+      setSubmitStatus(<div><WarningIcon sx={{
+        color: 'red',
+        fontSize: 20
+      }}/> Error Saving form: {response}</div>);
+      // router.push("/nonprofits/errorOnSubmit");
     }
   }
 
@@ -266,17 +273,17 @@ export default function NonProfitApply() {
       }
 
       { !loading && user && <div>
-      <TitleBanner>
-        <Parallax bgImage={image} strength={300}></Parallax>
-      </TitleBanner>
+      
       <DetailsContainer container>        
         <DescriptionStyled>
         
         {
           !loading && formSubmissionDate && 
               <Alert severity="success">
-                <h3>You've already submitted this form  {formSubmissionDate.toLocaleString()}</h3>
-                  <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} width="480" height="400"/>
+                  <h4>You've already submitted this form on {Moment(formSubmissionDate.toLocaleString()).format('MMMM Do YYYY @ hh:mma')}</h4>
+                  <div className={'image-container'}>
+                    <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="480" height="400"/>
+                  </div>
                   
                   <h4>Be sure to save any changes you make.</h4>
                 </Alert>          
@@ -337,32 +344,44 @@ export default function NonProfitApply() {
             We support charities including non-profits (NPOs) and non-government
             organizations (NGOs).
           </p>
+            
+            <Autocomplete
+              disablePortal
+              value={formState.charityName}
+              onChange={(event, newValue) => {
+                if( newValue == null )
+                {
+                  newValue = "";
+                }
 
-          {/* <Autocomplete
-            disablePortal
-            id="combo-box-demo"
-            freeSolo
-            options={nonProfitOptions}
-            sx={{ width: 300 }}
-            required
-            renderInput={(params) => ( */}
-          <TextField
-            // {...params}
-            sx={{ width: 300 }}
-            required
-            label="Name of Charity Organization"
-            defaultValue={formState.charityName}
-            onChange={(event) => {
-              setFormState({
-                ...formState,
-                charityName: event.target.value,
-              });
-              console.log(`Charity name changed to ${event.target.value}`);
-            }}
-          />
-          <br />
-          {/* )}
-          /> */}
+                setFormState({
+                  ...formState,
+                  charityName: newValue,
+                });
+                // console.log(`onChange Charity name changed to ${newValue}`);
+              }}
+              inputValue={formState.charityName}
+              onInputChange={(event, newInputValue) => {
+                if( newInputValue == null )
+                {
+                  newInputValue = "";
+                }
+                
+                setFormState({
+                  ...formState,
+                  charityName: newInputValue,
+                });
+                // console.log(`Input Change Charity name changed to ${newInputValue}`);
+              }}
+              id="controllable-states-demo"
+              freeSolo                            
+              options={nonProfitOptions}
+              
+              sx={{ width: 300 }}
+              renderInput={(params) => <TextField {...params} label="Name of Charity Organization" />}
+            />
+          
+
           <br />
           <p>
             <b>Charity Location:</b>
@@ -379,31 +398,31 @@ export default function NonProfitApply() {
               });
             }}
           />
-
-          <p>
-            <br />
-            <b>Complete transparency:</b> Not all projects will be completed
-            after the hackathon <br />
-          </p>
-          <FormControlLabel
-            control={
-              <Checkbox
-                type="checkbox"
-                name="understandProjectUncertainty"
-                formState={formState}
-                setFormState={setFormState}
-                checked={formState.understandProjectUncertainty}
-                onChange={(event) => {
-                  setFormState({
-                    ...formState,
-                    understandProjectUncertainty: event.target.checked,
-                  });
-                  
-                }}
-              />
-            }
-            label="I understand that my project may not be completed during this hackathon"
-          />
+          <br /><br />
+            <Alert severity="warning">
+              <b>Complete transparency:</b> Not all projects will be completed after the hackathon is over. 
+              <br /><br />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  type="checkbox"
+                  name="understandProjectUncertainty"
+                  formState={formState}
+                  setFormState={setFormState}
+                  checked={formState.understandProjectUncertainty}
+                  onChange={(event) => {
+                    setFormState({
+                      ...formState,
+                      understandProjectUncertainty: event.target.checked,
+                    });
+                    
+                  }}
+                />
+              }
+              label="I understand that my project may not be completed during this hackathon"
+            />
+            </Alert>
+          
         </DescriptionStyled>
         <DescriptionStyled>
           <br />
@@ -787,6 +806,7 @@ export default function NonProfitApply() {
             <b>Slack.com</b>
           </a>{" "}
           for more info).
+          <br/>
           <FormControlLabel
             control={
               <Checkbox
