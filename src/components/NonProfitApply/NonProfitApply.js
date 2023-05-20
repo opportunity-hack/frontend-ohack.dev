@@ -6,7 +6,6 @@ import { useRouter } from "next/router";
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Puff } from "react-loading-icons";
-import { Parallax } from "react-parallax";
 import TextField from "@mui/material/TextField";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -24,6 +23,7 @@ import Moment from 'moment';
 import Image from 'next/image';
 import PlaceIcon from '@mui/icons-material/Place';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import WarningIcon from '@mui/icons-material/Warning';
 
 import {
   LayoutContainer,
@@ -84,7 +84,7 @@ export default function NonProfitApply() {
       console.log("Recevied handleFormLoad data: ", data);
       setLoading(false);
 
-      if(data.status != null && data.status == 404)
+      if(data.status != null && data.status === 404)
       {
         console.log("No application yet.  Returning empty form.");
       } else if(data) {
@@ -217,24 +217,21 @@ export default function NonProfitApply() {
     }
   };
 
-  const onComplete = (response, success) => {
-    console.log("Response",response);
-    setSubmitStatus(<div><CheckCircleOutlineIcon/>Saved Successfully</div>);
-
+  const onComplete = (response, success) => {    
     // Remove the saved status after 5 seconds
     setTimeout(() => {
       setSubmitStatus("");
     }, 5000);
 
-
     if( success )
-    {
-     //  router.push("/nonprofits/confirmation");
-     console.log("success");
+    {    
+      setSubmitStatus(<div><CheckCircleOutlineIcon />Saved Successfully</div>);
+      console.log("success");
     }
     else
     {
-      router.push("/nonprofits/errorOnSubmit");
+      setSubmitStatus(<div><WarningIcon/>Error Saving form: {response}</div>);
+      // router.push("/nonprofits/errorOnSubmit");
     }
   }
 
@@ -266,9 +263,7 @@ export default function NonProfitApply() {
       }
 
       { !loading && user && <div>
-      <TitleBanner>
-        <Parallax bgImage={image} strength={300}></Parallax>
-      </TitleBanner>
+      
       <DetailsContainer container>        
         <DescriptionStyled>
         
@@ -276,7 +271,9 @@ export default function NonProfitApply() {
           !loading && formSubmissionDate && 
               <Alert severity="success">
                 <h3>You've already submitted this form  {formSubmissionDate.toLocaleString()}</h3>
-                  <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} width="480" height="400"/>
+                  <div className={'image-container'}>
+                    <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="480" height="400"/>
+                  </div>
                   
                   <h4>Be sure to save any changes you make.</h4>
                 </Alert>          
