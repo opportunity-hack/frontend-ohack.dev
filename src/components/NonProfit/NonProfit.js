@@ -28,6 +28,7 @@ import { red } from '@mui/material/colors';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 import ReactMarkdown from 'react-markdown'
+import { useEnv } from '../../context/env.context';
 
 
 import Stack from '@mui/material/Stack';
@@ -64,11 +65,8 @@ const ExpandMore = styled((props) => {
 }));
 */
 
-const JOIN_SLACK_LINK =
-  'https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig';
-const createSlackAccount = () => {
-  window.open(JOIN_SLACK_LINK, '_blank', 'noopener noreferrer');
-};
+
+
 
 export default function NonProfit(props) {
   const {
@@ -82,7 +80,12 @@ export default function NonProfit(props) {
   const [message, setMessage] = useState('');
 
   const [expanded, setExpanded] = useState(false);
+  const { slackSignupUrl } = useEnv();
   
+  const createSlackAccount = () => {
+    window.open(slackSignupUrl, '_blank', 'noopener noreferrer');
+  };
+
   // TODO: Use?
   /*
   const handleExpandClick = () => {

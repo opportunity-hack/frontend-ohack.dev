@@ -33,9 +33,6 @@ export default function NonProfitListTile({
     {
     const { user } = useAuth0();
 
-    // const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
-    
-
 
     var number_of_problem_statements_helping_with = 0;
     

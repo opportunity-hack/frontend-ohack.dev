@@ -25,19 +25,26 @@ import PlaceIcon from '@mui/icons-material/Place';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WarningIcon from '@mui/icons-material/Warning';
 import Autocomplete from "@mui/material/Autocomplete";
+import { useEnv } from "../../context/env.context";
+
 
 import {
   LayoutContainer,
   DetailsContainer,
   TitleBanner,
-  DescriptionStyled,
+  DescriptionStyled  
 } from "../../styles/nonprofits/apply/styles";
+
+
+import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
+
 
 export default function NonProfitApply() {
   const router = useRouter();
   let { nonprofits, handle_get_npo_form, handle_npo_form_submission } = useNonprofit();
-
-  const { user, loginWithRedirect } = useAuth0();
+  const { slackSignupUrl } = useEnv();
+  
+  const { user } = useAuth0();
   var image = "/npo_placeholder.png";
   var nonProfitOptions = [];
 
@@ -47,10 +54,8 @@ export default function NonProfitApply() {
   const LOCATION_ARIZONA = "Phoenix, Arizona (to be determined)"
   const LOCATION = LOCATION_ARIZONA + " and virtual";
 
-  const JOIN_SLACK_LINK =
-    "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
   const createSlackAccount = () => {
-    window.open(JOIN_SLACK_LINK, "_blank", "noopener noreferrer");
+    window.open(slackSignupUrl, "_blank", "noopener noreferrer");
   };
 
   nonprofits.forEach((item) => {
@@ -108,51 +113,8 @@ export default function NonProfitApply() {
   }
 
 
-  var loginCallToAction = (
-    <Stack alignItems="center" paddingTop={5}>
-      <Alert variant="outlined" severity="warning">
-        <AlertTitle>
-          Whoa there - in order to submit this nonprofit form, you need to login or create an account first.
-        </AlertTitle>
-
-        <Stack alignItems="center" spacing={2}>
-          <Stack direction="column" spacing={1}>
-            <button
-              className="button button--primary button--compact"
-              onClick={() =>
-                loginWithRedirect({
-                  appState: {
-                    returnTo: window.location.pathname,
-                    redirectUri: window.location.pathname,
-                  },
-                })
-              }
-            >
-              Log In
-            </button>
-
-            <Typography>
-              We use Slack to collaborate, if you already have an account, login
-              with Slack
-            </Typography>
-          </Stack>
-
-          <Stack direction="column" spacing={1}>
-            <button
-              onClick={createSlackAccount}
-              className="button button--primary"
-            >
-              Create a Slack account
-            </button>
-
-            <Typography>
-              If you don't have an account, you will need to create an account
-            </Typography>
-          </Stack>
-        </Stack>
-      </Alert>
-    </Stack>
-  );
+  var loginCallToAction = <LoginOrRegister 
+      introText={"Whoa there - in order to submit this nonprofit form, you need to login or create an account first."} />;
 
   const areasOfFocusSetState = (event) => {
     if (event.target.checked) {
