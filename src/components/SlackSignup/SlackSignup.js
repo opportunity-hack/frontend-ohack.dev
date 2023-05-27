@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import axios from 'axios';
-import { TextField } from '@mui/material';
+import { Stack, TextField } from '@mui/material';
 import { Button } from '@mui/material';
 import { Typography } from '@mui/material';
 import { useState } from 'react';
@@ -45,7 +45,9 @@ export default function SlackSignup({ previousPage }) {
                         <Typography variant="h5">
                             Click the button to register for a Slack account and join the Opportunity Hack Slack workspace.
                         </Typography>
-                    </SlackSignupDetailText>                    
+                    </SlackSignupDetailText>       
+                    <br/>
+                    <Stack direction="column" spacing={1}>
                     <Link
                         target="_blank"
                         rel="noopener noreferrer"
@@ -59,6 +61,9 @@ export default function SlackSignup({ previousPage }) {
                             Signup for Opportunity Hack Slack
                         </ButtonStyled>
                     </Link>
+
+                    </Stack>
+
                     <br /><br />
                     <Typography variant="h2">Why Slack?</Typography>
                     <Typography variant="h5">

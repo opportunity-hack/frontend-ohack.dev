@@ -218,52 +218,39 @@ export default function NonProfitApply() {
         <title>Nonprofit Application for Opportunity Hack 2023 {START_DATE} & {END_DATE}</title>
         <meta
           name="description"
-          content="Have a problem where you think software could help? Submit your application today!"
+          content="Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem."
         />
       </Head>
 
       {!user && loginCallToAction}
-
-      {
-        user && loading && (
-          <DetailsContainer container>
-            Loading ...
-            <Puff stroke="#0000FF" />
-            <Puff stroke="#0000FF" />
-          </DetailsContainer>
-        )
-      }
-
-      { !loading && user && <div>
-      
-      <DetailsContainer container>        
+      <DetailsContainer container>
         <DescriptionStyled>
-        
-        {
-          !loading && formSubmissionDate && 
-              <Alert severity="success">
-                  <h4>You've already submitted this form on {Moment(formSubmissionDate.toLocaleString()).format('MMMM Do YYYY @ hh:mma')}</h4>
-                  <div className={'image-container'}>
-                    <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="480" height="400"/>
-                  </div>
-                  
-                  <h4>Be sure to save any changes you make.</h4>
-                </Alert>          
-          
-        }      
-          <h1 className="content__title">Nonprofit Project Application</h1>          
+
+          {
+            !loading && formSubmissionDate &&
+            <Alert severity="success">
+              <h4>You've already submitted this form on {Moment(formSubmissionDate.toLocaleString()).format('MMMM Do YYYY @ hh:mma')}</h4>
+              <div className={'image-container'}>
+                <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="480" height="400" />
+              </div>
+
+              <h4>Be sure to save any changes you make.</h4>
+            </Alert>
+
+          }
+          <h1 className="content__title">Nonprofit Project Application</h1>
 
           <div className="content__body">
             <div className="profile__header">
               <div className="profile__headline">
-                  <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
-                  <div className="profile__header"><PlaceIcon />{LOCATION}</div>             
-                  <a target="_blank"
-                    rel="noreferrer"
-                    style={{ color: "#0000EE", textDecoration: "underline" }}
-                    href="https://forms.gle/ByDbHo1eqEaxZB1v7">Suggest a location for the hackathon</a>
-                  <hr/>
-                  <h4 className="profile__title">
+                <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
+                <div className="profile__header"><PlaceIcon />{LOCATION}</div>
+                <a target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "#0000EE", textDecoration: "underline" }}
+                  href="https://forms.gle/ByDbHo1eqEaxZB1v7">Suggest a location for the hackathon</a>
+                <hr />
+                <h4 className="profile__title">
                   Opportunity Hack is a 48-hour hackathon that brings together
                   software developers, designers, and project managers to solve
                   technical problems for public charities, non-profit
@@ -272,34 +259,55 @@ export default function NonProfitApply() {
                 <br />
                 This form helps us to find the charities that are the right fit
                 for our event.
+                <p>
+                  <br />
+                  🥇 We're able to sponsor top prizes for teams who are selected by
+                  the judges to complete your project post-hackathon. We only can
+                  sponsor teams if we have sponsors, if you know of any companies
+                  would would be willing to sponsor a prize, please share{" "}
+                  <a
+                    href="https://www.ohack.org/about/sponsorship"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#0000EE", textDecoration: "underline" }}
+                  >
+                    <b>ohack.org/about/sponsorship</b>
+                  </a>{" "}
+                  within your network to help us complete as many projects as
+                  possible!
+                </p>
+                <p>
+                  Sponsorship allows us to incentivize teams to complete their
+                  hackathon projects. From our previous experience over the last 9
+                  years, in order for projects to reach completion states, we need to
+                  provide a prize with monetary value that attracts the attention of
+                  the team to follow-through.
+                </p>
               </div>
             </div>
           </div>
+          {
+            user && loading && (
+              <DetailsContainer container>
+                Loading ...
+                <Puff stroke="#0000FF" />
+                <Puff stroke="#0000FF" />
+              </DetailsContainer>
+            )
+          } 
         </DescriptionStyled>
+        
+      </DetailsContainer>
+
+      
+
+      { !loading && user && <div>
+      
+      <DetailsContainer container>   
+              
+       
         <DescriptionStyled>
-          <p>
-            <br />
-            🥇 We're able to sponsor top prizes for teams who are selected by
-            the judges to complete your project post-hackathon. We only can
-            sponsor teams if we have sponsors, if you know of any companies
-            would would be willing to sponsor a prize, please share{" "}
-            <a
-                href="https://www.ohack.org/about/sponsorship"
-              target="_blank"
-              style={{ color: "#0000EE", textDecoration: "underline" }}
-            >
-              <b>ohack.org/about/sponsorship</b>
-            </a>{" "}
-            within your network to help us complete as many projects as
-            possible!
-          </p>
-          <p>
-            Sponsorship allows us to incentivize teams to complete their
-            hackathon projects. From our previous experience over the last 9
-            years, in order for projects to reach completion states, we need to
-            provide a prize with monetary value that attracts the attention of
-            the team to follow-through.
-          </p>
+          
           <p>
             <b>Name of Charity Organization:</b>
             <br />
