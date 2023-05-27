@@ -25,19 +25,26 @@ import PlaceIcon from '@mui/icons-material/Place';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WarningIcon from '@mui/icons-material/Warning';
 import Autocomplete from "@mui/material/Autocomplete";
+import { useEnv } from "../../context/env.context";
+
 
 import {
   LayoutContainer,
   DetailsContainer,
   TitleBanner,
-  DescriptionStyled,
+  DescriptionStyled  
 } from "../../styles/nonprofits/apply/styles";
+
+
+import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
+
 
 export default function NonProfitApply() {
   const router = useRouter();
   let { nonprofits, handle_get_npo_form, handle_npo_form_submission } = useNonprofit();
-
-  const { user, loginWithRedirect } = useAuth0();
+  const { slackSignupUrl } = useEnv();
+  
+  const { user } = useAuth0();
   var image = "/npo_placeholder.png";
   var nonProfitOptions = [];
 
@@ -47,10 +54,8 @@ export default function NonProfitApply() {
   const LOCATION_ARIZONA = "Phoenix, Arizona (to be determined)"
   const LOCATION = LOCATION_ARIZONA + " and virtual";
 
-  const JOIN_SLACK_LINK =
-    "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
   const createSlackAccount = () => {
-    window.open(JOIN_SLACK_LINK, "_blank", "noopener noreferrer");
+    window.open(slackSignupUrl, "_blank", "noopener noreferrer");
   };
 
   nonprofits.forEach((item) => {
@@ -108,51 +113,8 @@ export default function NonProfitApply() {
   }
 
 
-  var loginCallToAction = (
-    <Stack alignItems="center" paddingTop={5}>
-      <Alert variant="outlined" severity="warning">
-        <AlertTitle>
-          Whoa there - in order to submit this nonprofit form, you need to login or create an account first.
-        </AlertTitle>
-
-        <Stack alignItems="center" spacing={2}>
-          <Stack direction="column" spacing={1}>
-            <button
-              className="button button--primary button--compact"
-              onClick={() =>
-                loginWithRedirect({
-                  appState: {
-                    returnTo: window.location.pathname,
-                    redirectUri: window.location.pathname,
-                  },
-                })
-              }
-            >
-              Log In
-            </button>
-
-            <Typography>
-              We use Slack to collaborate, if you already have an account, login
-              with Slack
-            </Typography>
-          </Stack>
-
-          <Stack direction="column" spacing={1}>
-            <button
-              onClick={createSlackAccount}
-              className="button button--primary"
-            >
-              Create a Slack account
-            </button>
-
-            <Typography>
-              If you don't have an account, you will need to create an account
-            </Typography>
-          </Stack>
-        </Stack>
-      </Alert>
-    </Stack>
-  );
+  var loginCallToAction = <LoginOrRegister 
+      introText={"Whoa there - in order to submit this nonprofit form, you need to login or create an account first."} />;
 
   const areasOfFocusSetState = (event) => {
     if (event.target.checked) {
@@ -256,52 +218,39 @@ export default function NonProfitApply() {
         <title>Nonprofit Application for Opportunity Hack 2023 {START_DATE} & {END_DATE}</title>
         <meta
           name="description"
-          content="Have a problem where you think software could help? Submit your application today!"
+          content="Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem."
         />
       </Head>
 
       {!user && loginCallToAction}
-
-      {
-        user && loading && (
-          <DetailsContainer container>
-            Loading ...
-            <Puff stroke="#0000FF" />
-            <Puff stroke="#0000FF" />
-          </DetailsContainer>
-        )
-      }
-
-      { !loading && user && <div>
-      
-      <DetailsContainer container>        
+      <DetailsContainer container>
         <DescriptionStyled>
-        
-        {
-          !loading && formSubmissionDate && 
-              <Alert severity="success">
-                  <h4>You've already submitted this form on {Moment(formSubmissionDate.toLocaleString()).format('MMMM Do YYYY @ hh:mma')}</h4>
-                  <div className={'image-container'}>
-                    <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="480" height="400"/>
-                  </div>
-                  
-                  <h4>Be sure to save any changes you make.</h4>
-                </Alert>          
-          
-        }      
-          <h1 className="content__title">Nonprofit Project Application</h1>          
+
+          {
+            !loading && formSubmissionDate &&
+            <Alert severity="success">
+              <h4>You've already submitted this form on {Moment(formSubmissionDate.toLocaleString()).format('MMMM Do YYYY @ hh:mma')}</h4>
+              <div className={'image-container'}>
+                <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="480" height="400" />
+              </div>
+
+              <h4>Be sure to save any changes you make.</h4>
+            </Alert>
+
+          }
+          <h1 className="content__title">Nonprofit Project Application</h1>
 
           <div className="content__body">
             <div className="profile__header">
               <div className="profile__headline">
-                  <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
-                  <div className="profile__header"><PlaceIcon />{LOCATION}</div>             
-                  <a target="_blank"
-                    rel="noreferrer"
-                    style={{ color: "#0000EE", textDecoration: "underline" }}
-                    href="https://forms.gle/ByDbHo1eqEaxZB1v7">Suggest a location for the hackathon</a>
-                  <hr/>
-                  <h4 className="profile__title">
+                <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
+                <div className="profile__header"><PlaceIcon />{LOCATION}</div>
+                <a target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "#0000EE", textDecoration: "underline" }}
+                  href="https://forms.gle/ByDbHo1eqEaxZB1v7">Suggest a location for the hackathon</a>
+                <hr />
+                <h4 className="profile__title">
                   Opportunity Hack is a 48-hour hackathon that brings together
                   software developers, designers, and project managers to solve
                   technical problems for public charities, non-profit
@@ -310,34 +259,55 @@ export default function NonProfitApply() {
                 <br />
                 This form helps us to find the charities that are the right fit
                 for our event.
+                <p>
+                  <br />
+                  🥇 We're able to sponsor top prizes for teams who are selected by
+                  the judges to complete your project post-hackathon. We only can
+                  sponsor teams if we have sponsors, if you know of any companies
+                  would would be willing to sponsor a prize, please share{" "}
+                  <a
+                    href="https://www.ohack.org/about/sponsorship"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#0000EE", textDecoration: "underline" }}
+                  >
+                    <b>ohack.org/about/sponsorship</b>
+                  </a>{" "}
+                  within your network to help us complete as many projects as
+                  possible!
+                </p>
+                <p>
+                  Sponsorship allows us to incentivize teams to complete their
+                  hackathon projects. From our previous experience over the last 9
+                  years, in order for projects to reach completion states, we need to
+                  provide a prize with monetary value that attracts the attention of
+                  the team to follow-through.
+                </p>
               </div>
             </div>
           </div>
+          {
+            user && loading && (
+              <DetailsContainer container>
+                Loading ...
+                <Puff stroke="#0000FF" />
+                <Puff stroke="#0000FF" />
+              </DetailsContainer>
+            )
+          } 
         </DescriptionStyled>
+        
+      </DetailsContainer>
+
+      
+
+      { !loading && user && <div>
+      
+      <DetailsContainer container>   
+              
+       
         <DescriptionStyled>
-          <p>
-            <br />
-            🥇 We're able to sponsor top prizes for teams who are selected by
-            the judges to complete your project post-hackathon. We only can
-            sponsor teams if we have sponsors, if you know of any companies
-            would would be willing to sponsor a prize, please share{" "}
-            <a
-                href="https://www.ohack.org/about/sponsorship"
-              target="_blank"
-              style={{ color: "#0000EE", textDecoration: "underline" }}
-            >
-              <b>ohack.org/about/sponsorship</b>
-            </a>{" "}
-            within your network to help us complete as many projects as
-            possible!
-          </p>
-          <p>
-            Sponsorship allows us to incentivize teams to complete their
-            hackathon projects. From our previous experience over the last 9
-            years, in order for projects to reach completion states, we need to
-            provide a prize with monetary value that attracts the attention of
-            the team to follow-through.
-          </p>
+          
           <p>
             <b>Name of Charity Organization:</b>
             <br />

@@ -136,13 +136,15 @@ export default function NavBar() {
                   src="https://i.imgur.com/Ih0mbYx.png"
                   alt="Opportunity Hack logo"
                   width={150}
-                  height={72}                  
+                  height={72}      
+                  layout="responsive"            
                 />
                 </LogoContainer>
               </Link>
             </Grid>
             {[
               ["Projects", "/nonprofits", ""],
+              ["Submit a project", "/nonprofits/apply", ""],
               ["About Us", "https://www.ohack.org/about", <OpenInNewIcon />],
               [
                 "Our History",
@@ -193,7 +195,7 @@ export default function NavBar() {
             <>
               <NavbarListItem>
                 <NavbarLink href="/nonprofits/apply" exact>
-                  Submit Project Request
+                  Submit Project
                 </NavbarLink>
               </NavbarListItem>
               <NavbarListItem>

@@ -3,18 +3,20 @@ import Link from 'next/link'
 import Head from 'next/head';
 import Stack from '@mui/material/Stack';
 import Image from 'next/image'
+import { useEnv } from '../context/env.context'
 
 import * as ga from '../lib/ga'
 
 
 export default function HeroBanner(){
   const logo = "https://i.imgur.com/Ih0mbYx.png";
+  const { slackSignupUrl } = useEnv();
+
   
-  const JOIN_SLACK_LINK = "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
   const openCodeSample = () => {
     gaButton("open_code_sample");
     window.open(
-      JOIN_SLACK_LINK,
+      slackSignupUrl,
       "_blank",
       "noopener noreferrer"
     );

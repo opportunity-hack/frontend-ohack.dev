@@ -8,6 +8,7 @@ import { Puff } from "react-loading-icons";
 import useProblemstatements from "../../hooks/use-problem-statements";
 import Head from 'next/head';
 
+import { useEnv } from "../../context/env.context";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
@@ -19,12 +20,6 @@ import {
 import { Link } from "@mui/material";
 
 
-const JOIN_SLACK_LINK =
-  "https://join.slack.com/t/opportunity-hack/shared_invite/zt-1db1ehglc-2tR6zpmszc5898MhiSxHig";
-const createSlackAccount = () => {
-  window.open(JOIN_SLACK_LINK, "_blank", "noopener noreferrer");
-};
-
 export default function Project() {
   const { user, loginWithRedirect } = useAuth0();
   const router = useRouter();
@@ -32,6 +27,12 @@ export default function Project() {
   const { problem_statement } = useProblemstatements(project_id);
   console.log("project_id", project_id);
   console.log("problem_statement", problem_statement);
+  const { slackSignupUrl } = useEnv();
+
+  const createSlackAccount = () => {
+    window.open(slackSignupUrl, "_blank", "noopener noreferrer");
+  };
+
   
   if( problem_statement == null || problem_statement.title === "" || problem_statement.description === "")
   {
