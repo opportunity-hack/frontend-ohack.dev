@@ -2,6 +2,15 @@
 import React from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Alert, AlertTitle, Stack, Typography } from '@mui/material';
+import ReactPixel from 'react-facebook-pixel';
+
+const options = {
+    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+    debug: false, // enable logs
+};
+const advancedMatching =  null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+
+
 
 // Import ga
 import * as ga from '../../lib/ga';
@@ -13,8 +22,11 @@ import {
 
 export default function LoginOrRegister({introText, previousPage}) {
     const { loginWithRedirect } = useAuth0();
+    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+
 
     const handleLoginClick = () => {
+        ReactPixel.track('Login Slack', { test_event_code: "TEST10870" });
         ga.event({
             action: "login_slack",
             params: {
@@ -31,6 +43,7 @@ export default function LoginOrRegister({introText, previousPage}) {
     };
 
     const handleSignupClick = () => {
+        ReactPixel.track('Signup Slack', { test_event_code: "TEST10870" });
         ga.event({
             action: "signup_slack",
             params: {
