@@ -18,18 +18,29 @@ import Typewriter from 'typewriter-effect';
 // import ohack from '../../../public/ohack.png'
 import Logo from './Logo'
 import { useEnv } from '../../context/env.context';
+import ReactPixel from 'react-facebook-pixel';
 
 import * as ga from '../../lib/ga';
 
 function HeroBanner() {
   const { slackSignupUrl } = useEnv();
 
-  const openCodeSample = () => {
+  const options = {
+    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+    debug: false, // enable logs
+  };
+  const advancedMatching = null; // { em: 'someemail@.com' }; // optional
+  ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+  
+
+  const openCodeSample = () => {    
     gaButton('slack_button', 'open_join_slack');
     window.open(slackSignupUrl, '_blank', 'noopener noreferrer');
   };
 
   const gaButton = (action, actionName) => {
+    ReactPixel.track(action, { action_name: actionName });
+
     ga.event({
       action: action,
       params: {

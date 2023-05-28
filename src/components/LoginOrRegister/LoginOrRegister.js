@@ -23,7 +23,7 @@ export default function LoginOrRegister({introText, previousPage}) {
 
 
     const handleLoginClick = () => {
-        ReactPixel.track('Login Slack', { test_event_code: "TEST10870" });
+        ReactPixel.track('Login Slack');
         ga.event({
             action: "login_slack",
             params: {
@@ -40,7 +40,7 @@ export default function LoginOrRegister({introText, previousPage}) {
     };
 
     const handleSignupClick = () => {
-        ReactPixel.track('Signup Slack', { test_event_code: "TEST10870" });
+        ReactPixel.track('Signup Slack');
         ga.event({
             action: "signup_slack",
             params: {

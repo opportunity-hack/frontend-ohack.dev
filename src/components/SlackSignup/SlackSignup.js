@@ -6,6 +6,9 @@ import { Typography } from '@mui/material';
 import Head from 'next/head';
 import { useEnv } from '../../context/env.context';
 import Image from 'next/image';
+import ReactPixel from 'react-facebook-pixel';
+import * as ga from '../../lib/ga';
+
 
 import {
     InnerContainer,
@@ -22,6 +25,25 @@ import {
 export default function SlackSignup({ previousPage }) {    
     
     const { slackSignupUrl } = useEnv();
+
+    const options = {
+        autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+        debug: false, // enable logs
+    };
+    const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);    
+
+    const handleSignupClick = () => {
+        // Ref: https://developers.facebook.com/docs/meta-pixel/reference#standard-events
+        ReactPixel.track('CompleteRegistration');
+        ga.event({
+            action: "CompleteRegistration",
+            params: {
+                current_page: window.location.pathname
+            }
+        });
+    };
+
     
     return (
         <LayoutContainer container>
@@ -47,11 +69,12 @@ export default function SlackSignup({ previousPage }) {
                         rel="noopener noreferrer"
                         href={slackSignupUrl} >
                         <ButtonStyled                    
-                        href={`${slackSignupUrl}`}                            
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        variant="contained"
-                        color="primary">                        
+                            onClick={handleSignupClick}
+                            href={`${slackSignupUrl}`}                            
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            variant="contained"
+                            color="primary">                        
                             Signup for Opportunity Hack Slack
                         </ButtonStyled>
                     </Link>
