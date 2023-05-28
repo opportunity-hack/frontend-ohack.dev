@@ -1,17 +1,11 @@
 // Create page
 import React from 'react';
 import Link from 'next/link';
-import axios from 'axios';
-import { Stack, TextField } from '@mui/material';
-import { Button } from '@mui/material';
+import { Stack } from '@mui/material';
 import { Typography } from '@mui/material';
-import { useState } from 'react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useEnv } from '../../context/env.context';
 import Image from 'next/image';
-
 
 import {
     InnerContainer,

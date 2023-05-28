@@ -22,18 +22,14 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { Puff } from 'react-loading-icons';
 import { Parallax } from 'react-parallax';
 
-import { styled } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
 import { red } from '@mui/material/colors';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 import ReactMarkdown from 'react-markdown'
-import { useEnv } from '../../context/env.context';
+import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 
 
-import Stack from '@mui/material/Stack';
-import Alert from '@mui/material/Alert';
-import AlertTitle from '@mui/material/AlertTitle';
 import {
   // CardContainer,
   ChannelChip,
@@ -73,25 +69,10 @@ export default function NonProfit(props) {
     nonprofit_id
   } = props;
   const { user } = useAuth0();
-  const { loginWithRedirect } = useAuth0();
 
   const { isAdmin } = useAdmin();
   const [checked, setChecked] = useState([]);
   const [message, setMessage] = useState('');
-
-  const [expanded, setExpanded] = useState(false);
-  const { slackSignupUrl } = useEnv();
-  
-  const createSlackAccount = () => {
-    window.open(slackSignupUrl, '_blank', 'noopener noreferrer');
-  };
-
-  // TODO: Use?
-  /*
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
-  */
 
   const { handle_npo_problem_statement_edit, nonprofit } =
     useNonprofit(nonprofit_id);
@@ -153,7 +134,7 @@ export default function NonProfit(props) {
   var description = '';
 
   function getTwoLetters(str) {
-    if (typeof str === 'string' && str != '') {
+    if (typeof str === 'string' && str === '') {
       if (str.includes(' ')) {
         const strArr = str.split(' ');
         return strArr[0].charAt(0) + strArr[1].charAt(0);
@@ -201,51 +182,11 @@ export default function NonProfit(props) {
     }
   };
 
-  var loginCallToAction = (
-    <Stack alignItems='center' paddingTop={5}>
-      <Alert variant='outlined' severity='warning'>
-        <AlertTitle>
-          Whoa there - you need to login or create an account first.
-        </AlertTitle>
-
-        <Stack alignItems='center' spacing={2}>
-          <Stack direction='column' spacing={1}>
-            <button
-              className='button button--primary button--compact'
-              onClick={() =>
-                loginWithRedirect({
-                  appState: {
-                    returnTo: window.location.pathname,
-                    redirectUri: window.location.pathname,
-                  },
-                })
-              }
-            >
-              Log In
-            </button>
-
-            <Typography>
-              We use Slack to collaborate, if you already have an account, login
-              with Slack
-            </Typography>
-          </Stack>
-
-          <Stack direction='column' spacing={1}>
-            <button
-              onClick={createSlackAccount}
-              className='button button--primary'
-            >
-              Create a Slack account
-            </button>
-
-            <Typography>
-              If you don't have an account, you will need to create an account
-            </Typography>
-          </Stack>
-        </Stack>
-      </Alert>
-    </Stack>
-  );
+  var loginCallToAction = <LoginOrRegister
+    introText={"Whoa there - you need to login or create an account first."}
+    previousPage={"/nonprofit/" + nonprofit_id}
+    />
+  
 
   // More on meta tags
   // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254

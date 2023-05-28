@@ -1,17 +1,14 @@
 import React from "react";
 
 import ProblemStatement from "../../components/ProblemStatement/ProblemStatement";
-import Typography from "@mui/material/Typography";
 import { useRouter } from "next/router";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Puff } from "react-loading-icons";
 import useProblemstatements from "../../hooks/use-problem-statements";
 import Head from 'next/head';
+import LoginOrRegister from "../../components/LoginOrRegister/LoginOrRegister";
 
-import { useEnv } from "../../context/env.context";
-import Stack from "@mui/material/Stack";
-import Alert from "@mui/material/Alert";
-import AlertTitle from "@mui/material/AlertTitle";
+
 import {
   LayoutContainer,
   ProjectsContainer,
@@ -21,18 +18,14 @@ import { Link } from "@mui/material";
 
 
 export default function Project() {
-  const { user, loginWithRedirect } = useAuth0();
+  const { user } = useAuth0();
   const router = useRouter();
   const { project_id } = router.query;
   const { problem_statement } = useProblemstatements(project_id);
   console.log("project_id", project_id);
   console.log("problem_statement", problem_statement);
-  const { slackSignupUrl } = useEnv();
 
-  const createSlackAccount = () => {
-    window.open(slackSignupUrl, "_blank", "noopener noreferrer");
-  };
-
+ 
   
   if( problem_statement == null || problem_statement.title === "" || problem_statement.description === "")
   {
@@ -46,51 +39,11 @@ export default function Project() {
     );
   }
 
-  var loginCallToAction = (
-    <Stack alignItems="center" paddingTop={5}>
-      <Alert variant="outlined" severity="warning">
-        <AlertTitle>
-          Whoa there - you need to login or create an account first.
-        </AlertTitle>
+  var loginCallToAction = <LoginOrRegister
+    introText={"Whoa there - you need to login or create an account first."}
+    previousPage={`/project/${project_id}`}/>;
 
-        <Stack alignItems="center" spacing={2}>
-          <Stack direction="column" spacing={1}>
-            <button
-              className="button button--primary button--compact"
-              onClick={() =>
-                loginWithRedirect({
-                  appState: {
-                    returnTo: window.location.pathname,
-                    redirectUri: window.location.pathname,
-                  },
-                })
-              }
-            >
-              Log In
-            </button>
-
-            <Typography>
-              We use Slack to collaborate, if you already have an account, login
-              with Slack
-            </Typography>
-          </Stack>
-
-          <Stack direction="column" spacing={1}>
-            <button
-              onClick={createSlackAccount}
-              className="button button--primary"
-            >
-              Create a Slack account
-            </button>
-
-            <Typography>
-              If you don't have an account, you will need to create an account
-            </Typography>
-          </Stack>
-        </Stack>
-      </Alert>
-    </Stack>
-  );
+    
 
   var metaDescription = problem_statement.status + ": " + problem_statement.description + " ";
   var title = "Project: " + problem_statement.title;
