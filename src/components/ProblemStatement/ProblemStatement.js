@@ -61,6 +61,7 @@ import {
 
 import SkillSet from "../skill-set";
 import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
+import ReactPixel from 'react-facebook-pixel';
 
 import * as ga from '../../lib/ga';
 
@@ -84,6 +85,15 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   const { handle_help_toggle } = useProfileApi();
 
+  const options = {
+    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+    debug: false, // enable logs
+  };
+  const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+  ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+
+  console.log("USER:",user);
+
   const [expanded, setExpanded] = useState("");
   const handleChange = (panel) => (event, isExpanded) => {
     // Set user object and handle null
@@ -96,7 +106,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
       problem_statement_title: problem_statement.title,
       user_id: user_id
     }    
-
+    ReactPixel.trackCustom("problem_statement_accordion", params);
     ga.event({
       action: "problem_statement_accordion",
       params: params
@@ -155,36 +165,126 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
     if (event.target.checked) {
       // Only when selecting yes
       setOpen(true);
+      ReactPixel.track("Helping Dialog Opened", {
+        problem_statement_id: problem_statement.id,
+        problem_statement_title: problem_statement.title,
+        npo_id: npo_id,
+        user_id: user.sub
+        });
     } else {
       setOpenUnhelp(true);
+
+      ReactPixel.track("Not Helping Dialog Opened", {
+        problem_statement_id: problem_statement.id,
+        problem_statement_title: problem_statement.title,
+        npo_id: npo_id,
+        user_id: user.sub
+        });
     }
   };
 
   const handleLeavingTeam = (teamId) => {
     handle_unjoin_a_team(teamId, handleTeamLeavingResponse);
+
+    ReactPixel.track("Team Left", {
+      team_id: teamId
+      });
+
+    ga.event({
+      action: "team_left",
+      params: {
+        team_id: teamId
+      }
+    });
+
   };
 
   const handleJoiningTeam = (teamId) => {
     handle_join_team(teamId, handleTeamLeavingResponse);
+
+    ReactPixel.track("Team Joined", {
+      team_id: teamId
+      });
+    
+    ga.event({
+      action: "team_joined",
+      params: {
+        team_id: teamId
+      }
+    });
+
   };
 
   const handleTeamCreate = (problemStatementId, eventId) => {
     setNewTeamProblemStatementId(problemStatementId);
     setNewTeamEventId(eventId);
     setCreateTeamOpen(true); // Open the modal
+
+    ReactPixel.track("Team Create Dialog Opened", {
+      problem_statement_id: problemStatementId,
+      event_id: eventId
+      });
+
+    ga.event({
+      action: "team_create_dialog_opened",
+      params: {
+        problem_statement_id: problemStatementId,
+        event_id: eventId
+      }
+    });
+
   };
 
   const handleUpdateTeamName = (event) => {
     const value = event.target.value;
     setNewTeamName(value);
+
+    ReactPixel.track("Team Name Updated", {
+      team_name: value
+      });
+
+    ga.event({
+      action: "team_name_updated",
+      params: {
+        team_name: value
+      }
+    });
+
   };
 
   const handleUpdateSlackChannel = (event) => {
     const value = event.target.value;
     setNewTeamSlackChannel(value);
+
+    ReactPixel.track("Slack Channel Entered", {
+      slack_channel: value
+      });
+
+    ga.event({
+      action: "slack_channel_entered",
+      params: {
+        slack_channel: value
+      }
+    });
+
   };
 
   const handleConfirmTeamCreate = (event) => {
+    // Submit button pressed to create team
+    const params = {
+      team_name: newTeamName,
+      slack_channel: newTeamSlackChannel,
+      problem_statement_id: newTeamProblemStatementId,
+      event_id: newTeamEventId,
+      user_id: user.sub
+    }
+    ReactPixel.trackCustom("team_create", params);
+    ga.event({
+      action: "team_create",
+      params: params
+    })
+
+
     handle_new_team_submission(
       newTeamName,
       newTeamSlackChannel,
@@ -197,6 +297,15 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   };
 
   const handleTeamLeavingResponse = (data) => {
+    // Person left a team
+    ReactPixel.track("Team Left");
+    ga.event({
+      category: "Team",
+      action: "Team Left",
+      label: "Team",
+    });
+
+
     // console.log(data);
     // We don't do anything when someone leaves
   };
@@ -219,10 +328,33 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   const handleCloseTeamCreate = (event) => {
     setCreateTeamOpen(false); // Cancel or close selected
+    ReactPixel.track("Team Creation Dialog Closed", {
+      user_id: user.sub
+    });
+    ga.event({
+      category: "Team Creation",
+      action: "Team Creation Dialog Closed",
+      label: "Team Creation",
+    });
+
   };
 
   const handleClose = (event) => {
     // They wanted to start helping
+    ReactPixel.track("Helping: User Finalized Start Helping", {
+      problem_statement_id: problem_statement.id,
+      problem_statement_title: problem_statement.title,
+      npo_id: npo_id,
+      user_id: user.sub,
+      mentor_or_hacker: event.target.value
+      });
+    ga.event({
+      category: "Helping",
+      action: "User Finalized Helping",
+      label: "Helping",
+    });
+
+
     setOpen(false);
     setHelpedChecked("checked");
     setHelpingType(event.target.value);
@@ -237,6 +369,18 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   const handleCancel = (event) => {
     // They didn't want to start helping (cancel button pressed)
+    ReactPixel.track("Helping: User Canceled Helping", {
+      problem_statement_id: problem_statement.id,
+      problem_statement_title: problem_statement.title,
+      npo_id: npo_id,
+      user_id: user.sub
+      });
+    ga.event({
+      category: "Helping",
+      action: "User Canceled Helping",
+      label: "Helping",
+    });
+
     setOpen(false);
     setHelpedChecked("");
     setHelpingType("");
@@ -244,6 +388,18 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   const handleCloseUnhelp = (event) => {
     // They wanted to stop helping
+    ReactPixel.track("Helping: User Finalized Stop Helping", {
+      problem_statement_id: problem_statement.id,
+      problem_statement_title: problem_statement.title,
+      npo_id: npo_id,
+      user_id: user.sub
+    });
+    ga.event({
+      category: "Helping",
+      action: "User Finalized Stop Helping",
+      label: "Helping",
+    });
+
     setOpenUnhelp(false);
     setHelpedChecked("");
     setHelpingType("");
@@ -252,6 +408,13 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   const handleCloseUnhelpCancel = (event) => {
     // They didn't want to stop helping (cancel button pressed)
+    ReactPixel.track("Helping: User Canceled Stop Helping");
+    ga.event({
+      category: "Helping",
+      action: "User Canceled Stop Helping",
+      label: "Helping",
+    });
+
     setOpenUnhelp(false);
   };
 

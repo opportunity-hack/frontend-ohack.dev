@@ -25,13 +25,11 @@ import PlaceIcon from '@mui/icons-material/Place';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WarningIcon from '@mui/icons-material/Warning';
 import Autocomplete from "@mui/material/Autocomplete";
-import { useEnv } from "../../context/env.context";
 
 
 import {
   LayoutContainer,
   DetailsContainer,
-  TitleBanner,
   DescriptionStyled  
 } from "../../styles/nonprofits/apply/styles";
 
@@ -42,7 +40,6 @@ import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 export default function NonProfitApply() {
   const router = useRouter();
   let { nonprofits, handle_get_npo_form, handle_npo_form_submission } = useNonprofit();
-  const { slackSignupUrl } = useEnv();
   
   const { user } = useAuth0();
   var image = "/npo_placeholder.png";
@@ -54,9 +51,6 @@ export default function NonProfitApply() {
   const LOCATION_ARIZONA = "Phoenix, Arizona (to be determined)"
   const LOCATION = LOCATION_ARIZONA + " and virtual";
 
-  const createSlackAccount = () => {
-    window.open(slackSignupUrl, "_blank", "noopener noreferrer");
-  };
 
   nonprofits.forEach((item) => {
     if( item.name )
@@ -114,7 +108,9 @@ export default function NonProfitApply() {
 
 
   var loginCallToAction = <LoginOrRegister 
-      introText={"Whoa there - in order to submit this nonprofit form, you need to login or create an account first."} />;
+      introText={"Whoa there - in order to submit this nonprofit form, you need to login or create an account first."} 
+      previousPage={router.pathname}
+      />;
 
   const areasOfFocusSetState = (event) => {
     if (event.target.checked) {

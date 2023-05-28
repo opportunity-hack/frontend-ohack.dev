@@ -12,6 +12,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import * as ga from "../../lib/ga";
+import ReactPixel from 'react-facebook-pixel';
 
 import {
   NavbarContainer,
@@ -63,9 +64,20 @@ export default function NavBar() {
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
 
-  if (isAuthenticated) {
+
+  if (isAuthenticated) {    
     ga.set(user.email);
+
+    const advancedMatching = { em: user.email };
+    const options = {
+      autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+      debug: false, // enable logs
+    };
+    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    ReactPixel.track('Login Email Set');
   }
+
+
 
   useEffect(() => {
     // click outside handler
