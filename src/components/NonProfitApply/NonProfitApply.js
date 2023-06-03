@@ -17,8 +17,8 @@ import useNonprofit from "../../hooks/use-nonprofit";
 import { useAuth0 } from "@auth0/auth0-react";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
-import AlertTitle from "@mui/material/AlertTitle";
-import Typography from "@mui/material/Typography";
+
+
 import Moment from 'moment';
 import Image from 'next/image';
 import PlaceIcon from '@mui/icons-material/Place';
@@ -26,6 +26,9 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WarningIcon from '@mui/icons-material/Warning';
 import Autocomplete from "@mui/material/Autocomplete";
 
+import ReactRecaptcha3 from 'react-google-recaptcha3';
+
+import axios from "axios";
 
 import {
   LayoutContainer,
@@ -44,24 +47,30 @@ export default function NonProfitApply() {
   const { user } = useAuth0();
   var image = "/npo_placeholder.png";
   var nonProfitOptions = [];
-
+  
+  useEffect(() => {
+    ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY).then(
+      (status) => {
+        // console.log(status); // Should log SUCCESS
+      }
+    );
+  }, []);
 
   const START_DATE = "Saturday, Oct 7th";
   const END_DATE = "Sunday, Oct 8th 2023";
   const LOCATION_ARIZONA = "Phoenix, Arizona (to be determined)"
   const LOCATION = LOCATION_ARIZONA + " and virtual";
 
-
-  nonprofits.forEach((item) => {
+  nonprofits && nonprofits.forEach((item) => {
     if( item.name )
     {
       nonProfitOptions.push(item.name);
     }
   });
-
-
   
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState('');
+
+  const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState("");
   const [formState, setFormState] = useState({
     charityName: "",
@@ -203,12 +212,37 @@ export default function NonProfitApply() {
     }
   }
 
-  const handleSubmit = async () => {
-    return handle_npo_form_submission(formState, onComplete)
+  const [ip, setIP] = useState("");
+
+  const getIP = async () => {
+    const res = await axios.get("https://api.ipify.org/?format=json");    
+    setIP(res.data.ip);
+  };
+
+  useEffect(() => {
+    //passing getData method to the lifecycle method
+    getIP();
+  }, []);
+
+
+  const handleFormSubmit = async () => {
+    ReactRecaptcha3.getToken().then(
+      (atoken) => {        
+        setToken(atoken);
+        formState.token = atoken;
+        formState.ip = ip;        
+        return handle_npo_form_submission(formState, onComplete)
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+
+    
   };
   
 
-  return (
+  return (   
     <LayoutContainer key="apply_form" container>
       <Head>
         <title>Nonprofit Application for Opportunity Hack 2023 {START_DATE} & {END_DATE}</title>
@@ -217,8 +251,7 @@ export default function NonProfitApply() {
           content="Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem."
         />
       </Head>
-
-      {!user && loginCallToAction}
+      
       <DetailsContainer container>
         <DescriptionStyled>
 
@@ -296,12 +329,8 @@ export default function NonProfitApply() {
       </DetailsContainer>
 
       
-
-      { !loading && user && <div>
-      
       <DetailsContainer container>   
-              
-       
+                     
         <DescriptionStyled>
           
           <p>
@@ -390,8 +419,9 @@ export default function NonProfitApply() {
             </Alert>
           
         </DescriptionStyled>
-        <DescriptionStyled>
-          <br />
+        
+        <Stack direction="row" spacing={2}  alignItems="flex-start" mt={3}>
+        <DescriptionStyled>          
           <b>Areas of focus for your non-profit?</b>
           <FormGroup>
             <FormControlLabel
@@ -485,8 +515,7 @@ export default function NonProfitApply() {
           </FormGroup>
         </DescriptionStyled>
 
-        <DescriptionStyled>
-          <br />
+        <DescriptionStyled>          
           <b>
             Does your organization or program serve a majority (51% or more) of
             any of the following populations?
@@ -604,6 +633,7 @@ export default function NonProfitApply() {
             />
           </FormGroup>
         </DescriptionStyled>
+        </Stack>
       </DetailsContainer>
 
       <DetailsContainer container>
@@ -879,25 +909,23 @@ export default function NonProfitApply() {
           </FormGroup>
         </DescriptionStyled>
       </DetailsContainer>
-      <DetailsContainer container>
-        <DescriptionStyled>
-          {
-            // Loading/Save button with status uses MUI Lab
-          }
+      <DetailsContainer container>                
+        <DescriptionStyled>         
             <LoadingButton
               color="secondary"
               loading={loading}
               loadingPosition="start"
               startIcon={<SaveIcon />}
               variant="contained"
-              onClick={handleSubmit}
+              onClick={handleFormSubmit}
             >
               <span>Submit</span>
             </LoadingButton>
           &nbsp;{submitStatus}
+
         </DescriptionStyled>
       </DetailsContainer>
-      </div>}
+      
     </LayoutContainer>
   );
 }
