@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 
 import { useRouter } from "next/router";
 
@@ -38,7 +38,7 @@ import {
 
 
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
-
+import ReactPixel from 'react-facebook-pixel';
 
 export default function NonProfitApply() {
   const router = useRouter();
@@ -48,6 +48,18 @@ export default function NonProfitApply() {
   var image = "/npo_placeholder.png";
   var nonProfitOptions = [];
   
+
+  const options = {
+    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+    debug: false, // enable logs
+  };
+  var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+  if( user && user.email )
+  {
+    advancedMatching = { em: user.email };
+  }
+  ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+
   useEffect(() => {
     ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY).then(
       (status) => {
@@ -72,6 +84,8 @@ export default function NonProfitApply() {
 
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState("");
+  const [showLogin, setShowLogin] = useState(false);
+
   const [formState, setFormState] = useState({
     charityName: "",
     charityLocation: "",
@@ -117,11 +131,19 @@ export default function NonProfitApply() {
 
 
   var loginCallToAction = <LoginOrRegister 
-      introText={"Whoa there - in order to submit this nonprofit form, you need to login or create an account first."} 
+      introText={"Please consider logging in or creating an account. You'll need a Slack account for the hackathon."} 
       previousPage={router.pathname}
       />;
 
   const areasOfFocusSetState = (event) => {
+    ReactPixel.track('NPO: Area of Focus', {
+      content_name: 'Nonprofit Application',
+      status: event.target.checked,
+      content_category: 'Nonprofit Application',
+      value: 0.00,
+      currency: 'USD',
+    });
+
     if (event.target.checked) {
       const areasOfFocus = [...formState.areasOfFocus, event.target.name];
       setFormState({
@@ -141,6 +163,14 @@ export default function NonProfitApply() {
   };
 
   const servedPopulationsSetState = (event) => {
+    ReactPixel.track('NPO: Served Populations', {
+      content_name: 'Nonprofit Application',
+      status: event.target.checked,
+      content_category: 'Nonprofit Application',
+      value: 0.00,
+      currency: 'USD',
+    });
+
     if (event.target.checked) {
       const servedPopulations = [
         ...formState.servedPopulations,
@@ -165,6 +195,14 @@ export default function NonProfitApply() {
   };
 
   const keyStaffAvailabilitySetState = (event) => {
+    ReactPixel.track('NPO: Key Staff Available', {
+      content_name: 'Nonprofit Application',
+      status: event.target.checked,
+      content_category: 'Nonprofit Application',
+      value: 0.00,
+      currency: 'USD',
+    });
+
     if (event.target.checked) {
       const keyStaffAvailability = [
         ...formState.keyStaffAvailability,
@@ -194,8 +232,16 @@ export default function NonProfitApply() {
       setSubmitStatus("");
     }, 6000);
 
+    setShowLogin(true);
     if( success )
     {    
+      ReactPixel.track('NonProfit Form Submitted', {
+        content_name: 'Nonprofit Application',
+        status: "Submitted",
+        content_category: 'Nonprofit Application',
+        value: 1.00,
+        currency: 'USD',
+      });
       setSubmitStatus(<div><CheckCircleOutlineIcon sx={{
         color: 'green',
         fontSize: 20        
@@ -204,6 +250,14 @@ export default function NonProfitApply() {
     }
     else
     {
+      ReactPixel.track('NonProfit Form Error Submitting', {
+        content_name: 'Nonprofit Application',
+        status: "Error",
+        content_category: 'Nonprofit Application',
+        value: 0.50,
+        currency: 'USD',
+      });
+
       setSubmitStatus(<div><WarningIcon sx={{
         color: 'red',
         fontSize: 20
@@ -234,7 +288,7 @@ export default function NonProfitApply() {
         return handle_npo_form_submission(formState, onComplete)
       },
       (error) => {
-        console.log(error);
+        // console.log(error);
       }
     );
 
@@ -344,6 +398,14 @@ export default function NonProfitApply() {
               disablePortal
               value={formState.charityName}
               onChange={(event, newValue) => {
+                ReactPixel.track('NPO: Charity Name', {
+                  content_name: 'Nonprofit Application',
+                  status: newValue,
+                  content_category: 'Nonprofit Application',
+                  value: 0.00,
+                  currency: 'USD',
+                });
+
                 if( newValue == null )
                 {
                   newValue = "";
@@ -776,6 +838,14 @@ export default function NonProfitApply() {
             required
             defaultValue={formState.solutionBenefits}
             onChange={(event) => {
+              ReactPixel.track('NPO: Solution Benefits', {
+                content_name: 'Nonprofit Application',
+                status: event.target.value,
+                content_category: 'Nonprofit Application',
+                value: 0.01,
+                currency: 'USD',
+              });
+
               setFormState({
                 ...formState,
                 solutionBenefits: event.target.value,
@@ -810,6 +880,14 @@ export default function NonProfitApply() {
                 name="familiarWithSlack"
                 checked={formState.familiarWithSlack}
                 onChange={(event) => {
+                  ReactPixel.track('NPO: Familiar with Slack', {
+                    content_name: 'Nonprofit Application',
+                    status: event.target.checked,
+                    content_category: 'Nonprofit Application',
+                    value: 0.05,
+                    currency: 'USD',
+                  });
+
                   setFormState({
                     ...formState,
                     familiarWithSlack: event.target.checked,
@@ -922,8 +1000,8 @@ export default function NonProfitApply() {
               <span>Submit</span>
             </LoadingButton>
           &nbsp;{submitStatus}
-
-        </DescriptionStyled>
+          {!user && showLogin && loginCallToAction}
+        </DescriptionStyled>        
       </DetailsContainer>
       
     </LayoutContainer>
