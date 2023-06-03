@@ -39,6 +39,8 @@ import {
 
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 import ReactPixel from 'react-facebook-pixel';
+import * as ga from '../../lib/ga';
+
 
 export default function NonProfitApply() {
   const router = useRouter();
@@ -102,7 +104,17 @@ export default function NonProfitApply() {
     keyStaffAvailability: [],
   });
 
+  const [ip, setIP] = useState("");
 
+  const getIP = async () => {
+    const res = await axios.get("https://api.ipify.org/?format=json");
+    setIP(res.data.ip);
+  };
+
+  useEffect(() => {
+    //passing getData method to the lifecycle method
+    getIP();
+  }, []);
 
   // Do this once on load with useEffect
   useEffect(() => {        
@@ -120,8 +132,8 @@ export default function NonProfitApply() {
 
     };
 
-    handle_get_npo_form(handleFormLoad);
-  }, [user]);  
+    handle_get_npo_form(ip, handleFormLoad);
+  }, [user, ip]);  
 
   var formSubmissionDate = null;
   if( formState.timeStamp ){
@@ -234,7 +246,13 @@ export default function NonProfitApply() {
 
     setShowLogin(true);
     if( success )
-    {    
+    {        
+      setSubmitStatus(<div><CheckCircleOutlineIcon sx={{
+        color: 'green',
+        fontSize: 20        
+      }} /> Saved Successfully</div>);
+      // console.log("success");
+
       ReactPixel.track('NonProfit Form Submitted', {
         content_name: 'Nonprofit Application',
         status: "Submitted",
@@ -242,11 +260,17 @@ export default function NonProfitApply() {
         value: 1.00,
         currency: 'USD',
       });
-      setSubmitStatus(<div><CheckCircleOutlineIcon sx={{
-        color: 'green',
-        fontSize: 20        
-      }} /> Saved Successfully</div>);
-      // console.log("success");
+
+      ga.event({
+        action: 'NonProfit Form Submitted',
+        params: {
+          content_name: 'Nonprofit Application',
+          status: "Submitted",
+          content_category: 'Nonprofit Application',
+          value: 1.00,
+          currency: 'USD',
+        }
+      });
     }
     else
     {
@@ -258,6 +282,17 @@ export default function NonProfitApply() {
         currency: 'USD',
       });
 
+      ga.event({
+        action: 'NonProfit Form Error Submitting',
+        params: {
+          content_name: 'Nonprofit Application',
+          status: "Error",
+          content_category: 'Nonprofit Application',
+          value: 0.50,
+          currency: 'USD',
+        }
+      });
+
       setSubmitStatus(<div><WarningIcon sx={{
         color: 'red',
         fontSize: 20
@@ -266,17 +301,7 @@ export default function NonProfitApply() {
     }
   }
 
-  const [ip, setIP] = useState("");
-
-  const getIP = async () => {
-    const res = await axios.get("https://api.ipify.org/?format=json");    
-    setIP(res.data.ip);
-  };
-
-  useEffect(() => {
-    //passing getData method to the lifecycle method
-    getIP();
-  }, []);
+  
 
 
   const handleFormSubmit = async () => {
@@ -292,7 +317,6 @@ export default function NonProfitApply() {
       }
     );
 
-    
   };
   
 
@@ -405,6 +429,17 @@ export default function NonProfitApply() {
                   value: 0.00,
                   currency: 'USD',
                 });
+
+                ga.event({
+                  action: 'NPO: Charity Name',
+                  params: {
+                    content_name: 'Nonprofit Application',
+                    status: newValue,
+                    content_category: 'Nonprofit Application',
+                    value: 0.00,
+                    currency: 'USD',
+                  }
+                });                
 
                 if( newValue == null )
                 {
@@ -887,6 +922,17 @@ export default function NonProfitApply() {
                     value: 0.05,
                     currency: 'USD',
                   });
+
+                  ga.event({
+                    action: 'NPO: Familiar with Slack',
+                    params: {
+                      content_name: 'Nonprofit Application',
+                      status: event.target.checked,
+                      content_category: 'Nonprofit Application',
+                      value: 0.05,
+                      currency: 'USD',
+                    }
+                  });                  
 
                   setFormState({
                     ...formState,

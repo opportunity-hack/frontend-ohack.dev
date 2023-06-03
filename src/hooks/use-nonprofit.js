@@ -48,7 +48,8 @@ export default function useNonprofit( nonprofit_id ){
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "X-IP-Address": formData.ip
             },
             data: JSON.stringify(formData)
         };
@@ -67,13 +68,13 @@ export default function useNonprofit( nonprofit_id ){
     };
 
     // Use memoization to prevent unnecessary re-renders
-    const handle_get_npo_form = async (onComplete) => {      
-
+    const handle_get_npo_form = async (ip, onComplete) => {              
         const config = {
             url: `${apiNodeJsServerUrl}/api/nonprofit-application`,            
             method: "GET",
             headers: {                
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "X-IP-Address": ip
             }            
         };
 
