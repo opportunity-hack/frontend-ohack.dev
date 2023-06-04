@@ -68,7 +68,7 @@ export default function useNonprofit( nonprofit_id ){
 
     // Use memoization to prevent unnecessary re-renders
     const handle_get_npo_form = async (ip, onComplete) => {                      
-        var data = null;
+        
 
         if( user ) 
         {
@@ -82,10 +82,20 @@ export default function useNonprofit( nonprofit_id ){
             };
 
             console.log("Authenticated user, adding token to request");            
-            data = await makeRequest({ config, authenticated: true });        
+            const data = await makeRequest({ config, authenticated: true });        
+            onComplete(data);
         }
         else
         {
+            if( ip === null || ip === undefined || ip === "" )
+            {
+                console.log("IP is null, cannot make request");
+                return null;
+            }
+            else{
+                console.log("IP is not null, making request");
+            }
+
             const config = {
                 url: `${apiNodeJsServerUrl}/api/public/nonprofit-application`,
                 method: "GET",
@@ -95,12 +105,13 @@ export default function useNonprofit( nonprofit_id ){
                 }
             };
             console.log("Unauthenticated user");
-            data = await makeRequest({ config, authenticated: false });        
+            const data = await makeRequest({ config, authenticated: false });        
+            onComplete(data);
         }        
         
-        onComplete(data);
+        
 
-        return data;
+        //return data;
     };
 
     const handle_new_npo_submission = async (name, email, npoName, description, website, slack_channel, checked, onComplete) => {
