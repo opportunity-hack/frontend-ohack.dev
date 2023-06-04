@@ -31,9 +31,24 @@ export const getStaticProps = async () => {
                     key: "title"
                 },
                 {
+                    name: "og:title",
+                    content: "Nonprofit Application for Opportunity Hack 2023!",
+                    key: "ogtitle"
+                },
+                {
+                    name: "og:description",
+                    content: "Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem!",
+                    key: "ogdescription"
+                },
+                {
                     name: "image",
                     content: "https://i.imgur.com/hE3wm7M.png",
                     key: "image"
+                },
+                {
+                    name: "og:image",
+                    content: "https://i.imgur.com/hE3wm7M.png",
+                    key: "ogimage"
                 },
                 {
                     name: "url",
