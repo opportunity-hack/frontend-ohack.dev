@@ -12,7 +12,6 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
-import Head from "next/head";
 import useNonprofit from "../../hooks/use-nonprofit";
 import { useAuth0 } from "@auth0/auth0-react";
 import Stack from "@mui/material/Stack";
@@ -321,26 +320,7 @@ export default function NonProfitApply() {
   
 
   return (   
-    <LayoutContainer key="apply_form" container>
-      <Head>
-        <title>Nonprofit Application for Opportunity Hack 2023 {START_DATE} & {END_DATE}</title>
-        <meta
-          name="description"
-          content="Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem."
-        />
-        <meta
-          property="og:title"
-          content="Nonprofit Application for Opportunity Hack 2023"
-        />
-        <meta
-          property="og:description"
-          content="Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem."
-        />
-        <meta property="og:image" content="https://i.imgur.com/hE3wm7M.png" />
-        <meta property="og:url" content="https://www.ohack.org/nonprofits/apply" />
-        <meta name="twitter:card" content="summary_large_image" />   
-      </Head>
-      
+    <LayoutContainer key="apply_form" container>            
       <DetailsContainer container>
         <DescriptionStyled>
 
