@@ -260,7 +260,12 @@ export default function NavBar() {
               <LoginButton
                 variant="contained"
                 disableElevation
-                onClick={() => loginWithRedirect()}
+                  onClick={() => loginWithRedirect({
+                    appState: {
+                      returnTo: window.location.pathname,
+                      redirectUri: window.location.pathname,
+                    },
+                  })}
                 className="login-button"
               >
                 Log In
