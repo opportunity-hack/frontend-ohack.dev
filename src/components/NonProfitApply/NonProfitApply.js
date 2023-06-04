@@ -12,7 +12,6 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
-import Head from "next/head";
 import useNonprofit from "../../hooks/use-nonprofit";
 import { useAuth0 } from "@auth0/auth0-react";
 import Stack from "@mui/material/Stack";
@@ -104,7 +103,7 @@ export default function NonProfitApply() {
     keyStaffAvailability: [],
   });
 
-  const [ip, setIP] = useState("");
+  const [ip, setIP] = useState(null);
 
   const getIP = async () => {
     const res = await axios.get("https://api.ipify.org/?format=json");
@@ -119,14 +118,14 @@ export default function NonProfitApply() {
   // Do this once on load with useEffect
   useEffect(() => {        
     const handleFormLoad = (data) => {
-      // console.log("Recevied handleFormLoad data: ", data);
+      console.log("Recevied handleFormLoad data: ", data);
       setLoading(false);
 
       if(data.status != null && data.status === 404)
       {
         console.log("No application yet.  Returning empty form.");
-      } else if(data) {
-        // console.log("Found application.  Setting form state.");
+      } else if( data !== undefined && data !== null) {
+        console.log("Found application.  Setting form state.");        
         setFormState(data);
       }      
 
@@ -321,15 +320,7 @@ export default function NonProfitApply() {
   
 
   return (   
-    <LayoutContainer key="apply_form" container>
-      <Head>
-        <title>Nonprofit Application for Opportunity Hack 2023 {START_DATE} & {END_DATE}</title>
-        <meta
-          name="description"
-          content="Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem."
-        />
-      </Head>
-      
+    <LayoutContainer key="apply_form" container>            
       <DetailsContainer container>
         <DescriptionStyled>
 
@@ -527,7 +518,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Economic Empowerment"
                   onChange={areasOfFocusSetState}
-                  checked={ formState.areasOfFocus.includes("Economic Empowerment") }                  
+                    checked={formState.areasOfFocus && formState.areasOfFocus.includes("Economic Empowerment") }                  
                 />
               }
               label="Economic Empowerment"
@@ -538,7 +529,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Education"
                   onChange={areasOfFocusSetState}
-                  checked={ formState.areasOfFocus.includes("Education") }
+                    checked={formState.areasOfFocus && formState.areasOfFocus.includes("Education") }
                 />
               }
               label="Education"
@@ -549,7 +540,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Animals"
                   onChange={areasOfFocusSetState}
-                  checked={ formState.areasOfFocus.includes("Animals") }
+                    checked={formState.areasOfFocus && formState.areasOfFocus.includes("Animals") }
                 />
               }
               label="Animals"
@@ -560,7 +551,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Environmental Sustainability"
                   onChange={areasOfFocusSetState}
-                  checked={ formState.areasOfFocus.includes("Environmental Sustainability") }
+                    checked={formState.areasOfFocus && formState.areasOfFocus.includes("Environmental Sustainability") }
                 />
               }
               label="Environmental Sustainability"
@@ -571,7 +562,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Career Mentoring"
                   onChange={areasOfFocusSetState}
-                  checked={ formState.areasOfFocus.includes("Career Mentoring")}
+                    checked={formState.areasOfFocus && formState.areasOfFocus.includes("Career Mentoring")}
                 />
               }
               label="Career Mentoring"
@@ -582,7 +573,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Arts & Culture"
                   onChange={areasOfFocusSetState}
-                  checked={ formState.areasOfFocus.includes("Arts & Culture")}
+                    checked={formState.areasOfFocus && formState.areasOfFocus.includes("Arts & Culture")}
                 />
               }
               label="Arts & Culture"
@@ -593,7 +584,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Health and Human Services"
                   onChange={areasOfFocusSetState}
-                  checked={ formState.areasOfFocus.includes("Health and Human Services")}
+                    checked={formState.areasOfFocus && formState.areasOfFocus.includes("Health and Human Services")}
                 />
               }
               label="Health and Human Services"
@@ -604,7 +595,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Other areas"
                   onChange={areasOfFocusSetState}
-                  checked={ formState.areasOfFocus.includes("Other areas")}
+                    checked={formState.areasOfFocus && formState.areasOfFocus.includes("Other areas")}
                 />
               }
               label="Other areas"
@@ -624,7 +615,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Women"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("Women") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("Women") }
                 />
               }
               label="Women"
@@ -635,7 +626,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Black"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("Black") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("Black") }
                 />
               }
               label="Black"
@@ -646,7 +637,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Indigenous"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("Indigenous") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("Indigenous") }
                 />
               }
               label="Indigenous"
@@ -657,7 +648,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Asian"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("Asian") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("Asian") }
                 />
               }
               label="Asian"
@@ -668,7 +659,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="LatinX"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("LatinX") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("LatinX") }
                 />
               }
               label="LatinX"
@@ -679,7 +670,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Disabled"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("Disabled") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("Disabled") }
                 />
               }
               label="Disabled"
@@ -690,7 +681,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="LGBTQUIA+"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("LGBTQUIA+") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("LGBTQUIA+") }
                 />
               }
               label="LGBTQIA+"
@@ -701,7 +692,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Veterans"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("Veterans") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("Veterans") }
                 />
               }
               label="Veterans"
@@ -712,7 +703,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Immigrants/ Refugees"
                   onChange={servedPopulationsSetState}
-                  checked={formState.servedPopulations.includes("Immigrants/ Refugees")}
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("Immigrants/ Refugees")}
                 />
               }
               label="Immigrants/Refugees"
@@ -723,7 +714,7 @@ export default function NonProfitApply() {
                   type="checkbox"
                   name="Other"
                   onChange={servedPopulationsSetState}
-                  checked={ formState.servedPopulations.includes("Other") }
+                    checked={formState.servedPopulations && formState.servedPopulations.includes("Other") }
                 />
               }
               label="Other"
@@ -966,7 +957,7 @@ export default function NonProfitApply() {
                 <Checkbox
                   type="checkbox"
                   name="They will be available remotely throughout the entire period by phone"
-                  checked={formState.keyStaffAvailability.includes("They will be available remotely throughout the entire period by phone")}
+                  checked={formState.keyStaffAvailability && formState.keyStaffAvailability.includes("They will be available remotely throughout the entire period by phone")}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
@@ -977,7 +968,7 @@ export default function NonProfitApply() {
                 <Checkbox
                   type="checkbox"
                   name="They will be available remotely throughout the entire period by email and Slack"
-                  checked={formState.keyStaffAvailability.includes("They will be available remotely throughout the entire period by email and Slack")}
+                  checked={formState.keyStaffAvailability && formState.keyStaffAvailability.includes("They will be available remotely throughout the entire period by email and Slack")}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
@@ -988,7 +979,7 @@ export default function NonProfitApply() {
                 <Checkbox
                   type="checkbox"
                   name="Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th"
-                    checked={formState.keyStaffAvailability.includes("Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th")}
+                  checked={formState.keyStaffAvailability && formState.keyStaffAvailability.includes("Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th")}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
@@ -999,7 +990,7 @@ export default function NonProfitApply() {
                 <Checkbox
                   type="checkbox"
                   name="Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th"
-                    checked={formState.keyStaffAvailability.includes("Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th")}
+                  checked={formState.keyStaffAvailability && formState.keyStaffAvailability.includes("Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th")}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
