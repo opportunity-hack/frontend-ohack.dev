@@ -23,9 +23,7 @@ export default function Home() {
       </Head>
 
       <HeroBanner />
-      <HackathonList />
-      <PreviousHackathonList />  
-      <OHackFeatures />
+      
     </Fragment>
   );
 }
