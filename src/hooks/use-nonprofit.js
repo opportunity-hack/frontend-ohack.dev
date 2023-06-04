@@ -42,25 +42,22 @@ export default function useNonprofit( nonprofit_id ){
     }, [getAccessTokenSilently]);
 
 
-    const handle_npo_form_submission = async (formData, onComplete) => {
-        if (!user)
-            return null;
-
+    const handle_npo_form_submission = async (formData, onComplete) => {     
         const config = {
             url: `${apiNodeJsServerUrl}/api/nonprofit-submit-application`,            
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "X-IP-Address": formData.ip
             },
             data: JSON.stringify(formData)
         };
-
-        console.log(config);
-        const data = await makeRequest({ config, authenticated: true });
+        
+        const data = await makeRequest({ config, authenticated: user ? true : false });
         // Check if data.message exists 
         // If it does, then we know that the submission was successful
-        // If it doesn't, then we know that the submission failed
+        // If it doesn't, then we know that the submission failed        
         if (data.message) {
             onComplete(data.message, true);
         } else {
@@ -70,20 +67,37 @@ export default function useNonprofit( nonprofit_id ){
     };
 
     // Use memoization to prevent unnecessary re-renders
-    const handle_get_npo_form = async (onComplete) => {
-        if (!user)
-            return null;
+    const handle_get_npo_form = async (ip, onComplete) => {                      
+        var data = null;
 
-        const config = {
-            url: `${apiNodeJsServerUrl}/api/nonprofit-application`,            
-            method: "GET",
-            headers: {                
-                "Accept": "application/json"
-            }            
-        };
+        if( user ) 
+        {
+            const config = {
+                url: `${apiNodeJsServerUrl}/api/nonprofit-application`,
+                method: "GET",
+                headers: {
+                    "Accept": "application/json",
+                    "X-IP-Address": ip
+                }
+            };
 
-        console.log(config);
-        const data = await makeRequest({ config, authenticated: true });        
+            console.log("Authenticated user, adding token to request");            
+            data = await makeRequest({ config, authenticated: true });        
+        }
+        else
+        {
+            const config = {
+                url: `${apiNodeJsServerUrl}/api/public/nonprofit-application`,
+                method: "GET",
+                headers: {
+                    "Accept": "application/json",
+                    "X-IP-Address": ip
+                }
+            };
+            console.log("Unauthenticated user");
+            data = await makeRequest({ config, authenticated: false });        
+        }        
+        
         onComplete(data);
 
         return data;

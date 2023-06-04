@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 
 import { useRouter } from "next/router";
 
@@ -17,8 +17,8 @@ import useNonprofit from "../../hooks/use-nonprofit";
 import { useAuth0 } from "@auth0/auth0-react";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
-import AlertTitle from "@mui/material/AlertTitle";
-import Typography from "@mui/material/Typography";
+
+
 import Moment from 'moment';
 import Image from 'next/image';
 import PlaceIcon from '@mui/icons-material/Place';
@@ -26,6 +26,9 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WarningIcon from '@mui/icons-material/Warning';
 import Autocomplete from "@mui/material/Autocomplete";
 
+import ReactRecaptcha3 from 'react-google-recaptcha3';
+
+import axios from "axios";
 
 import {
   LayoutContainer,
@@ -35,6 +38,8 @@ import {
 
 
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
+import ReactPixel from 'react-facebook-pixel';
+import * as ga from '../../lib/ga';
 
 
 export default function NonProfitApply() {
@@ -44,25 +49,45 @@ export default function NonProfitApply() {
   const { user } = useAuth0();
   var image = "/npo_placeholder.png";
   var nonProfitOptions = [];
+  
 
+  const options = {
+    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+    debug: false, // enable logs
+  };
+  var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+  if( user && user.email )
+  {
+    advancedMatching = { em: user.email };
+  }
+  ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+
+  useEffect(() => {
+    ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY).then(
+      (status) => {
+        // console.log(status); // Should log SUCCESS
+      }
+    );
+  }, []);
 
   const START_DATE = "Saturday, Oct 7th";
   const END_DATE = "Sunday, Oct 8th 2023";
   const LOCATION_ARIZONA = "Phoenix, Arizona (to be determined)"
   const LOCATION = LOCATION_ARIZONA + " and virtual";
 
-
-  nonprofits.forEach((item) => {
+  nonprofits && nonprofits.forEach((item) => {
     if( item.name )
     {
       nonProfitOptions.push(item.name);
     }
   });
-
-
   
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState('');
+
+  const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState("");
+  const [showLogin, setShowLogin] = useState(false);
+
   const [formState, setFormState] = useState({
     charityName: "",
     charityLocation: "",
@@ -79,7 +104,17 @@ export default function NonProfitApply() {
     keyStaffAvailability: [],
   });
 
+  const [ip, setIP] = useState("");
 
+  const getIP = async () => {
+    const res = await axios.get("https://api.ipify.org/?format=json");
+    setIP(res.data.ip);
+  };
+
+  useEffect(() => {
+    //passing getData method to the lifecycle method
+    getIP();
+  }, []);
 
   // Do this once on load with useEffect
   useEffect(() => {        
@@ -97,8 +132,8 @@ export default function NonProfitApply() {
 
     };
 
-    handle_get_npo_form(handleFormLoad);
-  }, [user]);  
+    handle_get_npo_form(ip, handleFormLoad);
+  }, [user, ip]);  
 
   var formSubmissionDate = null;
   if( formState.timeStamp ){
@@ -108,11 +143,19 @@ export default function NonProfitApply() {
 
 
   var loginCallToAction = <LoginOrRegister 
-      introText={"Whoa there - in order to submit this nonprofit form, you need to login or create an account first."} 
+      introText={"Please consider logging in or creating an account. You'll need a Slack account for the hackathon."} 
       previousPage={router.pathname}
       />;
 
   const areasOfFocusSetState = (event) => {
+    ReactPixel.track('NPO: Area of Focus', {
+      content_name: 'Nonprofit Application',
+      status: event.target.checked,
+      content_category: 'Nonprofit Application',
+      value: 0.00,
+      currency: 'USD',
+    });
+
     if (event.target.checked) {
       const areasOfFocus = [...formState.areasOfFocus, event.target.name];
       setFormState({
@@ -132,6 +175,14 @@ export default function NonProfitApply() {
   };
 
   const servedPopulationsSetState = (event) => {
+    ReactPixel.track('NPO: Served Populations', {
+      content_name: 'Nonprofit Application',
+      status: event.target.checked,
+      content_category: 'Nonprofit Application',
+      value: 0.00,
+      currency: 'USD',
+    });
+
     if (event.target.checked) {
       const servedPopulations = [
         ...formState.servedPopulations,
@@ -156,6 +207,14 @@ export default function NonProfitApply() {
   };
 
   const keyStaffAvailabilitySetState = (event) => {
+    ReactPixel.track('NPO: Key Staff Available', {
+      content_name: 'Nonprofit Application',
+      status: event.target.checked,
+      content_category: 'Nonprofit Application',
+      value: 0.00,
+      currency: 'USD',
+    });
+
     if (event.target.checked) {
       const keyStaffAvailability = [
         ...formState.keyStaffAvailability,
@@ -185,16 +244,55 @@ export default function NonProfitApply() {
       setSubmitStatus("");
     }, 6000);
 
+    setShowLogin(true);
     if( success )
-    {    
+    {        
       setSubmitStatus(<div><CheckCircleOutlineIcon sx={{
         color: 'green',
         fontSize: 20        
       }} /> Saved Successfully</div>);
       // console.log("success");
+
+      ReactPixel.track('NonProfit Form Submitted', {
+        content_name: 'Nonprofit Application',
+        status: "Submitted",
+        content_category: 'Nonprofit Application',
+        value: 1.00,
+        currency: 'USD',
+      });
+
+      ga.event({
+        action: 'NonProfit Form Submitted',
+        params: {
+          content_name: 'Nonprofit Application',
+          status: "Submitted",
+          content_category: 'Nonprofit Application',
+          value: 1.00,
+          currency: 'USD',
+        }
+      });
     }
     else
     {
+      ReactPixel.track('NonProfit Form Error Submitting', {
+        content_name: 'Nonprofit Application',
+        status: "Error",
+        content_category: 'Nonprofit Application',
+        value: 0.50,
+        currency: 'USD',
+      });
+
+      ga.event({
+        action: 'NonProfit Form Error Submitting',
+        params: {
+          content_name: 'Nonprofit Application',
+          status: "Error",
+          content_category: 'Nonprofit Application',
+          value: 0.50,
+          currency: 'USD',
+        }
+      });
+
       setSubmitStatus(<div><WarningIcon sx={{
         color: 'red',
         fontSize: 20
@@ -203,12 +301,26 @@ export default function NonProfitApply() {
     }
   }
 
-  const handleSubmit = async () => {
-    return handle_npo_form_submission(formState, onComplete)
+  
+
+
+  const handleFormSubmit = async () => {
+    ReactRecaptcha3.getToken().then(
+      (atoken) => {        
+        setToken(atoken);
+        formState.token = atoken;
+        formState.ip = ip;        
+        return handle_npo_form_submission(formState, onComplete)
+      },
+      (error) => {
+        // console.log(error);
+      }
+    );
+
   };
   
 
-  return (
+  return (   
     <LayoutContainer key="apply_form" container>
       <Head>
         <title>Nonprofit Application for Opportunity Hack 2023 {START_DATE} & {END_DATE}</title>
@@ -217,8 +329,7 @@ export default function NonProfitApply() {
           content="Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem."
         />
       </Head>
-
-      {!user && loginCallToAction}
+      
       <DetailsContainer container>
         <DescriptionStyled>
 
@@ -296,12 +407,8 @@ export default function NonProfitApply() {
       </DetailsContainer>
 
       
-
-      { !loading && user && <div>
-      
       <DetailsContainer container>   
-              
-       
+                     
         <DescriptionStyled>
           
           <p>
@@ -315,6 +422,25 @@ export default function NonProfitApply() {
               disablePortal
               value={formState.charityName}
               onChange={(event, newValue) => {
+                ReactPixel.track('NPO: Charity Name', {
+                  content_name: 'Nonprofit Application',
+                  status: newValue,
+                  content_category: 'Nonprofit Application',
+                  value: 0.00,
+                  currency: 'USD',
+                });
+
+                ga.event({
+                  action: 'NPO: Charity Name',
+                  params: {
+                    content_name: 'Nonprofit Application',
+                    status: newValue,
+                    content_category: 'Nonprofit Application',
+                    value: 0.00,
+                    currency: 'USD',
+                  }
+                });                
+
                 if( newValue == null )
                 {
                   newValue = "";
@@ -390,8 +516,9 @@ export default function NonProfitApply() {
             </Alert>
           
         </DescriptionStyled>
-        <DescriptionStyled>
-          <br />
+        
+        <Stack direction="row" spacing={2}  alignItems="flex-start" mt={3}>
+        <DescriptionStyled>          
           <b>Areas of focus for your non-profit?</b>
           <FormGroup>
             <FormControlLabel
@@ -485,8 +612,7 @@ export default function NonProfitApply() {
           </FormGroup>
         </DescriptionStyled>
 
-        <DescriptionStyled>
-          <br />
+        <DescriptionStyled>          
           <b>
             Does your organization or program serve a majority (51% or more) of
             any of the following populations?
@@ -604,6 +730,7 @@ export default function NonProfitApply() {
             />
           </FormGroup>
         </DescriptionStyled>
+        </Stack>
       </DetailsContainer>
 
       <DetailsContainer container>
@@ -746,6 +873,14 @@ export default function NonProfitApply() {
             required
             defaultValue={formState.solutionBenefits}
             onChange={(event) => {
+              ReactPixel.track('NPO: Solution Benefits', {
+                content_name: 'Nonprofit Application',
+                status: event.target.value,
+                content_category: 'Nonprofit Application',
+                value: 0.01,
+                currency: 'USD',
+              });
+
               setFormState({
                 ...formState,
                 solutionBenefits: event.target.value,
@@ -780,6 +915,25 @@ export default function NonProfitApply() {
                 name="familiarWithSlack"
                 checked={formState.familiarWithSlack}
                 onChange={(event) => {
+                  ReactPixel.track('NPO: Familiar with Slack', {
+                    content_name: 'Nonprofit Application',
+                    status: event.target.checked,
+                    content_category: 'Nonprofit Application',
+                    value: 0.05,
+                    currency: 'USD',
+                  });
+
+                  ga.event({
+                    action: 'NPO: Familiar with Slack',
+                    params: {
+                      content_name: 'Nonprofit Application',
+                      status: event.target.checked,
+                      content_category: 'Nonprofit Application',
+                      value: 0.05,
+                      currency: 'USD',
+                    }
+                  });                  
+
                   setFormState({
                     ...formState,
                     familiarWithSlack: event.target.checked,
@@ -879,25 +1033,23 @@ export default function NonProfitApply() {
           </FormGroup>
         </DescriptionStyled>
       </DetailsContainer>
-      <DetailsContainer container>
-        <DescriptionStyled>
-          {
-            // Loading/Save button with status uses MUI Lab
-          }
+      <DetailsContainer container>                
+        <DescriptionStyled>         
             <LoadingButton
               color="secondary"
               loading={loading}
               loadingPosition="start"
               startIcon={<SaveIcon />}
               variant="contained"
-              onClick={handleSubmit}
+              onClick={handleFormSubmit}
             >
               <span>Submit</span>
             </LoadingButton>
           &nbsp;{submitStatus}
-        </DescriptionStyled>
+          {!user && showLogin && loginCallToAction}
+        </DescriptionStyled>        
       </DetailsContainer>
-      </div>}
+      
     </LayoutContainer>
   );
 }
