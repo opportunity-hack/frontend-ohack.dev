@@ -53,9 +53,8 @@ export default function useNonprofit( nonprofit_id ){
             },
             data: JSON.stringify(formData)
         };
-
-        console.log(config);
-        const data = await makeRequest({ config, authenticated: false });
+        
+        const data = await makeRequest({ config, authenticated: user ? true : false });
         // Check if data.message exists 
         // If it does, then we know that the submission was successful
         // If it doesn't, then we know that the submission failed        
@@ -68,18 +67,37 @@ export default function useNonprofit( nonprofit_id ){
     };
 
     // Use memoization to prevent unnecessary re-renders
-    const handle_get_npo_form = async (ip, onComplete) => {              
-        const config = {
-            url: `${apiNodeJsServerUrl}/api/nonprofit-application`,            
-            method: "GET",
-            headers: {                
-                "Accept": "application/json",
-                "X-IP-Address": ip
-            }            
-        };
+    const handle_get_npo_form = async (ip, onComplete) => {                      
+        var data = null;
 
-        console.log(config);
-        const data = await makeRequest({ config, authenticated: false });        
+        if( user ) 
+        {
+            const config = {
+                url: `${apiNodeJsServerUrl}/api/nonprofit-application`,
+                method: "GET",
+                headers: {
+                    "Accept": "application/json",
+                    "X-IP-Address": ip
+                }
+            };
+
+            console.log("Authenticated user, adding token to request");            
+            data = await makeRequest({ config, authenticated: true });        
+        }
+        else
+        {
+            const config = {
+                url: `${apiNodeJsServerUrl}/api/public/nonprofit-application`,
+                method: "GET",
+                headers: {
+                    "Accept": "application/json",
+                    "X-IP-Address": ip
+                }
+            };
+            console.log("Unauthenticated user");
+            data = await makeRequest({ config, authenticated: false });        
+        }        
+        
         onComplete(data);
 
         return data;
