@@ -23,6 +23,7 @@ export default function Home() {
       </Head>
 
       <HeroBanner />
+      <HackathonList />
       
     </Fragment>
   );
