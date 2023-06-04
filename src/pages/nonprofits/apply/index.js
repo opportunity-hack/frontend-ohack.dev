@@ -67,7 +67,7 @@ export const getStaticProps = async () => {
                 },
                 {
                     name: "twitter:image:alt",
-                    content: "Opportunity Hack logo",
+                    content: "Opportunity Hack logo for nonprofit applications",
                     key: "twitterimagealt"
                 },
                 {
@@ -77,7 +77,7 @@ export const getStaticProps = async () => {
                 },
                 {
                     name: "twitter:label1",
-                    value: "Project Status",
+                    value: "Status",
                     key: "twitterlabel1"
                 },
                 {
@@ -92,29 +92,9 @@ export const getStaticProps = async () => {
                 },
                 {
                     name: "twitter:data2",
-                    value: "October 1, 2023",
+                    value: "August 1, 2023",
                     key: "twitterdata2"
-                },
-                {
-                    name: "twitter:label3",
-                    value: "💻 Hackers",
-                    key: "twitterlabel3"
-                },
-                {
-                    name: "twitter:data3",
-                    value: "100+",
-                    key: "twitterdata3"
-                },
-                {
-                    name: "twitter:label4",
-                    value: "🛟 Mentors",
-                    key: "twitterlabel4"
-                },
-                {
-                    name: "twitter:data4",
-                    value: "50+",
-                    key: "twitterdata4"
-                },                
+                }                
             ]
         },
     };
