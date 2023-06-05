@@ -46,7 +46,7 @@ export default function NonProfitApply() {
   let { nonprofits, handle_get_npo_form, handle_npo_form_submission } = useNonprofit();
   
   const { user } = useAuth0();
-  var image = "/npo_placeholder.png";
+  var image = "/OHack_NonProfit_Application.png";
   var nonProfitOptions = [];
   
 
@@ -321,9 +321,8 @@ export default function NonProfitApply() {
 
   return (   
     <LayoutContainer key="apply_form" container>            
-      <DetailsContainer container>
-        <DescriptionStyled>
-
+      <DetailsContainer container>        
+        <DescriptionStyled>          
           {
             !loading && formSubmissionDate &&
             <Alert severity="success">
@@ -336,11 +335,12 @@ export default function NonProfitApply() {
             </Alert>
 
           }
-          <h1 className="content__title">Nonprofit Project Application</h1>
+          <h1 className="content__title">Nonprofit Project Application</h1>          
 
           <div className="content__body">
             <div className="profile__header">
               <div className="profile__headline">
+                <Image src={image} width="400" height="300" />
                 <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
                 <div className="profile__header"><PlaceIcon />{LOCATION}</div>
                 <a target="_blank"
