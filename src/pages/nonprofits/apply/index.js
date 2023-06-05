@@ -27,86 +27,109 @@ export const getStaticProps = async () => {
             openGraphData: [
                 {
                     name: "title",
+                    property: "title",
                     content: "Nonprofit Application for Opportunity Hack 2023",
                     key: "title"
                 },
                 {
                     name: "og:title",
+                    property: "og:title",
                     content: "Nonprofit Application for Opportunity Hack 2023!",
                     key: "ogtitle"
                 },
                 {
                     name: "og:description",
+                    property: "og:description",
                     content: "Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem!",
                     key: "ogdescription"
                 },
                 {
                     name: "image",
+                    property: "image",
                     content: "https://i.imgur.com/hE3wm7M.png",
                     key: "image"
                 },
                 {
                     name: "og:image",
+                    property: "og:image",
                     content: "https://i.imgur.com/hE3wm7M.png",
                     key: "ogimage"
                 },
                 {
                     name: "url",
+                    property: "url",
                     content: "https://www.ohack.org/nonprofits/apply",
                     key: "url"
                 },
                 {
+                    name: "org:url",
+                    property: "org:url",
+                    content: "https://www.ohack.org/nonprofits/apply",
+                    key: "ogurl"
+                },
+                {
                     name: "twitter:card",
+                    property: "twitter:card",
                     content: "summary_large_image",
                     key: "twittercard"
                 },
                 {
                     name: "twitter:site",
+                    property: "twitter:site",
                     content: "@opportunityhack",
                     key: "twittersite"
                 },
                 {
                     name: "twitter:title",
+                    property: "twitter:title",
                     content: "Nonprofit Application for Opportunity Hack 2023",
                     key: "twittertitle"
                 },
                 {
                     name: "twitter:description",
+                    property: "twitter:description",
                     content: "Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem.",
                     key: "twitterdesc"
                 },
                 {
                     name: "twitter:image",
+                    property: "twitter:image",
                     content: "https://i.imgur.com/hE3wm7M.png",
                     key: "twitterimage"
                 },
                 {
                     name: "twitter:image:alt",
+                    property: "twitter:image:alt",                    
                     content: "Opportunity Hack logo for nonprofit applications",
                     key: "twitterimagealt"
                 },
                 {
                     name: "twitter:creator",
+                    property: "twitter:creator",
                     content: "@opportunityhack",
                     key: "twittercreator"
                 },
                 {
                     name: "twitter:label1",
+                    property: "twitter:label1",
                     value: "Status",
                     key: "twitterlabel1"
                 },
                 {
                     name: "twitter:data1",
+                    property: "twitter:data1",
                     value: "Accepting Applications",
                     key: "twitterdata1"
                 },
                 {
                     name: "twitter:label2",
+                    property: "twitter:label2",
                     value: "Application Deadline",
                     key: "twitterlabel2"
                 },
                 {
                     name: "twitter:data2",
+                    property: "twitter:data2",
                     value: "August 1, 2023",
                     key: "twitterdata2"
                 }                
