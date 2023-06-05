@@ -38,22 +38,44 @@ export const getStaticProps = async () => {
                     key: "ogtitle"
                 },
                 {
+                    name: "author",
+                    property: "author",
+                    content: "Opportunity Hack",
+                    key: "author"
+                },
+                {
+                    name: "author",
+                    property: "author",
+                    content: "Opportunity Hack",
+                    key: "author"
+                },
+                {
+                    name: "publish_date",
+                    property: "og:publish_date",
+                    content: "2023-06-05T00:00:00-0600",
+                    key: "publishdate"
+                },
+                {
                     name: "og:description",
                     property: "og:description",
                     content: "Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem!",
                     key: "ogdescription"
-                },                
-                {
-                    name: "og:image",
-                    property: "og:image",
-                    content: "https://i.imgur.com/hE3wm7M.png",
-                    key: "ogimage"
-                },
+                },                                
                 {
                     name: "image",
                     property: "og:image",
                     content: "https://i.imgur.com/hE3wm7M.png",
                     key: "ognameimage"
+                },
+                {
+                    property: "og:image:width",
+                    content: "400",
+                    key: "ogimagewidth",
+                },
+                {
+                    property: "og:image:height",
+                    content: "300",
+                    key: "ogimageheight",
                 },
                 {
                     name: "url",
