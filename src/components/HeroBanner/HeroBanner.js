@@ -14,8 +14,6 @@ import {
   BackgroundGrid,
 } from './styles';
 import Typewriter from 'typewriter-effect';
-// import { Player } from '@lottiefiles/react-lottie-player';
-// import ohack from '../../../public/ohack.png'
 import Logo from './Logo'
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';

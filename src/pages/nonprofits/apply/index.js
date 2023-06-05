@@ -52,7 +52,7 @@ export const getStaticProps = async () => {
                 {
                     name: "publish_date",
                     property: "og:publish_date",
-                    content: "2023-06-05T00:00:00-0600",
+                    content: "2023-06-04T00:00:00-0700",
                     key: "publishdate"
                 },
                 {
@@ -64,7 +64,7 @@ export const getStaticProps = async () => {
                 {
                     name: "image",
                     property: "og:image",
-                    content: "https://i.imgur.com/hE3wm7M.png",
+                    content: "https://ohack.dev/OHack_NonProfit_Application.png",
                     key: "ognameimage"
                 },
                 {
@@ -80,13 +80,13 @@ export const getStaticProps = async () => {
                 {
                     name: "url",
                     property: "url",
-                    content: "https://www.ohack.org/nonprofits/apply",
+                    content: "https://ohack.dev/nonprofits/apply",
                     key: "url"
                 },
                 {
                     name: "org:url",
                     property: "org:url",
-                    content: "https://www.ohack.org/nonprofits/apply",
+                    content: "https://ohack.dev/nonprofits/apply",
                     key: "ogurl"
                 },
                 {
