@@ -56,6 +56,12 @@ export const getStaticProps = async () => {
                     key: "ogimage"
                 },
                 {
+                    name: "image",
+                    property: "og:image",
+                    content: "https://i.imgur.com/hE3wm7M.png",
+                    key: "ognameimage"
+                },
+                {
                     name: "url",
                     property: "url",
                     content: "https://www.ohack.org/nonprofits/apply",
