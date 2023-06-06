@@ -3,6 +3,8 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Stack from "@mui/material/Stack";
 import { Grid, Typography } from "@mui/material";
 
+
+
 export default function Events({
   events,
   user,
@@ -14,6 +16,12 @@ export default function Events({
   isHelping,
 }) {
   const eventsResult = events.map((event) => {
+    var devPostPostfixString = "on DevPost";
+
+    if (event.devpost_url && !event.devpost_url.includes("devpost")) {
+      devPostPostfixString = "";
+    }
+
     console.log(" == Events Render");
     return (
       <Grid key={event.id} style={{ padding: "0 1.5rem" }}>
@@ -49,11 +57,11 @@ export default function Events({
             // If event.start_date is in the past then show the button as View on DevPost instead
             event.start_date < new Date().toISOString() ? (
               <button className="button button--primary button--compact">
-                View on DevPost
+                  View {devPostPostfixString}
               </button>
             ) : (
               <button className="button button--primary button--compact">
-                Register on DevPost
+                  Register {devPostPostfixString}
               </button>
             )             
           }
