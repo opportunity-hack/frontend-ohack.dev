@@ -462,13 +462,29 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   if (problem_statement.status === "production") {
     status = (
+      <Tooltip
+        enterTouchDelay={0}
+        title={
+          <span style={{ fontSize: "14px" }}>We pushed this to production!</span>
+        }
+        arrow
+      >
       <Chip variant="outlined" icon={<WorkspacePremiumIcon />} color="success" label="Live" />      
+      </Tooltip>
     );
     cardBackground = "#e5fbe5";
 
     
   } else {
-    status = <Chip icon={<BuildIcon />} color="warning" label="Needs Help" />
+    status = <Tooltip
+      enterTouchDelay={0}
+      title={
+        <span style={{ fontSize: "14px" }}>This project isn't complete yet, and we need your help!</span>
+      }
+      arrow
+    >
+    <Chip icon={<BuildIcon />} color="warning" label="Needs Help" />
+    </Tooltip>
   }
 
   var callToAction = "";
@@ -592,10 +608,15 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
     {
       label: 'Description',
       icon: <NotesIcon />,
-      description: <Typography>        
+      description: <Typography fontSize={13}>
         {getWordStr(problem_statement.description)}...
       </Typography>,
-      content: problem_statement.description
+      content: 
+        <ProjectDescText>
+          <ReactMarkdown>
+          {problem_statement.description}
+          </ReactMarkdown>
+        </ProjectDescText>        
     },
     {
       label: 'Events',
@@ -610,16 +631,18 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
         <ShortDescText>{TeamText}</ShortDescText>
       </Stack>,
       content: 
-      <Events
-        events={problem_statement.events}
-        onTeamCreate={handleTeamCreate}
-        onTeamLeave={handleLeavingTeam}
-        onTeamCreateComplete={createdTeamDetails}
-        onTeamJoin={handleJoiningTeam}
-        user={user}
-        problemStatementId={problem_statement.id}
-        isHelping={help_checked}
-      />
+      <ProjectDescText>
+        <Events
+          events={problem_statement.events}
+          onTeamCreate={handleTeamCreate}
+          onTeamLeave={handleLeavingTeam}
+          onTeamCreateComplete={createdTeamDetails}
+          onTeamJoin={handleJoiningTeam}
+          user={user}
+          problemStatementId={problem_statement.id}
+          isHelping={help_checked}
+        />
+      </ProjectDescText>      
     },
     {
       label: 'Code & Tasks',
@@ -627,6 +650,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
       description: "GitHub repos and Tasks associated with this project",
 
       content: 
+      <ProjectDescText>
       <Grid container direction="row" spacing={0.5} padding={0}>
         <Stack spacing={1} padding={0.5}>
         {
@@ -665,7 +689,8 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
             </AccordionButton>
           ))}
           </Stack>
-        </Grid>      
+        </Grid>   
+        </ProjectDescText>   
     },
     {
       label: 'References',
@@ -677,7 +702,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
           // handle zero records 
         } that will help you better understand the problem
       </ShortDescText>,
-      content: references_buttons
+      content: <ProjectDescText>{references_buttons}</ProjectDescText>
     },    
   ];
 
@@ -697,10 +722,8 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
           {item.label}  
         </AccordionTitle>
         {item.description}
-      </AccordionSummary>
-      <ProjectDescText>        
-          {item.content}        
-      </ProjectDescText>
+      </AccordionSummary>            
+          {item.content}                    
     </Accordion>
   ));
 
@@ -710,8 +733,8 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   ));
 
   const myTabPanel = myItems.map((item) => (
-    <TabPanel sx={{ width: "100%" }} value={item.label}>              
-          {item.content}            
+    <TabPanel sx={{ width: "100%" }} value={item.label}>                    
+      {item.content}         
     </TabPanel>
   ));
 
@@ -783,15 +806,10 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
           </Badge>
         </Tooltip>       
       </Grid>
-
-
-      <TitleStyled sx={{marginBottom: "5px"}} variant="h2">{problem_statement.title}</TitleStyled>      
-      <YearStyled>{problem_statement.first_thought_of}</YearStyled>
-      <ProjectProgress state={problem_statement.status} />
-        
       
-
-      
+    <TitleStyled sx={{marginBottom: "5px"}} variant="h2">{problem_statement.title}</TitleStyled>            
+    <YearStyled>{problem_statement.first_thought_of}</YearStyled>      
+    <ProjectProgress state={problem_statement.status} />      
 
     { 
       isLargeScreen ? 

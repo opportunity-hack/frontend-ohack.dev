@@ -35,7 +35,7 @@ export const YearStyled = styled(Typography)({
   fontWeight: "bold",
   fontSize: "1.5rem",
   margin: "0.5rem 0",
-  marginTop: "1rem",
+  marginTop: "1rem"  
 });
 
 export const AccordionContainer = styled(Grid)((props) => ({

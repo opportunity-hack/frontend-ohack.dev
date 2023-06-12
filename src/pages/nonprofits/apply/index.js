@@ -8,8 +8,6 @@ const NonProfitApply = dynamic(() =>  import('../../../components/NonProfitApply
 
 
 export default function Apply() {
-    
-
     return (     
         <NonProfitApply/>     
     );
@@ -17,9 +15,7 @@ export default function Apply() {
 
 export const getStaticProps = async () => {
     //const data = await fetch('/api/metadata');
-    //const metadata = await data.json();
- 
-
+    //const metadata = await data.json(); 
     return {
         props: {
             title: "Nonprofit Application for Opportunity Hack 2023",
