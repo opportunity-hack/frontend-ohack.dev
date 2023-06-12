@@ -1,10 +1,13 @@
 import { Button, Snackbar } from '@mui/material'
 import { useState } from 'react'
 import ShareIcon from '@mui/icons-material/Share';
+import Stack from '@mui/material/Stack';
+
 export default function CopyToClipboardButton({ location }) 
 {
     const [open, setOpen] = useState(false);
     const handleClick = () => {
+      console.log("Copy to clipboard");
       setOpen(true);
 
       if(location != null)
@@ -19,14 +22,15 @@ export default function CopyToClipboardButton({ location })
     }
     
     return (
-        <>
-          <Button onClick={handleClick}><ShareIcon/></Button>
-          <Snackbar
-            open={open}
-            onClose={() => setOpen(false)}
-            autoHideDuration={2000}
-            message="Copied link to clipboard"
-          />
-        </>
+      <Stack spacing={0} margin={0} >
+        <Snackbar
+          open={open}          
+          onClose={() => setOpen(false)}
+          autoHideDuration={2000}
+          message="Copied link to clipboard"
+        />
+        <ShareIcon onClick={handleClick} />          
+          
+      </Stack>
     )
 }
