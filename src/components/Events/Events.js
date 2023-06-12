@@ -16,13 +16,12 @@ export default function Events({
   isHelping,
 }) {
   var eventsResult = "We haven't hacked on this yet!"
-
-  if (events.length > 0) {    
+  if (events && events.length > 0) {    
     eventsResult = events.map((event) => {
-      var devPostPostfixString = "on DevPost";
+      var devPostPostfixString = "";
 
-      if (event.devpost_url && !event.devpost_url.includes("devpost")) {
-        devPostPostfixString = "";
+      if (event.devpost_url && event.devpost_url.includes("devpost")) {
+        devPostPostfixString = "on DevPost";
       }
 
       console.log(" == Events Render");

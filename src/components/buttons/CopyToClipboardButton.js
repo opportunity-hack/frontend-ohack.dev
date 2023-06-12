@@ -2,6 +2,7 @@ import { Button, Snackbar } from '@mui/material'
 import { useState } from 'react'
 import ShareIcon from '@mui/icons-material/Share';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 
 export default function CopyToClipboardButton({ location }) 
 {
@@ -29,7 +30,18 @@ export default function CopyToClipboardButton({ location })
           autoHideDuration={2000}
           message="Copied link to clipboard"
         />
+
+        <Tooltip
+          enterTouchDelay={0}
+          title={
+            <span
+              style={{ fontSize: "14px" }}
+            >Click to copy and share</span>
+          }
+          style={{ marginLeft: "2rem" }}
+        >
         <ShareIcon onClick={handleClick} />          
+        </Tooltip>
           
       </Stack>
     )
