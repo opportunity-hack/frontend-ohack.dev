@@ -1,13 +1,14 @@
 import { AccordionDetails, Grid, Typography, Link } from "@mui/material";
 import { styled } from "@mui/material";
 
-export const ProjectCard = styled(Grid)({
-  padding: "1.5rem",
-  backgroundColor: "#f5f7f77f",
+export const ProjectCard = styled(Grid)((props) => ({
+  padding: "1.4rem",
+  backgroundColor: props.bgcolor,
   boxShadow: "0 2px 5px rgba(0, 0, 0, 0.15)",
   borderRadius: "1rem",
-  position: "relative",  
-});
+  position: "relative",
+  
+}));
 
 export const BadgeContainer = styled(Grid)((props) => ({
   position: "absolute",
@@ -25,7 +26,7 @@ export const TitleStyled = styled(Typography)((props) => ({
 
   [props.theme.breakpoints.down("sm")]: {
     marginTop: "4rem",
-    width: "100%",
+    width: "90%",
   },
 }));
 
@@ -34,6 +35,7 @@ export const YearStyled = styled(Typography)({
   fontWeight: "bold",
   fontSize: "1.5rem",
   margin: "0.5rem 0",
+  marginTop: "1rem",
 });
 
 export const AccordionContainer = styled(Grid)((props) => ({

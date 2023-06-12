@@ -1,5 +1,5 @@
 import React from "react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
@@ -34,7 +34,6 @@ import ProjectProgress from "../ProjectProgress/ProjectProgress";
 import Box from "@mui/material/Box";
 
 import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -44,6 +43,13 @@ import NotesIcon from '@mui/icons-material/Notes';
 import EventIcon from "@mui/icons-material/Event";
 import CodeIcon from "@mui/icons-material/Code";
 import EngineeringIcon from "@mui/icons-material/Engineering";
+import useMediaQuery from '@mui/material/useMediaQuery';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import TabContext from '@mui/lab/TabContext';
+import TabList from '@mui/lab/TabList';
+import TabPanel from '@mui/lab/TabPanel';
+
 
 import useTeams from "../../hooks/use-teams";
 import Events from "../Events/Events";
@@ -57,6 +63,7 @@ import {
   TitleStyled,
   YearStyled,
 } from "./styles";
+import Grid from '@mui/material/Grid';
 
 
 import SkillSet from "../skill-set";
@@ -66,6 +73,8 @@ import ReactPixel from 'react-facebook-pixel';
 import * as ga from '../../lib/ga';
 
 export default function ProblemStatement({ problem_statement, user, npo_id }) {
+  const isLargeScreen = useMediaQuery('(min-width: 768px)');
+
   const [open, setOpen] = useState(false);
   const [openUnhelp, setOpenUnhelp] = useState(false);
   const [help_checked, setHelpedChecked] = useState("");
@@ -92,7 +101,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
   ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
 
-  console.log("USER:",user);
+  // console.log("USER:",user);
+
+
 
   const [expanded, setExpanded] = useState("");
   const handleChange = (panel) => (event, isExpanded) => {
@@ -132,12 +143,12 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
         },
         "& + .MuiSwitch-track": {
           opacity: 1,
-          backgroundColor: "#00AA00",
+          backgroundColor: "#00BB00",
         },
       },
     },
     "& .MuiSwitch-thumb": {
-      backgroundColor: "#FF0000",
+      backgroundColor: "#000",
       width: 32,
       height: 32,
       "&:before": {
@@ -419,9 +430,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   };
 
   function getWordStr(str) {
-    if( str != null )
+    if( str != null && str.length > 0 && typeof str === "string" )
     {
-      return str.split(/\s+/).slice(0, 50).join(" ");
+      return str.split(/\s+/).slice(0, 30).join(" ");
     }
     else {
       return "";
@@ -446,11 +457,16 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
       "There" + is_are + teamCounter + " team" + s + " working on this";
   }
 
-  var status = "";
+  var status = "";  
+  var cardBackground = "#f5f7f77f";
+
   if (problem_statement.status === "production") {
     status = (
-      <Chip icon={<WorkspacePremiumIcon />} color="success" label="Live" />
+      <Chip variant="outlined" icon={<WorkspacePremiumIcon />} color="success" label="Live" />      
     );
+    cardBackground = "#e5fbe5";
+
+    
   } else {
     status = <Chip icon={<BuildIcon />} color="warning" label="Needs Help" />
   }
@@ -519,7 +535,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
       <FormControlLabel
         onClick={handleClickOpen}
         onChange={handleClickOpen}
-        labelPlacement="bottom"
+        labelPlacement="bottom"        
         control={<MaterialUISwitch sx={{ m: 1 }} checked={help_checked} />}
         label={helpingSwitchType}
       />
@@ -572,425 +588,409 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
   const copyProjectLink = "project/"+problem_statement.id;
 
-  console.log("== Problem Statement Render: ", problem_statement);
-  return (
-    <ProjectCard key={problem_statement.id}>
-      <Stack direction="row" justifyContent="flex-start" alignItems="flex-start" spacing={1.5}>        
-        <CopyToClipboardButton location={copyProjectLink} />
-        {status}        
-        <SkillSet Skills={problem_statement.skills} />      
-      </Stack>
-      <Stack direction="row" justifyContent="flex-end" marginTop={1.5}>
-        
-        {/* {problem_statement.status === "production" ? (
-          <Tooltip title="Needs help">
-            <BuildIcon />
-          </Tooltip>
+  const myItems = [
+    {
+      label: 'Description',
+      icon: <NotesIcon />,
+      description: <Typography>        
+        {getWordStr(problem_statement.description)}...
+      </Typography>,
+      content: problem_statement.description
+    },
+    {
+      label: 'Events',
+      icon: <EventIcon />,      
+      description: <Stack>
+        <ShortDescText>
+          {problem_statement.events.length > 0
+            ? `We've hacked on this at ${problem_statement.events.length
+            } event${problem_statement.events.length > 1 ? "s" : ""}`
+            : "We haven't hacked on this project yet!"}
+        </ShortDescText>
+        <ShortDescText>{TeamText}</ShortDescText>
+      </Stack>,
+      content: 
+      <Events
+        events={problem_statement.events}
+        onTeamCreate={handleTeamCreate}
+        onTeamLeave={handleLeavingTeam}
+        onTeamCreateComplete={createdTeamDetails}
+        onTeamJoin={handleJoiningTeam}
+        user={user}
+        problemStatementId={problem_statement.id}
+        isHelping={help_checked}
+      />
+    },
+    {
+      label: 'Code & Tasks',
+      icon: <CodeIcon />,
+      description: "GitHub repos and Tasks associated with this project",
+
+      content: 
+      <Grid container direction="row" spacing={0.5} padding={0}>
+        <Stack spacing={1} padding={0.5}>
+        {
+          problem_statement.github != null &&
+          problem_statement.github.length > 0 &&
+          typeof problem_statement.github !== "string" ? (
+          problem_statement.github.map((github) => (
+            <AccordionButton
+              target="_blank"
+              rel="noopener noreferrer"
+              key={github.name}
+              href={github.link}
+              className="button button--primary button--compact"
+            >
+              {github.name}
+            </AccordionButton>
+          ))
         ) : (
-          <Tooltip title={
+          <p>No GitHub links yet.</p>
+        )}
+          </Stack>
+
+        <Stack spacing={1} padding={0.5}>
+        {problem_statement.github != null &&
+          problem_statement.github.length > 0 &&
+          typeof problem_statement.github !== "string" &&
+          problem_statement.github.map((github) => (
+            <AccordionButton
+              target="_blank"
+              rel="noopener noreferrer"
+              key={github.name}
+              className="button button--primary button--compact"
+              href={`${github.link}/issues`}
+            >
+              Tasks for {github.name}
+            </AccordionButton>
+          ))}
+          </Stack>
+        </Grid>      
+    },
+    {
+      label: 'References',
+      icon: <ArticleIcon />,
+      description: <ShortDescText>
+        {reference_count} doc{
+          // handle plural vs singular
+          (reference_count === 0 || reference_count > 1) ? "s" : ""
+          // handle zero records 
+        } that will help you better understand the problem
+      </ShortDescText>,
+      content: references_buttons
+    },    
+  ];
+
+  // Accordion for large screens
+  const myAccordion = myItems.map((item) => (
+    <Accordion
+      expanded={expanded === item.label}
+      onChange={handleChange(item.label)}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        aria-controls={item.label + "bh-content"}
+        id={item.label + "bh-header"}
+      >
+        <AccordionTitle>
+          {item.icon}
+          {item.label}  
+        </AccordionTitle>
+        {item.description}
+      </AccordionSummary>
+      <ProjectDescText>        
+          {item.content}        
+      </ProjectDescText>
+    </Accordion>
+  ));
+
+  // Tabs for small screens
+  const myTabs = myItems.map((item) => (
+    <Tab onClick={handleChange(item.label)} sx={{ width: "50px" }} icon={item.icon} label={item.label} value={item.label} />
+  ));
+
+  const myTabPanel = myItems.map((item) => (
+    <TabPanel sx={{ width: "100%" }} value={item.label}>              
+          {item.content}            
+    </TabPanel>
+  ));
+
+  const [tabValue, setTabValue] = React.useState('Description');
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  // console.log("== Problem Statement Render: ", problem_statement);
+
+  return (
+    <ProjectCard container bgcolor={cardBackground} sx={{ border: 1, borderColor: "#C0C0C0" }} key={problem_statement.id}>
+      <Grid container item xs={6} md={6} justifyItems="flex-start">        
+        {status}
+      </Grid>
+      <Grid container item xs={6} md={6} justifyContent="flex-end" justifyItems="flex-end">
+        <CopyToClipboardButton location={copyProjectLink} />                
+      </Grid>
+      <Grid container item xs={12} md={12} justifyContent="flex-start">
+        <Stack direction="row" spacing={0} justifyContent="flex-end">
+          
+          <SkillSet Skills={problem_statement.skills} />          
+        </Stack>
+      </Grid>
+            
+      <Grid container item xs={12} md={12} justifyItems="flex-end" justifyContent="flex-end">
+        <Tooltip
+         enterTouchDelay={0}
+          title={
             <span
               style={{ fontSize: "14px" }}
-            >Needs help</span>
-          }>
-            <BuildIcon fontSize="large" sx={{ color: "orange" }}/>
-          </Tooltip>
-        )} */}          
-          
+            >{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>
+          }
+          style={{ marginLeft: "2rem" }}
+        >
+          <Badge
+            showZero
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            badgeContent={countOfHackers}
+            color="secondary"
+          >
+            <DeveloperModeIcon fontSize="large" />
+          </Badge>
+        </Tooltip>
 
-          
-          <Tooltip
-            title={
-              <span
-                style={{ fontSize: "14px" }}
-              >{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>
-            }
-            style={{ marginLeft: "2rem" }}
+        <Tooltip
+          enterTouchDelay={0}
+          title={
+            <span
+              style={{ fontSize: "14px" }}
+            >{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>
+          }
+          style={{ marginLeft: "2rem" }}
+        >
+          <Badge
+            showZero
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            badgeContent={countOfMentors}
+            color="secondary"
           >
-            <Badge
-              showZero
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              badgeContent={countOfHackers}
-              color="secondary"
-            >
-              <DeveloperModeIcon fontSize="large" />
-            </Badge>
-          </Tooltip>
-          <Tooltip
-            title={
-              <span
-                style={{ fontSize: "14px" }}
-              >{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>
-            }
-            style={{ marginLeft: "2rem" }}
-          >
-            <Badge
-              showZero
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              badgeContent={countOfMentors}
-              color="secondary"
-            >
-              <SupportIcon fontSize="large" />
-            </Badge>
-          </Tooltip>
-      </Stack>
-      <TitleStyled variant="h2">{problem_statement.title}</TitleStyled>
+            <SupportIcon fontSize="large" />
+          </Badge>
+        </Tooltip>       
+      </Grid>
+
+
+      <TitleStyled sx={{marginBottom: "5px"}} variant="h2">{problem_statement.title}</TitleStyled>      
       <YearStyled>{problem_statement.first_thought_of}</YearStyled>
+      <ProjectProgress state={problem_statement.status} />
+        
+      
 
-      <ProjectProgress state={problem_statement.status} />      
+      
 
+    { 
+      isLargeScreen ? 
       <AccordionContainer>
-        <Accordion
-          expanded={expanded === "description"}
-          onChange={handleChange("description")}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="descriptionbh-content"
-            id="descriptionbh-header"
+        {myAccordion}
+      </AccordionContainer> 
+      : 
+      <TabContext allowScrollButtonsMobile scrollButtons={true}  value={tabValue}>          
+        <TabList allowScrollButtonsMobile scrollButtons={true} onChange={handleTabChange} aria-label="lab API tabs example">              
+          {myTabs}                          
+        </TabList>
+        {myTabPanel}  
+      </TabContext>    
+    }
+
+
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">
+        Thank you for helping a nonprofit with your talent!
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText component={"span"} id="alert-dialog-description">
+          There are several ways to contibute, if you want, when you want.
+          <h4>Hacker</h4>
+          You'll be creating something that benefits nonprofits. Most of what
+          you do will take place on:
+          <ul>
+            <li>
+              <b>Slack</b> - communication with your team, non-profits,
+              mentors
+            </li>
+            <li>
+              <b>DevPost</b> - for hackathons this is the main landing place
+              for your project
+            </li>
+            <li>
+              <b>GitHub</b> - your code must be publically available and well
+              documented so that others can use it
+            </li>
+            <li>
+              <b>Heroku</b> - when you productionalize your code, use Heroku
+              as one of the easiest ways to make it available to the masses
+            </li>
+          </ul>
+          <h4>Mentor</h4>
+          You'll be assisting hackers with their project. Most of what you do
+          will take place on:
+          <ul>
+            <li>
+              Slack - checking in on teams and jumping into a screenshare here
+              and there
+            </li>
+          </ul>
+          Your goals are:
+          <ul>
+            <li>Make sure the team knows the problem they are solving</li>
+            <li>...are solving that problem 👆</li>
+            <li>
+              Are using libraries and are not trying to reinvent the wheel
+            </li>
+            <li>Are looking at the judging criteria (on DevPost)</li>
+            <li>
+              Have a demo video that is 4 minutes that describes the problem
+              and solution using tools like Loom or Quicktime.
+            </li>
+          </ul>
+          <a
+            href="https://www.ohack.org/about/mentors"
+            rel="noreferrer"
+            target="_blank"
           >
-            <AccordionTitle>
-              <NotesIcon />
-              Project Description
-            </AccordionTitle>
-            <Typography>
-              
-              {" "}              
-              {getWordStr(problem_statement.description)}...              
-            </Typography>
-          </AccordionSummary>
-          <ProjectDescText>
-            <ReactMarkdown>
-              {problem_statement.description}
-            </ReactMarkdown>
-          </ProjectDescText>
-        </Accordion>
-        <Accordion
-          expanded={expanded === "events"}
-          onChange={handleChange("events")}
+            More details on mentoring
+          </a>
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          class="button button--compact button--third"
+          onClick={handleClose}
+          value="hacker"
+          autoFocus
         >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="eventsbh-content"
-            id="eventsbh-header"
-          >
-            <AccordionTitle>
-              <EventIcon />
-              Events
-            </AccordionTitle>
-            <Stack>
-              <ShortDescText>
-                {problem_statement.events.length > 0
-                  ? `We've hacked on this at ${
-                      problem_statement.events.length
-                    } event${problem_statement.events.length > 1 ? "s" : ""}`
-                  : "We haven't hacked on this project yet!"}
-              </ShortDescText>
-              <ShortDescText>{TeamText}</ShortDescText>
-            </Stack>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Events
-              events={problem_statement.events}
-              onTeamCreate={handleTeamCreate}
-              onTeamLeave={handleLeavingTeam}
-              onTeamCreateComplete={createdTeamDetails}
-              onTeamJoin={handleJoiningTeam}
-              user={user}
-              problemStatementId={problem_statement.id}
-              isHelping={help_checked}
+          Help as Hacker
+        </Button>
+        <Button
+          class="button button--compact button--third"
+          onClick={handleClose}
+          value="mentor"
+        >
+          Help as Mentor
+        </Button>
+        <Button
+          class="button button--compact button--secondary"
+          className="error"
+          onClick={handleCancel}
+        >
+          Cancel
+        </Button>
+      </DialogActions>
+    </Dialog>
+
+    <Dialog
+      open={openUnhelp}
+      onClose={handleCloseUnhelp}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">
+        Helping has completed!
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText component={"span"} id="alert-dialog-description">
+          <h4>What this means</h4>
+          You are recording the fact that you're no longer helping this
+          nonprofit
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          class="button button--compact button--secondary"
+          onClick={handleCloseUnhelpCancel}
+        >
+          Cancel
+        </Button>
+        <Button
+          class="button button--compact button--red"
+          onClick={handleCloseUnhelp}
+          autoFocus
+        >
+          Withdrawl Help
+        </Button>
+      </DialogActions>
+    </Dialog>
+
+    <Dialog
+      open={createTeamOpen}
+      onClose={handleCloseTeamCreate}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">Create a new team</DialogTitle>
+      <DialogContent>
+        <DialogContentText component={"span"} id="alert-dialog-description">
+          <Stack spacing={2}>
+            <TextField
+              id="team-name"
+              label="Team Name"
+              helperText="Any unique name you can use to identify your team"
+              onChange={handleUpdateTeamName}
+              margin="dense"
+              FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
+              variant="filled"
             />
-          </AccordionDetails>
-        </Accordion>
-        <Accordion
-          expanded={expanded === "code"}
-          onChange={handleChange("code")}
+
+            <TextField
+              id="slack-name"
+              label="Slack Channel Name"
+              helperText="Create this public channel first"
+              onChange={handleUpdateSlackChannel}
+              margin="dense"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">#</InputAdornment>
+                ),
+              }}
+              FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
+              variant="filled"
+            />
+          </Stack>
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          class="button button--compact button--secondary"
+          onClick={handleCloseTeamCreate}
         >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="codebh-content"
-            id="codebh-header"
-          >
-            <AccordionTitle>
-              <CodeIcon />
-              Code
-            </AccordionTitle>
-            <ShortDescText>
-              GitHub repos associated with this project
-            </ShortDescText>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack direction="row" spacing={1}>
-              {problem_statement.github != null &&
-              problem_statement.github.length > 0 &&
-              typeof problem_statement.github !== "string" ? (
-                problem_statement.github.map((github) => (
-                  <AccordionButton
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    key={github.name}
-                    href={github.link}
-                    className="button button--primary button--compact"
-                  >
-                    {github.name}
-                  </AccordionButton>
-                ))
-              ) : (
-                <p>No GitHub links yet.</p>
-              )}
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
-        <Accordion
-          expanded={expanded === "work_remaining"}
-          onChange={handleChange("work_remaining")}
+          Cancel
+        </Button>
+        <Button
+          class="button button--compact button--third"
+          onClick={handleConfirmTeamCreate}
+          autoFocus
         >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="work_remainingbh-content"
-            id="work_remainingbh-header"
-          >
-            <AccordionTitle>
-              <EngineeringIcon />
-              Work Remaining
-            </AccordionTitle>
-            <ShortDescText>Tasks used to track progress</ShortDescText>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack direction="row" spacing={1}>
-              {problem_statement.github != null &&
-                problem_statement.github.length > 0 &&
-                typeof problem_statement.github !== "string" &&
-                problem_statement.github.map((github) => (
-                  <AccordionButton
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    key={github.name}
-                    className="button button--primary button--compact"
-                    href={`${github.link}/issues`}
-                  >
-                    {github.name} Tasks
-                  </AccordionButton>
-                ))}
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
-        <Accordion
-          expanded={expanded === "references"}
-          onChange={handleChange("references")}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="referencesbh-content"
-            id="referencesbh-header"
-          >
-            <AccordionTitle>
-              <ArticleIcon />
-              References
-            </AccordionTitle>
-            <ShortDescText>            
-              {reference_count} doc{ 
-                // handle plural vs singular
-                (reference_count === 0 || reference_count > 1) ? "s" : ""
-                // handle zero records 
-               } that will help you better understand the problem
-            </ShortDescText>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack direction="row" spacing={1}>
-              {references_buttons}
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
-      </AccordionContainer>
+          Submit
+        </Button>
+      </DialogActions>
+    </Dialog>
 
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          Thank you for helping a nonprofit with your talent!
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText component={"span"} id="alert-dialog-description">
-            There are several ways to contibute, if you want, when you want.
-            <h4>Hacker</h4>
-            You'll be creating something that benefits nonprofits. Most of what
-            you do will take place on:
-            <ul>
-              <li>
-                <b>Slack</b> - communication with your team, non-profits,
-                mentors
-              </li>
-              <li>
-                <b>DevPost</b> - for hackathons this is the main landing place
-                for your project
-              </li>
-              <li>
-                <b>GitHub</b> - your code must be publically available and well
-                documented so that others can use it
-              </li>
-              <li>
-                <b>Heroku</b> - when you productionalize your code, use Heroku
-                as one of the easiest ways to make it available to the masses
-              </li>
-            </ul>
-            <h4>Mentor</h4>
-            You'll be assisting hackers with their project. Most of what you do
-            will take place on:
-            <ul>
-              <li>
-                Slack - checking in on teams and jumping into a screenshare here
-                and there
-              </li>
-            </ul>
-            Your goals are:
-            <ul>
-              <li>Make sure the team knows the problem they are solving</li>
-              <li>...are solving that problem 👆</li>
-              <li>
-                Are using libraries and are not trying to reinvent the wheel
-              </li>
-              <li>Are looking at the judging criteria (on DevPost)</li>
-              <li>
-                Have a demo video that is 4 minutes that describes the problem
-                and solution using tools like Loom or Quicktime.
-              </li>
-            </ul>
-            <a
-              href="https://www.ohack.org/about/mentors"
-              rel="noreferrer"
-              target="_blank"
-            >
-              More details on mentoring
-            </a>
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            class="button button--compact button--third"
-            onClick={handleClose}
-            value="hacker"
-            autoFocus
-          >
-            Help as Hacker
-          </Button>
-          <Button
-            class="button button--compact button--third"
-            onClick={handleClose}
-            value="mentor"
-          >
-            Help as Mentor
-          </Button>
-          <Button
-            class="button button--compact button--secondary"
-            className="error"
-            onClick={handleCancel}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={openUnhelp}
-        onClose={handleCloseUnhelp}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          Helping has completed!
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText component={"span"} id="alert-dialog-description">
-            <h4>What this means</h4>
-            You are recording the fact that you're no longer helping this
-            nonprofit
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            class="button button--compact button--secondary"
-            onClick={handleCloseUnhelpCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            class="button button--compact button--red"
-            onClick={handleCloseUnhelp}
-            autoFocus
-          >
-            Withdrawl Help
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={createTeamOpen}
-        onClose={handleCloseTeamCreate}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">Create a new team</DialogTitle>
-        <DialogContent>
-          <DialogContentText component={"span"} id="alert-dialog-description">
-            <Stack spacing={2}>
-              <TextField
-                id="team-name"
-                label="Team Name"
-                helperText="Any unique name you can use to identify your team"
-                onChange={handleUpdateTeamName}
-                margin="dense"
-                FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
-                variant="filled"
-              />
-
-              <TextField
-                id="slack-name"
-                label="Slack Channel Name"
-                helperText="Create this public channel first"
-                onChange={handleUpdateSlackChannel}
-                margin="dense"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">#</InputAdornment>
-                  ),
-                }}
-                FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
-                variant="filled"
-              />
-            </Stack>
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            class="button button--compact button--secondary"
-            onClick={handleCloseTeamCreate}
-          >
-            Cancel
-          </Button>
-          <Button
-            class="button button--compact button--third"
-            onClick={handleConfirmTeamCreate}
-            autoFocus
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Stack spacing={2} direction="row">
-        <Box sx={{ width: "75%" }}>{callToAction}</Box>
-
+    <Stack spacing={2} direction="row">
         {helpingSwitch}
-      </Stack>
-    </ProjectCard>
+      <Box sx={{ width: "75%" }}>{callToAction}</Box>
+
+      
+    </Stack>
+  </ProjectCard>
   );
 }
