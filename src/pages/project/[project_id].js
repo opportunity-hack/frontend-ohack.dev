@@ -10,11 +10,22 @@ export default function ProjectPage() {
   );
 }
 
-export async function getStaticPaths() {
+export async function getStaticPaths(project_id) {
+  console.log("project_id", project_id);
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statements`
+  );
+  const data = await res.json();
+  const problem_statements = data.problem_statements;
+
+  const paths = problem_statements.map((problem_statement) => ({
+    params: { project_id: problem_statement.id },
+  }))
+
   return {
-    paths: [
-    ],
-    fallback: "blocking",
+    paths: paths,
+    fallback: true
   }
 }
 
