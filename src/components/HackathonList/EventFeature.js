@@ -24,6 +24,7 @@ function EventFeature(props) {
   // TODO: Fix unused variable warning here
   const {
     title,
+    description,
     type,
     nonprofits,
     start_date,
@@ -43,15 +44,36 @@ function EventFeature(props) {
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
   console.log("eventLinks", eventLinks);
   
+
   return (
     <EventCards container direction="column">
-      <EventTitle variant="h3">{Moment(start_date).format('MMMM YYYY')} {type}</EventTitle>
-      <EventGreyText variant="button">
-        {Moment(start_date).format('MMM Do')} - {Moment(end_date).format('MMM Do')}
-      </EventGreyText>
+
+      <EventTitle variant="h3">{title}</EventTitle>
+      <EventText variant="h3">{description}</EventText>
+      
+      <br />
+      
+      {
+        Moment(new Date()).format("YYYY") === Moment(start_date).format('YYYY') && 
+        <EventText variant="h3">
+          {Moment(start_date).format('MMM Do')} - {Moment(end_date).format('MMM Do')}
+        </EventText>      
+      }
+
+      {
+        Moment(new Date()).format("YYYY") !== Moment(start_date).format('YYYY') &&
+        <EventText variant="h3">
+          {Moment(start_date).format('MMM Do YYYY')} - {Moment(end_date).format('MMM Do YYYY')}
+        </EventText>
+      }
+      
+      <br/>
+    
+      
       <EventGreyText variant="button">{location}</EventGreyText>
 
-      <EventText variant="h3">{title}</EventText>
+
+      
 
       <ProgressContainer
         container

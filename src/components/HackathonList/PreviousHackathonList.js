@@ -50,6 +50,7 @@ function PreviousHackathonList() {
                   <EventFeature
                     key={event.title}
                     title={event.title}
+                    description={event.description}
                     type={event.type}
                     nonprofits={event.nonprofits}
                     start_date={event.start_date}
