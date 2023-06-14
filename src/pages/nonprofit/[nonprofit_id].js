@@ -16,12 +16,22 @@ export default function NonProfitProfile() {
     );
 }
 
-export async function getStaticPaths() {
-    return {
-        paths: [
+export async function getStaticPaths(nonprofit_id) {
+    console.log("nonprofit_id", nonprofit_id);
 
-        ],
-        fallback: "blocking",
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`
+    );
+    const data = await res.json();
+    const nonprofits = data.nonprofits;
+
+    const paths = nonprofits.map((npo) => ({
+        params: { nonprofit_id: npo.id },
+    }))
+
+    return {
+        paths: paths,
+        fallback: true
     }
 }
 
