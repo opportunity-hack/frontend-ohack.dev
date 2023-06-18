@@ -354,33 +354,32 @@ export default function NonProfitApply() {
                   technical problems for public charities, non-profit
                   organizations (NPOs), and non-government organizations (NGOs).
                 </h4>
+                {
+                  // Countdown timer to June 30th 2023
+                }
+                <div className="profile__header">
+                  <iframe src="https://free.timeanddate.com/countdown/i8wdrh4y/n1945/cf12/cm0/cu3/ct0/cs0/ca0/co1/cr0/ss0/cac00f/cpc000/pcfff/tc66c/fs100/szw448/szh189/tatApplication%20deadline/tac009/tptTime%20since%20Event%20started%20in/tpc000/iso2023-06-30T00:00:00" allowtransparency="true" frameborder="0" width="253" height="67"></iframe>
+                </div>
+                <hr />
+                <h4 className="profile__title">
+                  <b>What is a hackathon?</b>
+                </h4>
+                <p>
+                  A hackathon is a 48-hour event where teams of 3-6 people work
+                  together to solve a problem. The teams are made up of
+                  developers, designers, and project managers. The teams are
+                  given a problem statement from a non-profit organization and
+                  they work together to solve the problem. At the end of the
+                  hackathon, the teams present their solutions to a panel of
+                  judges. The judges will select the top three teams and award
+                  them prizes.
+                </p>
+                <hr />
+                
                 <br />
                 This form helps us to find the charities that are the right fit
-                for our event.
-                <p>
-                  <br />
-                  🥇 We're able to sponsor top prizes for teams who are selected by
-                  the judges to complete your project post-hackathon. We only can
-                  sponsor teams if we have sponsors, if you know of any companies
-                  would would be willing to sponsor a prize, please share{" "}
-                  <a
-                    href="https://www.ohack.org/about/sponsorship"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: "#0000EE", textDecoration: "underline" }}
-                  >
-                    <b>ohack.org/about/sponsorship</b>
-                  </a>{" "}
-                  within your network to help us complete as many projects as
-                  possible!
-                </p>
-                <p>
-                  Sponsorship allows us to incentivize teams to complete their
-                  hackathon projects. From our previous experience over the last 9
-                  years, in order for projects to reach completion states, we need to
-                  provide a prize with monetary value that attracts the attention of
-                  the team to follow-through.
-                </p>
+                for our event.                             
+                <br /><br />
               </div>
             </div>
           </div>
