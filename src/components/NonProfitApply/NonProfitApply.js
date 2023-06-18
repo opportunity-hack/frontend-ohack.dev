@@ -94,7 +94,7 @@ export default function NonProfitApply() {
     joiningInPerson: false,
     areasOfFocus: [],
     servedPopulations: [],
-    contanctName: "",
+    contactName: "",
     contactPhone: "",
     organizationPurposeAndHistory: "",
     technicalProblem: "",
@@ -408,8 +408,9 @@ export default function NonProfitApply() {
             We support charities including non-profits (NPOs) and non-government
             organizations (NGOs).
           </p>
-            
-            <Autocomplete
+           
+        
+        <Autocomplete
               disablePortal
               value={formState.charityName}
               onChange={(event, newValue) => {
@@ -463,6 +464,7 @@ export default function NonProfitApply() {
               sx={{ width: 300 }}
               renderInput={(params) => <TextField {...params} label="Name of Charity Organization" />}
             />
+          
           
 
           <br />
@@ -740,11 +742,11 @@ export default function NonProfitApply() {
             required
             multiline
             rows={4}
-            defaultValue={formState.contanctName}
+            defaultValue={formState.contactName}
             onChange={(event) => {
               setFormState({
                 ...formState,
-                contanctName: event.target.value,
+                contactName: event.target.value,
               });
             }}
           />
@@ -764,7 +766,7 @@ export default function NonProfitApply() {
           <TextField
             sx={{ width: 250 }}
             id="outlined-basic"
-            label="Contact Phone Number(s) or Email(s)"
+            label="Contact Email or Phone"
             variant="filled"
             required
             multiline
