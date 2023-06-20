@@ -48,22 +48,27 @@ export default function Project() {
   var metaDescription = problem_statement.status + ": " + problem_statement.description + " ";
   var title = "Project: " + problem_statement.title;
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": problem_statement.title,
+    "description": metaDescription,
+    "provider": {
+      "@type": "Organization",
+      "name": "Opportunity Hack",
+      "sameAs": "https://www.ohack.dev"
+    }
+  };
+
   return(
     <LayoutContainer key="ham" container>           
     <Head>
       <title>{title}</title>
-      <meta name="description" content={metaDescription} />
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={metaDescription} />
-      <meta property="og:image" content={problem_statement.image_url} />
-      <meta property="og:url" content={problem_statement.url} />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@opportunityhack" />
-      <meta name="twitter:creator" content="@opportunityhack" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={metaDescription} />
-      <meta name="twitter:image" content={problem_statement.image_url} />
-      <meta property='twitter:domain' content='ohack.dev' />
+        <script
+          key="structured-data"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
     </Head>
 
     <ProjectsContainer>        
