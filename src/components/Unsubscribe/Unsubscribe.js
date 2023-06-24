@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -9,32 +9,91 @@ import TextField from '@mui/material/TextField';
 import Head from 'next/head';
 import { LayoutContainer } from '../../styles/nonprofit/styles';
 import { TitleContainer } from '../../styles/nonprofit/styles';
+import Typography from '@mui/material/Typography';
+
+import ReactPixel from 'react-facebook-pixel';
+import * as ga from '../../lib/ga';
+
+import axios from 'axios';
 
 
 
-export default function Unsubscribe() {
-    const [open, setOpen] = React.useState(false);
-    const [email, setEmail] = React.useState('');
+export default function Unsubscribe({email_address}) {
+    const [open, setOpen] = useState(false);
+    const [email, setEmail] = useState(email_address);
+    const [status, setStatus] = useState(''); // 'success' or 'error'
+
+    const options = {
+        autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+        debug: false, // enable logs
+    };
+    var advancedMatching = null;
+    if (email_address && email_address !== '') {
+        advancedMatching = { em: email_address };
+    }
+    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+
 
     const handleClickOpen = () => {
+        setStatus('');
         setOpen(true);
+
+        ga.event({
+            action: 'UnsubscribeOpened',
+            params: {
+                email: email_address,
+            },
+        });
+
+        ReactPixel.track('UnsubscribeOpened', {
+            value: 0.00,
+            currency: 'USD',            
+        });
+
     };
 
     const handleClose = () => {
         setOpen(false);
     };
 
+    
+
     const handleUnsubscribe = () => {
-        // Handle the unsubscribe logic here
-        console.log(`Unsubscribed: ${email}`);
-        setEmail('');
-        setOpen(false);
+        ga.event({
+            action: 'Unsubscribe',
+            params: {
+                email: email_address,
+            },
+        });
+
+        ReactPixel.track('Unsubscribe', {
+            value: 0.00,
+            currency: 'USD',
+        });
+
+
+        axios.post(`${process.env.NEXT_PUBLIC_API_NODEJS_SERVER_URL}/api/unsubscribe`, {
+            email: email,
+        })
+            .then((response) => {
+                console.log(response);
+                setStatus('Success! You have been unsubscribed from our newsletter.');
+                setEmail('');
+                setOpen(false);
+            })
+            .catch((error) => {
+                console.log(error);
+                setStatus('Error! There was a problem unsubscribing you from our newsletter.');                
+                setOpen(false);
+            });
+
     };
 
     const handleEmailChange = (event) => {
         setEmail(event.target.value);
     };
 
+    
     return (
         <LayoutContainer key="unsubscribe" container>
             <Head>
@@ -61,8 +120,11 @@ export default function Unsubscribe() {
             <p>~ The Opportunity Hack Team</p>
             <br /><br />
             <Button variant="outlined" color="secondary" onClick={handleClickOpen}>
-                Unsubscribe
+                    Unsubscribe {email_address}
             </Button>
+            <Typography variant="h6" textAlign="center" component="div" sx={{ flexGrow: 1 }}>
+                {status}
+            </Typography>
             </TitleContainer>
             <Dialog
                 open={open}
