@@ -39,6 +39,7 @@ import {
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 import ReactPixel from 'react-facebook-pixel';
 import * as ga from '../../lib/ga';
+import { Typography } from "@mui/material";
 
 
 export default function NonProfitApply() {
@@ -71,7 +72,7 @@ export default function NonProfitApply() {
 
   const START_DATE = "Saturday, Oct 7th";
   const END_DATE = "Sunday, Oct 8th 2023";
-  const LOCATION_ARIZONA = "Phoenix, Arizona (to be determined)"
+  const LOCATION_ARIZONA = "Phoenix, Arizona"
   const LOCATION = LOCATION_ARIZONA + " and virtual";
 
   nonprofits && nonprofits.forEach((item) => {
@@ -237,20 +238,19 @@ export default function NonProfitApply() {
     }
   };
 
-  const onComplete = (response, success) => {    
-    // Remove the saved status after 5 seconds
-    setTimeout(() => {
-      setSubmitStatus("");
-    }, 6000);
-
+  const onComplete = (response, success) => {        
     setShowLogin(true);
     if( success )
     {        
-      setSubmitStatus(<div><CheckCircleOutlineIcon sx={{
+      setSubmitStatus(
+        <div><CheckCircleOutlineIcon sx={{
         color: 'green',
-        fontSize: 20        
-      }} /> Saved Successfully</div>);
-      // console.log("success");
+        fontSize: 50        
+      }} />
+      <Typography fontSize={15}>Saved Successfully</Typography>
+      
+      </div>);
+      
 
       ReactPixel.track('NonProfit Form Submitted', {
         content_name: 'Nonprofit Application',
@@ -303,7 +303,10 @@ export default function NonProfitApply() {
   
 
 
-  const handleFormSubmit = async () => {
+  const handleFormSubmit = async () => {    
+    setSubmitStatus(<Puff stroke="#0000FF" />);
+    
+
     ReactRecaptcha3.getToken().then(
       (atoken) => {        
         setToken(atoken);
@@ -328,7 +331,7 @@ export default function NonProfitApply() {
             <Alert severity="success">
               <h4>You've already submitted this form on {Moment(formSubmissionDate.toLocaleString()).format('MMMM Do YYYY @ hh:mma')}</h4>
               <div className={'image-container'}>
-                <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="480" height="400" />
+                <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="320" height="266" />
               </div>
 
               <h4>Be sure to save any changes you make.</h4>
@@ -343,38 +346,14 @@ export default function NonProfitApply() {
                 <Image src={image} width="400" height="300" />
                 <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
                 <div className="profile__header"><PlaceIcon />{LOCATION}</div>
-                <a target="_blank"
-                  rel="noreferrer"
-                  style={{ color: "#0000EE", textDecoration: "underline" }}
-                  href="https://forms.gle/ByDbHo1eqEaxZB1v7">Suggest a location for the hackathon</a>
-                <hr />
-                <h4 className="profile__title">
-                  Opportunity Hack is a 48-hour hackathon that brings together
-                  software developers, designers, and project managers to solve
-                  technical problems for public charities, non-profit
-                  organizations (NPOs), and non-government organizations (NGOs).
-                </h4>
+                                
+               
                 {
                   // Countdown timer to June 30th 2023
                 }
                 <div className="profile__header">
                   <iframe src="https://free.timeanddate.com/countdown/i8wdrh4y/n1945/cf12/cm0/cu3/ct0/cs0/ca0/co1/cr0/ss0/cac00f/cpc000/pcfff/tc66c/fs100/szw448/szh189/tatApplication%20deadline/tac009/tptTime%20since%20Event%20started%20in/tpc000/iso2023-06-30T00:00:00" allowtransparency="true" frameborder="0" width="253" height="67"></iframe>
                 </div>
-                <hr />
-                <h4 className="profile__title">
-                  <b>What is a hackathon?</b>
-                </h4>
-                <p>
-                  A hackathon is a 48-hour event where teams of 3-6 people work
-                  together to solve a problem. The teams are made up of
-                  developers, designers, and project managers. The teams are
-                  given a problem statement from a non-profit organization and
-                  they work together to solve the problem. At the end of the
-                  hackathon, the teams present their solutions to a panel of
-                  judges. The judges will select the top three teams and award
-                  them prizes.
-                </p>
-                <hr />
                 
                 <br />
                 This form helps us to find the charities that are the right fit
@@ -484,7 +463,7 @@ export default function NonProfitApply() {
           />
           <br /><br />
             <Alert severity="warning">
-              <b>Complete transparency:</b> Not all projects will be completed after the hackathon is over. 
+              <b>Complete transparency:</b> Not all projects will be completed after the hackathon is over.<br/>Your time is commitment is 10-20 hours over the course of the weekend, and a few hours of prep work before the event.<br/>Winning teams will be invited to continue working on their projects after the hackathon is over and this typically takes 3 months.<br/>
               <br /><br />
             <FormControlLabel
               control={
@@ -780,35 +759,7 @@ export default function NonProfitApply() {
           />
         </DescriptionStyled>
       </DetailsContainer>
-
-      <DetailsContainer container>
-        <DescriptionStyled>
-          <br />
-          <b>Organization’s Purpose and History:</b>
-          <br />
-          Please provide a brief summary or your organization’s purpose and
-          history. Feel free to include a link to your website or social media
-          account.
-          <br />
-          <TextField
-            fullWidth
-            id="filled-textarea"
-            label="Tell us more"
-            placeholder="Tell us more about your organization"
-            multiline
-            rows={3}
-            variant="filled"
-            required
-            defaultValue={formState.organizationPurposeAndHistory}
-            onChange={(event) => {
-              setFormState({
-                ...formState,
-                organizationPurposeAndHistory: event.target.value,
-              });
-            }}
-          />
-        </DescriptionStyled>
-      </DetailsContainer>
+    
 
       <DetailsContainer container>
         <DescriptionStyled>
@@ -819,12 +770,7 @@ export default function NonProfitApply() {
           to solve.
           <br />
           Try to think only about the problem you are trying to solve,
-            and <em><strong>not</strong> how you want to solve it</em>. 
-          <br />  
-          The more specific you can get with your problem(s), the better scoped your project will be. 
-          <br />
-          Given that this problem is solved, how can it help you and your non-profit in
-          terms of cost savings, people served, time saved, etc.?
+            and <em><strong>not</strong> how you want to solve it</em>.                     
           <br />
           <TextField
             fullWidth
@@ -1035,11 +981,36 @@ export default function NonProfitApply() {
               variant="contained"
               onClick={handleFormSubmit}
             >
-              <span>Submit</span>
+              <span>Save</span>
             </LoadingButton>
           &nbsp;{submitStatus}
           {!user && showLogin && loginCallToAction}
+          <hr/>
+          <h4 className="profile__title">
+            <b>What is Opportunity Hack?</b>
+          </h4>
+          <p>
+            Opportunity Hack is a 48-hour hackathon that brings together
+            software developers, designers, and project managers to solve
+            technical problems for public charities, non-profit
+            organizations (NPOs), and non-government organizations (NGOs).
+          </p>
+
+          <h4 className="profile__title">
+            <b>What is a hackathon?</b>
+          </h4>
+          <p>
+            A hackathon is a 48-hour event where teams of 3-6 people work
+            together to solve a problem. The teams are made up of
+            developers, designers, and project managers. The teams are
+            given a problem statement from a non-profit organization and
+            they work together to solve the problem. At the end of the
+            hackathon, the teams present their solutions to a panel of
+            judges. The judges will select the top three teams and award
+            them prizes.
+          </p>
         </DescriptionStyled>        
+        
       </DetailsContainer>
       
     </LayoutContainer>
