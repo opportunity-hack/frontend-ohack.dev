@@ -42,6 +42,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
     const data = await res.json();
     const nonprofit = data.nonprofits;
 
+    var title = "Nonprofit: " + data.nonprofits.name;
     var metaDescription = '';
 
     var countOfhelpingMentors = 0;
@@ -82,16 +83,16 @@ export const getStaticProps = async ({ params = {} } = {}) => {
     // https://github.com/vercel/next.js/issues/35172#issuecomment-1169362010
     return {
         props: {
-            title: data.nonprofits.name,
+            title: title,
             openGraphData: [
                 {
                     name: 'title',
-                    content: data.nonprofits.name,
+                    content: title,
                     key: 'title',
                 },
                 {
                     property: 'og:title',
-                    content: data.nonprofits.name,
+                    content: title,
                     key: 'ogtitle',
                 },
                 {

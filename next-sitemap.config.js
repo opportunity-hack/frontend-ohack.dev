@@ -1,6 +1,6 @@
 module.exports = {
     siteUrl: process.env.SITE_URL || 'https://ohack.dev',
     generateRobotsTxt: false, // (optional)
-    exclude: ['/admin', '/profile']
+    exclude: [ '/admin', '/profile', '/nonprofit/[nonprofit_id]', '/hackathon/[hackathon_id]', '/project/[project_id]' ]
     // ...other options
 }
