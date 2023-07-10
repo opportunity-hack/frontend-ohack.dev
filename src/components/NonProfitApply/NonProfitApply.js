@@ -392,6 +392,7 @@ export default function NonProfitApply() {
               disablePortal
               value={formState.charityName}
               onChange={(event, newValue) => {
+                console.log("onChange Charity name changed to ", newValue);
                 ReactPixel.track('NPO: Charity Name', {
                   content_name: 'Nonprofit Application',
                   status: newValue,
@@ -424,6 +425,27 @@ export default function NonProfitApply() {
               }}
               inputValue={formState.charityName}
               onInputChange={(event, newInputValue) => {
+                console.log("Input Change Charity name changed to ", newInputValue);
+
+                ReactPixel.track('NPO: Charity Name', {
+                  content_name: 'Nonprofit Application',
+                  status: newInputValue,
+                  content_category: 'Nonprofit Application',
+                  value: 0.00,
+                  currency: 'USD',
+                });
+
+                ga.event({
+                  action: 'NPO: Charity Name',
+                  params: {
+                    content_name: 'Nonprofit Application',
+                    status: newInputValue,
+                    content_category: 'Nonprofit Application',
+                    value: 0.00,
+                    currency: 'USD',
+                  }
+                });   
+
                 if( newInputValue == null )
                 {
                   newInputValue = "";
