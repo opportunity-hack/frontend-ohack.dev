@@ -392,11 +392,12 @@ export default function NonProfitApply() {
               disablePortal
               value={formState.charityName}
               onChange={(event, newValue) => {
+                console.log("onChange Charity name changed to ", newValue);
                 ReactPixel.track('NPO: Charity Name', {
                   content_name: 'Nonprofit Application',
                   status: newValue,
                   content_category: 'Nonprofit Application',
-                  value: 0.00,
+                  value: 0.02,
                   currency: 'USD',
                 });
 
@@ -406,7 +407,7 @@ export default function NonProfitApply() {
                     content_name: 'Nonprofit Application',
                     status: newValue,
                     content_category: 'Nonprofit Application',
-                    value: 0.00,
+                    value: 0.02,
                     currency: 'USD',
                   }
                 });                
@@ -424,6 +425,27 @@ export default function NonProfitApply() {
               }}
               inputValue={formState.charityName}
               onInputChange={(event, newInputValue) => {
+                console.log("Input Change Charity name changed to ", newInputValue);
+
+                ReactPixel.track('oic NPO: Charity Name', {
+                  content_name: 'Nonprofit Application',
+                  status: newInputValue,
+                  content_category: 'Nonprofit Application',
+                  value: 0.01,
+                  currency: 'USD',
+                });
+
+                ga.event({
+                  action: 'oic NPO: Charity Name',
+                  params: {
+                    content_name: 'Nonprofit Application',
+                    status: newInputValue,
+                    content_category: 'Nonprofit Application',
+                    value: 0.01,
+                    currency: 'USD',
+                  }
+                });   
+
                 if( newInputValue == null )
                 {
                   newInputValue = "";
