@@ -12,7 +12,6 @@ import { Puff } from "react-loading-icons";
 
 import { NonProfitContainer, NonProfitGrid } from "../../styles/nonprofits/styles";
 
-import Head from "next/head";
 import {
   ContentContainer,
   InnerContainer,
@@ -173,16 +172,7 @@ function NonProfitList() {
     }, [nonprofits, needs_help_flag, production_flag, searchString]);
 
     return(
-        <ContentContainer container>
-      <Head>
-        <title>
-          Nonprofit Project List - Opportunity Hack Developer Portal
-        </title>
-        <meta
-          name="description"
-          content="A listing of all of the nonprofits and projects we have worked on from hackathons, senior capstone projects, and internships - we need help from you to push to production!"
-        />
-      </Head>
+        <ContentContainer container>      
       <InnerContainer container>
         <h1 className="content__title">Nonprofit Projects</h1>
         <div className="content__body">
