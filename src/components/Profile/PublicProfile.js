@@ -2,6 +2,7 @@ import React from "react";
 
 import { useRouter } from 'next/router'
 import Head from 'next/head';
+import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 
 export default function PublicProfile(){
     const router = useRouter()
@@ -27,6 +28,7 @@ export default function PublicProfile(){
                             <span className="profile__description">something@something.com</span>
                             <span className="profile__last_updated">Last Login: 12-12-2022 10:10:10</span>
                         </div>
+                        <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8" github_name="Issue #8" />
                     </div>
 
                     <div className="profile__details">

@@ -80,7 +80,7 @@ export default function NonProfit(props) {
   var slack_details = '';
   // var slack_details_plain = '';
 
-  if (nonprofit.slack_channel !== '') {
+  if (nonprofit.slack_channel && nonprofit.slack_channel !== '') {
     // TODO: Use?
     // slack_details_plain = nonprofit.slack_channel;
     slack_details = (
