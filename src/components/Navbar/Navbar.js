@@ -14,6 +14,9 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import * as ga from "../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
 
+
+
+
 import {
   NavbarContainer,
   Navbar,
@@ -55,13 +58,13 @@ import Badge from '@mui/material/Badge';
 import Tooltip from '@mui/material/Tooltip';
 */
 
-export default function NavBar() {
+export default function NavBar() {  
   const { isAuthenticated, logout, loginWithRedirect, user } = useAuth0();
   // TODO: const { badges, hackathons, profile, feedback_url } = useProfileApi();
   const [isOpen, setIsOpen] = useState(false);
 
   // add close dropdown mouselistener to close on outside click
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef(null);  
   const profileRef = useRef(null);
 
 
@@ -157,7 +160,8 @@ export default function NavBar() {
             {[
               ["Projects", "/nonprofits", ""],
               ["Submit a project", "/nonprofits/apply", ""],
-              ["About Us", "https://www.ohack.org/about", <OpenInNewIcon />],
+              ["About Us", "/about", ""],
+              ["Mentorship", "/about/mentors", ""],
               [
                 "Our History",
                 "https://www.ohack.org/about/history",
@@ -206,29 +210,29 @@ export default function NavBar() {
           {width >= 900 && (
             <>
               <NavbarListItem>
-                <NavbarLink href="/nonprofits/apply" exact>
-                  Submit Project
-                </NavbarLink>
-              </NavbarListItem>
-              <NavbarListItem>
-                <NavbarLink href="/nonprofits" exact>
-                  Projects
-                </NavbarLink>
-              </NavbarListItem>
-              <NavbarListItem>
-                <NavbarLink href="https://www.ohack.org/about" exact>
-                  About Us <OpenInNewIcon />
-                </NavbarLink>
-              </NavbarListItem>
-              <NavbarListItem>
-                <NavbarLink
-                  target={"_blank"}
-                  href="https://github.com/opportunity-hack/"
-                  exact
-                >
-                  <GitHubIcon fontSize="large" />
-                </NavbarLink>
-              </NavbarListItem>
+  <NavbarLink href="/nonprofits/apply" exact>
+    Submit Project
+  </NavbarLink>
+</NavbarListItem>
+<NavbarListItem>
+  <NavbarLink href="/nonprofits" exact>
+    Projects
+  </NavbarLink>
+</NavbarListItem>
+<NavbarListItem>
+  <NavbarLink href="/about" exact>
+    About Us
+  </NavbarLink>
+</NavbarListItem>
+<NavbarListItem>
+  <NavbarLink
+    target={"_blank"}
+    href="https://github.com/opportunity-hack/"
+    exact
+  >
+    <GitHubIcon fontSize="large" />
+  </NavbarLink>
+</NavbarListItem>
             </>
           )}
           <NavbarListItem>

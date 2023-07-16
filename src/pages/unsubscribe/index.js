@@ -12,10 +12,7 @@ export default function UnsubscribeMe(props) {
     // Get email address if it was passed into GET request
     const email = props.email;
 
-    console.log("Props: ", props);
-
-
-
+    // console.log("Props: ", props);
     return <Unsubscribe email_address={email} />;
 }
 

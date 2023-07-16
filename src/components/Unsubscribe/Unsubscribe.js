@@ -15,7 +15,7 @@ import ReactPixel from 'react-facebook-pixel';
 import * as ga from '../../lib/ga';
 
 import axios from 'axios';
-
+import Image from 'next/image';
 
 
 export default function Unsubscribe({email_address}) {
@@ -114,12 +114,15 @@ export default function Unsubscribe({email_address}) {
             </Head>
             <TitleContainer container>
             <h1>Unsubscribe from our newsletter</h1>
-            <p>Don't go! You'll miss out on our latest updates.</p>
-            <p>Click the button below and enter your email address below to unsubscribe.</p>
-            <p>Thanks for your interest in Opportunity Hack!</p>
-            <p>~ The Opportunity Hack Team</p>
+            <Typography variant='h4'>Don't go! You'll miss out on our latest updates and free support for you and your nonprofit.</Typography>
+            <Typography variant='h5'>Click the button below and enter your email address below to unsubscribe.</Typography>
+            
+            <Image style={{ margin: 10 }} src="https://i.imgur.com/pzcF1aj.jpg" alt="Unsubscribe" width={708/1.5} height={472/1.5} />
+            <Typography variant='h5'>Thanks for your interest in Opportunity Hack!</Typography>
+            <Typography variant='h5'>❤️💻💡 The Opportunity Hack Team</Typography>
+            
             <br /><br />
-            <Button variant="outlined" color="secondary" onClick={handleClickOpen}>
+            <Button variant="contained" color="secondary" onClick={handleClickOpen}>
                     Unsubscribe {email_address}
             </Button>
             <Typography variant="h6" textAlign="center" component="div" sx={{ flexGrow: 1 }}>
