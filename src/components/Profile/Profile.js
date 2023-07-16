@@ -27,6 +27,7 @@ import {
   ProfileHeadline,
 } from "../../styles/profile/styles";
 import { Link, Typography } from "@mui/material";
+import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack.js";
 
 export default function Profile(props) {
   const { isLoading, isAuthenticated, user } = useAuth0();
@@ -80,6 +81,7 @@ export default function Profile(props) {
               See Your Public Profile
           </ProfileButton>
           </Link>
+          <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6" github_name="Issue #6" />
         </ProfileContainer>
 
         <div className="profile__details">
@@ -113,6 +115,7 @@ export default function Profile(props) {
           <p>
             Feedback gathered from your mentors, peers, team members, nonprofits
           </p>
+          <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8" github_name="Issue #8" />
 
          
         </div>

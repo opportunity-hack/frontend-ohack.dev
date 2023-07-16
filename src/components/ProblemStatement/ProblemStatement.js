@@ -42,13 +42,14 @@ import InputAdornment from "@mui/material/InputAdornment";
 import NotesIcon from '@mui/icons-material/Notes'; 
 import EventIcon from "@mui/icons-material/Event";
 import CodeIcon from "@mui/icons-material/Code";
-import EngineeringIcon from "@mui/icons-material/Engineering";
+
 import useMediaQuery from '@mui/material/useMediaQuery';
-import Tabs from '@mui/material/Tabs';
+
 import Tab from '@mui/material/Tab';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
+import Link from "next/link";
 
 
 import useTeams from "../../hooks/use-teams";
@@ -515,8 +516,25 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
     }
   }, [problem_statement, user]);
 
-  if (user == null) {
-    helpingSwitch = "";
+  if (user == null) {     
+    // helpingSwitch should set a FormControlLabel and helpingSwitch should show everyting disabled
+    helpingSwitch = (
+      <FormControlLabel
+        labelPlacement="bottom"
+        control={<MaterialUISwitch sx={{ m: 1, color: "gray"}} disabled />}
+        label="Login to help"
+      />
+    );
+
+    callToAction = (
+      <Link href={`/signup?previousPage=/nonprofit/${npo_id}`}>    
+        <button className="button button--compact button--primary">
+          Login first
+        </button>
+      </Link>
+    );
+  
+
   } else {
     callToAction = (
       <a
@@ -544,7 +562,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
         </div>
       );
     } else {
-      helpingSwitchType = <span>I want to help</span>;
+      helpingSwitchType = <span>Slide to help</span>;
     }
 
     helpingSwitch = (
@@ -1005,9 +1023,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
 
     <Stack spacing={2} direction="row">
         {helpingSwitch}
-      <Box sx={{ width: "75%" }}>{callToAction}</Box>
-
-      
+      <Box sx={{ width: "75%" }}>{callToAction}</Box>      
     </Stack>
   </ProjectCard>
   );

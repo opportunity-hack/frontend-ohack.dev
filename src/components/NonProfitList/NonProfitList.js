@@ -18,6 +18,7 @@ import {
 } from "../../styles/nonprofits/styles";
 import { Search, SearchIconWrapper, StyledInputBase } from "./styles";
 import { Typography } from "@mui/material";
+import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 
 function NonProfitList() {
     let { nonprofits } = useNonprofit();
@@ -213,6 +214,8 @@ function NonProfitList() {
         {/* TODO: Move everything below here and end of function to pages/nonprofits/index.js once MUI has been set up to render server side. */}
         </div>
       </InnerContainer>
+
+      <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/4" github_name="Issue #4" />
     </ContentContainer>
     );
 }
