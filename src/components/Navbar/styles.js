@@ -57,6 +57,18 @@ export const NavbarListItem = styled("li")((props) => ({
   },
 }));
 
+export const NavbarButton = styled(Button)({
+  textDecoration: "none",
+  fontSize: "1.6rem",
+  fontWeight: 700,
+  letterSpacing: "0em",
+  color: "#333333",
+  transitionDuration: "0.3s",
+  
+  "&:hover": {
+    color: "#6a6a6a",
+  },
+});
 export const NavbarLink = styled(Link)({
   textDecoration: "none",
   fontSize: "1.6rem",
