@@ -321,6 +321,7 @@ export default function NonProfitApply() {
 
   };
   
+  const style = { fontSize: '15px' };
 
   return (   
     <LayoutContainer key="apply_form" container>            
@@ -343,17 +344,18 @@ export default function NonProfitApply() {
           <div className="content__body">
             <div className="profile__header">
               <div className="profile__headline">
-                <Image src={image} width="400" height="300" />
-                <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
-                <div className="profile__header"><PlaceIcon />{LOCATION}</div>
-                                
-               
-                {
+              {
                   // Countdown timer to June 30th 2023
                 }
                 <div className="profile__header">
                   <iframe src="https://free.timeanddate.com/countdown/i8xehgoj/n197/cf12/cm0/cu4/ct0/cs0/ca0/co1/cr0/ss0/cac000/cpc000/pcfff/tcfff/fs100/szw448/szh189/tatRemaining%20time%20to%20apply/tac000/tpc000/iso2023-07-31T00:00:00" allowtransparency="true" frameborder="0" width="304" height="67"></iframe>
                 </div>
+                <br />
+                <Image src={image} width="400" height="300" />
+                <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
+                <div className="profile__header"><PlaceIcon />{LOCATION}</div>
+                                
+                               
                 
                 <br />
                 This form helps us to find the charities that are the right fit
@@ -381,10 +383,10 @@ export default function NonProfitApply() {
         <DescriptionStyled>
           
           <p>
-            <b>Name of Charity Organization:</b>
+            <Typography style={style}><b>Name of Charity Organization:</b></Typography>
             <br />
-            We support charities including non-profits (NPOs) and non-government
-            organizations (NGOs).
+            <Typography style={style}>We support charities including non-profits (NPOs) and non-government
+            organizations (NGOs).</Typography>
           </p>
            
         
@@ -485,11 +487,12 @@ export default function NonProfitApply() {
           />
           <br /><br />
             <Alert severity="warning">
-              <b>Complete transparency:</b> Not all projects will be completed after the hackathon is over.<br/>Your time is commitment is 10-20 hours over the course of the weekend, and a few hours of prep work before the event.<br/>Winning teams will be invited to continue working on their projects after the hackathon is over and this typically takes 3 months.<br/>
-              <br /><br />
-            <FormControlLabel
+              <Typography style={style}><b>Complete transparency:</b> Not all projects will be completed after the hackathon is over.<br/>Your time is commitment is 10-20 hours over the course of the weekend, and a few hours of prep work before the event.<br/>Winning teams will be invited to continue working on their projects after the hackathon is over and this typically takes 3 months.</Typography>
+              <br/>
+              <br />
+            <FormControlLabel              
               control={
-                <Checkbox
+                <Checkbox                  
                   type="checkbox"
                   name="understandProjectUncertainty"
                   formState={formState}
@@ -504,7 +507,7 @@ export default function NonProfitApply() {
                   }}
                 />
               }
-              label="I understand that my project may not be completed during this hackathon"
+              label={<Typography style={style}>I understand that not all projects will be completed after the hackathon is over.</Typography>}
             />
             </Alert>
           
@@ -518,12 +521,12 @@ export default function NonProfitApply() {
               control={
                 <Checkbox
                   type="checkbox"
-                  name="Economic Empowerment"
+                  name="Economic Empowerment"                  
                   onChange={areasOfFocusSetState}
                     checked={formState.areasOfFocus && formState.areasOfFocus.includes("Economic Empowerment") }                  
                 />
               }
-              label="Economic Empowerment"
+              label={<Typography style={style}>Economic Empowerment</Typography>}
             />
             <FormControlLabel
               control={
@@ -534,7 +537,7 @@ export default function NonProfitApply() {
                     checked={formState.areasOfFocus && formState.areasOfFocus.includes("Education") }
                 />
               }
-              label="Education"
+              label={<Typography style={style}>Education</Typography>}
             />
             <FormControlLabel
               control={
@@ -545,7 +548,7 @@ export default function NonProfitApply() {
                     checked={formState.areasOfFocus && formState.areasOfFocus.includes("Animals") }
                 />
               }
-              label="Animals"
+              label={<Typography style={style}>Animals</Typography>}
             />
             <FormControlLabel
               control={
@@ -556,7 +559,7 @@ export default function NonProfitApply() {
                     checked={formState.areasOfFocus && formState.areasOfFocus.includes("Environmental Sustainability") }
                 />
               }
-              label="Environmental Sustainability"
+              label={<Typography style={style}>Environmental Sustainability</Typography>}
             />
             <FormControlLabel
               control={
@@ -567,7 +570,7 @@ export default function NonProfitApply() {
                     checked={formState.areasOfFocus && formState.areasOfFocus.includes("Career Mentoring")}
                 />
               }
-              label="Career Mentoring"
+              label={<Typography style={style}>Career Mentoring</Typography>}
             />
             <FormControlLabel
               control={
@@ -578,7 +581,7 @@ export default function NonProfitApply() {
                     checked={formState.areasOfFocus && formState.areasOfFocus.includes("Arts & Culture")}
                 />
               }
-              label="Arts & Culture"
+              label={<Typography style={style}>Arts & Culture</Typography>}
             />
             <FormControlLabel
               control={
@@ -589,7 +592,7 @@ export default function NonProfitApply() {
                     checked={formState.areasOfFocus && formState.areasOfFocus.includes("Health and Human Services")}
                 />
               }
-              label="Health and Human Services"
+              label={<Typography style={style}>Health and Human Services</Typography>}
             />
             <FormControlLabel
               control={
@@ -600,7 +603,7 @@ export default function NonProfitApply() {
                     checked={formState.areasOfFocus && formState.areasOfFocus.includes("Other areas")}
                 />
               }
-              label="Other areas"
+              label={<Typography style={style}>Other areas</Typography>}
             />
           </FormGroup>
         </DescriptionStyled>
@@ -620,7 +623,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("Women") }
                 />
               }
-              label="Women"
+              label={<Typography style={style}>Women</Typography>}
             />
             <FormControlLabel
               control={
@@ -631,7 +634,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("Black") }
                 />
               }
-              label="Black"
+              label={<Typography style={style}>Black</Typography>}
             />
             <FormControlLabel
               control={
@@ -642,7 +645,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("Indigenous") }
                 />
               }
-              label="Indigenous"
+              label={<Typography style={style}>Indigenous</Typography>}
             />
             <FormControlLabel
               control={
@@ -653,7 +656,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("Asian") }
                 />
               }
-              label="Asian"
+              label={<Typography style={style}>Asian</Typography>}
             />
             <FormControlLabel
               control={
@@ -664,7 +667,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("LatinX") }
                 />
               }
-              label="LatinX"
+              label={<Typography style={style}>LatinX</Typography>}
             />
             <FormControlLabel
               control={
@@ -675,7 +678,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("Disabled") }
                 />
               }
-              label="Disabled"
+              label={<Typography style={style}>Disabled</Typography>}
             />
             <FormControlLabel
               control={
@@ -686,7 +689,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("LGBTQUIA+") }
                 />
               }
-              label="LGBTQIA+"
+              label={<Typography style={style}>LGBTQUIA+</Typography>}
             />
             <FormControlLabel
               control={
@@ -697,7 +700,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("Veterans") }
                 />
               }
-              label="Veterans"
+              label={<Typography style={style}>Veterans</Typography>}
             />
             <FormControlLabel
               control={
@@ -708,7 +711,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("Immigrants/ Refugees")}
                 />
               }
-              label="Immigrants/Refugees"
+              label={<Typography style={style}>Immigrants/Refugees</Typography>}
             />
             <FormControlLabel
               control={
@@ -719,7 +722,7 @@ export default function NonProfitApply() {
                     checked={formState.servedPopulations && formState.servedPopulations.includes("Other") }
                 />
               }
-              label="Other"
+              label={<Typography style={style}>Other</Typography>}
             />
           </FormGroup>
         </DescriptionStyled>
@@ -729,10 +732,12 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <b>Contact Name:</b>
+          <Typography style={style}><b>Contact Name:</b></Typography>
           <br />
+          <Typography style={style}>
           Who is the best person we can contact to better understand your
           problem statements? Feel free to include multiple people.
+          </Typography>
           <br />
           <TextField
             sx={{ width: 250 }}
@@ -756,12 +761,14 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <b>Contact Email(s) or Phone Number(s):</b>
+          <Typography style={style}><b>Contact Email(s) or Phone Number(s):</b></Typography>
           <br />
+          <Typography style={style}>
           We'd like to ensure our hackers (the people writing the code) have
           your contact information for any questions they have. We'd also like
           to have this number so that we can reach out to you before you are
           able to join us on Slack. Feel free to include multiple email addresses and/or phone numbers.
+          </Typography>
           <br />
           <TextField
             sx={{ width: 250 }}
@@ -786,13 +793,17 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <b>Technical Problem:</b>
+          <Typography style={style}><b>Technical Problem:</b></Typography>
           <br />
+          <Typography style={style}>
           Describe what technical problem would you like hackathon participants
           to solve.
+          </Typography>
           <br />
+          <Typography style={style}>
           Try to think only about the problem you are trying to solve,
             and <em><strong>not</strong> how you want to solve it</em>.                     
+          </Typography>
           <br />
           <TextField
             fullWidth
@@ -817,10 +828,11 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <b>Benefit(s) to Organization:</b>
+          <Typography style={style}><b>Benefit(s) to Organization:</b></Typography>
           <br />
-          How would a solution to these challenges help further your work,
+          <Typography style={style}>How would a solution to these challenges help further your work,
           mission, strategy, or growth?
+          </Typography>
           <br />
           <TextField
             fullWidth
@@ -853,11 +865,13 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <b>Slack Familiarity:</b>
+          <Typography style={style}><b>Slack Familiarity:</b></Typography>
           <br />
+          <Typography style={style}>
           We use Slack as our only mechanism for communication for Opportunity
           Hack, we ask this question to better understand your knowledge of
           using Slack (see{" "}
+          
           <a
             href="https://slack.com/"
             target="_blank"
@@ -867,6 +881,7 @@ export default function NonProfitApply() {
             <b>Slack.com</b>
           </a>{" "}
           for more info).
+          </Typography>
           <br/>
           <FormControlLabel
             control={
@@ -901,7 +916,7 @@ export default function NonProfitApply() {
                 }}
               />
             }
-            label="I am familiar with what Slack is"
+            label={<Typography style={style}>I am familiar with Slack</Typography>}
           />
         </DescriptionStyled>
       </DetailsContainer>
@@ -909,8 +924,9 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <b>Key Staff Availability:</b>
+          <Typography style={style}><b>Key Staff Availability:</b></Typography>
           <br />
+          <Typography style={style}>
           Is at least one key staff person who is knowledgeable about the
           project and your needs available to attend the event?
           <br />
@@ -919,9 +935,11 @@ export default function NonProfitApply() {
           <br />
           We use Slack as our primary communication platform both before the
           hackathon starts and during the hackathon.
+          </Typography>
           
           <FormGroup>
             <FormControlLabel
+            sx={{ padding: "5px"}}
               control={
                 <Checkbox
                   type="checkbox"
@@ -930,9 +948,10 @@ export default function NonProfitApply() {
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
-              label="They will be available remotely throughout the entire period by phone"
+              label={<Typography style={style}>They will be available remotely throughout the entire period by <b>phone</b></Typography>}
             />
             <FormControlLabel
+              sx={{ padding: "5px"}}
               control={
                 <Checkbox
                   type="checkbox"
@@ -941,9 +960,10 @@ export default function NonProfitApply() {
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
-              label="They will be available remotely throughout the entire period by email and Slack"
+              label={<Typography style={style}>They will be available remotely throughout the entire period by <b>email and Slack</b></Typography>}
             />
             <FormControlLabel
+              sx={{ padding: "5px"}}
               control={
                 <Checkbox
                   type="checkbox"
@@ -952,9 +972,10 @@ export default function NonProfitApply() {
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
-                label="Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th"
+                label={<Typography style={style}>Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th</Typography>}
             />
             <FormControlLabel
+              sx={{ padding: "5px"}}
               control={
                 <Checkbox
                   type="checkbox"
@@ -963,16 +984,18 @@ export default function NonProfitApply() {
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
-                label="Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th"
+                label={<Typography style={style}>Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th</Typography>}
             />
           </FormGroup>
           <br />
-          <b>Coming Onsite?</b>
+          <Typography style={style}><b>Coming Onsite?</b></Typography>
           <br />
+          <Typography style={style}>
             Are you planning to join us in person at {LOCATION_ARIZONA}? <a target="_blank"
               rel="noreferrer"
               style={{ color: "#0000EE", textDecoration: "underline" }} 
               href="https://forms.gle/ByDbHo1eqEaxZB1v7">Suggest a location for the hackathon here.</a>
+          </Typography>
           <FormGroup>
               <FormControlLabel
                 control={
@@ -988,12 +1011,13 @@ export default function NonProfitApply() {
                     }}
                   />
                 }
-                label="Yes, either myself or a point of contact from our nonprofit is planning to attend in-person"
+                label={<Typography style={style}>Yes, either myself or a point of contact from our nonprofit is planning to attend in-person</Typography>}
               />
           </FormGroup>
         </DescriptionStyled>
-      </DetailsContainer>
+      </DetailsContainer>      
       <DetailsContainer container>                
+      <br/>
         <DescriptionStyled>         
             <LoadingButton
               color="secondary"
@@ -1007,21 +1031,22 @@ export default function NonProfitApply() {
             </LoadingButton>
           &nbsp;{submitStatus}
           {!user && showLogin && loginCallToAction}
+          <br/><br/>
           <hr/>
           <h4 className="profile__title">
             <b>What is Opportunity Hack?</b>
           </h4>
-          <p>
+          <Typography style={style}>
             Opportunity Hack is a 48-hour hackathon that brings together
             software developers, designers, and project managers to solve
             technical problems for public charities, non-profit
             organizations (NPOs), and non-government organizations (NGOs).
-          </p>
-
+          </Typography>
+          <br/>
           <h4 className="profile__title">
             <b>What is a hackathon?</b>
           </h4>
-          <p>
+          <Typography style={style}>
             A hackathon is a 48-hour event where teams of 3-6 people work
             together to solve a problem. The teams are made up of
             developers, designers, and project managers. The teams are
@@ -1030,7 +1055,7 @@ export default function NonProfitApply() {
             hackathon, the teams present their solutions to a panel of
             judges. The judges will select the top three teams and award
             them prizes.
-          </p>
+          </Typography>
         </DescriptionStyled>        
         
       </DetailsContainer>
