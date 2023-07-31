@@ -348,7 +348,7 @@ export default function NonProfitApply() {
                   // Countdown timer to June 30th 2023
                 }
                 <div className="profile__header">
-                  <iframe src="https://free.timeanddate.com/countdown/i8xehgoj/n197/cf12/cm0/cu4/ct0/cs0/ca0/co1/cr0/ss0/cac000/cpc000/pcfff/tcfff/fs100/szw448/szh189/tatRemaining%20time%20to%20apply/tac000/tpc000/iso2023-07-31T00:00:00" allowtransparency="true" frameborder="0" width="304" height="67"></iframe>
+                  <iframe src="https://free.timeanddate.com/countdown/i8yl1e21/n1945/cf12/cm0/cu4/ct0/cs1/ca0/co1/cr0/ss0/cac000/cpc000/pcfff/tcfff/fs100/szw448/szh189/tatTime%20left%20to%20submit%20application/tac000/tpc000/iso2023-08-01T00:00:00" allowtransparency="true" frameborder="0" width="381" height="67"></iframe>
                 </div>
                 <br />
                 <Image src={image} width="400" height="300" />

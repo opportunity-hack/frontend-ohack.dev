@@ -8,6 +8,8 @@ export default function useNonprofit( nonprofit_id ){
     
     const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl, apiNodeJsServerUrl } = useEnv();
+    const [nonprofitApplications, setNonprofitApplications] = useState([]); // This is for /nonprofits/apply/list
+
     const [nonprofits, setNonprofits] = useState([]);
     const [nonprofit, setNonprofit] = useState({
         "name":"",
@@ -113,6 +115,28 @@ export default function useNonprofit( nonprofit_id ){
 
         //return data;
     };
+
+
+    const handle_get_nonprofit_applications = async ( ) => {        
+        const config = {
+            url: `${apiNodeJsServerUrl}/api/nonprofit-applications`,
+            method: "GET",
+            headers: {
+                "content-type": "application/json",
+            },
+        };
+
+        // Publically available, so authenticated: false here
+        const data = await makeRequest({ config, authenticated: false });
+
+        if( user ){
+            setNonprofitApplications(data);
+        }        
+        
+        return data;
+    };
+
+
 
     const handle_new_npo_submission = async (name, email, npoName, description, website, slack_channel, checked, onComplete) => {
         if (!user)
@@ -257,6 +281,8 @@ export default function useNonprofit( nonprofit_id ){
         handle_new_npo_submission,
         handle_npo_problem_statement_delete,
         handle_npo_form_submission,
+        handle_get_nonprofit_applications,
+        nonprofitApplications,
         handle_get_npo_form
     }
 }
