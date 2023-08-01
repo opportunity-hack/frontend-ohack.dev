@@ -344,12 +344,18 @@ export default function NonProfitApply() {
           <div className="content__body">
             <div className="profile__header">
               <div className="profile__headline">
-              {
-                  // Countdown timer to June 30th 2023
-                }
-                <div className="profile__header">
-                  <iframe src="https://free.timeanddate.com/countdown/i8yl1e21/n1945/cf12/cm0/cu4/ct0/cs1/ca0/co1/cr0/ss0/cac000/cpc000/pcfff/tcfff/fs100/szw448/szh189/tatTime%20left%20to%20submit%20application/tac000/tpc000/iso2023-08-01T00:00:00" allowtransparency="true" frameborder="0" width="381" height="67"></iframe>
-                </div>
+             
+                <Typography variant="h2">Applications are closed as of August 1st 2023</Typography>
+                <Image src="https://media4.giphy.com/media/ysu9eOMkhYa7YyE70J/giphy.gif" width="480" height="270" />
+                <Typography variant="h3">Any forms submitted now will not be considered for our October hackathon.</Typography>
+                <br />
+                <Typography variant="h4">Here's what you can expect:</Typography>
+                <ul>
+                <li>August: We'll review applications - expect some questions sent via email or Slack.</li>
+                <li>September: Nonprofits will be notified, we'll spend a couple hours to refine your pitches for the hackathon.</li>
+                <li>October: Hackathon! We meet over a weekend and hackers write software to solve your problem.</li>
+                </ul>
+                <Typography variant="body4">Still have a problem for us? Submit it! We're a 24x7 platform and we always welcome your partnership. We likely won't be able to get working on it until after our hackathon in October.</Typography>
                 <br />
                 <Image src={image} width="400" height="300" />
                 <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
