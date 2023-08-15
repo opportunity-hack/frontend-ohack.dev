@@ -38,6 +38,26 @@ export default function NonProfitListTile({
 
   var number_of_problem_statements_helping_with = 0;
 
+  // Function to get the first 50 words of a string
+  const getFirst50Words = (str) => {
+    var output = str.split(/\s+/).slice(0, 50).join(' ');
+    
+    // If output ends with a comma, remove it
+    if (output.endsWith(',')) {
+      output = output.slice(0, -1);
+    }
+
+    // If longer than 50 words, also add ...
+    if (str.split(/\s+/).length > 50) {
+      return output + '...';
+    }
+
+    
+
+    return output;
+  };
+
+
   // TODO: add this to a lib. Preferrably slack related.
   const openCodeSample = (e, channel) => {
     e.preventDefault();
@@ -98,7 +118,7 @@ export default function NonProfitListTile({
     npo.problem_statements.length > 0
   ) {
     npo.problem_statements.forEach((ps) => {
-      if (ps.helping != null) {
+      if (ps?.helping != null) {
         ps.helping.forEach((helping) => {
           if (helping.slack_user === user.sub) {
             number_of_problem_statements_helping_with++;
@@ -285,7 +305,7 @@ export default function NonProfitListTile({
           {npo.problem_statements.length} Projects
         </p>
         <p className='ohack-feature__description'>
-          {npo.description ? npo.description : 'No description available.'}
+          {npo.description ? getFirst50Words(npo.description) : 'No description available.'}
         </p>
       </span>
     );
@@ -331,7 +351,7 @@ export default function NonProfitListTile({
         </Grid>
         {displayCountDetails()}
 
-        <NonProfitDescText>{npo.description ? npo.description : "No description available."}</NonProfitDescText>
+        <NonProfitDescText>{npo.description ? getFirst50Words(npo.description) : "No description available."}</NonProfitDescText>
         <Grid
           container
           direction='row'

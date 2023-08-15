@@ -14,7 +14,7 @@ import Stack from '@mui/material/Stack';
 // import { useState, useMemo, useEffect } from "react";
 import Button from '@mui/material/Button';
 import Team from './event-team';
-// import next from 'next';
+import useProfileApi from '../hooks/use-profile-api';
 
 /*
 
@@ -64,11 +64,21 @@ teams -> users
 teams -> problem_statements
 
 */
-export default function EventTeams({ teams, user, problemStatementId, eventId, onTeamCreate, onTeamLeave, onTeamCreateComplete, onTeamJoin, isHelping }) {     
+export default function EventTeams(
+    {   teams,    
+        user,
+        userDetails,
+        problemStatementId,
+        eventId,
+        onTeamCreate,
+        onTeamLeave,
+        onTeamCreateComplete,
+        onTeamJoin,
+        isHelping }) {     
     var teamCounter = 0;    
-    
-    const isUserInAnyTeamListTemp = teams.map(team =>{        
-        const isTeamAssociatedToProblemStatement = team.problem_statements !=null && team.problem_statements.includes(problemStatementId);
+        
+    const isUserInAnyTeamListTemp = teams && teams.map(team =>{                
+        const isTeamAssociatedToProblemStatement = team?.problem_statements !=null && team.problem_statements?.includes(problemStatementId);
         if (!isTeamAssociatedToProblemStatement )
         {                
             return false;
@@ -77,13 +87,21 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
         teamCounter++;
         
         const result = team.users.map(auser => {
-            console.log("Event Teams User: ", auser);
-
-            if( user == null )
+            console.log("Event Teams User: ", auser);            
+            console.log("Event Teams User Details: ", userDetails);
+            
+            var extendedDetails = {};
+            if (userDetails != null && auser != null) {                
+                extendedDetails["slack_id"] = userDetails[auser]["user_id"];                                
+            }
+            
+                
+            
+            if( user == null ) // Only show this to logged in people
             {
                 return false;
             }
-            else if (auser["slack_id"] === user.sub) {
+            else if (extendedDetails && extendedDetails["slack_id"] === user.sub) {
                 return true;
             }
             else {
@@ -97,8 +115,6 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
     
     const isUserInAnyTeamList = [].concat.apply([], isUserInAnyTeamListTemp);
     const isLoggedInUserAlreadyOnTeam = isUserInAnyTeamList.includes(true);
-       
-
     const handleDeleteClicked = (team) => {
         console.log("Delete Button Clicked");
         console.log(team);
@@ -113,22 +129,32 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
     };
 
 
-    const teamsToShow = teams.map(team => {
-            const users = team.users;
+    const teamsToShow = teams && teams.map(team => {
+            const users = team?.users;
 
-            const isTeamAssociatedToProblemStatement = team.problem_statements != null && team.problem_statements.includes(problemStatementId);
+            const isTeamAssociatedToProblemStatement = team?.problem_statements != null && team?.problem_statements.includes(problemStatementId);
+            console.log("isTeamAssociatedToProblemStatement: ", isTeamAssociatedToProblemStatement);
+            console.log("isTeamAssociatedToProblemStatement Problem Statement ID: ", problemStatementId);
+            console.log("isTeamAssociatedToProblemStatement problem_statements: ", team?.problem_statements);
             if (!isTeamAssociatedToProblemStatement) {
                 return "";
             }
 
             
+            
             // This will give a result for each team, e.g. [true, false, false]
             const isUserOnThisTeam = users.map( auser => {
+                var extendedDetails = {};
+
+                if (userDetails != null && auser != null) {                
+                    extendedDetails["slack_id"] = userDetails[auser]["user_id"];                                
+                }
+                
                 if( user == null )
                 {
                     return false;
                 }
-                else if (auser["slack_id"] === user.sub )
+                else if (extendedDetails && extendedDetails["slack_id"] === user.sub )
                 {
                     return true;
                 }
@@ -140,7 +166,7 @@ export default function EventTeams({ teams, user, problemStatementId, eventId, o
             const isOnTeam = isUserOnThisTeam.includes(true);            
 
             
-        return (<Team team={team} isHelping={isHelping} _isOnTeam={isOnTeam} _isOnAnyTeam={isLoggedInUserAlreadyOnTeam} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} />);
+        return (<Team team={team} userDetails={userDetails} isHelping={isHelping} _isOnTeam={isOnTeam} _isOnAnyTeam={isLoggedInUserAlreadyOnTeam} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} />);
     });
     
 

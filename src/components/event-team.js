@@ -16,6 +16,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 
 import Stack from '@mui/material/Stack';
 import Image from 'next/image'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
     '& .MuiBadge-badge': {
@@ -28,7 +29,7 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 
 
 
-export default function EventTeam({ team, _isOnTeam, _isOnAnyTeam, onJoin, onDelete, isHelping }) {    
+export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, onJoin, onDelete, isHelping }) {    
     const countOfPeopleOnTeam = team.users.length;
     
     const [isOnTeam, setOnTeam] = useState(_isOnTeam);
@@ -88,14 +89,20 @@ export default function EventTeam({ team, _isOnTeam, _isOnAnyTeam, onJoin, onDel
     }, [team, isOnTeam, isOnAnyTeam, isHelping]);
 
     const userIcons = team.users.map(auser => {
+        var extendedDetails = {};
+        if (userDetails != null && auser != null) {                
+            extendedDetails = userDetails[auser];
+            console.log("Profile Image: " + extendedDetails.profile_image);
+        }
+
         return (
             <Stack direction="row" alignItems="center" spacing={1}>
                 <Image className="ohack-feature__icon"
-                    src={auser.profile_image}
+                    src={extendedDetails.profile_image}
                     width={50}
                     height={50} />
 
-                <div>{auser.name}</div>
+                <div>{extendedDetails.name}</div>
             </Stack>
         )
     });
@@ -117,7 +124,7 @@ export default function EventTeam({ team, _isOnTeam, _isOnAnyTeam, onJoin, onDel
                 })()}
                     <b>{team.name}</b> <font face="Courier">#{team.slack_channel}</font> {joinOrLeaveTeam}<br />
                 <div>
-                        {isOnTeam && <b>You are on this team</b>}
+                        {isOnTeam && <b><CheckCircleIcon sx={{color: 'green'}}/>You are on this team</b>}
                         {userIcons}                        
                 </div>
             </li>

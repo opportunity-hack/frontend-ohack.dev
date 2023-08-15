@@ -105,6 +105,26 @@ export default function useProfileApi(props){
         }
     }, [getAccessTokenSilently]);
 
+    // Handle calling /profile/ endpoint by user id
+    const get_user_by_id = async (user_id, onComplete) => {
+        if (!user_id)
+            return null;
+        
+        const config = {
+            url: `${apiServerUrl}/api/messages/profile/${user_id}`,
+            method: "GET",
+            headers: {
+                "content-type": "application/json",
+            },
+        };
+
+        const data = await fetchUser({ config, authenticated: true });
+        onComplete(data);
+        return data;
+    };
+
+
+
 
     
     /*
@@ -114,7 +134,6 @@ export default function useProfileApi(props){
     */
 
     useEffect(() => {
-    
         const getProfileDetails = async () => {
             if (!user_id)
                 return null;
@@ -159,6 +178,7 @@ export default function useProfileApi(props){
         badges,
         hackathons,
         profile,
+        get_user_by_id,
         feedback_url,
         handle_help_toggle
     };

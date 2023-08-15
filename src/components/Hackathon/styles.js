@@ -39,22 +39,6 @@ export const EventCards = styled(Grid)((props) => ({
   },
 }));
 
-export const EventExtendedCard = styled(Grid)((props) => ({
-  height: "auto",
-  padding: "2%",
-  maxWidth: "50%",
-  boxShadow: "10px",
-  backgroundColor: "#e6f7ff",
-  borderRadius: "15px",
-  // margin: "3% 2% 2% 0%",
-
-  [props.theme.breakpoints.down("md")]: {
-    maxWidth: "100%",
-    width: "100%",
-    marginTop: "3%",
-  },
-}));
-
 export const ButtonContainer = styled(Grid)({
   width: "100%",
   // gap: "25px"
@@ -86,20 +70,6 @@ export const EventTitle = styled(Typography)({
   fontWeight: "bold",
 });
 
-export const EventLink = styled(Typography)({
-  fontSize: "2.5rem",  
-  color: "#0000FF",
-  textDecoration: "underline",
-  textTransform: "none",
-  fontWeight: "bold",
-  "&:hover": {
-    color: "#003486",
-    textDecoration: "underline",
-  },
-  marginBottom: "6px"
-
-});
-
 export const EventText = styled(Typography)({
   fontSize: "1.5rem",
   textTransform: "none",
@@ -119,18 +89,6 @@ export const EventButton = styled(Button)({
   backgroundColor: "#003486",
   color: "#ffffff",
   minWidth: "120px",
-  borderRadius: "20px",
-  marginTop: "3%",
-  fontSize: "15px",
-
-  "&:hover": {
-    backgroundColor: `var(--blue)`,
-  },
-});
-
-export const ExtendedEventButton = styled(Button)({
-  textTransform: "unset !important",
-
   borderRadius: "20px",
   marginTop: "3%",
   fontSize: "15px",

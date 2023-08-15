@@ -32,7 +32,7 @@ export default function ProjectProgress({ state }) {
     const statusList = stateMapping[state];
 
     return states.map((name, index) => {
-      if (statusList[index] === 2) {
+      if (statusList && statusList[index] === 2) {
         return (
           <Tooltip
             enterTouchDelay={0}
@@ -49,7 +49,7 @@ export default function ProjectProgress({ state }) {
             />
           </Tooltip>
         );
-      } else if (statusList[index] === 1) {
+      } else if (statusList && statusList[index] === 1) {
         return (
           <Tooltip
             enterTouchDelay={0}

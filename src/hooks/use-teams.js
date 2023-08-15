@@ -36,6 +36,22 @@ export default function useTeams(){
         }
     }, [getAccessTokenSilently]);
 
+    // Get a single team
+    const handle_get_team = async (team_id, onComplete) => {
+        const config = {
+            url: `${apiServerUrl}/api/messages/team/${team_id}`,
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        const data = await makeRequest({ config, authenticated: false });
+        onComplete(data);
+        return data;
+    };
+
 
     const handle_new_team_submission = async (teamName, teamSlackChannel, problemStatementId, eventId, userId, onComplete) => {
         if (!user)
@@ -170,6 +186,7 @@ export default function useTeams(){
         teams,
         handle_new_team_submission,
         handle_unjoin_a_team,
-        handle_join_team
+        handle_join_team,
+        handle_get_team
     }
 }

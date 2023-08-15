@@ -7,6 +7,7 @@ import {
   EventGreyText,
   EventText,
   EventTitle,
+  EventLink,
   ProgressBarHolder,
   ProgressContainer,
   ThankYouContainer,
@@ -19,6 +20,7 @@ import {
 import "react-circular-progressbar/dist/styles.css";
 import { Typography } from "@mui/material";
 import Moment from 'moment';
+import Link from 'next/link';
 
 function EventFeature(props) {
   // TODO: Fix unused variable warning here
@@ -31,7 +33,8 @@ function EventFeature(props) {
     end_date,
     location,
     devpostUrl,
-    rawEventLinks,
+    event_id,
+    rawEventLinks,    
     donationUrl,    
     donationGoals,
     donationCurrent,
@@ -46,9 +49,11 @@ function EventFeature(props) {
   
 
   return (
+    
     <EventCards container direction="column">
+    <Link href={`/hack/${event_id}`}>
 
-      <EventTitle variant="h3">{title}</EventTitle>
+      <EventLink variant="h3"><a href={`/hack/${event_id}`}>{title}</a></EventLink>
       <EventText variant="h3">{description}</EventText>
       
       <br />
@@ -71,10 +76,7 @@ function EventFeature(props) {
     
       
       <EventGreyText variant="button">{location}</EventGreyText>
-
-
       
-
       <ProgressContainer
         container
         justifyContent="space-around"
@@ -191,7 +193,9 @@ function EventFeature(props) {
             })
        }
       </ButtonContainer>
+      </Link>
     </EventCards>
+    
   );
 }
 
