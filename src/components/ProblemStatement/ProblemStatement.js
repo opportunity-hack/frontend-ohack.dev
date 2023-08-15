@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use } from "react";
 import { useState, useMemo, useEffect } from "react";
 
 import Tooltip from "@mui/material/Tooltip";
@@ -70,11 +70,135 @@ import Grid from '@mui/material/Grid';
 import SkillSet from "../skill-set";
 import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 import ReactPixel from 'react-facebook-pixel';
+import useProblemstatements from "../../hooks/use-problem-statements";
+import useHackathonEvents from "../../hooks/use-hackathon-events";
+
 
 import * as ga from '../../lib/ga';
 
-export default function ProblemStatement({ problem_statement, user, npo_id }) {
+export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
   const isLargeScreen = useMediaQuery('(min-width: 768px)');
+
+  console.log("problem_statement_id", problem_statement_id);
+  const { problem_statement } = useProblemstatements(problem_statement_id);
+  const { handle_get_hackathon_id } = useHackathonEvents();
+  const { handle_get_team, handle_new_team_submission, handle_join_team, handle_unjoin_a_team } = useTeams();
+
+  console.log("problem_statement", problem_statement);
+  
+
+  // For every item in problem_statement.events, get the event details with useCallback using handle_get_hackathon(event_id, onComplete) 
+  const [hackathonEvents, setHackathonEvents] = useState([]);
+  const [hackathonEventsLoaded, setHackathonEventsLoaded] = useState(false);
+  const [hackathonEventsError, setHackathonEventsError] = useState(false);
+  const [hackathonEventsErrorDetails, setHackathonEventsErrorDetails] = useState(null);
+
+  useEffect(() => {
+    if (problem_statement && problem_statement.events) {
+      const events = problem_statement.events;
+      const hackathonEvents = [];
+      const promises = [];
+      events.forEach((id) => {
+        console.log("_id", id);
+        const promise = new Promise((resolve, reject) => {          
+          handle_get_hackathon_id(id, (hackathonEvent) => {
+            if (hackathonEvent) {
+              
+              hackathonEvents.push(hackathonEvent);
+              resolve(hackathonEvent);
+            } else {
+              reject("Error getting hackathon event");
+            }
+          });
+        });
+        promises.push(promise);
+      });
+      Promise.all(promises)
+        .then((values) => {          
+          setHackathonEvents(hackathonEvents);
+          setHackathonEventsLoaded(true);
+        })
+        .catch((error) => {
+          setHackathonEventsError(true);
+          setHackathonEventsErrorDetails(error);
+        });
+    }
+  }, [problem_statement_id, problem_statement]);
+  
+
+  const [teams, setTeams] = useState([]);
+  const [teamsLoaded, setTeamsLoaded] = useState(false);
+  const [teamsError, setTeamsError] = useState(false);
+  const [teamsErrorDetails, setTeamsErrorDetails] = useState(null);
+  useEffect(() => {
+    if (hackathonEvents) {
+      
+      console.log("~events", hackathonEvents);
+      const teamsArray = [];
+      const promises = [];
+      hackathonEvents.forEach((event) => {
+          console.log("  teams~", event.teams);
+          event.teams && event.teams.forEach((team) => {
+            console.log("  team~", team);
+            promises.push(
+              handle_get_team(team, (team) => {
+                teamsArray.push(team);
+              })
+            );
+          }
+        );
+      });                            
+        Promise.all(promises)
+          .then((values) => {
+            setTeams(teamsArray);
+            setTeamsLoaded(true);
+          })
+          .catch((error) => {
+            setTeamsError(true);
+            setTeamsErrorDetails(error);
+          });
+      }
+    }, [hackathonEvents]);
+
+
+  const { get_user_by_id } = useProfileApi();
+  const [userLoaded, setUserLoaded] = useState(false);
+  const [userError, setUserError] = useState(false);
+  const [userErrorDetails, setUserErrorDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
+  
+  // For all users within teams, call get_user_by_id to get the user details in a map and store in userDetails
+  useEffect(() => {
+    if (teams && teams.length > 0) {
+      const userDetailsMap = {};
+      const promises = [];
+      teams.forEach((team) => {
+        team.users && team.users.forEach((user_id) => {
+          promises.push(
+            get_user_by_id(user_id, (user) => {
+              userDetailsMap[user_id] = user;
+            })
+          );
+        });
+      });
+      Promise.all(promises)
+        .then((values) => {            
+          setUserDetails(userDetailsMap);
+          setUserLoaded(true);
+        })
+        .catch((error) => {
+          setUserError(true);
+          setUserErrorDetails(error);
+        });
+    }
+  }, [teams]);
+
+
+
+  console.log("hackathonEvents:", hackathonEvents);
+  console.log("teams:", teams);
+  console.log("userDetails:", userDetails);
+
 
   const [open, setOpen] = useState(false);
   const [openUnhelp, setOpenUnhelp] = useState(false);
@@ -84,8 +208,7 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
   const [createdTeamDetails, setCreatedTeamDetails] = useState();
 
-  const { handle_new_team_submission, handle_join_team, handle_unjoin_a_team } =
-    useTeams();
+  
 
   const [newTeamSlackChannel, setNewTeamSlackChannel] = useState("");
   const [newTeamName, setNewTeamName] = useState("");
@@ -101,9 +224,6 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   };
   const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
   ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-
-  // console.log("USER:",user);
-
 
 
   const [expanded, setExpanded] = useState("");
@@ -228,6 +348,8 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   };
 
   const handleTeamCreate = (problemStatementId, eventId) => {
+    console.log("handleTeamCreate")
+    console.log("Params: " + problemStatementId + " " + eventId)
     setNewTeamProblemStatementId(problemStatementId);
     setNewTeamEventId(eventId);
     setCreateTeamOpen(true); // Open the modal
@@ -442,16 +564,14 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
   }
 
   var TeamText = "";
-  if (problem_statement.events != null) {
-    var teamCounter = 0;
-    problem_statement.events.forEach((event) => {
-      event.teams.forEach((ateam) => {
-        if (ateam.problem_statements != null && 
-            ateam.problem_statements.includes(problem_statement.id)) {
-          teamCounter++;
-        }
-      });
-    });
+  if (hackathonEvents != null) {
+    var teamCounter = teams.filter((team) => team.problem_statements.includes(problem_statement_id)).length;
+    // Count the number of teams across all events for this problem statement
+    
+
+
+    
+    
     var s = teamCounter === 1 ? "" : "s";
     var is_are = teamCounter === 1 ? " is " : " are ";
     TeamText =
@@ -641,9 +761,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
       icon: <EventIcon />,      
       description: <Stack>
         <ShortDescText>
-          {problem_statement.events.length > 0
-            ? `We've hacked on this at ${problem_statement.events.length
-            } event${problem_statement.events.length > 1 ? "s" : ""}`
+          {hackathonEvents && hackathonEvents.length > 0
+            ? `We've hacked on this at ${hackathonEvents.length
+            } event${hackathonEvents.length > 1 ? "s" : ""}`
             : "We haven't hacked on this project yet!"}
         </ShortDescText>
         <ShortDescText>{TeamText}</ShortDescText>
@@ -651,7 +771,9 @@ export default function ProblemStatement({ problem_statement, user, npo_id }) {
       content: 
       <ProjectDescText>
         <Events
-          events={problem_statement.events}
+          teams={teams}
+          userDetails={userDetails}
+          events={hackathonEvents}
           onTeamCreate={handleTeamCreate}
           onTeamLeave={handleLeavingTeam}
           onTeamCreateComplete={createdTeamDetails}

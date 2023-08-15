@@ -37,7 +37,7 @@ export default function AdminProblemStatementList ({ selected, onSelected, defau
     return (<div className="checklist-box-list">
         <List>
             {
-                problem_statements.map((problem_statement) => {
+                problem_statements?.map((problem_statement) => {
                     const labelId = `checkbox-list-label-${problem_statement.id}`;
 
                     return (

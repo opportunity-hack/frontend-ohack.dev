@@ -37,6 +37,7 @@ function HackathonList() {
             return (
               <EventFeature
                 title={event?.title}
+                event_id={event?.event_id}
                 description={event?.description}
                 key={event?.title}
                 type={event?.type}

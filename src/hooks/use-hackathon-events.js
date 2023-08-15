@@ -37,6 +37,36 @@ export default function useHackathonEvents( currentOnly ){
     }, [getAccessTokenSilently]);
 
 
+    const handle_get_hackathon = async (event_id, onComplete) => {        
+        const config = {
+            url: `${apiServerUrl}/api/messages/hackathon/${event_id}`,
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }            
+        };
+
+        const data = await makeRequest({ config, authenticated: false });        
+        onComplete(data); 
+        return data;
+    };
+
+    const handle_get_hackathon_id = async (id, onComplete) => {        
+        const config = {
+            url: `${apiServerUrl}/api/messages/hackathon/id/${id}`,
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }            
+        };
+
+        const data = await makeRequest({ config, authenticated: false });        
+        onComplete(data); 
+        return data;
+    };
+
     const handle_problem_statement_to_event_link_update = async (mapping, onComplete) => {
         if (!user)
             return null;
@@ -74,9 +104,7 @@ export default function useHackathonEvents( currentOnly ){
 
             // Publically available, so authenticated: false here
             const data = await makeRequest({ config, authenticated: false });
-
             if (data) {
-
                 if (data.status && data.status === 403) {
                     setHackathons([]);
                 }
@@ -96,6 +124,8 @@ export default function useHackathonEvents( currentOnly ){
 
     return {
         hackathons,
+        handle_get_hackathon,
+        handle_get_hackathon_id,
         handle_problem_statement_to_event_link_update
     }
 }

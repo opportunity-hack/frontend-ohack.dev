@@ -22,6 +22,7 @@ import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 
 function NonProfitList() {
     let { nonprofits } = useNonprofit();
+    console.log("Nonprofits: ", nonprofits);
 
     const [searchString, setSearchString] = useState('');
     const [needs_help_flag, setNeedsHelpFlag] = useState(true);
@@ -126,15 +127,15 @@ function NonProfitList() {
         let needs_help_counter = 0;
         let hacker_counter = 0;
         let mentor_counter = 0;
-
-        npo.problem_statements.forEach((ps) => {
-          if (ps.status === "production") {
+        
+        npo.problem_statements?.forEach((ps) => {
+          if (ps?.status === "production") {
             production_counter++;
           } else {
             needs_help_counter++;
           }
 
-          if (ps.helping) {
+          if (ps?.helping) {
             ps.helping.forEach((help) => {
               // TODO: "hacker" and "mentor" should probably be exported as consts from somewhere.
               if (help.type === "hacker") {

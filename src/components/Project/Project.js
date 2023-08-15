@@ -77,7 +77,7 @@ export default function Project() {
     <ProjectsGrid container>
       <ProblemStatement
       key={problem_statement.id}
-      problem_statement={problem_statement}
+      problem_statement_id={problem_statement.id}
       user={user}              
       />
       </ProjectsGrid>

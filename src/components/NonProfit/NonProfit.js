@@ -121,7 +121,7 @@ export default function NonProfit(props) {
           return (
             <ProblemStatement
               key={ps.id}
-              problem_statement={ps}
+              problem_statement_id={ps}
               user={user}
               npo_id={nonprofit_id}
             />

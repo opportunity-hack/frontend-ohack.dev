@@ -2,11 +2,14 @@ import EventTeams from "../event-teams";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Stack from "@mui/material/Stack";
 import { Grid, Typography } from "@mui/material";
-
-
+import { useState, useEffect } from "react";
+import useTeams from "../../hooks/use-teams";
+import useProfileApi from "../../hooks/use-profile-api";
 
 export default function Events({
   events,
+  teams,
+  userDetails,
   user,
   problemStatementId,
   onTeamCreate,
@@ -15,10 +18,14 @@ export default function Events({
   onTeamJoin,
   isHelping,
 }) {
+  
+  
   var eventsResult = "We haven't hacked on this yet!"
   if (events && events.length > 0) {    
     eventsResult = events.map((event) => {
-      var devPostPostfixString = "";
+      
+
+      var devPostPostfixString = "";      
 
       if (event.devpost_url && event.devpost_url.includes("devpost")) {
         devPostPostfixString = "on DevPost";
@@ -66,13 +73,17 @@ export default function Events({
                     Register {devPostPostfixString}
                 </button>
               )             
-            }
-              
+            }              
             </a>
 
+            
+
+
             <EventTeams
-              teams={event.teams}
+              // The teams filtered for a given event
+              teams={teams.filter((team) => event.teams.includes(team.id))} 
               user={user}
+              userDetails={userDetails}
               problemStatementId={problemStatementId}
               eventId={event.id}
               onTeamCreate={onTeamCreate}
