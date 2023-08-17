@@ -73,15 +73,19 @@ function EventFeatureExtended(props) {
     );
   };
 
+  const countdownSize = 70;
+
   const getTimeSeconds = (time) => (minuteSeconds - time) | 0;
   const getTimeMinutes = (time) => ((time % hourSeconds) / minuteSeconds) | 0;
   const getTimeHours = (time) => ((time % daySeconds) / hourSeconds) | 0;
   const getTimeDays = (time) => (time / daySeconds) | 0;
 
   const stratTime = Date.now() / 1000; // use UNIX timestamp in seconds
+  
+  // Parse the date time with Moment and convert to Date object
 
   // endTime is October 7th at 7am
-  const endTime = new Date("October 7, 2023 07:00:00").getTime() / 1000;
+  const endTime = new Date(start_date).getTime() / 1000;
 
   const remainingTime = endTime - stratTime;
   const days = Math.ceil(remainingTime / daySeconds);
@@ -123,7 +127,7 @@ function EventFeatureExtended(props) {
           direction="column"
         >
           <BlankContainer container justifyContent="center" direction="row" gap="20px">        
-            {donationCurrent?.food > 0 && (
+            {donationCurrent && donationCurrent.food > 0 && (
               <ProgressBarHolder container justifyContent="center">
                 <Typography variant="h5" marginBottom="12%" fontWeight="bold">
                   Food
@@ -152,7 +156,7 @@ function EventFeatureExtended(props) {
               </ProgressBarHolder>
             )}
 
-            {donationCurrent?.prize > 0 && (
+            {donationCurrent && donationCurrent.prize > 0 && (
             <ProgressBarHolder container justifyContent="center">
               <Typography variant="h5" marginBottom="12%" fontWeight="bold">
                 Prize
@@ -181,7 +185,7 @@ function EventFeatureExtended(props) {
             </ProgressBarHolder>
             )}
 
-            {donationCurrent.swag > 0 && (
+            {donationCurrent && donationCurrent.swag > 0 && (
               <ProgressBarHolder container justifyContent="center">
                 <Typography variant="h5" marginBottom="12%" fontWeight="bold">
                   Swag
@@ -213,7 +217,7 @@ function EventFeatureExtended(props) {
 
           <ThankYouContainer>
             <TypographyStyled variant="h6">
-              {donationCurrent.thank_you.length > 0
+              {donationCurrent && donationCurrent.thank_you.length > 0
                 ? `Special thanks to: ${donationCurrent?.thank_you} for donating!`
                 : ""}
             </TypographyStyled>
@@ -243,7 +247,7 @@ function EventFeatureExtended(props) {
       <CountdownCircleTimer
         {...timerProps}
         colors="#7E2E84"
-        size={100}
+        size={countdownSize}
         duration={daysDuration}
         initialRemainingTime={remainingTime}
       >
@@ -256,7 +260,7 @@ function EventFeatureExtended(props) {
       <CountdownCircleTimer
         {...timerProps}
         colors="#D14081"
-        size={100}
+        size={countdownSize}
         duration={daySeconds}
         initialRemainingTime={remainingTime % daySeconds}
         onComplete={(totalElapsedTime) => ({
@@ -273,7 +277,7 @@ function EventFeatureExtended(props) {
         {...timerProps}
         colors="#EF798A"
         duration={hourSeconds}
-        size={100}
+        size={countdownSize}
         initialRemainingTime={remainingTime % hourSeconds}
         onComplete={(totalElapsedTime) => ({
           shouldRepeat: remainingTime - totalElapsedTime > minuteSeconds
@@ -288,7 +292,7 @@ function EventFeatureExtended(props) {
       <CountdownCircleTimer
         {...timerProps}
         colors="#218380"
-        size={100}
+        size={countdownSize}
         duration={minuteSeconds}
         initialRemainingTime={remainingTime % minuteSeconds}
         onComplete={(totalElapsedTime) => ({
