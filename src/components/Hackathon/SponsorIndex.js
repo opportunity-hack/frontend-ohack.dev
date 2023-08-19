@@ -1,9 +1,7 @@
-import { TitleContainer, LayoutContainer, ProjectsContainer, DetailsContainer} from '../../styles/nonprofit/styles';
-import HackathonList from '../HackathonList/HackathonList';
+import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../styles/nonprofit/styles';
 import { Button, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
-import { ProjectsGrid } from '../../styles/nonprofit/styles';
-import { Grid, Card, CardContent} from '@mui/material';
+import { Grid, Card, Box, CardContent} from '@mui/material';
 
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -14,7 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 import Avatar from '@mui/material/Avatar';
-import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
+
 export default function SponsorIndex()
 {
     // Get the props for event_id from the URL
@@ -36,9 +34,9 @@ export default function SponsorIndex()
     const goldColor = '#ffd700';
     const platinumColor = '#e5e4e2';
     const sponsorshipLevels = (
-        <Grid item xs={5} sm={5} md={5} key="sponsorLevels" style={{margin: '1%'}}>
-            <Typography variant="h3" component="h1">
-                Sponsorship Levels
+        <Grid item xs={6} sm={6} md={5} key="sponsorLevels" style={{margin: '1%'}}>
+            <Typography variant="h4" component="h1">
+                Levels
             </Typography>
 
             <Card style={{backgroundColor : bronzeColor, margin:'2px' }}>
@@ -46,7 +44,7 @@ export default function SponsorIndex()
                 <Typography variant="h4" component="h2">
                   Bronze
                 </Typography>
-                <Typography variant="body1"  component="p">
+                <Typography variant="body1" style={style} component="p">
                   Over $500 in support or over 10 hours of volunteering/mentoring.
                 </Typography>
               </CardContent>
@@ -56,7 +54,7 @@ export default function SponsorIndex()
                 <Typography variant="h4" component="h2">
                   Silver
                 </Typography>
-                <Typography variant="body1" component="p">
+                <Typography variant="body1" style={style} component="p">
                   Over $800 in support or over 20 hours of volunteering/mentoring.  This helps to keep existing solutions running.
                 </Typography>
               </CardContent>
@@ -66,7 +64,7 @@ export default function SponsorIndex()
                 <Typography variant="h4" component="h2">
                   Gold
                 </Typography>
-                <Typography variant="body1" component="p">
+                <Typography variant="body1" style={style} component="p">
                   Over $1,000 in support or over 80 hours of volunteering/mentoring.  This helps us partially fund a team to complete their projects.
                 </Typography>
               </CardContent>
@@ -76,7 +74,7 @@ export default function SponsorIndex()
                 <Typography variant="h4" component="h2">
                   Platinum
                 </Typography>
-                <Typography variant="body1" component="p">
+                <Typography variant="body1" style={style} component="p">
                   Over $4,000 in support and over 150 hours of volunteering/mentoring.
                   $4,000 is the sweet-spot that we've found as a prize to ensure successful completion of the project after the hackathon.
                 </Typography>
@@ -87,25 +85,20 @@ export default function SponsorIndex()
 
     const sponsorList = (
         <Grid item xs={5} sm={5} md={5} key="sponsorLevels" style={{margin: '1%'}}>
-            <Typography variant="h3" component="h1">
+            <Typography variant="h4" component="h1">
                 Sponsors
             </Typography>
             
             <Card style={{backgroundColor : bronzeColor, margin:'2px' }}>
               <CardContent>
-                <Typography variant="h4" component="h2">
-                  <Chip style={largeStyle} label="Your company could be here!" icon=<DataSaverOnIcon/> />
-                </Typography>
-                <Typography variant="body1"  component="p">
-                  
+                <Typography style={style}>Your company could be here!</Typography>
+                <Typography variant="body1"  component="p">                  
                 </Typography>
               </CardContent>
             </Card>
             <Card style={{backgroundColor : silverColor, margin:'2px' }}>
               <CardContent>
-                <Typography variant="h4" component="h2">
-                  <Chip style={largeStyle} label="Or here" icon=<DataSaverOnIcon/> />
-                </Typography>
+                <Typography style={style}>...or here</Typography>
                 <Typography variant="body1" component="p">
                 
                 </Typography>
@@ -119,16 +112,14 @@ export default function SponsorIndex()
                 <Chip style={largeStyle} color="secondary" label="Spotify" avatar=<Avatar src="https://i.imgur.com/r9qB2L4.png" imgProps={{ referrerPolicy: "no-referrer" }}/> />                
                 
 
-                <Typography variant="body1" component="p">
+                <Typography variant="body1" style={style} component="p">
                   100 hours of volunteering this year
                 </Typography>
               </CardContent>
             </Card>
             <Card style={{backgroundColor : platinumColor, margin:'2px'}}>
               <CardContent>
-                <Typography variant="h4" component="h2">
-                <Chip style={largeStyle} label="Or even here" icon=<DataSaverOnIcon/> />
-                </Typography>
+                <Typography style={style}>...or even here!</Typography>
                 <Typography variant="body1" component="p">
                 
                 </Typography>
@@ -254,21 +245,23 @@ export default function SponsorIndex()
     ];
 
     const sponsorshipTable = (
-        <Grid item xs={5} sm={5} md={9} key="sponsorLevels" style={{margin: '1%'}}>
+        <Box sx={{ overflow: "auto" }}>
+        <Box sx={{ width: "95%", display: "table", tableLayout: "fixed" }}>
+
         <TableContainer component={Paper}>
-            <Table sx={{ width: '100%' }} aria-label="simple table">
+            <Table aria-label="simple table">
                 <TableHead>
                 <TableRow>
-                    <TableCell>Award</TableCell>                            
-                    <TableCell style={style} align="right">Logo on website</TableCell>
-                    <TableCell style={style} align="right">Logo shirts & event posters</TableCell>
-                    <TableCell style={style} align="right">Hackathon table</TableCell>
-                    <TableCell style={style} align="right">Judging Panel</TableCell>
-                    <TableCell style={style} align="right">Opening/Closing Ceremony</TableCell>
-                    <TableCell style={style} align="right">Hackathon Badges</TableCell>
-                    <TableCell style={style} align="right">Workshops</TableCell>
-                    <TableCell style={style} align="right">Prize/Award</TableCell>                            
-                    <TableCell style={style} align="right">Winner Networking</TableCell>
+                    <TableCell style={style} width={90}>Award</TableCell>                            
+                    <TableCell style={style} width={100} align="right">Logo on website</TableCell>
+                    <TableCell style={style} width={100} align="right">Logo shirts & event posters</TableCell>
+                    <TableCell style={style} width={100} align="right">Hackathon table</TableCell>
+                    <TableCell style={style} width={100} align="right">Judging Panel</TableCell>
+                    <TableCell style={style} width={100} align="right">Opening/Closing Ceremony</TableCell>
+                    <TableCell style={style} width={150} align="right">Hackathon Badges</TableCell>
+                    <TableCell style={style} width={100} align="right">Workshops</TableCell>
+                    <TableCell style={style} width={100} align="right">Prize/Award</TableCell>                            
+                    <TableCell style={style} width={100} align="right">Winner Networking</TableCell>
                 </TableRow>
                 </TableHead>
                 <TableBody>
@@ -289,7 +282,8 @@ export default function SponsorIndex()
                 </TableBody>
             </Table>
         </TableContainer>
-        </Grid>
+        </Box>
+        </Box>
     )
 
     return(
