@@ -27,41 +27,7 @@ export default function SponsorIndex()
     // The form should be submitted to the backend and the backend should send an email to the sponsor with a link to the payment page
     // The payment page should be a Stripe checkout page that collects the payment and sends a confirmation email to the sponsor
     // Use MUI components for the form and the Stripe checkout page
-
-    const sponsorshipForm = (
-        <Grid item xs={12} sm={12} md={12}>
-            <Typography variant="h3" component="h1">
-                Sponsorship Form
-            </Typography>
-            <Typography variant="body1" style={style} paragraph>
-                Please fill out the form below to sponsor our event.
-            </Typography>
-            <form>
-                <label>
-                    Name:
-                    <input type="text" name="name" />
-                </label>
-                <label>
-                    Email:
-                    <input type="text" name="email" />
-                </label>
-                <label>
-                    Company:
-                    <input type="text" name="company" />
-                </label>
-                <label>
-                    Support Level:
-                    <select>
-                        <option value="bronze">Bronze</option>
-                        <option value="silver">Silver</option>
-                        <option value="gold">Gold</option>
-                        <option value="platinum">Platinum</option>
-                    </select>
-                </label>
-                <input type="submit" value="Submit" />
-            </form>
-        </Grid>
-    );
+    
 
     // Print out the levels of sponorship and what each level provides
     // Use MUI Card and CardContent to display the information
@@ -70,7 +36,7 @@ export default function SponsorIndex()
     const goldColor = '#ffd700';
     const platinumColor = '#e5e4e2';
     const sponsorshipLevels = (
-        <Grid item xs={11} sm={11} md={5} key="sponsorLevels" style={{margin: '1%'}}>
+        <Grid item xs={5} sm={5} md={5} key="sponsorLevels" style={{margin: '1%'}}>
             <Typography variant="h3" component="h1">
                 Sponsorship Levels
             </Typography>
@@ -120,7 +86,7 @@ export default function SponsorIndex()
     );
 
     const sponsorList = (
-        <Grid item xs={11} sm={11} md={5} key="sponsorLevels" style={{margin: '1%'}}>
+        <Grid item xs={5} sm={5} md={5} key="sponsorLevels" style={{margin: '1%'}}>
             <Typography variant="h3" component="h1">
                 Sponsors
             </Typography>
@@ -288,7 +254,7 @@ export default function SponsorIndex()
     ];
 
     const sponsorshipTable = (
-        <Grid item xs={11} sm={11} md={9} key="sponsorLevels" style={{margin: '1%'}}>
+        <Grid item xs={5} sm={5} md={9} key="sponsorLevels" style={{margin: '1%'}}>
         <TableContainer component={Paper}>
             <Table sx={{ width: '100%' }} aria-label="simple table">
                 <TableHead>
@@ -350,7 +316,6 @@ export default function SponsorIndex()
                 <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
                 <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1" />
                 </form>
-
 
             </TitleContainer>   
             
