@@ -58,6 +58,7 @@ function SingleHackathonEvent( { event_id }) {
           <ProjectsContainer style={{marginTop: 20, width: '100%'}} >
           <EventFeatureExtended
               title={event.title}
+              event_id={event_id}
               description={event.description}
               key={event.title}
               type={event.type}
