@@ -15,7 +15,8 @@ import {
   ExtendedEventButton
 } from "./styles";
 
-import { Grid } from "@mui/material";
+
+import { Grid, Button } from "@mui/material";
 import { CountdownCircleTimer } from 'react-countdown-circle-timer'
 
 import { 
@@ -121,6 +122,7 @@ function EventFeatureExtended(props) {
     
       <EventExtendedCard xs={10} md={5} marginRight={0.5}>            
       <SectionTitle>Donor Funding</SectionTitle>
+        <Button variant="contained" size="large" href={`/hack/${event_id}/sponsor`}>Be a sponsor</Button>
         <ProgressContainer
           container
           justifyContent="space-around"
