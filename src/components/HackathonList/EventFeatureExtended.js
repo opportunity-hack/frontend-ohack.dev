@@ -27,6 +27,7 @@ import "react-circular-progressbar/dist/styles.css";
 import { Typography } from "@mui/material";
 import * as ga from "../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
+import NonProfitHackathonTile from "../NonProfitListTile/NonProfitHackathonTile";
 
 function EventFeatureExtended(props) {
   // TODO: Fix unused variable warning here
@@ -34,6 +35,7 @@ function EventFeatureExtended(props) {
     title,
     description,
     type,
+    teams,
     nonprofits,
     start_date,
     end_date,
@@ -116,6 +118,9 @@ function EventFeatureExtended(props) {
     });
 
   };  
+
+  
+  const nonprofitsShuffle = nonprofits.sort(() => Math.random() - Math.random());
 
   return ( 
     <Grid container spacing={2} justifyContent="center" marginTop={1}>
@@ -219,9 +224,7 @@ function EventFeatureExtended(props) {
 
           <ThankYouContainer>
             <TypographyStyled variant="h6">
-              {donationCurrent && donationCurrent.thank_you.length > 0
-                ? `Special thanks to: ${donationCurrent?.thank_you} for donating!`
-                : ""}
+              { donationCurrent && donationCurrent.thank_you.length > 0 ? `Special thanks to: ${donationCurrent?.thank_you} for donating!` : ""}
             </TypographyStyled>
           </ThankYouContainer>
         </ProgressContainer>
@@ -243,7 +246,7 @@ function EventFeatureExtended(props) {
         </ButtonContainer>                
       </EventExtendedCard>
     
-    <EventExtendedCard xs={10}  md={5} marginRight={0.5} marginTop={0.5}>
+    <EventExtendedCard xs={10}  md={10} marginRight={0.5} marginTop={0.5}>
       <SectionTitle>Hackathon Countdown</SectionTitle>
       <div style={{ display: 'flex', fontFamily: 'sans-serif', textAlign: 'center', paddingTop: '10px'}}>
       <CountdownCircleTimer
@@ -309,9 +312,19 @@ function EventFeatureExtended(props) {
       </CountdownCircleTimer>
       </div>
       </EventExtendedCard>
-      <EventExtendedCard xs={10}  md={5} marginLeft={0.5} marginTop={0.5}>
+      
+      <EventExtendedCard xs={10}  md={10} marginTop={0.5}>
+      
       <SectionTitle>Nonprofits</SectionTitle>
         <Typography variant="body1" style={{fontSize: '15px'}}>Check back on September 1st</Typography>
+        <Grid container spacing={2} justifyContent="center" marginTop={1}>
+        { 
+          nonprofitsShuffle.map((nonprofit) => {
+            return <NonProfitHackathonTile npo={nonprofit} teams={teams}  />
+          })
+        } 
+        </Grid>
+
       </EventExtendedCard>
     
 
