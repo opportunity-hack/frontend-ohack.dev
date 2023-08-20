@@ -74,7 +74,7 @@ export default function useTeams(){
         };
 
         const data = await makeRequest({ config, authenticated: true });
-        onComplete(data);
+        onComplete(data, problemStatementId, eventId);
         return data;
     };
 

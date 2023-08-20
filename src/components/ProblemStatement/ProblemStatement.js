@@ -50,6 +50,7 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import Link from "next/link";
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 
 import useTeams from "../../hooks/use-teams";
@@ -206,7 +207,6 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const [helpingType, setHelpingType] = useState("");
 
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
-  const [createdTeamDetails, setCreatedTeamDetails] = useState();
 
   
 
@@ -226,7 +226,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
 
 
-  const [expanded, setExpanded] = useState("");
+  const [expanded, setExpanded] = useState("Events");
   const handleChange = (panel) => (event, isExpanded) => {
     // Set user object and handle null
     const user_id = user ? user.sub : null;
@@ -370,7 +370,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   };
 
   const handleUpdateTeamName = (event) => {
-    const value = event.target.value;
+    const value = event.target.value;   
     setNewTeamName(value);
 
     ReactPixel.track("Team Name Updated", {
@@ -444,20 +444,22 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     // We don't do anything when someone leaves
   };
 
-  const handleTeamCreationResponse = (data) => {
+  const handleTeamCreationResponse = (data, problemStatementId, eventId) => {
     // We need to update our state to temporarily show the user that they have created a team
     // This should be followed up on refresh of the page with a hit to grab the real version from the backend/DB
-    setCreatedTeamDetails({
-      name: data.team.name,
-      slack_channel: data.team.slack_channel,
-      active: "True",
-      users: [
-        {
-          name: data.user.name,
-          profile_image: data.user.profile_image,
-        },
-      ],
+    console.log("handleTeamCreationResponse", data);
+
+    // Append this to the current teams state 
+    setTeams(teams => [...teams, data.team]);  
+
+    // Update hackathonEvents to include this team
+    const hackathonEventsCopy = hackathonEvents;
+    hackathonEventsCopy.forEach((event) => {
+      if (event.id === eventId) {
+        event.teams.push(data.team.id);
+      }
     });
+    setHackathonEvents(hackathonEventsCopy);
   };
 
   const handleCloseTeamCreate = (event) => {
@@ -641,7 +643,25 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     helpingSwitch = (
       <FormControlLabel
         labelPlacement="bottom"
-        control={<MaterialUISwitch sx={{ m: 1, color: "gray"}} disabled />}
+        control={
+          
+        <Tooltip
+          enterTouchDelay={0}  
+          placement="top-start"       
+          title={<span
+              style={{ fontSize: "14px" }}
+            >Login first, then you can help by sliding this</span>
+          }
+          style={{ marginLeft: "2rem" }}
+        >
+          <Badge color="secondary" variant="dot" anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+            }}>
+            <MaterialUISwitch sx={{ m: 1, color: "gray"}} disabled />
+          </Badge>
+        </Tooltip>
+        }
         label="Login to help"
       />
     );
@@ -775,8 +795,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           userDetails={userDetails}
           events={hackathonEvents}
           onTeamCreate={handleTeamCreate}
-          onTeamLeave={handleLeavingTeam}
-          onTeamCreateComplete={createdTeamDetails}
+          onTeamLeave={handleLeavingTeam}          
           onTeamJoin={handleJoiningTeam}
           user={user}
           problemStatementId={problem_statement.id}
@@ -972,43 +991,54 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
-      <DialogTitle id="alert-dialog-title">
+      <DialogTitle id="alert-dialog-title" style={{fontSize: '15px'}}>
         Thank you for helping a nonprofit with your talent!
       </DialogTitle>
       <DialogContent>
-        <DialogContentText component={"span"} id="alert-dialog-description">
+        <DialogContentText component={"span"} style={{fontSize: '15px'}} id="alert-dialog-description">
           There are several ways to contibute, if you want, when you want.
-          <h4>Hacker</h4>
-          You'll be creating something that benefits nonprofits. Most of what
+          <Typography variant="h4">Hacker</Typography>
+          You'll be <b>creating</b> something that benefits nonprofits. Most of what
           you do will take place on:
           <ul>
             <li>
-              <b>Slack</b> - communication with your team, non-profits,
-              mentors
+              <b>Slack</b> - communication with your team, nonprofits, mentors
             </li>
             <li>
-              <b>DevPost</b> - for hackathons this is the main landing place
-              for your project
+              <b>DevPost</b> - for hackathons this is where you formally submit your projects
             </li>
             <li>
               <b>GitHub</b> - your code must be publically available and well
-              documented so that others can use it
+              documented so that others can use it, all code is open source for the public good
             </li>
             <li>
-              <b>Heroku</b> - when you productionalize your code, use Heroku
-              as one of the easiest ways to make it available to the masses
+              <b><Link href="https://heroku.com" target="_blank">Heroku<OpenInNewIcon/></Link> | <Link href="https://fly.io" target="_blank">Fly<OpenInNewIcon/></Link> | <Link href="https://aws.amazon.com/" target="_blank">AWS<OpenInNewIcon/></Link></b> - 
+              when you productionalize your code, use something like this to make it available to the masses
             </li>
           </ul>
-          <h4>Mentor</h4>
-          You'll be assisting hackers with their project. Most of what you do
+          <Typography variant="h4">
+            Mentor &nbsp;
+            <Link
+            href="https://www.ohack.org/about/mentors"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <Button variant="outlined">More details on mentoring</Button>
+          </Link>
+          
+          </Typography>
+          
+          
+          
+          You'll be <b>assisting</b> hackers with their project. Most of what you do
           will take place on:
           <ul>
             <li>
-              Slack - checking in on teams and jumping into a screenshare here
+              Slack/In-person - checking in on teams, troubleshooting, giving them guidance, and jumping into a screenshare here
               and there
-            </li>
+            </li>            
           </ul>
-          Your goals are:
+          As a mentor, your goals are:
           <ul>
             <li>Make sure the team knows the problem they are solving</li>
             <li>...are solving that problem 👆</li>
@@ -1017,17 +1047,10 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
             </li>
             <li>Are looking at the judging criteria (on DevPost)</li>
             <li>
-              Have a demo video that is 4 minutes that describes the problem
-              and solution using tools like Loom or Quicktime.
+              Ensure teams have a demo video that describes the problem
+              and solution using tools like <Link href="https://www.loom.com/">Loom<OpenInNewIcon/></Link> or <Link href="https://support.apple.com/guide/quicktime-player/record-your-screen-qtp97b08e666/">Quicktime Screen recording<OpenInNewIcon/></Link>.
             </li>
-          </ul>
-          <a
-            href="https://www.ohack.org/about/mentors"
-            rel="noreferrer"
-            target="_blank"
-          >
-            More details on mentoring
-          </a>
+          </ul>          
         </DialogContentText>
       </DialogContent>
       <DialogActions>
@@ -1133,18 +1156,18 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         >
           Cancel
         </Button>
-        <Button
+        { ( (newTeamName!== "" && newTeamName.length > 2) &&  (newTeamSlackChannel!=="" && newTeamSlackChannel.length > 2)  ) && <Button        
           class="button button--compact button--third"
-          onClick={handleConfirmTeamCreate}
-          autoFocus
+          onClick={handleConfirmTeamCreate}                              
         >
           Submit
         </Button>
+        }
       </DialogActions>
     </Dialog>
 
-    <Stack spacing={2} direction="row">
-        {helpingSwitch}
+    <Stack spacing={2} direction="row">      
+        {helpingSwitch}      
       <Box sx={{ width: "75%" }}>{callToAction}</Box>      
     </Stack>
   </ProjectCard>
