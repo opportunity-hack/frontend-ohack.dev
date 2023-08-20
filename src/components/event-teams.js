@@ -15,6 +15,8 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Team from './event-team';
 import useProfileApi from '../hooks/use-profile-api';
+import { Tooltip } from '@mui/material';
+import Badge from '@mui/material/Badge';
 
 /*
 
@@ -71,8 +73,7 @@ export default function EventTeams(
         problemStatementId,
         eventId,
         onTeamCreate,
-        onTeamLeave,
-        onTeamCreateComplete,
+        onTeamLeave,        
         onTeamJoin,
         isHelping }) {     
     var teamCounter = 0;    
@@ -173,11 +174,29 @@ export default function EventTeams(
     console.log("  == Event Teams Render")
     return(                        
             <Stack spacing={0.5}>
-            {isHelping && !isLoggedInUserAlreadyOnTeam && !onTeamCreateComplete && <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team</Button>}
+            {
+            isHelping && !isLoggedInUserAlreadyOnTeam && 
+                <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team</Button>
+            }
+            {
+            !isHelping && !isLoggedInUserAlreadyOnTeam  && 
+                <Tooltip 
+                    placement="right"
+                    title={
+                        <span style={{ fontSize: '15px' }}>
+                            You need to be helping to create or join a team, slide that » slider below to the right to help. 👇
+                        </span>
+                    }                    
+                    >
+                <Badge color="error" badgeContent="!">
+                <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained" disabled>Create Team</Button>
+                </Badge>
+                </Tooltip>
+            }
             {teamCounter > 0 && <div><GroupIcon style={{ color: "blue" }} /> {teamCounter} team{teamCounter > 1 || teamCounter === 0 ? "s" : ""}</div> }
                         
             {teamsToShow}
-            {onTeamCreateComplete && <Team team={onTeamCreateComplete} _isOnTeam={true} _isOnAnyTeam={true} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} /> }
+            
             </Stack>
         
     )
