@@ -6,6 +6,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import Link from 'next/link';
 
+import GroupsIcon from '@mui/icons-material/Groups';
 
 import ProblemStatementChip from '../ProblemStatement/ProblemStatementChip';
 import Typography from '@mui/material/Typography';
@@ -24,7 +25,7 @@ import TeamsChip from '../Teams/TeamsChip';
 export default function NonProfitHackathonTile({ npo, teams }) {
   const { user } = useAuth0();
   var slackDetails = '';
-  
+    
 
   // Function to get the first 50 words of a string
   const getFirst50Words = (str) => {
@@ -99,24 +100,54 @@ export default function NonProfitHackathonTile({ npo, teams }) {
   }
 
   const problemStatementChips = npo.problem_statements.map((ps) => {
+    
     // If the team has this problem statement, then show it
-    if (teams && teams.length > 0) {      
-      const team = teams.find((t) => t.problem_statements.includes(ps));
-      if (team) {
+    if (teams && teams.length > 0) {
+      // Get all teams that have this problem statement
+      const teamsWithThisProblemStatement = teams.filter((t) =>
+        t.problem_statements.includes(ps)
+      );
+      
+
+      // Return ProblemStatementChip and TeamsChip
+      if (teamsWithThisProblemStatement.length > 0) {
         return (
           <div>
           <ProblemStatementChip problem_statement_id={ps} />     
-          <TeamsChip team_id={team.id} />
+          {teamsWithThisProblemStatement.map((t) => {
+            return <TeamsChip team_id={t.id} />;
+          })}
           </div>
         );
       }
     }
 
+    // Otherwise only return the problem statement chip
     return (
      <ProblemStatementChip problem_statement_id={ps} />     
     );
   }
   );
+
+  const countOfTeams = npo.problem_statements.map((ps) => {
+    // If the team has this problem statement, then show it
+    if (teams && teams.length > 0) {
+      // Get all teams that have this problem statement
+      const teamsWithThisProblemStatement = teams.filter((t) =>
+        t.problem_statements.includes(ps)
+      );
+
+      // Return ProblemStatementChip and TeamsChip
+      if (teamsWithThisProblemStatement.length > 0) {
+        return teamsWithThisProblemStatement.length;
+      }
+    }
+
+    return 0;
+  }
+  );
+  // Sum up all of the team counts
+  const sumOfTeamCountForEachProblemStatement = countOfTeams.reduce((a, b) => a + b, 0);
 
 
   return (
@@ -134,6 +165,9 @@ export default function NonProfitHackathonTile({ npo, teams }) {
           
           <CountDetailsText variant='h2'>
             {npo.problem_statements.length} Project{npo.problem_statements.length > 1 ? 's' : ''}
+          </CountDetailsText>
+          <CountDetailsText variant='h5' style={{fontSize: '14px', margin: '1px 0px 8px 2px'}}>
+            <GroupsIcon/> {sumOfTeamCountForEachProblemStatement} Team{ (sumOfTeamCountForEachProblemStatement === 0 || sumOfTeamCountForEachProblemStatement > 1) ? 's' : ''}
           </CountDetailsText>
           {problemStatementChips}  
         </CardContent>        

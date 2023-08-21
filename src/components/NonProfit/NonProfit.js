@@ -115,8 +115,7 @@ export default function NonProfit(props) {
     } else {
       if (nonprofit.problem_statements.length === 0) {
         return <div>Working on it!</div>;
-      } else {
-        console.log('NPO Rendering Problem Statement');
+      } else {        
         return nonprofit.problem_statements.map((ps) => {
           return (
             <ProblemStatement
@@ -190,9 +189,7 @@ export default function NonProfit(props) {
 
   // More on meta tags
   // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
-  console.log('Nonprofit Page Render');
-  // console.log(slack_details);
-
+  
   var image = '/npo_placeholder.png';
   if (nonprofit.image !== undefined) {
     image = nonprofit.image;

@@ -15,7 +15,7 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Team from './event-team';
 import useProfileApi from '../hooks/use-profile-api';
-import { Tooltip } from '@mui/material';
+import { Tooltip, Typography } from '@mui/material';
 import Badge from '@mui/material/Badge';
 
 /*
@@ -69,6 +69,7 @@ teams -> problem_statements
 export default function EventTeams(
     {   teams,    
         user,
+        isEventStartDateOlderThanToday,
         userDetails,
         problemStatementId,
         eventId,
@@ -87,16 +88,11 @@ export default function EventTeams(
 
         teamCounter++;
         
-        const result = team.users.map(auser => {
-            console.log("Event Teams User: ", auser);            
-            console.log("Event Teams User Details: ", userDetails);
-            
+        const result = team.users.map(auser => {            
             var extendedDetails = {};
             if (userDetails != null && auser != null) {                
                 extendedDetails["slack_id"] = userDetails[auser]["user_id"];                                
-            }
-            
-                
+            }                            
             
             if( user == null ) // Only show this to logged in people
             {
@@ -117,15 +113,13 @@ export default function EventTeams(
     const isUserInAnyTeamList = [].concat.apply([], isUserInAnyTeamListTemp);
     const isLoggedInUserAlreadyOnTeam = isUserInAnyTeamList.includes(true);
     const handleDeleteClicked = (team) => {
-        console.log("Delete Button Clicked");
-        console.log(team);
+        console.log("Delete Button Clicked");    
         onTeamLeave(team.id)
     };
 
 
     const handleJoinClicked = (team) => {
-        console.log("Join Button Clicked");        
-        console.log(team);       
+        console.log("Join Button Clicked");            
         onTeamJoin(team.id);
     };
 
@@ -134,15 +128,12 @@ export default function EventTeams(
             const users = team?.users;
 
             const isTeamAssociatedToProblemStatement = team?.problem_statements != null && team?.problem_statements.includes(problemStatementId);
-            console.log("isTeamAssociatedToProblemStatement: ", isTeamAssociatedToProblemStatement);
-            console.log("isTeamAssociatedToProblemStatement Problem Statement ID: ", problemStatementId);
-            console.log("isTeamAssociatedToProblemStatement problem_statements: ", team?.problem_statements);
+            
             if (!isTeamAssociatedToProblemStatement) {
                 return "";
             }
-
-            
-            
+        
+                        
             // This will give a result for each team, e.g. [true, false, false]
             const isUserOnThisTeam = users.map( auser => {
                 var extendedDetails = {};
@@ -170,16 +161,15 @@ export default function EventTeams(
         return (<Team team={team} userDetails={userDetails} isHelping={isHelping} _isOnTeam={isOnTeam} _isOnAnyTeam={isLoggedInUserAlreadyOnTeam} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} />);
     });
     
-
-    console.log("  == Event Teams Render")
+    
     return(                        
-            <Stack spacing={0.5}>
+            <Stack spacing={0}>
             {
-            isHelping && !isLoggedInUserAlreadyOnTeam && 
+            isHelping && !isLoggedInUserAlreadyOnTeam &&  !isEventStartDateOlderThanToday &&
                 <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team</Button>
             }
             {
-            !isHelping && !isLoggedInUserAlreadyOnTeam  && 
+            !isHelping && !isLoggedInUserAlreadyOnTeam  && !isEventStartDateOlderThanToday &&
                 <Tooltip 
                     placement="right"
                     title={
@@ -194,8 +184,12 @@ export default function EventTeams(
                 </Tooltip>
             }
             {teamCounter > 0 && <div><GroupIcon style={{ color: "blue" }} /> {teamCounter} team{teamCounter > 1 || teamCounter === 0 ? "s" : ""}</div> }
-                        
-            {teamsToShow}
+            
+            <Stack spacing={0}>
+            { user && teamsToShow}
+            { !user && <Typography>Log in to see teams</Typography>}
+            </Stack>
+
             
             </Stack>
         

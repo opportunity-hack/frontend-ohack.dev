@@ -36,8 +36,7 @@ export default function LinkedProblemStatements ({ problemStatements, hackathonI
                     
         setProblemStatement(result);
         onChange(hackathonId, result);
-        console.log("CHANGE");
-        console.log(" " + hackathonId + " ->" + result);
+            
     };
 
     const formProblemStatementSelectionId = `form-problem-list-label-${hackathonId}`;

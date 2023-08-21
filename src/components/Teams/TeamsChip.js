@@ -6,8 +6,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { Puff } from "react-loading-icons";
 
 
-export default function TeamsChip({ team_id }) {
-    console.log("team_id", team_id);    
+export default function TeamsChip({ team_id }) {    
      const { handle_get_team } = useTeams();
     
     const [team, setTeam] = useState(null);

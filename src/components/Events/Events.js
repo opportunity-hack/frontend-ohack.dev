@@ -2,9 +2,10 @@ import EventTeams from "../event-teams";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Stack from "@mui/material/Stack";
 import { Grid, Typography } from "@mui/material";
-import { useState, useEffect } from "react";
-import useTeams from "../../hooks/use-teams";
-import useProfileApi from "../../hooks/use-profile-api";
+import Link from "next/link";
+import EventBusyIcon from '@mui/icons-material/EventBusy';
+import Button from "@mui/material/Button";
+import { EventLink } from "../HackathonList/styles";
 
 export default function Events({
   events,
@@ -13,31 +14,47 @@ export default function Events({
   user,
   problemStatementId,
   onTeamCreate,
-  onTeamLeave,
-  onTeamCreateComplete,
+  onTeamLeave,  
   onTeamJoin,
   isHelping,
 }) {
   
-  
-  var eventsResult = "We haven't hacked on this yet!"
-  if (events && events.length > 0) {    
-    eventsResult = events.map((event) => {
-      
+  const isEventStartDateOlderThanToday = (event) => {
+    return new Date(event.end_date) < new Date();
+  }
 
+  // Sort events by event.start_date with the newest on the top
+  events.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+
+
+  var eventsResult = "We haven't hacked on this yet!"
+  if (events && events.length > 0) {        
+    eventsResult = events.map((event) => {      
       var devPostPostfixString = "";      
 
       if (event.devpost_url && event.devpost_url.includes("devpost")) {
         devPostPostfixString = "on DevPost";
       }
-
-      console.log(" == Events Render");
+      
       return (
-        <Grid key={event.id} style={{ padding: "0 1.5rem" }}>
-          <Typography variant="h3">
-            {event.location} {event.type}
-          </Typography>
-          <Typography variant="h5" style={{ color: "#808087", marginBottom: "1rem" }}>
+        <Grid key={event.id} style={{ marginTop: '5px', padding: "10px" }}>
+
+          { isEventStartDateOlderThanToday(event) && 
+            <Link href={`/hack/${event.event_id}`}>
+             <EventLink variant="h4" style={{ color: 'gray' }}>
+              <EventBusyIcon/> Past Event: {event.location} {event.type}
+            </EventLink>
+            </Link>
+          }
+          { !isEventStartDateOlderThanToday(event) && 
+            <Link href={`/hack/${event.event_id}`}>
+            <EventLink variant="h3">
+              {event.location} {event.type}
+            </EventLink>
+            </Link>
+          }
+
+          <Typography variant="h5" style={{ color: isEventStartDateOlderThanToday(event) ? "#C0C0C0" : "#222222", marginBottom: "1rem" }}>
             {
               // Convert start_date to readible format
               new Date(event.start_date).toLocaleDateString("en-US", {
@@ -48,6 +65,7 @@ export default function Events({
               })
             }
             <ArrowForwardIosIcon style={{ color: "gray" }} />{" "}
+
             {
               // Convert start_date to readible format
               new Date(event.end_date).toLocaleDateString("en-US", {
@@ -61,34 +79,33 @@ export default function Events({
 
           <Stack direction="column" alignItems="flex-start" spacing={2}>
 
-            <a href={event.devpost_url}>
+
+            { event.devpost_url && <Link href={event.devpost_url} target="_blank" rel="noreferrer">
             {
               // If event.start_date is in the past then show the button as View on DevPost instead
               event.start_date < new Date().toISOString() ? (
-                <button className="button button--primary button--compact">
+                <Button variant="contained" color={isEventStartDateOlderThanToday ? "info" : "secondary"}>
                     View {devPostPostfixString}
-                </button>
+                </Button>
               ) : (
-                <button className="button button--primary button--compact">
+                <Button variant="contained" color={isEventStartDateOlderThanToday ? "info" : "secondary"}>
                     Register {devPostPostfixString}
-                </button>
+                </Button>
               )             
             }              
-            </a>
-
+            </Link>
+            }
             
-
-
             <EventTeams
               // The teams filtered for a given event
               teams={teams.filter((team) => event.teams.includes(team.id))} 
               user={user}
+              isEventStartDateOlderThanToday={isEventStartDateOlderThanToday(event)}
               userDetails={userDetails}
               problemStatementId={problemStatementId}
               eventId={event.id}
               onTeamCreate={onTeamCreate}
-              onTeamLeave={onTeamLeave}
-              onTeamCreateComplete={onTeamCreateComplete}
+              onTeamLeave={onTeamLeave}              
               onTeamJoin={onTeamJoin}
               isHelping={isHelping}
             />

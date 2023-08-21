@@ -58,12 +58,7 @@ export const useExternalApi = () => {
       const response = await axios(options.config);      
       const { data } = response;
 
-      console.log(data);
-      console.log(data.app_metadata);
-      console.log(data.created_at);
-      console.log(data.email);
-      console.log(data.email_verified);
-      console.log(data.name);
+      
 
       if( data.app_metadata["something"] === 123355 )
       {

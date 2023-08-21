@@ -16,8 +16,7 @@ export default function NonProfitProfile() {
     );
 }
 
-export async function getStaticPaths(nonprofit_id) {
-    console.log("nonprofit_id", nonprofit_id);
+export async function getStaticPaths(nonprofit_id) {    
 
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`

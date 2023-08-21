@@ -80,12 +80,9 @@ import * as ga from '../../lib/ga';
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
   const isLargeScreen = useMediaQuery('(min-width: 768px)');
 
-  console.log("problem_statement_id", problem_statement_id);
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
   const { handle_get_team, handle_new_team_submission, handle_join_team, handle_unjoin_a_team } = useTeams();
-
-  console.log("problem_statement", problem_statement);
   
 
   // For every item in problem_statement.events, get the event details with useCallback using handle_get_hackathon(event_id, onComplete) 
@@ -99,8 +96,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       const events = problem_statement.events;
       const hackathonEvents = [];
       const promises = [];
-      events.forEach((id) => {
-        console.log("_id", id);
+      events.forEach((id) => {        
         const promise = new Promise((resolve, reject) => {          
           handle_get_hackathon_id(id, (hackathonEvent) => {
             if (hackathonEvent) {
@@ -132,15 +128,11 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const [teamsError, setTeamsError] = useState(false);
   const [teamsErrorDetails, setTeamsErrorDetails] = useState(null);
   useEffect(() => {
-    if (hackathonEvents) {
-      
-      console.log("~events", hackathonEvents);
+    if (hackathonEvents) {      
       const teamsArray = [];
       const promises = [];
-      hackathonEvents.forEach((event) => {
-          console.log("  teams~", event.teams);
-          event.teams && event.teams.forEach((team) => {
-            console.log("  team~", team);
+      hackathonEvents.forEach((event) => {          
+          event.teams && event.teams.forEach((team) => {            
             promises.push(
               handle_get_team(team, (team) => {
                 teamsArray.push(team);
@@ -193,12 +185,6 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         });
     }
   }, [teams]);
-
-
-
-  console.log("hackathonEvents:", hackathonEvents);
-  console.log("teams:", teams);
-  console.log("userDetails:", userDetails);
 
 
   const [open, setOpen] = useState(false);
@@ -347,9 +333,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
 
   };
 
-  const handleTeamCreate = (problemStatementId, eventId) => {
-    console.log("handleTeamCreate")
-    console.log("Params: " + problemStatementId + " " + eventId)
+  const handleTeamCreate = (problemStatementId, eventId) => {    
     setNewTeamProblemStatementId(problemStatementId);
     setNewTeamEventId(eventId);
     setCreateTeamOpen(true); // Open the modal
@@ -439,15 +423,13 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       label: "Team",
     });
 
-
-    // console.log(data);
+    
     // We don't do anything when someone leaves
   };
 
   const handleTeamCreationResponse = (data, problemStatementId, eventId) => {
     // We need to update our state to temporarily show the user that they have created a team
     // This should be followed up on refresh of the page with a hit to grab the real version from the backend/DB
-    console.log("handleTeamCreationResponse", data);
 
     // Append this to the current teams state 
     setTeams(teams => [...teams, data.team]);  
@@ -706,6 +688,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     }
 
     helpingSwitch = (
+      <Tooltip enterTouchDelay={0} title={<span style={{ fontSize: "15px" }}> {help_checked === "checked" ? "Click to stop helping 😭" : "Click to help 😍"} </span>}>
       <FormControlLabel
         onClick={handleClickOpen}
         onChange={handleClickOpen}
@@ -713,6 +696,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         control={<MaterialUISwitch sx={{ m: 1 }} checked={help_checked} />}
         label={helpingSwitchType}
       />
+      </Tooltip>
     );
   }
 
@@ -728,7 +712,8 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         <a target="_blank" rel="noopener noreferrer" href={reference.link}>
           <Button
             key={reference.name}
-            className="button button--pad button--third"
+            variant="outlined"
+            style={{ margin: "0.5rem", fontSize: '13px' }}
           >
             <ArticleIcon />
             &nbsp;
@@ -903,7 +888,6 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     setTabValue(newValue);
   };
 
-  // console.log("== Problem Statement Render: ", problem_statement);
 
   return (
     <ProjectCard container bgcolor={cardBackground} sx={{ border: 1, borderColor: "#C0C0C0" }} key={problem_statement.id}>
@@ -914,8 +898,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         <CopyToClipboardButton location={copyProjectLink} />                
       </Grid>
       <Grid container item xs={12} md={12} justifyContent="flex-start">
-        <Stack direction="row" spacing={0} justifyContent="flex-end">
-          
+        <Stack direction="row" spacing={0} justifyContent="flex-end">          
           <SkillSet Skills={problem_statement.skills} />          
         </Stack>
       </Grid>
@@ -967,6 +950,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       </Grid>
       
     <TitleStyled sx={{marginBottom: "5px"}} variant="h2">{problem_statement.title}</TitleStyled>            
+    
     <YearStyled>{problem_statement.first_thought_of}</YearStyled>      
     <ProjectProgress state={problem_statement.status} />      
 
@@ -1124,8 +1108,8 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           <Stack spacing={2}>
             <TextField
               id="team-name"
-              label="Team Name"
-              helperText="Any unique name you can use to identify your team"
+              label=<span style={{ fontSize: "15px" }}>Team Name (at least 3 letters)</span>
+              helperText=<span style={{ color:"black", fontSize: "14px" }}>A unique team name</span>
               onChange={handleUpdateTeamName}
               margin="dense"
               FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
@@ -1134,8 +1118,8 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
 
             <TextField
               id="slack-name"
-              label="Slack Channel Name"
-              helperText="Create this public channel first"
+              label=<span style={{ fontSize: "15px" }}>Slack Channel (at least 3 letters)</span>
+              helperText=<span  style={{ color:"black", fontSize: "14px" }}>Create this public channel first</span>
               onChange={handleUpdateSlackChannel}
               margin="dense"
               InputProps={{

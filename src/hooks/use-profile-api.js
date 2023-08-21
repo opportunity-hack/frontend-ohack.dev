@@ -55,8 +55,7 @@ export default function useProfileApi(props){
     const handle_help_toggle = async (status, problem_statement_id, mentor_or_hacker, npo_id) => {
         if (!user)
             return null;
-        
-        console.log(user);
+                
 
         const config = {
             url: `${apiServerUrl}/api/messages/profile/helping`,
@@ -149,7 +148,7 @@ export default function useProfileApi(props){
             const data = await fetchUser({ config, authenticated: true });
 
             if (data) {
-                console.log(data);
+                
 
                 if (data.text && data.text.badges && data.text.hackathons) {                    
                     setBadges(data.text.badges);

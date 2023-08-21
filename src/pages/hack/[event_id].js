@@ -18,13 +18,11 @@ export default function NonProfitProfile() {
 }
 
 export async function getStaticPaths(event_id) {
-    console.log("event_id", event_id);
 
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathons?current=true`
     );
     const data = await res.json();
-    console.log("Hackathon Data:",data);
 
     const hackathons = data.hackathons;
 
@@ -47,7 +45,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
 
     var title = "Hackathon: " + data.title;
     var metaDescription = data.location + " | " + data.start_date + " to " + data.end_date + " | " + data.description;
-    var countOfNonProfits = data.nonprofits.length ? data.nonprofits.length : 0;
+    var countOfNonProfits = data.nonprofits?.length ? data.nonprofits.length : 0;
     var startDate = data.start_date;
     var endDate = data.end_date;
 

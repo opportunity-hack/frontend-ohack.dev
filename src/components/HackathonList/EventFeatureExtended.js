@@ -95,11 +95,7 @@ function EventFeatureExtended(props) {
   const daysDuration = days * daySeconds;
 
 
-  console.log("donationCurrent", donationCurrent);
-  console.log("donationGoals", donationGoals);
-  // TODO: Is the schema on the backend wrong? Or is the schema here wrong?
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
-  console.log("eventLinks", eventLinks);
 
   const trackClick = (link, name) => {    
     ga.event({
@@ -119,8 +115,9 @@ function EventFeatureExtended(props) {
 
   };  
 
-  
-  const nonprofitsShuffle = nonprofits.sort(() => Math.random() - Math.random());
+  // Shuffle the nonprofits so that they are in a random order and check for null
+  const nonprofitsShuffle = nonprofits?.sort(() => Math.random() - 0.5);
+
 
   return ( 
     <Grid container spacing={2} justifyContent="center" marginTop={1}>
@@ -319,7 +316,7 @@ function EventFeatureExtended(props) {
         <Typography variant="body1" style={{fontSize: '15px'}}>Check back on September 1st</Typography>
         <Grid container spacing={2} justifyContent="center" marginTop={1}>
         { 
-          nonprofitsShuffle.map((nonprofit) => {
+          nonprofitsShuffle?.map((nonprofit) => {
             return <NonProfitHackathonTile npo={nonprofit} teams={teams}  />
           })
         } 
