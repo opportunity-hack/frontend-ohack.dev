@@ -117,7 +117,7 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
     console.log("    == Event Team Render")
     return(
         <ul key={team.id} style={{margin: '0px'}}>
-            <li>
+            <li id={team.id}>
                 {team.active === "True" ?
                     <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active with {countOfPeopleOnTeam} {peoplePersonString}! Jump into Slack to see if you can help out.</span>}>
                         <StyledBadge badgeContent={countOfPeopleOnTeam} color="primary"><DirectionsRunIcon style={{ color: "green" }} /></StyledBadge></Tooltip> :

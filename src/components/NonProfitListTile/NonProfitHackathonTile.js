@@ -99,7 +99,7 @@ export default function NonProfitHackathonTile({ npo, teams }) {
     );
   }
 
-  const problemStatementChips = npo.problem_statements.map((ps) => {
+  const problemStatementChips = npo.problem_statements?.map((ps) => {
     
     // If the team has this problem statement, then show it
     if (teams && teams.length > 0) {
@@ -129,7 +129,7 @@ export default function NonProfitHackathonTile({ npo, teams }) {
   }
   );
 
-  const countOfTeams = npo.problem_statements.map((ps) => {
+  const countOfTeams = npo.problem_statements?.map((ps) => {
     // If the team has this problem statement, then show it
     if (teams && teams.length > 0) {
       // Get all teams that have this problem statement
@@ -147,8 +147,12 @@ export default function NonProfitHackathonTile({ npo, teams }) {
   }
   );
   // Sum up all of the team counts
-  const sumOfTeamCountForEachProblemStatement = countOfTeams.reduce((a, b) => a + b, 0);
+  const sumOfTeamCountForEachProblemStatement = countOfTeams?.reduce((a, b) => a + b, 0);
 
+  // If npo.image doesn't exist use a placeholder image 
+  if (!npo.image) {
+    npo.image = 'https://i.imgur.com/hTpVsAX.png';
+  }
 
   return (
     <Link href={`/nonprofit/${npo.id}`}>
@@ -164,7 +168,7 @@ export default function NonProfitHackathonTile({ npo, teams }) {
           </Typography>
           
           <CountDetailsText variant='h2'>
-            {npo.problem_statements.length} Project{npo.problem_statements.length > 1 ? 's' : ''}
+            {npo.problem_statements?.length} Project{npo.problem_statements?.length > 1 ? 's' : ''}
           </CountDetailsText>
           <CountDetailsText variant='h5' style={{fontSize: '14px', margin: '1px 0px 8px 2px'}}>
             <GroupsIcon/> {sumOfTeamCountForEachProblemStatement} Team{ (sumOfTeamCountForEachProblemStatement === 0 || sumOfTeamCountForEachProblemStatement > 1) ? 's' : ''}

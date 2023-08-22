@@ -18,6 +18,7 @@ import {
 
 import { Grid, Button } from "@mui/material";
 import { CountdownCircleTimer } from 'react-countdown-circle-timer'
+import Moment from 'moment';
 
 import { 
   CircularProgressbar
@@ -87,8 +88,8 @@ function EventFeatureExtended(props) {
   
   // Parse the date time with Moment and convert to Date object
 
-  // endTime is October 7th at 7am
-  const endTime = new Date(start_date).getTime() / 1000;
+  // If the start_date is in the future, use the start date otherwise use end_date
+  const endTime = Moment(start_date).isAfter(Moment()) ? Moment(start_date).toDate() /1000 : Moment(end_date).toDate() /1000;
 
   const remainingTime = endTime - stratTime;
   const days = Math.ceil(remainingTime / daySeconds);
@@ -244,7 +245,17 @@ function EventFeatureExtended(props) {
       </EventExtendedCard>
     
     <EventExtendedCard xs={10}  md={10} marginRight={0.5} marginTop={0.5}>
-      <SectionTitle>Hackathon Countdown</SectionTitle>
+      <SectionTitle>Countdown 
+        {
+          Moment(start_date).isAfter(Moment()) && 
+          <span> to Start 🟢 </span>
+        }
+        {
+          Moment(start_date).isBefore(Moment()) && 
+          
+            <span> to Completion 🏁</span>          
+        }
+      </SectionTitle>
       <div style={{ display: 'flex', fontFamily: 'sans-serif', textAlign: 'center', paddingTop: '10px'}}>
       <CountdownCircleTimer
         {...timerProps}
@@ -312,8 +323,7 @@ function EventFeatureExtended(props) {
       
       <EventExtendedCard xs={10}  md={10} marginTop={0.5}>
       
-      <SectionTitle>Nonprofits</SectionTitle>
-        <Typography variant="body1" style={{fontSize: '15px'}}>Check back on September 1st</Typography>
+      <SectionTitle>Nonprofits</SectionTitle>        
         <Grid container spacing={2} justifyContent="center" marginTop={1}>
         { 
           nonprofitsShuffle?.map((nonprofit) => {

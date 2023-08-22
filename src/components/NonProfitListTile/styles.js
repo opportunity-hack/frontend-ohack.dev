@@ -17,10 +17,14 @@ export const TileLink = styled(Link)({
 export const NonProfitHackathonTileLink = styled(Card)({
   padding: "0rem",
   margin: "0.2rem",
-  maxWidth: 200,
+  
+  maxWidth: 350,
+  minHeight: 400,
+
+
   textDecoration: "none",
   transition: "all 0.2s ease-out",  
-  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.15)",
+  boxShadow: "0 2px 4px rgba(24, 14, 14, 0.15)",
   "&:hover": {
     transform: "scale(1.01)",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",

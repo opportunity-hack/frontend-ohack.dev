@@ -102,10 +102,10 @@ function HeroBanner() {
             */
           }
             <ButtonStyled
-              onClick={gaButton('Nonprofit Apply', 'button_nonprofit_apply')}
-              href='/nonprofits/apply'
+              onClick={gaButton('October Hackathon', 'button_october_hack')}
+              href='/hack/2023_fall'
             >
-              ⭐️ Nonprofit application
+              ⭐️ October Hackathon
             </ButtonStyled>
             <ButtonGoldStyle onClick={openCodeSample}>
               Join us on Slack to get involved
