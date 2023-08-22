@@ -71,18 +71,26 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
         {        
             if (isHelping)
             {
-                setJoinOrLeaveTeam(<IconButton onClick={handleJoin} edge="end" aria-label="comments">
+                setJoinOrLeaveTeam(
+                <Tooltip placeholder="bottom-end" title={<span style={{ fontSize: "15px" }}>Join a team (only join one)</span>}>
+                <IconButton onClick={handleJoin} edge="end" aria-label="comments">
                     <PersonAddIcon fontSize="large" color="success" />
-                </IconButton>);
+                </IconButton>
+                </Tooltip>
+                );
             }
                 
             
         }
         else if (isOnTeam) {
             if (isHelping) {
-            setJoinOrLeaveTeam(<IconButton value={team} onClick={handleLeave} edge="end" aria-label="comments">
+            setJoinOrLeaveTeam(
+            <Tooltip placeholder="bottom-end" title={<span style={{ fontSize: "15px" }}>Leave this team</span>}>
+            <IconButton value={team} onClick={handleLeave} edge="end" aria-label="comments">
                 <PersonRemoveIcon fontSize="large" color="error" />
-            </IconButton>);
+            </IconButton>
+            </Tooltip>
+            );
             }
         }
     
@@ -91,8 +99,7 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
     const userIcons = team.users.map(auser => {
         var extendedDetails = {};
         if (userDetails != null && auser != null) {                
-            extendedDetails = userDetails[auser];
-            console.log("Profile Image: " + extendedDetails.profile_image);
+            extendedDetails = userDetails[auser];            
         }
 
         return (
@@ -109,9 +116,8 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
 
     console.log("    == Event Team Render")
     return(
-    <div>
-        <ul key={team.id}>
-            <li>
+        <ul key={team.id} style={{margin: '0px'}}>
+            <li id={team.id}>
                 {team.active === "True" ?
                     <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active with {countOfPeopleOnTeam} {peoplePersonString}! Jump into Slack to see if you can help out.</span>}>
                         <StyledBadge badgeContent={countOfPeopleOnTeam} color="primary"><DirectionsRunIcon style={{ color: "green" }} /></StyledBadge></Tooltip> :
@@ -128,10 +134,8 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
                         {userIcons}                        
                 </div>
             </li>
-
-
         </ul>
-    </div>
+    
 )
 
 }

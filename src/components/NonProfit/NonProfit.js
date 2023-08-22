@@ -2,11 +2,11 @@ import React from 'react';
 import { useState } from 'react';
 
 import useNonprofit from '../../hooks/use-nonprofit';
-import useAdmin from '../../hooks/use-admin-check';
+
 import Head from 'next/head';
 // import ProblemStatement from "../../components/problem-statement";
 import ProblemStatement from '../../components/ProblemStatement/ProblemStatement';
-import AdminProblemStatementList from '../../components/admin/problemstatement-list';
+
 
 import TagIcon from '@mui/icons-material/Tag';
 import IconButton from '@mui/material/IconButton';
@@ -14,9 +14,6 @@ import Tooltip from '@mui/material/Tooltip';
 
 import Typography from '@mui/material/Typography';
 import { Grid } from '@mui/material';
-
-import Button from '@mui/material/Button';
-import SaveIcon from '@mui/icons-material/Save';
 
 import { useAuth0 } from '@auth0/auth0-react';
 import { Puff } from 'react-loading-icons';
@@ -70,7 +67,7 @@ export default function NonProfit(props) {
   } = props;
   const { user } = useAuth0();
 
-  const { isAdmin } = useAdmin();
+  
   const [checked, setChecked] = useState([]);
   const [message, setMessage] = useState('');
 
@@ -106,18 +103,17 @@ export default function NonProfit(props) {
   };
 
   const problemStatements = () => {
-    if (nonprofit.problem_statements == null) {
+    if (nonprofit.id === null) {
       return (
         <Grid container justifyContent='center'>
           <Puff stroke='#0000FF' />
         </Grid>
       );
     } else {
-      if (nonprofit.problem_statements.length === 0) {
+      if (nonprofit?.problem_statements?.length === 0) {
         return <div>Working on it!</div>;
-      } else {
-        console.log('NPO Rendering Problem Statement');
-        return nonprofit.problem_statements.map((ps) => {
+      } else {        
+        return nonprofit?.problem_statements?.map((ps) => {
           return (
             <ProblemStatement
               key={ps.id}
@@ -155,32 +151,7 @@ export default function NonProfit(props) {
     description = nonprofit.description;    
   }
 
-  const renderAdminProblemStatements = () => {
-    if (isAdmin && nonprofit.problem_statements != null) {
-      const default_selected = nonprofit.problem_statements.map((ps) => {
-        return ps.id;
-      });
-      return (
-        <div>
-          <AdminProblemStatementList
-            selected={checked}
-            onSelected={setChecked}
-            default_selected={default_selected}
-          />
-          <Button
-            onClick={handleSubmit}
-            variant='contained'
-            endIcon={<SaveIcon />}
-          >
-            Save
-          </Button>
-          {message}
-        </div>
-      );
-    } else {
-      return '';
-    }
-  };
+
 
   var loginCallToAction = <LoginOrRegister
     introText={"Whoa there - you need to login or create an account first."}
@@ -190,13 +161,14 @@ export default function NonProfit(props) {
 
   // More on meta tags
   // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
-  console.log('Nonprofit Page Render');
-  // console.log(slack_details);
-
+  
   var image = '/npo_placeholder.png';
   if (nonprofit.image !== undefined) {
     image = nonprofit.image;
   }
+
+  var projectCount = 0;
+  nonprofit.problem_statements?.length > 0 ? projectCount = nonprofit.problem_statements?.length : projectCount = 0;
 
   return (
     <LayoutContainer key={nonprofit_id} container>
@@ -232,7 +204,7 @@ export default function NonProfit(props) {
         <Parallax bgImage={image} strength={300}></Parallax>
       </TitleBanner>
       <TitleContainer container>
-        {nonprofit.problem_statements ? (
+        {nonprofit.id ? (
           <>
             <Grid item>
               <TitleChipContainer>
@@ -250,7 +222,7 @@ export default function NonProfit(props) {
                   color='default'
                   icon={<AccountTreeIcon />}
                   label={`
-             ${nonprofit.problem_statements?.length} project${
+             ${projectCount} project${
                     nonprofit.problem_statements?.length !== 1 ? 's' : ''
                   } available`}
                 />
@@ -297,8 +269,6 @@ export default function NonProfit(props) {
       </TitleContainer>
 
       <ProjectsContainer>
-        {renderAdminProblemStatements()}
-
         {!user && loginCallToAction}
         <h3>Projects</h3>
         <ProjectsGrid container>{problemStatements()}</ProjectsGrid>

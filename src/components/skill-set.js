@@ -5,7 +5,6 @@ import Tooltip from '@mui/material/Tooltip';
 import HardwareIcon from '@mui/icons-material/Hardware';
 export default function SkillSet({Skills}) {
     
-    console.log("Skills: ", Skills)
 
     return (
         <Stack direction="row" spacing={1}>          

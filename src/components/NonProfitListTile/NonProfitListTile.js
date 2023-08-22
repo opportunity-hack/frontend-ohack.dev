@@ -69,7 +69,7 @@ export default function NonProfitListTile({
   };
 
   var slackDetails = '';
-  if (npo.slack_channel == null || npo.slack_channel === '') {
+  if (!npo || npo.slack_channel == null || npo.slack_channel === '') {
     slackDetails = (
       <Tooltip
         title={

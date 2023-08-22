@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from "react";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-import { EmptyGrid, OuterGrid, TypographyStyled } from "./styles";
-import { SectionTitle } from "./styles";
 import EventFeatureExtended from "../HackathonList/EventFeatureExtended";
 
 import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../styles/nonprofit/styles';
 import { Typography } from '@mui/material';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import { styled } from '@mui/material/styles';
 import Moment from 'moment';
 import { EventText } from "../HackathonList/styles";
 import { EventGreyText } from "./styles";
@@ -63,6 +58,7 @@ function SingleHackathonEvent( { event_id }) {
               key={event.title}
               type={event.type}
               nonprofits={event.nonprofits}
+              teams={event.teams}
               start_date={event.start_date}
               end_date={event.end_date}
               location={event.location}

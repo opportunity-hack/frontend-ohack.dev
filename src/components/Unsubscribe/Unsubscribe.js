@@ -75,8 +75,7 @@ export default function Unsubscribe({email_address}) {
         axios.post(`${process.env.NEXT_PUBLIC_API_NODEJS_SERVER_URL}/api/unsubscribe`, {
             email: email,
         })
-            .then((response) => {
-                console.log(response);
+            .then((response) => {                
                 setStatus('Success! You have been unsubscribed from our newsletter.');
                 setEmail('');
                 setOpen(false);

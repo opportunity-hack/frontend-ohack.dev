@@ -10,8 +10,7 @@ export default function ProjectPage() {
   );
 }
 
-export async function getStaticPaths(project_id) {
-  console.log("project_id", project_id);
+export async function getStaticPaths(project_id) {  
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statements`

@@ -118,8 +118,7 @@ export default function NonProfitApply() {
 
   // Do this once on load with useEffect
   useEffect(() => {        
-    const handleFormLoad = (data) => {
-      console.log("Recevied handleFormLoad data: ", data);
+    const handleFormLoad = (data) => {      
       setLoading(false);
 
       if(data.status != null && data.status === 404)
@@ -399,8 +398,7 @@ export default function NonProfitApply() {
         <Autocomplete
               disablePortal
               value={formState.charityName}
-              onChange={(event, newValue) => {
-                console.log("onChange Charity name changed to ", newValue);
+              onChange={(event, newValue) => {                
                 ReactPixel.track('NPO: Charity Name', {
                   content_name: 'Nonprofit Application',
                   status: newValue,
@@ -432,8 +430,7 @@ export default function NonProfitApply() {
                 // console.log(`onChange Charity name changed to ${newValue}`);
               }}
               inputValue={formState.charityName}
-              onInputChange={(event, newInputValue) => {
-                console.log("Input Change Charity name changed to ", newInputValue);
+              onInputChange={(event, newInputValue) => {                
 
                 ReactPixel.track('oic NPO: Charity Name', {
                   content_name: 'Nonprofit Application',

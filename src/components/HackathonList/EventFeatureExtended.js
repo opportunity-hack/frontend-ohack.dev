@@ -18,6 +18,7 @@ import {
 
 import { Grid, Button } from "@mui/material";
 import { CountdownCircleTimer } from 'react-countdown-circle-timer'
+import Moment from 'moment';
 
 import { 
   CircularProgressbar
@@ -27,6 +28,7 @@ import "react-circular-progressbar/dist/styles.css";
 import { Typography } from "@mui/material";
 import * as ga from "../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
+import NonProfitHackathonTile from "../NonProfitListTile/NonProfitHackathonTile";
 
 function EventFeatureExtended(props) {
   // TODO: Fix unused variable warning here
@@ -34,6 +36,7 @@ function EventFeatureExtended(props) {
     title,
     description,
     type,
+    teams,
     nonprofits,
     start_date,
     end_date,
@@ -85,19 +88,15 @@ function EventFeatureExtended(props) {
   
   // Parse the date time with Moment and convert to Date object
 
-  // endTime is October 7th at 7am
-  const endTime = new Date(start_date).getTime() / 1000;
+  // If the start_date is in the future, use the start date otherwise use end_date
+  const endTime = Moment(start_date).isAfter(Moment()) ? Moment(start_date).toDate() /1000 : Moment(end_date).toDate() /1000;
 
   const remainingTime = endTime - stratTime;
   const days = Math.ceil(remainingTime / daySeconds);
   const daysDuration = days * daySeconds;
 
 
-  console.log("donationCurrent", donationCurrent);
-  console.log("donationGoals", donationGoals);
-  // TODO: Is the schema on the backend wrong? Or is the schema here wrong?
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
-  console.log("eventLinks", eventLinks);
 
   const trackClick = (link, name) => {    
     ga.event({
@@ -116,6 +115,10 @@ function EventFeatureExtended(props) {
     });
 
   };  
+
+  // Shuffle the nonprofits so that they are in a random order and check for null
+  const nonprofitsShuffle = nonprofits?.sort(() => Math.random() - 0.5);
+
 
   return ( 
     <Grid container spacing={2} justifyContent="center" marginTop={1}>
@@ -219,9 +222,7 @@ function EventFeatureExtended(props) {
 
           <ThankYouContainer>
             <TypographyStyled variant="h6">
-              {donationCurrent && donationCurrent.thank_you.length > 0
-                ? `Special thanks to: ${donationCurrent?.thank_you} for donating!`
-                : ""}
+              { donationCurrent && donationCurrent.thank_you.length > 0 ? `Special thanks to: ${donationCurrent?.thank_you} for donating!` : ""}
             </TypographyStyled>
           </ThankYouContainer>
         </ProgressContainer>
@@ -243,8 +244,18 @@ function EventFeatureExtended(props) {
         </ButtonContainer>                
       </EventExtendedCard>
     
-    <EventExtendedCard xs={10}  md={5} marginRight={0.5} marginTop={0.5}>
-      <SectionTitle>Hackathon Countdown</SectionTitle>
+    <EventExtendedCard xs={10}  md={10} marginRight={0.5} marginTop={0.5}>
+      <SectionTitle>Countdown 
+        {
+          Moment(start_date).isAfter(Moment()) && 
+          <span> to Start 🟢 </span>
+        }
+        {
+          Moment(start_date).isBefore(Moment()) && 
+          
+            <span> to Completion 🏁</span>          
+        }
+      </SectionTitle>
       <div style={{ display: 'flex', fontFamily: 'sans-serif', textAlign: 'center', paddingTop: '10px'}}>
       <CountdownCircleTimer
         {...timerProps}
@@ -309,9 +320,18 @@ function EventFeatureExtended(props) {
       </CountdownCircleTimer>
       </div>
       </EventExtendedCard>
-      <EventExtendedCard xs={10}  md={5} marginLeft={0.5} marginTop={0.5}>
-      <SectionTitle>Nonprofits</SectionTitle>
-        <Typography variant="body1" style={{fontSize: '15px'}}>Check back on September 1st</Typography>
+      
+      <EventExtendedCard xs={10}  md={10} marginTop={0.5}>
+      
+      <SectionTitle>Nonprofits</SectionTitle>        
+        <Grid container spacing={2} justifyContent="center" marginTop={1}>
+        { 
+          nonprofitsShuffle?.map((nonprofit) => {
+            return <NonProfitHackathonTile npo={nonprofit} teams={teams}  />
+          })
+        } 
+        </Grid>
+
       </EventExtendedCard>
     
 

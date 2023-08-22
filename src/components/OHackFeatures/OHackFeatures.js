@@ -110,7 +110,7 @@ const OHackFeatures = () => {
 		// listen for Swiper events using addEventListener
 		swiperElRef.current.addEventListener('progress', (e) => {
 		  const progress = e.detail[1];
-		  console.log("Progress:",progress);
+		  
 		});
 	
 		swiperElRef.current.addEventListener('slidechange', (e) => {

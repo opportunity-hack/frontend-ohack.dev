@@ -41,11 +41,10 @@ function EventFeature(props) {
     icon,
   } = props;
 
-  console.log("donationCurrent", donationCurrent);
-  console.log("donationGoals", donationGoals);
+  
   // TODO: Is the schema on the backend wrong? Or is the schema here wrong?
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
-  console.log("eventLinks", eventLinks);
+  
   
 
   return (

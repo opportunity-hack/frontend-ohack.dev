@@ -5,8 +5,7 @@ import Stack from '@mui/material/Stack';
 
 export default function Events({ events, user, problemStatementId, onTeamCreate, onTeamLeave, onTeamCreateComplete, onTeamJoin, isHelping }) {
 
-    const eventsResult = events.map(event => {
-        console.log(" == Events Render")
+    const eventsResult = events.map(event => {        
         return (
             <div key={event.id}>
                 <h3><EngineeringIcon /> {event.location} {event.type}</h3>
