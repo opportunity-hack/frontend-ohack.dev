@@ -48,11 +48,20 @@ export const getStaticProps = async ({ params = {} } = {}) => {
     var countOfhelpingHackers = 0;
     var countOfProjects = 0;
     var statusList = [];
+
+
+
+
+
     if (
         nonprofit.problem_statements != null &&
         nonprofit.problem_statements.length > 0
     ) {
-        nonprofit.problem_statements.forEach((ps) => {
+        nonprofit.problem_statements.forEach( async (psId) => {            
+            const problemStatementResult = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${psId}`);
+            const ps = await problemStatementResult.json();
+            
+
             metaDescription +=
                 ps.title + ' | ' + ps.status + ': ' + ps.description + ' ';
             countOfProjects++;
