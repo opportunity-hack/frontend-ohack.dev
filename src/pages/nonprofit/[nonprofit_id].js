@@ -34,27 +34,61 @@ export async function getStaticPaths(nonprofit_id) {
     }
 }
 
-export const getStaticProps = async ({ params = {} } = {}) => {
+const fetchNonProfit = async (nonprofit_id) => {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${params.nonprofit_id}`
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${nonprofit_id}`
     );
     const data = await res.json();
     const nonprofit = data.nonprofits;
 
-    var title = "Nonprofit: " + data.nonprofits.name;
+    return nonprofit;
+}
+
+const fetchProblemStatement = async (problem_statement_id) => {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${problem_statement_id}`
+    );
+    const data = await res.json();
+    const problemStatement = data;
+
+    return problemStatement;
+}
+
+export const getStaticProps = async ({ params = {} } = {}) => {
+    
+    const nonprofit = await fetchNonProfit(params.nonprofit_id);
+
+    // Gather all of the problem statements
+    var problemStatements = [];
+    if (nonprofit.problem_statements != null) {
+        for (const psId of nonprofit.problem_statements) {
+            const problemStatement = await fetchProblemStatement(psId);
+            problemStatements.push(problemStatement);
+        }
+    }
+
+    console.log("problemStatements", problemStatements);
+
+    var title = "Nonprofit: " + nonprofit.name;
     var metaDescription = '';
 
     var countOfhelpingMentors = 0;
     var countOfhelpingHackers = 0;
     var countOfProjects = 0;
     var statusList = [];
+
+
     if (
-        nonprofit.problem_statements != null &&
-        nonprofit.problem_statements.length > 0
+        problemStatements != null &&
+        problemStatements.length > 0
     ) {
-        nonprofit.problem_statements.forEach((ps) => {
+        problemStatements.forEach((ps) => {                        
+            console.log("----->", ps) ;
+
             metaDescription +=
                 ps.title + ' | ' + ps.status + ': ' + ps.description + ' ';
+
+
             countOfProjects++;
             statusList.push(ps.status);
 
