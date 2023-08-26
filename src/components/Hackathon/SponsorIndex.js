@@ -34,7 +34,7 @@ export default function SponsorIndex()
     const goldColor = '#ffd700';
     const platinumColor = '#e5e4e2';
     const sponsorshipLevels = (
-        <Grid item xs={6} sm={6} md={5} key="sponsorLevels" style={{margin: '1%'}}>
+        <Grid item xs={11} sm={11} md={11} key="sponsorLevels" style={{margin: '1%'}}>
             <Typography variant="h4" component="h1">
                 Levels
             </Typography>
@@ -67,6 +67,18 @@ export default function SponsorIndex()
                 <Typography variant="body1" style={style} component="p">
                   Over $1,000 in support or over 80 hours of volunteering/mentoring.  This helps us partially fund a team to complete their projects.
                 </Typography>
+
+                <Typography variant="h4" style={{marginTop:'5px'}}>
+                  Sponsors
+                </Typography>
+                <Chip style={largeStyle} color="secondary" label="Meta" avatar=<Avatar src="https://i.imgur.com/v1qjSIO.png" imgProps={{ referrerPolicy: "no-referrer" }} /> />
+                &nbsp;
+                <Chip style={largeStyle} color="secondary" label="Spotify" avatar=<Avatar src="https://i.imgur.com/r9qB2L4.png" imgProps={{ referrerPolicy: "no-referrer" }}/> />                
+                
+                
+                <Typography variant="body1" style={style} component="p">
+                  100 hours of volunteering this year
+                </Typography>
               </CardContent>
             </Card>
             <Card style={{backgroundColor : platinumColor, margin:'2px'}}>
@@ -83,50 +95,7 @@ export default function SponsorIndex()
           </Grid>
     );
 
-    const sponsorList = (
-        <Grid item xs={5} sm={5} md={5} key="sponsorLevels" style={{margin: '1%'}}>
-            <Typography variant="h4" component="h1">
-                Sponsors
-            </Typography>
-            
-            <Card style={{backgroundColor : bronzeColor, margin:'2px' }}>
-              <CardContent>
-                <Typography style={style}>Your company could be here!</Typography>
-                <Typography variant="body1"  component="p">                  
-                </Typography>
-              </CardContent>
-            </Card>
-            <Card style={{backgroundColor : silverColor, margin:'2px' }}>
-              <CardContent>
-                <Typography style={style}>...or here</Typography>
-                <Typography variant="body1" component="p">
-                
-                </Typography>
-              </CardContent>
-            </Card>
-            <Card style={{backgroundColor : goldColor, margin:'2px' }}>
-              <CardContent>
-
-                <Chip style={largeStyle} color="secondary" label="Meta" avatar=<Avatar src="https://i.imgur.com/v1qjSIO.png" imgProps={{ referrerPolicy: "no-referrer" }} /> />
-                &nbsp;
-                <Chip style={largeStyle} color="secondary" label="Spotify" avatar=<Avatar src="https://i.imgur.com/r9qB2L4.png" imgProps={{ referrerPolicy: "no-referrer" }}/> />                
-                
-
-                <Typography variant="body1" style={style} component="p">
-                  100 hours of volunteering this year
-                </Typography>
-              </CardContent>
-            </Card>
-            <Card style={{backgroundColor : platinumColor, margin:'2px'}}>
-              <CardContent>
-                <Typography style={style}>...or even here!</Typography>
-                <Typography variant="body1" component="p">
-                
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-    );
+    
 
     const sponsorLevelDescriptions = (
         <Grid item xs={11} sm={11} md={9} key="sponsorLevels" style={{margin: '1%'}}>
@@ -315,8 +284,7 @@ export default function SponsorIndex()
             
 
             <ProjectsContainer container style={{marginTop: 20, width: '100%'}} >                                
-                {sponsorshipLevels}
-                {sponsorList}                
+                {sponsorshipLevels}                            
                 {sponsorshipTable}                
                 {sponsorLevelDescriptions}
             </ProjectsContainer> 
