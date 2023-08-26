@@ -18,8 +18,8 @@ export const NonProfitHackathonTileLink = styled(Card)({
   padding: "0rem",
   margin: "0.2rem",
   
-  maxWidth: 330,
-  minHeight: 400,
+  width: 330,
+  height: 400,
 
 
   textDecoration: "none",

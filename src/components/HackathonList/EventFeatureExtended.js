@@ -123,7 +123,7 @@ function EventFeatureExtended(props) {
   return ( 
     <Grid container spacing={2} justifyContent="center" marginTop={1}>
     
-      <EventExtendedCard xs={10} md={5} marginRight={0.5}>            
+      <EventExtendedCard xs={11} md={6} marginRight={0.5}>            
       <SectionTitle>Donor Funding</SectionTitle>
         <Button variant="contained" size="large" href={`/hack/${event_id}/sponsor`}>Be a sponsor</Button>
         <ProgressContainer
@@ -228,7 +228,7 @@ function EventFeatureExtended(props) {
         </ProgressContainer>
       </EventExtendedCard>
 
-      <EventExtendedCard xs={10}  md={5} marginLeft={0.5}>
+      <EventExtendedCard xs={11}  md={5} marginLeft={0.5}>
       <SectionTitle>Important Links</SectionTitle>
         <ButtonContainer
           container
@@ -244,7 +244,7 @@ function EventFeatureExtended(props) {
         </ButtonContainer>                
       </EventExtendedCard>
     
-    <EventExtendedCard xs={10}  md={10} marginRight={0.5} marginTop={0.5}>
+    <EventExtendedCard xs={11}  md={11} marginRight={0.5} marginTop={0.5}>
       <SectionTitle>Countdown 
         {
           Moment(start_date).isAfter(Moment()) && 
@@ -321,8 +321,7 @@ function EventFeatureExtended(props) {
       </div>
       </EventExtendedCard>
       
-      <EventExtendedCard xs={10}  md={10} marginTop={0.5}>
-      
+      <EventExtendedCard xs={11}  md={11} marginTop={0.5}>      
       <SectionTitle>Nonprofits</SectionTitle>        
         <Grid container spacing={2} justifyContent="center" marginTop={1}>
         { 

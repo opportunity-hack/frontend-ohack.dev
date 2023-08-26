@@ -7,6 +7,7 @@ import { Typography } from '@mui/material';
 import Moment from 'moment';
 import { EventText } from "../HackathonList/styles";
 import { EventGreyText } from "./styles";
+import Skeleton from '@mui/material/Skeleton';
 
 
 
@@ -24,7 +25,8 @@ function SingleHackathonEvent( { event_id }) {
 
   return (        
         <LayoutContainer key="hackathons" container>    
-        { event && <div>
+        { 
+          event ? ( <div>
           <TitleContainer style={{paddingBottom: '8px', paddingTop: '10px'}} container>  
               <Typography variant="h3" component="h1">
               {event.title}
@@ -70,7 +72,16 @@ function SingleHackathonEvent( { event_id }) {
               donationCurrent={event.donation_current}                                 
               />                      
           </ProjectsContainer>    
-            </div>}
+            </div> ) : (
+              <div>
+             <Skeleton variant="text" width={310} height={250} />             
+             <Skeleton variant="rectangular" width={310} height={118} />             
+             
+             <Skeleton variant="text" width={310} height={250} />   
+             <Skeleton variant="rectangular" width={310} height={318} />
+             </div>
+            )
+      }            
     </LayoutContainer>
   
   );
