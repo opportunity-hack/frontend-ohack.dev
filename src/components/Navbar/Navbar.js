@@ -15,6 +15,7 @@ import * as ga from "../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
 
 
+import Button from "@mui/material/Button";
 
 
 import {
@@ -49,6 +50,8 @@ import {
   // ListItemIcon,
   ListItemText,
   Divider,
+  Alert,
+  Typography,
 } from "@mui/material";
 
 /*
@@ -132,7 +135,13 @@ export default function NavBar() {
   };
 
   return (
+    
     <NavbarContainer container>
+      
+      <Alert severity="error" style={{ width: '100%', fontSize:'13px', padding: '0 0 0 10px', marginBottom: "0px" }}>
+      <strong>Hackathon: October 7th and 8th</strong> <Link href="/hack/2023_fall"><Button>hack.ohack.dev</Button></Link>
+    </Alert>
+
       <Drawer anchor="left" open={isDrawerOpen} onClose={toggleDrawer(false)}>
         <DrawerContainer
           onClick={toggleDrawer(false)}
@@ -144,20 +153,25 @@ export default function NavBar() {
               style={{ justifyContent: "center", margin: "2rem 0 3rem 0" }}
               key="logo"
             >
-              <Link href="/" passHref>
-                <LogoContainer>
+              <Link href="/" passHref>                
+                
                 <Image
                   className="nav-bar__logo"
                   src="https://i.imgur.com/Ih0mbYx.png"
                   alt="Opportunity Hack logo"
-                  width={150}
-                  height={72}      
-                  layout="responsive"            
-                />
-                </LogoContainer>
-              </Link>
+                  width={100}
+                  height={86}            
+                  justifyContent="center"
+                  alignItems="center"
+                  alignContent="center"                              
+                  style={{ cursor: "pointer" }}
+                />                                
+                
+              </Link>                            
+              
             </Grid>
             {[
+              ["⭐️ Hackathon", "/hack/2023_fall", ""],
               ["Projects", "/nonprofits", ""],
               ["Submit a project", "/nonprofits/apply", ""],
               ["About Us", "/about", ""],

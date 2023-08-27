@@ -322,7 +322,7 @@ function EventFeatureExtended(props) {
       </EventExtendedCard>
       
       <EventExtendedCard xs={11}  md={11} marginTop={0.5}>      
-      <SectionTitle>Nonprofits</SectionTitle>        
+      <SectionTitle>{nonprofits?.length} Nonprofit{ nonprofits?.length === 1 ? "" : "s"} </SectionTitle>        
         <Grid container spacing={2} justifyContent="center" marginTop={1}>
         { 
           nonprofitsShuffle?.map((nonprofit) => {
