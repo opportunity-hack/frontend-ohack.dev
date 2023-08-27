@@ -74,11 +74,11 @@ function SingleHackathonEvent( { event_id }) {
           </ProjectsContainer>    
             </div> ) : (
               <div>
-             <Skeleton variant="text" width={310} height={250} />             
-             <Skeleton variant="rectangular" width={310} height={118} />             
+             <Skeleton animation="wave" variant="text" width={310} height={250} />             
+             <Skeleton animation="wave" variant="rectangular" width={310} height={118} />             
              
-             <Skeleton variant="text" width={310} height={250} />   
-             <Skeleton variant="rectangular" width={310} height={318} />
+             <Skeleton animation="wave" variant="text" width={310} height={250} />   
+             <Skeleton animation="wave" variant="rectangular" width={310} height={318} />
              </div>
             )
       }            
