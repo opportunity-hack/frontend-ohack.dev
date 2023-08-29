@@ -1,9 +1,9 @@
 import {
-  Grid,
-  Button,
-  Typography,
-  CircularProgress,
-  Chip,
+    Grid,
+    Button,
+    Typography,
+    CircularProgress,
+    Chip,
 } from "@mui/material";
 import { styled } from "@mui/material";
 
@@ -41,15 +41,17 @@ export const HelpUsBuildOHackLink = styled(Button)({
 });
 
 // help-us-build-ohack
-export const HelpUsBuildOHackContainer = styled(Grid)({    
+export const HelpUsBuildOHackContainer = styled(Grid)({
     width: "400px",
-    marginBottom: "5%",
+    position: "fixed",
+    zIndex: 100,
+    bottom: 10,
+    right: 10,
     marginTop: "5%",
     padding: "2%",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fbfbfb",
     borderRadius: "20px",
-    boxShadow: "0px 0px 10px 0px rgba(0,0,0,0.75)",
-    
+    boxShadow: "0px 0px 30px 0px rgba(0,0,0,0.15)",
 });
 
 // help-us-build-ohack__body
