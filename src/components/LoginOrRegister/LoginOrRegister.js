@@ -12,7 +12,7 @@ import {
     ButtonStyledWithLink
 } from "./styles";
 
-export default function LoginOrRegister({introText, previousPage}) {
+export default function LoginOrRegister({ introText, previousPage }) {
     const { loginWithRedirect } = useAuth0();
     const options = {
         autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -20,7 +20,6 @@ export default function LoginOrRegister({introText, previousPage}) {
     };
     const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
     ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-
 
     const handleLoginClick = () => {
         ReactPixel.track('Login Slack');
@@ -50,29 +49,31 @@ export default function LoginOrRegister({introText, previousPage}) {
     };
 
 
-    return(
-    <Stack alignItems="center" paddingTop={5}>
-        <Alert variant="outlined" severity="warning">
-            <AlertTitle>{introText}</AlertTitle>
-
-            <Stack alignItems="center" spacing={2}>
-                <Stack direction="column" spacing={1}>
-                    <ButtonStyled onClick={handleLoginClick}>Log In</ButtonStyled>
-
-                    <Typography>
-                        We use Slack to collaborate, if you already have an account, login with Slack
-                    </Typography>
+    return (
+        <Stack alignItems="center" paddingTop={5}>
+            <Alert variant="outlined" severity="info">
+                <AlertTitle>
+                    {introText}
+                </AlertTitle>
+                <Stack alignItems="center" spacing={2}>
+                    <Stack direction="column" spacing={1}>
+                        <ButtonStyled onClick={handleLoginClick}>Log In</ButtonStyled>
+                        <Typography>
+                            We use Slack to collaborate, if you already have an account, login with Slack
+                        </Typography>
+                    </Stack>
+                    <Stack direction="column" spacing={1}>
+                        <ButtonStyled onClick={handleSignupClick}>
+                            <ButtonStyledWithLink href={`/signup?previousPage=${previousPage}`}>
+                                Create a Slack account
+                            </ButtonStyledWithLink>
+                        </ButtonStyled>
+                        <Typography>
+                            If you don't have an account, you will need to create an account
+                        </Typography>
+                    </Stack>
                 </Stack>
-
-                <Stack direction="column" spacing={1}>
-                        <ButtonStyled onClick={handleSignupClick}><ButtonStyledWithLink href={`/signup?previousPage=${previousPage}`}>Create a Slack account</ButtonStyledWithLink></ButtonStyled>
-
-                    <Typography>
-                        If you don't have an account, you will need to create an account
-                    </Typography>
-                </Stack>
-            </Stack>
-        </Alert>
-    </Stack>
+            </Alert>
+        </Stack>
     );
 };
