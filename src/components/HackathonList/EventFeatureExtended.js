@@ -17,8 +17,6 @@ import {
 
 
 import { Grid, Button } from "@mui/material";
-import { CountdownCircleTimer } from 'react-countdown-circle-timer'
-import Moment from 'moment';
 
 import { 
   CircularProgressbar
@@ -29,6 +27,7 @@ import { Typography } from "@mui/material";
 import * as ga from "../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
 import NonProfitHackathonTile from "../NonProfitListTile/NonProfitHackathonTile";
+import Countdown from "../Countdown/Countdown";
 
 function EventFeatureExtended(props) {
   // TODO: Fix unused variable warning here
@@ -40,6 +39,7 @@ function EventFeatureExtended(props) {
     nonprofits,
     start_date,
     end_date,
+    countdowns,
     location,
     devpostUrl,
     event_id,
@@ -57,43 +57,6 @@ function EventFeatureExtended(props) {
   var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
   ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
 
-
-  const minuteSeconds = 60;
-  const hourSeconds = 3600;
-  const daySeconds = 86400;
-
-  const timerProps = {
-    isPlaying: true,
-    size: 120,
-    strokeWidth: 6
-  };
-
-  const renderTime = (dimension, time) => {
-    return (
-      <div className="time-wrapper">
-        <div className="time">{time}</div>
-        <div>{dimension}</div>
-      </div>
-    );
-  };
-
-  const countdownSize = 70;
-
-  const getTimeSeconds = (time) => (minuteSeconds - time) | 0;
-  const getTimeMinutes = (time) => ((time % hourSeconds) / minuteSeconds) | 0;
-  const getTimeHours = (time) => ((time % daySeconds) / hourSeconds) | 0;
-  const getTimeDays = (time) => (time / daySeconds) | 0;
-
-  const stratTime = Date.now() / 1000; // use UNIX timestamp in seconds
-  
-  // Parse the date time with Moment and convert to Date object
-
-  // If the start_date is in the future, use the start date otherwise use end_date
-  const endTime = Moment(start_date).isAfter(Moment()) ? Moment(start_date).toDate() /1000 : Moment(end_date).toDate() /1000;
-
-  const remainingTime = endTime - stratTime;
-  const days = Math.ceil(remainingTime / daySeconds);
-  const daysDuration = days * daySeconds;
 
 
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
@@ -243,85 +206,8 @@ function EventFeatureExtended(props) {
         }
         </ButtonContainer>                
       </EventExtendedCard>
-    
-    <EventExtendedCard xs={11}  md={11} marginRight={0.5} marginTop={0.5}>
-      <SectionTitle>Countdown 
-        {
-          Moment(start_date).isAfter(Moment()) && 
-          <span> to Start 🟢 </span>
-        }
-        {
-          Moment(start_date).isBefore(Moment()) && 
-          
-            <span> to Completion 🏁</span>          
-        }
-      </SectionTitle>
-      <div style={{ display: 'flex', fontFamily: 'sans-serif', textAlign: 'center', paddingTop: '10px'}}>
-      <CountdownCircleTimer
-        {...timerProps}
-        colors="#7E2E84"
-        size={countdownSize}
-        duration={daysDuration}
-        initialRemainingTime={remainingTime}
-      >
-        {({ elapsedTime, color }) => (
-          <span style={{ color }}>
-            {renderTime("days", getTimeDays(daysDuration - elapsedTime))}
-          </span>
-        )}
-      </CountdownCircleTimer>
-      <CountdownCircleTimer
-        {...timerProps}
-        colors="#D14081"
-        size={countdownSize}
-        duration={daySeconds}
-        initialRemainingTime={remainingTime % daySeconds}
-        onComplete={(totalElapsedTime) => ({
-          shouldRepeat: remainingTime - totalElapsedTime > hourSeconds
-        })}
-      >
-        {({ elapsedTime, color }) => (
-          <span style={{ color }}>
-            {renderTime("hours", getTimeHours(daySeconds - elapsedTime))}
-          </span>
-        )}
-      </CountdownCircleTimer>
-      <CountdownCircleTimer
-        {...timerProps}
-        colors="#EF798A"
-        duration={hourSeconds}
-        size={countdownSize}
-        initialRemainingTime={remainingTime % hourSeconds}
-        onComplete={(totalElapsedTime) => ({
-          shouldRepeat: remainingTime - totalElapsedTime > minuteSeconds
-        })}
-      >
-        {({ elapsedTime, color }) => (
-          <span style={{ color }}>
-            {renderTime("minutes", getTimeMinutes(hourSeconds - elapsedTime))}
-          </span>
-        )}
-      </CountdownCircleTimer>
-      <CountdownCircleTimer
-        {...timerProps}
-        colors="#218380"
-        size={countdownSize}
-        duration={minuteSeconds}
-        initialRemainingTime={remainingTime % minuteSeconds}
-        onComplete={(totalElapsedTime) => ({
-          shouldRepeat: remainingTime - totalElapsedTime > 0
-        })}
-      >
-        {({ elapsedTime, color }) => (
-          <span style={{ color }}>
-            {renderTime("seconds", getTimeSeconds(elapsedTime))}
-          </span>
-        )}
-      </CountdownCircleTimer>
-      </div>
-      </EventExtendedCard>
-      
-      <EventExtendedCard xs={11}  md={11} marginTop={0.5}>      
+              
+    <EventExtendedCard xs={11}  md={11} marginTop={0.5}>      
       <SectionTitle>{nonprofits?.length} Nonprofit{ nonprofits?.length === 1 ? "" : "s"} </SectionTitle>        
         <Grid container spacing={2} justifyContent="center" marginTop={1}>
         { 
@@ -330,11 +216,21 @@ function EventFeatureExtended(props) {
           })
         } 
         </Grid>
-
       </EventExtendedCard>
-    
 
-    
+      <EventExtendedCard xs={11}  md={11} marginRight={0.5} marginTop={0.5}>
+      <SectionTitle>Countdown</SectionTitle>
+      {
+        countdowns && countdowns.length > 0 && (
+          countdowns.map((countdown) => {
+            return <Countdown details={countdown} />
+          }
+        ))
+
+        // If no countdowns are provided, display a default countdown using end_date
+        || <Countdown details={{name: title + " completion", time: end_date, description: description}} />
+      }
+      </EventExtendedCard>
     
   </Grid>    
   );
