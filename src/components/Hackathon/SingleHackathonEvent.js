@@ -63,6 +63,7 @@ function SingleHackathonEvent( { event_id }) {
               teams={event.teams}
               start_date={event.start_date}
               end_date={event.end_date}
+              countdowns={event.countdowns}
               location={event.location}
               devpostUrl={event.devpost_url}
               rawEventLinks={event.links}
