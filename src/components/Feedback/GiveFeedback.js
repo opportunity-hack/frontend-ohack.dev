@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 
-import AuthenticationButton from "../../components/buttons/authentication-button";
+import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 
 import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
@@ -53,11 +53,8 @@ export default function GiveFeedback() {
 
     if (!user) {
         return (
-            <div className="content-layout">
-                <h1 className="content__title">Please login</h1>
-                <div className="content__body">
-                    <AuthenticationButton />
-                </div>
+            <div className="content-layout">                                
+                    <LoginOrRegister />                
             </div>
         );
     }

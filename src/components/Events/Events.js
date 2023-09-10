@@ -28,7 +28,7 @@ export default function Events({
 
 
   var eventsResult = "We haven't hacked on this yet!"
-  if (events && events.length > 0) {        
+  if (events && events.length > 0) {       
     eventsResult = events.map((event) => {      
       var devPostPostfixString = "";      
 
@@ -54,6 +54,10 @@ export default function Events({
             </Link>
           }
 
+          <Typography variant="body1" style={{ color: isEventStartDateOlderThanToday(event) ? "#C0C0C0" : "#222222" }}>
+              {event.description}
+           </Typography>
+
           <Typography variant="h5" style={{ color: isEventStartDateOlderThanToday(event) ? "#C0C0C0" : "#222222", marginBottom: "1rem" }}>
             {
               // Convert start_date to readible format
@@ -77,8 +81,43 @@ export default function Events({
             }
           </Typography>
 
-          <Stack direction="column" alignItems="flex-start" spacing={2}>
+          
 
+           {
+            // Print constraints if they exist
+            event.constraints && (
+              <Grid item direction="row" spacing={2} justifyContent="flex-start">
+                {
+                  // If constraints.max_teams_per_problem is not null, then display the max number of teams per problem
+                  event.constraints.max_teams_per_problem && (
+                    <Typography variant="body1" style={{marginBottom: 1, marginRight: 1}}>
+                      <b>Max teams per problem: </b> {event.constraints.max_teams_per_problem}
+                    </Typography>
+                  )            
+                }
+
+                {
+                  // If constraints.min_people_per_team is not null, then display the min number of people per team
+                  event.constraints.min_people_per_team && (
+                    <Typography variant="body1" style={{marginBottom: 1, marginRight:1, marginLeft:1}}>
+                      <b>Minimum people per team: </b> {event.constraints.min_people_per_team}
+                    </Typography>              
+                  )
+                }
+
+                {
+                  // If constraints.max_people_per_team is not null, then display the max number of people per team
+                  event.constraints.max_people_per_team && (
+                    <Typography variant="body1" style={{marginBottom: 1, marginLeft:1}}>
+                      <b>Max people per team: </b> {event.constraints.max_people_per_team}
+                    </Typography>
+                  )
+                }
+              </Grid>
+            )
+           }
+
+          <Stack direction="column" alignItems="flex-start" spacing={2}>            
 
             { event.devpost_url && <Link href={event.devpost_url} target="_blank" rel="noreferrer">
             {
@@ -95,6 +134,29 @@ export default function Events({
             }              
             </Link>
             }
+
+            { 
+            // Print out links if they exist
+            event.links && event.links.length > 0 && (
+              <Grid container
+              style={{                                 
+                }} spacing={1} direction="row" md={12} xs={12} marginTop={0.5} justifyContent="flex-start" alignItems={"center"} alignContent={"center"} >
+                {
+                  event.links.map((link) => {
+                    return (
+                      <Grid item>
+                      <Link href={link.link} target="_blank" rel="noreferrer">
+                        <Button variant={link.variant} color={link.color} size={link.size}>
+                          {link.name}
+                        </Button>
+                      </Link>
+                      </Grid>
+                    );
+                  })
+                }
+              </Grid>
+            )
+            }
             
             <EventTeams
               // The teams filtered for a given event
@@ -104,6 +166,7 @@ export default function Events({
               userDetails={userDetails}
               problemStatementId={problemStatementId}
               eventId={event.id}
+              constraints={event.constraints}
               onTeamCreate={onTeamCreate}
               onTeamLeave={onTeamLeave}              
               onTeamJoin={onTeamJoin}

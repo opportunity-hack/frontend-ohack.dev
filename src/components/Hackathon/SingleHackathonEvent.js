@@ -70,7 +70,8 @@ function SingleHackathonEvent( { event_id }) {
               icon={event.image_url}
               donationUrl={event.donation_url}
               donationGoals={event.donation_goals}
-              donationCurrent={event.donation_current}                                 
+              donationCurrent={event.donation_current}      
+              constraints={event.constraints}                           
               />                      
           </ProjectsContainer>    
             </div> ) : (
