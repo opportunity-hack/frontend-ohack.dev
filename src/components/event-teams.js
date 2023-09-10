@@ -14,9 +14,9 @@ import Stack from '@mui/material/Stack';
 // import { useState, useMemo, useEffect } from "react";
 import Button from '@mui/material/Button';
 import Team from './event-team';
-import useProfileApi from '../hooks/use-profile-api';
 import { Tooltip, Typography } from '@mui/material';
 import Badge from '@mui/material/Badge';
+import Alert from '@mui/material/Alert';
 
 /*
 
@@ -73,11 +73,12 @@ export default function EventTeams(
         userDetails,
         problemStatementId,
         eventId,
+        constraints,
         onTeamCreate,
         onTeamLeave,        
         onTeamJoin,
         isHelping }) {     
-    var teamCounter = 0;    
+    var teamCounter = 0;       
         
     const isUserInAnyTeamListTemp = teams && teams.map(team =>{                
         const isTeamAssociatedToProblemStatement = team?.problem_statements !=null && team.problem_statements?.includes(problemStatementId);
@@ -90,7 +91,7 @@ export default function EventTeams(
         
         const result = team.users.map(auser => {            
             var extendedDetails = {};
-            if (userDetails != null && auser != null) {                
+            if (userDetails != null && auser != null && userDetails[auser] != null ) {                
                 extendedDetails["slack_id"] = userDetails[auser]["user_id"];                                
             }                            
             
@@ -117,6 +118,22 @@ export default function EventTeams(
         onTeamLeave(team.id)
     };
 
+    const showCreateTeamButton = !isLoggedInUserAlreadyOnTeam && !isEventStartDateOlderThanToday && isHelping && constraints?.max_teams_per_problem > teamCounter;
+
+    // Declare const that will return Alert dialog if constraints.max_teams_per_problem is reached
+    const AlertMaxTeamsPerProblem = () => {
+        return (
+            <Alert severity="warning" style={{margin: 5, fontSize: 13}}>
+                We have reached the maximum number of teams per problem statement.
+                <br/>
+                Head back to the hackathon page to see if there are other problem statements that need help.
+                <br/>
+                We do this to ensure that every nonprofit has a fair chance of getting a team.
+                <br/><br/>
+                Once every nonprofit has a team, we will open up more teams.
+            </Alert>
+        );
+    };
 
     const handleJoinClicked = (team) => {
         console.log("Join Button Clicked");            
@@ -138,7 +155,7 @@ export default function EventTeams(
             const isUserOnThisTeam = users.map( auser => {
                 var extendedDetails = {};
 
-                if (userDetails != null && auser != null) {                
+                if (userDetails != null && auser != null && userDetails[auser] != null ) {                
                     extendedDetails["slack_id"] = userDetails[auser]["user_id"];                                
                 }
                 
@@ -164,10 +181,16 @@ export default function EventTeams(
     
     return(                        
             <Stack spacing={0}>
+            
             {
-            isHelping && !isLoggedInUserAlreadyOnTeam &&  !isEventStartDateOlderThanToday &&
+                constraints?.max_teams_per_problem <= teamCounter && <AlertMaxTeamsPerProblem />
+            }
+
+            {
+            showCreateTeamButton &&
                 <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team</Button>
             }
+            
             {
             !isHelping && !isLoggedInUserAlreadyOnTeam  && !isEventStartDateOlderThanToday &&
                 <Tooltip 
@@ -179,7 +202,7 @@ export default function EventTeams(
                     }                    
                     >
                 <Badge color="error" badgeContent="!">
-                <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained" disabled>Create Team</Button>
+                <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained" disabled>Create Team</Button>                
                 </Badge>
                 </Tooltip>
             }

@@ -14,8 +14,11 @@ import { styled } from "@mui/material/styles";
 import ReactMarkdown from 'react-markdown'
 
 
+
 import SupportIcon from "@mui/icons-material/Support";
 import Badge from "@mui/material/Badge";
+import { LoginButton } from "../Navbar/styles";
+
 
 import ArticleIcon from "@mui/icons-material/Article";
 import Button from "@mui/material/Button";
@@ -73,6 +76,8 @@ import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 import ReactPixel from 'react-facebook-pixel';
 import useProblemstatements from "../../hooks/use-problem-statements";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
+import { useAuth0 } from "@auth0/auth0-react";
+
 
 
 import * as ga from '../../lib/ga';
@@ -80,6 +85,7 @@ import * as ga from '../../lib/ga';
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
   const isLargeScreen = useMediaQuery('(min-width: 768px)');
 
+  const { loginWithRedirect } = useAuth0();
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
   const { handle_get_team, handle_new_team_submission, handle_join_team, handle_unjoin_a_team } = useTeams();
@@ -649,11 +655,42 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     );
 
     callToAction = (
+    <Grid container direction="column" justifyContent="flex-start" alignItems="flex-start">  
+      <Grid item padding={1}>
       <Link href={`/signup?previousPage=/nonprofit/${npo_id}`}>    
-        <button className="button button--compact button--primary">
-          Login first
-        </button>
+        <Button variant="contained" color="primary">
+          Create OHack Slack Account
+        </Button>
       </Link>
+      </Grid>
+      
+      <Grid item padding={1}>
+        <LoginButton
+                variant="contained"
+                disableElevation
+                  onClick={() => loginWithRedirect({
+                    appState: {
+                      returnTo: window.location.pathname,
+                      redirectUri: window.location.pathname,
+                    },
+                  })}
+                className="login-button"
+              >
+                Log In
+                <svg
+                  fill="none"
+                  viewBox="0 0 10 10"
+                  stroke="currentColor"
+                  height="1em"
+                  width="1em"
+                >
+                  <path className="arrow" d="M3,2 L6,5 L3,8" />
+                  <path className="line" d="M3,5 L8,5" />
+                </svg>
+        </LoginButton>
+      </Grid>
+
+      </Grid>
     );
   
 

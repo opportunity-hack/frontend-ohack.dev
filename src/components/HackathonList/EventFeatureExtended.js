@@ -15,7 +15,7 @@ import {
   ExtendedEventButton
 } from "./styles";
 
-
+import GroupIcon from '@mui/icons-material/Group';
 import { Grid, Button } from "@mui/material";
 
 import { 
@@ -48,6 +48,7 @@ function EventFeatureExtended(props) {
     donationGoals,
     donationCurrent,
     icon,
+    constraints,
   } = props;
 
   const options = {
@@ -209,17 +210,55 @@ function EventFeatureExtended(props) {
               
     <EventExtendedCard xs={11}  md={11} marginTop={0.5}>      
       <SectionTitle>{nonprofits?.length} Nonprofit{ nonprofits?.length === 1 ? "" : "s"} </SectionTitle>        
-        <Grid container spacing={2} justifyContent="center" marginTop={1}>
+        <Grid container justifyContent="flex-start">
+        {
+          // Check if there are constraints
+          constraints && (
+            // If constraints.max_teams_per_problem is not null, then display the max number of teams per problem
+            constraints.max_teams_per_problem && (
+              <Typography variant="body1" style={{marginBottom: 1, marginRight: 1}}>
+                <b>Max teams per problem: </b> {constraints.max_teams_per_problem}
+              </Typography>
+            )            
+          ) 
+        }
+
+        {
+          constraints && (            
+          // If constraints.min_people_per_team is not null, then display the min number of people per team
+            constraints.min_people_per_team && (              
+              <Typography variant="body1" style={{marginBottom: 1, marginRight:1, marginLeft:1}}>
+                <b>Minimum people per team: </b> {constraints.min_people_per_team}
+              </Typography>              
+            )
+          )          
+        }
+
+        {
+          constraints && (
+          // If constraints.max_people_per_team is not null, then display the max number of people per team
+            constraints.max_people_per_team && (
+              <Typography variant="body1" style={{marginBottom: 1, marginLeft:1}}>
+                <b>Max people per team: </b> {constraints.max_people_per_team}
+              </Typography>
+            )
+          )
+        }
+
+        
+        </Grid>
+
+        <Grid container spacing={2} justifyContent="center" marginTop={1}>          
         { 
           nonprofitsShuffle?.map((nonprofit) => {
             return <NonProfitHackathonTile npo={nonprofit} teams={teams}  />
           })
         } 
-        </Grid>
+        </Grid>        
       </EventExtendedCard>
 
       <EventExtendedCard xs={11}  md={11} marginRight={0.5} marginTop={0.5}>
-      <SectionTitle>Countdown</SectionTitle>
+      <SectionTitle id="countdown">Countdown</SectionTitle>
       {
         countdowns && countdowns.length > 0 && (
           countdowns.map((countdown) => {

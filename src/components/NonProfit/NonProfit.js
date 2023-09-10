@@ -7,7 +7,7 @@ import Head from 'next/head';
 // import ProblemStatement from "../../components/problem-statement";
 import ProblemStatement from '../../components/ProblemStatement/ProblemStatement';
 
-
+import LanguageIcon from '@mui/icons-material/Language';
 import TagIcon from '@mui/icons-material/Tag';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -225,15 +225,29 @@ export default function NonProfit(props) {
              ${projectCount} project${
                     nonprofit.problem_statements?.length !== 1 ? 's' : ''
                   } available`}
-                />
+                />                
               </TitleChipContainer>
             </Grid>
+            
             <Grid item>
               {description ? (
-                <ReactMarkdown>{description}</ReactMarkdown>
+                <Typography style={{fontSize:"13px"}}>{description}</Typography>
               ) : (
                 ''
               )}
+
+              {nonprofit.website ? (
+                <DescriptionStyled>
+                  <LanguageIcon /> {' '}
+                  <LinkStyled href={nonprofit.website} target='_blank' rel='noreferrer'>
+                    {nonprofit.website}
+                  </LinkStyled>
+                </DescriptionStyled>
+              ) : (
+                ''
+              )}
+
+
               {nonprofit.slack_channel ? (
                 <DescriptionStyled>
                   Looking to get involved? Join the{' '}

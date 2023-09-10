@@ -17,6 +17,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import Stack from '@mui/material/Stack';
 import Image from 'next/image'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { Puff } from 'react-loading-icons';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
     '& .MuiBadge-badge': {
@@ -100,16 +101,21 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
         var extendedDetails = {};
         if (userDetails != null && auser != null) {                
             extendedDetails = userDetails[auser];            
-        }
+        }        
 
         return (
             <Stack direction="row" alignItems="center" spacing={1}>
-                <Image className="ohack-feature__icon"
+                { extendedDetails && <Image className="ohack-feature__icon"
                     src={extendedDetails.profile_image}
                     width={50}
                     height={50} />
+                }
 
-                <div>{extendedDetails.name}</div>
+                {
+                    !extendedDetails && <Puff stroke="#000000" fill="#000000" />
+                }
+
+                <div>{extendedDetails?.name}</div>
             </Stack>
         )
     });
