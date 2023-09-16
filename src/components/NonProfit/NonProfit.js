@@ -247,10 +247,18 @@ export default function NonProfit(props) {
                 ''
               )}
 
+              {nonprofit.contact_people ? (
+                <DescriptionStyled>
+                  Point of Contact: {nonprofit.contact_people}
+                </DescriptionStyled>
+              ) : (
+                ''
+              )}
 
               {nonprofit.slack_channel ? (
                 <DescriptionStyled>
                   Looking to get involved? Join the{' '}
+                  <LinkStyled href={`https://opportunity-hack.slack.com/app_redirect?channel=${nonprofit.slack_channel}`}>
                   <Tooltip
                     title={
                       <p style={{ fontSize: '1rem', margin: '0' }}>
@@ -262,8 +270,9 @@ export default function NonProfit(props) {
                     <ChannelChip
                       label={`#${nonprofit.slack_channel}`}
                       variant='outlined'
+                      style={{ cursor: 'pointer' }} 
                     />
-                  </Tooltip>{' '}
+                  </Tooltip></LinkStyled>{' '}
                   channel on{' '}
                   <LinkStyled href='https://slack.com/'>Slack</LinkStyled> to
                   join in on the discussion!
