@@ -247,6 +247,13 @@ export default function NonProfit(props) {
                 ''
               )}
 
+              {nonprofit.contact_people ? (
+                <DescriptionStyled>
+                  Point of Contact: {nonprofit.contact_people}
+                </DescriptionStyled>
+              ) : (
+                ''
+              )}
 
               {nonprofit.slack_channel ? (
                 <DescriptionStyled>
