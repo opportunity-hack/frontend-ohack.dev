@@ -1,11 +1,26 @@
 import React from 'react';
 import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../../styles/nonprofit/styles';
 import Head from 'next/head';
-import { Typography, Grid, Card, CardContent} from '@mui/material';
+import { Typography, Grid, Card, CardContent, Box} from '@mui/material';
 import LoginOrRegister from '../../LoginOrRegister/LoginOrRegister';
+import Button from '@mui/material/Button';
+import * as ga from "../../../lib/ga";
+import ReactPixel from 'react-facebook-pixel';
 
 const style = { fontSize: '15px' };
 
+const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
+    ga.event({
+      action: "click",
+      params: {
+        event_category: "button",
+        event_label: buttonName,
+      },
+    });
+    ReactPixel.trackCustom(buttonName + ' Click', {});   
+}
+ 
+const mentorGoogleForm = "https://forms.gle/gJgXeEsPoLqSJKgB6"
 
 const Mentorship = () => (
     <LayoutContainer key="mentorship" container>
@@ -24,10 +39,16 @@ const Mentorship = () => (
         <Typography variant="h3" component="h1">
         Opportunity Hack Mentorship
         </Typography>
-        
+                
+
         <Typography variant="body1" style={style} paragraph>
         Welcome to Opportunity Hack! As a mentor, you are instrumental to the success of our event. Your skills, knowledge, and experience will shape the outcomes of projects and the experience of our participants. With different domains calling for expertise, we invite Software Engineers, Product Managers, UX Designers, and Project Managers to help make a difference for nonprofits around the world.
         </Typography>
+        <Box sx={{ flexGrow: 1, margin: 2 }}>
+        <Button onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_1")} variant="contained" size='large' color="primary" href={mentorGoogleForm}>
+            Mentor for OHack 2023!
+        </Button>
+        </Box>
     </TitleContainer>
 
     <ProjectsContainer style={{marginTop: 10}} >
@@ -52,7 +73,11 @@ const Mentorship = () => (
         <Typography variant="body1" paragraph style={style}>
             If you're searching for purpose in your professional life, consider volunteering as an Opportunity Hack mentor. It's not just about what you can teach—it's also about what you can learn, the connections you can forge, and the impact you can make. Together, we can use technology to shape a better world. Are you ready to make a difference?
         </Typography>
-
+        <Box sx={{ flexGrow: 1, margin: 2 }}>
+        <Button onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_2")} variant="contained" size='large' color="primary" href={mentorGoogleForm}>
+            Sign up to mentor for OHack 2023!
+        </Button>
+        </Box>
         <Typography variant="h4" component="h2">
         The Role of a Mentor
         </Typography>
@@ -145,7 +170,13 @@ const Mentorship = () => (
         </Card>
         </Grid>
     </Grid>
+
     
+    <Box sx={{ flexGrow: 1, margin: 2 }}>
+        <Button onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_3")} variant="contained" size='large' color="secondary" href={mentorGoogleForm}>
+            Be a mentor for OHack 2023!
+        </Button>
+    </Box>
     
     <Typography variant="h4" component="h2" gutterBottom>
         What It Takes
