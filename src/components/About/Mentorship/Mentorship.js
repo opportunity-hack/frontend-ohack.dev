@@ -6,6 +6,8 @@ import LoginOrRegister from '../../LoginOrRegister/LoginOrRegister';
 import Button from '@mui/material/Button';
 import * as ga from "../../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
+import { InstagramEmbed } from 'react-social-media-embed';
+
 
 const style = { fontSize: '15px' };
 
@@ -40,17 +42,25 @@ const Mentorship = () => (
         Opportunity Hack Mentorship
         </Typography>
                 
-
-        <Typography variant="body1" style={style} paragraph>
-        Welcome to Opportunity Hack! As a mentor, you are instrumental to the success of our event. Your skills, knowledge, and experience will shape the outcomes of projects and the experience of our participants. With different domains calling for expertise, we invite Software Engineers, Product Managers, UX Designers, and Project Managers to help make a difference for nonprofits around the world.
-        </Typography>
-        <Box sx={{ flexGrow: 1, margin: 2 }}>
-        <Button onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_1")} variant="contained" size='large' color="primary" href={mentorGoogleForm}>
-            Mentor for OHack 2023!
-        </Button>
-        </Box>
+        <Grid container spacing={1}>            
+            <Grid item xs={12} sm={6} md={8}>
+                <Typography variant="body1" style={style} paragraph>
+                Welcome to Opportunity Hack! As a mentor, you are instrumental to the success of our event. Your skills, knowledge, and experience will shape the outcomes of projects and the experience of our participants. With different domains calling for expertise, we invite Software Engineers, Product Managers, UX Designers, and Project Managers to help make a difference for nonprofits around the world.
+                </Typography>
+                <Box sx={{ flexGrow: 1, margin: 2 }}>
+                <Button onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_1")} variant="contained" size='large' color="primary" href={mentorGoogleForm}>
+                    Mentor for OHack 2023!
+                </Button>
+                </Box>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>                
+                <InstagramEmbed url="https://www.instagram.com/p/CxVnPC5vLYa/" maxWidth={328} height={500} />
+            </Grid>                
+        </Grid>
     </TitleContainer>
+    
 
+    
     <ProjectsContainer style={{marginTop: 10}} >
         <Typography variant="h4" component="h1">
             Seeking Meaningful Impact in Your Career?
@@ -78,12 +88,20 @@ const Mentorship = () => (
             Sign up to mentor for OHack 2023!
         </Button>
         </Box>
-        <Typography variant="h4" component="h2">
-        The Role of a Mentor
-        </Typography>
-        <Typography variant="body1" paragraph style={style}>
-        As a mentor, you play a vital role in our hackathon. Your primary responsibility is to provide guidance and support to participants as they navigate through technical and strategic challenges. You're not just a sounding board for ideas; you're the beacon that guides teams towards their goals. You provide balance, expertise, and ensure teams can rely on you when they need help the most.
-        </Typography>
+
+        <Grid container spacing={1}>
+            <Grid item xs={12} sm={6} md={8}>   
+                <Typography variant="h4" component="h2">
+                The Role of a Mentor
+                </Typography>
+                <Typography variant="body1" paragraph style={style}>
+                As a mentor, you play a vital role in our hackathon. Your primary responsibility is to provide guidance and support to participants as they navigate through technical and strategic challenges. You're not just a sounding board for ideas; you're the beacon that guides teams towards their goals. You provide balance, expertise, and ensure teams can rely on you when they need help the most.
+                </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} marginTop={1} marginBottom={2}>               
+                <InstagramEmbed url="https://www.instagram.com/p/CxQ7ycBh66q/" maxWidth={328} height={500}  />        
+            </Grid>
+        </Grid>
     
     
     <Typography variant="h4" gutterBottom>Types of Mentors</Typography>
