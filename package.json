@@ -37,6 +37,7 @@
     "react-markdown": "^8.0.5",
     "react-moment": "^1.1.2",
     "react-parallax": "^3.5.1",
+    "react-social-media-embed": "^2.3.5",
     "react-table": "^7.7.0",
     "swiper": "^9.1.0",
     "typewriter-effect": "^2.19.0",
