@@ -14,7 +14,7 @@ export default function Mentors() {
 
 export const getStaticProps = async () => {    
     const title = "How to Become a Mentor for Opportunity Hack and Help Nonprofits";
-    const description =  "Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem.";
+    const description =  "Opportunity Hack is an event where mentors guide participants to create solutions for nonprofits. Join us as a Software Engineer, Product Manager, UX Designer, or Project Manager and make a difference.";
     return {
         props: {
             title: "Opportunity Hack Mentorship",
