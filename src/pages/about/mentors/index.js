@@ -18,18 +18,18 @@ export const getStaticProps = async () => {
     return {
         props: {
             title: "Opportunity Hack Mentorship",
-            description: {description},
+            description: description,
             openGraphData: [
                 {
                     name: "title",
                     property: "title",
-                    content: {title},
+                    content: title,
                     key: "title"
                 },
                 {
                     name: "og:title",
                     property: "og:title",
-                    content: {title},
+                    content: title,
                     key: "ogtitle"
                 },
                 {
@@ -53,7 +53,7 @@ export const getStaticProps = async () => {
                 {
                     name: "og:description",
                     property: "og:description",
-                    content: {description},
+                    content: description,
                     key: "ogdescription"
                 },                                
                 {
@@ -99,13 +99,13 @@ export const getStaticProps = async () => {
                 {
                     name: "twitter:title",
                     property: "twitter:title",
-                    content: {title},
+                    content: title,
                     key: "twittertitle"
                 },
                 {
                     name: "twitter:description",
                     property: "twitter:description",
-                    content: {description},
+                    content: description,
                     key: "twitterdesc"
                 },
                 {
