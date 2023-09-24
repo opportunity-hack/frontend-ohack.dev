@@ -141,7 +141,7 @@ export const getStaticProps = async () => {
                 {
                     name: "twitter:label2",
                     property: "twitter:label2",
-                    value: "Application Deadline",
+                    value: "Signup Deadline",
                     key: "twitterlabel2"
                 },
                 {
