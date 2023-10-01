@@ -54,6 +54,8 @@ import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import Link from "next/link";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+// Add circle spinner
+import CircularProgress from '@mui/material/CircularProgress';
 
 
 import useTeams from "../../hooks/use-teams";
@@ -78,8 +80,6 @@ import useProblemstatements from "../../hooks/use-problem-statements";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
 import { useAuth0 } from "@auth0/auth0-react";
 
-
-
 import * as ga from '../../lib/ga';
 
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
@@ -93,11 +93,72 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
 
   // For every item in problem_statement.events, get the event details with useCallback using handle_get_hackathon(event_id, onComplete) 
   const [hackathonEvents, setHackathonEvents] = useState([]);
+  const [teamCreationError, setTeamCreationError] = useState(false);
+  const [teamCreationErrorDetails, setTeamCreationErrorDetails] = useState("");
+  const [sendingTeamDetails, setSendingTeamDetails] = useState(false);
+  const [teamSuggestions, setTeamSuggestions] = useState(null);
+
   const [hackathonEventsLoaded, setHackathonEventsLoaded] = useState(false);
   const [hackathonEventsError, setHackathonEventsError] = useState(false);
   const [hackathonEventsErrorDetails, setHackathonEventsErrorDetails] = useState(null);
 
+  const songs = [
+    "Lover",
+    "Willow",
+    "Blank Space",
+    "Shake It Off",
+    "Code Style",
+    "Good Blood",
+    "You Belong With Me",
+    "Fearless",
+    "Red",
+    "Sparks Fly",
+    "Enchanted",    
+    "Mine",
+    "Back To December",
+    "The Story Of Us",
+    "Speak Now",
+    "Fifteen",    
+    "Hey Stephen",
+    "White Horse",
+  ];
+
+  const codeAdjectives = [
+  "Compiler",
+  "Cryptic",
+  "Systematic", 
+  "Coding",
+  "Serverless",
+  "Codable",
+  "Codified", 
+  "Exception", 
+  "Exceptional"
+];
+
+const volunteerWords = [
+  "Leaders",
+  "Heroes",  
+  "Visionaries",
+  "Helpers",
+  "Humans",
+  "Advocates", 
+  "Volunteers",  
+  "Champions",
+  "Ambassadors"  
+];
+
   useEffect(() => {
+    // Generate random team name suggestions using Taylor Swift songs and social good as the topic and only provide two words from them
+    // Pick 1 word from songs, codeAdjectives, and volunteerWords
+    const teamSuggestions = [];
+    const randomSong = songs[Math.floor(Math.random() * songs.length)];
+    const randomCodeAdjective = codeAdjectives[Math.floor(Math.random() * codeAdjectives.length)];
+    const randomVolunteerWord = volunteerWords[Math.floor(Math.random() * volunteerWords.length)];
+    teamSuggestions.push(randomSong + " " + randomCodeAdjective + " " + randomVolunteerWord);    
+    setTeamSuggestions(teamSuggestions);
+  
+
+
     if (problem_statement && problem_statement.events) {
       const events = problem_statement.events;
       const hackathonEvents = [];
@@ -394,7 +455,9 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   };
 
   const handleConfirmTeamCreate = (event) => {
-    // Submit button pressed to create team
+    setSendingTeamDetails(true);
+
+    // Submit button pressed to create team    
     const params = {
       team_name: newTeamName,
       slack_channel: newTeamSlackChannel,
@@ -417,7 +480,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       user.sub,
       handleTeamCreationResponse
     );
-    setCreateTeamOpen(false); // Submit button pressed to create team
+    
   };
 
   const handleTeamLeavingResponse = (data) => {
@@ -436,18 +499,36 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const handleTeamCreationResponse = (data, problemStatementId, eventId) => {
     // We need to update our state to temporarily show the user that they have created a team
     // This should be followed up on refresh of the page with a hit to grab the real version from the backend/DB
+    setSendingTeamDetails(false); // We are done sending the team details
+    setTeamCreationErrorDetails("");
+    setTeamCreationError(false); // No error
 
-    // Append this to the current teams state 
-    setTeams(teams => [...teams, data.team]);  
+    // Check if data is success (has data.message that contains "Saved Team"
+    if (data.success) {    
+      // Success
+      setTeamCreationError(false); // No error
+      setTeamCreationErrorDetails("");
 
-    // Update hackathonEvents to include this team
-    const hackathonEventsCopy = hackathonEvents;
-    hackathonEventsCopy.forEach((event) => {
-      if (event.id === eventId) {
-        event.teams.push(data.team.id);
-      }
-    });
-    setHackathonEvents(hackathonEventsCopy);
+      // Append this to the current teams state 
+      setTeams(teams => [...teams, data.team]);  
+
+      // Update hackathonEvents to include this team
+      const hackathonEventsCopy = hackathonEvents;
+      hackathonEventsCopy.forEach((event) => {
+        if (event.id === eventId) {
+          event.teams.push(data.team.id);
+        }
+      });
+      setHackathonEvents(hackathonEventsCopy);
+
+      setTeamCreationErrorDetails(data.message); // Error details      
+      setCreateTeamOpen(false); // Submit button pressed to create team
+    }
+    else {
+      setCreateTeamOpen(true); // Error, so keep open
+      setTeamCreationError(true); // Error
+      setTeamCreationErrorDetails(data.message); // Error details      
+    }      
   };
 
   const handleCloseTeamCreate = (event) => {
@@ -1141,12 +1222,14 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     >
       <DialogTitle id="alert-dialog-title">Create a new team</DialogTitle>
       <DialogContent>
+      <b>Suggestion:</b> {teamSuggestions}
+
         <DialogContentText component={"span"} id="alert-dialog-description">
           <Stack spacing={2}>
             <TextField
               id="team-name"
               label=<span style={{ fontSize: "15px" }}>Team Name (at least 3 letters)</span>
-              helperText=<span style={{ color:"black", fontSize: "14px" }}>A unique team name</span>
+              helperText=<span style={{ color:"black", fontSize: "14px" }}>A unique team name - we will create a GitHub repo for you</span>
               onChange={handleUpdateTeamName}
               margin="dense"
               FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
@@ -1156,7 +1239,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
             <TextField
               id="slack-name"
               label=<span style={{ fontSize: "15px" }}>Slack Channel (at least 3 letters)</span>
-              helperText=<span  style={{ color:"black", fontSize: "14px" }}>Create this public channel first</span>
+              helperText=<span  style={{ color:"black", fontSize: "14px" }}>Create this public channel first <Link href="https://slack.com/help/articles/201402297-Create-a-channel" target="_blank"><Button variant="text" size="small" >How?</Button></Link></span>
               onChange={handleUpdateSlackChannel}
               margin="dense"
               InputProps={{
@@ -1171,6 +1254,8 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         </DialogContentText>
       </DialogContent>
       <DialogActions>
+        <Stack container>
+        <Stack spacing={2} direction="row">
         <Button
           class="button button--compact button--secondary"
           onClick={handleCloseTeamCreate}
@@ -1182,9 +1267,22 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           onClick={handleConfirmTeamCreate}                              
         >
           Submit
+            {" "}
+            { sendingTeamDetails && 
+              <CircularProgress size={20} />
+            }
         </Button>
         }
+        </Stack>
+      <Stack spacing={0} direction="row" alignContent={"right"} alignItems={"right"} justifyContent={"right"}>
+      <Typography>
+        {teamCreationErrorDetails}
+      </Typography>      
+      </Stack>                
+      </Stack>
+        
       </DialogActions>
+      
     </Dialog>
 
     <Stack spacing={2} direction="row">      

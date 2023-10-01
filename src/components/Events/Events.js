@@ -139,20 +139,21 @@ export default function Events({
             // Print out links if they exist
             event.links && event.links.length > 0 && (
               <Grid container
-              style={{                                 
-                }} spacing={1} direction="row" md={12} xs={12} marginTop={0.5} justifyContent="flex-start" alignItems={"center"} alignContent={"center"} >
+              style={{ backgroundColor: "#f5f5f5" }} spacing={0} padding={1} direction="row" md={12} xs={12} marginTop={0.5} justifyContent="flex-start"  alignItems="center" alignContent="center" >
                 {
-                  event.links.map((link) => {
-                    return (
-                      <Grid item>
-                      <Link href={link.link} target="_blank" rel="noreferrer">
-                        <Button variant={link.variant} color={link.color} size={link.size}>
-                          {link.name}
-                        </Button>
-                      </Link>
-                      </Grid>
-                    );
-                  })
+                  <Grid item style={{  }}>
+                    {event.links.map((link) => {
+                      return (
+                       
+                          <Link href={link.link} target="_blank" rel="noreferrer">
+                            <Button size="small" variant={link.variant} color={link.color}>
+                              {link.name}
+                            </Button>
+                          </Link>
+                       
+                      );
+                    })}
+                  </Grid>
                 }
               </Grid>
             )
