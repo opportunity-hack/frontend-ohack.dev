@@ -124,7 +124,7 @@ export default function EventTeams(
     const AlertMaxTeamsPerProblem = () => {
         return (
             <Alert severity="warning" style={{margin: 5, fontSize: 13}}>
-                We have reached the maximum number of teams per problem statement.
+                <b>We have reached the maximum number of teams per problem statement.</b>
                 <br/>
                 Head back to the hackathon page to see if there are other problem statements that need help.
                 <br/>
@@ -195,6 +195,7 @@ export default function EventTeams(
             !isHelping && !isLoggedInUserAlreadyOnTeam  && !isEventStartDateOlderThanToday &&
                 <Tooltip 
                     placement="right"
+                    enterTouchDelay={0}
                     title={
                         <span style={{ fontSize: '15px' }}>
                             You need to be helping to create or join a team, slide that » slider below to the right to help. 👇
