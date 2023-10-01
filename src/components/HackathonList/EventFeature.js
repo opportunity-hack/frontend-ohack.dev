@@ -187,8 +187,18 @@ function EventFeature(props) {
       >
         {
           
-            eventLinks?.map((Link) => {
-              return <EventButton href={Link?.link}>{Link?.name}</EventButton>;
+            eventLinks?.map((alink) => {
+              const isExternal = alink?.link?.startsWith('http');
+              return (
+                <Link href={alink?.link} target={isExternal ? '_blank' : '_self'} onClick={(e) => {
+                  if (isExternal) {
+                    e.preventDefault();
+                    window.open(alink?.link, '_blank');
+                  }
+                }}>
+                  <EventButton>{alink?.name}</EventButton>
+                </Link>
+              );
             })
        }
       </ButtonContainer>
