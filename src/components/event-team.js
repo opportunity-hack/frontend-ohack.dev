@@ -6,6 +6,7 @@ import {
 import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 import Badge from '@mui/material/Badge';
+import Button from '@mui/material/Button';
 
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
@@ -18,6 +19,7 @@ import Stack from '@mui/material/Stack';
 import Image from 'next/image'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { Puff } from 'react-loading-icons';
+import { Typography } from "@mui/material";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
     '& .MuiBadge-badge': {
@@ -43,10 +45,7 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
 
     useEffect(() => {
         setOnTeam(_isOnTeam);
-    }, [_isOnTeam, isHelping])
-
-    
-    
+    }, [_isOnTeam, isHelping])    
 
     var peoplePersonString = "hacker";
     if (countOfPeopleOnTeam === 0 || countOfPeopleOnTeam >= 2) {
@@ -73,10 +72,8 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
             if (isHelping)
             {
                 setJoinOrLeaveTeam(
-                <Tooltip placeholder="bottom-end" title={<span style={{ fontSize: "15px" }}>Join a team (only join one)</span>}>
-                <IconButton onClick={handleJoin} edge="end" aria-label="comments">
-                    <PersonAddIcon fontSize="large" color="success" />
-                </IconButton>
+                <Tooltip placeholder="bottom-end" title={<span style={{ fontSize: "15px" }}>Join a team (only join one team please)</span>}>
+                    <Button style={{padding:3, margin:2}} onClick={handleJoin} variant="outlined" color="success"><PersonAddIcon fontSize="medium" color="success" />&nbsp;Join Team</Button>              
                 </Tooltip>
                 );
             }
@@ -87,9 +84,8 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
             if (isHelping) {
             setJoinOrLeaveTeam(
             <Tooltip placeholder="bottom-end" title={<span style={{ fontSize: "15px" }}>Leave this team</span>}>
-            <IconButton value={team} onClick={handleLeave} edge="end" aria-label="comments">
-                <PersonRemoveIcon fontSize="large" color="error" />
-            </IconButton>
+                <Button value={team} style={{padding:3, margin:2}} onClick={handleLeave} variant="outlined" color="success"><PersonRemoveIcon fontSize="medium" color="error" />&nbsp;Leave Team</Button>              
+            
             </Tooltip>
             );
             }
@@ -126,7 +122,7 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
             <li id={team.id}>
                 {team.active === "True" ?
                     <Tooltip title={<span style={{ fontSize: "15px" }}>This team is active with {countOfPeopleOnTeam} {peoplePersonString}! Jump into Slack to see if you can help out.</span>}>
-                        <StyledBadge badgeContent={countOfPeopleOnTeam} color="primary"><DirectionsRunIcon style={{ color: "green" }} /></StyledBadge></Tooltip> :
+                        <StyledBadge showZero badgeContent={countOfPeopleOnTeam} sx={{ "& .MuiBadge-badge": { fontSize: 12, } }} color="primary"><DirectionsRunIcon style={{ color: "green" }} /></StyledBadge></Tooltip> :
                     <Tooltip title={<span style={{ fontSize: "15px" }}>This team is no longer working on this.  You can check out their Slack channel for posterity.</span>}>
                         <CancelIcon style={{ color: "red" }} /></Tooltip>}&nbsp;
                 {(() => {
@@ -134,7 +130,7 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
                         return "Team " + team.team_number + " ";
                     }
                 })()}
-                    <b>{team.name}</b> <font face="Courier">#{team.slack_channel}</font> {joinOrLeaveTeam}<br />
+                    <Typography style={{ fontSize: 18 }} variant="caption">{team.name} <font face="Courier">#{team.slack_channel}</font> {joinOrLeaveTeam}</Typography>
                 <div>
                         {isOnTeam && <b><CheckCircleIcon sx={{color: 'green'}}/>You are on this team</b>}
                         {userIcons}                        

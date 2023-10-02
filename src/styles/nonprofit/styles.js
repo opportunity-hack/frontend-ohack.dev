@@ -11,7 +11,7 @@ import { styled as styling } from "@mui/material";
 export const LayoutContainer = styling(Grid)({
   justifyContent: "center",
   alignContent: "center",
-  paddingTop: "9rem",
+  paddingTop: "9rem",    
   backgroundColor: "white",
 });
 
@@ -105,15 +105,16 @@ export const LinkStyled = styling(Link)({
 
 export const ProjectsContainer = styling(Grid)((props) => ({
   width: "75%",
-
+  
   [props.theme.breakpoints.down("md")]: {
-    width: "90%",
+    width: "99%"  
   },
 }));
 
 export const ProjectsGrid = styling(Grid)({
-  display: "grid",
+  display: "grid",  
   // gridTemplateColumns: "1fr 1fr",
+  
   columnGap: "3.5rem",
   rowGap: "3.5rem",
 });
