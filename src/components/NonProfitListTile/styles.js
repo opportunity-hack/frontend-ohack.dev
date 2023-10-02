@@ -17,7 +17,11 @@ export const TileLink = styled(Link)({
 export const NonProfitHackathonTileLink = styled(Card)({
   padding: "0rem",
   margin: "0.2rem",
-  
+  overflowY:'auto',
+  display: "flex",
+  flexDirection:"column",
+  alignItems: "center",
+  flexGrow: 1,
   width: 330,
   height: 400,
 
