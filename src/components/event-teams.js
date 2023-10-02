@@ -86,15 +86,14 @@ export default function EventTeams(
 
 
     function scrollToComponent() {        
-        const targetHash = '#create-team-'+eventStringId;
-        if (window.location.hash === targetHash ){
-            console.log("Scrolling to create team button")
+        const targetHash = '#create-team-'+eventStringId+'-'+problemStatementId;
+        if (window.location.hash === targetHash ){            
             myRef.current.scrollIntoView();
             myRef.current.focus();
         }
     }
 
-    useEffect( () => scrollToComponent(), [teams, user] )
+    useEffect( () => scrollToComponent(), [] )
     
     const isUserInAnyTeamListTemp = teams && teams.map(team =>{                
         const isTeamAssociatedToProblemStatement = team?.problem_statements !=null && team.problem_statements?.includes(problemStatementId);
@@ -197,7 +196,7 @@ export default function EventTeams(
     
     return(                        
             <Stack spacing={0}>
-            <div ref={myRef} id={`create-team-${eventStringId}`}>
+            <div ref={myRef} id={`create-team-${eventStringId}-${problemStatementId}`}>
             {
                 constraints?.max_teams_per_problem <= teamCounter && <AlertMaxTeamsPerProblem />
             }

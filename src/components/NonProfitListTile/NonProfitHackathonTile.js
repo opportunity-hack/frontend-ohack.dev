@@ -114,10 +114,13 @@ export default function NonProfitHackathonTile({ eventId, npo, teams }) {
       if (teamsWithThisProblemStatement.length > 0) {
         return (
           <div>
+            <Link href={`/nonprofit/${npo.id}#create-team-${eventId}-${ps}`}><Button style={{ marginLeft:2}} variant="contained" size="small">Join team</Button></Link>
+            
           <ProblemStatementChip problem_statement_id={ps} />     
           {teamsWithThisProblemStatement.map((t) => {
             return <TeamsChip team_id={t.id} />;
           })}
+          
           </div>
         );
       }
@@ -172,8 +175,7 @@ export default function NonProfitHackathonTile({ eventId, npo, teams }) {
             {npo.problem_statements?.length} Project{npo.problem_statements?.length > 1 ? 's' : ''}
           </CountDetailsText>
           <CountDetailsText variant='h5' style={{fontSize: '14px', margin: '1px 0px 8px 2px'}}>
-            <GroupsIcon/> {sumOfTeamCountForEachProblemStatement} Team{ (sumOfTeamCountForEachProblemStatement === 0 || sumOfTeamCountForEachProblemStatement > 1) ? 's' : ''}
-            <Link href={`/nonprofit/${npo.id}#create-team-${eventId}`}><Button style={{ marginLeft:2}} variant="contained" size="small">Join team</Button></Link>
+            <GroupsIcon/> {sumOfTeamCountForEachProblemStatement} Team{ (sumOfTeamCountForEachProblemStatement === 0 || sumOfTeamCountForEachProblemStatement > 1) ? 's' : ''}            
           </CountDetailsText>
           {problemStatementChips}  
         </CardContent>        
