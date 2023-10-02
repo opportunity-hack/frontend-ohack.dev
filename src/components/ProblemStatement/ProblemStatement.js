@@ -521,7 +521,7 @@ const volunteerWords = [
       });
       setHackathonEvents(hackathonEventsCopy);
 
-      setTeamCreationErrorDetails(data.message); // Error details      
+      setTeamCreationErrorDetails(data.message); // Success message
       setCreateTeamOpen(false); // Submit button pressed to create team
     }
     else {
@@ -867,19 +867,6 @@ const volunteerWords = [
 
   const myItems = [
     {
-      label: 'Description',
-      icon: <NotesIcon />,
-      description: <Typography fontSize={13}>
-        {getWordStr(problem_statement.description)}...
-      </Typography>,
-      content: 
-        <ProjectDescText>
-          <ReactMarkdown>
-          {problem_statement.description}
-          </ReactMarkdown>
-        </ProjectDescText>        
-    },
-    {
       label: 'Events',
       icon: <EventIcon />,      
       description: <Stack>
@@ -891,9 +878,8 @@ const volunteerWords = [
         </ShortDescText>
         <ShortDescText>{TeamText}</ShortDescText>
       </Stack>,
-      content: 
-      <ProjectDescText>
-        <Events
+      content:       
+        <Events          
           teams={teams}
           userDetails={userDetails}
           events={hackathonEvents}
@@ -903,9 +889,21 @@ const volunteerWords = [
           user={user}
           problemStatementId={problem_statement.id}
           isHelping={help_checked}
-        />
-      </ProjectDescText>      
+        />              
     },
+    {
+      label: 'Description',
+      icon: <NotesIcon />,
+      description: <Typography fontSize={13}>
+        {getWordStr(problem_statement.description)}...
+      </Typography>,
+      content: 
+        <ProjectDescText>
+          <ReactMarkdown>
+          {problem_statement.description}
+          </ReactMarkdown>
+        </ProjectDescText>        
+    },    
     {
       label: 'Code & Tasks',
       icon: <CodeIcon />,
@@ -984,8 +982,10 @@ const volunteerWords = [
           {item.label}  
         </AccordionTitle>
         {item.description}
-      </AccordionSummary>            
+      </AccordionSummary>
+      <Stack marginLeft={2}>
           {item.content}                    
+        </Stack>          
     </Accordion>
   ));
 
@@ -995,12 +995,12 @@ const volunteerWords = [
   ));
 
   const myTabPanel = myItems.map((item) => (
-    <TabPanel sx={{ width: "100%" }} value={item.label}>                    
+    <TabPanel  sx={{ padding:0, margin:0, width: "100%" }} value={item.label}>                    
       {item.content}         
     </TabPanel>
   ));
 
-  const [tabValue, setTabValue] = React.useState('Description');
+  const [tabValue, setTabValue] = React.useState('Events');
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -1071,7 +1071,8 @@ const volunteerWords = [
     
     <YearStyled>{problem_statement.first_thought_of}</YearStyled>      
     <ProjectProgress state={problem_statement.status} />      
-
+    
+    
     { 
       isLargeScreen ? 
       <AccordionContainer>
@@ -1085,7 +1086,6 @@ const volunteerWords = [
         {myTabPanel}  
       </TabContext>    
     }
-
 
     <Dialog
       open={open}
@@ -1222,7 +1222,7 @@ const volunteerWords = [
     >
       <DialogTitle id="alert-dialog-title">Create a new team</DialogTitle>
       <DialogContent>
-      <b>Suggestion:</b> {teamSuggestions}
+      <b>Team Name Suggestion:</b> {teamSuggestions}
 
         <DialogContentText component={"span"} id="alert-dialog-description">
           <Stack spacing={2}>
@@ -1271,6 +1271,7 @@ const volunteerWords = [
             { sendingTeamDetails && 
               <CircularProgress size={20} />
             }
+            <Typography variant="body1">Takes ~7 seconds</Typography>
         </Button>
         }
         </Stack>

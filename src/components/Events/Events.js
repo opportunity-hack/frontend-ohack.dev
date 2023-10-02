@@ -37,7 +37,7 @@ export default function Events({
       }
       
       return (
-        <Grid key={event.id} style={{ marginTop: '5px', padding: "10px" }}>
+        <Grid item key={event.id} style={{ marginTop: 10, padding: "2px" }}>
 
           { isEventStartDateOlderThanToday(event) && 
             <Link href={`/hack/${event.event_id}`}>
@@ -57,6 +57,8 @@ export default function Events({
           <Typography variant="body1" style={{ color: isEventStartDateOlderThanToday(event) ? "#C0C0C0" : "#222222" }}>
               {event.description}
            </Typography>
+
+           
 
           <Typography variant="h5" style={{ color: isEventStartDateOlderThanToday(event) ? "#C0C0C0" : "#222222", marginBottom: "1rem" }}>
             {
@@ -81,6 +83,32 @@ export default function Events({
             }
           </Typography>
 
+            { 
+            /* Can't tell if this is helpful or too noisy, so commenting this out for now
+            
+            // Print out links if they exist
+            event.links && event.links.length > 0 && (
+              <Grid container
+              style={{ backgroundColor: "#f5f5f5" }} spacing={0} padding={1} direction="row" md={12} xs={12} marginTop={0.5} justifyContent="flex-start"  alignItems="center" alignContent="center" >
+                {
+                  <Grid item style={{  }}>
+                    {event.links.map((link) => {
+                      return (
+                       
+                          <Link href={link.link} target="_blank" rel="noreferrer">
+                            <Button size="small" variant={link.variant} color={link.color}>
+                              {link.name}
+                            </Button>
+                          </Link>
+                       
+                      );
+                    })}
+                  </Grid>
+                }
+              </Grid>
+            )
+            */
+            }
           
 
            {
@@ -135,29 +163,7 @@ export default function Events({
             </Link>
             }
 
-            { 
-            // Print out links if they exist
-            event.links && event.links.length > 0 && (
-              <Grid container
-              style={{ backgroundColor: "#f5f5f5" }} spacing={0} padding={1} direction="row" md={12} xs={12} marginTop={0.5} justifyContent="flex-start"  alignItems="center" alignContent="center" >
-                {
-                  <Grid item style={{  }}>
-                    {event.links.map((link) => {
-                      return (
-                       
-                          <Link href={link.link} target="_blank" rel="noreferrer">
-                            <Button size="small" variant={link.variant} color={link.color}>
-                              {link.name}
-                            </Button>
-                          </Link>
-                       
-                      );
-                    })}
-                  </Grid>
-                }
-              </Grid>
-            )
-            }
+            
             
             <EventTeams
               // The teams filtered for a given event
@@ -167,6 +173,7 @@ export default function Events({
               userDetails={userDetails}
               problemStatementId={problemStatementId}
               eventId={event.id}
+              eventStringId={event.event_id}
               constraints={event.constraints}
               onTeamCreate={onTeamCreate}
               onTeamLeave={onTeamLeave}              

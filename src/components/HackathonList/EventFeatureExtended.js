@@ -251,7 +251,7 @@ function EventFeatureExtended(props) {
         <Grid container spacing={2} justifyContent="center" marginTop={1}>          
         { 
           nonprofitsShuffle?.map((nonprofit) => {
-            return <NonProfitHackathonTile npo={nonprofit} teams={teams}  />
+            return <NonProfitHackathonTile eventId={event_id} npo={nonprofit} teams={teams}  />
           })
         } 
         </Grid>        

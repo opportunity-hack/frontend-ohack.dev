@@ -23,7 +23,6 @@ import Avatar from '@mui/material/Avatar';
 import { red } from '@mui/material/colors';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
-import ReactMarkdown from 'react-markdown'
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 
 

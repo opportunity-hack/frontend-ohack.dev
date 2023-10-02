@@ -22,7 +22,7 @@ import { CardActionArea, CardActions, CardContent, CardMedia } from '@mui/materi
 import TeamsChip from '../Teams/TeamsChip';
 
 
-export default function NonProfitHackathonTile({ npo, teams }) {
+export default function NonProfitHackathonTile({ eventId, npo, teams }) {
   const { user } = useAuth0();
   var slackDetails = '';
     
@@ -90,8 +90,9 @@ export default function NonProfitHackathonTile({ npo, teams }) {
           onClick={(event) => openCodeSample(event, npo.slack_channel)}
           color='primary'
           startIcon={<TagIcon />}
-          variant='contained'
-          size='large'
+          variant='outlined'
+          size='small'
+          style={{ margin: 0}}
         >
           {npo.slack_channel}
         </Button>
@@ -159,7 +160,7 @@ export default function NonProfitHackathonTile({ npo, teams }) {
     <NonProfitHackathonTileLink>     
       <CardActionArea>
         <CardMedia referrerPolicy="no-referrer" component='img' height='140' image={npo.image} alt={npo.name} />
-        <CardContent>          
+        <CardContent style={{margin:0, paddingTop:2}}>          
           <Typography gutterBottom variant="h5" component="div">
             {npo.name}
           </Typography>          
@@ -172,6 +173,7 @@ export default function NonProfitHackathonTile({ npo, teams }) {
           </CountDetailsText>
           <CountDetailsText variant='h5' style={{fontSize: '14px', margin: '1px 0px 8px 2px'}}>
             <GroupsIcon/> {sumOfTeamCountForEachProblemStatement} Team{ (sumOfTeamCountForEachProblemStatement === 0 || sumOfTeamCountForEachProblemStatement > 1) ? 's' : ''}
+            <Link href={`/nonprofit/${npo.id}#create-team-${eventId}`}><Button style={{ marginLeft:2}} variant="contained" size="small">Join team</Button></Link>
           </CountDetailsText>
           {problemStatementChips}  
         </CardContent>        
@@ -182,7 +184,7 @@ export default function NonProfitHackathonTile({ npo, teams }) {
         direction='row'
         justifyContent='center'
         alignItems='center'
-        sx={{ marginTop: 2 }}
+        sx={{ marginTop: 0 }}
       >
         {slackDetails}
       </Grid>

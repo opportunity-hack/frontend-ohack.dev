@@ -17,6 +17,7 @@ import Team from './event-team';
 import { Tooltip, Typography } from '@mui/material';
 import Badge from '@mui/material/Badge';
 import Alert from '@mui/material/Alert';
+import React, { useRef, useEffect }  from 'react';
 
 /*
 
@@ -73,13 +74,28 @@ export default function EventTeams(
         userDetails,
         problemStatementId,
         eventId,
+        eventStringId,
         constraints,
         onTeamCreate,
         onTeamLeave,        
         onTeamJoin,
         isHelping }) {     
     var teamCounter = 0;       
-        
+    
+    const myRef = useRef();
+
+
+    function scrollToComponent() {        
+        const targetHash = '#create-team-'+eventStringId;
+        if (window.location.hash === targetHash ){
+            console.log("Scrolling to create team button")
+            myRef.current.scrollIntoView();
+            myRef.current.focus();
+        }
+    }
+
+    useEffect( () => scrollToComponent(), [teams, user] )
+    
     const isUserInAnyTeamListTemp = teams && teams.map(team =>{                
         const isTeamAssociatedToProblemStatement = team?.problem_statements !=null && team.problem_statements?.includes(problemStatementId);
         if (!isTeamAssociatedToProblemStatement )
@@ -181,16 +197,17 @@ export default function EventTeams(
     
     return(                        
             <Stack spacing={0}>
-            
+            <div ref={myRef} id={`create-team-${eventStringId}`}>
             {
                 constraints?.max_teams_per_problem <= teamCounter && <AlertMaxTeamsPerProblem />
             }
-
+                        
             {
-            showCreateTeamButton &&
-                <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team</Button>
+            showCreateTeamButton &&                
+                <Button style={{ marginTop: 5, marginBottom: 5, padding: 10, fontSize: 15}} color="success" onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team (and GitHub repo)</Button>
             }
-            
+            </div>
+                        
             {
             !isHelping && !isLoggedInUserAlreadyOnTeam  && !isEventStartDateOlderThanToday &&
                 <Tooltip 
@@ -207,7 +224,10 @@ export default function EventTeams(
                 </Badge>
                 </Tooltip>
             }
+            
+            
             {teamCounter > 0 && <div><GroupIcon style={{ color: "blue" }} /> {teamCounter} team{teamCounter > 1 || teamCounter === 0 ? "s" : ""}</div> }
+            
             
             <Stack spacing={0}>
             { user && teamsToShow}
