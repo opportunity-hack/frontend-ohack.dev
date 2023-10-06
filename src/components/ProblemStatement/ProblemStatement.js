@@ -1271,7 +1271,7 @@ const volunteerWords = [
             { sendingTeamDetails && 
               <CircularProgress size={20} />
             }
-            <Typography variant="body1">Takes ~7 seconds</Typography>
+            <Typography variant="body1">Takes ~14 seconds :(</Typography>
         </Button>
         }
         </Stack>

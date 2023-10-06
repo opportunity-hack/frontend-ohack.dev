@@ -20,6 +20,8 @@ import Image from 'next/image'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { Puff } from 'react-loading-icons';
 import { Typography } from "@mui/material";
+import GitHubIcon from '@mui/icons-material/GitHub';
+import Link from 'next/link';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
     '& .MuiBadge-badge': {
@@ -130,7 +132,19 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
                         return "Team " + team.team_number + " ";
                     }
                 })()}
-                    <Typography style={{ fontSize: 18 }} variant="caption">{team.name} <font face="Courier">#{team.slack_channel}</font> {joinOrLeaveTeam}</Typography>
+                
+                {(() => {
+                    if (team.github_links.length > 0) {
+                        return team.github_links.map((link) => {
+                            console.log(link);
+                            return <Link href={link.link} target="_blank"  ><GitHubIcon style={{ color: "black", marginLeft: 2, marginRight: 2 }} /></Link>
+                        });
+                                                
+                    }
+                })()}
+                
+
+                    <Typography style={{ fontSize: 18 }} variant="caption">{team.name} <font face="Courier"><Link href={`https://opportunity-hack.slack.com/app_redirect?channel=${team.slack_channel}`} target="_blank">#{team.slack_channel}</Link></font> {joinOrLeaveTeam}</Typography>
                 <div>
                         {isOnTeam && <b><CheckCircleIcon sx={{color: 'green'}}/>You are on this team</b>}
                         {userIcons}                        
