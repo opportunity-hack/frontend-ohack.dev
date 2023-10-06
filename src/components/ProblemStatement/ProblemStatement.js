@@ -636,7 +636,7 @@ const volunteerWords = [
 
   var TeamText = "";
   if (hackathonEvents != null) {
-    var teamCounter = teams.filter((team) => team.problem_statements.includes(problem_statement_id)).length;
+    var teamCounter = teams.filter((team) => team.problem_statements?.includes(problem_statement_id)).length;
     // Count the number of teams across all events for this problem statement
     
 
