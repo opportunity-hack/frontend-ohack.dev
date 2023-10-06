@@ -136,8 +136,10 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
                 {(() => {
                     if (team.github_links.length > 0) {
                         return team.github_links.map((link) => {
-                            console.log(link);
-                            return <Link href={link.link} target="_blank"  ><GitHubIcon style={{ color: "black", marginLeft: 2, marginRight: 2 }} /></Link>
+                            if (link.link != null && link.link !== "")
+                            {
+                                return <Link href={link.link} target="_blank"  ><GitHubIcon style={{ color: "black", marginLeft: 2, marginRight: 2 }} /></Link>
+                            }                            
                         });
                                                 
                     }
