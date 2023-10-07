@@ -23,7 +23,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
 
   var title = "Nonprofit Project List: Opportunity Hack Developer Portal";
   var metaDescription = 'A listing of ' + countOfNonProfits + ' nonprofits and projects we have worked on from hackathons, senior capstone projects, and internships.';
-  
+
   // Helpful Docs:
   // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
   // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags
@@ -91,7 +91,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
           property: 'twitter:data1',
           value: countOfNonProfits,
           key: 'twitterdata1',
-        }        
+        }
       ],
     },
   };

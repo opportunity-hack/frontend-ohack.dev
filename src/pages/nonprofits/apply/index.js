@@ -9,7 +9,7 @@ const NonProfitApply = dynamic(() =>  import('../../../components/NonProfitApply
 
 export default function Apply() {
     return (     
-        <NonProfitApply/>     
+        <NonProfitApply />     
     );
 }
 
