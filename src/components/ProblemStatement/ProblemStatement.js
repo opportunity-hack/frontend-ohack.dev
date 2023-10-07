@@ -495,6 +495,7 @@ const volunteerWords = [
       newTeamSlackChannel,
       newTeamProblemStatementId,
       newTeamEventId,
+      user.sub,
       newGithubUsername,      
       handleTeamCreationResponse
     );
@@ -1272,7 +1273,7 @@ const volunteerWords = [
             <TextField
               id="github-name"
               label=<span style={{ fontSize: "15px" }}>Github Username</span>
-              helperText=<span style={{ color:"black", fontSize: "14px" }}>Enter your Github username</span>
+              helperText=<span style={{ color:"black", fontSize: "14px" }}>Enter your Github username (we will make you an admin)</span>
               onChange={handleUpdateGithubUsername}
               margin="dense"
               FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
