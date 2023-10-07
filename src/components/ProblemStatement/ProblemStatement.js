@@ -477,7 +477,7 @@ const volunteerWords = [
       newTeamSlackChannel,
       newTeamProblemStatementId,
       newTeamEventId,
-      user.sub,
+      user.sub,      
       handleTeamCreationResponse
     );
     
