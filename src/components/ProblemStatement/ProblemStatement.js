@@ -268,6 +268,7 @@ const volunteerWords = [
   const [newTeamEventId, setNewTeamEventId] = useState("");
   const [newTeamProblemStatementId, setNewTeamProblemStatementId] =
     useState("");
+  const [newGithubUsername, setNewGithubUsername] = useState("");
 
   const { handle_help_toggle } = useProfileApi();
 
@@ -454,6 +455,23 @@ const volunteerWords = [
 
   };
 
+  const handleUpdateGithubUsername = (event) => {
+    const value = event.target.value;
+    setNewGithubUsername(value);
+
+    ReactPixel.track("Github Username Entered", {
+      github_username: value
+    });
+
+    ga.event({
+      action: "github_username_event",
+      params: {
+        github_username: value
+      }
+    });
+
+  };
+
   const handleConfirmTeamCreate = (event) => {
     setSendingTeamDetails(true);
 
@@ -478,6 +496,7 @@ const volunteerWords = [
       newTeamProblemStatementId,
       newTeamEventId,
       user.sub,
+      newGithubUsername,      
       handleTeamCreationResponse
     );
     
@@ -1250,6 +1269,17 @@ const volunteerWords = [
               FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
               variant="filled"
             />
+
+            <TextField
+              id="github-name"
+              label=<span style={{ fontSize: "15px" }}>Github Username</span>
+              helperText=<span style={{ color:"black", fontSize: "14px" }}>Enter your Github username (we will make you an admin)</span>
+              onChange={handleUpdateGithubUsername}
+              margin="dense"
+              FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
+              variant="filled"
+            />
+
           </Stack>
         </DialogContentText>
       </DialogContent>
@@ -1264,6 +1294,7 @@ const volunteerWords = [
         </Button>
         { ( (newTeamName!== "" && newTeamName.length > 2) &&  (newTeamSlackChannel!=="" && newTeamSlackChannel.length > 2)  ) && <Button        
           class="button button--compact button--third"
+          disabled={sendingTeamDetails}
           onClick={handleConfirmTeamCreate}                              
         >
           Submit

@@ -53,7 +53,7 @@ export default function useTeams(){
     };
 
 
-    const handle_new_team_submission = async (teamName, teamSlackChannel, problemStatementId, eventId, userId, onComplete) => {
+    const handle_new_team_submission = async (teamName, teamSlackChannel, problemStatementId, eventId, userId, githubUsername, onComplete) => {
         if (!user)
             return null;
 
@@ -69,7 +69,8 @@ export default function useTeams(){
                 userId: userId,
                 eventId: eventId,
                 problemStatementId: problemStatementId,
-                slackChannel: teamSlackChannel                      
+                slackChannel: teamSlackChannel,
+                githubUsername: githubUsername   
             }
         };
 
