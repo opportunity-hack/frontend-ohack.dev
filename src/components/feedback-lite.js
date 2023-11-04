@@ -40,7 +40,9 @@ export default function FeedbackLite ( {feedback_url, history} ){
             "code_quality": 0,
             "unit_test_writing": 0,
             "unit_test_coverage": 0,
-            "observability": 0
+            "observability": 0,
+            "judge": 0,
+            "mentor": 0
         },
         "how": {
             "standups_completed": 0,
@@ -203,7 +205,32 @@ export default function FeedbackLite ( {feedback_url, history} ){
                     max={MAX_HEARTS}
                     icon={<FavoriteIcon fontSize="inherit" />}
                     emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />  
+                /> 
+
+                <Typography component="legend"><b>Judge:</b> You judged other people's work.</Typography>
+                <StyledRating
+                    readOnly
+                    name="customized-color"
+                    defaultValue={history.what.judge}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}                    
+                    max={MAX_HEARTS}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+
+                <Typography component="legend"><b>Mentor:</b> You mentored other people.</Typography>
+                <StyledRating
+                    readOnly
+                    name="customized-color"
+                    defaultValue={history.what.mentor}
+                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
+                    precision={0.5}                    
+                    max={MAX_HEARTS}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+                 
             </p>
 
 
