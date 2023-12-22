@@ -234,6 +234,7 @@ const OHackFeatures = () => {
 						id="ohack-feature-carousel"
 						ref={swiperElRef}
 						slides-per-view="1"
+						aria-label="ohack-feature-carousel"
     >
 						{details.map((detail) => {
 							return (getTabPanel(detail));
