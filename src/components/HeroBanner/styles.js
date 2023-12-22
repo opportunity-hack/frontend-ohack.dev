@@ -109,12 +109,12 @@ export const ButtonContainers = styled(Grid)((props) => ({
 
 // Typography
 export const TitleStyled = styled(Typography)((props) => ({
-  fontSize: "3em",
+  fontSize: "1.9em",
   lineHeight: "1em",
   fontWeight: "400",
   color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-  letterSpacing: "-0.3rem",
+  letterSpacing: "-0.1rem",
 
   [props.theme.breakpoints.down("md")]: {
     fontSize: "8vw",
@@ -130,7 +130,7 @@ export const TextStyled = styled(Typography)({
 
 export const SpanText = styled("span") ((props) => ({
   color: `var(--blue)`,
-  fontSize: "3.5vw",
+  fontSize: "0.9em",
   "& .Typewriter": {
     marginTop: "4px",
   },
