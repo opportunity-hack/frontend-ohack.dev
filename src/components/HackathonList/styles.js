@@ -77,7 +77,7 @@ export const ThankYouContainer = styled(Grid)({
 
 // Text
 export const SectionTitle = styled(Typography)({
-  fontSize: "2rem",
+  fontSize: "2.5rem",
   fontWeight: "600",
 });
 
@@ -87,7 +87,7 @@ export const EventTitle = styled(Typography)({
 });
 
 export const EventLink = styled(Typography)({
-  fontSize: "2.5rem",  
+  fontSize: "2.4rem",  
   color: "#0000FF",
   textDecoration: "underline",
   textTransform: "none",

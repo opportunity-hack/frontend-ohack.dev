@@ -78,8 +78,11 @@ function HeroBanner() {
 
         <CaptionContainer right={'true'} container>
           <TextStyled>
-            Want to code for social good? Join us!
+            Want to code for social good?
+            <br/>
+            Join us!
           </TextStyled>
+          
           <ButtonContainers container>
           {/* Disable for new nonprofit form instead
             <ButtonStyled

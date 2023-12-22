@@ -40,7 +40,7 @@ function PreviousHackathonList() {
       direction='column'
       textAlign='center'
     >
-      <SectionTitle variant='h2'>Previous Events</SectionTitle>
+      <SectionTitle variant='h1'>Previous Events</SectionTitle>
 
       <EmptyGrid container justifyContent='center'>
         {hackathons?.length > 0
