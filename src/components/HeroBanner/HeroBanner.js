@@ -72,9 +72,9 @@ function HeroBanner() {
       {/* Left Container */}
       <BlankContainer xs={12} md={7} lg={7}>
         <TitleContainer container>
-          <TitleStyled variant='h1'>
+          <TitleStyled>
             The place where
-            <SpanText variant='h1'>
+            <SpanText>
               <Typewriter
                 options={{
                   strings: ['Nonprofits', 'Hackers', 'Mentors', 'Volunteers'],

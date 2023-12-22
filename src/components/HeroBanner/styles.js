@@ -78,11 +78,11 @@ export const BlankContainer = styled(Grid)({
 });
 
 export const TitleContainer = styled(Grid)((props) => ({
-  padding: "6rem 5% 0px 0px",
-  marginTop: "5rem",
+  padding: "1rem 5% 0px 0px",
+  marginTop: "3rem",
 
   [props.theme.breakpoints.down("md")]: {
-    padding: props.right === "true" ? "15% 5% 5% 5%" : "3rem 10px 0 10px",
+    padding: props.right === "true" ? "15% 5% 5% 5%" : "3rem 2px 0 10px",
     justifyContent: "center",
     textAlign: "center",
   },
@@ -109,9 +109,9 @@ export const ButtonContainers = styled(Grid)((props) => ({
 
 // Typography
 export const TitleStyled = styled(Typography)((props) => ({
-  fontSize: "4vw",
-  lineHeight: "5vw",
-  fontWeight: "700",
+  fontSize: "3em",
+  lineHeight: "1em",
+  fontWeight: "400",
   color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
   letterSpacing: "-0.3rem",
@@ -130,9 +130,9 @@ export const TextStyled = styled(Typography)({
 
 export const SpanText = styled("span") ((props) => ({
   color: `var(--blue)`,
-  fontSize: "6.5vw",
+  fontSize: "3.5vw",
   "& .Typewriter": {
-    marginTop: "10px",
+    marginTop: "4px",
   },
 
   [props.theme.breakpoints.down("md")]: {
