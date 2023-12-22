@@ -80,6 +80,8 @@ function HeroBanner() {
                   strings: ['Nonprofits', 'Hackers', 'Mentors', 'Volunteers'],
                   autoStart: true,
                   loop: true,
+                  delay: 1,
+                  pauseFor: 300,
                 }}
               />
             </SpanText>
