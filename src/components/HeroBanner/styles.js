@@ -123,7 +123,7 @@ export const TitleStyled = styled(Typography)((props) => ({
 }));
 
 export const TextStyled = styled(Typography)({
-  fontSize: "2.1rem",  
+  fontSize: "1.9rem",  
   marginTop: "0.8rem",
   marginBottom: "0.8rem",
   width: "100%",
