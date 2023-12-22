@@ -87,7 +87,7 @@ export const EventTitle = styled(Typography)({
 });
 
 export const EventLink = styled(Typography)({
-  fontSize: "2.4rem",  
+  fontSize: "2.0rem",  
   color: "#0000FF",
   textDecoration: "underline",
   textTransform: "none",
