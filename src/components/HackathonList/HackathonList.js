@@ -29,7 +29,7 @@ function HackathonList() {
       direction="column"
       textAlign="center"
     >
-      <SectionTitle variant="h2">Upcoming and Current Events</SectionTitle>
+      <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
 
       <EmptyGrid container justifyContent="center">
         {hackathons?.length > 0 ? (

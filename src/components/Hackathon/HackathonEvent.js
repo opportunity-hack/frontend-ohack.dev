@@ -23,7 +23,7 @@ function HackathonEvent( { event_id }) {
       direction="column"
       textAlign="center"
     >
-      <SectionTitle variant="h2">Upcoming and Current Events</SectionTitle>
+      <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
       <EmptyGrid container justifyContent="center">
         <EventFeature
                 title={event?.title}
