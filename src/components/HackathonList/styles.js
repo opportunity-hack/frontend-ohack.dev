@@ -106,8 +106,8 @@ export const EventText = styled(Typography)({
 });
 
 export const EventGreyText = styled(Typography)({
-  color: "grey",
-  fontSize: "1.2rem",
+  color: "#666666",
+  fontSize: "1.5rem",
   textTransform: "none",
 });
 
