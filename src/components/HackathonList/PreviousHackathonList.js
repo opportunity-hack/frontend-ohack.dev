@@ -10,28 +10,10 @@ import {
 } from './styles';
 import EventFeature from './EventFeature';
 import { SectionTitle } from './styles';
-// import { Player } from '@lottiefiles/react-lottie-player';
-//import { hackathons } from './dummyData';
+
 
 function PreviousHackathonList() {
-  const { hackathons } = useHackathonEvents("previous");
-
-  // TODO: Use media queries, not widths in js
-  /*
-  const [width, setWidth] = useState();
-  const functionName = () => {
-    setInterval(() => {
-      setWidth(window.screen.width);
-    }, 500);
-  };
-
-  window.addEventListener('resize', functionName);
-  */
-  /*
-  useEffect(() => {
-    setWidth(window.screen.width);
-  }, []);
-  */
+  const { hackathons } = useHackathonEvents("previous");  
 
   return (
     <OuterGrid

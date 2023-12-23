@@ -1,13 +1,42 @@
-module.exports = {
-    images: {
-        domains: [
-            'media0.giphy.com',
-            'media4.giphy.com',
-            'media*.giphy.com',
-            'cdn.ohack.dev',
-            'i.imgur.com',
-            'avatars.githubusercontent.com',
-            'avatars.slack-edge.com',
-            'secure.gravatar.com'],
-    },
+module.exports = { 
+    images : { 
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.giphy.com',
+        port: '',
+        pathname: '/media/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.imgur.com',
+        port: '',
+        pathname: '/**',
+      },
+        {
+            protocol: 'https',
+            hostname: 'avatars.githubusercontent.com',
+            port: '',
+            pathname: '/**',
+        },
+        {
+            protocol: 'https',
+            hostname: 'avatars.slack-edge.com',
+            port: '',
+            pathname: '/**',
+        },
+        {
+            protocol: 'https',
+            hostname: 'secure.gravatar.com',
+            port: '',
+            pathname: '/**',
+        },
+        {
+            protocol: 'https',
+            hostname: 'cdn.ohack.dev',
+            port: '',
+            pathname: '/**',
+        },
+
+    ]}
 }

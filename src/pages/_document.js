@@ -11,6 +11,7 @@ export default function Document() {
                         width="1"
                         style={{ display: 'none' }}
                         src={`https://www.facebook.com/tr?id=340533780623242&ev=PageView&noscript=1`}
+                        alt="tracker"
                     />
                 </noscript>
 
@@ -56,6 +57,14 @@ export default function Document() {
                     href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Inter&family=Space+Grotesk&display=optional"
                 />
            
+                <link
+                    rel="preload"
+                    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+                    as="style"
+                />
+                    
+                    
+
                 
                 
             </Head>
