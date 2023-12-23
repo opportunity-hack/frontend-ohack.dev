@@ -3,8 +3,8 @@ import useHackathonEvents from "../../hooks/use-hackathon-events";
 import { EmptyGrid, OuterGrid, TypographyStyled } from "./styles";
 import EventFeature from "./EventFeature";
 import { SectionTitle } from "./styles";
-import { Player } from "@lottiefiles/react-lottie-player";
-//import { hackathons } from "./dummyData";
+import Image from "next/image";
+
 
 function HackathonList() {
   const { hackathons } = useHackathonEvents("current");
@@ -32,7 +32,7 @@ function HackathonList() {
       <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
 
       <EmptyGrid container justifyContent="center">
-        {hackathons?.length > 0 ? (
+        { hackathons && hackathons.length > 0 && (
           hackathons.map((event) => {
             return (
               <EventFeature
@@ -54,24 +54,17 @@ function HackathonList() {
               />
             );
           })
-        ) : (
-          <Player
-            src="https://assets8.lottiefiles.com/private_files/lf30_e3pteeho.json"
-            className="player"
-            loop
-            autoplay
-            speed={1}
-            style={{
-              width: "100%",
-              height: width >= 600 ? "40rem" : "100%",
-            }}
-          />
         )}
-        {hackathons?.length > 0 ? null : (
-          <TypographyStyled variant="h3">
-            No events found!
-          </TypographyStyled>
-        )}
+
+        { 
+          hackathons && hackathons.length === 0 && (
+            <TypographyStyled variant="h4">
+              No events found!
+            </TypographyStyled>
+          )
+        }
+      
+
       </EmptyGrid>
     </OuterGrid>
   );

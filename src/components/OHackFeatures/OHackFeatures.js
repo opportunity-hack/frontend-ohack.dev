@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { register } from 'swiper/element/bundle';
 import { BlankContainer } from "../HeroBanner/styles";
 import {
 	GridStyled,
@@ -21,7 +20,6 @@ import BuildOutlinedIcon from "@mui/icons-material/BuildOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import LibraryAddCheckOutlinedIcon from "@mui/icons-material/LibraryAddCheckOutlined";
 
-register(); // since this declares vars, do this after all imports
 
 function TabPanel(props) {
 	const { children, value, index, ...other } = props;
@@ -81,7 +79,6 @@ const OHackFeatures = () => {
 		},
 	];
 
-	const swiperElRef = useRef(null);
 
 	const [value, setValue] = React.useState(0);
 	
@@ -99,42 +96,7 @@ const OHackFeatures = () => {
 		}, 500);
 	};
 
-	window.addEventListener("resize", functionName);
 
-	// TODO: Replace width comparisons with media queries
-	useEffect(() => {
-		setWidth(window.screen.width);
-	}, []);
-
-	useEffect(() => {
-		// listen for Swiper events using addEventListener
-		swiperElRef.current.addEventListener('progress', (e) => {
-		  const progress = e.detail[1];
-		  
-		});
-	
-		swiperElRef.current.addEventListener('slidechange', (e) => {
-		  console.log('slide changed');
-		  const swiper = document.querySelector(CAROUSEL_SELECTOR)?.swiper;
-		  const index = swiper?.activeSlide;
-		  if (typeof index === 'number') {
-			setValue(index);
-		  }
-		});
-
-		return () => {
-			// Unsubscribe?
-		}
-	  }, []);
-
-	  useEffect(() => {
-		const swiper = document.querySelector(CAROUSEL_SELECTOR)?.swiper;
-
-		if (swiper?.activeSlide !== value) {
-			swiper?.slideTo(value, 300, false);
-		}
-
-	  }, [value]);
 
 	  const getIcon = (shortName) => {
 		switch(shortName.toLowerCase()) {
@@ -164,30 +126,28 @@ const OHackFeatures = () => {
 
 	const getTabPanel = (feature) => {
 		return (
-			<swiper-slide>
-				<TabPanel
-					value={value}
-					key={feature.index}
-					index={feature.index}
+			<TabPanel
+				value={value}
+				key={feature.index}
+				index={feature.index}
+			>
+				<GridStyled
+					container
+					justifyContent="center"
 				>
-					<GridStyled
+					<InfoContainer
+						item
+						// lg={12}
 						container
 						justifyContent="center"
+						alignItems="center"
 					>
-						<InfoContainer
-							item
-							// lg={12}
-							container
-							justifyContent="center"
-							alignItems="center"
-						>
-							<NormalTextStyled>
-								{feature.description}
-							</NormalTextStyled>
-						</InfoContainer>
-					</GridStyled>
-				</TabPanel>
-			</swiper-slide>
+						<NormalTextStyled>
+							{feature.description}
+						</NormalTextStyled>
+					</InfoContainer>
+				</GridStyled>
+			</TabPanel>
 		);
 	};
 	
@@ -230,16 +190,11 @@ const OHackFeatures = () => {
 					justifyContent="center"
 					alignItems="center"
 				>
-					<swiper-container
-						id="ohack-feature-carousel"
-						ref={swiperElRef}
-						slides-per-view="1"
-						aria-label="ohack-feature-carousel"
-    >
-						{details.map((detail) => {
-							return (getTabPanel(detail));
-						})}
-					</swiper-container>
+					
+					{details.map((detail) => {
+						return (getTabPanel(detail));
+					})}
+				
 				</TabContainer>
 			</TabsContainer>
 		</BlankContainer>
