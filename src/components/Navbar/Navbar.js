@@ -1,15 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
-import GitHubIcon from "@mui/icons-material/GitHub";
-
-// TODO: import useProfileApi from "../../hooks/use-profile-api";
-
-// TODO: import NavBarAdmin from "../nav-bar-admin";
 import Image from "next/image";
-import LogoutIcon from "@mui/icons-material/Logout";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import * as ga from "../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
 
@@ -194,12 +186,26 @@ export default function NavBar() {
               sx={{
                 display: { xs: 'block', md: 'none' },
               }}
-            >
-              {pages.map((page) => (
-                <MenuItem key={page[0]} onClick={handleCloseNavMenu}>
-                  <Link href={page[1]}><Typography textAlign="center">{page[0]}</Typography></Link>
+            >              
+
+              {about_settings.map((setting) => (
+                <MenuItem key={setting[0]} onClick={handleCloseNavMenu}>
+                <Link href={setting[1]}>                  
+                    <Typography textAlign="center">{setting[0]}</Typography>                  
+                </Link>
                 </MenuItem>
+              ))
+              }
+
+              {pages.map((page) => (
+                <Link href={page[1]}>
+                  <MenuItem key={page[0]} onClick={handleCloseNavMenu}>
+                    <Typography textAlign="center">{page[0]}</Typography>
+                  </MenuItem>
+                </Link>
               ))}
+            
+
             </Menu>
           </Box>
           
@@ -219,12 +225,13 @@ export default function NavBar() {
           
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page) => (
-              <Button                
+              <NavbarLink href={page[1]}><Button                
                 onClick={handleCloseNavMenu}
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >                
-                <NavbarLink href={page[1]}>{page[0]}</NavbarLink>
+                {page[0]}
               </Button>
+              </NavbarLink>
             ))}
 
             <Tooltip title="About Us">
@@ -252,9 +259,11 @@ export default function NavBar() {
               onClose={handleCloseAboutMenu}
             >
               {about_settings.map((setting) => (
-                <MenuItem key={setting[0]} onClick={handleCloseAboutMenu}>
-                  <Link href={setting[1]}><Typography textAlign="center">{setting[0]}</Typography></Link>
-                </MenuItem>
+                <Link href={setting[1]}>
+                  <MenuItem key={setting[0]} onClick={handleCloseAboutMenu}>
+                    <Typography textAlign="center">{setting[0]}</Typography>
+                  </MenuItem>
+                </Link>
               ))
               }
             </Menu> 
@@ -284,9 +293,11 @@ export default function NavBar() {
               onClose={handleCloseUserMenu}
             >
               {auth_settings.map((setting) => (
-                <MenuItem key={setting[0]} onClick={handleCloseUserMenu}>
-                  <Link href={setting[1]}><Typography textAlign="center">{setting[0]}</Typography></Link>
-                </MenuItem>
+                <Link href={setting[1]}>
+                  <MenuItem key={setting[0]} onClick={handleCloseUserMenu}>
+                    <Typography textAlign="center">{setting[0]}</Typography>
+                  </MenuItem>
+                </Link>
               ))
               }
               <MenuItem onClick={() => logout({
@@ -329,194 +340,6 @@ export default function NavBar() {
 
         </Toolbar>
       </Container>
-    </AppBar>
-    /*
-    <NavbarContainer container>
-      
-     
-
-      <Drawer anchor="left" open={isDrawerOpen} onClose={toggleDrawer(false)}>
-        <DrawerContainer
-          onClick={toggleDrawer(false)}
-          onKeyDown={toggleDrawer(false)}
-        >
-          <List>
-            <Grid
-              container
-              style={{ justifyContent: "center", margin: "2rem 0 3rem 0" }}
-              key="logo"
-            >
-              
-            </Grid>
-            {[
-              ["⭐️ Hackathon", "/hack/2023_fall", ""],
-              ["Projects", "/nonprofits", ""],
-              ["Submit a project", "/nonprofits/apply", ""],
-              ["About Us", "/about", ""],
-              ["Mentorship", "/about/mentors", ""],
-              [
-                "Our History",
-                "https://www.ohack.org/about/history",
-                <OpenInNewIcon />,
-              ],
-              [
-                <GitHubIcon />,
-                "https://github.com/opportunity-hack/",
-                <OpenInNewIcon />,
-              ],
-            ].map((link) => (
-              <>
-                <Divider />
-                <ListItem key={link[0]} disablePadding>
-                  <ListItemButton href={link[1]}>
-                    <ListItemText primary={link[0]} /> {link[2]}
-                  </ListItemButton>
-                </ListItem>
-              </>
-            ))}
-            <Divider />
-          </List>
-          <LogoText>Opportunity Hack Inc. EIN: 84-5113049</LogoText>
-        </DrawerContainer>
-      </Drawer>
-      <Navbar container>
-        {width <= 900 ? (
-          <MenuIcon
-            onClick={toggleDrawer(true)}
-            fontSize="large"
-            style={{ transform: "scale(1.5)" }}
-          />
-        ) : (
-          <Link href="/" passHref>
-            <Image
-              className="nav-bar__logo"
-              src="https://i.imgur.com/Ih0mbYx.png"
-              alt="Opportunity Hack logo"
-              width={100}
-              height={48}
-              style={{ cursor: "pointer" }}
-            />
-          </Link>
-        )}
-        <NavbarList container>
-          {width >= 900 && (
-            <>
-              <NavbarListItem>
-  <NavbarLink href="/nonprofits/apply" exact>
-    Submit Project
-  </NavbarLink>
-</NavbarListItem>
-<NavbarListItem>
-  <NavbarLink href="/nonprofits" exact>
-    Projects
-  </NavbarLink>
-</NavbarListItem>
-<NavbarListItem>
-  <NavbarLink href="/about" exact>
-    About Us
-  </NavbarLink>
-</NavbarListItem>
-<NavbarListItem>
-  <NavbarLink
-    target={"_blank"}
-    href="https://github.com/opportunity-hack/"
-    exact
-  >
-    <GitHubIcon fontSize="large" />
-  </NavbarLink>
-</NavbarListItem>
-            </>
-          )}
-          <NavbarListItem>
-            {isAuthenticated ? (
-              <ProfileContainer ref={profileRef}>
-                <Profile container onClick={setIsOpen.bind(null, !isOpen)}>
-                  <ProfileAvatar
-                    src={user.picture}
-                    alt="Profile"
-                    width={30}
-                    height={30}
-                  />
-                  <svg
-                    fill="none"
-                    viewBox="0 0 10 10"
-                    stroke="currentColor"
-                    height="1em"
-                    width="1em"
-                  >
-                    {!isOpen ? (
-                      <ArrowPath d="M2,3.5 L5,6.5 L8,3.5" />
-                    ) : (
-                      <ArrowPath d="M2,6.5 L5,3.5 L8,6.5" />
-                    )}
-                  </svg>
-                </Profile>
-              </ProfileContainer>
-            ) : (
-              <LoginButton
-                variant="contained"
-                disableElevation
-                  onClick={() => loginWithRedirect({
-                    appState: {
-                      returnTo: window.location.pathname,
-                      redirectUri: window.location.pathname,
-                    },
-                  })}
-                className="login-button"
-              >
-                Log In
-                <svg
-                  fill="none"
-                  viewBox="0 0 10 10"
-                  stroke="currentColor"
-                  height="1em"
-                  width="1em"
-                >
-                  <path className="arrow" d="M3,2 L6,5 L3,8" />
-                  <path className="line" d="M3,5 L8,5" />
-                </svg>
-              </LoginButton>
-            )}
-          </NavbarListItem>
-
-          {isOpen && (
-            <DropdownContainer ref={dropdownRef}>
-              <DropdownList>
-                <DetailListItem>
-                  Logged in as:
-                  <DetailTypography variant="body">
-                    {user.nickname}
-                  </DetailTypography>
-                </DetailListItem>
-                <DropdownDivider />
-                <Link href="/profile" exact>
-                  <DropdownListItem onClick={setIsOpen.bind(null, false)}>
-                    <AccountCircleIcon
-                      style={{ marginRight: "1rem", marginTop: "-2px" }}
-                    />
-                    Profile
-                  </DropdownListItem>
-                </Link>
-                <DropdownDivider />
-                <DropdownListItem
-                  onClick={() =>
-                    logout({
-                      returnTo: window.location.origin,
-                    })
-                  }
-                >
-                  <LogoutIcon
-                    style={{ marginRight: "1rem", marginTop: "-2px" }}
-                  />
-                  Log Out
-                </DropdownListItem>
-              </DropdownList>
-            </DropdownContainer>
-          )}
-        </NavbarList>
-      </Navbar>
-    </NavbarContainer>
-    */
+    </AppBar>    
   );
-  
 }

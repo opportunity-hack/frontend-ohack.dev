@@ -59,14 +59,14 @@ function EventFeature(props) {
       {
         Moment(new Date()).format("YYYY") === Moment(start_date).format('YYYY') && 
         <EventText variant="h3">
-          {Moment(start_date).format('MMM Do')} - {Moment(end_date).format('MMM Do')}
+          {Moment(start_date).format('MMM Do')} to {Moment(end_date).format('MMM Do YYYY')}
         </EventText>      
       }
 
       {
         Moment(new Date()).format("YYYY") !== Moment(start_date).format('YYYY') &&
         <EventText variant="h3">
-          {Moment(start_date).format('MMM Do YYYY')} - {Moment(end_date).format('MMM Do YYYY')}
+          {Moment(start_date).format('MMM Do YYYY')} to {Moment(end_date).format('MMM Do YYYY')}
         </EventText>
       }
       

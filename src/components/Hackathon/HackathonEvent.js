@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-import { EmptyGrid, OuterGrid, TypographyStyled } from "./styles";
+import { EmptyGrid, OuterGrid } from "./styles";
 import { SectionTitle } from "./styles";
 import EventFeature from "../HackathonList/EventFeature";
 

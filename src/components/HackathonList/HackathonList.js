@@ -5,8 +5,14 @@ import EventFeature from "./EventFeature";
 import { SectionTitle } from "./styles";
 import Image from "next/image";
 
+import dynamic from 'next/dynamic'
+const News = dynamic(() => import('../../components/News/News'), {
+  ssr: false,
+});
+
 
 function HackathonList() {
+
   const { hackathons } = useHackathonEvents("current");
 
   const [width, setWidth] = useState();
@@ -30,8 +36,9 @@ function HackathonList() {
       textAlign="center"
     >
       <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
-
+      
       <EmptyGrid container justifyContent="center">
+        <News />        
         { hackathons && hackathons.length > 0 && (
           hackathons.map((event) => {
             return (
@@ -55,7 +62,7 @@ function HackathonList() {
             );
           })
         )}
-
+      
         { 
           hackathons && hackathons.length === 0 && (
             <TypographyStyled variant="h4">
