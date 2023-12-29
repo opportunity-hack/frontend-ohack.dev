@@ -5,15 +5,16 @@ import { Typography, Grid, Card, CardContent } from '@mui/material';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import { FaLinkedin } from 'react-icons/fa';
 
 const style = { fontSize: '15px' };
 
 // Data
 const cofounders = [
-  'Prashanthi Ravanavarapu, Head of Product, Customer Experiences @ PayPal',
-  'Jot Powers, Senior Director, Site Reliability Engineering @ PayPal',
-  'Bryant Chan, Engineering Director @ Google',
-  'Smitha Satish, Principal MTS, Architect @ PayPal'
+  [ 'Prashanthi Ravanavarapu', 'https://www.linkedin.com/in/pravanavarapu/' ],
+  [ 'Jot Powers', 'https://www.linkedin.com/in/jotpowers/'],
+  [ 'Bryant Chan', 'https://www.linkedin.com/in/bryantchan/'],
+  [ 'Smitha Satish', 'https://www.linkedin.com/in/smitha-satish-7978091/']
 ]
 
 const board_members = [
@@ -39,7 +40,7 @@ const AboutUs = () => (
       <meta property="og:title" content="Opportunity Hack - About Us" />
       <meta
         name="description"
-        content="Learn about Opportunity Hack, our founders, board members, and community pledge. Join us as we harness the power of code for social good."
+        content={`Learn about Opportunity Hack, our founders, board members (${board_members.join(', ')}), and community pledge. Join us as we harness the power of code for social good.`}
       />
       <meta
         name="keywords"
@@ -47,19 +48,35 @@ const AboutUs = () => (
       />
       <meta
         name="og:description"
-        content="Learn about Opportunity Hack, our founders, board members, and community pledge. Join us as we harness the power of code for social good."
+        content={`Learn about Opportunity Hack, our founders, board members (${board_members.join(', ')}), and community pledge. Join us as we harness the power of code for social good.`}
       />
       <meta property="og:image" content="https://i.imgur.com/pzcF1aj.jpg" />
       <meta property="og:url" content="https://ohack.dev/about" />
+      {board_members.map((member, i) => (
+        <meta key={i} name="board_member" content={member} />
+      ))}
     </Head>
 
     <TitleContainer container>
-      <Typography variant="h3" component="h1">
+      <Typography variant="h2">
         About Us
       </Typography>
 
       <Typography variant="body1" style={style} paragraph>
-        Founded in 2013 as a part of eBay/PayPal Inc., Opportunity Hack was created to meet the technological needs of nonprofits. Our vision has since grown to harness the power of code for social good, fostering an inclusive society, and championing impactful, sustainable change.
+        Founded in 2013 as a part of eBay/PayPal Inc., Opportunity Hack was created to meet the technological needs of nonprofits. Our vision has since grown to harness the power of code for social good, fostering an inclusive society, and championing impactful, sustainable change.        
+      </Typography>
+
+      <Typography variant="h2">
+        Why Opportunity Hack?
+      </Typography>
+      <Typography variant="body1" style={style} paragraph>        
+        🧑🏿‍💻 As computer science students or software engineers, we have a moral and ethical obligation to use our skills to make a positive impact on the world. One way to do this is by contributing to Opportunity Hack, a hackathon focused on creating technology solutions for social good.
+        <br /><br />
+        💡 By participating in Opportunity Hack, you have the opportunity to use your technical skills to make a real difference in the lives of others. In addition to the personal satisfaction of using your skills for good, participating in Opportunity Hack can also help you build your resume and portfolio. Demonstrating your ability to create technology solutions that have a positive impact on society can be a powerful way to stand out to potential employers and make a name for yourself in the industry.
+        <br /><br />
+        ❤️ But perhaps most importantly, contributing to Opportunity Hack can evoke a sense of purpose and fulfillment that is often missing from traditional software engineering jobs. By using your skills to help others, you can find meaning and satisfaction in your work that goes beyond just writing code.
+        <br /><br />
+        💻 So if you're looking for a way to make a difference with your skills, consider participating in Opportunity Hack. Not only will you be able to contribute to social good, but you'll also be able to build your skills, your resume, and your sense of purpose and fulfillment.                
       </Typography>
 
       <Box mt={2}>
@@ -80,11 +97,11 @@ const AboutUs = () => (
             <Card>
               <CardContent>
                 <Typography variant="h5" component="h2">
-                  {member.split(',')[0]}
-                </Typography>
-                <Typography variant="h6" color="textSecondary" component="p">
-                  {member.split(',')[1]}
-                </Typography>
+                  {member[0]}
+                  <a href={`${member[1]}`} target="_blank" rel="noopener noreferrer">
+                    <FaLinkedin size={32} style={{ marginLeft: '10px', marginTop: '15px' }} />
+                  </a>
+                </Typography>                              
               </CardContent>
             </Card>
           </Grid>
