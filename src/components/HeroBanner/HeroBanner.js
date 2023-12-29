@@ -93,12 +93,7 @@ function HeroBanner() {
             </ButtonStyled>
             */
           }
-            <ButtonStyled
-              onClick={gaButton('October Hackathon', 'button_october_hack')}
-              href='/hack/2023_fall'
-            >
-              ⭐️ October Hackathon
-            </ButtonStyled>
+            
             <ButtonGoldStyle onClick={openCodeSample}>
               Join us on Slack to get involved
             </ButtonGoldStyle>

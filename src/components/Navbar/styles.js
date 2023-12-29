@@ -59,10 +59,10 @@ export const NavbarListItem = styled("li")((props) => ({
 
 export const NavbarButton = styled(Button)({
   textDecoration: "none",
-  fontSize: "1.6rem",
-  fontWeight: 700,
+  fontSize: "1.0rem",
+  fontWeight: 400,
   letterSpacing: "0em",
-  color: "#333333",
+  color: "#F0F)F)",
   transitionDuration: "0.3s",
   
   "&:hover": {
@@ -71,10 +71,10 @@ export const NavbarButton = styled(Button)({
 });
 export const NavbarLink = styled(Link)({
   textDecoration: "none",
-  fontSize: "1.6rem",
-  fontWeight: 700,
+  fontSize: "1.0rem",
+  fontWeight: 400,
   letterSpacing: "0em",
-  color: "#333333",
+  color: "#F0F0F0",
   transitionDuration: "0.3s",
   
   "&:hover": {

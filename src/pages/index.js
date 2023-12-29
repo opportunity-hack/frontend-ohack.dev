@@ -4,6 +4,7 @@ import Head from "next/head";
 const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), {
   ssr: false,
 });
+
 const OHackFeatures = dynamic(() => import('../components/OHackFeatures/OHackFeatures'), { 
   ssr: false
 });
@@ -23,6 +24,7 @@ export default function Home() {
       </Head>
 
       <HeroBanner />
+            
       <HackathonList />
       <PreviousHackathonList />  
       <OHackFeatures />

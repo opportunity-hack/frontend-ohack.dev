@@ -1,9 +1,8 @@
 import React from "react";
-// import FooterHyperlink from "../footer-hyperlink";
 import Link from "next/link";
-// import Image from "next/image";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { FaThreads } from "react-icons/fa6";
 
 import {
   FooterContainer,
@@ -22,7 +21,7 @@ import {
   Facebook,
   LinkedIn,
   Twitter,
-  GitHub,
+  GitHub
 } from "@mui/icons-material";
 
 export default function Footer() {
@@ -47,19 +46,7 @@ export default function Footer() {
                 Our mission is to bring together skilled volunteers and passionate nonprofit organizations to create simple yet effective technological solutions. 
                 Through their dedicated work, our volunteers gain invaluable experience while making a tangible difference in the lives of those in need. 
                 Together, we build more than just software – we forge powerful bonds that transcend the project and enrich our communities for years to come.
-                Join us in our mission to create a brighter future for all.                
-                <br /><br />
-                🧑🏿‍💻 As computer science students or software engineers, we have a moral and ethical obligation to use our skills to make a positive impact on the world. One way to do this is by contributing to Opportunity Hack, a hackathon focused on creating technology solutions for social good.
-                <br /><br />
-                💡 By participating in Opportunity Hack, you have the opportunity to use your technical skills to make a real difference in the lives of others. 
-                In addition to the personal satisfaction of using your skills for good, participating in Opportunity Hack can also help you build your resume and portfolio. 
-                Demonstrating your ability to create technology solutions that have a positive impact on society can be a powerful way to stand out to potential employers and make a name for yourself in the industry.
-                <br /><br />
-                ❤️ But perhaps most importantly, contributing to Opportunity Hack can evoke a sense of purpose and fulfillment that is often missing from traditional software engineering jobs. 
-                By using your skills to help others, you can find meaning and satisfaction in your work that goes beyond just writing code.
-                <br /><br />
-                💻 So if you're looking for a way to make a difference with your skills, consider participating in Opportunity Hack. 
-                Not only will you be able to contribute to social good, but you'll also be able to build your skills, your resume, and your sense of purpose and fulfillment.
+                Join us in our mission to create a brighter future for all.                                
               </MutedText>
 
               <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
@@ -71,6 +58,9 @@ export default function Footer() {
               </IconLink>
               <IconLink href="https://www.linkedin.com/company/opportunity-hack/">
                 <LinkedIn fontSize="large" style={{ marginRight: "2rem" }} />
+              </IconLink>              
+              <IconLink href="https://www.threads.net/@opportunityhack">                
+                <FaThreads fontSize="large" style={{ marginRight: "2rem", marginBottom: "0.25rem" }}/>
               </IconLink>
               <IconLink href="https://twitter.com/opportunityhack">
                 <Twitter fontSize="large" style={{ marginRight: "2rem" }} />
