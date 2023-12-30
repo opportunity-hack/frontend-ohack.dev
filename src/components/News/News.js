@@ -104,7 +104,7 @@ function News() {
   };
 
   return (
-    <EventCards xs={8} md={8} lg={8} container direction='row' style={{ margin: '1px', padding: '1px' }}>      
+    <EventCards container direction='row' style={{ margin: '1px', padding: '1px' }}>      
       {/* Render news items */}
       {news.map((newsItem) => (
         <BlankContainer xs={12} md={12} lg={12} key={newsItem.id}>
