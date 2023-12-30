@@ -51,6 +51,28 @@ export default function Project() {
     "@type": "Course",
     "name": problem_statement.title,
     "description": metaDescription,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "courseCode": problem_statement.id,
+    "hasCourseInstance": {
+      "@type": "CourseInstance",
+      "courseMode": "Online",
+      "courseWorkload": "PT22H",
+      "instructor": {
+        "@type": "VirtualLocation",
+        "name": "Opportunity Hack"
+      }
+    },
+    "instuctor": [
+      {
+        "@type": "Person",
+        "name": "Opportunity Hack",
+        "sameAs": "https://www.ohack.dev/about"
+      }
+    ],    
     "provider": {
       "@type": "Organization",
       "name": "Opportunity Hack",
