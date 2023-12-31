@@ -53,6 +53,7 @@ export default function Project() {
     "description": metaDescription,
     "offers": {
       "@type": "Offer",
+      "category": "Nonprofit problem statement you solve to learn how to code",
       "price": "0",
       "priceCurrency": "USD"
     },
