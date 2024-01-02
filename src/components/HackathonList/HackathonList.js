@@ -14,19 +14,16 @@ const News = dynamic(() => import('../../components/News/News'), {
 function HackathonList() {
 
   const { hackathons } = useHackathonEvents("current");
+  const [newsData, setNewsData] = useState([]);
 
-  const [width, setWidth] = useState();
-  const functionName = () => {
-    setInterval(() => {
-      setWidth(window.screen.width);
-    }, 500);
-  };
+    useEffect(() => {
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=2`)
+            .then(response => response.json())
+            .then(data => setNewsData(data.text || null))
+            .catch(error => console.error(error));
+    }, []);
 
-  window.addEventListener("resize", functionName);
 
-  useEffect(() => {
-    setWidth(window.screen.width);
-  }, []);
 
   return (
     <OuterGrid
@@ -38,7 +35,8 @@ function HackathonList() {
       <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
       
       <EmptyGrid container justifyContent="center">
-        <News />        
+        <News newsData={newsData} frontPage={true}/>        
+
         { hackathons && hackathons.length > 0 && (
           hackathons.map((event) => {
             return (

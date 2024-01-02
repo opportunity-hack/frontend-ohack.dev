@@ -6,6 +6,36 @@ import {
 } from "@mui/material";
 import { styled, keyframes, css } from "@mui/material";
 
+// Slack button that is smaller than the other buttons and simple
+export const SlackButton = styled(Button)({
+  marginLeft: "1rem",
+  
+  marginTop: "0.5rem",
+  fontWeight: 200,
+  padding: "0.5rem 0.9rem",
+  fontSize: "11px",
+  textTransform: "unset !important",  
+  
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },
+});
+
+// Slack button that is smaller than the other buttons and simple
+export const NewsLinkButton = styled(Button)({
+  marginLeft: "1rem",
+  borderRadius: "2rem",  
+  marginTop: "0.5rem",
+
+  fontWeight: 200,
+  fontSize: "11px",
+  textTransform: "unset !important",  
+  
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },
+});
+
 // Button
 export const ButtonStyled = styled(Button)({
   borderRadius: "2rem",
@@ -71,6 +101,23 @@ export const ButtonBasicStyle = styled(Button)({
   },
 });
 
+export const MoreNewsStyle = styled(Button)({
+  borderRadius: "1rem",
+  paddingLeft: "0.9rem",
+  paddingRight: "0.9rem",
+  fontWeight: 600,  
+  fontSize: "12px",
+  textTransform: "unset !important",
+  backgroundColor: "#E0E0E0",
+  color: "#000000",
+  
+
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },
+});
+
+
 // Grid
 export const GridStyled = styled(Grid)((props) => ({
   padding: "8rem 6rem 6rem 6rem",
@@ -96,7 +143,7 @@ export const BlankContainer = styled(Grid)({
 export const EventCards = styled(Grid)((props) => ({
   height: "auto",
   padding: "2%",
-  maxWidth: "30%",
+  maxWidth: props.frontPage ? "30%" : "100%",
   boxShadow: "10px",
   backgroundColor: "#e6f7ff",
   borderRadius: "15px",
@@ -133,6 +180,13 @@ export const CaptionContainer = styled(Grid)((props) => ({
 
 export const ButtonContainers = styled(Grid)((props) => ({
   display: "flex",
+  flexDirection: "column",
+  width: "auto",
+  gap: "1rem",
+}));
+
+export const ButtonContainersSmall = styled(Grid)((props) => ({
+  
   flexDirection: "column",
   width: "auto",
   gap: "1rem",
