@@ -17,6 +17,7 @@ import Typewriter from 'typewriter-effect';
 import Logo from './Logo'
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
+import Image from 'next/image';
 
 import * as ga from '../../lib/ga';
 
@@ -35,6 +36,7 @@ function HeroBanner() {
     gaButton('slack_button', 'open_join_slack');
     window.open(slackSignupUrl, '_blank', 'noopener noreferrer');
   };
+
 
   const gaButton = (action, actionName) => {
     ReactPixel.track(action, { action_name: actionName });
@@ -59,21 +61,29 @@ function HeroBanner() {
       {/* Left Container */}
       <BlankContainer xs={12} md={7} lg={7}>
         <TitleContainer container>
+          
           <TitleStyled>
             The place where
-            <SpanText>
-              <Typewriter
-                options={{
-                  strings: ['Nonprofits', 'Hackers', 'Mentors', 'Volunteers'],
-                  autoStart: true,
-                  loop: true,
-                  delay: 1,
-                  pauseFor: 300,
-                }}
-              />
+            <br/>
+            <SpanText style={{ marginLeft: '10px' }}>              
+              Nonprofits              
             </SpanText>
+              
+            <SpanText style={{ marginLeft: '10px' }}>                            
+              Hackers              
+            </SpanText>
+            <br/>
+            <SpanText style={{ marginLeft: '10px' }}>                                          
+              Mentors              
+            </SpanText>
+
+            <SpanText style={{ marginLeft: '10px' }}>                                          
+              Volunteers
+            </SpanText>
+            <br/>
             unite
-          </TitleStyled>
+          </TitleStyled>                  
+
         </TitleContainer>
 
         <CaptionContainer right={'true'} container>
@@ -108,12 +118,7 @@ function HeroBanner() {
       </BlankContainer>
       {/* Right Container */}
       <BlankContainer xs={12} md={5} lg={5} flex justifyContent="center" alignItems="center">
-  
-  
-  <Logo />
-         
-  
-  
+          <Image src="https://cdn.ohack.dev/ohack.dev/ohack-light-blue-logo.png" alt='Opportunity Hack logo' width={300} height={300}  />
       </BlankContainer>
     </GridStyled>
   );
