@@ -118,7 +118,7 @@ function HeroBanner() {
       </BlankContainer>
       {/* Right Container */}
       <BlankContainer xs={12} md={5} lg={5} flex justifyContent="center" alignItems="center">
-          <Image src="https://cdn.ohack.dev/ohack.dev/ohack-light-blue-logo.png" alt='Opportunity Hack logo' width={300} height={300}  />
+          
       </BlankContainer>
     </GridStyled>
   );
