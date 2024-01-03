@@ -42,11 +42,7 @@ export default function Footer() {
                 <p>
                 We empower volunteers to make a difference by creating technical solutions for nonprofit organizations while fostering lasting connections within their communities.
                 </p>
-                We are driven by the desire to make a positive impact on the world. 
-                Our mission is to bring together skilled volunteers and passionate nonprofit organizations to create simple yet effective technological solutions. 
-                Through their dedicated work, our volunteers gain invaluable experience while making a tangible difference in the lives of those in need. 
-                Together, we build more than just software – we forge powerful bonds that transcend the project and enrich our communities for years to come.
-                Join us in our mission to create a brighter future for all.                                
+                                    
               </MutedText>
 
               <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
