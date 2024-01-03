@@ -27,7 +27,7 @@ export default function Home() {
             
       <HackathonList />
       <PreviousHackathonList />  
-      <OHackFeatures />
+      
     </Fragment>
   );
 }
