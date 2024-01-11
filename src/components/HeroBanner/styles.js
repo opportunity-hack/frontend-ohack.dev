@@ -131,13 +131,13 @@ export const TextStyled = styled(Typography)({
 
 export const SpanText = styled("span") ((props) => ({
   color: `var(--blue)`,
-  fontSize: "0.9em",
+  fontSize: "1em",
   "& .Typewriter": {
     marginTop: "4px",
   },
 
   [props.theme.breakpoints.down("md")]: {
-    fontSize: "10vw",
+    fontSize: "4vw",
     lineHeight: "8.25vw",
   },
 }));
