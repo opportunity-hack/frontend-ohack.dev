@@ -4,17 +4,11 @@ import Head from "next/head";
 const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), {
   ssr: false,
 });
-
-const OHackFeatures = dynamic(() => import('../components/OHackFeatures/OHackFeatures'), { 
-  ssr: false
-});
 const HackathonList = dynamic(() => import('../components/HackathonList/HackathonList'), {
   ssr: false
 });
 
-const PreviousHackathonList = dynamic(() =>  import('../components/HackathonList/PreviousHackathonList'), {
-  ssr: false
-});
+
 
 export default function Home() {
   return (
@@ -25,9 +19,7 @@ export default function Home() {
 
       <HeroBanner />
             
-      <HackathonList />
-      <PreviousHackathonList />  
-      
+      <HackathonList />          
     </Fragment>
   );
 }

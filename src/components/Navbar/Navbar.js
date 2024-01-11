@@ -237,7 +237,7 @@ export default function NavBar() {
             <Tooltip title="About Us">
               <NavbarButton                
                 onClick={handleOpenAboutMenu}
-                sx={{ my: 2, color: 'white', display: 'block' }}
+                sx={{ my: 1, color: 'white', display: 'block' }}
               >
                 About
               </NavbarButton>

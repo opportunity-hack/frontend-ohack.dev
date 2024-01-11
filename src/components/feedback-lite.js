@@ -9,16 +9,16 @@ import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 import TextField from '@mui/material/TextField';
-// import Box from '@mui/material/Box';
+import Link from 'next/link'
+import Button from '@mui/material/Button';
 
-import { 
-//    Button, 
+
+import {  
     Snackbar 
 } from '@mui/material'
-// import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-// import { Puff } from 'react-loading-icons'
+
 
 // TODO: Is this part of a dead tree?
 export default function FeedbackLite ( {feedback_url, history} ){
@@ -107,6 +107,7 @@ export default function FeedbackLite ( {feedback_url, history} ){
                 />            
             </p>
 
+            <Link href="/about/hearts"><Button style={{marginTop:'10px'}} variant="contained">Why we give out hearts</Button></Link>
 
             <h2 className="profile__title">What <FormControlLabel onClick={handleWhatPrivateClick} control={<Switch defaultChecked />} label={whatPrivateText} /></h2>
             What you've completed for nonprofits

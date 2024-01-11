@@ -3,6 +3,7 @@ import React from "react";
 import { useRouter } from 'next/router'
 import Head from 'next/head';
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 
 export default function PublicProfile(){
     const router = useRouter()
@@ -22,7 +23,7 @@ export default function PublicProfile(){
                 <div className="profile-grid">
                     <div className="profile__header">                        
                         <div className="profile__headline">
-                            <h2 className="profile__title"><span className="material-symbols-outlined">verified_user</span>
+                            <h2 className="profile__title"><VerifiedUserIcon color="success" fontSize="large" />
                                 Public User {userid}</h2>
                             <span className="profile__description">Hi</span>
                             <span className="profile__description">something@something.com</span>
@@ -32,7 +33,8 @@ export default function PublicProfile(){
                     </div>
 
                     <div className="profile__details">
-                        <h2 className="profile__title">Badges</h2>                                        
+                        <h2 className="profile__title">Badges</h2>  
+                        // TODO                                       
                     </div>
                 </div>
             </div>
