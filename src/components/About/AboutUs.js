@@ -155,7 +155,7 @@ const AboutUs = () => (
             More at ohack.org
           </Button>
         </Grid>
-        <Grid item xs={12} sm={2} md={3}>
+        <Grid item xs={12} sm={2} ml={5} md={3}>
           <Button variant="contained" style={style} color="primary" href="/about/mentors">
             Learn about Mentorship
           </Button>

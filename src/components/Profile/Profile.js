@@ -8,6 +8,8 @@ import useProfileApi from "../../hooks/use-profile-api.js";
 import BadgeList from "../../components/badge-list";
 import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
+// Material UI Sheild Icon
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 
 // TODO: Use?
 // import CodeSnippet from "../../components/code-snippet";
@@ -68,7 +70,7 @@ export default function Profile(props) {
                 }}
               >
                 {user?.name}{" "}
-                <span className="material-symbols-outlined">verified_user</span>
+                <VerifiedUserIcon color="success" fontSize="large" />
               </Typography>
               <ProfileDetailText>{user?.email}</ProfileDetailText>
               <ProfileDetailText>

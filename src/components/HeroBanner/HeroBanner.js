@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from 'react';
 import {
-  ButtonStyled,
   ButtonBasicStyle,
   ButtonGoldStyle,
   GridStyled,
@@ -13,16 +11,19 @@ import {
   BlankContainer,
   BackgroundGrid,
 } from './styles';
-import Typewriter from 'typewriter-effect';
-import Logo from './Logo'
+import { LoginButton } from "../Navbar/styles";
+
+
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
-import Image from 'next/image';
+
 
 import * as ga from '../../lib/ga';
+import { useAuth0 } from '@auth0/auth0-react';
 
 function HeroBanner() {
   const { slackSignupUrl } = useEnv();
+  const { isAuthenticated, loginWithRedirect } = useAuth0();
 
   const options = {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -105,13 +106,47 @@ function HeroBanner() {
           }
             
             <ButtonGoldStyle onClick={openCodeSample}>
-              Join us on Slack to get involved
+              1. Create an OHack Slack account
             </ButtonGoldStyle>
+
+            {!isAuthenticated && <LoginButton
+                variant="contained"
+                disableElevation
+                  onClick={() => loginWithRedirect({
+                    appState: {
+                      returnTo: window.location.pathname,
+                      redirectUri: window.location.pathname,
+                    },
+                  })}
+                className="login-button"
+              >
+                2. Log In
+                <svg
+                  fill="none"
+                  viewBox="0 0 10 10"
+                  stroke="currentColor"
+                  height="1em"
+                  width="1em"
+                >
+                  <path className="arrow" d="M3,2 L6,5 L3,8" />
+                  <path className="line" d="M3,5 L8,5" />
+                </svg>
+              </LoginButton> 
+            }
+
+            {isAuthenticated && <ButtonBasicStyle
+              onClick={gaButton('button_profile', 'clicked to see profile')}
+              href='/profile'
+            >
+              2. View your profile
+            </ButtonBasicStyle>
+            }
+            
             <ButtonBasicStyle
               onClick={gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'
             >
-              See all nonprofit projects
+              3. See all nonprofit projects
             </ButtonBasicStyle>
           </ButtonContainers>
         </CaptionContainer>
