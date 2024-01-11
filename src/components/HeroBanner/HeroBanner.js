@@ -65,23 +65,9 @@ function HeroBanner() {
           
           <TitleStyled>
             The place where
-            <br/>
-            <SpanText style={{ marginLeft: '10px' }}>              
-              Nonprofits              
-            </SpanText>
-              
-            <SpanText style={{ marginLeft: '10px' }}>                            
-              Hackers              
-            </SpanText>
-            <br/>
-            <SpanText style={{ marginLeft: '10px' }}>                                          
-              Mentors              
-            </SpanText>
-
-            <SpanText style={{ marginLeft: '10px' }}>                                          
-              Volunteers
-            </SpanText>
-            <br/>
+            <div>
+            <SpanText>Nonprofits, Hackers, Mentors, Volunteers</SpanText>
+            </div>
             unite
           </TitleStyled>                  
 
