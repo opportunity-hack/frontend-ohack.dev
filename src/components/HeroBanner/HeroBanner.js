@@ -80,7 +80,7 @@ function HeroBanner() {
             marginTop: "3rem",      
           }}>
             <span style={{              
-              fontSize: '1.8em'                
+              fontSize: '3em'                
             }}>
             The place where
             </span>
@@ -92,7 +92,7 @@ function HeroBanner() {
             </span>
             </div>
             <span style={{              
-              fontSize: '1.8em'                
+              fontSize: '3em'                
             }}>
             unite
             </span>

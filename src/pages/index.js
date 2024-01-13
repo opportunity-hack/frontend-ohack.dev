@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic'
 import React, { Fragment } from "react";
 import Head from "next/head";
+
 const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), {
   ssr: false,
 });
@@ -10,15 +11,18 @@ const HackathonList = dynamic(() => import('../components/HackathonList/Hackatho
 
 
 
-export default function Home() {
-  return (
+
+
+export default function Home() {  
+  return (      
     <Fragment>
       <Head>
         <title></title>
-      </Head>
-
-          
+      </Head>      
+      <HeroBanner />
+      <HackathonList />
     </Fragment>
+    
   );
 }
 export const getStaticProps = async ({ params = {} } = {}) => {

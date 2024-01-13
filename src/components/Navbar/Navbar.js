@@ -301,7 +301,7 @@ export default function NavBar() {
               ))
               }
               <MenuItem onClick={() => logout({
-                    logoutParams: { returnTo: window.location.href }
+                    logoutParams: { returnTo: window.location.origin }
                   })}>
                 <Typography textAlign="center">Log Out</Typography>
               </MenuItem>

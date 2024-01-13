@@ -29,7 +29,13 @@ export default function useProfileApi(props){
     const makeRequest = useCallback(async (options) => {
         try {
             if (options.authenticated) {
-                const token = await getAccessTokenSilently();
+                const token = await getAccessTokenSilently(
+                    {
+                        authorizationParams: {
+                            audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
+                            scope: ''
+                        }
+                });
 
                 // TODO: auth is a cross-cutting concern. Add axios interceptor in _app.js get token out of localStorage and do this.
                 options.config.headers = {
@@ -81,7 +87,13 @@ export default function useProfileApi(props){
     const fetchUser = useCallback(async (options) => {
         try {
             if (options.authenticated) {
-                const token = await getAccessTokenSilently();
+                const token = await getAccessTokenSilently(
+                    {
+                        authorizationParams: {
+                            audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
+                            scope: ''
+                        }
+                });
 
                 // TODO: auth is a cross-cutting concern. Add axios interceptor in _app.js get token out of localStorage and do this.
                 options.config.headers = {
