@@ -12,11 +12,11 @@ import {
   BackgroundGrid,
 } from './styles';
 import { LoginButton } from "../Navbar/styles";
-
+import { Typography } from "@mui/material";
 
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
-
+import { Grid } from "@mui/material";
 
 import * as ga from '../../lib/ga';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -24,6 +24,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 function HeroBanner() {
   const { slackSignupUrl } = useEnv();
   const { isAuthenticated, loginWithRedirect } = useAuth0();
+  
 
   const options = {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -52,33 +53,64 @@ function HeroBanner() {
 
   
   return (
-    <GridStyled
+    <Grid
       container
       direction='row'
       justifyContent='center'
       alignItem='center'
+      style={{
+        padding: "8rem 6rem 6rem 6rem",
+  height: "100%",
+  width: "80%",
+  margin: "auto"    
+      }}
     >
       <BackgroundGrid />
-      {/* Left Container */}
-      <BlankContainer xs={12} md={7} lg={7}>
-        <TitleContainer container>
-          
-          <TitleStyled>
-            The place where
-            <div>
-            <SpanText>Nonprofits, Hackers, Mentors, Volunteers</SpanText>
-            </div>
-            unite
-          </TitleStyled>                  
 
-        </TitleContainer>
+      
+      {/* Left Container */}
+      <Grid xs={12} md={7} lg={7}>
+        <Grid container style={{
+          padding: "1rem 5% 0px 0px",
+          marginTop: "3rem",
+        }}>
+          
+          <Grid style={{
+            padding: "1rem 5% 0px 0px",
+            marginTop: "3rem",      
+          }}>
+            <span style={{              
+              fontSize: '1.8em'                
+            }}>
+            The place where
+            </span>
+            <div>
+            <span style={{
+              color: 'var(--blue)',
+              fontSize: '1.6em'              
+            }}>Nonprofits, Hackers, Mentors, Volunteers   
+            </span>
+            </div>
+            <span style={{              
+              fontSize: '1.8em'                
+            }}>
+            unite
+            </span>
+          </Grid>                  
+
+        </Grid>
 
         <CaptionContainer right={'true'} container>
-          <TextStyled>
+          <Typography style={{
+            fontSize: "2.0rem",  
+            marginTop: "0.8rem",
+            marginBottom: "0.8rem",
+            width: "100%",
+          }}>
             Want to code for social good?
             <br/>
             Join us!
-          </TextStyled>
+          </Typography>
           
           <ButtonContainers container>
           {/* Disable for new nonprofit form instead
@@ -136,12 +168,12 @@ function HeroBanner() {
             </ButtonBasicStyle>
           </ButtonContainers>
         </CaptionContainer>
-      </BlankContainer>
+      </Grid>
       {/* Right Container */}
-      <BlankContainer xs={12} md={5} lg={5} flex justifyContent="center" alignItems="center">
+      <Grid xs={12} md={5} lg={5} flex justifyContent="center" alignItems="center">
           
-      </BlankContainer>
-    </GridStyled>
+      </Grid>
+    </Grid>
   );
 }
 
