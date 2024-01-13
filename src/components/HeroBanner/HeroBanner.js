@@ -1,18 +1,6 @@
-import {
-  ButtonBasicStyle,
-  ButtonGoldStyle,
-  GridStyled,
-  TextStyled,
-  TitleStyled,
-  TitleContainer,
-  CaptionContainer,
-  ButtonContainers,
-  SpanText,
-  BlankContainer,
-  BackgroundGrid,
-} from './styles';
 import { LoginButton } from "../Navbar/styles";
 import { Typography } from "@mui/material";
+import { Button } from "@mui/material";
 
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
@@ -60,12 +48,20 @@ function HeroBanner() {
       alignItem='center'
       style={{
         padding: "8rem 6rem 6rem 6rem",
-  height: "100%",
-  width: "80%",
-  margin: "auto"    
+        height: "100%",
+        width: "80%",
+        margin: "auto"    
       }}
     >
-      <BackgroundGrid />
+      <Grid style={{
+        position: "absolute",
+        width: "100%",
+        height: "70rem",
+        top: "-20rem",
+        transform: "skewY(-10deg)",
+        background: "linear-gradient(to bottom right, #58cffb 23%, #CCCCFF 89%)",
+        zIndex: "-100",
+      }} />
 
       
       {/* Left Container */}
@@ -100,7 +96,8 @@ function HeroBanner() {
 
         </Grid>
 
-        <CaptionContainer right={'true'} container>
+        <Grid right={'true'} container style={{color: "#425466",
+            maxWidth: "390px"}}>
           <Typography style={{
             fontSize: "2.0rem",  
             marginTop: "0.8rem",
@@ -112,7 +109,10 @@ function HeroBanner() {
             Join us!
           </Typography>
           
-          <ButtonContainers container>
+          <Grid containe style={{display: "flex",
+            flexDirection: "column",
+            width: "auto",
+            gap: "1rem",}}>
           {/* Disable for new nonprofit form instead
             <ButtonStyled
               onClick={gaButton('button_build_ohack', 'find_a_problem')}
@@ -123,9 +123,21 @@ function HeroBanner() {
             */
           }
             
-            <ButtonGoldStyle onClick={openCodeSample}>
+            <Button onClick={openCodeSample} style={{borderRadius: "2rem",
+              paddingLeft: "1.5rem",
+              paddingRight: "1.5rem",
+              fontWeight: 600,
+              fontSize: "15px",
+              textTransform: "unset !important",
+              backgroundColor: "#FFD700",
+              color: "#000000",
+              minWidth: "25rem",
+
+              "&:hover": {
+                backgroundColor: `var(--blue)`,
+              },}}>
               1. Create an OHack Slack account
-            </ButtonGoldStyle>
+            </Button>
 
             {!isAuthenticated && <LoginButton
                 variant="contained"
@@ -152,22 +164,48 @@ function HeroBanner() {
               </LoginButton> 
             }
 
-            {isAuthenticated && <ButtonBasicStyle
+            {isAuthenticated && <Button
               onClick={gaButton('button_profile', 'clicked to see profile')}
               href='/profile'
+              style={{ borderRadius: "2rem",
+  paddingLeft: "1.5rem",
+  paddingRight: "1.5rem",
+  fontWeight: 600,
+  fontSize: "15px",
+  textTransform: "unset !important",
+  backgroundColor: "#E0E0E0",
+  color: "#000000",
+  minWidth: "25rem",
+
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },}}
             >
               2. View your profile
-            </ButtonBasicStyle>
+            </Button>
             }
             
-            <ButtonBasicStyle
+            <Button 
+              style={{ borderRadius: "2rem",
+  paddingLeft: "1.5rem",
+  paddingRight: "1.5rem",
+  fontWeight: 600,
+  fontSize: "15px",
+  textTransform: "unset !important",
+  backgroundColor: "#E0E0E0",
+  color: "#000000",
+  minWidth: "25rem",
+
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },}}
               onClick={gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'
             >
               3. See all nonprofit projects
-            </ButtonBasicStyle>
-          </ButtonContainers>
-        </CaptionContainer>
+            </Button>
+          </Grid>
+        </Grid>
       </Grid>
       {/* Right Container */}
       <Grid xs={12} md={5} lg={5} flex justifyContent="center" alignItems="center">

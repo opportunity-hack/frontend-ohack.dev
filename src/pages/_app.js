@@ -66,17 +66,10 @@ export default function MyApp({ Component, pageProps }) {
         <Auth0Wrapper>
         <ThemeProvider theme={theme}>
           <CssBaseline>
-            <div className="page-layout">              
-                <NavBar />
-              
-              
-              
+            <div className="page-layout">
+              <NavBar />
               <Component {...pageProps} />
-              
-              
-              
-              <Footer />
-              
+              <Footer />              
             </div>
           </CssBaseline>
         </ThemeProvider>
