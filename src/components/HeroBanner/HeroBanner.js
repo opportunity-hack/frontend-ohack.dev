@@ -8,6 +8,11 @@ import { Grid } from "@mui/material";
 
 import * as ga from '../../lib/ga';
 import { useAuth0 } from '@auth0/auth0-react';
+import dynamic from 'next/dynamic';
+
+const ThePlaceWhere = dynamic(() => import('../HeroBanner/ThePlaceWhere'), {
+  ssr: true
+});
 
 function HeroBanner() {
   const { slackSignupUrl } = useEnv();
@@ -66,35 +71,8 @@ function HeroBanner() {
       
       {/* Left Container */}
       <Grid xs={12} md={7} lg={7}>
-        <Grid container style={{
-          padding: "1rem 5% 0px 0px",
-          marginTop: "3rem",
-        }}>
-          
-          <Grid style={{
-            padding: "1rem 5% 0px 0px",
-            marginTop: "3rem",      
-          }}>
-            <span style={{              
-              fontSize: '3em'                
-            }}>
-            The place where
-            </span>
-            <div>
-            <span style={{
-              color: 'var(--blue)',
-              fontSize: '1.6em'              
-            }}>Nonprofits, Hackers, Mentors, Volunteers   
-            </span>
-            </div>
-            <span style={{              
-              fontSize: '3em'                
-            }}>
-            unite
-            </span>
-          </Grid>                  
-
-        </Grid>
+        
+        <ThePlaceWhere/>
 
         <Grid right={'true'} container style={{color: "#425466",
             maxWidth: "390px"}}>
