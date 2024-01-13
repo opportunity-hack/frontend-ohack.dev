@@ -17,8 +17,6 @@ export default function Home() {
         <title></title>
       </Head>
 
-      <HeroBanner />
-            
           
     </Fragment>
   );
