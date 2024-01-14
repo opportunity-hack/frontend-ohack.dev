@@ -18,12 +18,12 @@ export default function Document() {
 
                 {/* Global Site Tag (gtag.js) - Google Analytics */}
                 <Script
-                    strategy="afterInteractive"
+                    strategy="lazyOnLoad"
                     src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
                 />
 
                 <Script
-                    strategy="afterInteractive"
+                    strategy="lazyOnLoad"
                     dangerouslySetInnerHTML={{
                         __html: `
                             window.dataLayer = window.dataLayer || [];
@@ -37,7 +37,7 @@ export default function Document() {
                 />
 
                 <Script
-                    strategy="afterInteractive"
+                    strategy="lazyOnLoad"
                     dangerouslySetInnerHTML={{
                         __html: `
                             !function(f,b,e,v,n,t,s)
