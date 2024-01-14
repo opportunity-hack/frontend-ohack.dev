@@ -1,4 +1,5 @@
 import { Html, Head, Main, NextScript } from 'next/document'
+import Script from 'next/script';
 
 export default function Document() {
     return (
@@ -16,13 +17,13 @@ export default function Document() {
                 </noscript>
 
                 {/* Global Site Tag (gtag.js) - Google Analytics */}
-                <script
-                    async={true}
+                <Script
+                    strategy="afterInteractive"
                     src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
                 />
 
-                <script
-                    async={true}
+                <Script
+                    strategy="afterInteractive"
                     dangerouslySetInnerHTML={{
                         __html: `
                             window.dataLayer = window.dataLayer || [];
@@ -35,8 +36,8 @@ export default function Document() {
                     }}
                 />
 
-                <script
-                    async={true}
+                <Script
+                    strategy="afterInteractive"
                     dangerouslySetInnerHTML={{
                         __html: `
                             !function(f,b,e,v,n,t,s)
@@ -53,17 +54,9 @@ export default function Document() {
                     }}
                 />
 
-                <link
-                    rel="preconnect"
-                    as="style"
-                    href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Inter&family=Space+Grotesk&display=optional"
-                />
+                <style data-href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Inter&family=Space+Grotesk&display=optional" />
 
-                <link
-                    rel="preconnect"
-                    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap"
-                    as="style"
-                />
+                <style data-href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" />
             </Head>
             <body>
                 <Main />
