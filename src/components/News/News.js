@@ -13,7 +13,6 @@ import {
 } from './styles';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { CalendarToday } from '@mui/icons-material';
-import { Typography } from '@mui/material';
 import Link from 'next/link';
 
 function News( {newsData, frontPage} ) {
