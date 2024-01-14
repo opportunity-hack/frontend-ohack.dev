@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Head from "next/head";
 import Image from "next/image";
 import MenuIcon from "@mui/icons-material/Menu";
 import * as ga from "../../lib/ga";
@@ -24,6 +25,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
+
 
 import Menu from '@mui/material/Menu';
 
@@ -126,7 +128,9 @@ export default function NavBar() {
 
   return (
     <AppBar position="fixed">
-       
+       <Head>
+        <link rel="preload" href="https://cdn.ohack.dev/ohack.dev/ohack_white.webp" as="image" />
+       </Head>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           
@@ -147,7 +151,7 @@ export default function NavBar() {
           >            
             <Image
                 className="nav-bar__logo"
-                src="https://i.imgur.com/A3FpKQQ.png"
+                src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
                 alt="Opportunity Hack logo"
                 width={100}
                 height={86}            
