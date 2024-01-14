@@ -2,6 +2,7 @@ import { Auth0Provider } from "@auth0/auth0-react";
 import React from "react";
 import { useEnv } from "./context/env.context";
 import Router from 'next/router'
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 
 export const Auth0ProviderWithHistory = ({ children }) => {
@@ -25,6 +26,7 @@ export const Auth0ProviderWithHistory = ({ children }) => {
         onRedirectCallback={onRedirectCallback}
       >
         {children}
+        <SpeedInsights/>
       </Auth0Provider>
     );
   } else {
