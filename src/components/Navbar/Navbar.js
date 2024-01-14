@@ -327,17 +327,7 @@ export default function NavBar() {
                   })}
                 className="login-button"
               >
-                Log In
-                <svg
-                  fill="none"
-                  viewBox="0 0 10 10"
-                  stroke="currentColor"
-                  height="1em"
-                  width="1em"
-                >
-                  <path className="arrow" d="M3,2 L6,5 L3,8" />
-                  <path className="line" d="M3,5 L8,5" />
-                </svg>
+                Log In                
               </LoginButton>             
             }           
 

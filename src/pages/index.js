@@ -6,7 +6,7 @@ const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), 
   ssr: false,
 });
 const HackathonList = dynamic(() => import('../components/HackathonList/HackathonList'), {
-  ssr: process.env.NODE_ENV === 'production'
+  ssr: false
 });
 
 

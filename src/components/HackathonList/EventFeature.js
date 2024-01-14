@@ -16,10 +16,11 @@ import {
   CircularProgressbar, 
   // buildStyles 
 } from "react-circular-progressbar";
-import "react-circular-progressbar/dist/styles.css";
+
 import { Typography } from "@mui/material";
 import Moment from 'moment';
 import Link from 'next/link';
+
 
 function EventFeature(props) {
   // TODO: Fix unused variable warning here
@@ -48,7 +49,7 @@ function EventFeature(props) {
 
   return (
     
-    <EventCards container direction="column">
+    <EventCards container direction="column">      
     <Link href={`/hack/${event_id}`}>
 
       <EventLink variant="h3"><a href={`/hack/${event_id}`}>{title}</a></EventLink>
