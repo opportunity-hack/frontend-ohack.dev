@@ -194,7 +194,7 @@ export default function NavBar() {
 
               {about_settings.map((setting) => (
                 <MenuItem key={setting[0]} onClick={handleCloseNavMenu}>
-                <Link href={setting[1]}>                  
+                <Link prefetch={false} href={setting[1]}>                  
                     <Typography textAlign="center">{setting[0]}</Typography>                  
                 </Link>
                 </MenuItem>
@@ -202,7 +202,7 @@ export default function NavBar() {
               }
 
               {pages.map((page) => (
-                <Link href={page[1]}>
+                <Link prefetch={false} href={page[1]}>
                   <MenuItem key={page[0]} onClick={handleCloseNavMenu}>
                     <Typography textAlign="center">{page[0]}</Typography>
                   </MenuItem>
@@ -217,7 +217,7 @@ export default function NavBar() {
             // Only display Image on mobile
           }
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <Link href="/" passHref>
+            <Link prefetch={false} href="/" passHref>
               <Image                                    
                   src="https://i.imgur.com/A3FpKQQ.png"
                   alt="Opportunity Hack logo"
@@ -229,7 +229,7 @@ export default function NavBar() {
           
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page) => (
-              <NavbarLink href={page[1]}><Button                
+              <NavbarLink prefetch={false} href={page[1]}><Button                
                 onClick={handleCloseNavMenu}
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >                
@@ -263,7 +263,7 @@ export default function NavBar() {
               onClose={handleCloseAboutMenu}
             >
               {about_settings.map((setting) => (
-                <Link href={setting[1]}>
+                <Link prefetch={false} href={setting[1]}>
                   <MenuItem key={setting[0]} onClick={handleCloseAboutMenu}>
                     <Typography textAlign="center">{setting[0]}</Typography>
                   </MenuItem>
@@ -297,7 +297,7 @@ export default function NavBar() {
               onClose={handleCloseUserMenu}
             >
               {auth_settings.map((setting) => (
-                <Link href={setting[1]}>
+                <Link prefetch={false} href={setting[1]}>
                   <MenuItem key={setting[0]} onClick={handleCloseUserMenu}>
                     <Typography textAlign="center">{setting[0]}</Typography>
                   </MenuItem>
