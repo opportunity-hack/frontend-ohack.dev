@@ -27,7 +27,7 @@ const NavBar = dynamic(() => import('../components/Navbar/Navbar'), {
 })
 
 const Footer = dynamic(() => import('../components/Footer/Footer'), {
-  ssr: process.env.NODE_ENV === 'development' ? false : true,
+  ssr: false
 });
 
 const GA = dynamic(() => import('../components/GA/GA'), {
