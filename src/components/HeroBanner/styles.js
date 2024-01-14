@@ -125,6 +125,7 @@ export const TitleStyled = styled(Typography)((props) => ({
 }));
 
 export const TextStyled = styled(Typography)({
+  fontDisplay: "swap",
   fontSize: "2.0rem",  
   marginTop: "0.8rem",
   marginBottom: "0.8rem",
@@ -132,9 +133,9 @@ export const TextStyled = styled(Typography)({
 });
 
 export const SpanText = styled("span") ((props) => ({
-  color: `var(--blue)`,
-  fontSize: "1em",
   fontDisplay: "swap",
+  color: `var(--blue)`,
+  fontSize: "1em",  
   "& .Typewriter": {
     marginTop: "4px",
   },

@@ -2,24 +2,31 @@ import {
   ButtonBasicStyle,
   ButtonGoldStyle,
   GridStyled,
-  TextStyled,
-  TitleStyled,
+  TextStyled,  
   TitleContainer,
   CaptionContainer,
-  ButtonContainers,
-  SpanText,
+  ButtonContainers,  
   BlankContainer,
-  BackgroundGrid,
 } from './styles';
 import { LoginButton } from "../Navbar/styles";
+
+import React, { Suspense, useEffect } from 'react';
+
 
 
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
 
-
+// Assuming you're using Next.js for SSR
+import dynamic from 'next/dynamic';
 import * as ga from '../../lib/ga';
 import { useAuth0 } from '@auth0/auth0-react';
+
+
+const BackgroundGrid = React.lazy(() => import('./BackgroundGridComponent'));
+// Lazy load the TitleStyled and SpanText components
+const TitleStyled = dynamic(() => import('./TitleStyledComponent'), { ssr: true });
+
 
 function HeroBanner() {
   const { slackSignupUrl } = useEnv();
@@ -34,7 +41,10 @@ function HeroBanner() {
   const initializeReactPixel = async () => {
     await ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
   };
-  initializeReactPixel();
+  
+  useEffect(() => {
+    initializeReactPixel();
+  }, []);
   
 
   const openCodeSample = () => {    
@@ -58,23 +68,17 @@ function HeroBanner() {
     <GridStyled
       container
       direction='row'
-      justifyContent='center'
-      alignItem='center'
+      justifyContent='center'      
     >
-      <BackgroundGrid />
+      <Suspense fallback={<div>Loading...</div>}>
+        <BackgroundGrid />
+      </Suspense>
+
       {/* Left Container */}
       <BlankContainer xs={12} md={7} lg={7}>
         
         <TitleContainer container>
-          
-          <TitleStyled>
-            The place where
-            <div>
-            <SpanText>Nonprofits, Hackers, Mentors, Volunteers</SpanText>
-            </div>
-            unite
-          </TitleStyled>                  
-
+          <TitleStyled/>                        
         </TitleContainer>
 
         <CaptionContainer right={'true'} container>
@@ -110,17 +114,7 @@ function HeroBanner() {
                   })}
                 className="login-button"
               >
-                2. Log In
-                <svg
-                  fill="none"
-                  viewBox="0 0 10 10"
-                  stroke="currentColor"
-                  height="1em"
-                  width="1em"
-                >
-                  <path className="arrow" d="M3,2 L6,5 L3,8" />
-                  <path className="line" d="M3,5 L8,5" />
-                </svg>
+                2. Log In                                                  
               </LoginButton> 
             }
 
