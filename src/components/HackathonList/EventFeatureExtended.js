@@ -1,11 +1,7 @@
 import React from "react";
 import {
   BlankContainer,
-  ButtonContainer,
-  EventButton,
-  EventGreyText,
-  EventText,
-  EventTitle,
+  ButtonContainer,  
   SectionTitle,
   ProgressBarHolder,
   ProgressContainer,
@@ -15,14 +11,12 @@ import {
   ExtendedEventButton
 } from "./styles";
 
-import GroupIcon from '@mui/icons-material/Group';
 import { Grid, Button } from "@mui/material";
 
 import { 
   CircularProgressbar
-  // buildStyles 
 } from "react-circular-progressbar";
-import "react-circular-progressbar/dist/styles.css";
+
 import { Typography } from "@mui/material";
 import * as ga from "../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';

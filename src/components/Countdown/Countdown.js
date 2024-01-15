@@ -1,21 +1,10 @@
 import Moment from 'moment';
 import { CountdownCircleTimer } from 'react-countdown-circle-timer'
-import {
-  BlankContainer,
-  ButtonContainer,
-  EventButton,
-  EventGreyText,
-  EventText,
-  EventTitle,
-  SectionTitle,
-  ProgressBarHolder,
-  ProgressContainer,
-  ThankYouContainer,
-  TypographyStyled,
-  EventExtendedCard,  
-  ExtendedEventButton
+import {  
+  SectionTitle,  
+  TypographyStyled,  
 } from "../HackathonList/styles";
-import { Grid, Button, Box } from "@mui/material";
+import { Grid } from "@mui/material";
 
 
 

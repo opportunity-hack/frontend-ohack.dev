@@ -2,7 +2,7 @@ import React from 'react';
 import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../../styles/nonprofit/styles';
 import Head from 'next/head';
 import Image from 'next/image';
-import { Typography, Grid, Card, CardContent, Box} from '@mui/material';
+import { Typography, Grid, Card, CardContent } from '@mui/material';
 import LoginOrRegister from '../../LoginOrRegister/LoginOrRegister';
 import Button from '@mui/material/Button';
 import * as ga from "../../../lib/ga";
