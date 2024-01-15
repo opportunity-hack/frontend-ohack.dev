@@ -2,7 +2,9 @@ import "../styles/styles.css";
 import dynamic from 'next/dynamic'
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
-import { Auth0ProviderWithHistory } from "../auth0-provider-with-history";
+import { Auth0Provider } from "@auth0/auth0-react";
+
+
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "../assets/theme";
 
@@ -14,13 +16,18 @@ import theme from "../assets/theme";
 
 // TODO: Set up MUI for server side rendering: https://github.com/mui/material-ui/tree/HEAD/examples/material-next
 
+const Auth0Wrapper = dynamic(() => import('../components/Auth0Wrapper/Auth0Wrapper'), {
+  ssr: false
+});
+
+
 // NOTE: Load dynamics below static imports to avoid eslint errors.
 const NavBar = dynamic(() => import('../components/Navbar/Navbar'), {
   ssr: false,
 })
 
 const Footer = dynamic(() => import('../components/Footer/Footer'), {
-  ssr: false,
+  ssr: false
 });
 
 const GA = dynamic(() => import('../components/GA/GA'), {
@@ -50,17 +57,24 @@ export default function MyApp({ Component, pageProps }) {
 
         <title>{pageProps.title}</title>
       </Head>
-      <Auth0ProviderWithHistory>
+      <Auth0Provider
+        domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN}
+        clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID}
+        audience={process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}
+        redirectUri={typeof window !== 'undefined' && window.location.origin}        
+      >
+        <Auth0Wrapper>
         <ThemeProvider theme={theme}>
           <CssBaseline>
             <div className="page-layout">
               <NavBar />
               <Component {...pageProps} />
-              <Footer />
+              <Footer />              
             </div>
           </CssBaseline>
         </ThemeProvider>
-      </Auth0ProviderWithHistory>
+        </Auth0Wrapper>
+      </Auth0Provider>
       <GA/>
     </span>
   );

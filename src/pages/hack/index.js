@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 
 const HackathonIndex = dynamic(() => import('../../components/Hackathon/HackathonIndex'), {
-    ssr: false
+    ssr: process.env.NODE_ENV === 'production'
 });
 
 export default function HackList() {      

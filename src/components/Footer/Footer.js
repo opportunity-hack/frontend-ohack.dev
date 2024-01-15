@@ -25,11 +25,7 @@ import {
 } from "@mui/icons-material";
 
 export default function Footer() {
-  
-
-  const hashtags = [
-    "#socialgood", "#nonprofit", "#volunteer", "#socialimpact", "#communitybuilding", "#technicalsolutions", "#skillsbasedvolunteering", "#makeadifference", "#givingback", "#changemakers", "#empowerment"
-  ]
+    
 
   return (
     <FooterContainer container>
@@ -47,27 +43,37 @@ export default function Footer() {
 
               <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
               <IconLink href="https://www.instagram.com/opportunityhack/">
-                <Instagram fontSize="large" style={{ marginRight: "2rem" }} />
+                <Instagram fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px" }} />
               </IconLink>
               <IconLink href="https://www.facebook.com/OpportunityHack/">
-                <Facebook fontSize="large" style={{ marginRight: "2rem" }} />
+                <Facebook fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
               </IconLink>
               <IconLink href="https://www.linkedin.com/company/opportunity-hack/">
-                <LinkedIn fontSize="large" style={{ marginRight: "2rem" }} />
+                <LinkedIn fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
               </IconLink>              
               <IconLink href="https://www.threads.net/@opportunityhack">                
-                <FaThreads fontSize="large" style={{ marginRight: "2rem", marginBottom: "0.25rem" }}/>
+                <FaThreads fontSize="large" style={{ marginRight: "2rem", marginBottom: "0.25rem", width: "24px", height: "24px"  }}/>
               </IconLink>
               <IconLink href="https://twitter.com/opportunityhack">
-                <Twitter fontSize="large" style={{ marginRight: "2rem" }} />
+                <Twitter fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
               </IconLink>
               <IconLink href="https://github.com/opportunity-hack/">
-                <GitHub fontSize="large" style={{ marginRight: "2rem" }} />
+                <GitHub fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
                 <br></br>
               </IconLink>
-              {hashtags.map((h) => {
-                return <><Hashtag>{h}</Hashtag> &nbsp;</>
-              })}
+              
+              <Hashtag>#socialgood</Hashtag> &nbsp;
+              <Hashtag>#nonprofit</Hashtag> &nbsp;
+              <Hashtag>#volunteer</Hashtag> &nbsp;
+              <Hashtag>#socialimpact</Hashtag> &nbsp;
+              <Hashtag>#communitybuilding</Hashtag> &nbsp;
+              <Hashtag>#technicalsolutions</Hashtag> &nbsp;
+              <Hashtag>#skillsbasedvolunteering</Hashtag> &nbsp;
+              <Hashtag>#makeadifference</Hashtag> &nbsp;
+              <Hashtag>#givingback</Hashtag> &nbsp;
+              <Hashtag>#changemakers</Hashtag> &nbsp;
+              <Hashtag>#empowerment</Hashtag> &nbsp;
+              
               <MutedText style={{ marginTop: "3rem" }}>
                 Opportunity Hack Inc. EIN: 84-5113049
               </MutedText>                            

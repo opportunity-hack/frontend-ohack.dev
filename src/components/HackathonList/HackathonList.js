@@ -3,11 +3,10 @@ import useHackathonEvents from "../../hooks/use-hackathon-events";
 import { EmptyGrid, OuterGrid, TypographyStyled } from "./styles";
 import EventFeature from "./EventFeature";
 import { SectionTitle } from "./styles";
-import Image from "next/image";
 
 import dynamic from 'next/dynamic'
 const News = dynamic(() => import('../../components/News/News'), {
-  ssr: false,
+  ssr: true,
 });
 
 

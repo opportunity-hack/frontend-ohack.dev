@@ -28,6 +28,7 @@ export const TextContainer = styled(Grid)({
 });
 
 export const StyledText = styled(Typography)({
+  fontDisplay: "swap",
   fontSize: "1.5rem",
   textTransform: "uppercase",
   fontWeight: 600,
@@ -38,6 +39,7 @@ export const StyledText = styled(Typography)({
 });
 
 export const MutedText = styled(Typography)({
+  fontDisplay: "swap",
   fontSize: "1.5rem",
   color: "#c7c7c7",
   width: "100%",
@@ -52,6 +54,7 @@ export const IconLink = styled(Link)({
 });
 
 export const Hashtag = styled(Typography)({
+  fontDisplay: "swap",
   fontSize: "1.5rem",
   color: "#c7c7c7",
   display: "inline-block",
@@ -62,6 +65,7 @@ export const Hashtag = styled(Typography)({
 })
 
 export const LinkList = styled("ul")({
+  fontDisplay: "swap",
   listStyle: "none",
   position: "relative",
   padding: "0",

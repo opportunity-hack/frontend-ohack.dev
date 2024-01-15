@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Head from "next/head";
 import Image from "next/image";
 import MenuIcon from "@mui/icons-material/Menu";
 import * as ga from "../../lib/ga";
@@ -24,6 +25,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
+
 
 import Menu from '@mui/material/Menu';
 
@@ -126,7 +128,9 @@ export default function NavBar() {
 
   return (
     <AppBar position="fixed">
-       
+       <Head>
+        <link rel="preload" href="https://cdn.ohack.dev/ohack.dev/ohack_white.webp" as="image" />
+       </Head>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           
@@ -147,7 +151,7 @@ export default function NavBar() {
           >            
             <Image
                 className="nav-bar__logo"
-                src="https://i.imgur.com/A3FpKQQ.png"
+                src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
                 alt="Opportunity Hack logo"
                 width={100}
                 height={86}            
@@ -190,7 +194,7 @@ export default function NavBar() {
 
               {about_settings.map((setting) => (
                 <MenuItem key={setting[0]} onClick={handleCloseNavMenu}>
-                <Link href={setting[1]}>                  
+                <Link prefetch={false} href={setting[1]}>                  
                     <Typography textAlign="center">{setting[0]}</Typography>                  
                 </Link>
                 </MenuItem>
@@ -198,7 +202,7 @@ export default function NavBar() {
               }
 
               {pages.map((page) => (
-                <Link href={page[1]}>
+                <Link prefetch={false} href={page[1]}>
                   <MenuItem key={page[0]} onClick={handleCloseNavMenu}>
                     <Typography textAlign="center">{page[0]}</Typography>
                   </MenuItem>
@@ -213,7 +217,7 @@ export default function NavBar() {
             // Only display Image on mobile
           }
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <Link href="/" passHref>
+            <Link prefetch={false} href="/" passHref>
               <Image                                    
                   src="https://i.imgur.com/A3FpKQQ.png"
                   alt="Opportunity Hack logo"
@@ -225,7 +229,7 @@ export default function NavBar() {
           
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page) => (
-              <NavbarLink href={page[1]}><Button                
+              <NavbarLink prefetch={false} href={page[1]}><Button                
                 onClick={handleCloseNavMenu}
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >                
@@ -259,7 +263,7 @@ export default function NavBar() {
               onClose={handleCloseAboutMenu}
             >
               {about_settings.map((setting) => (
-                <Link href={setting[1]}>
+                <Link prefetch={false} href={setting[1]}>
                   <MenuItem key={setting[0]} onClick={handleCloseAboutMenu}>
                     <Typography textAlign="center">{setting[0]}</Typography>
                   </MenuItem>
@@ -293,7 +297,7 @@ export default function NavBar() {
               onClose={handleCloseUserMenu}
             >
               {auth_settings.map((setting) => (
-                <Link href={setting[1]}>
+                <Link prefetch={false} href={setting[1]}>
                   <MenuItem key={setting[0]} onClick={handleCloseUserMenu}>
                     <Typography textAlign="center">{setting[0]}</Typography>
                   </MenuItem>
@@ -301,7 +305,7 @@ export default function NavBar() {
               ))
               }
               <MenuItem onClick={() => logout({
-                    logoutParams: { returnTo: window.location.href }
+                    logoutParams: { returnTo: window.location.origin }
                   })}>
                 <Typography textAlign="center">Log Out</Typography>
               </MenuItem>
@@ -323,17 +327,7 @@ export default function NavBar() {
                   })}
                 className="login-button"
               >
-                Log In
-                <svg
-                  fill="none"
-                  viewBox="0 0 10 10"
-                  stroke="currentColor"
-                  height="1em"
-                  width="1em"
-                >
-                  <path className="arrow" d="M3,2 L6,5 L3,8" />
-                  <path className="line" d="M3,5 L8,5" />
-                </svg>
+                Log In                
               </LoginButton>             
             }           
 
