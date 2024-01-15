@@ -24,7 +24,7 @@ export default function Document() {
                 />
 
                 <Script
-                    strategy="lazyOnLoad"
+                    strategy="afterInteractive"
                     dangerouslySetInnerHTML={{
                         __html: `
                             window.dataLayer = window.dataLayer || [];
