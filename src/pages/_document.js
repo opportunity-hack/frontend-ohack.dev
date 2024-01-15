@@ -19,7 +19,7 @@ export default function Document() {
 
                 {/* Global Site Tag (gtag.js) - Google Analytics */}
                 <Script
-                    strategy="lazyOnLoad"
+                    strategy="afterInteractive"
                     src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
                 />
 
