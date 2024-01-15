@@ -49,7 +49,7 @@
     "postbuild": "next-sitemap"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "eslintConfig": {
     "extends": [
