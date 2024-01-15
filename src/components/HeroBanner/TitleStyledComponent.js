@@ -1,15 +1,21 @@
 import React from 'react';
 
 import {
+    
+    GridStyledSmaller,
   TitleStyled,
   SpanText,
-  TitleContainer,
+  TitleContainerSmaller,
 } from './styles';
-import { Fragment } from 'react';
+
 
 const TitleStyledComponent = () => (
-    <Fragment>
-    <TitleContainer container>
+    <GridStyledSmaller
+      container
+      direction='row'
+      justifyContent='center'      
+    >
+    <TitleContainerSmaller container>
     <TitleStyled>
         The place where
         <div>
@@ -17,8 +23,8 @@ const TitleStyledComponent = () => (
         </div>
         unite
     </TitleStyled>
-    </TitleContainer>
-    </Fragment>
+    </TitleContainerSmaller>
+    </GridStyledSmaller>
 );
 
 export default TitleStyledComponent;

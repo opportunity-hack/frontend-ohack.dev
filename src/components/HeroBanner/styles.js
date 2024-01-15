@@ -71,6 +71,22 @@ export const GridStyled = styled(Grid)((props) => ({
   },
 }));
 
+export const GridStyledSmaller = styled(Grid)((props) => ({
+  padding: "8rem 6rem 6rem 6rem",
+  height: "100px",
+  width: "80%",
+  margin: "0",  
+
+  [props.theme.breakpoints.down("lg")]: {    
+    padding: "8rem 0rem 6rem 0rem",
+  },
+
+  [props.theme.breakpoints.down("md")]: {
+    height: "200px",
+    width: "100%",
+  },
+}));
+
 export const BlankContainer = styled(Grid)({
   display: "flex",
   flexDirection: "column",
@@ -81,6 +97,18 @@ export const TitleContainer = styled(Grid)((props) => ({
   padding: "1rem 5% 0px 0px",
   marginTop: "3rem",
   minHeight: '200px',
+
+  [props.theme.breakpoints.down("md")]: {
+    padding: props.right === "true" ? "15% 5% 5% 5%" : "3rem 2px 0 10px",
+    justifyContent: "center",
+    textAlign: "center",
+  },
+}));
+
+export const TitleContainerSmaller = styled(Grid)((props) => ({
+  padding: "1rem 5% 0px 0px",
+  marginTop: "0rem",
+  minHeight: '100px',
 
   [props.theme.breakpoints.down("md")]: {
     padding: props.right === "true" ? "15% 5% 5% 5%" : "3rem 2px 0 10px",

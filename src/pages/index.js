@@ -9,8 +9,7 @@ const HackathonList = dynamic(() => import('../components/HackathonList/Hackatho
   ssr: false
 });
 
-
-
+const TitleStyled = dynamic(() => import('../components/HeroBanner/TitleStyledComponent'), { ssr: true });
 
 
 export default function Home() {  
@@ -19,6 +18,7 @@ export default function Home() {
       <Head>
         <title></title>
       </Head>      
+      <TitleStyled/> 
       <HeroBanner />
       <HackathonList />
     </Fragment>
