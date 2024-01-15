@@ -9,7 +9,7 @@ const HackathonList = dynamic(() => import('../components/HackathonList/Hackatho
   ssr: false
 });
 
-const TitleStyled = dynamic(() => import('../components/HeroBanner/TitleStyledComponent'), { ssr: false });
+const TitleStyled = dynamic(() => import('../components/HeroBanner/TitleStyledComponent'), { ssr: true });
 
 
 export default function Home() {  
