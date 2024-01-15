@@ -77,9 +77,9 @@ function HeroBanner() {
       {/* Left Container */}
       <BlankContainer xs={12} md={7} lg={7}>
         
-        <TitleContainer container>
-          <TitleStyled/>                        
-        </TitleContainer>
+       
+        <TitleStyled/>                        
+
 
         <CaptionContainer right={'true'} container>
           <TextStyled>
