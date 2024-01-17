@@ -56,6 +56,13 @@ function HeroBanner() {
   const gaButton = async (action, actionName) => {
     await ReactPixel.track(action, { action_name: actionName });
 
+    ga.event({ 
+        action: "conversion",
+        params: {
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+      
     ga.event({
       action: action,
       params: {
