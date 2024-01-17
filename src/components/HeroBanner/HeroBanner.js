@@ -24,7 +24,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 
 const BackgroundGrid = React.lazy(() => import('./BackgroundGridComponent'));
-
+// Lazy load the TitleStyled and SpanText components
+const TitleStyled = dynamic(() => import('./TitleStyledComponent'), { ssr: true });
 
 
 function HeroBanner() {
@@ -74,7 +75,12 @@ function HeroBanner() {
       </Suspense>
 
       {/* Left Container */}
-      <BlankContainer xs={12} md={7} lg={7}>               
+      <BlankContainer xs={12} md={7} lg={7}>
+        
+        <TitleContainer container>
+          <TitleStyled/>                        
+        </TitleContainer>
+
         <CaptionContainer right={'true'} container>
           <TextStyled>
             Want to code for social good?
