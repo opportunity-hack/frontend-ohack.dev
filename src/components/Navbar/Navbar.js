@@ -102,10 +102,41 @@ export default function NavBar() {
     // Check if logged in
     if (isAuthenticated && user && user.email) {
       ga.event({
-        category: 'User',
-        action: 'Open User Menu',
-        label: user.email,
+        action: "Open User Menu",
+        params: {
+          category: 'User',          
+          label: user.email,
+        }
       });
+
+      /*
+      <!-- Event snippet for Page view conversion page
+      In your html page, add the snippet and call gtag_report_conversion when someone clicks on the chosen link or button. -->
+      <script>
+      function gtag_report_conversion(url) {
+        var callback = function () {
+          if (typeof(url) != 'undefined') {
+            window.location = url;
+          }
+        };
+        gtag('event', 'conversion', {
+            'send_to': 'AW-11474351176/JCk6COG-q4kZEMjost8q',
+            'event_callback': callback
+        });
+        return false;
+      }
+      </script>
+      */    
+
+  
+
+      ga.event({ 
+        action: "conversion",
+        params: {
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     }    
   };
 
