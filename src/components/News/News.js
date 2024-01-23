@@ -12,10 +12,27 @@ import {
   BlankContainer,
 } from './styles';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { CalendarToday } from '@mui/icons-material';
+import { CalendarToday, FileCopy } from '@mui/icons-material'; // Import the FileCopy icon
+import { useState } from 'react';
+import { Snackbar, IconButton } from '@mui/material';
+import { Alert } from '@mui/material';
+
 import Link from 'next/link';
 
 function News( {newsData, frontPage} ) {
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text); // Copy the text to clipboard
+    setSnackbarMessage('Text copied!');
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
 
   return (
     <EventCards container direction='row' frontPage={frontPage} style={{ margin: '1px', padding: '10px' }}>      
@@ -32,14 +49,17 @@ function News( {newsData, frontPage} ) {
           <TitleContainer container>
             <Grid item xs={12} md={12} lg={12}>
               <TitleStyled variant="h1">{newsItem.title}
-
-              
+                            
                 <SlackButton target="_blank" variant="outlined" >
                   <Link href={newsItem.slack_permalink} target='_blank'>
-                Slack post
-                </Link>
-              </SlackButton>
+                    Slack post
+                  </Link>
+                </SlackButton>
               
+                <FileCopy // Add the FileCopy icon button
+                  onClick={() => handleCopy(`${newsItem.title} ${newsItem.description}`)} // Call handleCopy function on click
+                  style={{ cursor: 'pointer', marginLeft: '5px' }}
+                />
               </TitleStyled>
               
             </Grid>
@@ -90,6 +110,12 @@ function News( {newsData, frontPage} ) {
         </MoreNewsStyle>        
       </Link>
       }
+
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </EventCards>
   );
 
