@@ -3,7 +3,6 @@ import { TitleContainer, LayoutContainer } from '../../styles/nonprofit/styles';
 import Head from 'next/head';
 import { Typography } from '@mui/material';
 import News from '../News/News';
-import Link from 'next/link';
 import Button from '@mui/material/Button';
 import GitHubIcon from '@mui/icons-material/GitHub';
 

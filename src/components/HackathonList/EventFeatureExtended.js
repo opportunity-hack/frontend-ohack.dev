@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BlankContainer,
   ButtonContainer,  
@@ -50,9 +50,12 @@ function EventFeatureExtended(props) {
     debug: false, // enable logs
   };
   var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-  ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-
-
+  
+  useEffect(() => {
+       if (typeof window !== 'undefined') {
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
+    }, []);
 
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
 

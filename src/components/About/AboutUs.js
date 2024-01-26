@@ -35,26 +35,10 @@ const pledge = [
   'Nurture a Supportive Community: We pledge to create a safe and supportive environment where everyone is encouraged to learn, grow, and contribute.'
 ]
 
-
-
-const AboutUs = () => {
-
-  const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-  };
-  const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
-  
- const initializeReactPixel = async () => {
-    await ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-  };
-  
-  useEffect(() => {
-    initializeReactPixel();
-  }, []);
+const AboutUs = () => {  
 
   const gaButton = async (action, actionName) => {
-    await ReactPixel.track(action, { action_name: actionName });
+    ReactPixel.track(action, { action_name: actionName });
 
     ga.event({ 
         action: "conversion",

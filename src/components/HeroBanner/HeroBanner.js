@@ -38,12 +38,10 @@ function HeroBanner() {
   };
   const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
   
-  const initializeReactPixel = async () => {
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-  };
-  
   useEffect(() => {
-    initializeReactPixel();
+       if (typeof window !== 'undefined') {
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
   }, []);
   
 

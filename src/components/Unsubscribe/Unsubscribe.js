@@ -21,17 +21,7 @@ import Image from 'next/image';
 export default function Unsubscribe({email_address}) {
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState(email_address);
-    const [status, setStatus] = useState(''); // 'success' or 'error'
-
-    const options = {
-        autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-        debug: false, // enable logs
-    };
-    var advancedMatching = null;
-    if (email_address && email_address !== '') {
-        advancedMatching = { em: email_address };
-    }
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    const [status, setStatus] = useState(''); // 'success' or 'error'    
 
 
     const handleClickOpen = () => {

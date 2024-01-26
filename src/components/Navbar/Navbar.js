@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from 'react';
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
@@ -35,6 +35,7 @@ import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useAuth0 } from "@auth0/auth0-react";
+
 
 /*
 TODO: In the future we may want to show notifications using something like this
@@ -75,23 +76,21 @@ export default function NavBar() {
 
   if (isAuthenticated && user && user.email) {    
     ga.set(user.email);
-
-    const advancedMatching = {
-      em: user.email,
-      ct: '', // Add the missing properties
-      country: '',
-      db: '',
-      fn: '',
-      // Add the remaining properties
-    };
-    const options = {
-      autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-      debug: false, // enable logs
-    };
     
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
     ReactPixel.track('Login Email Set');
   }
+
+  const options = {
+    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+    debug: false, // enable logs
+  };
+  const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
+  }, []);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);

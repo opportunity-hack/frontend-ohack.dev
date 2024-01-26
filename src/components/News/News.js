@@ -18,9 +18,8 @@ import { Snackbar } from '@mui/material';
 import { Alert } from '@mui/material';
 
 import * as ga from '../../lib/ga';
-import ReactPixel from 'react-facebook-pixel';
 import React, { useEffect } from 'react';
-import {Divider} from "@mui/material";
+import { Divider } from "@mui/material";
 
 import Link from 'next/link';
 
@@ -39,23 +38,21 @@ function News( {newsData, frontPage} ) {
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
-
-  const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-  };
-  const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
-  
-  const initializeReactPixel = async () => {
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-  };
-  
-  useEffect(() => {
-    initializeReactPixel();
-  }, []);
+ 
   
   const gaButton = async (action, actionName) => {
     console.log("gaButton", "action:", action, "actionName:", actionName);
+
+    const ReactPixel =  require('react-facebook-pixel');
+    
+    const options = {
+    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+    debug: false, // enable logs
+    };
+    var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+    
+    ReactPixel.default.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+
     ReactPixel.track(action, { action_name: actionName });
 
     ga.event({ 
