@@ -11,7 +11,7 @@ import {
 import { LoginButton } from "../Navbar/styles";
 
 import React, { Suspense, useEffect } from 'react';
-
+import * as ga from '../../lib/ga';
 
 
 import { useEnv } from '../../context/env.context';
@@ -19,7 +19,7 @@ import ReactPixel from 'react-facebook-pixel';
 
 // Assuming you're using Next.js for SSR
 import dynamic from 'next/dynamic';
-import * as ga from '../../lib/ga';
+
 import { useAuth0 } from '@auth0/auth0-react';
 
 
@@ -36,10 +36,10 @@ function HeroBanner() {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
     debug: false, // enable logs
   };
-  const advancedMatching = null; // { em: 'someemail@.com' }; // optional
+  const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
   
   const initializeReactPixel = async () => {
-    await ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
   };
   
   useEffect(() => {
@@ -54,7 +54,7 @@ function HeroBanner() {
 
 
   const gaButton = async (action, actionName) => {
-    await ReactPixel.track(action, { action_name: actionName });
+    ReactPixel.track(action, { action_name: actionName });
 
     ga.event({ 
         action: "conversion",
@@ -62,7 +62,7 @@ function HeroBanner() {
           send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
         }      
       });
-      
+
     ga.event({
       action: action,
       params: {
@@ -125,25 +125,29 @@ function HeroBanner() {
               </LoginButton> 
             }
 
-            {isAuthenticated && <ButtonBasicStyle
-              onClick={gaButton('button_profile', 'clicked to see profile')}
+            <ButtonBasicStyle
+              onClick={() => gaButton('button_profile', 'clicked to see profile')}
               href='/profile'
             >
               2. View your profile
             </ButtonBasicStyle>
-            }
-            
             <ButtonBasicStyle
-              onClick={gaButton('button_see_all', 'see_all_nonprofit_projects')}
+              onClick={() => gaButton('button_about', 'about us')}
+              href='/about'
+            >
+              3. Read more about us
+            </ButtonBasicStyle>
+            <ButtonBasicStyle
+              onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'
             >
-              3. See all nonprofit projects
+              4. See all nonprofit projects
             </ButtonBasicStyle>
           </ButtonContainers>
         </CaptionContainer>
       </BlankContainer>
       {/* Right Container */}
-      <BlankContainer xs={12} md={5} lg={5} flex justifyContent="center" alignItems="center">
+      <BlankContainer xs={12} md={5} lg={5}  justifyContent="center" alignItems="center">
           
       </BlankContainer>
     </GridStyled>

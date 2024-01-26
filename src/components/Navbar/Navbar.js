@@ -128,8 +128,6 @@ export default function NavBar() {
       </script>
       */    
 
-  
-
       ga.event({ 
         action: "conversion",
         params: {
@@ -141,18 +139,50 @@ export default function NavBar() {
   };
 
   const handleOpenAboutMenu = (event) => {
+    ga.event({ 
+        action: "conversion",        
+        params: {
+          "category": "handleOpenAboutMenu",
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     setAnchorElAbout(event.currentTarget);
   }
 
   const handleCloseNavMenu = () => {
+    ga.event({ 
+        action: "conversion",        
+        params: {
+          "category": "handleCloseNavMenu",
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     setAnchorElNav(null);
   };
 
   const handleCloseUserMenu = () => {
+    ga.event({ 
+        action: "conversion",        
+        params: {
+          "category": "handleCloseUserMenu",
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     setAnchorElUser(null);
   };
   
   const handleCloseAboutMenu = () => {
+    ga.event({ 
+        action: "conversion",        
+        params: {
+          "category": "handleCloseAboutMenu",
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     setAnchorElAbout(null);
   }
 
