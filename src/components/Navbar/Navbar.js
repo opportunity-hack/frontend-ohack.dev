@@ -4,8 +4,6 @@ import Head from "next/head";
 import Image from "next/image";
 import MenuIcon from "@mui/icons-material/Menu";
 import * as ga from "../../lib/ga";
-import ReactPixel from 'react-facebook-pixel';
-
 
 import Button from "@mui/material/Button";
 
@@ -73,21 +71,36 @@ export default function NavBar() {
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [anchorElAbout, setAnchorElAbout] = React.useState(null);
 
+  const ReactPixel =  require('react-facebook-pixel');
 
   if (isAuthenticated && user && user.email) {    
-    ga.set(user.email);
+    ga.set(user.email);  
     
     ReactPixel.track('Login Email Set');
   }
 
-  const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-  };
-  const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
+  
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      var advancedMatching = undefined;
+      if( isAuthenticated && user && user.email )
+      {
+        advancedMatching = {
+          em: user.email,
+          ct: '', // Add the missing properties
+          country: '',
+          db: '',
+          fn: '',
+          // Add the remaining properties
+        };
+      }
+      
+      const options = {
+        autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+        debug: false, // enable logs
+      };
+
       ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
     }
   }, []);
