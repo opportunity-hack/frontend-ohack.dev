@@ -6,6 +6,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import * as ga from "../../lib/ga";
 
 import Button from "@mui/material/Button";
+import ReactPixel from "react-facebook-pixel";
 
 
 import {  
@@ -69,9 +70,7 @@ export default function NavBar() {
   const { isAuthenticated, logout, loginWithRedirect, user } = useAuth0();
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const [anchorElAbout, setAnchorElAbout] = React.useState(null);
-
-  const ReactPixel =  require('react-facebook-pixel');
+  const [anchorElAbout, setAnchorElAbout] = React.useState(null);  
 
   if (isAuthenticated && user && user.email) {    
     ga.set(user.email);  

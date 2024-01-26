@@ -123,24 +123,29 @@ function HeroBanner() {
               </LoginButton> 
             }
 
-            <ButtonBasicStyle
+            {isAuthenticated && <ButtonBasicStyle
+              style={{ color: 'white', backgroundColor: '#FFC107' }}
               onClick={() => gaButton('button_profile', 'clicked to see profile')}
-              href='/profile'
+              href='/profile'              
             >
               2. View your profile
             </ButtonBasicStyle>
+            }
+            
             <ButtonBasicStyle
               onClick={() => gaButton('button_about', 'about us')}
               href='/about'
             >
               3. Read more about us
             </ButtonBasicStyle>
+
             <ButtonBasicStyle
               onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'
             >
               4. See all nonprofit projects
             </ButtonBasicStyle>
+
           </ButtonContainers>
         </CaptionContainer>
       </BlankContainer>
