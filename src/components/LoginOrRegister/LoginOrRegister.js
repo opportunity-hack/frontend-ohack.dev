@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Alert, AlertTitle, Stack, Typography } from '@mui/material';
 import ReactPixel from 'react-facebook-pixel';
@@ -19,7 +19,12 @@ export default function LoginOrRegister({ introText, previousPage }) {
         debug: false, // enable logs
     };
     const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    
+    useEffect(() => {
+       if (typeof window !== 'undefined') {
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
+    }, []);
 
     const handleLoginClick = () => {
         ReactPixel.track('Login Slack');

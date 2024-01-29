@@ -6,6 +6,8 @@ import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { FaLinkedin } from 'react-icons/fa';
+import * as ga from '../../lib/ga';
+import ReactPixel from 'react-facebook-pixel';
 
 const style = { fontSize: '15px' };
 
@@ -33,7 +35,27 @@ const pledge = [
   'Nurture a Supportive Community: We pledge to create a safe and supportive environment where everyone is encouraged to learn, grow, and contribute.'
 ]
 
-const AboutUs = () => (
+const AboutUs = () => {  
+
+  const gaButton = async (action, actionName) => {
+    ReactPixel.track(action, { action_name: actionName });
+
+    ga.event({ 
+        action: "conversion",
+        params: {
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
+    ga.event({
+      action: action,
+      params: {
+        action_name: actionName,
+      },
+    });    
+  };
+
+  return(
   <LayoutContainer key="mentorship" container>
     <Head>
       <title>Opportunity Hack - About Us</title>
@@ -80,9 +102,14 @@ const AboutUs = () => (
       </Typography>
 
       <Box mt={2}>
+        <Button variant="contained" onClick={() => gaButton('button_see_nonprofits', 'see projects')} style={style} color="secondary" href="/nonprofits">
+          👀 Nonprofit projects
+        </Button>        
+      </Box>
+      <Box mt={2}>
         <Button variant="contained" style={style} color="primary" href="https://www.ohack.org/about" target="_blank" rel="noopener noreferrer">
           More at ohack.org
-        </Button>
+        </Button>        
       </Box>
     </TitleContainer>
 
@@ -149,14 +176,14 @@ const AboutUs = () => (
         Together, we are Opportunity Hack. Together, we code for social good, for change.
       </Typography>
 
-      <Grid container spacing={2} mt={3}>
-        <Grid item xs={12} sm={2} md={2}>
-          <Button variant="contained" style={style} color="primary" href="https://www.ohack.org/about" target="_blank" rel="noopener noreferrer">
-            More at ohack.org
+      <Grid container spacing={2} mt={3} xs={12} md={12}>
+        <Grid item>
+          <Button variant="contained" onClick={() => gaButton('button_see_nonprofit_projects', 'see projects')} style={style} color="primary" href="/nonprofits">
+            See Nonprofit Projects
           </Button>
         </Grid>
-        <Grid item xs={12} sm={2} ml={5} md={3}>
-          <Button variant="contained" style={style} color="primary" href="/about/mentors">
+        <Grid item>
+          <Button variant="contained" style={style} onClick={() => gaButton('button_mentorship', 'Learn about mentorship')} color="primary" href="/about/mentors">
             Learn about Mentorship
           </Button>
         </Grid>
@@ -166,6 +193,7 @@ const AboutUs = () => (
 
     </ProjectsContainer>
   </LayoutContainer>
-);
+  );
+}
 
 export default AboutUs;

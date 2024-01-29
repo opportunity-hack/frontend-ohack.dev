@@ -12,6 +12,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import { styled } from "@mui/material/styles";
 
 import ReactMarkdown from 'react-markdown'
+import Divider from '@mui/material/Divider';
 
 
 
@@ -68,6 +69,7 @@ import {
   ProjectDescText,
   ShortDescText,
   TitleStyled,
+  ReferencesStyled,
   YearStyled,
 } from "./styles";
 import Grid from '@mui/material/Grid';
@@ -276,8 +278,13 @@ const volunteerWords = [
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
     debug: false, // enable logs
   };
-  const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-  ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+  const advancedMatching = undefined; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
+  }, []);
 
 
   const [expanded, setExpanded] = useState("Events");
@@ -1090,6 +1097,26 @@ const volunteerWords = [
     
     <YearStyled>{problem_statement.first_thought_of}</YearStyled>      
     <ProjectProgress state={problem_statement.status} />      
+    
+
+    {
+      // Add references here
+    }
+    <Grid container item xs={12} md={12} justifyContent="flex-start" sx={{ marginTop: "10px" }}>      
+      
+            
+      <Grid item textAlign="justify" xs={12} md={12}>                    
+          <ReferencesStyled>Reference Docs</ReferencesStyled>          
+          <ShortDescText>Check these first to get more detail on the problem.  Most of these are Google docs, so feel free to comment on them to collaborate!</ShortDescText>
+      </Grid>
+      <Grid item xs={12} md={12}>
+        <ProjectDescText>{references_buttons}</ProjectDescText>
+      </Grid>      
+
+      <Grid item xs={12} md={12}>
+          <Divider/>
+        </Grid>
+    </Grid>
     
     
     { 

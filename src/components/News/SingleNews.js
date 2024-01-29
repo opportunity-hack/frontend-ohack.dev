@@ -10,23 +10,26 @@ import {
   TextMuted,  
   EventCards,
   BlankContainer,
-  StyledTextLink
 } from './styles';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useState } from 'react';
 import { Snackbar } from '@mui/material';
 import { Alert } from '@mui/material';
+import { Typography } from '@mui/material';
+import ReactPixel from 'react-facebook-pixel';
 
+import InfoIcon from '@mui/icons-material/Info';
 import * as ga from '../../lib/ga';
 import React from 'react';
-import { Divider } from "@mui/material";
+
 import Image from 'next/image'
 
 import Link from 'next/link';
 
-function News( {newsData, frontPage} ) {
+function SingleNews( {newsItem} ) {
+  console.log("NEWS ITEM:", newsItem)
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -45,8 +48,7 @@ function News( {newsData, frontPage} ) {
   
   const gaButton = async (action, actionName) => {
     console.log("gaButton", "action:", action, "actionName:", actionName);
-
-    const ReactPixel =  require('react-facebook-pixel');
+    
     
     const options = {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -54,7 +56,7 @@ function News( {newsData, frontPage} ) {
     };
     var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
     
-    ReactPixel.default.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
 
     ReactPixel.track(action, { action_name: actionName });
 
@@ -74,26 +76,32 @@ function News( {newsData, frontPage} ) {
   };
 
   return (
-    <EventCards container direction='row' frontPage={frontPage} style={{ margin: '1px', padding: '8px' }}>      
-      { frontPage && <Link prefetch={false} href="/blog">        
-        <MoreNewsStyle>
-          More news
-          <ArrowForwardIcon/>
-        </MoreNewsStyle>        
-      </Link>
-      }
-      {/* Render news items */}
-      {newsData?.map((newsItem) => (
+    <EventCards container direction='row' style={{ margin: '2px', padding: '8px' }}>      
+        
+        <Link prefetch={false} href="/blog">        
+        <MoreNewsStyle>        
+          <ArrowBackIcon/>
+          Back to news
+        </MoreNewsStyle>   
+        </Link>
+
+        <Link prefetch={false} href="/about">        
+        <MoreNewsStyle style={{marginLeft:'5px'}}>        
+          <InfoIcon/>&nbsp;
+          Read more about us
+        </MoreNewsStyle>   
+        </Link>
+
         <BlankContainer xs={12} md={12} lg={12}  key={newsItem.id}>
           <TitleContainer container>          
             <Grid item xs={12} md={12} lg={12}>                          
-              {newsItem.image && (
+              {newsItem?.image && (
               <Image
                 src={newsItem.image}
                 alt={newsItem.title}
 
-                height={70}
-                width={70}
+                height={150}
+                width={150}
                                 
                 style={{
                   marginBottom: '0.5em',
@@ -101,8 +109,13 @@ function News( {newsData, frontPage} ) {
                 }}
               />                              
               )}
+                  
+                <Typography variant="h2">
+                    {newsItem.title}
+                </Typography>                
+            
 
-                <TitleStyled variant="h1"><Link prefetch={false} href={`/blog/${newsItem.id}`}><StyledTextLink>{newsItem.title}</StyledTextLink></Link>
+                <TitleStyled variant="h1">
 
                 <SlackButton onClick={() => gaButton("button_slack_post", newsItem.slack_permalink)} target="_blank" variant="outlined" >
                   <Link href={newsItem.slack_permalink} target='_blank'>
@@ -127,7 +140,7 @@ function News( {newsData, frontPage} ) {
               </TextMuted>
             </Grid>
           </TitleContainer>
-          <CaptionContainer>
+          <CaptionContainer style={{ fontSize: '15px'}}>
             {newsItem.description}
           </CaptionContainer>
           {
@@ -162,17 +175,11 @@ function News( {newsData, frontPage} ) {
             
           ))}
           </ButtonContainersSmall>    
-            <Divider style={{ marginTop: '2em' }}/>
         </BlankContainer>         
-      ))}
+      
+      
 
-      { frontPage && <Link prefetch={false} href="/blog">        
-        <MoreNewsStyle>
-          More news
-          <ArrowForwardIcon/>
-        </MoreNewsStyle>        
-      </Link>
-      }
+    
 
       <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleSnackbarClose}>
         <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
@@ -183,4 +190,4 @@ function News( {newsData, frontPage} ) {
   );
 
 }
-export default News;
+export default SingleNews;

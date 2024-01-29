@@ -69,6 +69,14 @@ export const StyledLink = styled(Button)({
   },
 });
 
+export const StyledTextLink = styled(Button)({    
+  fontWeight: 600,
+  fontSize: "15px",
+  margin: "0px",
+  padding: "0px"
+
+});
+
 export const ButtonGoldStyle = styled(Button)({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",
@@ -134,11 +142,13 @@ export const GridStyled = styled(Grid)((props) => ({
   },
 }));
 
-export const BlankContainer = styled(Grid)({
+export const BlankContainer = styled(Grid)((props) => ({
   display: "flex",
   flexDirection: "column",
-  position: "relative",
-});
+  position: "relative",    
+
+  
+}));
 
 export const EventCards = styled(Grid)((props) => ({
   height: "auto",
@@ -159,7 +169,7 @@ export const EventCards = styled(Grid)((props) => ({
 
 export const TitleContainer = styled(Grid)((props) => ({
   padding: "1rem 5% 0px 0px",
-  marginTop: "3rem",
+  marginTop: "1.1rem",
 
   [props.theme.breakpoints.down("md")]: {
     padding: props.right === "true" ? "15% 5% 5% 5%" : "3rem 2px 0 10px",
@@ -185,8 +195,7 @@ export const ButtonContainers = styled(Grid)((props) => ({
   gap: "1rem",
 }));
 
-export const ButtonContainersSmall = styled(Grid)((props) => ({
-  
+export const ButtonContainersSmall = styled(Grid)((props) => ({  
   flexDirection: "column",
   width: "auto",
   gap: "1rem",

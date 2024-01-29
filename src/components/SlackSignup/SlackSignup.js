@@ -1,5 +1,5 @@
 // Create page
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Stack } from '@mui/material';
 import { Typography } from '@mui/material';
@@ -30,8 +30,13 @@ export default function SlackSignup({ previousPage }) {
         autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
         debug: false, // enable logs
     };
-    const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);    
+    const advancedMatching = undefined; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+    
+    useEffect(() => {
+       if (typeof window !== 'undefined') {
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
+    }, []);
 
     const handleSignupClick = () => {
         // Ref: https://developers.facebook.com/docs/meta-pixel/reference#standard-events

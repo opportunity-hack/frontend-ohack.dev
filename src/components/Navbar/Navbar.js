@@ -1,13 +1,12 @@
-import React from "react";
+import React, { useEffect } from 'react';
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
 import MenuIcon from "@mui/icons-material/Menu";
 import * as ga from "../../lib/ga";
-import ReactPixel from 'react-facebook-pixel';
-
 
 import Button from "@mui/material/Button";
+import ReactPixel from "react-facebook-pixel";
 
 
 import {  
@@ -35,6 +34,7 @@ import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useAuth0 } from "@auth0/auth0-react";
+
 
 /*
 TODO: In the future we may want to show notifications using something like this
@@ -70,28 +70,39 @@ export default function NavBar() {
   const { isAuthenticated, logout, loginWithRedirect, user } = useAuth0();
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const [anchorElAbout, setAnchorElAbout] = React.useState(null);
-
+  const [anchorElAbout, setAnchorElAbout] = React.useState(null);  
 
   if (isAuthenticated && user && user.email) {    
-    ga.set(user.email);
-
-    const advancedMatching = {
-      em: user.email,
-      ct: '', // Add the missing properties
-      country: '',
-      db: '',
-      fn: '',
-      // Add the remaining properties
-    };
-    const options = {
-      autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-      debug: false, // enable logs
-    };
+    ga.set(user.email);  
     
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
     ReactPixel.track('Login Email Set');
   }
+
+  
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      var advancedMatching = undefined;
+      if( isAuthenticated && user && user.email )
+      {
+        advancedMatching = {
+          em: user.email,
+          ct: '', // Add the missing properties
+          country: '',
+          db: '',
+          fn: '',
+          // Add the remaining properties
+        };
+      }
+      
+      const options = {
+        autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
+        debug: false, // enable logs
+      };
+
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
+  }, []);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -102,26 +113,87 @@ export default function NavBar() {
     // Check if logged in
     if (isAuthenticated && user && user.email) {
       ga.event({
-        category: 'User',
-        action: 'Open User Menu',
-        label: user.email,
+        action: "Open User Menu",
+        params: {
+          category: 'User',          
+          label: user.email,
+        }
       });
+
+      /*
+      <!-- Event snippet for Page view conversion page
+      In your html page, add the snippet and call gtag_report_conversion when someone clicks on the chosen link or button. -->
+      <script>
+      function gtag_report_conversion(url) {
+        var callback = function () {
+          if (typeof(url) != 'undefined') {
+            window.location = url;
+          }
+        };
+        gtag('event', 'conversion', {
+            'send_to': 'AW-11474351176/JCk6COG-q4kZEMjost8q',
+            'event_callback': callback
+        });
+        return false;
+      }
+      </script>
+      */    
+
+      ga.event({ 
+        action: "conversion",
+        params: {
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     }    
   };
 
   const handleOpenAboutMenu = (event) => {
+    ga.event({ 
+        action: "conversion",        
+        params: {
+          "category": "handleOpenAboutMenu",
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     setAnchorElAbout(event.currentTarget);
   }
 
   const handleCloseNavMenu = () => {
+    ga.event({ 
+        action: "conversion",        
+        params: {
+          "category": "handleCloseNavMenu",
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     setAnchorElNav(null);
   };
 
   const handleCloseUserMenu = () => {
+    ga.event({ 
+        action: "conversion",        
+        params: {
+          "category": "handleCloseUserMenu",
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     setAnchorElUser(null);
   };
   
   const handleCloseAboutMenu = () => {
+    ga.event({ 
+        action: "conversion",        
+        params: {
+          "category": "handleCloseAboutMenu",
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
+
     setAnchorElAbout(null);
   }
 

@@ -30,6 +30,17 @@ export const TitleStyled = styled(Typography)((props) => ({
   },
 }));
 
+export const ReferencesStyled = styled(Typography)((props) => ({
+  fontSize: "1.5rem",
+  fontWeight: "600",
+  width: "calc(100% - 180px)",
+
+  [props.theme.breakpoints.down("sm")]: {
+    marginTop: "4rem",
+    width: "90%",
+  },
+}));
+
 export const YearStyled = styled(Typography)({
   color: "#808080",
   fontWeight: "bold",

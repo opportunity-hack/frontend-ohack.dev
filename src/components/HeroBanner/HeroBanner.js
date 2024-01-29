@@ -11,7 +11,7 @@ import {
 import { LoginButton } from "../Navbar/styles";
 
 import React, { Suspense, useEffect } from 'react';
-
+import * as ga from '../../lib/ga';
 
 
 import { useEnv } from '../../context/env.context';
@@ -19,7 +19,7 @@ import ReactPixel from 'react-facebook-pixel';
 
 // Assuming you're using Next.js for SSR
 import dynamic from 'next/dynamic';
-import * as ga from '../../lib/ga';
+
 import { useAuth0 } from '@auth0/auth0-react';
 
 
@@ -36,14 +36,12 @@ function HeroBanner() {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
     debug: false, // enable logs
   };
-  const advancedMatching = null; // { em: 'someemail@.com' }; // optional
-  
-  const initializeReactPixel = async () => {
-    await ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-  };
+  const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
   
   useEffect(() => {
-    initializeReactPixel();
+       if (typeof window !== 'undefined') {
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
   }, []);
   
 
@@ -54,7 +52,14 @@ function HeroBanner() {
 
 
   const gaButton = async (action, actionName) => {
-    await ReactPixel.track(action, { action_name: actionName });
+    ReactPixel.track(action, { action_name: actionName });
+
+    ga.event({ 
+        action: "conversion",
+        params: {
+          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+        }      
+      });
 
     ga.event({
       action: action,
@@ -99,6 +104,15 @@ function HeroBanner() {
             */
           }
             
+            <ButtonBasicStyle 
+              onClick={() => gaButton('button_donate', 'donate via PayPal')}
+              href='https://www.paypal.com/fundraiser/charity/4119839'
+              target="_blank"
+              style={{ color: 'white', backgroundColor: '#0070BA' }}
+            >
+              0. Donate via PayPal
+            </ButtonBasicStyle>
+
             <ButtonGoldStyle onClick={openCodeSample}>
               1. Create an OHack Slack account
             </ButtonGoldStyle>
@@ -119,24 +133,33 @@ function HeroBanner() {
             }
 
             {isAuthenticated && <ButtonBasicStyle
-              onClick={gaButton('button_profile', 'clicked to see profile')}
-              href='/profile'
+              style={{ color: 'white', backgroundColor: '#FFC107' }}
+              onClick={() => gaButton('button_profile', 'clicked to see profile')}
+              href='/profile'              
             >
               2. View your profile
             </ButtonBasicStyle>
             }
             
             <ButtonBasicStyle
-              onClick={gaButton('button_see_all', 'see_all_nonprofit_projects')}
+              onClick={() => gaButton('button_about', 'about us')}
+              href='/about'
+            >
+              3. Read more about us
+            </ButtonBasicStyle>
+
+            <ButtonBasicStyle
+              onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'
             >
-              3. See all nonprofit projects
+              4. See all nonprofit projects
             </ButtonBasicStyle>
+
           </ButtonContainers>
         </CaptionContainer>
       </BlankContainer>
       {/* Right Container */}
-      <BlankContainer xs={12} md={5} lg={5} flex justifyContent="center" alignItems="center">
+      <BlankContainer xs={12} md={5} lg={5}  justifyContent="center" alignItems="center">
           
       </BlankContainer>
     </GridStyled>

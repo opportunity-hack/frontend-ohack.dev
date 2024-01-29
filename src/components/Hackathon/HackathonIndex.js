@@ -2,8 +2,6 @@ import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../styles/
 import HackathonList from '../../components/HackathonList/HackathonList';
 import PreviousHackathonList from '../../components/HackathonList/PreviousHackathonList';
 import { Typography } from '@mui/material';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 
 
 export default function HackathonIndex()
