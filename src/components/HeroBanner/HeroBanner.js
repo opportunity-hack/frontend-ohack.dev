@@ -104,6 +104,15 @@ function HeroBanner() {
             */
           }
             
+            <ButtonBasicStyle 
+              onClick={() => gaButton('button_donate', 'donate via PayPal')}
+              href='https://www.paypal.com/fundraiser/charity/4119839'
+              target="_blank"
+              style={{ color: 'white', backgroundColor: '#0070BA' }}
+            >
+              0. Donate via PayPal
+            </ButtonBasicStyle>
+
             <ButtonGoldStyle onClick={openCodeSample}>
               1. Create an OHack Slack account
             </ButtonGoldStyle>
