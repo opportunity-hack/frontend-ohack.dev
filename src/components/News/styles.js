@@ -69,6 +69,14 @@ export const StyledLink = styled(Button)({
   },
 });
 
+export const StyledTextLink = styled(Button)({    
+  fontWeight: 600,
+  fontSize: "15px",
+  margin: "0px",
+  padding: "0px"
+
+});
+
 export const ButtonGoldStyle = styled(Button)({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",

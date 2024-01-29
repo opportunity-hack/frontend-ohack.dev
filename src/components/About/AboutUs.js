@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { TitleContainer, LayoutContainer, ProjectsContainer } from '../../styles/nonprofit/styles';
 import Head from 'next/head';
 import { Typography, Grid, Card, CardContent } from '@mui/material';
