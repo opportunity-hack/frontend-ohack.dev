@@ -100,8 +100,8 @@ function SingleNews( {newsItem} ) {
                 src={newsItem.image}
                 alt={newsItem.title}
 
-                height={70}
-                width={70}
+                height={150}
+                width={150}
                                 
                 style={{
                   marginBottom: '0.5em',
