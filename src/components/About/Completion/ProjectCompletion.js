@@ -9,6 +9,7 @@ import * as ga from "../../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
 import { InstagramEmbed } from 'react-social-media-embed';
 import TaskIcon from '@mui/icons-material/Task';
+import Link from 'next/link';
 
 const style = { fontSize: '15px' };
 
@@ -91,6 +92,20 @@ const Hearts = () => (
                         </Typography>
                         <Typography variant="h6" component="h4" gutterBottom>
                             Deployment of code so it can be used by others (not on your laptop but to AWS, fly.io, Google Cloud, etc)
+                        </Typography>                                                
+                    </CardContent>
+                </Card>
+
+                <Card style={{ border: '1px solid lightblue', marginBottom: '10px' }}>
+                    <CardContent>
+                        <Typography variant="h5" component="h3" gutterBottom>
+                            <TaskIcon/> Nonprofit Signoff
+                        </Typography>
+                        <Typography variant="h6" component="h4" gutterBottom>
+                            The nonprofit you're building this application for agrees that what you've built is usable for them as per the completion requirements.
+                            <Link href="https://docs.google.com/document/d/1_B5uRZ7bOwYRfhK9SiSQ9uYUhaU9jmmhyO9LhDvFY1Q/edit#bookmark=id.c05tj14rfvg6" target="_blank">
+                            <Button>Example</Button>
+                            </Link>
                         </Typography>                                                
                     </CardContent>
                 </Card>
