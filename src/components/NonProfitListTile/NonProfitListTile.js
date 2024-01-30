@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 // import Link from 'next/link';
 import TagIcon from '@mui/icons-material/Tag';
 // import IconButton from '@mui/material/IconButton';
@@ -25,16 +25,70 @@ import {
 import { Chip } from '@mui/material';
 
 export default function NonProfitListTile({
-  onSelected,
-  admin,
-  npo,
-  need_help_problem_statement_count,
-  in_production_problem_statement_count,
-  hacker_count,
-  mentor_count,
+  onSelected,  
+  npo,    
+  needs_help_flag,
+  production_flag,
   icon,
 }) {
-  const { user } = useAuth0();
+  const { user } = useAuth0();  
+  
+  const [productionProblemStatementCount, setProductionProblemStatementCount] = useState(0);
+  const [needHelpProblemStatementCount, setNeedHelpProblemStatementCount] = useState(0);
+  const [hackersCount, setHackersCount] = useState(0);
+  const [mentorsCount, setMentorsCount] = useState(0);
+
+  
+  useEffect(() => {
+    if (npo && npo.problem_statements) {
+
+      var totalProductionCount = 0;
+      var totalNeedsHelpCount = 0;            
+
+      let hackerSet = new Set();
+      let mentorSet = new Set();
+
+      npo.problem_statements.forEach((problem_statement_id) => {
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${problem_statement_id}`)
+          .then((response) => response.json())
+          .then((data) => {                        
+            if( data.status === "production")
+            {
+              totalProductionCount++;
+            }
+            else {
+              totalNeedsHelpCount++;
+            }
+
+            setProductionProblemStatementCount(totalProductionCount);
+            setNeedHelpProblemStatementCount(totalNeedsHelpCount);
+            
+            // For data.helping, check if type is "hacker" or "mentor", then increase hackersCount or mentorsCount accordingly
+            
+            if (data.helping != null) {
+              data.helping.forEach((helping) => {
+                if (helping.type === 'hacker') {                  
+                  hackerSet.add(helping.slack_user);
+                } else if (helping.type === 'mentor') {                  
+                  mentorSet.add(helping.slack_user);
+                }
+              });
+            }
+            setHackersCount(hackerSet.size);
+            setMentorsCount(mentorSet.size);
+            
+          })
+          .catch((error) => {
+            // Handle the error
+            console.error(error);
+          });
+      });
+
+      
+
+
+    }
+  }, [npo]);
 
   var number_of_problem_statements_helping_with = 0;
 
@@ -101,7 +155,7 @@ export default function NonProfitListTile({
       >
         <Button
           onClick={(event) => openCodeSample(event, npo.slack_channel)}
-          color={need_help_problem_statement_count ? 'warning' : 'primary'}
+          color={needHelpProblemStatementCount ? 'warning' : 'primary'}
           startIcon={<TagIcon />}
           variant='contained'
           size='large'
@@ -143,7 +197,7 @@ export default function NonProfitListTile({
   }
 
   const displayCountDetails = () => {
-    if (npo.problem_statements.length === 0) {
+    if (npo && npo.problem_statements && npo.problem_statements.length === 0) {
       return (
         <div>
           <CountDetailsText>No Projects Yet!</CountDetailsText>
@@ -153,8 +207,8 @@ export default function NonProfitListTile({
       return (
         <div>
           <CountDetailsText variant='h2'>
-            {npo.problem_statements.length} Project
-            {npo.problem_statements.length > 1 ? 's' : ''}
+            {npo.problem_statements?.length} Project
+            {npo.problem_statements?.length > 1 ? 's' : ''}
           </CountDetailsText>
 
           <Box
@@ -171,12 +225,12 @@ export default function NonProfitListTile({
                   <Chip
                     icon={<AddAlertIcon color='warning' fontSize='medium' />}
                     color={
-                      need_help_problem_statement_count ? 'warning' : 'primary'
+                      needHelpProblemStatementCount ? 'warning' : 'primary'
                     }
-                    label={`${need_help_problem_statement_count} Project${
-                      need_help_problem_statement_count === 1 ? '' : 's'
+                    label={`${needHelpProblemStatementCount} Project${
+                      needHelpProblemStatementCount === 1 ? '' : 's'
                     } 
-                need${need_help_problem_statement_count === 1 ? 's' : ''} help`}
+                need${needHelpProblemStatementCount === 1 ? 's' : ''} help`}
                     style={{ fontSize: '1.5rem' }}
                   />
                 </Grid>
@@ -186,11 +240,11 @@ export default function NonProfitListTile({
                       <WorkspacePremiumIcon color='success' fontSize='medium' />
                     }
                     color='success'
-                    label={`${in_production_problem_statement_count} Project${
-                      in_production_problem_statement_count === 1 ? '' : 's'
+                    label={`${productionProblemStatementCount} Project${
+                      productionProblemStatementCount === 1 ? '' : 's'
                     } 
                 ${
-                  in_production_problem_statement_count === 1 ? 'is' : 'are'
+                  productionProblemStatementCount === 1 ? 'is' : 'are'
                 } live`}
                     style={{ fontSize: '1.5rem' }}
                   />
@@ -200,10 +254,10 @@ export default function NonProfitListTile({
                     icon={<DeveloperModeIcon color='info' fontSize='medium' />}
                     color='info'
                     variant='outlined'
-                    label={`${hacker_count} Hacker${
-                      hacker_count === 1 ? '' : 's'
+                    label={`${hackersCount} Hacker${
+                      hackersCount === 1 ? '' : 's'
                     } 
-                ${hacker_count === 1 ? 'is' : 'are'} working on this`}
+                ${hackersCount === 1 ? 'is' : 'are'} working on this`}
                     style={{ fontSize: '1.5rem' }}
                   />
                 </Grid>
@@ -212,10 +266,10 @@ export default function NonProfitListTile({
                     icon={<SupportIcon color='info' fontSize='medium' />}
                     color='info'
                     variant='outlined'
-                    label={`${mentor_count} Mentor${
-                      mentor_count === 1 ? '' : 's'
+                    label={`${mentorsCount} Mentor${
+                      mentorsCount === 1 ? '' : 's'
                     } 
-                ${mentor_count === 1 ? 'is' : 'are'} assigned`}
+                ${mentorsCount === 1 ? 'is' : 'are'} assigned`}
                     style={{ fontSize: '1.5rem' }}
                   />
                 </Grid>
@@ -282,44 +336,17 @@ export default function NonProfitListTile({
     }
   };
 
-  if (admin) {
-    return (
-      <span>
-        <button
-          onClick={() => {
-            onSelected(npo);
-          }}
-        >
-          Edit
-        </button>
-        <h3 className='ohack-feature__headline'>
-          <img
-            className='ohack-feature__icon'
-            src={icon}
-            alt='external link icon'
-          />
-          {npo.name}
-        </h3>
-        {slackDetails}
-        <p className='ohack-feature__callout'>
-          {npo.problem_statements.length} Projects
-        </p>
-        <p className='ohack-feature__description'>
-          {npo.description ? getFirst50Words(npo.description) : 'No description available.'}
-        </p>
-      </span>
-    );
-  } else {
+  if ( (needs_help_flag && needHelpProblemStatementCount > 0) || (production_flag && productionProblemStatementCount > 0) ) {    
     return (
       <TileLink
         href={`/nonprofit/${npo.id}`}
         sx={{
           borderTop: `2px solid ${
-            need_help_problem_statement_count ? '#e65100' : '#66cefb'
+            needHelpProblemStatementCount ? '#e65100' : '#66cefb'
           }`,
           '&:hover': {
             borderTop: `4px solid ${
-              need_help_problem_statement_count ? '#e65100' : '#66cefb'
+              needHelpProblemStatementCount ? '#e65100' : '#66cefb'
             }`,
           },
         }}
@@ -330,14 +357,14 @@ export default function NonProfitListTile({
           <NonProfitName variant='h3' flex='1'>
             {npo.name}
           </NonProfitName>
-          {need_help_problem_statement_count ? (
+          {needHelpProblemStatementCount ? (
             <Badge
               showZero
               anchorOrigin={{
                 vertical: 'top',
                 horizontal: 'left',
               }}
-              badgeContent={need_help_problem_statement_count}
+              badgeContent={needHelpProblemStatementCount}
               color='warning'
               style={{
                 marginLeft: '2rem',
@@ -363,5 +390,8 @@ export default function NonProfitListTile({
         </Grid>
       </TileLink>
     );
+  }
+  else {
+    return "";
   }
 }
