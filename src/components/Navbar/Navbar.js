@@ -52,10 +52,11 @@ const pages = [
 ];
 
 const about_settings = [
-  [ 'About Us', '/about' ],
-  [ 'Mentors?', '/about/mentors' ],
-  [ 'Rewards ❤️', '/about/hearts' ],
-  [ 'Hackathon?' ,'/hack']
+  [ 'ℹ️ About Us', '/about' ],
+  [ '🙏 Mentors?', '/about/mentors' ],
+  [ '❤️ Rewards', '/about/hearts' ],
+  [ '✅ Project Completion', '/about/completion' ],
+  [ '🎉 Hackathon?' ,'/hack']
 ];
 
 const auth_settings = [

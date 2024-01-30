@@ -13,7 +13,7 @@ import {
 } from "./styles";
 
 export default function LoginOrRegister({ introText, previousPage }) {
-    const { loginWithRedirect } = useAuth0();
+    const { loginWithRedirect, user } = useAuth0();
     const options = {
         autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
         debug: false, // enable logs
@@ -53,7 +53,15 @@ export default function LoginOrRegister({ introText, previousPage }) {
         });
     };
 
-
+    if(user) {
+        return(
+        <Stack alignItems="center" paddingTop={5}>        
+        <ButtonStyled href={`/profile`}>
+            Go to your profile
+        </ButtonStyled>
+        </Stack>
+        );
+    } else {    
     return (
         <Stack alignItems="center" paddingTop={5}>
             <Alert variant="outlined" severity="info">
@@ -81,4 +89,5 @@ export default function LoginOrRegister({ introText, previousPage }) {
             </Alert>
         </Stack>
     );
+    }
 };
