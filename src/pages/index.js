@@ -5,6 +5,7 @@ import Head from "next/head";
 const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), {
   ssr: false,
 });
+
 const HackathonList = dynamic(() => import('../components/HackathonList/HackathonList'), {
   ssr: false
 });

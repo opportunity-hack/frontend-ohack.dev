@@ -22,6 +22,10 @@ import dynamic from 'next/dynamic';
 
 import { useAuth0 } from '@auth0/auth0-react';
 
+const LeadForm = dynamic(() => import('../LeadForm/LeadForm'), {
+  ssr: false,
+});
+
 
 const BackgroundGrid = React.lazy(() => import('./BackgroundGridComponent'));
 // Lazy load the TitleStyled and SpanText components
@@ -83,7 +87,9 @@ function HeroBanner() {
       <BlankContainer xs={12} md={7} lg={7}>
         
         <TitleContainer container>
-          <TitleStyled/>                        
+          
+        <TitleStyled/>                        
+        <LeadForm />
         </TitleContainer>
 
         <CaptionContainer right={'true'} container>
@@ -91,7 +97,7 @@ function HeroBanner() {
             Want to code for social good?
             <br/>
             Join us!
-          </TextStyled>
+          </TextStyled>          
           
           <ButtonContainers container>
           {/* Disable for new nonprofit form instead
