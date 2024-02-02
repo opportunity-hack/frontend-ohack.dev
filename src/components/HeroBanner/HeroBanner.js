@@ -9,7 +9,7 @@ import {
   BlankContainer,
 } from './styles';
 import { LoginButton } from "../Navbar/styles";
-
+import { Grid } from '@mui/material';
 import React, { Suspense, useEffect } from 'react';
 import * as ga from '../../lib/ga';
 
@@ -87,9 +87,12 @@ function HeroBanner() {
       <BlankContainer xs={12} md={7} lg={7}>
         
         <TitleContainer container>
-          
-        <TitleStyled/>                        
-        <LeadForm />
+        
+        <Grid key="mainTitleAndLeadForm" direction='row'>        
+          <TitleStyled/>                                        
+          <LeadForm />        
+        </Grid>
+
         </TitleContainer>
 
         <CaptionContainer right={'true'} container>
