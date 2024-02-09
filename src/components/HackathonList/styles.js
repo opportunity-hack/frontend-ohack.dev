@@ -111,7 +111,23 @@ export const EventGreyText = styled(Typography)({
   textTransform: "none",
 });
 
-export const TypographyStyled = styled(Typography)({});
+export const TypographyStyled = styled(Typography)({
+  
+  textDecoration: "none",
+  textTransform: "none",
+  fontSize: "1.2rem",
+  
+  "a": {
+    color: "rgb(0, 0, 255)",
+    textDecoration: "none",
+  },
+
+  "a:hover": {
+    color: "#00BFFF",
+    textDecoration: "underline",
+  },
+  
+});
 
 // Button
 export const EventButton = styled(Button)({

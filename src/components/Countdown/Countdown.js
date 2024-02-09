@@ -5,7 +5,7 @@ import {
   TypographyStyled,  
 } from "../HackathonList/styles";
 import { Grid } from "@mui/material";
-
+import ReactMarkdown from 'react-markdown'
 
 
 export default function Countdown({ details })
@@ -132,7 +132,7 @@ export default function Countdown({ details })
             }
             </SectionTitle>        
             <TypographyStyled variant="body1" sx={{ marginTop: "0%" }}>
-                {_description}
+                <ReactMarkdown>{_description}</ReactMarkdown>
             </TypographyStyled>
         </Grid>
         
