@@ -1,15 +1,42 @@
 
 import Grid from '@mui/material/Grid';
+import { TitleContainer, LayoutContainer, ProjectsContainer, LinkStyled} from '../../components/Certificate/styles';
+import { useEffect } from 'react';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+
+
+const Certificate = dynamic(() => import('../../components/Certificate/Certificate'), {
+    ssr: false
+});
+
 
 export default function CertInfoPage(){
-    
+    const [certInfos, setCertInfos] = useState([]);
+
+    // Call backend /api/certificates/rcent to get recent certificates
+    useEffect(() => {
+        // Make call to backend to get certificate info
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/certificates/recent`)
+        .then(response => response.json())
+        .then(data => setCertInfos(data.certs));
+    }
+    , []);
+
     return (
-            <Grid container direction="column" alignItems="center" spacing={1} style={{ marginTop: '20px' }}>
-                <Grid item>
-                    <h1>Hey! You need to add a cert id to the end of this url</h1>
-                </Grid>
-            
-            </Grid>
+            <LayoutContainer key="certificate" container>
+            <ProjectsContainer container style={{ marginTop: '2em'}} spacing={0.5}>                                             
+            { 
+                
+                certInfos.map((certInfo) => {
+                return (                    
+                        <Certificate certInfo={certInfo} />
+                    
+                );
+                })    
+            }
+            </ProjectsContainer>
+            </LayoutContainer>
         
     );
 };
