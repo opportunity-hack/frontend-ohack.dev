@@ -4,7 +4,7 @@ import {
   SectionTitle,  
   TypographyStyled,  
 } from "../HackathonList/styles";
-import { Grid } from "@mui/material";
+import { Grid, Typography } from "@mui/material";
 import ReactMarkdown from 'react-markdown'
 
 
@@ -122,7 +122,8 @@ export default function Countdown({ details })
             }
             {
                 Moment(_time).isBefore(Moment()) &&           
-                <span style={{color: "gray"}}> 🏁 completed </span>          
+                <span style={{color: "gray"}}> 🏁 <Typography size="small" component="span">Completed {Moment(_time).format('ddd MMM Do, h:mm a')}</Typography></span>          
+                
             }
             {
                 // Print time if it is not in the past

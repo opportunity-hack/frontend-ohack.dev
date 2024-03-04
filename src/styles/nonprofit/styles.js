@@ -3,10 +3,27 @@ import {
   Typography, 
   Chip, 
   Link, 
+  Button,
   // TODO: Are we planning to do anything thematically with Tooltip?
   // Tooltip 
 } from "@mui/material";
 import { styled as styling } from "@mui/material";
+
+export const MoreNewsStyle = styling(Button)({
+  borderRadius: "1rem",
+  paddingLeft: "0.9rem",
+  paddingRight: "0.9rem",
+  fontWeight: 600,  
+  fontSize: "12px",
+  textTransform: "unset !important",
+  backgroundColor: "#E0E0E0",
+  color: "#000000",
+  
+
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },
+});
 
 export const LayoutContainer = styling(Grid)({
   justifyContent: "center",
