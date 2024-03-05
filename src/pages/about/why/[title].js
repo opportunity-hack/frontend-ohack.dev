@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import dynamic from "next/dynamic";
 import Link from 'next/link';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Image from 'next/image';
 
 
 import { TitleContainer, LayoutContainer, ProjectsContainer, LinkStyled, MoreNewsStyle} from '../../../styles/nonprofit/styles';
@@ -136,7 +137,8 @@ const lookup = {
         Opportunity Hack today and start coding for a better world!
       </Typography>
     </div>,
-    'Leverage your coding skills to tackle social issues like poverty, education, and healthcare. Discover the benefits and challenges of coding for good, along with resources to kickstart your journey.'
+    'Leverage your coding skills to tackle social issues like poverty, education, and healthcare. Discover the benefits and challenges of coding for good, along with resources to kickstart your journey.',
+    'https://cdn.ohack.dev/ohack.dev/why/coding_for_good.webp'
 
   ],
   'why-you-should-join-opportunity-hack-and-code-for-social-impact': [
@@ -183,8 +185,10 @@ const lookup = {
                         Joining Opportunity Hack is a fantastic way to enhance your learning, build a strong portfolio, network with professionals, and contribute to a meaningful cause. Don't miss out on this unique opportunity to make a difference while shaping your future as a software engineer!
                     </Typography>
                 </div>,
-                'Leverage your coding skills for social good! Join Opportunity Hack, a global community connecting coders with nonprofits. Build your portfolio, network, gain real-world experience, and make a positive impact.'
+                'Leverage your coding skills for social good! Join Opportunity Hack, a global community connecting coders with nonprofits. Build your portfolio, network, gain real-world experience, and make a positive impact.',
+                'https://cdn.ohack.dev/ohack.dev/why/college_students.webp'
             ],
+
             'how-to-find-and-work-on-nonprofit-projects-that-match-your-coding-interests-and-expertise': [
                 'Laid off? How to Find and Work on Nonprofit Projects that Match Your Coding Interests and Expertise',
                 'Being laid off is undoubtedly a challenging experience. While you focus on your job search, utilizing your tech skills to contribute to a meaningful cause can be incredibly rewarding. This article guides you through finding and working on impactful nonprofit projects that align with your coding expertise and interests.',
@@ -253,7 +257,8 @@ const lookup = {
                         Contributing to a meaningful project during your job search not only benefits society but also demonstrates valuable qualities to potential employers. Remember, even if you haven't coded professionally, platforms like Opportunity Hack can be a starting point to learn and contribute, regardless of your experience level. Embrace this opportunity to showcase your skills, make a positive impact, and stay engaged in the tech field while you search for your next exciting role.
                     </Typography>
                 </div>,
-                'Leverage your coding skills during your job search! This guide helps you find and work on nonprofit projects that align with your expertise, contribute to society, and showcase your dedication to potential employers.'
+                'Leverage your coding skills during your job search! This guide helps you find and work on nonprofit projects that align with your expertise, contribute to society, and showcase your dedication to potential employers.',
+                'https://cdn.ohack.dev/ohack.dev/why/work_for_nonprofit.webp'
             ]
         }
 
@@ -269,31 +274,29 @@ const lookup = {
 
             return (
                 <div>
-                    <LayoutContainer key="why" container>
-                     
-        
-                
-                <TitleContainer container>
-                
-                    <Typography variant="h2">
-                        {content[0]}
-                    </Typography>      
+                <LayoutContainer key="why" container>                
+                    <TitleContainer container>
 
-                    <Link prefetch={false} href="/about/why">        
-        <MoreNewsStyle>        
-          <ArrowBackIcon/>
-          Back to why
-        </MoreNewsStyle>   
-        </Link>
-        
-                </TitleContainer>
+                    <Image src={content[4]} alt="Why Opportunity Hack" width={300} height={300} />
+                        <Typography variant="h2">
+                            {content[0]}
+                        </Typography>      
 
-                <ProjectsContainer mt={"50px"}>
-                <Typography variant="body1" style={style} mb={1.5}>
-                    {content[1]}
-                </Typography>
+                        <Link prefetch={false} href="/about/why">        
+                        <MoreNewsStyle>        
+                        <ArrowBackIcon/>
+                        Back to why
+                        </MoreNewsStyle>   
+                        </Link>
+    
+                    </TitleContainer>
 
-                {content[2]}
+                    <ProjectsContainer mt={"50px"}>
+                        <Typography variant="body1" style={style} mb={1.5}>
+                        {content[1]}
+                    </Typography>
+
+                    {content[2]}
                     
                     <LoginOrRegister introText="Ready to join us as a mentor?" previousPage={"/about/mentors"} />
 
@@ -323,6 +326,7 @@ const lookup = {
         export async function getStaticProps({ params = {} } = {}) {
                 var title = lookup[params.title][0];
                 var metaDescription = lookup[params.title][3];
+                var image = lookup[params.title][4];
                 
             return {
                 props: {
@@ -355,12 +359,12 @@ const lookup = {
                         },
                         {
                             property: "og:image",
-                            content: "https://i.imgur.com/Ff801O6.png",
+                            content: image,
                             key: "ogimage",
                         },
                         {
                             property: "twitter:image",
-                            content: "https://i.imgur.com/Ff801O6.png",
+                            content: image,
                             key: "twitterimage",
                         },
                         {
