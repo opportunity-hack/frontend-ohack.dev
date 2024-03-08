@@ -32,7 +32,7 @@ function News( {newsData, frontPage} ) {
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const handleCopy = (text) => {
-    navigator.clipboard.writeText(text + " More at www.ohack.dev/blog"); // Copy the text to clipboard
+    navigator.clipboard.writeText(text); // Copy the text to clipboard
     setSnackbarMessage('Text copied!');
     setSnackbarOpen(true);
     gaButton("button_copy",text);
@@ -111,7 +111,7 @@ function News( {newsData, frontPage} ) {
                 </SlackButton>
               
                 <FileCopyIcon // Add the FileCopy icon button
-                  onClick={() => handleCopy(`${newsItem.title} ${newsItem.description}`)} // Call handleCopy function on click
+                  onClick={() => handleCopy(`${newsItem.title} ${newsItem.description} More at https://ohack.dev/blog/${newsItem.id}`)} // Call handleCopy function on click
                   style={{ cursor: 'pointer', marginLeft: '5px' }}
                 />
                 
