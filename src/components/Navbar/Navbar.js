@@ -200,11 +200,11 @@ export default function NavBar() {
 
 
   return (
-    <AppBar position="fixed">
+    <AppBar key="navbar" position="fixed">
        <Head>
         <link rel="preload" href="https://cdn.ohack.dev/ohack.dev/ohack_white.webp" as="image" />
        </Head>
-      <Container maxWidth="xl">
+      <Container key="navbarcontainer" maxWidth="xl">
         <Toolbar disableGutters>
           
           <Typography

@@ -153,7 +153,7 @@ export const BlankContainer = styled(Grid)((props) => ({
 export const EventCards = styled(Grid)((props) => ({
   height: "auto",
   padding: "2%",
-  maxWidth: props.frontPage ? "30%" : "100%",
+  maxWidth: props.frontpage ? "30%" : "100%",
   boxShadow: "10px",
   backgroundColor: "#e6f7ff",
   borderRadius: "15px",

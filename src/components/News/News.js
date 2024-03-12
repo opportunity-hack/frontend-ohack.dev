@@ -26,7 +26,7 @@ import Image from 'next/image'
 
 import Link from 'next/link';
 
-function News( {newsData, frontPage} ) {
+function News( {newsData, frontpage} ) {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -74,8 +74,8 @@ function News( {newsData, frontPage} ) {
   };
 
   return (
-    <EventCards container direction='row' frontPage={frontPage} style={{ margin: '1px', padding: '8px' }}>      
-      { frontPage && <Link prefetch={false} href="/blog">        
+    <EventCards container direction='row' frontpage={frontpage} style={{ margin: '1px', padding: '8px' }}>      
+      { frontpage && <Link prefetch={false} href="/blog">        
         <MoreNewsStyle>
           More news
           <ArrowForwardIcon/>
@@ -166,7 +166,7 @@ function News( {newsData, frontPage} ) {
         </BlankContainer>         
       ))}
 
-      { frontPage && <Link prefetch={false} href="/blog">        
+      { frontpage && <Link prefetch={false} href="/blog">        
         <MoreNewsStyle>
           More news
           <ArrowForwardIcon/>
