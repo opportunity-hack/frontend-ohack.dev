@@ -55,6 +55,10 @@ export default function Profile(props) {
 
   // Update expertise, education, and shirt size from the profile
   React.useEffect(() => {
+    if (!profile || !profile?.role || !profile?.education || !profile?.shirt_size) {
+      return;
+    }
+    
     setRole(profile?.role);    
     setEducation(profile?.education);
     setShirtSize(profile?.shirt_size);
@@ -273,7 +277,7 @@ export default function Profile(props) {
                 renderValue={(selected) => selected.join(', ')}
               >
                 
-                {expertise.length > 0 && expertiseListLabels.map((e, index) => (
+                { expertiseListLabels.map((e, index) => (
                   <MenuItem key={e} value={e}>
                     <Checkbox checked={expertise.indexOf(e) > -1} />
                     <ListItemText primary={e} />
