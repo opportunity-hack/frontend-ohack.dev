@@ -61,7 +61,9 @@ export default function MyApp({ Component, pageProps }) {
         domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN}
         clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID}
         audience={process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}
-        redirectUri={typeof window !== 'undefined' && window.location.origin}        
+        authorizationParams={{
+          redirect_uri: typeof window !== 'undefined' && window.location.origin 
+        }}        
       >
         <Auth0Wrapper>
         <ThemeProvider theme={theme}>
