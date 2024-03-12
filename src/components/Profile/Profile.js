@@ -3,13 +3,18 @@ import Router from "next/router.js";
 import React, { 
   // useEffect 
 } from "react";
-
+import { FormControl, TextField, InputLabel, MenuItem, Select } from "@mui/material";
 import useProfileApi from "../../hooks/use-profile-api.js";
 import BadgeList from "../../components/badge-list";
 import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
 // Material UI Sheild Icon
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import Stack from '@mui/material/Stack';
+import Checkbox from '@mui/material/Checkbox';
+import ListItemText from '@mui/material/ListItemText';
+
+
 
 // TODO: Use?
 // import CodeSnippet from "../../components/code-snippet";
@@ -31,15 +36,152 @@ import {
 import { Link, Typography } from "@mui/material";
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack.js";
 
-export default function Profile(props) {
-  const { isLoading, isAuthenticated, user } = useAuth0();
-  // TODO: Expose a user context that returns the current DB (not auth0) user and an accompanying useCurrentUser() hook
-  const  user_id  = props?.user_id ?? user?.sub; // Slack User ID (since we get this from the Auth0 Session)
 
- 
+export default function Profile(props) {
+  const { isLoading, isAuthenticated, user } = useAuth0();   
+
   
-  // TODO: Pass user_id prop to useProfileApi
-  const { badges, hackathons, profile, feedback_url } = useProfileApi({ user_id });
+  const  user_id  = props?.user_id ?? user?.sub; // Slack User ID (since we get this from the Auth0 Session)
+  const { badges, hackathons, profile, feedback_url, update_profile_metadata } = useProfileApi({ user_id });
+  console.log("Profile", profile);
+
+
+  const [role, setRole] = React.useState("");
+  const [expertise, setExpertise] = React.useState([]);
+  const [education, setEducation] = React.useState("");
+  const [shirtSize, setShirtSize] = React.useState("");
+  const [lastCompanyUpdate, setLastCompanyUpdate] = React.useState(0);
+  const [company, setCompany] = React.useState("");
+
+  // Update expertise, education, and shirt size from the profile
+  React.useEffect(() => {
+    setRole(profile?.role);    
+    setEducation(profile?.education);
+    setShirtSize(profile?.shirt_size);
+
+    console.log("Expertise:", profile?.expertise);
+    if (profile?.expertise) {
+      setExpertise(profile?.expertise);
+    }
+
+    setCompany(profile?.company);
+
+  }, [profile]);
+
+
+  const expertiseListLabels = [
+    "Software Engineering",
+    "Software Engineering: Front-end (CSS/JS, Node, Angular, React, etc)",
+    "Software Engineering: Back-end (Java, Python, Ruby, etc)",
+    "Software Engineering: Mobile (iOS, Android)",
+    "Software Engineering: Data Science & Machine Learning",
+    "AWS, Google Cloud, Heroku",
+    "GitHub ninja",
+    "Product Management",
+    "Project Manager",
+    "User Experience",
+    "Data Science",
+    "Data Analysis",
+    "Nonprofit Mindset",
+    "Marketing",
+    "Business",
+    "Finance",
+  ];
+
+  const onRoleChange = (event) => {
+    // Call the API to save the user's profile
+    console.log("Save to backend", event.target.value);
+
+    const onComplete = () => {
+      console.log("Profile role updated");
+    }
+
+    update_profile_metadata({ "role": event.target.value }, onComplete );    
+
+    setRole(event.target.value);
+  }
+
+  const handleExpertiseChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+
+    // On autofill we get the stringified value.
+    const toSet = typeof value === "string" ? value.split(",") : value;
+
+    setExpertise(toSet);
+
+    // Call the API to save the user's profile
+    console.log("Save to backend", {
+      toSet
+    });
+
+    const onComplete = () => {
+      console.log("Profile expertise updated");
+    }
+
+    update_profile_metadata({ "expertise": toSet }, onComplete );
+  }
+  
+
+  const handleEducationChange = (event) => {
+    // Call the API to save the user's profile
+    console.log("Save to backend", event.target.value);
+
+    const onComplete = () => {
+      console.log("Profile education updated");
+    }
+
+    update_profile_metadata({ "education": event.target.value }, onComplete );
+
+    setEducation(event.target.value);
+  }
+
+  const handleShirtSizeChange = (event) => {
+    // Call the API to save the user's profile
+    console.log("Save to backend", event.target.value);
+
+    const onComplete = () => {
+      console.log("Profile shirt size updated");
+    }
+
+    update_profile_metadata({ "shirt_size": event.target.value }, onComplete );
+
+    setShirtSize(event.target.value);
+  }
+
+  const handleCompanyChange = (event) => {
+   // Since company is a text field, wait a few seconds for the user to type before calling to save
+    // Call the API to save the user's profile
+    console.log("Save to backend", event.target.value);
+
+    const onComplete = () => {
+      console.log("Profile company updated");
+    }
+
+    // To prevent too many calls to the backend we'll wait a few seconds before calling the API
+    // This is a common pattern to prevent too many calls to the backend
+    // This is called "debouncing"
+    setCompany(event.target.value);
+
+    // Clear the last timeout
+    clearTimeout(lastCompanyUpdate);
+
+    // Set a new timeout
+    setLastCompanyUpdate(setTimeout(() => {
+      update_profile_metadata({ "company": event.target.value }, onComplete );
+    }, 2000));
+  }
+
+
+
+  const style = {
+    fontSize: 14
+  };
+
+
+  
+  
 
   if (!isLoading && !isAuthenticated) {
     Router.push("/");
@@ -83,7 +225,132 @@ export default function Profile(props) {
               See Your Public Profile
           </ProfileButton>
           </Link>
-          <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6" github_name="Issue #6" />
+
+          
+
+          
+          <Typography variant="h2" mt={2} style={{ fontWeight: 600, fontSize: "2rem" }}>
+            Tell us more about yourself and why you're here
+          </Typography>
+          <Typography variant="body1" mt={2}>
+            We ask because we want to make sure we're providing the right resources and opportunities for you.
+          </Typography>
+
+                    
+            <Stack direction="column" spacing={2} mt={2}>
+            
+            <FormControl>
+            <InputLabel id="role-label" style={style}>What hat are you currently wearing?</InputLabel>
+            <Select
+              labelId="role-label"
+              id="role-select"
+              value={role}
+              label="Role"
+              style={{ width: "300px" }}
+              onChange={(event) => onRoleChange( event ) }
+            >
+              <MenuItem value="">Select a role</MenuItem>
+              <MenuItem value="mentor">Mentor</MenuItem>
+              <MenuItem value="volunteer">Volunteer</MenuItem>
+              <MenuItem value="judge">Judge</MenuItem>
+              <MenuItem value="nonprofit">Nonprofit</MenuItem>
+              <MenuItem value="sponsor">Sponsor</MenuItem>
+              <MenuItem value="organizer">Organizer</MenuItem>
+            </Select>
+            </FormControl>
+
+
+            <FormControl>
+              <InputLabel id="expertise-label" style={style} >Areas of Expertise</InputLabel>
+              <Select
+                labelId="expertise-label"
+                id="expertise-select"
+                value={expertise}
+                onChange={handleExpertiseChange}
+                label="Area of Expertise"
+                style={{ width: "300px" }}
+                multiple                
+                renderValue={(selected) => selected.join(', ')}
+              >
+                
+                {expertise.length > 0 && expertiseListLabels.map((e, index) => (
+                  <MenuItem key={e} value={e}>
+                    <Checkbox checked={expertise.indexOf(e) > -1} />
+                    <ListItemText primary={e} />
+                    
+                  </MenuItem>
+                ))}
+
+
+              </Select>
+            </FormControl>
+
+          <FormControl>  
+              <InputLabel id="education-label" style={style}>Level of Education</InputLabel>
+              <Select
+                labelId="education-label"
+                id="education-select"
+                value={education}
+                label="Level of Education"
+                style={{ width: "300px" }}
+                onChange={(event) => handleEducationChange(event)}
+              >
+                <MenuItem value="">Select a level of education</MenuItem>
+                <MenuItem value="high-school">High School</MenuItem>
+                <MenuItem value="some-college">Some College</MenuItem>
+                <MenuItem value="completed-undergraduate-school">Completed Undergraduate</MenuItem>
+                
+                <MenuItem value="some-graduate-school">Some Graduate School</MenuItem>
+                <MenuItem value="completed-graduate-school">Completed Graduate School</MenuItem>
+                
+                <MenuItem value="coding-bootcamp">Some Coding Bootcamp</MenuItem>
+                <MenuItem value="coding-bootcamp">Completed Coding Bootcamp</MenuItem>
+                
+                <MenuItem value="other">Other</MenuItem>
+
+              </Select>        
+          </FormControl>
+          
+          <FormControl>            
+            <TextField
+              id="company"
+              onChange={handleCompanyChange}
+              aria-describedby="company-helper-text"
+              label="If you're working, what company do you work for?"
+              value={company}
+            />
+          </FormControl>
+
+          <FormControl>
+            <InputLabel id="shirt-label" style={style}>Shirt Size</InputLabel>
+            <Select
+              labelId="shirt-label"
+              id="shirt-select"
+              value={shirtSize}
+              label="Shirt Size"
+              style={{ width: "300px" }}
+              onChange={(event) => handleShirtSizeChange(event)}
+            >
+              <MenuItem value="">Select a shirt size</MenuItem>
+              <MenuItem value="small">Small</MenuItem>
+              <MenuItem value="medium">Medium</MenuItem>
+              <MenuItem value="large">Large</MenuItem>
+              <MenuItem value="x-large">X-Large</MenuItem>
+              <MenuItem value="xx-large">XX-Large</MenuItem> 
+            </Select>          
+          </FormControl>
+
+          
+          
+
+          
+
+          </Stack>
+
+          <HelpUsBuildOHack
+            github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6"
+            github_name="Issue #6"
+          />
         </ProfileContainer>
 
         <div className="profile__details">
@@ -97,7 +364,6 @@ export default function Profile(props) {
           Feedback you give and receive
           <FeedbackLite feedback_url={feedback_url} history={profile.history} />
 
-          
           <h2 className="profile__title">Hackathons</h2>
           <p>
             We've tried our best to keep track of each time you've volunteered,
@@ -117,9 +383,10 @@ export default function Profile(props) {
           <p>
             Feedback gathered from your mentors, peers, team members, nonprofits
           </p>
-          <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8" github_name="Issue #8" />
-
-         
+          <HelpUsBuildOHack
+            github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8"
+            github_name="Issue #8"
+          />
         </div>
       </InnerContainer>
     </LayoutContainer>

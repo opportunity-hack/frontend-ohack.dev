@@ -58,6 +58,30 @@ export default function useProfileApi(props){
         }
     }, [getAccessTokenSilently]);
 
+
+    const update_profile_metadata = async (metadata, onComplete) => {
+        if (!user)
+            return null;
+
+        const config = {
+            url: `${apiServerUrl}/api/messages/profile`,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: {
+                user_id: user_id,
+                metadata: metadata
+            }
+        };
+
+        const data = await makeRequest({ config, authenticated: true });
+        onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
+        return data;
+    };
+
+
     const handle_help_toggle = async (status, problem_statement_id, mentor_or_hacker, npo_id) => {
         if (!user)
             return null;
@@ -191,6 +215,7 @@ export default function useProfileApi(props){
         profile,
         get_user_by_id,
         feedback_url,
-        handle_help_toggle
+        handle_help_toggle,
+        update_profile_metadata
     };
 };

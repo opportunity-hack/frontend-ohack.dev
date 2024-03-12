@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-import { EmptyGrid, OuterGrid, TypographyStyled } from "./styles";
+import { EmptyGrid, OuterGrid, MoreNewsStyle } from "./styles";
 import EventFeature from "./EventFeature";
 import { SectionTitle } from "./styles";
+import Link from 'next/link';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 import dynamic from 'next/dynamic'
 const News = dynamic(() => import('../../components/News/News'), {
@@ -62,9 +64,12 @@ function HackathonList() {
       
         { 
           hackathons && hackathons.length === 0 && (
-            <TypographyStyled variant="h4">
-              No events found!
-            </TypographyStyled>
+             <Link prefetch={false} href="/hack">        
+              <MoreNewsStyle>
+                See older hacks
+                <ArrowForwardIcon/>
+              </MoreNewsStyle>        
+            </Link>
           )
         }
       
