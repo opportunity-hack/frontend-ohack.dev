@@ -11,6 +11,7 @@ import { useState, useCallback } from "react";
 import { Puff } from "react-loading-icons";
 
 import { NonProfitContainer, NonProfitGrid } from "../../styles/nonprofits/styles";
+import useProfileApi from "../../hooks/use-profile-api";
 
 import {
   ContentContainer,
@@ -22,6 +23,7 @@ import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 
 function NonProfitList() {
     let { nonprofits } = useNonprofit();    
+    const { profile } = useProfileApi();
 
     const [searchString, setSearchString] = useState('');
     const [needs_help_flag, setNeedsHelpFlag] = useState(true);
@@ -122,8 +124,9 @@ function NonProfitList() {
       return result.map((npo) => {                                    
         return (
           <NonProfitListTile
-            npo={npo}
             key={npo.id}     
+            npo={npo}            
+            profile={profile}
             needs_help_flag={needs_help_flag}
             production_flag={production_flag}         
             icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"

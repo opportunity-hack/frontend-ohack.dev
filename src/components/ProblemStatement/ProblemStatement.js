@@ -80,14 +80,14 @@ import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 import ReactPixel from 'react-facebook-pixel';
 import useProblemstatements from "../../hooks/use-problem-statements";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-import { useAuth0 } from "@auth0/auth0-react";
+import {useRedirectFunctions} from "@propelauth/react"
 
 import * as ga from '../../lib/ga';
 
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
   const isLargeScreen = useMediaQuery('(min-width: 768px)');
 
-  const { loginWithRedirect } = useAuth0();
+  const { redirectToLoginPage } = useRedirectFunctions();
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
   const { handle_get_team, handle_new_team_submission, handle_join_team, handle_unjoin_a_team } = useTeams();
@@ -223,7 +223,7 @@ const volunteerWords = [
     }, [hackathonEvents]);
 
 
-  const { get_user_by_id } = useProfileApi();
+  const { get_user_by_id, profile, handle_help_toggle} = useProfileApi();
   const [userLoaded, setUserLoaded] = useState(false);
   const [userError, setUserError] = useState(false);
   const [userErrorDetails, setUserErrorDetails] = useState(null);
@@ -272,7 +272,7 @@ const volunteerWords = [
     useState("");
   const [newGithubUsername, setNewGithubUsername] = useState("");
 
-  const { handle_help_toggle } = useProfileApi();
+
 
   const options = {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -290,14 +290,14 @@ const volunteerWords = [
   const [expanded, setExpanded] = useState("Events");
   const handleChange = (panel) => (event, isExpanded) => {
     // Set user object and handle null
-    const user_id = user ? user.sub : null;
+    
     const params = {
       action_name: isExpanded ? "open" : "close",
       panel_id: panel,
       npo_id: npo_id,
       problem_statement_id: problem_statement.id,
       problem_statement_title: problem_statement.title,
-      user_id: user_id
+      user_id: user.userId // Propel User ID
     }    
     ReactPixel.trackCustom("problem_statement_accordion", params);
     ga.event({
@@ -362,7 +362,7 @@ const volunteerWords = [
         problem_statement_id: problem_statement.id,
         problem_statement_title: problem_statement.title,
         npo_id: npo_id,
-        user_id: user.sub
+        user_id: user.userId // Propel User ID
         });
     } else {
       setOpenUnhelp(true);
@@ -371,7 +371,7 @@ const volunteerWords = [
         problem_statement_id: problem_statement.id,
         problem_statement_title: problem_statement.title,
         npo_id: npo_id,
-        user_id: user.sub
+        user_id: user.userId 
         });
     }
   };
@@ -487,8 +487,7 @@ const volunteerWords = [
       team_name: newTeamName,
       slack_channel: newTeamSlackChannel,
       problem_statement_id: newTeamProblemStatementId,
-      event_id: newTeamEventId,
-      user_id: user.sub
+      event_id: newTeamEventId      
     }
     ReactPixel.trackCustom("team_create", params);
     ga.event({
@@ -502,7 +501,6 @@ const volunteerWords = [
       newTeamSlackChannel,
       newTeamProblemStatementId,
       newTeamEventId,
-      user.sub,
       newGithubUsername,      
       handleTeamCreationResponse
     );
@@ -560,7 +558,7 @@ const volunteerWords = [
   const handleCloseTeamCreate = (event) => {
     setCreateTeamOpen(false); // Cancel or close selected
     ReactPixel.track("Team Creation Dialog Closed", {
-      user_id: user.sub
+      user_id: user.userId
     });
     ga.event({
       category: "Team Creation",
@@ -576,7 +574,7 @@ const volunteerWords = [
       problem_statement_id: problem_statement.id,
       problem_statement_title: problem_statement.title,
       npo_id: npo_id,
-      user_id: user.sub,
+      user_id: user.userId,
       mentor_or_hacker: event.target.value
       });
     ga.event({
@@ -604,7 +602,7 @@ const volunteerWords = [
       problem_statement_id: problem_statement.id,
       problem_statement_title: problem_statement.title,
       npo_id: npo_id,
-      user_id: user.sub
+      user_id: user.userId
       });
     ga.event({
       category: "Helping",
@@ -623,7 +621,7 @@ const volunteerWords = [
       problem_statement_id: problem_statement.id,
       problem_statement_title: problem_statement.title,
       npo_id: npo_id,
-      user_id: user.sub
+      user_id: user.userId
     });
     ga.event({
       category: "Helping",
@@ -725,13 +723,14 @@ const volunteerWords = [
   useMemo(() => {
     if (problem_statement.helping != null && user != null && problem_statement.helping.length > 0) {
       problem_statement.helping.forEach((help) => {
-        if (help.slack_user === user.sub) {
+        
+        if (help.slack_user === profile.user_id) {          
           setHelpedChecked("checked");
           setHelpingType(help.type);
         }
       });
     }
-  }, [problem_statement, user]);
+  }, [problem_statement, user, profile]);
 
   if (user == null) {     
     // helpingSwitch should set a FormControlLabel and helpingSwitch should show everyting disabled
@@ -775,12 +774,11 @@ const volunteerWords = [
         <LoginButton
                 variant="contained"
                 disableElevation
-                  onClick={() => loginWithRedirect({
-                    appState: {
-                      returnTo: window.location.pathname,
-                      redirectUri: window.location.pathname,
-                    },
-                  })}
+                  onClick={() => redirectToLoginPage(
+                    {
+                      postLoginRedirectUrl: window.location.href
+                    }
+                  )}
                 className="login-button"
               >
                 Log In
@@ -912,7 +910,7 @@ const volunteerWords = [
           onTeamCreate={handleTeamCreate}
           onTeamLeave={handleLeavingTeam}          
           onTeamJoin={handleJoiningTeam}
-          user={user}
+          user={profile}
           problemStatementId={problem_statement.id}
           isHelping={help_checked}
         />              

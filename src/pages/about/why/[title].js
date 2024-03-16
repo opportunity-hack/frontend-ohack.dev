@@ -298,7 +298,7 @@ const lookup = {
 
                     {content[2]}
                     
-                    <LoginOrRegister introText="Ready to join us as a mentor?" previousPage={"/about/mentors"} />
+                    <LoginOrRegister introText="Ready to join us?" previousPage={"/about/mentors"} />
 
                 </ProjectsContainer>
             </LayoutContainer>

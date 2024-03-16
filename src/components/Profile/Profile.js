@@ -1,5 +1,5 @@
-import { useAuth0 } from "@auth0/auth0-react";
-import Router from "next/router.js";
+import { useAuthInfo } from '@propelauth/react'
+
 import React, { 
   // useEffect 
 } from "react";
@@ -13,7 +13,7 @@ import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import Stack from '@mui/material/Stack';
 import Checkbox from '@mui/material/Checkbox';
 import ListItemText from '@mui/material/ListItemText';
-
+import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 
 
 // TODO: Use?
@@ -38,12 +38,11 @@ import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack.js";
 
 
 export default function Profile(props) {
-  const { isLoading, isAuthenticated, user } = useAuth0();   
+  const { isLoggedIn, user } = useAuthInfo();
 
   
-  const  user_id  = props?.user_id ?? user?.sub; // Slack User ID (since we get this from the Auth0 Session)
-  const { badges, hackathons, profile, feedback_url, update_profile_metadata } = useProfileApi({ user_id });
-  console.log("Profile", profile);
+  
+  const { badges, hackathons, profile, feedback_url, update_profile_metadata } = useProfileApi({ });  
 
 
   const [role, setRole] = React.useState("");
@@ -63,7 +62,7 @@ export default function Profile(props) {
     setEducation(profile?.education);
     setShirtSize(profile?.shirt_size);
 
-    console.log("Expertise:", profile?.expertise);
+    
     if (profile?.expertise) {
       setExpertise(profile?.expertise);
     }
@@ -187,9 +186,7 @@ export default function Profile(props) {
   
   
 
-  if (!isLoading && !isAuthenticated) {
-    Router.push("/");
-  }
+  console.log("isLoggedIn", isLoggedIn);
 
   return (
     <LayoutContainer container>
@@ -197,10 +194,12 @@ export default function Profile(props) {
         <Head>
           <title>Profile - Opportunity Hack Developer Portal</title>
         </Head>
-        <ProfileContainer>
+        
+        
+        {isLoggedIn && <ProfileContainer>
           <ProfileHeader container>
             <ProfileAvatar
-              src={user?.picture}
+              src={user?.pictureUrl}
               alt="Profile"
               width={60}
               height={60}
@@ -215,12 +214,12 @@ export default function Profile(props) {
                   marginBottom: "0.5rem",
                 }}
               >
-                {user?.name}{" "}
+                {user?.firstName} {user?.lastName}{" "}
                 <VerifiedUserIcon color="success" fontSize="large" />
               </Typography>
               <ProfileDetailText>{user?.email}</ProfileDetailText>
               <ProfileDetailText>
-                Last login: <Moment fromNow>{user?.updated_at}</Moment>
+                Created: <Moment fromNow>{user?.createdAt * 1000}</Moment>
               </ProfileDetailText>
             </ProfileHeadline>
           </ProfileHeader>
@@ -344,20 +343,14 @@ export default function Profile(props) {
             </Select>          
           </FormControl>
 
-          
-          
-
-          
-
           </Stack>
 
           <HelpUsBuildOHack
             github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6"
             github_name="Issue #6"
           />
-        </ProfileContainer>
 
-        <div className="profile__details">
+          <div className="profile__details">
           <h2 className="profile__title">Badges</h2>
           <BadgeList badges={badges} />
 
@@ -392,6 +385,18 @@ export default function Profile(props) {
             github_name="Issue #8"
           />
         </div>
+        </ProfileContainer>}
+
+        { isLoggedIn === false && <div>
+          <h1>Not logged in</h1>
+          <p>
+            You must be logged in to view this page.{" "}
+            <LoginOrRegister introText="Ready to join us?" previousPage={"/profile"} />
+          </p>
+        </div>}
+
+
+        
       </InnerContainer>
     </LayoutContainer>
   );

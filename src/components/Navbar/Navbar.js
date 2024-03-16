@@ -7,6 +7,7 @@ import * as ga from "../../lib/ga";
 
 import Button from "@mui/material/Button";
 import ReactPixel from "react-facebook-pixel";
+import {useLogoutFunction} from "@propelauth/react"
 
 
 import {  
@@ -33,7 +34,9 @@ import Avatar from '@mui/material/Avatar';
 
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthInfo  } from '@propelauth/react';
+import {useRedirectFunctions} from "@propelauth/react"
+
 
 
 /*
@@ -68,12 +71,17 @@ const auth_settings = [
 
 
 export default function NavBar() {  
-  const { isAuthenticated, logout, loginWithRedirect, user } = useAuth0();
+  const { isLoggedIn, user } = useAuthInfo();
+  const { redirectToLoginPage } = useRedirectFunctions();
+  const logout = useLogoutFunction()
+
+  
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [anchorElAbout, setAnchorElAbout] = React.useState(null);  
+  
 
-  if (isAuthenticated && user && user.email) {    
+  if (isLoggedIn && user && user.email) {    
     ga.set(user.email);  
     
     ReactPixel.track('Login Email Set');
@@ -84,7 +92,7 @@ export default function NavBar() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       var advancedMatching = undefined;
-      if( isAuthenticated && user && user.email )
+      if( isLoggedIn && user && user.email )
       {
         advancedMatching = {
           em: user.email,
@@ -112,7 +120,7 @@ export default function NavBar() {
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
     // Check if logged in
-    if (isAuthenticated && user && user.email) {
+    if (isLoggedIn && user && user.email) {
       ga.event({
         action: "Open User Menu",
         params: {
@@ -346,10 +354,10 @@ export default function NavBar() {
             </Menu> 
           </Box>
 
-          { isAuthenticated && <Box sx={{ flexGrow: 0 }}>
+          { isLoggedIn && <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Profile details">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt={user?.nickname} src={user?.picture} />
+                <Avatar alt={user?.firstName} src={user?.pictureUrl} />
               </IconButton>
             </Tooltip>
 
@@ -377,9 +385,7 @@ export default function NavBar() {
                 </Link>
               ))
               }
-              <MenuItem onClick={() => logout({
-                    logoutParams: { returnTo: window.location.origin }
-                  })}>
+              <MenuItem onClick={() => logout(true)}>
                 <Typography textAlign="center">Log Out</Typography>
               </MenuItem>
 
@@ -389,14 +395,11 @@ export default function NavBar() {
           </Box>
         }
 
-        { !isAuthenticated && <LoginButton
+        { !isLoggedIn && <LoginButton
                 variant="contained"
                 disableElevation
-                  onClick={() => loginWithRedirect({
-                    appState: {
-                      returnTo: window.location.pathname,
-                      redirectUri: window.location.pathname,
-                    },
+                  onClick={() => redirectToLoginPage({
+                    postLoginRedirectUrl: window.location.href
                   })}
                 className="login-button"
               >

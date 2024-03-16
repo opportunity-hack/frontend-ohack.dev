@@ -1,22 +1,21 @@
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthInfo } from '@propelauth/react'
 import axios from "axios";
 import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback } from "react";
 
 
 export default function useAdmin() {
-    const { getAccessTokenSilently, user } = useAuth0();
+  const { user, accessToken } = useAuthInfo();
     const { apiServerUrl } = useEnv();
     const [isAdmin, setIsAdmin ] = useState(false);
 
     const fetchUser = useCallback(async (options) => {
         try {
-            if (options.authenticated) {
-                const token = await getAccessTokenSilently();
+            if (options.authenticated) {                
 
                 options.config.headers = {
                     ...options.config.headers,
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${accessToken}`,
                 };
             }
 
@@ -32,7 +31,7 @@ export default function useAdmin() {
 
             return error.message;
         }
-    }, [getAccessTokenSilently]);
+    }, [accessToken]);
 
   
 
