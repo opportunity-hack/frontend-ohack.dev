@@ -13,7 +13,7 @@ import Checkbox from "@mui/material/Checkbox";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
 import useNonprofit from "../../hooks/use-nonprofit";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthInfo } from '@propelauth/react'
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 
@@ -46,7 +46,7 @@ export default function NonProfitApply() {
   const router = useRouter();
   let { nonprofits, handle_get_npo_form, handle_npo_form_submission } = useNonprofit();
   
-  const { user } = useAuth0();
+  const { user } = useAuthInfo();
   var image = "/OHack_NonProfit_Application.png";
   var nonProfitOptions = [];
   

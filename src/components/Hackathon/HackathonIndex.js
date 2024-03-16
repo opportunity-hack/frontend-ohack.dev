@@ -24,9 +24,9 @@ export default function HackathonIndex()
                 </Typography>                 
             </TitleContainer>   
 
-            <ProjectsContainer style={{marginTop: 20, width: '100%'}} >
-                <HackathonList />
+            <ProjectsContainer style={{marginTop: 20, width: '100%'}} >                
                 <PreviousHackathonList />
+                <HackathonList />
             </ProjectsContainer> 
         </LayoutContainer>
     );

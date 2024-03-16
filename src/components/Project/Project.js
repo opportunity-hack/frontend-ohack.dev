@@ -2,7 +2,7 @@ import React from "react";
 
 import ProblemStatement from "../../components/ProblemStatement/ProblemStatement";
 import { useRouter } from "next/router";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthInfo } from "@propelauth/react";
 import { Puff } from "react-loading-icons";
 import useProblemstatements from "../../hooks/use-problem-statements";
 import Head from 'next/head';
@@ -18,7 +18,7 @@ import { Link } from "@mui/material";
 
 
 export default function Project() {
-  const { user } = useAuth0();
+  const { user } = useAuthInfo();
   const router = useRouter();
   const { project_id } = router.query;
   const { problem_statement } = useProblemstatements(project_id);

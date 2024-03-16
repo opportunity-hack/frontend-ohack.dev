@@ -2,7 +2,7 @@ import "../styles/styles.css";
 import dynamic from 'next/dynamic'
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
-import { Auth0Provider } from "@auth0/auth0-react";
+import { AuthProvider } from "@propelauth/react";
 
 
 import { ThemeProvider } from "@mui/material/styles";
@@ -16,9 +16,6 @@ import theme from "../assets/theme";
 
 // TODO: Set up MUI for server side rendering: https://github.com/mui/material-ui/tree/HEAD/examples/material-next
 
-const Auth0Wrapper = dynamic(() => import('../components/Auth0Wrapper/Auth0Wrapper'), {
-  ssr: false
-});
 
 
 // NOTE: Load dynamics below static imports to avoid eslint errors.
@@ -57,13 +54,8 @@ export default function MyApp({ Component, pageProps }) {
 
         <title>{pageProps.title}</title>
       </Head>
-      <Auth0Provider
-        domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN}
-        clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID}
-        audience={process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}
-        redirectUri={typeof window !== 'undefined' && window.location.origin}        
-      >
-        <Auth0Wrapper>
+       <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
+        
         <ThemeProvider theme={theme}>
           <CssBaseline>
             <div className="page-layout">
@@ -73,8 +65,8 @@ export default function MyApp({ Component, pageProps }) {
             </div>
           </CssBaseline>
         </ThemeProvider>
-        </Auth0Wrapper>
-      </Auth0Provider>
+        
+      </AuthProvider>
       <GA/>
     </span>
   );

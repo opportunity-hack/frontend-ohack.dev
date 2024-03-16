@@ -1,7 +1,7 @@
-import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useAuthInfo } from '@propelauth/react';
 
 
 export default function useProblemstatements(problem_statement_id){
@@ -14,20 +14,19 @@ export default function useProblemstatements(problem_statement_id){
         }
     }, []);
 
-    const { getAccessTokenSilently, user } = useAuth0();
     const { apiServerUrl } = useEnv();
     const [problem_statements, setProblemStatements] = useState([]);
     const [problem_statement, setProblemStatement] = useState(default_problem_statement);
+    const { user, accessToken } = useAuthInfo();
 
 
     const fetchProblemStatements = useCallback(async (options) => {
         try {
-            if (options.authenticated) {
-                const token = await getAccessTokenSilently();
+            if (options.authenticated) {                
 
                 options.config.headers = {
                     ...options.config.headers,
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${accessToken}`,
                 };
             }
 
@@ -41,7 +40,7 @@ export default function useProblemstatements(problem_statement_id){
             }
             return error.message;
         }
-    }, [getAccessTokenSilently]);
+    }, [accessToken]);
 
 
 

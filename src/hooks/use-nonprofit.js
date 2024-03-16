@@ -1,4 +1,4 @@
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthInfo } from '@propelauth/react';
 import axios from "axios";
 import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback } from "react";
@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 
 export default function useNonprofit( nonprofit_id ){
     
-    const { getAccessTokenSilently, user } = useAuth0();
+    const { isLoggedIn, user, accessToken } = useAuthInfo();
     const { apiServerUrl, apiNodeJsServerUrl } = useEnv();
     const [nonprofitApplications, setNonprofitApplications] = useState([]); // This is for /nonprofits/apply/list
 
@@ -20,12 +20,11 @@ export default function useNonprofit( nonprofit_id ){
 
     const makeRequest = useCallback(async (options) => {
         try {
-            if (options.authenticated) {
-                const token = await getAccessTokenSilently();
+            if (options.authenticated) {                
 
                 options.config.headers = {
                     ...options.config.headers,
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${accessToken}`,
                 };
             }
 
@@ -41,7 +40,7 @@ export default function useNonprofit( nonprofit_id ){
 
             return error.message;
         }
-    }, [getAccessTokenSilently]);
+    }, [accessToken]);
 
 
     const handle_npo_form_submission = async (formData, onComplete) => {     

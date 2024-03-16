@@ -26,13 +26,13 @@ import Image from 'next/image'
 
 import Link from 'next/link';
 
-function News( {newsData, frontPage} ) {
+function News( {newsData, frontpage} ) {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const handleCopy = (text) => {
-    navigator.clipboard.writeText(text + " More at www.ohack.dev/blog"); // Copy the text to clipboard
+    navigator.clipboard.writeText(text); // Copy the text to clipboard
     setSnackbarMessage('Text copied!');
     setSnackbarOpen(true);
     gaButton("button_copy",text);
@@ -74,8 +74,8 @@ function News( {newsData, frontPage} ) {
   };
 
   return (
-    <EventCards container direction='row' frontPage={frontPage} style={{ margin: '1px', padding: '8px' }}>      
-      { frontPage && <Link prefetch={false} href="/blog">        
+    <EventCards container direction='row' frontpage={frontpage} style={{ margin: '1px', padding: '8px' }}>      
+      { frontpage && <Link prefetch={false} href="/blog">        
         <MoreNewsStyle>
           More news
           <ArrowForwardIcon/>
@@ -111,7 +111,7 @@ function News( {newsData, frontPage} ) {
                 </SlackButton>
               
                 <FileCopyIcon // Add the FileCopy icon button
-                  onClick={() => handleCopy(`${newsItem.title} ${newsItem.description}`)} // Call handleCopy function on click
+                  onClick={() => handleCopy(`${newsItem.title} ${newsItem.description} More at https://ohack.dev/blog/${newsItem.id}`)} // Call handleCopy function on click
                   style={{ cursor: 'pointer', marginLeft: '5px' }}
                 />
                 
@@ -166,7 +166,7 @@ function News( {newsData, frontPage} ) {
         </BlankContainer>         
       ))}
 
-      { frontPage && <Link prefetch={false} href="/blog">        
+      { frontpage && <Link prefetch={false} href="/blog">        
         <MoreNewsStyle>
           More news
           <ArrowForwardIcon/>

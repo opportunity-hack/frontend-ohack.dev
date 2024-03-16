@@ -1,13 +1,16 @@
-import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import { useEnv } from "../context/env.context";
+import { useAuthInfo } from '@propelauth/react';
+
 
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 
-export default function useProfileApi(props){
-    const { getAccessTokenSilently, user } = useAuth0();
-    const user_id = props?.user_id ?? user?.sub; // Slack User ID (since we get this from the Auth0 Session)
+export default function useProfileApi(){
+    
+    const { user, accessToken } = useAuthInfo();
+    
+    
 
     
     const { apiServerUrl } = useEnv();
@@ -29,18 +32,12 @@ export default function useProfileApi(props){
     const makeRequest = useCallback(async (options) => {
         try {
             if (options.authenticated) {
-                const token = await getAccessTokenSilently(
-                    {
-                        authorizationParams: {
-                            audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
-                            scope: ''
-                        }
-                });
+             
 
                 // TODO: auth is a cross-cutting concern. Add axios interceptor in _app.js get token out of localStorage and do this.
                 options.config.headers = {
                     ...options.config.headers,
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${accessToken}`,
                 };
             }
 
@@ -56,7 +53,31 @@ export default function useProfileApi(props){
 
             return error.message;
         }
-    }, [getAccessTokenSilently]);
+    }, [accessToken]);
+
+
+    const update_profile_metadata = async (metadata, onComplete) => {
+        if (!user)
+            return null;
+
+        const config = {
+            url: `${apiServerUrl}/api/messages/profile`,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: {
+                // user_id: user_id,
+                metadata: metadata
+            }
+        };
+
+        const data = await makeRequest({ config, authenticated: true });
+        onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
+        return data;
+    };
+
 
     const handle_help_toggle = async (status, problem_statement_id, mentor_or_hacker, npo_id) => {
         if (!user)
@@ -71,7 +92,7 @@ export default function useProfileApi(props){
                 "Accept": "application/json"
             },
             data: {
-                user_id: user_id,
+                // user_id: user_id,
                 status: status, // helping or not_helping
                 problem_statement_id: problem_statement_id,
                 type: mentor_or_hacker, // mentor or hacker
@@ -87,18 +108,12 @@ export default function useProfileApi(props){
     const fetchUser = useCallback(async (options) => {
         try {
             if (options.authenticated) {
-                const token = await getAccessTokenSilently(
-                    {
-                        authorizationParams: {
-                            audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
-                            scope: ''
-                        }
-                });
+           
 
                 // TODO: auth is a cross-cutting concern. Add axios interceptor in _app.js get token out of localStorage and do this.
                 options.config.headers = {
                     ...options.config.headers,
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${accessToken}`,
                 };
             }
 
@@ -114,9 +129,9 @@ export default function useProfileApi(props){
 
             return error.message;
         }
-    }, [getAccessTokenSilently]);
+    }, [accessToken]);
 
-    // Handle calling /profile/ endpoint by user id
+    // Handle calling /profile/ endpoint by user id using the db id of the user (not the Propel ID or the Slack ID)
     const get_user_by_id = async (user_id, onComplete) => {
         if (!user_id)
             return null;
@@ -146,7 +161,9 @@ export default function useProfileApi(props){
 
     useEffect(() => {
         const getProfileDetails = async () => {
-            if (!user_id)
+            console.log("*** getProfileDetails user_id: ", user);
+            
+            if (!user)
                 return null;
 
             const config = {
@@ -160,6 +177,7 @@ export default function useProfileApi(props){
             const data = await fetchUser({ config, authenticated: true });
 
             if (data) {
+                console.log("*** getProfileDetails data: ", data);
                 
 
                 if (data.text && data.text.badges && data.text.hackathons) {                    
@@ -182,7 +200,7 @@ export default function useProfileApi(props){
         };
 
         getProfileDetails();
-    }, [user_id, apiServerUrl, fetchUser, default_profile]);
+    }, [user, apiServerUrl, fetchUser, default_profile]);
     
 
     return {              
@@ -191,6 +209,7 @@ export default function useProfileApi(props){
         profile,
         get_user_by_id,
         feedback_url,
-        handle_help_toggle
+        handle_help_toggle,
+        update_profile_metadata
     };
 };

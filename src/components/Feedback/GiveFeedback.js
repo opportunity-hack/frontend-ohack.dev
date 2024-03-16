@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthInfo } from '@propelauth/react'
 
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 
@@ -14,7 +14,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head';
 
 export default function GiveFeedback() {
-    const { user } = useAuth0();
+    const { user } = useAuthInfo();
     const router = useRouter()
     const { userid } = router.query;
 
@@ -72,10 +72,10 @@ export default function GiveFeedback() {
             <div className="content__body">
                 <div className="profile-grid">
                     <div className="profile__header">
-                        <img src={user.picture} alt="Profile" className="profile__avatar" />
+                        <img src={user.pictureUrl} alt="Profile" className="profile__avatar" />
 
                         <div className="profile__headline">
-                            <h2 className="profile__title">Hi {user.name}</h2>
+                            <h2 className="profile__title">Hi {user.firstName} {user.lastName}</h2>
                             <h4 className="profile__subtitle">You are providing feedback for {userid}</h4>
                         </div>
                     </div>
