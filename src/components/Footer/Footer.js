@@ -31,7 +31,7 @@ export default function Footer() {
     <FooterContainer container>
       <InnerContainer container>
         <TextContainer container xs={12} md={7} lg={8}>
-          <Link key="mission" href="/">
+          
             <>
               <StyledText>Our Mission</StyledText>
               <MutedText>
@@ -42,22 +42,23 @@ export default function Footer() {
               </MutedText>
 
               <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
-              <IconLink href="https://www.instagram.com/opportunityhack/">
-                <Instagram fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px" }} />
+
+              <IconLink href="https://www.instagram.com/opportunityhack/" target="_blank">
+                <Instagram fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px" }}> </Instagram> 
               </IconLink>
-              <IconLink href="https://www.facebook.com/OpportunityHack/">
+              <IconLink href="https://www.facebook.com/OpportunityHack/" target="_blank">
                 <Facebook fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
               </IconLink>
-              <IconLink href="https://www.linkedin.com/company/opportunity-hack/">
+              <IconLink href="https://www.linkedin.com/company/opportunity-hack/" target="_blank">
                 <LinkedIn fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
               </IconLink>              
-              <IconLink href="https://www.threads.net/@opportunityhack">                
+              <IconLink href="https://www.threads.net/@opportunityhack" target="_blank">                
                 <FaThreads fontSize="large" style={{ marginRight: "2rem", marginBottom: "0.25rem", width: "24px", height: "24px"  }}/>
               </IconLink>
-              <IconLink href="https://twitter.com/opportunityhack">
+              <IconLink href="https://twitter.com/opportunityhack" target="_blank">
                 <Twitter fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
               </IconLink>
-              <IconLink href="https://github.com/opportunity-hack/">
+              <IconLink href="https://github.com/opportunity-hack/" target="_blank">
                 <GitHub fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
                 <br></br>
               </IconLink>
@@ -78,7 +79,7 @@ export default function Footer() {
                 Opportunity Hack Inc. EIN: 84-5113049
               </MutedText>                            
             </>
-          </Link>
+          
         </TextContainer>
         <TextContainer container xs={12} md={5} lg={4}>
           <LinkList>

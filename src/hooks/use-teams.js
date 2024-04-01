@@ -1,12 +1,13 @@
-import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import { useEnv } from "../context/env.context";
 import { useState, useEffect, useCallback } from "react";
+import { useAuthInfo } from '@propelauth/react';
 
 
 export default function useTeams(){
 
-    const { getAccessTokenSilently, user } = useAuth0();
+    const { isLoggedIn, user, accessToken } = useAuthInfo();
+
     const { apiServerUrl } = useEnv();
     const [teams, setTeams] = useState([]);
     
@@ -14,11 +15,10 @@ export default function useTeams(){
     const makeRequest = useCallback(async (options) => {
         try {
             if (options.authenticated) {
-                const token = await getAccessTokenSilently();
-
+                
                 options.config.headers = {
                     ...options.config.headers,
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${accessToken}`,
                 };
             }
 
@@ -34,7 +34,7 @@ export default function useTeams(){
 
             return error.message;
         }
-    }, [getAccessTokenSilently]);
+    }, [accessToken]);
 
     // Get a single team
     const handle_get_team = async (team_id, onComplete) => {
@@ -53,7 +53,7 @@ export default function useTeams(){
     };
 
 
-    const handle_new_team_submission = async (teamName, teamSlackChannel, problemStatementId, eventId, userId, githubUsername, onComplete) => {
+    const handle_new_team_submission = async (teamName, teamSlackChannel, problemStatementId, eventId, githubUsername, onComplete) => {
         if (!user)
             return null;
 
@@ -65,8 +65,7 @@ export default function useTeams(){
                 "Accept": "application/json"
             },
             data: {
-                name: teamName,
-                userId: userId,
+                name: teamName,                
                 eventId: eventId,
                 problemStatementId: problemStatementId,
                 slackChannel: teamSlackChannel,

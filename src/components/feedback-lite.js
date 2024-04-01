@@ -11,6 +11,7 @@ import CopyAllIcon from '@mui/icons-material/CopyAll';
 import TextField from '@mui/material/TextField';
 import Link from 'next/link'
 import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 
 
 import {  
@@ -107,7 +108,10 @@ export default function FeedbackLite ( {feedback_url, history} ){
                 />            
             </p>
 
+            <Stack spacing={2} direction="row" sx={{ mb: 2 }}>
+            <Link href="/cert"><Button style={{marginTop:'10px'}} variant="contained">See all certificates</Button></Link>
             <Link href="/about/hearts"><Button style={{marginTop:'10px'}} variant="contained">Why we give out hearts</Button></Link>
+            </Stack>
 
             <h2 className="profile__title">What <FormControlLabel onClick={handleWhatPrivateClick} control={<Switch defaultChecked />} label={whatPrivateText} /></h2>
             What you've completed for nonprofits

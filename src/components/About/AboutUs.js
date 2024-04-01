@@ -105,12 +105,7 @@ const AboutUs = () => {
         <Button variant="contained" onClick={() => gaButton('button_see_nonprofits', 'see projects')} style={style} color="secondary" href="/nonprofits">
           👀 Nonprofit projects
         </Button>        
-      </Box>
-      <Box mt={2}>
-        <Button variant="contained" style={style} color="primary" href="https://www.ohack.org/about" target="_blank" rel="noopener noreferrer">
-          More at ohack.org
-        </Button>        
-      </Box>
+      </Box>      
     </TitleContainer>
 
     <ProjectsContainer mt={"50px"}>
@@ -156,6 +151,21 @@ const AboutUs = () => {
         ))}
       </Grid>
 
+       <Typography variant="h3" style={{ marginTop: 50 }} gutterBottom>
+        Thinking about a coding bootcamp?
+      </Typography>
+      <Typography variant="h4">
+        We have coding bootcamp and senior capstone projects for you!
+      </Typography>
+        <Box key="bootcamp" my={2}>
+          <Typography variant="body1" paragraph style={style}>
+          If you are part of a coding bootcamp and want to build your portfolio, you should consider writing code for charity with Opportunity Hack. Opportunity Hack is a social good hackathon that connects you with nonprofit organizations that need your tech skills and solutions. 
+          By participating in Opportunity Hack, you will not only make a positive impact on the world, but also demonstrate your creativity, problem-solving, and collaboration abilities to prospective employers.
+          Take a look at our nonprofit projects and join us in our mission to harness the power of code for social good.
+          </Typography>
+          
+        </Box>
+
 
       <Typography variant="h3" style={{ marginTop: 50 }} gutterBottom>
         Our Community Pledge
@@ -174,6 +184,7 @@ const AboutUs = () => {
 
       <Typography variant="body1" paragraph style={style}>
         Together, we are Opportunity Hack. Together, we code for social good, for change.
+        
       </Typography>
 
       <Grid container spacing={2} mt={3} xs={12} md={12}>
@@ -187,8 +198,14 @@ const AboutUs = () => {
             Learn about Mentorship
           </Button>
         </Grid>
+        <Grid item>
+          <Button variant="contained" style={style} color="primary" href="https://www.ohack.org/about" target="_blank" rel="noopener noreferrer">
+            More at ohack.org
+          </Button>        
+        </Grid>
       </Grid>
 
+      
       <LoginOrRegister introText="Ready to join us as a mentor?" previousPage={"/about/mentors"} />
 
     </ProjectsContainer>

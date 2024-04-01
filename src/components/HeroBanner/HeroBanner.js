@@ -9,9 +9,12 @@ import {
   BlankContainer,
 } from './styles';
 import { LoginButton } from "../Navbar/styles";
-
+import { Grid } from '@mui/material';
 import React, { Suspense, useEffect } from 'react';
 import * as ga from '../../lib/ga';
+import { useRedirectFunctions } from "@propelauth/react"
+import { useAuthInfo } from '@propelauth/react'
+
 
 
 import { useEnv } from '../../context/env.context';
@@ -20,7 +23,10 @@ import ReactPixel from 'react-facebook-pixel';
 // Assuming you're using Next.js for SSR
 import dynamic from 'next/dynamic';
 
-import { useAuth0 } from '@auth0/auth0-react';
+
+const LeadForm = dynamic(() => import('../LeadForm/LeadForm'), {
+  ssr: false,
+});
 
 
 const BackgroundGrid = React.lazy(() => import('./BackgroundGridComponent'));
@@ -29,8 +35,9 @@ const TitleStyled = dynamic(() => import('./TitleStyledComponent'), { ssr: true 
 
 
 function HeroBanner() {
-  const { slackSignupUrl } = useEnv();
-  const { isAuthenticated, loginWithRedirect } = useAuth0();
+  const { slackSignupUrl } = useEnv();  
+  const { isLoggedIn } = useAuthInfo();
+  const { redirectToLoginPage } = useRedirectFunctions();
 
   const options = {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -83,7 +90,12 @@ function HeroBanner() {
       <BlankContainer xs={12} md={7} lg={7}>
         
         <TitleContainer container>
-          <TitleStyled/>                        
+        
+        <Grid key="mainTitleAndLeadForm" direction='row'>        
+          <TitleStyled/>                                        
+          <LeadForm />        
+        </Grid>
+
         </TitleContainer>
 
         <CaptionContainer right={'true'} container>
@@ -91,7 +103,7 @@ function HeroBanner() {
             Want to code for social good?
             <br/>
             Join us!
-          </TextStyled>
+          </TextStyled>          
           
           <ButtonContainers container>
           {/* Disable for new nonprofit form instead
@@ -117,22 +129,17 @@ function HeroBanner() {
               1. Create an OHack Slack account
             </ButtonGoldStyle>
 
-            {!isAuthenticated && <LoginButton
+            {!isLoggedIn && <LoginButton
                 variant="contained"
                 disableElevation
-                  onClick={() => loginWithRedirect({
-                    appState: {
-                      returnTo: window.location.pathname,
-                      redirectUri: window.location.pathname,
-                    },
-                  })}
+                  onClick={() => redirectToLoginPage()}
                 className="login-button"
               >
                 2. Log In                                                  
               </LoginButton> 
             }
 
-            {isAuthenticated && <ButtonBasicStyle
+            {isLoggedIn && <ButtonBasicStyle
               style={{ color: 'white', backgroundColor: '#FFC107' }}
               onClick={() => gaButton('button_profile', 'clicked to see profile')}
               href='/profile'              

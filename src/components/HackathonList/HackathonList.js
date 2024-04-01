@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-import { EmptyGrid, OuterGrid, TypographyStyled } from "./styles";
+import { EmptyGrid, OuterGrid, MoreNewsStyle } from "./styles";
 import EventFeature from "./EventFeature";
 import { SectionTitle } from "./styles";
+import Link from 'next/link';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 import dynamic from 'next/dynamic'
 const News = dynamic(() => import('../../components/News/News'), {
@@ -16,7 +18,7 @@ function HackathonList() {
   const [newsData, setNewsData] = useState([]);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=2`)
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=5`)
             .then(response => response.json())
             .then(data => setNewsData(data.text || null))
             .catch(error => console.error(error));
@@ -34,7 +36,7 @@ function HackathonList() {
       <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
       
       <EmptyGrid container justifyContent="center">
-        <News newsData={newsData} frontPage={true}/>        
+        <News newsData={newsData} frontpage={"true"}/>        
 
         { hackathons && hackathons.length > 0 && (
           hackathons.map((event) => {
@@ -62,9 +64,12 @@ function HackathonList() {
       
         { 
           hackathons && hackathons.length === 0 && (
-            <TypographyStyled variant="h4">
-              No events found!
-            </TypographyStyled>
+             <Link prefetch={false} href="/hack">        
+              <MoreNewsStyle>
+                See older hacks
+                <ArrowForwardIcon/>
+              </MoreNewsStyle>        
+            </Link>
           )
         }
       

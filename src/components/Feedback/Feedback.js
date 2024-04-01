@@ -1,11 +1,11 @@
 import React from "react";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthInfo } from "@propelauth/react";
 
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 
 import Head from 'next/head';
 export default function Feedback(){ 
-    const { user } = useAuth0();  
+    const { user } = useAuthInfo();  
 
     if (!user) {
         return (

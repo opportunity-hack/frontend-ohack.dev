@@ -11,7 +11,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import ProblemStatementChip from '../ProblemStatement/ProblemStatementChip';
 import Typography from '@mui/material/Typography';
 
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthInfo } from '@propelauth/react'
 
 import Grid from '@mui/material/Grid';
 import {
@@ -23,7 +23,7 @@ import TeamsChip from '../Teams/TeamsChip';
 
 
 export default function NonProfitHackathonTile({ eventId, npo, teams }) {
-  const { user } = useAuth0();
+  const { user } = useAuthInfo();
   var slackDetails = '';
     
 

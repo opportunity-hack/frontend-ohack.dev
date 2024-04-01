@@ -1,6 +1,8 @@
 
 import React, { useEffect } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import {useRedirectFunctions} from "@propelauth/react"
+import { useAuthInfo } from '@propelauth/react'
+
 import { Alert, AlertTitle, Stack, Typography } from '@mui/material';
 import ReactPixel from 'react-facebook-pixel';
 
@@ -13,7 +15,9 @@ import {
 } from "./styles";
 
 export default function LoginOrRegister({ introText, previousPage }) {
-    const { loginWithRedirect } = useAuth0();
+    const { isLoggedIn, user } = useAuthInfo();
+    const { redirectToLoginPage } = useRedirectFunctions();
+
     const options = {
         autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
         debug: false, // enable logs
@@ -35,12 +39,10 @@ export default function LoginOrRegister({ introText, previousPage }) {
             }
         });
 
-        loginWithRedirect({
-            appState: {
-                returnTo: window.location.pathname,
-                redirectUri: window.location.pathname,
-            },
-        });
+        redirectToLoginPage({
+            postLoginRedirectUrl: window.location.href
+        })
+        
     };
 
     const handleSignupClick = () => {
@@ -53,7 +55,15 @@ export default function LoginOrRegister({ introText, previousPage }) {
         });
     };
 
-
+    if(user) {
+        return(
+        <Stack alignItems="center" paddingTop={5}>        
+        <ButtonStyled href={`/profile`}>
+            Go to your profile
+        </ButtonStyled>
+        </Stack>
+        );
+    } else {    
     return (
         <Stack alignItems="center" paddingTop={5}>
             <Alert variant="outlined" severity="info">
@@ -81,4 +91,5 @@ export default function LoginOrRegister({ introText, previousPage }) {
             </Alert>
         </Stack>
     );
+    }
 };

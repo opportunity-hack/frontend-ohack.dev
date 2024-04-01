@@ -15,7 +15,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { Grid } from '@mui/material';
 
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthInfo } from '@propelauth/react';
 import { Puff } from 'react-loading-icons';
 import { Parallax } from 'react-parallax';
 
@@ -64,7 +64,7 @@ export default function NonProfit(props) {
   const {
     nonprofit_id
   } = props;
-  const { user } = useAuth0();
+  const { user } = useAuthInfo();
 
   
   const [checked, setChecked] = useState([]);

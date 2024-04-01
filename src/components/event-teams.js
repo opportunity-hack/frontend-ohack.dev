@@ -114,7 +114,7 @@ export default function EventTeams(
             {
                 return false;
             }
-            else if (extendedDetails && extendedDetails["slack_id"] === user.sub) {
+            else if (extendedDetails && extendedDetails["slack_id"] === user.user_id) {
                 return true;
             }
             else {
@@ -178,7 +178,7 @@ export default function EventTeams(
                 {
                     return false;
                 }
-                else if (extendedDetails && extendedDetails["slack_id"] === user.sub )
+                else if (extendedDetails && extendedDetails["slack_id"] === user.user_id )
                 {
                     return true;
                 }

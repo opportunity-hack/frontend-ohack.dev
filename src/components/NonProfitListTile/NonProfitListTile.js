@@ -12,7 +12,7 @@ import SupportIcon from '@mui/icons-material/Support';
 import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
 import Badge from '@mui/material/Badge';
 
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthInfo } from '@propelauth/react';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -27,17 +27,19 @@ import { Chip } from '@mui/material';
 export default function NonProfitListTile({
   onSelected,  
   npo,    
+  profile,
   needs_help_flag,
   production_flag,
   icon,
 }) {
-  const { user } = useAuth0();  
+  const { user } = useAuthInfo();
+
   
   const [productionProblemStatementCount, setProductionProblemStatementCount] = useState(0);
   const [needHelpProblemStatementCount, setNeedHelpProblemStatementCount] = useState(0);
   const [hackersCount, setHackersCount] = useState(0);
   const [mentorsCount, setMentorsCount] = useState(0);
-
+  const [problemStatementListThisUserIsHelpingWith, setProblemStatementListThisUserIsHelpingWith] = useState([]);
   
   useEffect(() => {
     if (npo && npo.problem_statements) {
@@ -47,7 +49,9 @@ export default function NonProfitListTile({
 
       let hackerSet = new Set();
       let mentorSet = new Set();
+      let helpingProblemStatementSet = new Set();
 
+      console.log("-- problem_statement_id npo: " + npo.name);
       npo.problem_statements.forEach((problem_statement_id) => {
         fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${problem_statement_id}`)
           .then((response) => response.json())
@@ -72,10 +76,16 @@ export default function NonProfitListTile({
                 } else if (helping.type === 'mentor') {                  
                   mentorSet.add(helping.slack_user);
                 }
+
+                if (helping.slack_user === profile.user_id) {     
+                  // Don't add the same problem statement id multiple times     
+                 helpingProblemStatementSet.add(problem_statement_id);
+                }
               });
             }
             setHackersCount(hackerSet.size);
             setMentorsCount(mentorSet.size);
+            setProblemStatementListThisUserIsHelpingWith(Array.from(helpingProblemStatementSet));
             
           })
           .catch((error) => {
@@ -83,9 +93,6 @@ export default function NonProfitListTile({
             console.error(error);
           });
       });
-
-      
-
 
     }
   }, [npo]);
@@ -166,35 +173,17 @@ export default function NonProfitListTile({
     );
   }
 
-  if (
-    npo.problem_statements != null &&
-    user != null &&
-    npo.problem_statements.length > 0
-  ) {
-    npo.problem_statements.forEach((ps) => {
-      if (ps?.helping != null) {
-        ps.helping.forEach((helping) => {
-          if (helping.slack_user === user.sub) {
-            number_of_problem_statements_helping_with++;
-          }
-        });
-      }
-    });
+ 
+
+  var helping_text = "";
+  if (problemStatementListThisUserIsHelpingWith.length > 0) {
+    if (problemStatementListThisUserIsHelpingWith.length === 1) {
+      helping_text = <center>You are helping with 1 project</center>;
+    } else {
+      helping_text = <center>You are helping with {problemStatementListThisUserIsHelpingWith.length} projects</center>
+    }
   }
 
-  var helping_text = '';
-
-  // TODO: Use ?
-  // var helping_class = 'ohack-nonprofit-feature';
-  
-  if (number_of_problem_statements_helping_with > 0) {
-    helping_text = (
-      <center>
-        <em>You're helping here!</em>
-      </center>
-    );
-    // helping_class = 'ohack-nonprofit-feature-helping';
-  }
 
   const displayCountDetails = () => {
     if (npo && npo.problem_statements && npo.problem_statements.length === 0) {
@@ -352,6 +341,7 @@ export default function NonProfitListTile({
         }}
       >
         {helping_text}
+        
 
         <Grid container direction='row' justifyContent='space-between'>
           <NonProfitName variant='h3' flex='1'>

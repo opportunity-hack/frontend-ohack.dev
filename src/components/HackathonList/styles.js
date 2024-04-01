@@ -18,6 +18,22 @@ export const OuterGrid = styled(Grid)((props) => ({
   },
 }));
 
+export const MoreNewsStyle = styled(Button)({
+  borderRadius: "1rem",
+  paddingLeft: "0.9rem",
+  paddingRight: "0.9rem",
+  fontWeight: 600,  
+  fontSize: "12px",
+  textTransform: "unset !important",
+  backgroundColor: "#E0E0E0",
+  color: "#000000",
+  
+
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },
+});
+
 export const EmptyGrid = styled(Grid)({
   gap: "30px",
   marginTop: "5%",
@@ -111,7 +127,23 @@ export const EventGreyText = styled(Typography)({
   textTransform: "none",
 });
 
-export const TypographyStyled = styled(Typography)({});
+export const TypographyStyled = styled(Typography)({
+  
+  textDecoration: "none",
+  textTransform: "none",
+  fontSize: "1.2rem",
+  
+  "a": {
+    color: "rgb(0, 0, 255)",
+    textDecoration: "none",
+  },
+
+  "a:hover": {
+    color: "#00BFFF",
+    textDecoration: "underline",
+  },
+  
+});
 
 // Button
 export const EventButton = styled(Button)({
