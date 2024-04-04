@@ -139,7 +139,7 @@ function News( {newsData, frontpage} ) {
           
           <ButtonContainersSmall style={{ justifyContent: 'center', justifyItems: 'center', textAlign: 'center' }}>
           {            
-            newsItem.links && newsItem.links.filter((link) => !link.url.startsWith('#')).map((link) => (            
+            newsItem.links && newsItem.links.filter((link) => !link.url.startsWith('#') && !link.name.startsWith("@") ).map((link) => (            
               <NewsLinkButton key={link.name} onClick={ ()=> gaButton("button_news", link.name+":"+link.url) } variant="contained" href={link.url} target="_blank">
                 {link.name}
               </NewsLinkButton>

@@ -49,7 +49,10 @@ export default function Profile(props) {
   const [expertise, setExpertise] = React.useState([]);
   const [education, setEducation] = React.useState("");
   const [shirtSize, setShirtSize] = React.useState("");
+  const [why, setWhy] = React.useState("");
+
   const [lastCompanyUpdate, setLastCompanyUpdate] = React.useState(0);
+  const [lastWhyUpdate, setLastWhyUpdate] = React.useState(0);
   const [company, setCompany] = React.useState("");
 
   // Update expertise, education, and shirt size from the profile
@@ -61,6 +64,7 @@ export default function Profile(props) {
     setRole(profile?.role);    
     setEducation(profile?.education);
     setShirtSize(profile?.shirt_size);
+    setWhy(profile?.why);
 
     
     if (profile?.expertise) {
@@ -78,7 +82,7 @@ export default function Profile(props) {
     "Software Engineering: Back-end (Java, Python, Ruby, etc)",
     "Software Engineering: Mobile (iOS, Android)",
     "Software Engineering: Data Science & Machine Learning",
-    "AWS, Google Cloud, Heroku",
+    "DevOps: AWS, Fly.io, Google Cloud, Heroku",
     "GitHub ninja",
     "Product Management",
     "Project Manager",
@@ -176,6 +180,29 @@ export default function Profile(props) {
     }, 2000));
   }
 
+   const handleWhyChange = (event) => {
+   // Since company is a text field, wait a few seconds for the user to type before calling to save
+    // Call the API to save the user's profile
+    console.log("Save to backend", event.target.value);
+
+    const onComplete = () => {
+      console.log("Why updated");
+    }
+
+    // To prevent too many calls to the backend we'll wait a few seconds before calling the API
+    // This is a common pattern to prevent too many calls to the backend
+    // This is called "debouncing"
+    setWhy(event.target.value);
+
+    // Clear the last timeout
+    clearTimeout(lastWhyUpdate);
+
+    // Set a new timeout
+    setLastWhyUpdate(setTimeout(() => {
+      update_profile_metadata({ "why": event.target.value }, onComplete );
+    }, 2000));
+  }
+
 
 
   const style = {
@@ -253,6 +280,8 @@ export default function Profile(props) {
               onChange={(event) => onRoleChange( event ) }
             >
               <MenuItem value="">Select a role</MenuItem>
+              <MenuItem value="hacker_in_school">Hacker (In School)</MenuItem>
+              <MenuItem value="hacker_pro">Hacker (working in industry)</MenuItem>
               <MenuItem value="mentor">Mentor</MenuItem>
               <MenuItem value="volunteer">Volunteer</MenuItem>
               <MenuItem value="judge">Judge</MenuItem>
@@ -314,6 +343,16 @@ export default function Profile(props) {
               </Select>        
           </FormControl>
           
+          <FormControl>            
+            <TextField
+              id="company"
+              onChange={handleWhyChange}
+              aria-describedby="learning-helper-text"
+              label="Why are you here with us at OHack?"
+              value={why}
+            />
+          </FormControl>
+
           <FormControl>            
             <TextField
               id="company"
