@@ -64,6 +64,7 @@ export default function Profile(props) {
     setRole(profile?.role);    
     setEducation(profile?.education);
     setShirtSize(profile?.shirt_size);
+    setWhy(profile?.why);
 
     
     if (profile?.expertise) {
