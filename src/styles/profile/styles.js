@@ -4,11 +4,11 @@ import { styled as styling } from "@mui/material";
 export const LayoutContainer = styling(Grid) ({
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: "9rem",
+    paddingTop: "6rem",
 });
 
 export const InnerContainer = styling(Grid) ({
-    width: "75%"
+    width: "95%"
 
 })
 
@@ -17,11 +17,11 @@ export const ProfileAvatar = styling("img")({
 });
 
 export const ProfileContainer = styling(Grid) ({
-  padding: "2rem",
+  padding: "1rem",
 })
 
 export const ProfileHeader = styling(Grid) ({
-  gap: "2rem",
+  gap: "1.5rem",
 })
 
 export const ProfileHeadline = styling(Grid) ({

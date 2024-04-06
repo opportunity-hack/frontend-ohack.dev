@@ -72,8 +72,8 @@ const Hearts = () => (
                         <Grid item>                            
                                 <Image 
                                     src="https://cdn.ohack.dev/8d2a68667a6911ee9e03e2f442f28a46.png"
-                                    width={971/2}
-                                    height={971/2}
+                                    width={971/3}
+                                    height={971/3}
                                     alt="Opportunity Hack Hearts Certificate Example"
                                 />                                                                                
                         </Grid>
