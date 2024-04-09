@@ -137,7 +137,7 @@ export default function useProfileApi(){
             return null;
         
         const config = {
-            url: `${apiServerUrl}/api/messages/${user_id}/profile`,
+            url: `${apiServerUrl}/api/users/${user_id}/profile`,
             method: "GET",
             headers: {
                 "content-type": "application/json",
