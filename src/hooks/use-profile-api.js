@@ -61,7 +61,7 @@ export default function useProfileApi(){
             return null;
 
         const config = {
-            url: `${apiServerUrl}/api/messages/profile`,
+            url: `${apiServerUrl}/api/users/profile`,
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -137,7 +137,7 @@ export default function useProfileApi(){
             return null;
         
         const config = {
-            url: `${apiServerUrl}/api/messages/profile/${user_id}`,
+            url: `${apiServerUrl}/api/messages/${user_id}/profile`,
             method: "GET",
             headers: {
                 "content-type": "application/json",
@@ -167,7 +167,7 @@ export default function useProfileApi(){
                 return null;
 
             const config = {
-                url: `${apiServerUrl}/api/messages/profile`,
+                url: `${apiServerUrl}/api/users/profile`,
                 method: "GET",
                 headers: {
                     "content-type": "application/json",
