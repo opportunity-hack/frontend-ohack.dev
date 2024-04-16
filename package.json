@@ -1,6 +1,7 @@
 {
   "name": "frontend-ohack-dev",
   "version": "0.1.0",
+  "proxy": "http://localhost:3001/",
   "private": true,
   "cacheDirectories": [
     ".next/cache"

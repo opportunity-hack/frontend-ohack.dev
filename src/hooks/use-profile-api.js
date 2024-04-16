@@ -180,14 +180,19 @@ export default function useProfileApi(){
                 console.log("*** getProfileDetails data: ", data);
                 
 
-                if (data.text && data.text.badges && data.text.hackathons) {                    
-                    setBadges(data.text.badges);
-                    setHackathons(data.text.hackathons);
+                if (data) {                    
+                    // FIXME: Need to call badges endpoint to get this now
+                    // setBadges(data.text.badges);
+                    setBadges(null);
+                    
+                    // FIXME: Need to call hackathon endpoint to get this now
+                    // setHackathons(data.text.hackathons);
+                    setHackathons(null);
 
-                    var profileData = data.text;
-                    profileData["profile_url"] = window.location.href + "/" + data.text.id;
+                    var profileData = data;
+                    profileData["profile_url"] = window.location.href + "/" + data.id;
                     setProfile(profileData);
-                    setFeedbackUrl(window.location.href.replace("profile", "feedback") + "/" + data.text.id);
+                    setFeedbackUrl(window.location.href.replace("profile", "feedback") + "/" + data.id);
 
                 }
                 else {
