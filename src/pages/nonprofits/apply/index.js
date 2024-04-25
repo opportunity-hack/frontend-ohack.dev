@@ -18,19 +18,19 @@ export const getStaticProps = async () => {
     //const metadata = await data.json(); 
     return {
         props: {
-            title: "Nonprofit Application for Opportunity Hack 2023",
+            title: "Nonprofit Application for Opportunity Hack 2024",
             description: "Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem.",
             openGraphData: [
                 {
                     name: "title",
                     property: "title",
-                    content: "Nonprofit Application for Opportunity Hack 2023",
+                    content: "Nonprofit Application for Opportunity Hack 2024",
                     key: "title"
                 },
                 {
                     name: "og:title",
                     property: "og:title",
-                    content: "Nonprofit Application for Opportunity Hack 2023!",
+                    content: "Nonprofit Application for Opportunity Hack 2024!",
                     key: "ogtitle"
                 },
                 {
@@ -48,7 +48,7 @@ export const getStaticProps = async () => {
                 {
                     name: "publish_date",
                     property: "og:publish_date",
-                    content: "2023-06-04T00:00:00-0700",
+                    content: "2024-06-04T00:00:00-0700",
                     key: "publishdate"
                 },
                 {
@@ -100,7 +100,7 @@ export const getStaticProps = async () => {
                 {
                     name: "twitter:title",
                     property: "twitter:title",
-                    content: "Nonprofit Application for Opportunity Hack 2023",
+                    content: "Nonprofit Application for Opportunity Hack 2024",
                     key: "twittertitle"
                 },
                 {
@@ -148,7 +148,7 @@ export const getStaticProps = async () => {
                 {
                     name: "twitter:data2",
                     property: "twitter:data2",
-                    value: "August 1, 2023",
+                    value: "August 1, 2024",
                     key: "twitterdata2"
                 }                
             ]
