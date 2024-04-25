@@ -33,12 +33,8 @@ export default function useNonprofit( nonprofit_id ){
 
             return data;
         } catch (error) {
-
-            if (axios.isAxiosError(error) && error.response) {
-                return error.response;
-            }
-
-            return error.message;
+            console.error(error);
+            return { error: error.message };            
         }
     }, [accessToken]);
 
