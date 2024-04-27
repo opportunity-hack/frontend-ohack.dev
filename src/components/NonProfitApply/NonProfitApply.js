@@ -799,22 +799,20 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <Typography style={style}><b>Technical Problem:</b></Typography>
+          <Typography style={style}><b>What challenges do you have?</b></Typography>          
           <br />
           <Typography style={style}>
-          Describe what technical problem would you like hackathon participants
-          to solve.
+          What tedious tasks do you have? What slows you down? What stops you from doing more? What could be better?
           </Typography>
           <br />
           <Typography style={style}>
-          Try to think only about the problem you are trying to solve,
-            and <em><strong>not</strong> how you want to solve it</em>.                     
+          Try to think only about the challenges you have and <em><strong>not</strong> how you want to solve it</em>.                     
           </Typography>
           <br />
           <TextField
             fullWidth
             id="filled-textarea"
-            label="What problem do you have?"
+            label="What challenges do you have?"
             placeholder="Give an overview of your problem: painpoints, things that could be better, etc."
             multiline
             rows={4}
@@ -837,7 +835,7 @@ export default function NonProfitApply() {
           <Typography style={style}><b>Benefit(s) to Organization:</b></Typography>
           <br />
           <Typography style={style}>How would a solution to these challenges help further your work,
-          mission, strategy, or growth?
+          mission, strategy, or growth?  Could you support more clients (people, animals, etc)?  
           </Typography>
           <br />
           <TextField
