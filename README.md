@@ -9,9 +9,9 @@ For OHack'22, ReactLovers greatly improved our UX by working on [#13 update our 
 
 # Opportunity Hack Developer Portal (Frontend)
 - 📝 [ohack.dev backend code is here](https://github.com/opportunity-hack/backend-ohack.dev)
-- This code is the frontend [ohack.dev](https://www.ohack.dev) and makes calls to the backend [api.ohack.dev](https://api.ohack.dev) along with some calls to Auth0
-- Like most things we build, to keep it simple, this runs on [Heroku](https://trifinlabs.com/what-is-heroku/).
-- We borrowed the code from [Auth0 here](https://github.com/auth0-developer-hub/spa_react_javascript_hello-world) to bootstrap our development (always a good practice)
+- This code is the frontend [ohack.dev](https://www.ohack.dev) and makes calls to the backend [api.ohack.dev](https://api.ohack.dev)
+- Like most things we build, to keep it simple, this runs on [Vercel](https://vercel.com/).
+- We borrowed the code from [Auth0 here](https://github.com/auth0-developer-hub/spa_react_javascript_hello-world) to bootstrap our development (always a good practice) we've migrated over to use [PropelAuth](https://www.propelauth.com/) to keep our costs down.
 
 
 ## Quickstart
@@ -23,10 +23,7 @@ to get up and running quickly.
 ## React UI Tools
 We're using Material UI (MUI) as much as possible, [check out their website](https://mui.com/) for more information.
 
-
-## Heroku Custom Domains
-It's not obvious here, but we had to upgrade our account to Hobbyist in order to get the SSL cert capability, without this, we could not make a HTTPS call nor serve HTTPS traffic on our custom domain https://devcenter.heroku.com/articles/custom-domains
-
+## DNS
 We have 3 CNAMES:
 - www.ohack.dev: we want everyone to land here
 - api.ohack.dev: for any API calls to 
