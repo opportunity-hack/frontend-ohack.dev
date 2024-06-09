@@ -35,8 +35,8 @@ export default function useNonprofit( nonprofit_id ){
         } catch (error) {
             console.error(error);
             return { error: error.message,
-                    status: error.response.status,
-                    statusText: error.response.statusText                
+                    status: error.response?.status,
+                    statusText: error.response?.statusText                
              };            
         }
     }, [accessToken]);
@@ -128,10 +128,19 @@ export default function useNonprofit( nonprofit_id ){
 
         // Publically available, so authenticated: false here
         const data = await makeRequest({ config, authenticated: false });
-
-        if( user ){
+        console.log("User: ", user);
+        console.log("isLoggedin: ", isLoggedIn);
+        
+        // If no data, set to empty array
+        if( !data )
+        {
+            setNonprofitApplications([]);
+        }
+        else{
+            console.log("DATA: ", data);
             setNonprofitApplications(data);
-        }        
+        }            
+    
         
         return data;
     };
