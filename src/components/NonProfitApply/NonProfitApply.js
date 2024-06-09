@@ -348,14 +348,9 @@ export default function NonProfitApply() {
           <div className="content__body">
             <div className="profile__header">
               <div className="profile__headline">                
-                <Typography variant="h4">Have a problem where you think software could help?</Typography>                
-                <Typography variant="h4">Here's what you can expect:</Typography>
-                <ul>
-                <li>August: We'll review applications - expect some questions sent via email or Slack.</li>
-                <li>September: Nonprofits will be notified, we'll spend a couple hours to refine your pitches for the hackathon.</li>
-                <li>October: Hackathon! We meet over a weekend and hackers write software to solve your problem.</li>
-                </ul>
-                <Typography variant="body4">Still have a problem for us? Submit it! We're a 24x7 platform and we always welcome your partnership. We likely won't be able to get working on it until after our hackathon in October.</Typography>
+                <Typography variant="h4">We write software for <b>free</b> to help you have more impact.</Typography>                
+                <br/>
+                <Typography variant="h4">No idea is too small or big.</Typography>                                                
                 <br />
                 <Image src={image} width="400" height="300" />
                 <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
@@ -366,7 +361,11 @@ export default function NonProfitApply() {
                 <br />
                 This form helps us to find the charities that are the right fit
                 for our event.                             
-                <br /><br />
+                
+                <Typography variant="h5">If you don't have the time right now just fill in your quick thoughts and come back later to edit.</Typography>                
+
+                <br />
+
               </div>
             </div>
           </div>
@@ -489,6 +488,19 @@ export default function NonProfitApply() {
               });
             }}
           />
+          <br /><br />
+          <LoadingButton
+              color="secondary"
+              loading={loading}
+              loadingPosition="start"
+              startIcon={<SaveIcon />}
+              variant="contained"
+              onClick={handleFormSubmit}
+            >
+              <span>Save</span>
+            </LoadingButton>
+          &nbsp;{submitStatus}
+          
           <br /><br />
             <Alert severity="warning">
               <Typography style={style}><b>Complete transparency:</b> Not all projects will be completed after the hackathon is over.<br/>Your time is commitment is 10-20 hours over the course of the weekend, and a few hours of prep work before the event.<br/>Winning teams will be invited to continue working on their projects after the hackathon is over and this typically takes 3 months.</Typography>
@@ -1018,9 +1030,18 @@ export default function NonProfitApply() {
                 label={<Typography style={style}>Yes, either myself or a point of contact from our nonprofit is planning to attend in-person</Typography>}
               />
           </FormGroup>
+          <hr/>
+          <Typography variant="h4">Here's what you can expect:</Typography>
+                <ul>
+                <li>From now until August: We'll review applications - expect some questions sent via email or Slack.</li>
+                <li>September: Nonprofits will be notified, we'll spend a couple hours to refine your pitches for the hackathon.</li>
+                <li>October: Hackathon! We meet over a weekend and hackers write software to solve your problem.</li>
+                </ul>
+                <Typography variant="body4">Still have a problem for us? Submit it! We're a 24x7 platform and we always welcome your partnership.</Typography>
         </DescriptionStyled>
       </DetailsContainer>      
-      <DetailsContainer container>                
+      <DetailsContainer container>   
+                   
       <br/>
         <DescriptionStyled>         
             <LoadingButton
