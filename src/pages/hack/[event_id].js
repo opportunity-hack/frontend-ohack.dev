@@ -1,19 +1,32 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 
 
 const SingleHackathonEvent = dynamic(() => import('../../components/Hackathon/SingleHackathonEvent'), {
     ssr: false
 });
 
-export default function NonProfitProfile() {
+export default function NonProfitProfile({ title, openGraphData, structuredData }) {
     const router = useRouter();
     const { event_id } = router.query;
   
     return (
+        <>
+        <Head>
+            <title>{title}</title>
+            {openGraphData.map((tag) => (
+                <meta key={tag.key} property={tag.property || tag.name} content={tag.content} />
+            ))}
+            <script type="application/ld+json">
+                {JSON.stringify(structuredData)}
+            </script>
+        </Head>
+        
         <SingleHackathonEvent
           event_id={event_id}
         />
+        </>
     );
 }
 
@@ -48,6 +61,11 @@ export const getStaticProps = async ({ params = {} } = {}) => {
     var countOfNonProfits = data.nonprofits?.length ? data.nonprofits.length : 0;
     var startDate = data.start_date;
     var endDate = data.end_date;
+    var eventImage = data.image_url ? data.image_url : 'https://i.imgur.com/Ff801O6.png';
+    var eventUrl = 'https://ohack.dev/hack/' + data.event_id;
+
+    // If data.description is empty use ""
+    var eventDescription = data.description ? data.description : "";
 
 
     return {
@@ -124,7 +142,62 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                     value: startDate + ' to ' + endDate,
                     key: 'twitterdata2',
                 },
+                
+                // Geo-specific meta tags -- need to update this to by dynamic using the database
+                {
+                    name: 'geo.region',
+                    content: 'US-AZ',
+                    key: 'georegion',
+                },
+                {
+                    name: 'geo.placename',
+                    content: 'Tempe',
+                    key: 'geoplacename',
+                },
+                {
+                    name: 'geo.position',
+                    content: '33.424564;-111.928001',
+                    key: 'geoposition',
+                },
+                {
+                    name: 'ICBM',
+                    content: '33.424564, -111.928001',
+                    key: 'icbm',
+                }
             ],
+            structuredData: {
+                "@context": "http://schema.org",
+                "@type": "Event",
+                "name": title,
+                "description": eventDescription,
+                "startDate": startDate,
+                "endDate": endDate,
+                "location": {
+                    "@type": "Place",
+                    "name": "Arizona State University",
+                    "address": {
+                        "@type": "PostalAddress",
+                        "streetAddress": "1151 S Forest Ave",
+                        "addressLocality": "Tempe",
+                        "addressRegion": "AZ",
+                        "postalCode": "85281",
+                        "addressCountry": "US"
+                    },
+                    "geo": {
+                        "@type": "GeoCoordinates",
+                        "latitude": 33.424564,
+                        "longitude": -111.928001
+                    }
+                },
+                "image": [
+                    eventImage
+                ],
+                "organizer": {
+                    "@type": "Organization",
+                    "name": "Opportunity Hack Arizona",
+                    "url": eventUrl
+                }
+            }
         },
     };
 };

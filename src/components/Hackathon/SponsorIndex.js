@@ -1,4 +1,4 @@
-import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../styles/nonprofit/styles';
+import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../styles/sponsors/styles';
 import { Button, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import { Grid, Card, Box, CardContent} from '@mui/material';
@@ -10,8 +10,10 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import Chip from '@mui/material/Chip';
-import Avatar from '@mui/material/Avatar';
+
+import CardActions from '@mui/material/CardActions';
+import CardMedia from '@mui/material/CardMedia';
+
 
 export default function SponsorIndex()
 {
@@ -19,22 +21,111 @@ export default function SponsorIndex()
     const router = useRouter();
     const { event_id } = router.query;
     const style = { fontSize: '15px' };
+    const tableHeaderStyle = { fontSize: '15px', fontWeight: 'bold', backgroundColor: '#f0f0f0'};
+
     const largeStyle = { fontSize: '20px' };
 
     // Define a sponsorship form to collect the sponsor's information and what level of support they are willing to provide
     // The form should be submitted to the backend and the backend should send an email to the sponsor with a link to the payment page
     // The payment page should be a Stripe checkout page that collects the payment and sends a confirmation email to the sponsor
     // Use MUI components for the form and the Stripe checkout page
+
+    const sponsors = [
+      {
+        name: "Meta",
+        logo: "https://i.imgur.com/v1qjSIO.png",
+        hours: 150,
+        donations: 1000,
+        website: "https://meta.com"
+      },
+      {
+        name: "Spotify",
+        logo: "https://i.imgur.com/r9qB2L4.png",
+        hours: 150,
+        donations: 0,
+        website: "https://spotify.com"
+      }
+    ]
     
+    const getSponsorCard = (sponsor, hourMin, hourMax) => {
+      return (
+        <Grid container spacing={0.5} mt={1} mb={1}>
+                {
+                  sponsors.map((sponsor) => {
+                    // Make sure sponsor has >= hours
+                    var donations = "";
+
+                    if( sponsor.donations > 0 )
+                    {
+                      donations = <Typography variant="body2" color="text.secondary" style={style}>${sponsor.donations} donated</Typography>
+                    }
+
+
+                    if( sponsor.hours >= hourMin && sponsor.hours < hourMax)
+                    {
+                      return (
+                        <Grid item key={sponsor.name}>
+                        <Card sx={{ width: '200px', height: '250px', marginTop: '5px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                          <CardMedia
+                            sx={{ height: 100 }}
+                            image={sponsor.logo}
+                            title="green iguana"
+                          />
+                          <CardContent>
+                            <Typography gutterBottom variant="h4" component="div">
+                              {sponsor.name}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" style={style}>
+                              {sponsor.hours} hours   
+                              {donations}                           
+                            </Typography>                            
+                          </CardContent>
+                          <CardActions style={{ marginTop: 'auto' }}>
+                            <Button size="small" href={sponsor.website}>Learn More</Button>
+                          </CardActions>
+                        </Card>
+                        </Grid>
+                      )
+                    }
+                    else {
+                      // Return an empty card with a link to donate money or time
+                      return (
+                        <Card sx={{ width: '200px', bgcolor: '#EEEEEE', borderStyle: 'outset'  }} >
+                          <CardContent>
+                            <Typography gutterBottom variant="h5" component="div">
+                              No sponsors yet
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Be the first!
+                            </Typography>
+
+                            <CardActions>
+                              <Button size="small" variant="outlined" href={`/hack/${event_id}`}>Volunteer</Button>
+                              <Button size="small" color="success" variant='outlined' href="https://www.paypal.com/donate?campaign_id=WWL4VPVBUS4SA">Donate</Button>
+                            </CardActions>
+
+                            
+                          </CardContent>
+                        </Card>
+                      )
+                    }
+                  }
+                  )
+                }
+                </Grid>  
+      )
+    }
+
 
     // Print out the levels of sponorship and what each level provides
     // Use MUI Card and CardContent to display the information
     const bronzeColor = '#e7cfae';
     const silverColor = '#f0f0f0';
     const goldColor = '#ffd700';
-    const platinumColor = '#e5e4e2';
+    const platinumColor = '#b3b3b3';
+
     const sponsorshipLevels = (
-        <Grid item xs={11} sm={11} md={11} key="sponsorLevels" style={{margin: '1%'}}>
+        <Grid item xs={10} sm={10} md={10} key="sponsorLevels">
             <Typography variant="h4" component="h1">
                 Levels
             </Typography>
@@ -47,6 +138,11 @@ export default function SponsorIndex()
                 <Typography variant="body1" style={style} component="p">
                   Over $500 in support or over 10 hours of volunteering/mentoring.
                 </Typography>
+
+                <Typography variant="h4" style={{marginTop:'5px'}}>
+                  Sponsors
+                </Typography>
+                {getSponsorCard(sponsors, 10, 20)} 
               </CardContent>
             </Card>
             <Card style={{backgroundColor : silverColor, margin:'2px' }}>
@@ -57,6 +153,11 @@ export default function SponsorIndex()
                 <Typography variant="body1" style={style} component="p">
                   Over $800 in support or over 20 hours of volunteering/mentoring.  This helps to keep existing solutions running.
                 </Typography>
+                
+                <Typography variant="h4" style={{marginTop:'5px'}}>
+                  Sponsors
+                </Typography>
+                {getSponsorCard(sponsors, 20, 100)} 
               </CardContent>
             </Card>
             <Card style={{backgroundColor : goldColor, margin:'2px' }}>
@@ -71,10 +172,7 @@ export default function SponsorIndex()
                 <Typography variant="h4" style={{marginTop:'5px'}}>
                   Sponsors
                 </Typography>
-                <Chip style={largeStyle} color="secondary" label="Meta" avatar=<Avatar src="https://i.imgur.com/v1qjSIO.png" imgProps={{ referrerPolicy: "no-referrer" }} /> />
-                &nbsp;
-                <Chip style={largeStyle} color="secondary" label="Spotify" avatar=<Avatar src="https://i.imgur.com/r9qB2L4.png" imgProps={{ referrerPolicy: "no-referrer" }}/> />                
-                
+                {getSponsorCard(sponsors, 100, 150)} 
                 
                 <Typography variant="body1" style={style} component="p">
                   100 hours of volunteering this year
@@ -90,6 +188,11 @@ export default function SponsorIndex()
                   Over $4,000 in support and over 150 hours of volunteering/mentoring.
                   $4,000 is the sweet-spot that we've found as a prize to ensure successful completion of the project after the hackathon.
                 </Typography>
+
+                <Typography variant="h4" style={{marginTop:'5px'}}>
+                  Sponsors
+                </Typography>
+                {getSponsorCard(sponsors, 150, 150000)} 
               </CardContent>
             </Card>
           </Grid>
@@ -214,23 +317,25 @@ export default function SponsorIndex()
     ];
 
     const sponsorshipTable = (
-        <Box sx={{ overflow: "auto" }}>
-        <Box sx={{ width: "95%", display: "table", tableLayout: "fixed" }}>
-
+        
+        <Grid sx={{ width: "90%", display: "table", tableLayout: "fixed", marginLeft: "15px", justifyContent: "center"}} mt={2} mb={2}>
+        <Typography variant="h4" component="h1">
+            Sponsorship Benefits
+        </Typography>
         <TableContainer component={Paper}>
             <Table aria-label="simple table">
                 <TableHead>
                 <TableRow>
-                    <TableCell style={style} width={90}>Award</TableCell>                            
-                    <TableCell style={style} width={100} align="right">Logo on website</TableCell>
-                    <TableCell style={style} width={100} align="right">Logo shirts & event posters</TableCell>
-                    <TableCell style={style} width={100} align="right">Hackathon table</TableCell>
-                    <TableCell style={style} width={100} align="right">Judging Panel</TableCell>
-                    <TableCell style={style} width={100} align="right">Opening/Closing Ceremony</TableCell>
-                    <TableCell style={style} width={150} align="right">Hackathon Badges</TableCell>
-                    <TableCell style={style} width={100} align="right">Workshops</TableCell>
-                    <TableCell style={style} width={100} align="right">Prize/Award</TableCell>                            
-                    <TableCell style={style} width={100} align="right">Winner Networking</TableCell>
+                    <TableCell style={tableHeaderStyle} width={90}><strong>Award</strong></TableCell>                            
+                    <TableCell style={tableHeaderStyle} width={100} align="right">Logo on website</TableCell>
+                    <TableCell style={tableHeaderStyle} width={100} align="right">Logo shirts & event posters</TableCell>
+                    <TableCell style={tableHeaderStyle} width={100} align="right">Hackathon table</TableCell>
+                    <TableCell style={tableHeaderStyle} width={100} align="right">Judging Panel</TableCell>
+                    <TableCell style={tableHeaderStyle} width={100} align="right">Opening/Closing Ceremony</TableCell>
+                    <TableCell style={tableHeaderStyle} width={150} align="right">Hackathon Badges</TableCell>
+                    <TableCell style={tableHeaderStyle} width={100} align="right">Workshops</TableCell>
+                    <TableCell style={tableHeaderStyle} width={100} align="right">Prize/Award</TableCell>                            
+                    <TableCell style={tableHeaderStyle} width={100} align="right">Winner Networking</TableCell>
                 </TableRow>
                 </TableHead>
                 <TableBody>
@@ -251,39 +356,69 @@ export default function SponsorIndex()
                 </TableBody>
             </Table>
         </TableContainer>
-        </Box>
-        </Box>
+        </Grid>
+        
     )
 
     return(
         <LayoutContainer key="sponsorship" container>    
         <div>
             <TitleContainer container>
-                <Grid sx={{margin: '5px'}}>
+                <Grid xs={10}>
                 <Button variant="outlined" href={`/hack/${event_id}`}>Back to the hack</Button>
-                </Grid>
+                
                 <Typography variant="h2" paragraph>Help sponsor our event!</Typography>
 
                <Typography variant="body1" style={style} paragraph>
                     Sponsoring our event is a great way to get your company's name out there and help the community. There are various support levels available to help you get the most out of your sponsorship.
                 </Typography>
+                </Grid>
 
-                <Typography variant="h3" paragraph>Option 1: Donate your time</Typography>                
-                <Typography variant="body1"  style={style}>
-                Work with your team to mentor or volunteer before, during, or after the hackathon. Self-report your time spent.  Make a committment today. <Button href={`/hack/${event_id}`}>Back to the hack</Button>
-                </Typography>
-                <Typography variant="h3" paragraph>Option 2: Contribute to our charity with PayPal</Typography>      
+                <Grid container spacing={0.5} mt={2} mb={2} xs={12} sm={12} md={12} direction="row">
                 
-                <form action="https://www.paypal.com/donate" method="post" target="_top">
-                <input type="hidden" name="campaign_id" value="SYFMRXYHBX534" />
-                <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
-                <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1" />
-                </form>
+                <Grid item xs={10} sm={6} md={6} lg={6}>
+                  <Card>
+                    <CardMedia
+                      sx={{ height: 200 }}
+                      image="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp"
+                      title="Option 1: Volunteer"
+                    />
+                    <CardContent>
+                      <Typography variant="h3" paragraph>Option 1: Volunteer</Typography>
+                      <Typography variant="body2" color="text.secondary" style={style}>
+                        Mentor or volunteer before, during, or after the hackathon. Self-report your time spent.  Make a committment today.
+                      </Typography>
+                    </CardContent>
+                    <CardActions>
+                      <Button size="small" href="https://www.paypal.com/donate?campaign_id=WWL4VPVBUS4SA">Donate</Button>
+                    </CardActions>                                
+                  </Card>                  
+                </Grid>
+
+                <Grid item xs={10} sm={6} md={6} lg={6}>
+                  <Card>
+                    <CardMedia
+                      sx={{ height: 200 }}
+                      image="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+                      title="Option 2: Donate"
+                    />
+                    <CardContent>
+                      <Typography variant="h3" paragraph>Option 2: Donate</Typography>
+                      <Typography variant="body2" color="text.secondary" style={style}>
+                        Support Opportunity Hack with a secure PayPal donation. Your donation will help us fund the hackathon and support the community.
+                      </Typography>
+                    </CardContent>
+                    <CardActions>
+                      <Button size="small" href="https://www.paypal.com/donate?campaign_id=WWL4VPVBUS4SA">Donate</Button>
+                    </CardActions>                                
+                  </Card>                  
+                </Grid>
+                </Grid>
 
             </TitleContainer>   
             
 
-            <ProjectsContainer container style={{marginTop: 20, width: '100%'}} >                                
+            <ProjectsContainer container style={{marginTop: 20}} xs={10} sm={12} md={12} lg={12} >                                
                 {sponsorshipLevels}                            
                 {sponsorshipTable}                
                 {sponsorLevelDescriptions}

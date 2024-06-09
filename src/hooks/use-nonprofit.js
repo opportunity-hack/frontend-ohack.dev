@@ -33,12 +33,11 @@ export default function useNonprofit( nonprofit_id ){
 
             return data;
         } catch (error) {
-
-            if (axios.isAxiosError(error) && error.response) {
-                return error.response;
-            }
-
-            return error.message;
+            console.error(error);
+            return { error: error.message,
+                    status: error.response.status,
+                    statusText: error.response.statusText                
+             };            
         }
     }, [accessToken]);
 
@@ -106,7 +105,9 @@ export default function useNonprofit( nonprofit_id ){
                 }
             };
             console.log("Unauthenticated user");
-            const data = await makeRequest({ config, authenticated: false });        
+            const data = await makeRequest({ config, authenticated: false });      
+            
+            console.log("Data from request: ", data);
             onComplete(data);
         }        
         

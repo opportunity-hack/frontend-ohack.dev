@@ -5,8 +5,12 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { AuthProvider } from "@propelauth/react";
 
 
+
+
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "../assets/theme";
+
+
 
 // TODO: What is this component? What does it do? Is it needed?
 // import { Loader } from "../components/loader";
@@ -19,6 +23,11 @@ import theme from "../assets/theme";
 
 
 // NOTE: Load dynamics below static imports to avoid eslint errors.
+
+const AxiosWrapper = dynamic(() => import('../components/axios-wrapper'), {
+  ssr: false,
+})
+
 const NavBar = dynamic(() => import('../components/Navbar/Navbar'), {
   ssr: false,
 })
@@ -55,17 +64,17 @@ export default function MyApp({ Component, pageProps }) {
         <title>{pageProps.title}</title>
       </Head>
        <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
-        
-        <ThemeProvider theme={theme}>
-          <CssBaseline>
-            <div className="page-layout">
-              <NavBar />
-              <Component {...pageProps} />
-              <Footer />              
-            </div>
-          </CssBaseline>
-        </ThemeProvider>
-        
+          <AxiosWrapper>
+            <ThemeProvider theme={theme}>
+            <CssBaseline>
+              <div className="page-layout">
+                <NavBar />
+                <Component {...pageProps} />
+                <Footer />              
+              </div>
+            </CssBaseline>
+          </ThemeProvider>
+        </AxiosWrapper>
       </AuthProvider>
       <GA/>
     </span>

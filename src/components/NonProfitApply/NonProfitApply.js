@@ -74,12 +74,12 @@ export default function NonProfitApply() {
     );
   }, []);
 
-  const START_DATE = "Saturday, Oct 7th";
-  const END_DATE = "Sunday, Oct 8th 2023";
+  const START_DATE = "Saturday, Oct 12th";
+  const END_DATE = "Sunday, Oct 13th 2024";
   const LOCATION_ARIZONA = "Phoenix, Arizona"
   const LOCATION = LOCATION_ARIZONA + " and virtual";
 
-  nonprofits && nonprofits.forEach((item) => {
+  nonprofits && nonprofits.forEach((item) => {    
     if( item.name )
     {
       nonProfitOptions.push(item.name);
@@ -128,8 +128,8 @@ export default function NonProfitApply() {
       if(data.status != null && data.status === 404)
       {
         console.log("No application yet.  Returning empty form.");
-      } else if( data !== undefined && data !== null) {
-        console.log("Found application.  Setting form state.");        
+      } else if( data !== undefined && data !== null && data !== "Network Error") {
+        console.log("Found application.  Setting form state.");            
         setFormState(data);
       }      
 
@@ -304,7 +304,8 @@ export default function NonProfitApply() {
   }
 
   
-
+  const yesTextSaturday = `"Yes, they will be able to attend for nonprofit presentations the morning of ${START_DATE}"`;
+  const yesTextSunday = `"Yes, they will be able to attend the final presentations and judging the afternoon of ${END_DATE}"`
 
   const handleFormSubmit = async () => {    
     setSubmitStatus(<Puff stroke="#0000FF" />);
@@ -346,12 +347,8 @@ export default function NonProfitApply() {
 
           <div className="content__body">
             <div className="profile__header">
-              <div className="profile__headline">
-             
-                <Typography variant="h2">Applications are closed as of August 1st 2023</Typography>
-                <Image src="https://media4.giphy.com/media/ysu9eOMkhYa7YyE70J/giphy.gif" width="480" height="270" />
-                <Typography variant="h3">Any forms submitted now will not be considered for our October hackathon.</Typography>
-                <br />
+              <div className="profile__headline">                
+                <Typography variant="h4">Have a problem where you think software could help?</Typography>                
                 <Typography variant="h4">Here's what you can expect:</Typography>
                 <ul>
                 <li>August: We'll review applications - expect some questions sent via email or Slack.</li>
@@ -399,7 +396,7 @@ export default function NonProfitApply() {
           </p>
            
         
-        <Autocomplete
+        {nonProfitOptions.length > 0    && <Autocomplete
               disablePortal
               value={formState.charityName}
               onChange={(event, newValue) => {                
@@ -473,7 +470,7 @@ export default function NonProfitApply() {
               sx={{ width: 300 }}
               renderInput={(params) => <TextField {...params} label="Name of Charity Organization" />}
             />
-          
+            }
           
 
           <br />
@@ -520,7 +517,9 @@ export default function NonProfitApply() {
           
         </DescriptionStyled>
         
-        <Stack direction="row" spacing={2}  alignItems="flex-start" mt={3}>
+        <Stack direction="row" spacing={2}  alignItems="flex-start" mt={3} style={{
+          marginLeft: "3rem",
+        }} >
         <DescriptionStyled>          
           <b>Areas of focus for your non-profit?</b>
           <FormGroup>
@@ -800,22 +799,20 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <Typography style={style}><b>Technical Problem:</b></Typography>
+          <Typography style={style}><b>What challenges do you have?</b></Typography>          
           <br />
           <Typography style={style}>
-          Describe what technical problem would you like hackathon participants
-          to solve.
+          What tedious tasks do you have? What slows you down? What stops you from doing more? What could be better?
           </Typography>
           <br />
           <Typography style={style}>
-          Try to think only about the problem you are trying to solve,
-            and <em><strong>not</strong> how you want to solve it</em>.                     
+          Try to think only about the challenges you have and <em><strong>not</strong> how you want to solve it</em>.                     
           </Typography>
           <br />
           <TextField
             fullWidth
             id="filled-textarea"
-            label="What problem do you have?"
+            label="What challenges do you have?"
             placeholder="Give an overview of your problem: painpoints, things that could be better, etc."
             multiline
             rows={4}
@@ -838,7 +835,7 @@ export default function NonProfitApply() {
           <Typography style={style}><b>Benefit(s) to Organization:</b></Typography>
           <br />
           <Typography style={style}>How would a solution to these challenges help further your work,
-          mission, strategy, or growth?
+          mission, strategy, or growth?  Could you support more clients (people, animals, etc)?  
           </Typography>
           <br />
           <TextField
@@ -974,24 +971,24 @@ export default function NonProfitApply() {
               control={
                 <Checkbox
                   type="checkbox"
-                  name="Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th"
-                  checked={formState.keyStaffAvailability && formState.keyStaffAvailability.includes("Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th")}
+                  name={yesTextSaturday}
+                  checked={formState.keyStaffAvailability && formState.keyStaffAvailability.includes(yesTextSaturday)}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
-                label={<Typography style={style}>Yes, they will be able to attend for nonprofit presentations the morning of Saturday, October 7th</Typography>}
+                label={<Typography style={style}>Yes, they will be able to attend for nonprofit presentations the morning of {START_DATE}</Typography>}
             />
             <FormControlLabel
               sx={{ padding: "5px"}}
               control={
                 <Checkbox
                   type="checkbox"
-                  name="Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th"
-                  checked={formState.keyStaffAvailability && formState.keyStaffAvailability.includes("Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th")}
+                  name={yesTextSunday}
+                  checked={formState.keyStaffAvailability && formState.keyStaffAvailability.includes(yesTextSunday)}
                   onChange={keyStaffAvailabilitySetState}
                 />
               }
-                label={<Typography style={style}>Yes, they will be able to attend the final presentations and judging the afternoon of Sunday, October 8th</Typography>}
+                label={<Typography style={style}>Yes, they will be able to attend the final presentations and judging the afternoon of {END_DATE}</Typography>}
             />
           </FormGroup>
           <br />

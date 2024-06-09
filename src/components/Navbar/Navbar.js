@@ -59,7 +59,8 @@ const about_settings = [
   [ '🙏 Mentors?', '/about/mentors' ],
   [ '❤️ Rewards', '/about/hearts' ],
   [ '✅ Project Completion', '/about/completion' ],
-  [ '🎉 Hackathon?' ,'/hack']
+  [ '🎉 Hackathon?' ,'/hack'],
+  [ '🚪 Office Hours', '/office-hours' ],
 ];
 
 const auth_settings = [

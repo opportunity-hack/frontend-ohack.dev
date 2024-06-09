@@ -22,6 +22,7 @@ import { LoginButton } from "../Navbar/styles";
 
 
 import ArticleIcon from "@mui/icons-material/Article";
+import SmartDisplayIcon from '@mui/icons-material/SmartDisplay';
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -658,6 +659,24 @@ const volunteerWords = [
     
   }
 
+  function isReferenceDocument(link) {
+    const documentExtensions = [".pdf", ".doc", ".docx"];
+    for (const extension of documentExtensions) {
+        if (link.endsWith(extension)) {
+            return true;
+        }
+    }
+
+    const documentPlatforms = ["docs.google.com"]; 
+    for (const platform of documentPlatforms) {
+        if (link.includes(platform)) {
+            return true;
+        }
+    }
+
+    return false;
+  }
+
   var TeamText = "";
   if (hackathonEvents != null) {
     var teamCounter = teams.filter((team) => team.problem_statements?.includes(problem_statement_id)).length;
@@ -857,7 +876,7 @@ const volunteerWords = [
             variant="outlined"
             style={{ margin: "0.5rem", fontSize: '13px' }}
           >
-            <ArticleIcon />
+            {isReferenceDocument(reference.link) ? <ArticleIcon /> : <SmartDisplayIcon />}
             &nbsp;
             {reference.name}
           </Button>
