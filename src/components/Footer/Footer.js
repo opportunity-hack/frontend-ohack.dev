@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import { FaSlack } from "react-icons/fa";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { FaThreads } from "react-icons/fa6";
 
@@ -55,6 +56,9 @@ export default function Footer() {
               <IconLink href="https://www.threads.net/@opportunityhack" target="_blank">                
                 <FaThreads fontSize="large" style={{ marginRight: "2rem", marginBottom: "0.25rem", width: "24px", height: "24px"  }}/>
               </IconLink>
+              <IconLink href="https://opportunity-hack.slack.com" target="_blank">
+              <FaSlack fontSize="large" style={{ marginRight: "2rem", marginBottom: "0.25rem", width: "24px", height: "24px" }} />
+            </IconLink>
               <IconLink href="https://twitter.com/opportunityhack" target="_blank">
                 <Twitter fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
               </IconLink>
@@ -62,7 +66,7 @@ export default function Footer() {
                 <GitHub fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px"  }} />
                 <br></br>
               </IconLink>
-              
+              <div style={{ marginTop: "1rem" }}>
               <Hashtag>#socialgood</Hashtag> &nbsp;
               <Hashtag>#nonprofit</Hashtag> &nbsp;
               <Hashtag>#volunteer</Hashtag> &nbsp;
@@ -74,7 +78,7 @@ export default function Footer() {
               <Hashtag>#givingback</Hashtag> &nbsp;
               <Hashtag>#changemakers</Hashtag> &nbsp;
               <Hashtag>#empowerment</Hashtag> &nbsp;
-              
+              </div>
               <MutedText style={{ marginTop: "3rem" }}>
                 Opportunity Hack Inc. EIN: 84-5113049
               </MutedText>                            
@@ -97,6 +101,9 @@ export default function Footer() {
             </LinkListItem>
             <LinkListItem key="historyohack">
               <StyledLink href="https://www.ohack.org/about/history">Our History</StyledLink> <OpenInNewIcon />
+            </LinkListItem>
+            <LinkListItem key="slackohack">
+              <StyledLink href="https://opportunity-hack.slack.com/">Join Us on Slack</StyledLink> <FaSlack />
             </LinkListItem>
             <LinkListItem key="githubpublicgood">
               This website is a public good<br/><StyledLink href="https://github.com/opportunity-hack/frontend-ohack.dev">Fork this on GitHub</StyledLink>              
