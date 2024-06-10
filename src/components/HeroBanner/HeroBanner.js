@@ -1,24 +1,23 @@
-import {
-  ButtonBasicStyle,
-  ButtonGoldStyle,
-  GridStyled,
-  TextStyled,  
-  TitleContainer,
-  CaptionContainer,
-  ButtonContainers,  
-  BlankContainer,
-} from './styles';
-import { LoginButton } from "../Navbar/styles";
 import { Grid } from '@mui/material';
+import { useAuthInfo, useRedirectFunctions } from "@propelauth/react";
 import React, { Suspense, useEffect } from 'react';
 import * as ga from '../../lib/ga';
-import { useRedirectFunctions } from "@propelauth/react"
-import { useAuthInfo } from '@propelauth/react'
+import { LoginButton } from "../Navbar/styles";
+import {
+  BlankContainer,
+  ButtonBasicStyle,
+  ButtonContainers,
+  ButtonGoldStyle,
+  CaptionContainer,
+  GridStyled,
+  TextStyled,
+  TitleContainer,
+} from './styles';
 
 
 
-import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
+import { useEnv } from '../../context/env.context';
 
 // Assuming you're using Next.js for SSR
 import dynamic from 'next/dynamic';
@@ -122,11 +121,11 @@ function HeroBanner() {
               target="_blank"
               style={{ color: 'white', backgroundColor: '#0070BA' }}
             >
-              0. Donate via PayPal
+             Donate via PayPal
             </ButtonBasicStyle>
 
             <ButtonGoldStyle onClick={openCodeSample}>
-              1. Create an OHack Slack account
+              Create an OHack Slack account
             </ButtonGoldStyle>
 
             {!isLoggedIn && <LoginButton
@@ -135,7 +134,7 @@ function HeroBanner() {
                   onClick={() => redirectToLoginPage()}
                 className="login-button"
               >
-                2. Log In                                                  
+                Log In                                                  
               </LoginButton> 
             }
 
@@ -144,7 +143,7 @@ function HeroBanner() {
               onClick={() => gaButton('button_profile', 'clicked to see profile')}
               href='/profile'              
             >
-              2. View your profile
+              View your profile
             </ButtonBasicStyle>
             }
             
@@ -152,23 +151,20 @@ function HeroBanner() {
               onClick={() => gaButton('button_about', 'about us')}
               href='/about'
             >
-              3. Read more about us
+              Read more about us
             </ButtonBasicStyle>
 
             <ButtonBasicStyle
               onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'
             >
-              4. See all nonprofit projects
+              See all nonprofit projects
             </ButtonBasicStyle>
 
           </ButtonContainers>
         </CaptionContainer>
       </BlankContainer>
-      {/* Right Container */}
-      <BlankContainer xs={12} md={5} lg={5}  justifyContent="center" alignItems="center">
-          
-      </BlankContainer>
+    
     </GridStyled>
   );
 }
