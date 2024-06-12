@@ -13,9 +13,9 @@
 }
 
 .content__title {
-  margin-top: 0;
-
-  color: var(--black);
+  margin-top: 15;
+  color: #1976d2;
+  /* color: #c7cedd; */
 }
 
 .content__body {

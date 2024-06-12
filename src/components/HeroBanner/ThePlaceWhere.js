@@ -3,15 +3,13 @@ import { TitleStyled, SpanText } from "./styles";
 
 function ThePlaceWhere() {
   return (
-    
-      <TitleStyled>
-        The place where
-        <div>
-          <SpanText>Nonprofits, Hackers, Mentors, Volunteers</SpanText>
-        </div>
-        unite
-      </TitleStyled>
-    
+    <TitleStyled>
+      The place where
+      <div>
+        <SpanText>Nonprofits, Hackers, Mentors, Volunteers</SpanText>
+      </div>
+      unite
+    </TitleStyled>
   );
 }
 
