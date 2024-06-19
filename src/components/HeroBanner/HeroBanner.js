@@ -13,17 +13,13 @@ import {
   CaptionContainer,
   GridStyled,
   TextStyled,
-  TitleContainer,
-  CaptionContainer,
-  ButtonContainers,
-  BlankContainer
+  TitleContainer  
 } from './styles';
 
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
 
 import dynamic from 'next/dynamic';
-import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 
 const LeadForm = dynamic(() => import('../LeadForm/LeadForm'), {
@@ -35,16 +31,19 @@ function HeroBanner() {
   const { slackSignupUrl } = useEnv();
   const { isLoggedIn } = useAuthInfo();
   const { redirectToLoginPage } = useRedirectFunctions();
+  
   const options = {
     autoConfig: true,
     debug: false,
   };
+
   const advancedMatching = undefined;
   useEffect(() => {
     if (typeof window !== 'undefined') {
       ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
     }
   }, []);
+
   const openCodeSample = () => {
     gaButton('slack_button', 'open_join_slack');
     window.open(slackSignupUrl, '_blank', 'noopener noreferrer');
