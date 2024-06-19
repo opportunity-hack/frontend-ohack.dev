@@ -10,6 +10,8 @@ import Switch from "@mui/material/Switch";
 import Stack from "@mui/material/Stack";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { styled } from "@mui/material/styles";
+import CoPresentIcon from '@mui/icons-material/CoPresent';
+import GitHubIcon from '@mui/icons-material/GitHub';
 
 import ReactMarkdown from 'react-markdown'
 import Divider from '@mui/material/Divider';
@@ -659,22 +661,57 @@ const volunteerWords = [
     
   }
 
-  function isReferenceDocument(link) {
+  function getIconForReferenceLinkOrName(link, name) {
     const documentExtensions = [".pdf", ".doc", ".docx"];
     for (const extension of documentExtensions) {
         if (link.endsWith(extension)) {
-            return true;
+            return <ArticleIcon />;
         }
     }
-
+ 
     const documentPlatforms = ["docs.google.com"]; 
     for (const platform of documentPlatforms) {
         if (link.includes(platform)) {
-            return true;
+            return <ArticleIcon />;
         }
     }
 
-    return false;
+    // If YouTube is in the name or video is in the name
+    const videoIconText = ["youtube", "video"];
+    const videoIconLink = ["youtube.com", "vimeo.com"];
+    if (videoIconText.some((text) => name.toLowerCase().includes(text)) || videoIconLink.some((text) => link.includes(text))) {
+        return <SmartDisplayIcon />;
+    }
+
+    // If .pptx or slides.google.com, use a presentation icon
+    const presentationExtensions = [".pptx"];
+    for (const extension of presentationExtensions) {
+        if (link.endsWith(extension)) {
+            return <CoPresentIcon />;
+        }
+    }
+
+    const presentationPlatforms = ["slides.google.com"];
+    for (const platform of presentationPlatforms) {
+        if (link.includes(platform)) {
+            return <CoPresentIcon />;
+        }
+    }
+
+    // Handle github name or link
+    const githubPlatforms = ["github.com"];
+    for (const platform of githubPlatforms) {
+        if (link.includes(platform)) {
+            return <GitHubIcon />;
+        }
+    }
+
+
+
+
+    // Default to a link icon
+    return <OpenInNewIcon />;
+    
   }
 
   var TeamText = "";
@@ -876,7 +913,7 @@ const volunteerWords = [
             variant="outlined"
             style={{ margin: "0.5rem", fontSize: '13px' }}
           >
-            {isReferenceDocument(reference.link) ? <ArticleIcon /> : <SmartDisplayIcon />}
+            { getIconForReferenceLinkOrName(reference.link, reference.name)}
             &nbsp;
             {reference.name}
           </Button>

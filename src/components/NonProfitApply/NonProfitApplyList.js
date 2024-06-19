@@ -2,17 +2,81 @@
 // =============================================================
 import React, { useState, useEffect } from "react";
 import useNonprofit from "../../hooks/use-nonprofit";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+
+// Import MUI dropdown that allows to select the nonprofit
+import { Select, MenuItem } from '@mui/material';
+// Import MUI Button that allows to save the selected nonprofit
+import { Button } from '@mui/material';
+import { useAuthInfo } from '@propelauth/react';
+
+// Import MUI TextField that allows to enter a summary of the project
+import { TextField } from '@mui/material';
+
+// Import MUI Modal dialog
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+
+// Import Next Link
+import Link from 'next/link';
 
 
 
 export default function NonProfitApplyList() {
     let { handle_get_nonprofit_applications, nonprofitApplications } = useNonprofit();
+    const { isLoggedIn, user, accessToken } = useAuthInfo();
 
-    useEffect(() => {        
-        handle_get_nonprofit_applications();
-    }, []);
+    useEffect(() => {
+        if( isLoggedIn ) {
+            handle_get_nonprofit_applications();
+        }   
+        
+    }, [user, isLoggedIn]);
+
+    const nonprofitApplicationStatusOptions = [
+        { value: 'pending', label: 'Pending' },
+        { value: 'approved', label: 'Approved' },
+        { value: 'rejected', label: 'Rejected' }
+    ];
+
+    const mockNonprofitNameList = [
+        { value: '1', label: 'Nonprofit 1' },
+        { value: '2', label: 'Nonprofit 2' },
+        { value: '3', label: 'Nonprofit 3' },
+        { value: '4', label: 'Nonprofit 4' },
+        { value: '5', label: 'Nonprofit 5' },
+        { value: '6', label: 'Nonprofit 6' },
+        { value: '7', label: 'Nonprofit 7' },
+        { value: '8', label: 'Nonprofit 8' },
+        { value: '9', label: 'Nonprofit 9' },
+        { value: '10', label: 'Nonprofit 10' },
+    ]
+
+    const [selectedNonprofit, setSelectedNonprofit] = useState(null);
+
+    const handleNonprofitChange = (event) => {
+        console.log("Selected Nonprofit: ", event.target.value);
+    }
+    
+    const handleSaveNonprofit = (index) => {
+        console.log("Save Nonprofit: ", index);
+    }
+
+    // Use alert dialog when launch announcement is clicked
+    const [open, setOpen] = useState(false);
+
+    const handleClickOpen = () => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
+
+
+
+
+
 
     // Use an array of keys to map the object properties to table cells
     const keys = [
@@ -64,6 +128,28 @@ export default function NonProfitApplyList() {
 
     return( 
         <div className="container">
+        <Dialog open={open} onClose={handleClose}>
+                                <DialogTitle>Launch Announcement</DialogTitle>
+                                <DialogContent>
+                                    <DialogContentText>
+                                        Are you sure you want to send the launch announcement?
+                                    </DialogContentText>
+
+                                    <h4>Other Details</h4>
+                                    <ul>
+                                        <li><b>Launch Summary:</b> Fill in from text box</li>
+                                        <li><b>Image:</b> TODO</li>
+                                        <li><b>Link:</b> TODO - should link to the project like <Link style={{ color: "blue" }} href="http://localhost:3000/project/991a8796476b11eda895827f9c97b805">this</Link></li>
+                                    </ul>
+
+                           
+                                </DialogContent>
+                                <DialogActions>
+                                    <Button onClick={handleClose}>Cancel</Button>
+                                    <Button onClick={handleClose}>Send</Button>
+                                </DialogActions>
+                            </Dialog>
+
             <div className="row">
                 <div className="col-12">
                     <h1>Nonprofit Applications</h1>
@@ -77,7 +163,86 @@ export default function NonProfitApplyList() {
                         {
                             nonprofitApplications.map((nonprofitApplication, index) => (
                             <div>
-                            <h3>{nonprofitApplication.charityName} - {nonprofitApplication.charityLocation} - {new Date(nonprofitApplication.timeStamp._seconds *1000).toLocaleDateString("en-US")}</h3>                                                                                                                           
+                            <h3>{nonprofitApplication.charityName} - {nonprofitApplication.charityLocation} - {new Date(nonprofitApplication.timeStamp._seconds *1000).toLocaleDateString("en-US")}</h3>
+                            {
+                                // Add nonprofit selection dropdown 
+                            }
+                            <Typography variant="h6">Select Nonprofit TODO - the idea is that you'd select a nonprofit we already have in our system, or you'd create a new one.  We should be able to match the nonprofit name submitted versus all nonprofits we currently have in our database.</Typography>
+                            <Select
+                                label="Select Nonprofit"
+                                value={selectedNonprofit}
+                                onChange={handleNonprofitChange}
+                                style={{ width: '200px' }} 
+                            >
+                                {
+                                    mockNonprofitNameList.map((nonprofit, index) => (
+                                        <MenuItem key={`nonprofit_${index}`} value={nonprofit.value}>{nonprofit.label}</MenuItem>
+                                    ))
+                                }
+                            </Select>
+
+                            {
+                                // Add status dropdown
+                            }
+                            <Typography variant="h6">Status - TODO - the idea here is that you'd be able to select the current state of the application</Typography>
+                            <Select
+                                label="Status"
+                                value={nonprofitApplication.status}
+                                onChange={handleNonprofitChange}
+                                style={{ width: '200px' }}
+                            >
+                                {
+                                    nonprofitApplicationStatusOptions.map((status, index) => (
+                                        <MenuItem key={`status_${index}`} value={status.value}>{status.label}</MenuItem>
+                                    ))
+                                }
+                            </Select>
+
+                            { 
+                                // Add save button
+                            }
+                            <Button variant="contained" onClick={handleSaveNonprofit(index)}>Save</Button>
+
+                            {
+                                // Add text field for summary of project
+                            }
+                            <Typography variant="h6">Summary of Project - ideally this is using an LLM/GPT to summarize the detail from the form in a way that will be easily digestable when published</Typography>
+                            <TextField
+                                id="summary"
+                                label="Summary"
+                                multiline
+                                rows={4}
+                                defaultValue={nonprofitApplication.summary}
+                                style={{ width: '400px' }}
+                            />
+                            
+
+                            {
+                                // Select dropdown if launch announcement should go to Slack, email distribution list, instagram post, or all
+                            }
+                            <Typography variant="h6">Launch Announcement - TODO - select the method of sending the announcement</Typography>
+                            <Select
+                                label="Launch Announcement"
+                                value={nonprofitApplication.launchAnnouncement}
+                                onChange={handleNonprofitChange}
+                                style={{ width: '200px' }}
+                            >
+                                <MenuItem value="slack">Slack</MenuItem>
+                                <MenuItem value="email">Email</MenuItem>
+                                <MenuItem value="instagram">Instagram</MenuItem>
+                                <MenuItem value="all">All</MenuItem>                                
+                            </Select>
+
+
+                            {
+                                // Add button for launch announcement
+                            }
+                            <Button variant="contained" onClick={ handleClickOpen } >Send Announcement</Button>
+                            
+                            
+                         
+                            
+
                             <ul key={`other_details_${index}`}>
                                 <li><b>Technical Problem:</b> {nonprofitApplication.technicalProblem}</li>
                                 <li><b>Solution Benefits:</b> {nonprofitApplication.solutionBenefits}</li>

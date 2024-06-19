@@ -26,24 +26,18 @@ import {
 } from "@mui/icons-material";
 
 export default function Footer() {
-    
-
   return (
     <FooterContainer container>
       <InnerContainer container>
-        <TextContainer container xs={12} md={7} lg={8}>
-          
-            <>
-              <StyledText>Our Mission</StyledText>
-              <MutedText>
-                <p>
-                We empower volunteers to make a difference by creating technical solutions for nonprofit organizations while fostering lasting connections within their communities.
-                </p>
-                                    
-              </MutedText>
+        <TextContainer container xs={12} md={7} lg={8}>          
+            <StyledText>Our Mission</StyledText>
+            <MutedText>
+              <p>
+              We empower volunteers to make a difference by creating technical solutions for nonprofit organizations while fostering lasting connections within their communities.
+              </p>                                  
+            </MutedText>
 
-              <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
-
+            <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
               <IconLink href="https://www.instagram.com/opportunityhack/" target="_blank">
                 <Instagram fontSize="large" style={{ marginRight: "2rem", width: "24px", height: "24px" }}> </Instagram> 
               </IconLink>
@@ -81,14 +75,13 @@ export default function Footer() {
               </div>
               <MutedText style={{ marginTop: "3rem" }}>
                 Opportunity Hack Inc. EIN: 84-5113049
-              </MutedText>                            
-            </>
-          
+              </MutedText>                                    
         </TextContainer>
         <TextContainer container xs={12} md={5} lg={4}>
           <LinkList>
+            {/* Link integration with icons for a single-click interaction */}
             <LinkListItem key="whatisohack">
-              <StyledLink href="https://www.ohack.org/">What's Opportunity Hack?</StyledLink> <OpenInNewIcon />
+              <StyledLink href="https://www.ohack.org/">What's Opportunity Hack? <OpenInNewIcon /></StyledLink>
             </LinkListItem>            
             <LinkListItem key="sponsor">
               <StyledLink href="https://www.ohack.org/about/sponsorship">Sponsor Social Good</StyledLink> <OpenInNewIcon />

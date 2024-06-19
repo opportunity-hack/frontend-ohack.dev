@@ -7,3 +7,4 @@ build/
 *.off
 .vscode
 sitemap*.xml
+robots.txt
