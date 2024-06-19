@@ -47,12 +47,17 @@ const pages = [
 ];
 
 const about_settings = [
-  ["ℹ️ About Us", "/about"],
-  ["🙏 Mentors?", "/about/mentors"],
-  ["❤️ Rewards", "/about/hearts"],
-  ["✅ Project Completion", "/about/completion"],
-  ["🎉 Hackathon?", "/hack"],
-  ["🚪 Office Hours", "/office-hours"],
+  [ 'ℹ️ About Us', '/about' ],
+  [ '🙏 Mentors?', '/about/mentors' ],
+  [ '❤️ Rewards', '/about/hearts' ],
+  [ '✅ Project Completion', '/about/completion' ],
+  [ '🎉 Hackathon?' ,'/hack'],
+  [ '🚪 Office Hours', '/office-hours' ],
+  ['🌟 Sponsor Social Good', 'https://www.ohack.org/about/sponsorship'], 
+  ['📚 FAQ', 'https://www.ohack.org/about/faq'], 
+  ['🕒 Our History', 'https://www.ohack.org/about/history'],
+  ['📜 Fork this on GitHub', 'https://github.com/opportunity-hack/frontend-ohack.dev'],
+  ['[TODO] Dashboard', '/myprofile'],
 ];
 
 const auth_settings = [["Profile", "/profile"]];

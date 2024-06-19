@@ -1,10 +1,11 @@
 import {
-  Grid,
   Button,
+  Grid,
   Typography,
-  // Box
+  css,
+  keyframes,
+  styled,
 } from "@mui/material";
-import { styled, keyframes, css } from "@mui/material";
 
 // Button
 export const ButtonStyled = styled(Button)({
@@ -61,6 +62,7 @@ export const GridStyled = styled(Grid)((props) => ({
   height: "100%",
   width: "80%",
   margin: "auto",
+  justifyContent: "center",
 
   [props.theme.breakpoints.down("lg")]: {
     padding: "8rem 0rem 6rem 0rem",
@@ -75,12 +77,16 @@ export const BlankContainer = styled(Grid)({
   display: "flex",
   flexDirection: "column",
   position: "relative",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
 export const TitleContainer = styled(Grid)((props) => ({
   padding: "1rem 5% 0px 0px",
   marginTop: "3rem",
-  minHeight: "200px",
+  minHeight: '200px',
+  alignItems: "center",
+  justifyContent: "center",
 
   [props.theme.breakpoints.down("md")]: {
     padding: props.right === "true" ? "15% 5% 5% 5%" : "3rem 2px 0 10px",
@@ -92,6 +98,10 @@ export const TitleContainer = styled(Grid)((props) => ({
 export const CaptionContainer = styled(Grid)((props) => ({
   color: "#425466",
   maxWidth: "390px",
+  display : "flex",
+  flexDirection :  "column",
+  alignItems: "center",
+  justifyContent: "center",
 
   [props.theme.breakpoints.down("md")]: {
     display: "flex",
@@ -106,6 +116,7 @@ export const ButtonContainers = styled(Grid)((props) => ({
   flexDirection: "column",
   width: "auto",
   gap: "1rem",
+  justifyContent: "center",
 }));
 
 // Typography
@@ -117,6 +128,8 @@ export const TitleStyled = styled(Typography)((props) => ({
   color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
   letterSpacing: "-0.1rem",
+  alignItems: "center",
+
 
   [props.theme.breakpoints.down("md")]: {
     fontSize: "8vw",
@@ -130,6 +143,8 @@ export const TextStyled = styled(Typography)({
   marginTop: "0.8rem",
   marginBottom: "0.8rem",
   width: "100%",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
 export const SpanText = styled("span")((props) => ({

@@ -93,109 +93,39 @@ export default function SlackSignup({ previousPage }) {
 
           <br />
           <br />
-          <Typography sx={{ marginTop: 1 }} variant="h3">
+
+          <Typography variant="h2" style={{ backgroundColor: "lightblue" }}>
             Why Slack?
           </Typography>
-          <br />
-          <Typography variant="h5">
+          <Typography variant="h4">
+
             Slack is a great tool for communicating with your team and the rest
             of the Opportunity Hack community. We use Slack to share important
             information, answer questions, and provide support. We also use
             Slack to have meetings and share other important information.
           </Typography>
-          <Typography sx={{ marginTop: 5 }} variant="h3">
+
+          <br />
+          <Typography variant="h2" style={{ backgroundColor: "lightblue" }}>
             What do you need to do?
           </Typography>
-          {/* <Typography variant="h5">
-            <strong>Step 1:</strong> Click on the "Signup for Opportunity Hack
-            Slack" button above to open the Slack signup page in a new tab.
+          <Typography>
+            <Typography variant="h4">
+              <strong>Step 1:</strong> Click on the "Signup for Opportunity Hack
+              Slack" button above to open the Slack signup page in a new tab.
+            </Typography>
+            <Typography variant="h4">
+              <strong>Step 2:</strong> Sign in with Google, Apple, or enter your
+              email address and click on the "Next" button.
+            </Typography>
+            <Typography variant="h4">
+              <strong>Step 3:</strong> Fill in your details. You can use your
+              real name or a nickname. You can also upload a profile picture if
+              you want.
+            </Typography>
           </Typography>
-          <Typography variant="h5">
-            <strong>Step 2:</strong> Sign in with Google, Apple, or enter your
-            email address and click on the "Next" button.
-          </Typography>
-          <Typography variant="h5">
-            <strong>Step 3:</strong> Fill in your details. You can use your real
-            name or a nickname. You can also upload a profile picture if you
-            want.
-          </Typography> */}
-          <br />
-          <Grid container spacing={2} justifyContent="center">
-            <Grid item xs={12} sm={6} md={4}>
-              <Box
-                sx={{
-                  padding: 2,
-                  border: 1,
-                  borderRadius: 3,
-                  borderColor: "#c7cedd",
-                  height: "200px",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Typography variant="h5" align={"center"}>
-                  <strong style={{ color: "#1976d2", fontSize: "2rem" }}>
-                    Step 1:
-                  </strong>
-                  <br />
-                  <br />
-                  Click on the "Signup for Opportunity Hack Slack" button above
-                  to open the Slack signup page in a new tab.
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <Box
-                sx={{
-                  padding: 2,
-                  border: 1,
-                  borderRadius: 3,
-                  borderColor: "#c7cedd",
-                  height: "200px",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Typography variant="h5" align={"center"}>
-                  <strong style={{ color: "#1976d2", fontSize: "2rem" }}>
-                    Step 2:
-                  </strong>
-                  <br />
-                  <br />
-                  Sign in with Google, Apple, or enter your email address and
-                  click on the "Next" button.
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <Box
-                sx={{
-                  padding: 2,
-                  border: 1,
-                  borderRadius: 3,
-                  borderColor: "#c7cedd",
-                  height: "200px",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Typography variant="h5" align={"center"}>
-                  <strong style={{ color: "#1976d2", fontSize: "2rem" }}>
-                    Step 3:
-                  </strong>
-                  <br />
-                  <br />
-                  Fill in your details. You can use your real name or a
-                  nickname. You can also upload a profile picture if you want.
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
           {previousPage && (
-            <Typography variant="h5">
+            <Typography variant="h4">
               <strong>Step 4:</strong>{" "}
               <Link href={previousPage}>
                 <SlackLink>
@@ -206,6 +136,7 @@ export default function SlackSignup({ previousPage }) {
           )}
           <br />
           <ImageBorder sx={{ marginTop: 2 }}>
+
             <Image
               src="/join_slack_1.png"
               width={797}

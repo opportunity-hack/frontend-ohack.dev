@@ -32,12 +32,16 @@ import {
   LayoutContainer,
   DetailsContainer,
   DescriptionStyled,
+  LinkStyled  
 } from "../../styles/nonprofits/apply/styles";
 
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 import ReactPixel from "react-facebook-pixel";
 import * as ga from "../../lib/ga";
 import { Typography } from "@mui/material";
+
+import { CountdownCircleTimer } from 'react-countdown-circle-timer'
+
 
 export default function NonProfitApply() {
   const router = useRouter();
@@ -47,6 +51,12 @@ export default function NonProfitApply() {
   const { user } = useAuthInfo();
   var image = "/OHack_NonProfit_Application.png";
   var nonProfitOptions = [];
+
+  const timerProps = {
+        isPlaying: true,
+        size: 120,
+        strokeWidth: 6
+    };
 
   const options = {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -75,8 +85,10 @@ export default function NonProfitApply() {
 
   const START_DATE = "Saturday, Oct 12th";
   const END_DATE = "Sunday, Oct 13th 2024";
-  const LOCATION_ARIZONA = "Phoenix, Arizona";
-  const LOCATION = LOCATION_ARIZONA + " and virtual";
+
+  const LOCATION_ARIZONA = "Tempe, Arizona"
+  const LOCATION = LOCATION_ARIZONA;
+
 
   nonprofits &&
     nonprofits.forEach((item) => {
@@ -334,6 +346,27 @@ export default function NonProfitApply() {
 
   const style = { fontSize: "16px" };
   const textfieldfont = { fontSize: "1.25rem" };
+  const countdownSize = 90;
+  const startTime = Date.now() / 1000; // use UNIX timestamp in seconds
+
+  const getNextFriday = () => {
+      const today = Moment();
+      const nextFriday = today.day(5).hour(21).minute(0).second(0);
+      if (today.day() > 5) {
+        nextFriday.add(1, 'weeks');
+      }      
+      return nextFriday;
+  };
+  
+  
+  
+  const daySeconds = 86400;
+  
+  const getTimeDays = (time) => (time / daySeconds) | 0;
+  const remainingTime = getNextFriday() /1000- startTime;
+
+  const days = Math.ceil(remainingTime / daySeconds);
+  const daysDuration = days * daySeconds;
 
   return (
     <LayoutContainer key="apply_form" container>
@@ -365,28 +398,54 @@ export default function NonProfitApply() {
 
           <div className="content__body">
             <div className="profile__header">
-              <div className="profile__headline">
-                <Typography variant="h4">
-                  We write software for <b>free</b> to help you have more
-                  impact. No idea is too small or big.
+              <div className="profile__headline">                
+                <Typography variant="h4">We write software for <b>free</b> to help you have more impact.</Typography>                
+                <br/>
+                <Typography variant="h4" sx={{ color: "#1976d2" }}>
+                  This form helps us to find the charities that are the right fit
+              for our event.
                 </Typography>
+        
+                <Typography variant="h5">
+                If you don't have the time right now just fill in your quick
+                thoughts and come back later to edit.
+                </Typography>
+
                 <br />
-                <Grid container spacing={5} alignItems="center">
-                  <Grid item>
-                    <Image src={image} width="400" height="300" />
-                  </Grid>
-                  <Grid item>
-                    <div className="profile__header">
-                      <CalendarMonthIcon />
-                      {START_DATE} to {END_DATE}
-                    </div>
-                    <div className="profile__header">
-                      <PlaceIcon />
-                      {LOCATION}
-                    </div>
-                  </Grid>
-                </Grid>
+                <Typography variant="h4">No idea is too small or big.</Typography>                                                
                 <br />
+                <Typography variant="h5">Got a moment? Share your initial thoughts now and easily come back later to finish.</Typography>                
+                <br />
+
+                <Stack direction={"row"} container mb={1.5}>
+                <Stack item style={{ justifyContent: "space-evenly" }}>
+                  <CountdownCircleTimer
+                      {...timerProps}
+                      colors="#7E2E84"
+                      size={countdownSize}
+                      duration={daysDuration}
+                      initialRemainingTime={remainingTime}
+                  >
+                      {({ elapsedTime, color }) => (
+                      <span style={{ color }}>
+                          <div className="time-wrapper">
+                            <div className="time">{ getTimeDays(daysDuration - elapsedTime)}</div>
+                            <div>days</div>
+                          </div>
+                      </span>
+                      )}
+                  </CountdownCircleTimer>
+                </Stack>
+                <Stack item ml={1} style={{ justifyContent: "space-evenly" }}>
+                Complete your application now! Submit your form before this Friday at 9pm to secure your spot. We review applications at the end of each week.
+                </Stack>
+
+
+                </Stack>
+
+                <Image src={image} width="300" height="200" />
+                <Typography style={style}><CalendarMonthIcon style={{marginRight: '5px'}} />{START_DATE} to {END_DATE}</Typography>
+                <Typography style={style}><PlaceIcon style={{marginRight: '5px'}} />{LOCATION}</Typography>
               </div>
             </div>
           </div>
@@ -400,51 +459,24 @@ export default function NonProfitApply() {
         </DescriptionStyled>
       </DetailsContainer>
 
-      <FormContainer>
-        <DetailsContainer container>
-          <DescriptionStyled>
-            {/* <hr /> */}
-            <Typography variant="h4" sx={{ color: "#1976d2" }}>
-              This form helps us to find the charities that are the right fit
-              for our event.
-            </Typography>
-            <Typography variant="h5">
-              If you don't have the time right now just fill in your quick
-              thoughts and come back later to edit.
-            </Typography>
+
+      <FormContainer>      
+      <DetailsContainer container>                        
+        <DescriptionStyled>                    
+            <Typography style={style} mt={1}><b>Charity Organization Name:</b></Typography>
             <br />
-            <p>
-              <b>Name of Charity Organization:</b>
-
-              <br />
-              <Typography style={style}>
-                We support charities including non-profits (NPOs) and
-                non-government organizations (NGOs).
-              </Typography>
-            </p>
-            {nonProfitOptions.length > 0 && (
-              <Autocomplete
-                disablePortal
-                value={formState.charityName}
-                onChange={(event, newValue) => {
-                  ReactPixel.track("NPO: Charity Name", {
-                    content_name: "Nonprofit Application",
-                    status: newValue,
-                    content_category: "Nonprofit Application",
-                    value: 0.02,
-                    currency: "USD",
-                  });
-
-                  ga.event({
-                    action: "NPO: Charity Name",
-                    params: {
-                      content_name: "Nonprofit Application",
-                      status: newValue,
-                      content_category: "Nonprofit Application",
-                      value: 0.02,
-                      currency: "USD",
-                    },
-                  });
+            <Typography style={style}>We proudly support various charities, including nonprofits (NPOs) and non-governmental organizations (NGOs). Don't see your organization in our list? No worries! Please add it.</Typography>                             
+        {nonProfitOptions.length > 0    && <Autocomplete
+              disablePortal
+              value={formState.charityName}
+              onChange={(event, newValue) => {                
+                ReactPixel.track('NPO: Charity Name', {
+                  content_name: 'Nonprofit Application',
+                  status: newValue,
+                  content_category: 'Nonprofit Application',
+                  value: 0.02,
+                  currency: 'USD',
+                });
 
                   if (newValue == null) {
                     newValue = "";
@@ -902,123 +934,105 @@ export default function NonProfitApply() {
           </DescriptionStyled>
         </DetailsContainer>
 
-        <DetailsContainer container>
-          <DescriptionStyled>
-            <br />
-            <Typography style={style}>
-              <b>Contact Email(s) or Phone Number(s):</b>
-            </Typography>
-            <br />
-            <Typography style={style}>
-              We'd like to ensure our hackers (the people writing the code) have
-              your contact information for any questions they have. We'd also
-              like to have this number so that we can reach out to you before
-              you are able to join us on Slack. Feel free to include multiple
-              email addresses and/or phone numbers.
-            </Typography>
-            <br />
-            <TextField
-              sx={{ width: 350 }}
-              id="outlined-basic"
-              label="Contact Email or Phone"
-              variant="filled"
-              required
-              multiline
-              rows={4}
-              defaultValue={formState.contactPhone}
-              onChange={(event) => {
-                setFormState({
-                  ...formState,
-                  contactPhone: event.target.value,
-                });
-              }}
-              InputProps={{ style: textfieldfont }}
-            />
-          </DescriptionStyled>
-        </DetailsContainer>
+      <DetailsContainer container>
+        <DescriptionStyled>
+          <br />
+          <Typography style={style}><b>Contact Email(s) or Phone Number(s):</b></Typography>
+          <br />
+          <Typography style={style}>
+          We'd like to ensure our hackers (the people writing the code) have
+          your contact information for any questions they have. Feel free to include multiple email addresses and/or phone numbers.
+          </Typography>
+          <br />
+          <TextField
+            sx={{ width: 250 }}
+            id="outlined-basic"
+            label="Contact Email or Phone"
+            variant="filled"
+            required
+            multiline
+            rows={4}
+            defaultValue={formState.contactPhone}
+            onChange={(event) => {
+              setFormState({
+                ...formState,
+                contactPhone: event.target.value,
+              });
+            }}
+          />
+        </DescriptionStyled>
+      </DetailsContainer>
+    
 
-        <DetailsContainer container>
-          <DescriptionStyled>
-            <br />
-            <Typography style={style}>
-              <b>What challenges do you have?</b>
-            </Typography>
-            <br />
-            <Typography style={style}>
-              What tedious tasks do you have? What slows you down? What stops
-              you from doing more? What could be better?
-            </Typography>
-            <br />
-            <Typography style={style}>
-              Try to think only about the challenges you have and{" "}
-              <em>
-                <strong>not</strong> how you want to solve it
-              </em>
-              .
-            </Typography>
-            <br />
-            <TextField
-              fullWidth
-              id="filled-textarea"
-              label="What challenges do you have?"
-              placeholder="Give an overview of your problem: painpoints, things that could be better, etc."
-              multiline
-              rows={4}
-              variant="filled"
-              required
-              defaultValue={formState.technicalProblem}
-              onChange={(event) => {
-                setFormState({
-                  ...formState,
-                  technicalProblem: event.target.value,
-                });
-              }}
-              InputProps={{ style: textfieldfont }}
-            />
-          </DescriptionStyled>
-        </DetailsContainer>
+      <DetailsContainer container>
+        <DescriptionStyled>
+          <br />
+          <Typography style={style}><b>What challenges do you have?</b></Typography>          
+          <br />
+          <Typography style={style}>
+          What tedious tasks do you have? What slows you down? What stops you from doing more? What could be better?
+          </Typography>
+          <br />
+          <Typography style={style}>
+          Try to think only about the challenges you have and <em><strong>not</strong> how you want to solve it</em>.                     
+          </Typography>
+          <br />
+          <TextField
+            fullWidth
+            id="filled-textarea"
+            label="What challenges do you have?"
+            placeholder="Give an overview of your problem: painpoints, things that could be better, etc."
+            multiline
+            rows={4}
+            variant="filled"
+            required
+            defaultValue={formState.technicalProblem}
+            onChange={(event) => {
+              setFormState({
+                ...formState,
+                technicalProblem: event.target.value,
+              });
+            }}
+          />
+        </DescriptionStyled>
+      </DetailsContainer>
 
-        <DetailsContainer container>
-          <DescriptionStyled>
-            <br />
-            <Typography style={style}>
-              <b>Benefit(s) to Organization:</b>
-            </Typography>
-            <br />
-            <Typography style={style}>
-              How would a solution to these challenges help further your work,
-              mission, strategy, or growth? Could you support more clients
-              (people, animals, etc)?
-            </Typography>
-            <br />
-            <TextField
-              fullWidth
-              id="filled-textarea"
-              label="How can a solution help you and your non-profit?"
-              placeholder="Given that this problem is solved, how can it help you and your non-profit?"
-              multiline
-              rows={4}
-              variant="filled"
-              required
-              defaultValue={formState.solutionBenefits}
-              onChange={(event) => {
-                ReactPixel.track("NPO: Solution Benefits", {
-                  content_name: "Nonprofit Application",
-                  status: event.target.value,
-                  content_category: "Nonprofit Application",
-                  value: 0.01,
-                  currency: "USD",
-                });
+      <DetailsContainer container>
+        <DescriptionStyled>
+          <br />
+          <Typography style={style}>(Optional) <b>Benefit(s) to Organization:</b></Typography>
+          <br />
+          <Typography style={style}>How would a solution to these challenges help further your work,
+          mission, strategy, or growth?  Could you support more clients (people, animals, etc)?  
+          </Typography>
+          <br />
+          <TextField
+            fullWidth
+            id="filled-textarea"
+            label="How can a solution help you and your nonprofit?"
+            placeholder="Given that this problem is solved, how can it help you and your nonprofit?"
+            multiline
+            rows={4}
+            variant="filled"            
+            defaultValue={formState.solutionBenefits}
+            onChange={(event) => {
+              ReactPixel.track('NPO: Solution Benefits', {
+                content_name: 'Nonprofit Application',
+                status: event.target.value,
+                content_category: 'Nonprofit Application',
+                value: 0.01,
+                currency: 'USD',
+              });
 
-                setFormState({
-                  ...formState,
-                  solutionBenefits: event.target.value,
-                });
-              }}
-              InputProps={{ style: textfieldfont }}
-            />
-          </DescriptionStyled>
-        </DetailsContainer>
+              setFormState({
+                ...formState,
+                solutionBenefits: event.target.value,
+              });
+            }}
+          />
+        </DescriptionStyled>
+      </DetailsContainer>
+
 
         <DetailsContainer container>
           <DescriptionStyled>
@@ -1284,12 +1298,14 @@ export default function NonProfitApply() {
           </h4>
           <Typography style={style}>
             A hackathon is a 48-hour event where teams of 3-6 people work
-            together to solve a problem. The teams are made up of developers,
-            designers, and project managers. The teams are given a problem
-            statement from a non-profit organization and they work together to
-            solve the problem. At the end of the hackathon, the teams present
-            their solutions to a panel of judges. The judges will select the top
-            three teams and award them prizes.
+            together to solve a problem. The teams are made up of
+            developers, designers, and project managers. The teams are
+            given a problem statement from a nonprofit organization and
+            they work together to solve the problem. At the end of the
+            hackathon, the teams present their solutions to a panel of
+            judges. The judges will select the top three teams and award
+            them prizes.
+
           </Typography>
         </DescriptionStyled>
       </DetailsContainer>

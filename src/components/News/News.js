@@ -1,28 +1,29 @@
-import Grid from "@mui/material/Grid";
+
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import FileCopyIcon from '@mui/icons-material/FileCopy';
+import { Alert, Snackbar } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import { useState } from 'react';
 import {
+  BlankContainer,
+  ButtonContainersSmall,
+  CaptionContainer,
+  EventCards,
+  MoreNewsStyle,
   NewsLinkButton,
   SlackButton,
-  TitleStyled,
-  TitleContainer,
-  CaptionContainer,
-  MoreNewsStyle,
-  ButtonContainersSmall,
-  TextMuted,
-  EventCards,
-  BlankContainer,
   StyledTextLink,
-} from "./styles";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import FileCopyIcon from "@mui/icons-material/FileCopy";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import { useState } from "react";
-import { Snackbar } from "@mui/material";
-import { Alert } from "@mui/material";
+  TextMuted,
+  TitleContainer,
+  TitleStyled
+} from './styles';
 
-import * as ga from "../../lib/ga";
-import React from "react";
 import { Divider } from "@mui/material";
-import Image from "next/image";
+import Image from 'next/image';
+import React from 'react';
+import * as ga from '../../lib/ga';
+
 
 import Link from "next/link";
 

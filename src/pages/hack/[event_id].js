@@ -172,6 +172,13 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                 "description": eventDescription,
                 "startDate": startDate,
                 "endDate": endDate,
+                "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+                "eventStatus": "https://schema.org/EventScheduled",
+                "performer": {
+                    "@type": "PerformingGroup",
+                    "name": "Sponsors: Meta, Spotify, PayPal, MX, and more!"
+                },
+                "offers": {},
                 "location": {
                     "@type": "Place",
                     "name": "Arizona State University",

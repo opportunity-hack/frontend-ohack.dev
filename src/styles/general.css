@@ -471,3 +471,18 @@ pre {
   }
 }
 
+.headline {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+.headline span {
+  color: #007bff; 
+}
+
+.headline {
+  line-height: 1.5;
+  margin-top: 20px;
+ 
+}
+
+

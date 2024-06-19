@@ -12,7 +12,7 @@ export const LayoutContainer = styling(Grid)({
   width: "70%",
   justifyContent: "center",
   alignContent: "center",
-  paddingTop: "9rem",
+  paddingTop: "9rem",  
   backgroundColor: "white",
 });
 
@@ -45,7 +45,7 @@ export const TitleContainer = styling(Grid)((props) => ({
 }));
 
 export const DetailsContainer = styling(Grid)({
-  paddingRight: "6rem",
+  paddingRight: "0.5rem",
 });
 
 export const FormContainer = styling(Grid)({
@@ -90,8 +90,7 @@ export const ProjectsChip = styling(Chip)((props) => ({
 }));
 
 export const DescriptionStyled = styling(Typography)({
-  fontSize: "1.25rem",
-  marginLeft: "3rem",
+  fontSize: "1.25rem",  
   letterSpacing: "0.05rem",
   padding: "0 0.5rem 0 1rem",
 });
