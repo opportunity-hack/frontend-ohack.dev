@@ -51,7 +51,8 @@ const pages = [
   [ 'Submit Project', '/nonprofits/apply' ],
   [ 'Projects', '/nonprofits' ],      
   [ 'Join Slack', '/signup'],
-  [ 'GitHub', 'https://github.com/opportunity-hack/' ]
+  [ 'GitHub', 'https://github.com/opportunity-hack/' ],
+  ['Dashboard', '/myprofile'],
 ];
 
 const about_settings = [
