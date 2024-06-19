@@ -1,22 +1,27 @@
 
+import { Grid } from '@mui/material';
+import { useAuthInfo, useRedirectFunctions } from "@propelauth/react";
+import React, { Suspense, useEffect } from 'react';
+import * as ga from '../../lib/ga';
+import { LoginButton } from "../Navbar/styles";
+
 import {
+  BlankContainer,
   ButtonBasicStyle,
+  ButtonContainers,
   ButtonGoldStyle,
+  CaptionContainer,
   GridStyled,
   TextStyled,
   TitleContainer,
   CaptionContainer,
   ButtonContainers,
-  BlankContainer,
+  BlankContainer
 } from './styles';
-import { LoginButton } from "../Navbar/styles";
-import { Grid } from '@mui/material';
-import React, { Suspense, useEffect } from 'react';
-import * as ga from '../../lib/ga';
-import { useRedirectFunctions } from "@propelauth/react";
-import { useAuthInfo } from '@propelauth/react';
+
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
+
 import dynamic from 'next/dynamic';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
@@ -84,72 +89,66 @@ function HeroBanner() {
             Join us!
           </TextStyled>
           
-          {/* Carousel and Buttons */}
-          <Grid container justifyContent="center" alignItems="center">
-            <Grid item xs={12} md={12} lg={12}> {/* Adjust width as needed */}
-              <Carousel showThumbs={true} autoPlay={false} infiniteLoop={true} showIndicators={false}>
-                <div>
-                  <ButtonBasicStyle
-                    onClick={() => gaButton('button_donate', 'donate via PayPal')}
-                    href='https://www.paypal.com/fundraiser/charity/4119839'
-                    target="_blank"
-                    style={{ color: 'white', backgroundColor: '#2767E9', width: '80%' }}
-                  >
-                    0. Donate via PayPal
-                  </ButtonBasicStyle>
-                </div>
-                <div>
-                  <ButtonGoldStyle onClick={openCodeSample} style={{ color: 'white', backgroundColor: '#7F1AE9', width: '80%' }}>
-                    1. Create an OHack Slack account
-                    
-                  </ButtonGoldStyle>
-                </div>
-                <div>
-                  {!isLoggedIn && <LoginButton
-                    variant="contained"
-                    disableElevation
-                    onClick={() => redirectToLoginPage()}
-                    style={{ color: 'white', backgroundColor: '#2767E9', width: '80%' }}
-                    className="login-button"
-                  >
-                    2. Log In
-                  </LoginButton>}
-                </div>
-                {/* <div>
-                  {isLoggedIn && <ButtonBasicStyle
-                    onClick={() => gaButton('button_profile', 'clicked to see profile')}
-                    style={{ color: 'white', backgroundColor: '#0070BA', width: '80%' }}
-                    href='/profile'
-                  >
-                    2. View your profile
-                  </ButtonBasicStyle>}
-                </div> */}
-                <div>
-                  <ButtonBasicStyle
-                    onClick={() => gaButton('button_about', 'about us')}
-                    href='/about'
-                    style={{ color: 'white', backgroundColor: '#7F1AE9', width: '80%' }}
-                  >
-                    3. Read more about us
-                  </ButtonBasicStyle>
-                </div>
-                <div>
-                  <ButtonBasicStyle
-                    onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
-                    href='/nonprofits'
-                    style={{ color: 'white', backgroundColor: '#2767E9', width: '80%' }}
-                  >
-                    4. See all nonprofit projects
-                  </ButtonBasicStyle>
-                </div>
-              </Carousel>
-            </Grid>
-          </Grid>
+          <ButtonContainers container>
+          {/* Disable for new nonprofit form instead
+            <ButtonStyled
+              onClick={gaButton('button_build_ohack', 'find_a_problem')}
+              href='/nonprofit/tRK5YPrc8vpHQabMYIDO'
+            >
+              Help us build ohack.dev
+            </ButtonStyled>
+            */
+          }
+            
+            <ButtonBasicStyle 
+              onClick={() => gaButton('button_donate', 'donate via PayPal')}
+              href='https://www.paypal.com/fundraiser/charity/4119839'
+              target="_blank"
+              style={{ color: 'white', backgroundColor: '#0070BA' }}
+            >
+             Donate via PayPal
+            </ButtonBasicStyle>
+
+            <ButtonGoldStyle onClick={openCodeSample}>
+              Create an OHack Slack account
+            </ButtonGoldStyle>
+
+            {!isLoggedIn && <LoginButton
+                variant="contained"
+                disableElevation
+                  onClick={() => redirectToLoginPage()}
+                className="login-button"
+              >
+                Log In                                                  
+              </LoginButton> 
+            }
+
+            {isLoggedIn && <ButtonBasicStyle
+              style={{ color: 'white', backgroundColor: '#FFC107' }}
+              onClick={() => gaButton('button_profile', 'clicked to see profile')}
+              href='/profile'              
+            >
+              View your profile
+            </ButtonBasicStyle>
+            }
+            
+            <ButtonBasicStyle
+              onClick={() => gaButton('button_about', 'about us')}
+              href='/about'
+            >
+              Read more about us
+            </ButtonBasicStyle>
+
+            <ButtonBasicStyle
+              onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
+              href='/nonprofits'
+            >
+              See all nonprofit projects
+            </ButtonBasicStyle>
+
+          </ButtonContainers>
         </CaptionContainer>
-      </BlankContainer>
-      {/* Right Container */}
-      <BlankContainer xs={12} md={5} lg={5} justifyContent="center" alignItems="center">
-      </BlankContainer>
+      </BlankContainer>   
     </GridStyled>
   );
 }
