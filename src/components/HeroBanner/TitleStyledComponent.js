@@ -1,9 +1,6 @@
-import React from 'react';
+import React from "react";
 
-import {
-  TitleStyled,
-  SpanText
-} from './styles';
+import { TitleStyled, SpanText } from "./styles";
 
 const TitleStyledComponent = () => (
     <TitleStyled>

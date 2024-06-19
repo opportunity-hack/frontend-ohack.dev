@@ -1,14 +1,15 @@
-import { 
-  Grid, 
-  Typography, 
-  Chip, 
-  Link, 
+import {
+  Grid,
+  Typography,
+  Chip,
+  Link,
   // TODO: Are we planning on doing anything with Tooltip thematically?
-  // Tooltip 
+  // Tooltip
 } from "@mui/material";
 import { styled as styling } from "@mui/material";
 
 export const LayoutContainer = styling(Grid)({
+  width: "70%",
   justifyContent: "center",
   alignContent: "center",
   paddingTop: "9rem",  
@@ -45,6 +46,13 @@ export const TitleContainer = styling(Grid)((props) => ({
 
 export const DetailsContainer = styling(Grid)({
   paddingRight: "0.5rem",
+});
+
+export const FormContainer = styling(Grid)({
+  backgroundColor: "#f1f8ff",
+  borderRadius: "10px",
+  paddingTop: "20px",
+  paddingBottom: "20px",
 });
 
 export const CardContainer = styling(Grid)({
@@ -84,7 +92,7 @@ export const ProjectsChip = styling(Chip)((props) => ({
 export const DescriptionStyled = styling(Typography)({
   fontSize: "1.25rem",  
   letterSpacing: "0.05rem",
-  padding: "0 0.5rem 0 1rem"  
+  padding: "0 0.5rem 0 1rem",
 });
 
 export const ChannelChip = styling(Chip)({

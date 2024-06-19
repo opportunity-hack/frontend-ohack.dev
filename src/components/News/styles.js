@@ -1,21 +1,21 @@
-import { 
-  Grid, 
-  Button, 
-  Typography, 
-  // Box 
+import {
+  Grid,
+  Button,
+  Typography,
+  // Box
 } from "@mui/material";
 import { styled, keyframes, css } from "@mui/material";
 
 // Slack button that is smaller than the other buttons and simple
 export const SlackButton = styled(Button)({
   marginLeft: "1rem",
-  
+
   marginTop: "0.5rem",
   fontWeight: 200,
   padding: "0.5rem 0.9rem",
   fontSize: "11px",
-  textTransform: "unset !important",  
-  
+  textTransform: "unset !important",
+
   "&:hover": {
     backgroundColor: `var(--blue)`,
   },
@@ -24,13 +24,13 @@ export const SlackButton = styled(Button)({
 // Slack button that is smaller than the other buttons and simple
 export const NewsLinkButton = styled(Button)({
   marginLeft: "1rem",
-  borderRadius: "2rem",  
+  borderRadius: "2rem",
   marginTop: "0.5rem",
 
   fontWeight: 200,
   fontSize: "11px",
-  textTransform: "unset !important",  
-  
+  textTransform: "unset !important",
+
   "&:hover": {
     backgroundColor: `var(--blue)`,
   },
@@ -69,12 +69,11 @@ export const StyledLink = styled(Button)({
   },
 });
 
-export const StyledTextLink = styled(Button)({    
+export const StyledTextLink = styled(Button)({
   fontWeight: 600,
   fontSize: "15px",
   margin: "0px",
-  padding: "0px"
-
+  padding: "0px",
 });
 
 export const ButtonGoldStyle = styled(Button)({
@@ -113,18 +112,15 @@ export const MoreNewsStyle = styled(Button)({
   borderRadius: "1rem",
   paddingLeft: "0.9rem",
   paddingRight: "0.9rem",
-  fontWeight: 600,  
+  fontWeight: 600,
   fontSize: "12px",
   textTransform: "unset !important",
   backgroundColor: "#E0E0E0",
   color: "#000000",
-  
-
   "&:hover": {
     backgroundColor: `var(--blue)`,
   },
 });
-
 
 // Grid
 export const GridStyled = styled(Grid)((props) => ({
@@ -145,9 +141,7 @@ export const GridStyled = styled(Grid)((props) => ({
 export const BlankContainer = styled(Grid)((props) => ({
   display: "flex",
   flexDirection: "column",
-  position: "relative",    
-
-  
+  position: "relative",
 }));
 
 export const EventCards = styled(Grid)((props) => ({
@@ -166,7 +160,6 @@ export const EventCards = styled(Grid)((props) => ({
   },
 }));
 
-
 export const TitleContainer = styled(Grid)((props) => ({
   padding: "1rem 5% 0px 0px",
   marginTop: "1.1rem",
@@ -184,8 +177,6 @@ export const CaptionContainer = styled(Grid)((props) => ({
   justifyContent: "flex-start",
   justifyItems: "flex-start",
   alignItems: "flex-start",
-
-  
 }));
 
 export const ButtonContainers = styled(Grid)((props) => ({
@@ -195,7 +186,7 @@ export const ButtonContainers = styled(Grid)((props) => ({
   gap: "1rem",
 }));
 
-export const ButtonContainersSmall = styled(Grid)((props) => ({  
+export const ButtonContainersSmall = styled(Grid)((props) => ({
   flexDirection: "column",
   width: "auto",
   gap: "1rem",
@@ -216,11 +207,8 @@ export const TitleStyledCenter = styled(Typography)((props) => ({
   [props.theme.breakpoints.down("md")]: {
     fontSize: "8vw",
     lineHeight: "8.25vw",
-  }
-  ,
+  },
 }));
-
-
 
 // Typography
 export const TitleStyled = styled(Typography)((props) => ({
@@ -245,9 +233,9 @@ export const TextNewsDescription = styled(Typography)({
 });
 
 export const TextStyled = styled(Typography)({
-  fontSize: "1.8rem",  
+  fontSize: "1.8rem",
   marginTop: "0.8rem",
-  marginBottom: "0.8rem",  
+  marginBottom: "0.8rem",
 });
 
 export const TextMuted = styled(Typography)({
@@ -258,7 +246,7 @@ export const TextMuted = styled(Typography)({
   width: "100%",
 });
 
-export const SpanText = styled("span") ((props) => ({
+export const SpanText = styled("span")((props) => ({
   color: `var(--blue)`,
   fontSize: "0.9em",
   "& .Typewriter": {
@@ -285,43 +273,45 @@ const offset = keyframes`
   100% {
     stroke-dashoffset: 0;
   }
-`
+`;
 const fadeIn = keyframes`
   100% {
     opacity: 1;
   }
-`
+`;
 
 export const AnimatedLine = styled("path")`
-  animation: ${offset} 5s 3.75s forwards infinite, ${fadeIn} 0.75s 3.25s forwards;
+  animation:
+    ${offset} 5s 3.75s forwards infinite,
+    ${fadeIn} 0.75s 3.25s forwards;
   opacity: 0;
   stroke-width: 18;
   stroke-linecap: square;
-  stroke-dasharray: 10,43,10;
+  stroke-dasharray: 10, 43, 10;
   stroke-dashoffset: 1010;
-`
+`;
 
 const animatedIcon = css`
   stroke-width: 10;
   stroke-linecap: round;
   stroke-linejoin: round;
   animation: ${offset} 3s forwards;
-`
+`;
 
 export const AnimatedHeart = styled("path")`
   ${animatedIcon};
   stroke-dasharray: 1130;
   stroke-dashoffset: 1130;
-`
+`;
 
 export const AnimatedLaptop = styled("path")`
-${animatedIcon};
+  ${animatedIcon};
   stroke-dasharray: 2090;
   stroke-dashoffset: 2090;
-`
+`;
 
 export const AnimatedBulb = styled("path")`
   ${animatedIcon};
   stroke-dasharray: 1600;
   stroke-dashoffset: 1600;
-`
+`;

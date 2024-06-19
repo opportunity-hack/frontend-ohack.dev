@@ -1,10 +1,4 @@
 
-import { Grid } from '@mui/material';
-import { useAuthInfo, useRedirectFunctions } from "@propelauth/react";
-import React, { Suspense, useEffect } from 'react';
-import * as ga from '../../lib/ga';
-import { LoginButton } from "../Navbar/styles";
-
 import {
   BlankContainer,
   ButtonBasicStyle,
@@ -13,20 +7,31 @@ import {
   CaptionContainer,
   GridStyled,
   TextStyled,
-  TitleContainer  
-} from './styles';
+  TitleContainer,
+  CaptionContainer,
+  ButtonContainers,
+  BlankContainer,
+} from "./styles";
+import Loader from "../loader";
+import { LoginButton } from "../Navbar/styles";
+import { Grid } from "@mui/material";
+import React, { Suspense, useEffect } from "react";
+import * as ga from "../../lib/ga";
+import { useRedirectFunctions } from "@propelauth/react";
+import { useAuthInfo } from "@propelauth/react";
+import { useEnv } from "../../context/env.context";
+import ReactPixel from "react-facebook-pixel";
+import dynamic from "next/dynamic";
+import { Carousel } from "react-responsive-carousel";
+import "react-responsive-carousel/lib/styles/carousel.min.css";
 
-import { useEnv } from '../../context/env.context';
-import ReactPixel from 'react-facebook-pixel';
-
-import dynamic from 'next/dynamic';
-import 'react-responsive-carousel/lib/styles/carousel.min.css';
-
-const LeadForm = dynamic(() => import('../LeadForm/LeadForm'), {
+const LeadForm = dynamic(() => import("../LeadForm/LeadForm"), {
   ssr: false,
 });
-const BackgroundGrid = React.lazy(() => import('./BackgroundGridComponent'));
-const TitleStyled = dynamic(() => import('./TitleStyledComponent'), { ssr: true });
+const BackgroundGrid = React.lazy(() => import("./BackgroundGridComponent"));
+const TitleStyled = dynamic(() => import("./TitleStyledComponent"), {
+  ssr: true,
+});
 function HeroBanner() {
   const { slackSignupUrl } = useEnv();
   const { isLoggedIn } = useAuthInfo();
@@ -39,22 +44,26 @@ function HeroBanner() {
 
   const advancedMatching = undefined;
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    if (typeof window !== "undefined") {
+      ReactPixel.init(
+        process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID,
+        advancedMatching,
+        options
+      );
     }
   }, []);
 
   const openCodeSample = () => {
-    gaButton('slack_button', 'open_join_slack');
-    window.open(slackSignupUrl, '_blank', 'noopener noreferrer');
+    gaButton("slack_button", "open_join_slack");
+    window.open(slackSignupUrl, "_blank", "noopener noreferrer");
   };
   const gaButton = async (action, actionName) => {
     ReactPixel.track(action, { action_name: actionName });
     ga.event({
       action: "conversion",
       params: {
-        send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"
-      }
+        send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q",
+      },
     });
     ga.event({
       action: action,
@@ -64,24 +73,19 @@ function HeroBanner() {
     });
   };
   return (
-    <GridStyled
-      container
-      direction='row'
-      justifyContent='center'
-      spacing={2} 
-    >
-      <Suspense fallback={<div>Loading...</div>}>
+    <GridStyled container direction="row" justifyContent="center" spacing={2}>
+      <Suspense fallback={Loader()}>
         <BackgroundGrid />
       </Suspense>
       {/* Left Container */}
       <BlankContainer xs={12} md={7} lg={7}>
         <TitleContainer container>
-          <Grid key="mainTitleAndLeadForm" direction='row'>
+          <Grid key="mainTitleAndLeadForm" direction="row">
             <TitleStyled />
             <LeadForm />
           </Grid>
         </TitleContainer>
-        <CaptionContainer right={'true'} container>
+        <CaptionContainer right={"true"} container>
           <TextStyled>
             Want to code for social good?
             <br />

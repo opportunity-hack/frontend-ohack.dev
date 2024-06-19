@@ -1,7 +1,7 @@
 // Create page
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { Stack } from "@mui/material";
+import { Stack, Box, Grid } from "@mui/material";
 import { Typography } from "@mui/material";
 import Head from "next/head";
 import { useEnv } from "../../context/env.context";
@@ -60,7 +60,9 @@ export default function SlackSignup({ previousPage }) {
         <SlackSignupContainer>
           <SlackSignupHeader container>
             <SlackSignupHeadline>
-              <Typography variant="h1">Slack Signup</Typography>
+              <Typography className="content__title" variant="h1">
+                Slack Signup
+              </Typography>
             </SlackSignupHeadline>
           </SlackSignupHeader>
           <SlackSignupDetailText>
@@ -91,15 +93,18 @@ export default function SlackSignup({ previousPage }) {
 
           <br />
           <br />
+
           <Typography variant="h2" style={{ backgroundColor: "lightblue" }}>
             Why Slack?
           </Typography>
           <Typography variant="h4">
+
             Slack is a great tool for communicating with your team and the rest
             of the Opportunity Hack community. We use Slack to share important
             information, answer questions, and provide support. We also use
             Slack to have meetings and share other important information.
           </Typography>
+
           <br />
           <Typography variant="h2" style={{ backgroundColor: "lightblue" }}>
             What do you need to do?
@@ -130,7 +135,8 @@ export default function SlackSignup({ previousPage }) {
             </Typography>
           )}
           <br />
-          <ImageBorder>
+          <ImageBorder sx={{ marginTop: 2 }}>
+
             <Image
               src="/join_slack_1.png"
               width={797}
