@@ -1,8 +1,10 @@
+
 import { Grid } from '@mui/material';
 import { useAuthInfo, useRedirectFunctions } from "@propelauth/react";
 import React, { Suspense, useEffect } from 'react';
 import * as ga from '../../lib/ga';
 import { LoginButton } from "../Navbar/styles";
+
 import {
   BlankContainer,
   ButtonBasicStyle,
@@ -12,97 +14,80 @@ import {
   GridStyled,
   TextStyled,
   TitleContainer,
+  CaptionContainer,
+  ButtonContainers,
+  BlankContainer
 } from './styles';
 
-
-
-import ReactPixel from 'react-facebook-pixel';
 import { useEnv } from '../../context/env.context';
+import ReactPixel from 'react-facebook-pixel';
 
-// Assuming you're using Next.js for SSR
 import dynamic from 'next/dynamic';
-
+import { Carousel } from 'react-responsive-carousel';
+import 'react-responsive-carousel/lib/styles/carousel.min.css';
 
 const LeadForm = dynamic(() => import('../LeadForm/LeadForm'), {
   ssr: false,
 });
-
-
 const BackgroundGrid = React.lazy(() => import('./BackgroundGridComponent'));
-// Lazy load the TitleStyled and SpanText components
 const TitleStyled = dynamic(() => import('./TitleStyledComponent'), { ssr: true });
-
-
 function HeroBanner() {
-  const { slackSignupUrl } = useEnv();  
+  const { slackSignupUrl } = useEnv();
   const { isLoggedIn } = useAuthInfo();
   const { redirectToLoginPage } = useRedirectFunctions();
-
   const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
+    autoConfig: true,
+    debug: false,
   };
-  const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
-  
+  const advancedMatching = undefined;
   useEffect(() => {
-       if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
     }
   }, []);
-  
-
-  const openCodeSample = () => {    
+  const openCodeSample = () => {
     gaButton('slack_button', 'open_join_slack');
     window.open(slackSignupUrl, '_blank', 'noopener noreferrer');
   };
-
-
   const gaButton = async (action, actionName) => {
     ReactPixel.track(action, { action_name: actionName });
-
-    ga.event({ 
-        action: "conversion",
-        params: {
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
+    ga.event({
+      action: "conversion",
+      params: {
+        send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"
+      }
+    });
     ga.event({
       action: action,
       params: {
         action_name: actionName,
       },
-    });    
+    });
   };
-
   return (
     <GridStyled
       container
       direction='row'
-      justifyContent='center'      
+      justifyContent='center'
+      spacing={2} 
     >
       <Suspense fallback={<div>Loading...</div>}>
         <BackgroundGrid />
       </Suspense>
-
       {/* Left Container */}
       <BlankContainer xs={12} md={7} lg={7}>
-        
         <TitleContainer container>
-        
-        <Grid key="mainTitleAndLeadForm" direction='row'>        
-          <TitleStyled/>                                        
-          <LeadForm />        
-        </Grid>
-
+          <Grid key="mainTitleAndLeadForm" direction='row'>
+            <TitleStyled />
+            <LeadForm />
+          </Grid>
         </TitleContainer>
-
         <CaptionContainer right={'true'} container>
           <TextStyled>
             Want to code for social good?
-            <br/>
+            <br />
             Join us!
-          </TextStyled>          
+          </TextStyled>
           
           <ButtonContainers container>
           {/* Disable for new nonprofit form instead
@@ -163,10 +148,8 @@ function HeroBanner() {
 
           </ButtonContainers>
         </CaptionContainer>
-      </BlankContainer>
-    
+      </BlankContainer>   
     </GridStyled>
   );
 }
-
 export default HeroBanner;

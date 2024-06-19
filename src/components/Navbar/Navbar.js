@@ -61,6 +61,10 @@ const about_settings = [
   [ '✅ Project Completion', '/about/completion' ],
   [ '🎉 Hackathon?' ,'/hack'],
   [ '🚪 Office Hours', '/office-hours' ],
+  ['🌟 Sponsor Social Good', 'https://www.ohack.org/about/sponsorship'], 
+  ['📚 FAQ', 'https://www.ohack.org/about/faq'], 
+  ['🕒 Our History', 'https://www.ohack.org/about/history'],
+  ['📜 Fork this on GitHub', 'https://github.com/opportunity-hack/frontend-ohack.dev']
 ];
 
 const auth_settings = [
