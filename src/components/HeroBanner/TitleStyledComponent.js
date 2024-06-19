@@ -7,11 +7,12 @@ import {
 
 const TitleStyledComponent = () => (
     <TitleStyled>
-        The place where
-        <div>
-            <SpanText>Nonprofits, Hackers, Mentors, Volunteers</SpanText>
-        </div>
+      <div class="headline">
+        The place where 
+            <SpanText> Nonprofits, Hackers, Mentors, Volunteers </SpanText>
+        
         unite
+        </div>
     </TitleStyled>
 );
 

@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://www.ohack.dev
+
+# Sitemaps
+Sitemap: https://www.ohack.dev/sitemap.xml
