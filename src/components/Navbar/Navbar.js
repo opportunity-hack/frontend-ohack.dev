@@ -52,7 +52,7 @@ const pages = [
   [ 'Projects', '/nonprofits' ],      
   [ 'Join Slack', '/signup'],
   [ 'GitHub', 'https://github.com/opportunity-hack/' ],
-  ['Dashboard', '/myprofile'],
+  ['[TODO] Dashboard', '/myprofile'],
 ];
 
 const about_settings = [
