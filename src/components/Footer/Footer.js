@@ -33,7 +33,7 @@ export default function Footer() {
             <StyledText>Our Mission</StyledText>
             <MutedText>
               <p>
-              We empower volunteers to make a difference by creating technical solutions for nonprofit organizations while fostering lasting connections within their communities.
+              Not only do we empower volunteers to make a difference by creating technical solutions for nonprofit organizations we also help  foster long lasting connections within  communities.
               </p>                                  
             </MutedText>
 
