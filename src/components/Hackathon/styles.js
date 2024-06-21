@@ -92,6 +92,7 @@ export const EventButton = styled(Button)({
   borderRadius: "5px",
   marginTop: "3%",
   fontSize: "15px",
+  padding: "10px 20px",
 
   "&:hover": {
     backgroundColor: `var(--blue)`,
