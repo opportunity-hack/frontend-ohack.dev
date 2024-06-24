@@ -4,6 +4,8 @@ import { useAuthInfo, useRedirectFunctions } from "@propelauth/react";
 import React, { Suspense, useEffect } from 'react';
 import * as ga from '../../lib/ga';
 import { LoginButton } from "../Navbar/styles";
+import { useFeatureIsOn } from "@growthbook/growthbook-react";
+
 
 import {
   BlankContainer,
@@ -31,7 +33,8 @@ function HeroBanner() {
   const { slackSignupUrl } = useEnv();
   const { isLoggedIn } = useAuthInfo();
   const { redirectToLoginPage } = useRedirectFunctions();
-  
+  const enabled = useFeatureIsOn("afeature");
+
   const options = {
     autoConfig: true,
     debug: false,
@@ -82,12 +85,14 @@ function HeroBanner() {
           </Grid>
         </TitleContainer>
         <CaptionContainer right={'true'} container>
-          <TextStyled>
+          {enabled && <TextStyled>
             Want to code for social good?
             <br />
             Join us!
           </TextStyled>
-          
+          } 
+
+
           <ButtonContainers container>
           {/* Disable for new nonprofit form instead
             <ButtonStyled
