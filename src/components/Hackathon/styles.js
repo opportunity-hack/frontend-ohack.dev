@@ -86,12 +86,13 @@ export const TypographyStyled = styled(Typography)({});
 // Button
 export const EventButton = styled(Button)({
   textTransform: "unset !important",
-  backgroundColor: "#003486",
+  backgroundColor: "#007bff",
   color: "#ffffff",
   minWidth: "120px",
-  borderRadius: "20px",
+  borderRadius: "5px",
   marginTop: "3%",
   fontSize: "15px",
+  padding: "10px 20px",
 
   "&:hover": {
     backgroundColor: `var(--blue)`,
