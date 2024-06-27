@@ -141,6 +141,7 @@ export default function useProfileApi(){
                     expertise: data.text.expertise,
                     why: data.text.why,
                     company: data.text.company,
+                    github: data.text.github,
                     profile_url: window.location.href + "/" + data.text.id  // /profile/<db id>
                 };
 

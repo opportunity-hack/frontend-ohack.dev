@@ -50,6 +50,8 @@ export default function Profile(props) {
   const [education, setEducation] = React.useState("");
   const [shirtSize, setShirtSize] = React.useState("");
   const [why, setWhy] = React.useState("");
+  const [github, setGithub] = React.useState("");
+  const [lastGithubUpdate, setLastGithubUpdate] = React.useState(0);
 
   const [lastCompanyUpdate, setLastCompanyUpdate] = React.useState(0);
   const [lastWhyUpdate, setLastWhyUpdate] = React.useState(0);
@@ -65,6 +67,7 @@ export default function Profile(props) {
     setEducation(profile?.education);
     setShirtSize(profile?.shirt_size);
     setWhy(profile?.why);
+    setGithub(profile?.github);
 
     
     if (profile?.expertise) {
@@ -180,6 +183,31 @@ export default function Profile(props) {
     }, 2000));
   }
 
+  const handleGithubChange = (event) => {
+    // Since company is a text field, wait a few seconds for the user to type before calling to save
+    // Call the API to save the user's profile
+    console.log("Save to backend", event.target.value);
+
+    const onComplete = () => {
+      console.log("GitHub updated");
+    }
+
+    // To prevent too many calls to the backend we'll wait a few seconds before calling the API
+    // This is a common pattern to prevent too many calls to the backend
+    // This is called "debouncing"
+    setGithub(event.target.value);
+
+    // Clear the last timeout
+    clearTimeout(lastGithubUpdate);
+
+    // Set a new timeout
+    setLastGithubUpdate(setTimeout(() => {
+      update_profile_metadata({ "github": event.target.value }, onComplete );
+    }, 2000));
+  }
+
+
+
    const handleWhyChange = (event) => {
    // Since company is a text field, wait a few seconds for the user to type before calling to save
     // Call the API to save the user's profile
@@ -292,8 +320,21 @@ export default function Profile(props) {
             </FormControl>
 
 
+            <FormControl>            
+            <TextField
+              id="github"
+              onChange={handleGithubChange}
+              aria-describedby="github-helper-text"
+              label="What's your GitHub username? (not email)"
+              value={github}              
+              style={{
+                  width: "300px",                                    
+                }}                        
+            />
+          </FormControl>
+
             <FormControl>
-              <InputLabel id="expertise-label" style={style} >Areas of Expertise</InputLabel>
+              <InputLabel id="expertise-label" style={style}>Areas of Expertise</InputLabel>
               <Select
                 labelId="expertise-label"
                 id="expertise-select"
@@ -350,6 +391,9 @@ export default function Profile(props) {
               aria-describedby="learning-helper-text"
               label="Why are you here with us at OHack?"
               value={why}
+              style={{
+                  width: "400px",                                    
+                }}     
             />
           </FormControl>
 
@@ -360,6 +404,9 @@ export default function Profile(props) {
               aria-describedby="company-helper-text"
               label="If you're working, what company do you work for?"
               value={company}
+              style={{
+                  width: "300px",                                    
+                }}     
             />
           </FormControl>
 
