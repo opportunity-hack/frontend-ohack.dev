@@ -18,7 +18,7 @@ const HackathonList = dynamic(() => import('../components/HackathonList/Hackatho
 const growthbook = new GrowthBook({
   apiHost: "https://cdn.growthbook.io",
   clientKey: "sdk-09TvTBUc2phrLe",
-  enableDevMode: false,
+  enableDevMode: true,
   trackingCallback: (experiment, result) => {
     // TODO: Use your real analytics tracking system
     console.log("Viewed Experiment", {
