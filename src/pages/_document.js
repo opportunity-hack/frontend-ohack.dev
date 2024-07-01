@@ -27,6 +27,20 @@ export default function Document() {
                     strategy="afterInteractive"
                     dangerouslySetInnerHTML={{
                         __html: `
+                            (function(s) {
+                            s=document.createElement('script'); s.async=true;
+                            s.dataset.clientKey="sdk-09TvTBUc2phrLe";
+                            s.src="https://cdn.jsdelivr.net/npm/@growthbook/growthbook/dist/bundles/auto.min.js";
+                            document.head.appendChild(s);
+                            })();
+                        `,
+                    }}
+                />
+        
+                <Script
+                    strategy="afterInteractive"
+                    dangerouslySetInnerHTML={{
+                        __html: `
                             window.dataLayer = window.dataLayer || [];
                             function gtag(){dataLayer.push(arguments);}
                             gtag('js', new Date());
