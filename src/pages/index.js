@@ -6,6 +6,9 @@ import { useEffect } from "react";
 import { GrowthBookProvider } from "@growthbook/growthbook-react";
 import { useAuthInfo } from '@propelauth/react'
 
+// Import ga
+import * as ga from '../lib/ga';
+
 const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), {
   ssr: false,
 });
@@ -23,8 +26,16 @@ const growthbook = new GrowthBook({
     // TODO: Use your real analytics tracking system
     console.log("Viewed Experiment", {
       experimentId: experiment.key,
-      variationId: result.key
+      variationId: result.key      
     });
+
+    ga.event({
+        action: "experiment_viewed",
+        params: {
+          experiment_id: experiment.key,
+          variation_id: result.key          
+        }
+    });   
   }
 });
 
