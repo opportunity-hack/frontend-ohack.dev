@@ -185,6 +185,13 @@ const StyleGuide = () => {
         ))}
 
         <Typography variant="h3" mt={4}>2-Letter Logo</Typography>
+        <Typography variant="body1" gutterBottom>
+            Generated with this AI prompt from <Button href="https://ideogram.ai/u/ohack/liked" variant='outlined' target="_blank">Ideogram.ai</Button>
+            <blockquote>
+            A sleek and modern logo design featuring a harmonious combination of a minimalist “O” and a bold “H”. The “O” is a perfect circle with an open right side, inviting viewers to explore its contents. The “H” is nestled inside, forming a visually appealing and subtle heart shape in the upper left quadrant. The design is crafted with geometric precision, using angular, circuit-like lines in a dark, navy blue or charcoal gray color. The balanced and symmetrical composition makes it adaptable for various sizes, from small icons to large displays, showcasing a sense of sophistication and elegance.
+            </blockquote>
+        </Typography>
+
         <Grid container spacing={2}>
           {twoLetterLogoColors.map(color => (
             <Grid item xs={12} sm={4} key={color}>
@@ -204,7 +211,7 @@ const StyleGuide = () => {
                   alt={`${color.replace('_', ' ')} 2-Letter Logo`}
                   width={80}
                   height={80}
-                />
+                />            
               </Box>
               <Typography variant="body2" mt={1}>{color.replace('_', ' ')}</Typography>
               <LogoDownloadButton type="2-letter" color={color} />
