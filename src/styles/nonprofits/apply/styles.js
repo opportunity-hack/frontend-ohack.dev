@@ -11,7 +11,7 @@ import { styled as styling } from "@mui/material";
 export const LayoutContainer = styling(Grid)({
   justifyContent: "center",
   alignContent: "center",
-  paddingTop: "9rem",
+  paddingTop: "9rem",  
   backgroundColor: "white",
 });
 
@@ -19,6 +19,21 @@ export const ContentContainer = styling(Grid)({
   flexDirection: "column",
   // width: "75%",
 });
+
+export const HeadlineDetails=styling(Grid)({
+  padding: '1rem',
+  marginTop: '2rem',
+  marginBottom: '2rem',
+  borderBottom: '2px solid #c0c0c0', // Slightly darker bottom border
+  borderTop: '1px solid #e0e0e0',   
+  borderLeft: '1px solid #e0e0e0',   
+  borderRight: '1px solid #e0e0e0',  
+  width: "100vw",
+
+
+});
+
+
 
 export const TitleBanner = styling(Grid)({
   width: "100%",
@@ -44,7 +59,7 @@ export const TitleContainer = styling(Grid)((props) => ({
 }));
 
 export const DetailsContainer = styling(Grid)({
-  paddingRight: "6rem",
+  paddingRight: "0.5rem",
 });
 
 export const CardContainer = styling(Grid)({
@@ -82,8 +97,7 @@ export const ProjectsChip = styling(Chip)((props) => ({
 }));
 
 export const DescriptionStyled = styling(Typography)({
-  fontSize: "1.25rem",
-  marginLeft: "3rem",
+  fontSize: "1.25rem",  
   letterSpacing: "0.05rem",
   padding: "0 0.5rem 0 1rem"  
 });

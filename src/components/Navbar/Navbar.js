@@ -50,8 +50,8 @@ import Tooltip from '@mui/material/Tooltip';
 const pages = [
   [ 'Submit Project', '/nonprofits/apply' ],
   [ 'Projects', '/nonprofits' ],      
-  [ 'Join Slack', '/signup'],
-  [ 'GitHub', 'https://github.com/opportunity-hack/' ]
+  [ 'Join Slack', '/signup'],  
+  // ['[TODO] Dashboard', '/myprofile'],
 ];
 
 const about_settings = [
@@ -61,6 +61,8 @@ const about_settings = [
   [ '✅ Project Completion', '/about/completion' ],
   [ '🎉 Hackathon?' ,'/hack'],
   [ '🚪 Office Hours', '/office-hours' ],
+  // Style Guide
+  [ '🎨 Style Guide', '/about/style-guide' ],
 ];
 
 const auth_settings = [
@@ -273,6 +275,14 @@ export default function NavBar() {
                 display: { xs: 'block', md: 'none' },
               }}
             >              
+            
+              {pages.map((page) => (
+                <Link prefetch={false} href={page[1]}>
+                  <MenuItem key={page[0]} onClick={handleCloseNavMenu}>
+                    <Typography textAlign="center">{page[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
 
               {about_settings.map((setting) => (
                 <MenuItem key={setting[0]} onClick={handleCloseNavMenu}>
@@ -282,14 +292,6 @@ export default function NavBar() {
                 </MenuItem>
               ))
               }
-
-              {pages.map((page) => (
-                <Link prefetch={false} href={page[1]}>
-                  <MenuItem key={page[0]} onClick={handleCloseNavMenu}>
-                    <Typography textAlign="center">{page[0]}</Typography>
-                  </MenuItem>
-                </Link>
-              ))}
             
 
             </Menu>

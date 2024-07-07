@@ -2,6 +2,7 @@ import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../styles/
 import HackathonList from '../../components/HackathonList/HackathonList';
 import PreviousHackathonList from '../../components/HackathonList/PreviousHackathonList';
 import { Typography } from '@mui/material';
+import Image from 'next/image';
 
 
 export default function HackathonIndex()
@@ -21,7 +22,9 @@ export default function HackathonIndex()
                 </Typography>
                 <Typography variant="body1" style={style} paragraph>
                 With over 20 events since 2013, we continuously innovate for an enhanced hackathon experience. Join us!
-                </Typography>                 
+                </Typography>  
+                
+                <Image src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp" alt="Coding Bootcamp Projects" layout="responsive" width={4032/9} height={3024/9}  />
             </TitleContainer>   
 
             <ProjectsContainer style={{marginTop: 20, width: '100%'}} >                

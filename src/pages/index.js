@@ -1,6 +1,13 @@
 import dynamic from 'next/dynamic'
 import React, { Fragment } from "react";
 import Head from "next/head";
+import { GrowthBook } from "@growthbook/growthbook-react";
+import { useEffect } from "react";
+import { GrowthBookProvider } from "@growthbook/growthbook-react";
+import { useAuthInfo } from '@propelauth/react'
+
+// Import ga
+import * as ga from '../lib/ga';
 
 const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), {
   ssr: false,
@@ -11,16 +18,55 @@ const HackathonList = dynamic(() => import('../components/HackathonList/Hackatho
 });
 
 
+const growthbook = new GrowthBook({
+  apiHost: "https://cdn.growthbook.io",
+  clientKey: "sdk-09TvTBUc2phrLe",
+  enableDevMode: true,
+  trackingCallback: (experiment, result) => {
+    // TODO: Use your real analytics tracking system
+    console.log("Viewed Experiment", {
+      experimentId: experiment.key,
+      variationId: result.key      
+    });
 
-
+    ga.event({
+        action: "experiment_viewed",
+        params: {
+          experiment_id: experiment.key,
+          variation_id: result.key          
+        }
+    });   
+  }
+});
 
 export default function Home() {  
+  const { user } = useAuthInfo();
+
+  var experimentUserId = Math.random().toString(36).substring(7);
+  if (user && user.userId) {
+    // Pick a random user ID if the user is not logged in
+    experimentUserId = user.userId;
+  }
+  console.log(experimentUserId);
+
+  growthbook.setAttributes({
+    "id":  experimentUserId
+  });
+
+
+  useEffect(() => {
+    // Load features asynchronously when the app renders
+  growthbook.init({ streaming: true });
+  }, []);
+
   return (      
     <Fragment>
       <Head>
         <title></title>
       </Head>      
+       <GrowthBookProvider growthbook={growthbook}>
       <HeroBanner />
+      </GrowthBookProvider>
       <HackathonList />
     </Fragment>
     

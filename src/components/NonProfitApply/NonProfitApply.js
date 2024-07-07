@@ -32,15 +32,17 @@ import axios from "axios";
 import {
   LayoutContainer,
   DetailsContainer,
-  DescriptionStyled  
+  DescriptionStyled,
+  LinkStyled,
+  HeadlineDetails
 } from "../../styles/nonprofits/apply/styles";
 
 
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 import ReactPixel from 'react-facebook-pixel';
 import * as ga from '../../lib/ga';
-import { Typography } from "@mui/material";
-
+import { Typography,Grid } from "@mui/material";
+import { CountdownCircleTimer } from 'react-countdown-circle-timer'
 
 export default function NonProfitApply() {
   const router = useRouter();
@@ -50,6 +52,11 @@ export default function NonProfitApply() {
   var image = "/OHack_NonProfit_Application.png";
   var nonProfitOptions = [];
   
+  const timerProps = {
+        isPlaying: true,
+        size: 120,
+        strokeWidth: 6
+    };
 
   const options = {
     autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -76,8 +83,8 @@ export default function NonProfitApply() {
 
   const START_DATE = "Saturday, Oct 12th";
   const END_DATE = "Sunday, Oct 13th 2024";
-  const LOCATION_ARIZONA = "Phoenix, Arizona"
-  const LOCATION = LOCATION_ARIZONA + " and virtual";
+  const LOCATION_ARIZONA = "Tempe, Arizona"
+  const LOCATION = LOCATION_ARIZONA;
 
   nonprofits && nonprofits.forEach((item) => {    
     if( item.name )
@@ -326,6 +333,28 @@ export default function NonProfitApply() {
   };
   
   const style = { fontSize: '15px' };
+  const countdownSize = 90;
+  const startTime = Date.now() / 1000; // use UNIX timestamp in seconds
+
+  const getNextFriday = () => {
+      const today = Moment();
+      const nextFriday = today.day(5).hour(21).minute(0).second(0);
+      if (today.day() > 5) {
+        nextFriday.add(1, 'weeks');
+      }      
+      return nextFriday;
+  };
+  
+  
+  
+  const daySeconds = 86400;
+  
+  const getTimeDays = (time) => (time / daySeconds) | 0;
+  const remainingTime = getNextFriday() /1000- startTime;
+
+  const days = Math.ceil(remainingTime / daySeconds);
+  const daysDuration = days * daySeconds;
+  
 
   return (   
     <LayoutContainer key="apply_form" container>            
@@ -336,37 +365,72 @@ export default function NonProfitApply() {
             <Alert severity="success">
               <h4>You've already submitted this form on {Moment(formSubmissionDate.toLocaleString()).format('MMMM Do YYYY @ hh:mma')}</h4>
               <div className={'image-container'}>
-                <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="320" height="266" />
+                <Image src={"https://media0.giphy.com/media/k6r6lTYIL9j9ZeRT51/giphy.gif"} layout="responsive" width="220" height="166" />
               </div>
 
               <h4>Be sure to save any changes you make.</h4>
             </Alert>
 
           }
-          <h1 className="content__title">Nonprofit Project Application</h1>          
+
+          {/*<h1 className="content__title"> <Typography variant="h1" sx={{ textDecoration: 'underline' }}>Nonprofit Project Application</Typography></h1>*/}
+          
+          
+          <Typography variant="h1" sx={{ textDecoration: 'underline', paddingBottom: '1rem'  }}>Nonprofit Project Application</Typography>
 
           <div className="content__body">
             <div className="profile__header">
+
               <div className="profile__headline">                
-                <Typography variant="h4">Have a problem where you think software could help?</Typography>                
-                <Typography variant="h4">Here's what you can expect:</Typography>
-                <ul>
-                <li>August: We'll review applications - expect some questions sent via email or Slack.</li>
-                <li>September: Nonprofits will be notified, we'll spend a couple hours to refine your pitches for the hackathon.</li>
-                <li>October: Hackathon! We meet over a weekend and hackers write software to solve your problem.</li>
-                </ul>
-                <Typography variant="body4">Still have a problem for us? Submit it! We're a 24x7 platform and we always welcome your partnership. We likely won't be able to get working on it until after our hackathon in October.</Typography>
-                <br />
-                <Image src={image} width="400" height="300" />
-                <div className="profile__header"><CalendarMonthIcon />{START_DATE} to {END_DATE}</div>
-                <div className="profile__header"><PlaceIcon />{LOCATION}</div>
-                                
-                               
-                
-                <br />
+                <Typography variant="h4">We write software for <b>free</b> to help you have more impact.</Typography>                
+                <br/>
                 This form helps us to find the charities that are the right fit
-                for our event.                             
-                <br /><br />
+                for our event. 
+                <br />
+                <Typography variant="h4">No idea is too small or big.</Typography>                                                
+                <br />
+                <iframe
+                  width={560/2}
+                  height={315/2}
+                  src="https://www.youtube.com/embed/Ia_xsX-318E"
+                  title="YouTube video player"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+
+                <Typography variant="h5">Got a moment? Share your initial thoughts now and easily come back later to finish.</Typography>                
+                <br />
+
+                <Stack direction={"row"} container mb={1.5}>
+                <Stack item style={{ justifyContent: "space-evenly" }}>
+                  <CountdownCircleTimer
+                      {...timerProps}
+                      colors="#7E2E84"
+                      size={countdownSize}
+                      duration={daysDuration}
+                      initialRemainingTime={remainingTime}
+                  >
+                      {({ elapsedTime, color }) => (
+                      <span style={{ color }}>
+                          <div className="time-wrapper">
+                            <div className="time">{ getTimeDays(daysDuration - elapsedTime)}</div>
+                            <div>days</div>
+                          </div>
+                      </span>
+                      )}
+                  </CountdownCircleTimer>
+                </Stack>
+                <Stack item ml={1} style={{ justifyContent: "space-evenly" }}>
+                Complete your application now! Submit your form before this Friday at 9pm to secure your spot. We review applications at the end of each week.
+                </Stack>
+
+
+                </Stack>
+
+                <Image src={image} width="300" height="200" />
+                <Typography style={style}><CalendarMonthIcon style={{marginRight: '5px'}} />{START_DATE} to {END_DATE}</Typography>
+                <Typography style={style}><PlaceIcon style={{marginRight: '5px'}} />{LOCATION}</Typography>
               </div>
             </div>
           </div>
@@ -383,19 +447,15 @@ export default function NonProfitApply() {
         
       </DetailsContainer>
 
-      
-      <DetailsContainer container>   
-                     
-        <DescriptionStyled>
+
+      <DetailsContainer container>         
+        <DescriptionStyled>    
+        <HeadlineDetails>
+          <h2>Charity Organization Information</h2>      
           
-          <p>
-            <Typography style={style}><b>Name of Charity Organization:</b></Typography>
+            <Typography style={style} mt={1}><b>Charity Organization Name:</b></Typography>
             <br />
-            <Typography style={style}>We support charities including non-profits (NPOs) and non-government
-            organizations (NGOs).</Typography>
-          </p>
-           
-        
+            <Typography style={style}>We proudly support various charities, including nonprofits (NPOs) and non-governmental organizations (NGOs). Don't see your organization in our list? No worries! Please add it.</Typography>                             
         {nonProfitOptions.length > 0    && <Autocomplete
               disablePortal
               value={formState.charityName}
@@ -490,6 +550,19 @@ export default function NonProfitApply() {
             }}
           />
           <br /><br />
+          <LoadingButton
+              color="secondary"
+              loading={loading}
+              loadingPosition="start"
+              startIcon={<SaveIcon />}
+              variant="contained"
+              onClick={handleFormSubmit}
+            >
+              <span>Save</span>
+            </LoadingButton>
+          &nbsp;{submitStatus}
+          </HeadlineDetails>
+          <br /><br />
             <Alert severity="warning">
               <Typography style={style}><b>Complete transparency:</b> Not all projects will be completed after the hackathon is over.<br/>Your time is commitment is 10-20 hours over the course of the weekend, and a few hours of prep work before the event.<br/>Winning teams will be invited to continue working on their projects after the hackathon is over and this typically takes 3 months.</Typography>
               <br/>
@@ -521,7 +594,7 @@ export default function NonProfitApply() {
           marginLeft: "3rem",
         }} >
         <DescriptionStyled>          
-          <b>Areas of focus for your non-profit?</b>
+          <b>Areas of focus for your nonprofit?</b>
           <FormGroup>
             <FormControlLabel
               control={
@@ -735,9 +808,13 @@ export default function NonProfitApply() {
         </Stack>
       </DetailsContainer>
 
+
+      <HeadlineDetails container>
       <DetailsContainer container>
         <DescriptionStyled>
-          <br />
+        
+        <h2>Organziation Contact Information</h2> 
+
           <Typography style={style}><b>Contact Name:</b></Typography>
           <br />
           <Typography style={style}>
@@ -771,9 +848,7 @@ export default function NonProfitApply() {
           <br />
           <Typography style={style}>
           We'd like to ensure our hackers (the people writing the code) have
-          your contact information for any questions they have. We'd also like
-          to have this number so that we can reach out to you before you are
-          able to join us on Slack. Feel free to include multiple email addresses and/or phone numbers.
+          your contact information for any questions they have. Feel free to include multiple email addresses and/or phone numbers.
           </Typography>
           <br />
           <TextField
@@ -794,11 +869,11 @@ export default function NonProfitApply() {
           />
         </DescriptionStyled>
       </DetailsContainer>
-    
+      </HeadlineDetails>
 
       <DetailsContainer container>
         <DescriptionStyled>
-          <br />
+          <h2>Current Challenges and Potential Benefits</h2>
           <Typography style={style}><b>What challenges do you have?</b></Typography>          
           <br />
           <Typography style={style}>
@@ -832,7 +907,7 @@ export default function NonProfitApply() {
       <DetailsContainer container>
         <DescriptionStyled>
           <br />
-          <Typography style={style}><b>Benefit(s) to Organization:</b></Typography>
+          <Typography style={style}>(Optional) <b>Benefit(s) to Organization:</b></Typography>
           <br />
           <Typography style={style}>How would a solution to these challenges help further your work,
           mission, strategy, or growth?  Could you support more clients (people, animals, etc)?  
@@ -841,12 +916,11 @@ export default function NonProfitApply() {
           <TextField
             fullWidth
             id="filled-textarea"
-            label="How can a solution help you and your non-profit?"
-            placeholder="Given that this problem is solved, how can it help you and your non-profit?"
+            label="How can a solution help you and your nonprofit?"
+            placeholder="Given that this problem is solved, how can it help you and your nonprofit?"
             multiline
             rows={4}
-            variant="filled"
-            required
+            variant="filled"            
             defaultValue={formState.solutionBenefits}
             onChange={(event) => {
               ReactPixel.track('NPO: Solution Benefits', {
@@ -1018,9 +1092,18 @@ export default function NonProfitApply() {
                 label={<Typography style={style}>Yes, either myself or a point of contact from our nonprofit is planning to attend in-person</Typography>}
               />
           </FormGroup>
+          <hr/>
+          <Typography variant="h4">Here's what you can expect:</Typography>
+                <ul>
+                <li>From now until August: We'll review applications at the end of each week - expect some questions sent via email or Slack.</li>
+                <li>September: Nonprofits will be notified, we'll spend a couple hours to refine your pitches for the hackathon.</li>
+                <li>October: Hackathon! We meet over a weekend and hackers write software to solve your problem.</li>
+                </ul>
+                <Typography variant="body4">Still have a problem for us? Submit it! We're a 24x7 platform and we always welcome your partnership.</Typography>
         </DescriptionStyled>
       </DetailsContainer>      
-      <DetailsContainer container>                
+      <DetailsContainer container>   
+                   
       <br/>
         <DescriptionStyled>         
             <LoadingButton
@@ -1043,9 +1126,11 @@ export default function NonProfitApply() {
           <Typography style={style}>
             Opportunity Hack is a 48-hour hackathon that brings together
             software developers, designers, and project managers to solve
-            technical problems for public charities, non-profit
+            technical problems for public charities, nonprofit
             organizations (NPOs), and non-government organizations (NGOs).
           </Typography>
+          <LinkStyled href="/about">Read more here</LinkStyled>
+
           <br/>
           <h4 className="profile__title">
             <b>What is a hackathon?</b>
@@ -1054,7 +1139,7 @@ export default function NonProfitApply() {
             A hackathon is a 48-hour event where teams of 3-6 people work
             together to solve a problem. The teams are made up of
             developers, designers, and project managers. The teams are
-            given a problem statement from a non-profit organization and
+            given a problem statement from a nonprofit organization and
             they work together to solve the problem. At the end of the
             hackathon, the teams present their solutions to a panel of
             judges. The judges will select the top three teams and award

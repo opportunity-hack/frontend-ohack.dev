@@ -1,110 +1,98 @@
-import {
-  ButtonBasicStyle,
-  ButtonGoldStyle,
-  GridStyled,
-  TextStyled,  
-  TitleContainer,
-  CaptionContainer,
-  ButtonContainers,  
-  BlankContainer,
-} from './styles';
-import { LoginButton } from "../Navbar/styles";
+
 import { Grid } from '@mui/material';
+import { useAuthInfo, useRedirectFunctions } from "@propelauth/react";
 import React, { Suspense, useEffect } from 'react';
 import * as ga from '../../lib/ga';
-import { useRedirectFunctions } from "@propelauth/react"
-import { useAuthInfo } from '@propelauth/react'
+import { LoginButton } from "../Navbar/styles";
+import { useFeatureIsOn } from "@growthbook/growthbook-react";
 
 
+import {
+  BlankContainer,
+  ButtonBasicStyle,
+  ButtonContainers,
+  ButtonGoldStyle,
+  CaptionContainer,
+  GridStyled,
+  TextStyled,
+  TitleContainer  
+} from './styles';
 
 import { useEnv } from '../../context/env.context';
 import ReactPixel from 'react-facebook-pixel';
 
-// Assuming you're using Next.js for SSR
 import dynamic from 'next/dynamic';
-
+import 'react-responsive-carousel/lib/styles/carousel.min.css';
 
 const LeadForm = dynamic(() => import('../LeadForm/LeadForm'), {
   ssr: false,
 });
-
-
 const BackgroundGrid = React.lazy(() => import('./BackgroundGridComponent'));
-// Lazy load the TitleStyled and SpanText components
 const TitleStyled = dynamic(() => import('./TitleStyledComponent'), { ssr: true });
-
-
 function HeroBanner() {
-  const { slackSignupUrl } = useEnv();  
+  const { slackSignupUrl } = useEnv();
   const { isLoggedIn } = useAuthInfo();
   const { redirectToLoginPage } = useRedirectFunctions();
+  const enabled = useFeatureIsOn("afeature");
 
   const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
+    autoConfig: true,
+    debug: false,
   };
-  const advancedMatching = undefined; // { em: 'someemail@.com' }; // optional
-  
+
+  const advancedMatching = undefined;
   useEffect(() => {
-       if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
     }
   }, []);
-  
 
-  const openCodeSample = () => {    
+  const openCodeSample = () => {
     gaButton('slack_button', 'open_join_slack');
     window.open(slackSignupUrl, '_blank', 'noopener noreferrer');
   };
-
-
   const gaButton = async (action, actionName) => {
     ReactPixel.track(action, { action_name: actionName });
-
-    ga.event({ 
-        action: "conversion",
-        params: {
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
+    ga.event({
+      action: "conversion",
+      params: {
+        send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"
+      }
+    });
     ga.event({
       action: action,
       params: {
         action_name: actionName,
       },
-    });    
+    });
   };
-
   return (
     <GridStyled
       container
       direction='row'
-      justifyContent='center'      
+      justifyContent='center'
+      spacing={2} 
     >
       <Suspense fallback={<div>Loading...</div>}>
         <BackgroundGrid />
       </Suspense>
-
       {/* Left Container */}
       <BlankContainer xs={12} md={7} lg={7}>
-        
         <TitleContainer container>
-        
-        <Grid key="mainTitleAndLeadForm" direction='row'>        
-          <TitleStyled/>                                        
-          <LeadForm />        
-        </Grid>
-
+          <Grid key="mainTitleAndLeadForm" direction='row'>
+            <TitleStyled />
+            <LeadForm />
+          </Grid>
         </TitleContainer>
-
         <CaptionContainer right={'true'} container>
-          <TextStyled>
+          {enabled && <TextStyled>
             Want to code for social good?
-            <br/>
+            <br />
             Join us!
-          </TextStyled>          
-          
+          </TextStyled>
+          } 
+
+
           <ButtonContainers container>
           {/* Disable for new nonprofit form instead
             <ButtonStyled
@@ -122,11 +110,11 @@ function HeroBanner() {
               target="_blank"
               style={{ color: 'white', backgroundColor: '#0070BA' }}
             >
-              0. Donate via PayPal
+             Donate via PayPal
             </ButtonBasicStyle>
 
             <ButtonGoldStyle onClick={openCodeSample}>
-              1. Create an OHack Slack account
+              Create an OHack Slack account
             </ButtonGoldStyle>
 
             {!isLoggedIn && <LoginButton
@@ -135,7 +123,7 @@ function HeroBanner() {
                   onClick={() => redirectToLoginPage()}
                 className="login-button"
               >
-                2. Log In                                                  
+                Log In                                                  
               </LoginButton> 
             }
 
@@ -144,7 +132,7 @@ function HeroBanner() {
               onClick={() => gaButton('button_profile', 'clicked to see profile')}
               href='/profile'              
             >
-              2. View your profile
+              View your profile
             </ButtonBasicStyle>
             }
             
@@ -152,25 +140,20 @@ function HeroBanner() {
               onClick={() => gaButton('button_about', 'about us')}
               href='/about'
             >
-              3. Read more about us
+              Read more about us
             </ButtonBasicStyle>
 
             <ButtonBasicStyle
               onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'
             >
-              4. See all nonprofit projects
+              See all nonprofit projects
             </ButtonBasicStyle>
 
           </ButtonContainers>
         </CaptionContainer>
-      </BlankContainer>
-      {/* Right Container */}
-      <BlankContainer xs={12} md={5} lg={5}  justifyContent="center" alignItems="center">
-          
-      </BlankContainer>
+      </BlankContainer>   
     </GridStyled>
   );
 }
-
 export default HeroBanner;
