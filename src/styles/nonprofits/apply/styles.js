@@ -20,6 +20,21 @@ export const ContentContainer = styling(Grid)({
   // width: "75%",
 });
 
+export const HeadlineDetails=styling(Grid)({
+  padding: '1rem',
+  marginTop: '2rem',
+  marginBottom: '2rem',
+  borderBottom: '2px solid #c0c0c0', // Slightly darker bottom border
+  borderTop: '1px solid #e0e0e0',   
+  borderLeft: '1px solid #e0e0e0',   
+  borderRight: '1px solid #e0e0e0',  
+  width: "100vw",
+
+
+});
+
+
+
 export const TitleBanner = styling(Grid)({
   width: "100%",
   height: "20rem",

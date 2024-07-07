@@ -33,14 +33,15 @@ import {
   LayoutContainer,
   DetailsContainer,
   DescriptionStyled,
-  LinkStyled  
+  LinkStyled,
+  HeadlineDetails
 } from "../../styles/nonprofits/apply/styles";
 
 
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
 import ReactPixel from 'react-facebook-pixel';
 import * as ga from '../../lib/ga';
-import { Typography } from "@mui/material";
+import { Typography,Grid } from "@mui/material";
 import { CountdownCircleTimer } from 'react-countdown-circle-timer'
 
 export default function NonProfitApply() {
@@ -371,10 +372,15 @@ export default function NonProfitApply() {
             </Alert>
 
           }
-          <h1 className="content__title">Nonprofit Project Application</h1>          
+
+          {/*<h1 className="content__title"> <Typography variant="h1" sx={{ textDecoration: 'underline' }}>Nonprofit Project Application</Typography></h1>*/}
+          
+          
+          <Typography variant="h1" sx={{ textDecoration: 'underline', paddingBottom: '1rem'  }}>Nonprofit Project Application</Typography>
 
           <div className="content__body">
             <div className="profile__header">
+
               <div className="profile__headline">                
                 <Typography variant="h4">We write software for <b>free</b> to help you have more impact.</Typography>                
                 <br/>
@@ -441,10 +447,11 @@ export default function NonProfitApply() {
         
       </DetailsContainer>
 
-      
-      <DetailsContainer container>   
-                     
-        <DescriptionStyled>          
+
+      <DetailsContainer container>         
+        <DescriptionStyled>    
+        <HeadlineDetails>
+          <h2>Charity Organization Information</h2>      
           
             <Typography style={style} mt={1}><b>Charity Organization Name:</b></Typography>
             <br />
@@ -554,7 +561,7 @@ export default function NonProfitApply() {
               <span>Save</span>
             </LoadingButton>
           &nbsp;{submitStatus}
-          
+          </HeadlineDetails>
           <br /><br />
             <Alert severity="warning">
               <Typography style={style}><b>Complete transparency:</b> Not all projects will be completed after the hackathon is over.<br/>Your time is commitment is 10-20 hours over the course of the weekend, and a few hours of prep work before the event.<br/>Winning teams will be invited to continue working on their projects after the hackathon is over and this typically takes 3 months.</Typography>
@@ -801,9 +808,13 @@ export default function NonProfitApply() {
         </Stack>
       </DetailsContainer>
 
+
+      <HeadlineDetails container>
       <DetailsContainer container>
         <DescriptionStyled>
-          <br />
+        
+        <h2>Organziation Contact Information</h2> 
+
           <Typography style={style}><b>Contact Name:</b></Typography>
           <br />
           <Typography style={style}>
@@ -858,11 +869,11 @@ export default function NonProfitApply() {
           />
         </DescriptionStyled>
       </DetailsContainer>
-    
+      </HeadlineDetails>
 
       <DetailsContainer container>
         <DescriptionStyled>
-          <br />
+          <h2>Current Challenges and Potential Benefits</h2>
           <Typography style={style}><b>What challenges do you have?</b></Typography>          
           <br />
           <Typography style={style}>
