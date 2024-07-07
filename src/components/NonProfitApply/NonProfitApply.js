@@ -380,20 +380,25 @@ export default function NonProfitApply() {
 
           <div className="content__body">
             <div className="profile__header">
-              <div className="profile__headline">
-                <HeadlineDetails container>
-                  <Grid item xs={12}>
-                    <Typography variant="h4">We write software for <b>free</b> to help you have more impact.</Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="h4">This form helps us to find the charities that are the right fit for our event.</Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="h3">No idea is too big or small.</Typography>
-                  </Grid>
-                </HeadlineDetails>
-             
-             <br />
+
+              <div className="profile__headline">                
+                <Typography variant="h4">We write software for <b>free</b> to help you have more impact.</Typography>                
+                <br/>
+                This form helps us to find the charities that are the right fit
+                for our event. 
+                <br />
+                <Typography variant="h4">No idea is too small or big.</Typography>                                                
+                <br />
+                <iframe
+                  width={560/2}
+                  height={315/2}
+                  src="https://www.youtube.com/embed/Ia_xsX-318E"
+                  title="YouTube video player"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+
                 <Typography variant="h5">Got a moment? Share your initial thoughts now and easily come back later to finish.</Typography>                
                 <br />
 
