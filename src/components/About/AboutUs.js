@@ -8,6 +8,7 @@ import Button from '@mui/material/Button';
 import { FaLinkedin } from 'react-icons/fa';
 import * as ga from '../../lib/ga';
 import ReactPixel from 'react-facebook-pixel';
+import Image from 'next/image';
 
 const style = { fontSize: '15px' };
 
@@ -88,6 +89,16 @@ const AboutUs = () => {
         Founded in 2013 as a part of eBay/PayPal Inc., Opportunity Hack was created to meet the technological needs of nonprofits. Our vision has since grown to harness the power of code for social good, fostering an inclusive society, and championing impactful, sustainable change.        
       </Typography>
 
+      <iframe
+                  width={560/2}
+                  height={315/2}
+                  src="https://www.youtube.com/embed/Ia_xsX-318E"
+                  title="YouTube video player"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+
       <Typography variant="h2">
         Why Opportunity Hack?
       </Typography>
@@ -157,6 +168,7 @@ const AboutUs = () => {
       <Typography variant="h4">
         We have coding bootcamp and senior capstone projects for you!
       </Typography>
+      <Image src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp"  layout="responsive" alt="Coding Bootcamp Projects" width={4032/9} height={3024/9}  />
         <Box key="bootcamp" my={2}>
           <Typography variant="body1" paragraph style={style}>
           If you are part of a coding bootcamp and want to build your portfolio, you should consider writing code for charity with Opportunity Hack. Opportunity Hack is a social good hackathon that connects you with nonprofit organizations that need your tech skills and solutions. 

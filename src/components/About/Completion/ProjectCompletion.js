@@ -58,6 +58,7 @@ const Hearts = () => (
                                     src="https://cdn.ohack.dev/ohack.dev/definition-of-done-65b90f271348b.webp"
                                     width={971/2}
                                     height={971/2}
+                                    layout="responsive"
                                     alt="A happy dog completing an Opportunity Hack project for social good"
                                 />                                                                                
                         </Grid>

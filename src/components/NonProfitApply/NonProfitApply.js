@@ -383,6 +383,16 @@ export default function NonProfitApply() {
                 <br />
                 <Typography variant="h4">No idea is too small or big.</Typography>                                                
                 <br />
+                <iframe
+                  width={560/2}
+                  height={315/2}
+                  src="https://www.youtube.com/embed/Ia_xsX-318E"
+                  title="YouTube video player"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+
                 <Typography variant="h5">Got a moment? Share your initial thoughts now and easily come back later to finish.</Typography>                
                 <br />
 
