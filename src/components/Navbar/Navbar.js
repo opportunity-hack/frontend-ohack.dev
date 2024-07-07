@@ -61,6 +61,8 @@ const about_settings = [
   [ '✅ Project Completion', '/about/completion' ],
   [ '🎉 Hackathon?' ,'/hack'],
   [ '🚪 Office Hours', '/office-hours' ],
+  // Style Guide
+  [ '🎨 Style Guide', '/about/style-guide' ],
 ];
 
 const auth_settings = [
