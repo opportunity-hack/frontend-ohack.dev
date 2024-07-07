@@ -251,4 +251,55 @@ const StyleGuide = () => {
   );
 };
 
+export async function getStaticProps() {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ohack.dev';
+  const pageUrl = `${baseUrl}/about/style-guide`;
+  const logoUrl = 'https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Dark_Blue_Square.png';
+
+  const openGraphData = {
+    title: 'Opportunity Hack Brand Guide: Logos, Colors, and UX Guidelines',
+    description: 'Access Opportunity Hack\'s official logos, color schemes, and UX guidelines. Ideal for volunteers and designers working on tech for social good projects.',
+    url: pageUrl,
+    image: logoUrl,
+    type: 'website',
+  };
+
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": openGraphData.title,
+    "description": openGraphData.description,
+    "url": pageUrl,
+    "image": logoUrl,
+    "publisher": {
+      "@type": "Organization",
+      "name": "Opportunity Hack",
+      "logo": {
+        "@type": "ImageObject",
+        "url": logoUrl
+      }
+    },
+    "mainEntity": {
+      "@type": "CreativeWork",
+      "name": "Opportunity Hack Brand and Style Guide",
+      "description": "Official brand and style guide for Opportunity Hack, including logos, color schemes, and UX guidelines.",
+      "educationalUse": "Training",
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Designers, Developers, Volunteers"
+      },
+      "keywords": "Opportunity Hack, logo, brand guide, style guide, UX guidelines, nonprofit tech, social good, volunteer, design, development, hackathon"
+    }
+  };
+
+  return {
+    props: {
+      openGraphData,
+      schemaData,
+    },
+    // Optionally, you can set a revalidate time if you want to update the static props periodically
+    // revalidate: 3600, // Revalidate every hour
+  };
+}
+
 export default StyleGuide;
