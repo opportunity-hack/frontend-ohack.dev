@@ -1,7 +1,13 @@
 {
   "name": "frontend-ohack-dev",
   "version": "0.1.0",
-  "proxy": "http://localhost:3001/",
+  "proxy": {
+    "/api": {
+      "target": "http://localhost:6060/api",
+      "changeOrigin": true,
+      "secure": false
+    }
+  },
   "private": true,
   "cacheDirectories": [
     ".next/cache"
