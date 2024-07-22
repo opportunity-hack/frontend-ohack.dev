@@ -1,24 +1,16 @@
 import { useAuthInfo } from '@propelauth/react'
-
-import React, { 
-  // useEffect 
-} from "react";
+import React from "react";
 import { FormControl, TextField, InputLabel, MenuItem, Select } from "@mui/material";
 import useProfileApi from "../../hooks/use-profile-api.js";
 import BadgeList from "../../components/badge-list";
 import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
-// Material UI Sheild Icon
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import Stack from '@mui/material/Stack';
 import Checkbox from '@mui/material/Checkbox';
 import ListItemText from '@mui/material/ListItemText';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
-
-
-// TODO: Use?
-// import CodeSnippet from "../../components/code-snippet";
-// import AuthenticationButton from "../../components/buttons/authentication-button";
+import HeartGauge from '../HeartGauge/HeartGauge';
 
 import Head from "next/head";
 import Moment from "react-moment";
@@ -33,17 +25,14 @@ import {
   ProfileHeader,
   ProfileHeadline,
 } from "../../styles/profile/styles";
-import { Link, Typography } from "@mui/material";
+import { Link, Typography, useTheme, useMediaQuery } from "@mui/material";
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack.js";
-
 
 export default function Profile(props) {
   const { isLoggedIn, user } = useAuthInfo();
-
-  
-  
   const { badges, hackathons, profile, feedback_url, update_profile_metadata } = useProfileApi({ });  
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [role, setRole] = React.useState("");
   const [expertise, setExpertise] = React.useState([]);
@@ -74,7 +63,7 @@ export default function Profile(props) {
       setExpertise(profile?.expertise);
     }
 
-    setCompany(profile?.company);
+    setCompany(profile?.company);    
 
   }, [profile]);
 
@@ -237,67 +226,59 @@ export default function Profile(props) {
     fontSize: 14
   };
 
-
-  
-  
-
-  console.log("isLoggedIn", isLoggedIn);
-
   return (
     <LayoutContainer container>
-      <InnerContainer container>
+      <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
         <Head>
           <title>Profile - Opportunity Hack Developer Portal</title>
         </Head>
         
-        
-        {isLoggedIn && <ProfileContainer>
-          <ProfileHeader container>
-            <ProfileAvatar
-              src={user?.pictureUrl}
-              alt="Profile"
-              width={60}
-              height={60}
-            />
+        {isLoggedIn && (
+          <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: isMobile ? 2 : 4 }}>
+            <ProfileHeader container>
+              <ProfileAvatar
+                src={user?.pictureUrl}
+                alt="Profile"
+                width={60}
+                height={60}
+              />
 
-            <ProfileHeadline>
-              <Typography
-                variant="h2"
-                style={{
-                  fontWeight: 600,
-                  fontSize: "3rem",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                {user?.firstName} {user?.lastName}{" "}
-                <VerifiedUserIcon color="success" fontSize="large" />
-              </Typography>
-              <ProfileDetailText>{user?.email}</ProfileDetailText>
-              <ProfileDetailText>
-                Created: <Moment fromNow>{user?.createdAt * 1000}</Moment>
-              </ProfileDetailText>
-            </ProfileHeadline>
-          </ProfileHeader>
-          <Link href={profile.profile_url}>
-          <ProfileButton className="button button--compact button--primary">
-              See Your Public Profile
-          </ProfileButton>
-          </Link>
-
-          
-
-          
-          <Typography variant="h2" mt={2} style={{ fontWeight: 600, fontSize: "2rem" }}>
-            Tell us more about yourself and why you're here
-          </Typography>
-          <Typography variant="body1" mt={2}>
-            We ask because we want to make sure we're providing the right resources and opportunities for you.
-          </Typography>
-
-                    
-            <Stack direction="column" spacing={2} mt={2}>
+              <ProfileHeadline>
+                <Typography
+                  variant="h2"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: isMobile ? "2rem" : "3rem",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  {user?.firstName} {user?.lastName}{" "}
+                  <VerifiedUserIcon color="success" fontSize="large" />
+                </Typography>
+                <ProfileDetailText>{user?.email}</ProfileDetailText>
+                <ProfileDetailText>
+                  Created: <Moment fromNow>{user?.createdAt * 1000}</Moment>
+                </ProfileDetailText>
+              </ProfileHeadline>
+            </ProfileHeader>
             
-            <FormControl>
+            <HeartGauge history={profile.history} />
+
+            <Link href={profile.profile_url}>
+              <ProfileButton className="button button--compact button--primary">
+                See Your Public Profile
+              </ProfileButton>
+            </Link>
+
+            <Typography variant="h2" mt={2} sx={{ fontWeight: 600, fontSize: isMobile ? "1.5rem" : "2rem" }}>
+              Tell us more about yourself and why you're here
+            </Typography>
+            <Typography variant="body1" mt={2}>
+              We ask because we want to make sure we're providing the right resources and opportunities for you.
+            </Typography>
+
+            <Stack direction="column" spacing={2} mt={2} sx={{ width: '100%' }}>
+              <FormControl>
             <InputLabel id="role-label" style={style}>What hat are you currently wearing?</InputLabel>
             <Select
               labelId="role-label"
@@ -428,15 +409,14 @@ export default function Profile(props) {
               <MenuItem value="xx-large">XX-Large</MenuItem> 
             </Select>          
           </FormControl>
+            </Stack>
 
-          </Stack>
+            <HelpUsBuildOHack
+              github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6"
+              github_name="Issue #6"
+            />
 
-          <HelpUsBuildOHack
-            github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6"
-            github_name="Issue #6"
-          />
-
-          <div className="profile__details">
+            <div className="profile__details">
           <h2 className="profile__title">Badges</h2>
           <BadgeList badges={badges} />
 
@@ -471,18 +451,18 @@ export default function Profile(props) {
             github_name="Issue #8"
           />
         </div>
-        </ProfileContainer>}
+          </ProfileContainer>
+        )}
 
-        { isLoggedIn === false && <div>
-          <h1>Not logged in</h1>
-          <p>
-            You must be logged in to view this page.{" "}
-            <LoginOrRegister introText="Ready to join us?" previousPage={"/profile"} />
-          </p>
-        </div>}
-
-
-        
+        {!isLoggedIn && (
+          <div>
+            <h1>Not logged in</h1>
+            <p>
+              You must be logged in to view this page.{" "}
+              <LoginOrRegister introText="Ready to join us?" previousPage={"/profile"} />
+            </p>
+          </div>
+        )}
       </InnerContainer>
     </LayoutContainer>
   );

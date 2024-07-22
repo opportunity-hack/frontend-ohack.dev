@@ -1,7 +1,13 @@
 {
   "name": "frontend-ohack-dev",
   "version": "0.1.0",
-  "proxy": "http://localhost:3001/",
+  "proxy": {
+    "/api": {
+      "target": "http://localhost:6060/api",
+      "changeOrigin": true,
+      "secure": false
+    }
+  },
   "private": true,
   "cacheDirectories": [
     ".next/cache"
@@ -35,6 +41,7 @@
     "react-responsive-carousel": "^3.2.23",
     "react-social-media-embed": "^2.4.1",
     "react-table": "^7.8.0",
+    "recharts": "^2.12.7",
     "sharp": "^0.33.2"
   },
   "scripts": {
