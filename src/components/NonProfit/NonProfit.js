@@ -1,5 +1,6 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
 
 import useNonprofit from '../../hooks/use-nonprofit';
 
@@ -24,6 +25,13 @@ import { red } from '@mui/material/colors';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
+
+// Import GA, ReactPixel, and GrowthBook
+import * as ga from '../../lib/ga';
+import { useFeatureValue } from "@growthbook/growthbook-react";
+import ReactPixel from 'react-facebook-pixel';
+
+
 
 
 import {
@@ -64,11 +72,38 @@ const ExpandMore = styled((props) => {
 
 
 
+
 export default function NonProfit(props) {
+  const nonprofit_cta_text = useFeatureValue("nonprofit_page_cta_text", "Hey there, it looks like there are no active projects with this organization. Let us know how we can help:");
+
   const {
     nonprofit_id
   } = props;
   const { user } = useAuthInfo();
+  
+  
+  const advancedMatching = undefined;
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const options = {
+        autoConfig: true,
+        debug: false,
+      };
+      
+      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    }
+  }, []);
+
+  const gaButton = async (action, actionName) => {
+    ReactPixel.track(action, { action_name: actionName });
+    
+    ga.event({
+      action: action,
+      params: {
+        action_name: actionName,
+      },
+    });
+  };
 
   
   const [checked, setChecked] = useState([]);
@@ -105,6 +140,9 @@ export default function NonProfit(props) {
     handle_npo_problem_statement_edit(nonprofit_id, checked, onComplete);
   };
 
+  const nonProfitPageName = "from_nonprofit_page_" + nonprofit.id;
+  const style = { fontSize: '14px' };
+    
   const problemStatements = () => {
     if (nonprofit.id === null) {
       return (
@@ -113,16 +151,15 @@ export default function NonProfit(props) {
         </Grid>
       );
     } else {
-      if (nonprofit?.problem_statements?.length === 0) {
-        return <div>Working on it!</div>;
-      } else if (!nonprofit?.problem_statements) {
+      if (nonprofit.problemStatements === undefined || nonprofit?.problem_statements?.length === 0) {      
         return (
           <Grid container justifyContent=''>
             <Grid item style={{ fontSize: "13px"}} xs={12}>
-              Looks like there are no active projects with this organization. Let us know how we can help:<br/>
+              <Typography style={style}>{nonprofit_cta_text}</Typography>
+              <br/>
             </Grid>
             <ApplyButtonContainer>
-              <ApplyButton href="https://www.ohack.dev/nonprofits/apply">Submit your project ideas!</ApplyButton>
+              <ApplyButton onClick={gaButton("click_apply", nonProfitPageName)} href="/nonprofits/apply">Submit your project ideas!</ApplyButton>
             </ApplyButtonContainer>
           </Grid>
         )
@@ -310,7 +347,7 @@ export default function NonProfit(props) {
         <h3>Projects</h3>
         <ProjectsGrid container>{problemStatements()}</ProjectsGrid>
       </ProjectsContainer>
-    </LayoutContainer>
+    </LayoutContainer>    
   );
 }
 
