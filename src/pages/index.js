@@ -62,7 +62,7 @@ export default function Home() {
   return (      
     <Fragment>
       <Head>
-        <title></title>
+        <title>Opportunity Hack: Tech Hackathons for Social Good, Empowering Nonprofits, Learn how to code, Solve end-to-end problems</title>
       </Head>      
        <GrowthBookProvider growthbook={growthbook}>
       <HeroBanner />
@@ -74,7 +74,7 @@ export default function Home() {
 }
 export const getStaticProps = async ({ params = {} } = {}) => {
   
-  var title = "Opportunity Hack Developer Portal";
+  var title = "Opportunity Hack: Tech Hackathons for Social Good, Empowering Nonprofits, Learn how to code, Solve end-to-end problems";
   var metaDescription = 'Empowering volunteers to create tech solutions for nonprofits, fostering community bonds. Join us at Opportunity Hack to use your skills for good, boost your resume, and find purpose in work.';
 
   // Helpful Docs:
