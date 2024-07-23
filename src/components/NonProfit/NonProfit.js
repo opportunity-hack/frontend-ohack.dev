@@ -42,6 +42,10 @@ import {
   TitleChipContainer,
   TitleContainer,
   TitleStyled,
+  // ProjectSubmissionContainer,
+  ApplyButtonContainer,
+  // Buttons
+  ApplyButton
 } from '../../styles/nonprofit/styles';
 
 /*
@@ -111,6 +115,17 @@ export default function NonProfit(props) {
     } else {
       if (nonprofit?.problem_statements?.length === 0) {
         return <div>Working on it!</div>;
+      } else if (!nonprofit?.problem_statements) {
+        return (
+          <Grid container justifyContent=''>
+            <Grid item style={{ fontSize: "13px"}} xs={12}>
+              Looks like there are no active projects with this organization. Let us know how we can help:<br/>
+            </Grid>
+            <ApplyButtonContainer>
+              <ApplyButton href="https://www.ohack.dev/nonprofits/apply">Submit your project ideas!</ApplyButton>
+            </ApplyButtonContainer>
+          </Grid>
+        )
       } else {        
         return nonprofit?.problem_statements?.map((ps) => {
           return (

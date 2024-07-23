@@ -25,6 +25,26 @@ export const MoreNewsStyle = styling(Button)({
   },
 });
 
+export const ApplyButton = styling(Button) ({
+  borderRadius: "2rem",
+  paddingLeft: "1.5rem",
+  paddingRight: "1.5rem",
+  fontWeight: 600,
+  fontSize: "15px",
+  textTransform: "unset !important",
+  backgroundColor: "#FFD700",
+  color: "#000000",
+  minWidth: "25rem",
+
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },
+})
+
+export const ApplyButtonContainer = styling(Grid)({
+  paddingTop: "1rem"
+})
+
 export const LayoutContainer = styling(Grid)({
   justifyContent: "center",
   alignContent: "center",
