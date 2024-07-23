@@ -35,8 +35,7 @@ function HackathonList() {
     >
       <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
       
-      <EmptyGrid container justifyContent="center">
-        <News newsData={newsData} frontpage={"true"}/>        
+      <EmptyGrid container justifyContent="center">               
 
         { hackathons && hackathons.length > 0 && (
           hackathons.map((event) => {
@@ -61,7 +60,8 @@ function HackathonList() {
             );
           })
         )}
-      
+        <News newsData={newsData} frontpage={"true"}/> 
+        
         { 
           hackathons && hackathons.length === 0 && (
              <Link prefetch={false} href="/hack">        
