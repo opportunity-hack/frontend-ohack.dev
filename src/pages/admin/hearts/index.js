@@ -87,7 +87,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
-  const { accessToken, user } = useAuthInfo();
+  const { user, accessToken } = useAuthInfo();
   const [slackUsername, setSlackUsername] = useState('');
   const [selectedHearts, setSelectedHearts] = useState([]);
   const [heartCount, setHeartCount] = useState(0);
@@ -97,6 +97,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
   const [orderBy, setOrderBy] = useState('totalHearts');
   const [order, setOrder] = useState('desc');
   const [filter, setFilter] = useState('');
+  const { get_user_hearts } = useProfileApi();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -108,19 +109,26 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
     setSelectedHearts(event.target.value);
   };
 
+
+
+
   const fetchUsersHearts = async () => {
+    
+
     if( user === null ) {
       return;
     }
-    
+
     setLoading(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hearts`, {
         method: 'GET',
-          headers: {
+          headers: {            
+            "authorization": `Bearer ${accessToken}`,
             "content-type": "application/json",
           }        
       });
+      
       
 
       if (response.ok) {
@@ -137,10 +145,10 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
   };
 
   useEffect(() => {
-    if (isAdmin && accessToken) {
+    if (isAdmin) {
       fetchUsersHearts();
     }
-  }, [isAdmin, accessToken]);
+  }, [isAdmin]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
