@@ -111,7 +111,6 @@ export default function NonProfit(props) {
 
   const { handle_npo_problem_statement_edit, nonprofit } =
     useNonprofit(nonprofit_id);
-
   var slack_details = '';
   // var slack_details_plain = '';
 
@@ -151,7 +150,7 @@ export default function NonProfit(props) {
         </Grid>
       );
     } else {
-      if (nonprofit.problemStatements === undefined || nonprofit?.problem_statements?.length === 0) {      
+      if (nonprofit.problem_statements === undefined || nonprofit?.problem_statements?.length === 0) {      
         return (
           <Grid container justifyContent=''>
             <Grid item style={{ fontSize: "13px"}} xs={12}>
