@@ -97,7 +97,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
   const [orderBy, setOrderBy] = useState('totalHearts');
   const [order, setOrder] = useState('desc');
   const [filter, setFilter] = useState('');
-  const { get_user_hearts } = useProfileApi();
+
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
