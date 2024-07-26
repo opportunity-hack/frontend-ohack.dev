@@ -87,7 +87,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
-  const { accessToken } = useAuthInfo();
+  const { accessToken, user } = useAuthInfo();
   const [slackUsername, setSlackUsername] = useState('');
   const [selectedHearts, setSelectedHearts] = useState([]);
   const [heartCount, setHeartCount] = useState(0);
@@ -109,14 +109,19 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
   };
 
   const fetchUsersHearts = async () => {
+    if( user === null ) {
+      return;
+    }
+    
     setLoading(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hearts`, {
         method: 'GET',
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
+            "content-type": "application/json",
           }        
       });
+      
 
       if (response.ok) {
         const data = await response.json();
