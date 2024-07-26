@@ -1,14 +1,11 @@
 import axios from "axios";
 import { useEnv } from "../context/env.context";
 import { useAuthInfo } from '@propelauth/react';
-
-
-
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 export default function useProfileApi(){
     
-    const { user, accessToken } = useAuthInfo();
+    const { user } = useAuthInfo();
     
     
 
