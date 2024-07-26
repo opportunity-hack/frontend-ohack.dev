@@ -38,12 +38,13 @@ const heartOptions = [
   { value: 'documentation', label: 'Documentation' },
   { value: 'design_architecture', label: 'Design Architecture' },
   { value: 'code_quality', label: 'Code Quality' },
-  { value: 'unit_tests', label: 'Unit Tests' },
+  { value: 'unit_test_coverage', label: 'Unit Test Coverage' },
+  { value: 'unit_test_writing', label: 'Unit Test Writing' },
   { value: 'observability', label: 'Observability' },
   { value: 'standups_completed', label: 'Standups Completed' },
   { value: 'code_reliability', label: 'Code Reliability' },
-  { value: 'customer_driven_innovation', label: 'Customer Driven Innovation' },
-  { value: 'code_iterations', label: 'Code Iterations Pushed to Production' },
+  { value: 'customer_driven_innovation_and_design_thinking', label: 'Customer Driven Innovation and Design Thinking' },
+  { value: 'iterations_of_code_pushed_to_production', label: 'Code Iterations Pushed to Production' },
 ];
 
 const StyledProjectsContainer = styled(ProjectsContainer)(({ theme }) => ({
@@ -90,14 +91,15 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
   const { user, accessToken } = useAuthInfo();
   const [slackUsername, setSlackUsername] = useState('');
   const [selectedHearts, setSelectedHearts] = useState([]);
-  const [heartCount, setHeartCount] = useState(0);
+  const [heartCount, setHeartCount] = useState(0.5);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [usersHearts, setUsersHearts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [orderBy, setOrderBy] = useState('totalHearts');
   const [order, setOrder] = useState('desc');
   const [filter, setFilter] = useState('');
-
+  const [awardHeartsButtonDisabled, setAwardHeartsButtonDisabled] = useState(false);
+  
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -112,9 +114,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
 
 
 
-  const fetchUsersHearts = async () => {
-    
-
+  const fetchUsersHearts = async () => {    
     if( user === null ) {
       return;
     }
@@ -151,6 +151,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
   }, [isAdmin]);
 
   const handleSubmit = async (event) => {
+    setAwardHeartsButtonDisabled(true);
     event.preventDefault();
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hearts`, {
@@ -161,12 +162,13 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
         },
         body: JSON.stringify({
           slackUsername,
-          hearts: selectedHearts,
-          count: heartCount,
+          reasons: selectedHearts,
+          amount: heartCount,
         }),
       });
 
       if (response.ok) {
+        setAwardHeartsButtonDisabled(false);
         setSnackbar({ open: true, message: 'Hearts awarded successfully!', severity: 'success' });
         setSlackUsername('');
         setSelectedHearts([]);
@@ -176,6 +178,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
         throw new Error('Failed to award hearts');
       }
     } catch (error) {
+      setAwardHeartsButtonDisabled(false);
       setSnackbar({ open: true, message: 'Failed to award hearts. Please try again.', severity: 'error' });
     }
   };
@@ -223,7 +226,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Slack Username"
+                label="Slack Member ID"
                 value={slackUsername}
                 onChange={(e) => setSlackUsername(e.target.value)}
                 required
@@ -253,12 +256,12 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
                 label="Heart Count"
                 value={heartCount}
                 onChange={(e) => setHeartCount(parseFloat(e.target.value))}
-                inputProps={{ min: 0, step: 0.5 }}
+                inputProps={{ min: 0.5, step: 0.5 }}
                 required
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Button type="submit" variant="contained" color="primary" fullWidth>
+              <Button type="submit" variant="contained" color="primary"  disabled={ awardHeartsButtonDisabled }  fullWidth>
                 Award Hearts
               </Button>
             </Grid>
