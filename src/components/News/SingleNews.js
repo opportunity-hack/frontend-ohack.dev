@@ -114,12 +114,12 @@ function SingleNews( {newsItem} ) {
                     {newsItem.title}
                 </Typography>                
             
-
+                <Typography>This was summarized by AI, see the Slack post for specific details.</Typography>
                 <TitleStyled variant="h1">
 
                 <SlackButton onClick={() => gaButton("button_slack_post", newsItem.slack_permalink)} target="_blank" variant="outlined" >
                   <Link href={newsItem.slack_permalink} target='_blank'>
-                    Slack post
+                    Original Slack Post
                   </Link>
                 </SlackButton>
               

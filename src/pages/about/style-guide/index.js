@@ -4,7 +4,7 @@ import { LayoutContainer, TitleContainer, ProjectsContainer } from '../../../sty
 import Head from 'next/head';
 import Image from 'next/image';
 
-const StyleGuide = () => {
+export default function StyleGuide(){
   const colors = {
     darkBlue: '#003087',
     lightBlue: '#009CDE',
@@ -250,5 +250,3 @@ const StyleGuide = () => {
     </LayoutContainer>
   );
 };
-
-export default StyleGuide;

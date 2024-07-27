@@ -105,7 +105,7 @@ function News( {newsData, frontpage} ) {
 
                 <SlackButton onClick={() => gaButton("button_slack_post", newsItem.slack_permalink)} target="_blank" variant="outlined" >
                   <Link href={newsItem.slack_permalink} target='_blank'>
-                    Slack post
+                    Original Slack Post
                   </Link>
                 </SlackButton>
               

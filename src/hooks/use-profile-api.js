@@ -1,14 +1,11 @@
 import axios from "axios";
 import { useEnv } from "../context/env.context";
 import { useAuthInfo } from '@propelauth/react';
-
-
-
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 export default function useProfileApi(){
     
-    const { user, accessToken } = useAuthInfo();
+    const { user } = useAuthInfo();
     
     
 
@@ -142,6 +139,7 @@ export default function useProfileApi(){
                     why: data.text.why,
                     company: data.text.company,
                     github: data.text.github,
+                    history: data.text.history,
                     profile_url: window.location.href + "/" + data.text.id  // /profile/<db id>
                 };
 

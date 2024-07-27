@@ -188,6 +188,7 @@ function EventFeature(props) {
         {
           
             eventLinks?.map((alink) => {
+              
               const isExternal = alink?.link?.startsWith('http');
               return (
                 <Link prefetch={false} href={alink?.link} target={isExternal ? '_blank' : '_self'} onClick={(e) => {
@@ -196,7 +197,7 @@ function EventFeature(props) {
                     window.open(alink?.link, '_blank');
                   }
                 }}>
-                  <EventButton>{alink?.name}</EventButton>
+                  <EventButton color={alink.color} variant={alink.variant} >{alink?.name}</EventButton>
                 </Link>
               );
             })
