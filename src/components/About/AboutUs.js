@@ -113,9 +113,33 @@ const AboutUs = () => {
       </Typography>
 
       <Box mt={2}>
-        <Button variant="contained" onClick={() => gaButton('button_see_nonprofits', 'see projects')} style={style} color="secondary" href="/nonprofits">
-          👀 Nonprofit projects
-        </Button>        
+       <Grid container spacing={2} mt={3} xs={12} md={12}>
+        <Grid item>
+          <Button variant="contained" onClick={() => gaButton('button_see_nonprofit_projects', 'see projects')} style={style} color="primary" href="/nonprofits">
+            See Nonprofit Projects
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button variant="contained" onClick={() => gaButton('button_mentorship', 'Learn about mentorship')} style={style} color="primary" href="/about/mentors">
+            Learn about Mentorship
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button variant="contained" onClick={() => gaButton('button_judging', 'Learn about judging')} style={style} color="primary" href="/about/judges">
+            Judging Information
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button variant="contained" onClick={() => gaButton('button_sponsorship', 'Learn about sponsorship')} style={style} color="primary" href="/hack/2024_fall/sponsor">
+            Sponsor Opportunities
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button variant="contained" onClick={() => gaButton('button_ohack_org', 'Visit ohack.org')} style={style} color="primary" href="https://www.ohack.org/about" target="_blank" rel="noopener noreferrer">
+            More at ohack.org
+          </Button>        
+        </Grid>
+      </Grid>   
       </Box>      
     </TitleContainer>
 
@@ -206,12 +230,22 @@ const AboutUs = () => {
           </Button>
         </Grid>
         <Grid item>
-          <Button variant="contained" style={style} onClick={() => gaButton('button_mentorship', 'Learn about mentorship')} color="primary" href="/about/mentors">
+          <Button variant="contained" onClick={() => gaButton('button_mentorship', 'Learn about mentorship')} style={style} color="primary" href="/about/mentors">
             Learn about Mentorship
           </Button>
         </Grid>
         <Grid item>
-          <Button variant="contained" style={style} color="primary" href="https://www.ohack.org/about" target="_blank" rel="noopener noreferrer">
+          <Button variant="contained" onClick={() => gaButton('button_judging', 'Learn about judging')} style={style} color="primary" href="/about/judges">
+            Judging Information
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button variant="contained" onClick={() => gaButton('button_sponsorship', 'Learn about sponsorship')} style={style} color="primary" href="/hack/2024_fall/sponsor">
+            Sponsor Opportunities
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button variant="contained" onClick={() => gaButton('button_ohack_org', 'Visit ohack.org')} style={style} color="primary" href="https://www.ohack.org/about" target="_blank" rel="noopener noreferrer">
             More at ohack.org
           </Button>        
         </Grid>

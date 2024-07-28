@@ -7,9 +7,32 @@ import Button from '@mui/material/Button';
 import * as ga from "../../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
 import { InstagramEmbed } from 'react-social-media-embed';
+import Link from 'next/link';
 
 
 const style = { fontSize: '15px' };
+
+const JudgeCTA = () => {
+  return (
+    <Box sx={{ mt: 4, p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+      <Typography variant="h5" gutterBottom>
+        Interested in another way to contribute? Consider becoming a judge!
+      </Typography>
+      <Typography variant="body1" paragraph>
+        As a judge, you'll evaluate innovative solutions, provide valuable feedback, and play a crucial role in recognizing top projects at Opportunity Hack.
+      </Typography>
+      <Link href="/about/judges" passHref>
+        <Button
+          component="a"
+          variant="contained"
+          color="secondary"
+        >
+          Learn About Judging
+        </Button>
+      </Link>
+    </Box>
+  );
+};
 
 const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
     ga.event({
@@ -211,6 +234,8 @@ const Mentorship = () => (
     <Typography variant="body1" paragraph style={style}>
         Are you ready to make a difference? Join us as a mentor at Opportunity Hack and help shape the future of nonprofit solutions!
     </Typography>
+
+    <JudgeCTA />
 
     <LoginOrRegister introText="Ready to join us as a mentor?" previousPage={"/about/mentors"} />
 
