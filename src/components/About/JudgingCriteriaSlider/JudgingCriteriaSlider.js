@@ -36,6 +36,7 @@ const JudgingCriteriaSlider = ({ criterion, value, onChange, maxPoints }) => {
       </Box>
       <Slider
         value={value}
+        key={criterion.category}
         onChange={(_, newValue) => onChange(criterion.category, newValue)}
         aria-labelledby={`${criterion.category}-slider`}
         valueLabelDisplay="auto"

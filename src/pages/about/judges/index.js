@@ -1,159 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
 import { 
-  Typography, 
-  Box, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
-  ListItemText, 
-  Button, 
-  Container, 
-  ThemeProvider, 
-  createTheme, 
-  Paper,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails
+  Typography, Box, List, ListItem, ListItemIcon, ListItemText, Button, Container, 
+  ThemeProvider, createTheme, Paper, Slider, Tooltip, Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
+import { Gavel, School, Security, Build, Movie, LiveTv, Business, EmojiEvents, Work, LocationOn } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { 
-  Gavel, 
-  School, 
-  Security, 
-  Build, 
-  Movie, 
-  LiveTv, 
-  Business, 
-  EmojiEvents, 
-  Work, 
-  LocationOn 
-} from '@mui/icons-material';
-import JudgingCriteriaSlider from '../../../components/About/JudgingCriteriaSlider/JudgingCriteriaSlider';
+import InfoIcon from '@mui/icons-material/Info';
 
-const theme = createTheme({
-  typography: {
-    fontSize: 16,
-  },
-});
+const theme = createTheme({ typography: { fontSize: 16 } });
 
 const AboutJudges = () => {
   const [scores, setScores] = useState({
-    scope: { impact: 3, complexity: 3 },
-    documentation: { codeAndUX: 3, easeOfUnderstanding: 3 },
+    scopeImpact: 3, scopeComplexity: 3,
+    documentationCode: 3, documentationEase: 3,
     polish: 3,
-    security: { dataProtection: 3, roleBased: 3 }
+    securityData: 3, securityRole: 3
   });
 
   const [totalScore, setTotalScore] = useState(0);
 
   useEffect(() => {
-    const newTotalScore = 
-      (scores.scope.impact + scores.scope.complexity) * 2 +
-      (scores.documentation.codeAndUX + scores.documentation.easeOfUnderstanding) +
-      scores.polish * 4 +
-      (scores.security.dataProtection + scores.security.roleBased);
+    const newTotalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
     setTotalScore(newTotalScore);
   }, [scores]);
 
-  const handleScoreChange = (category, subcategory, newValue) => {
-    setScores(prevScores => ({
-      ...prevScores,
-      [category]: subcategory 
-        ? { ...prevScores[category], [subcategory]: newValue }
-        : newValue
-    }));
+  const handleScoreChange = (criterion) => (_, newValue) => {
+    setScores(prevScores => ({ ...prevScores, [criterion]: newValue }));
   };
 
   const criteriaInfo = [
     {
-      category: 'scope',
-      name: 'Scope of Solution',
-      subcriteria: [
-        { name: 'Impact on Community', subcategory: 'impact', maxPoints: 10 },
-        { name: 'Complexity of Problem Solved', subcategory: 'complexity', maxPoints: 10 }
+      category: 'scope', name: 'Scope of Solution', maxPoints: 10,
+      subCriteria: [
+        { name: 'Impact on Community', key: 'scopeImpact' },
+        { name: 'Complexity of Problem Solved', key: 'scopeComplexity' }
       ],
-      tip: "Consider both breadth (how many people it affects) and depth (how significantly it affects them). Avoid the 'halo effect' by judging each sub-criterion independently."
+      tip: "Consider both breadth and depth of impact. Evaluate community impact and problem complexity."
     },
     {
-      category: 'documentation',
-      name: 'Documentation',
-      subcriteria: [
-        { name: 'Code and UX Documentation', subcategory: 'codeAndUX', maxPoints: 5 },
-        { name: 'Ease of Understanding', subcategory: 'easeOfUnderstanding', maxPoints: 5 }
+      category: 'documentation', name: 'Documentation', maxPoints: 10,
+      subCriteria: [
+        { name: 'Code and UX Documentation', key: 'documentationCode' },
+        { name: 'Ease of Understanding', key: 'documentationEase' }
       ],
-      tip: "Good documentation is crucial for project sustainability. When scoring, imagine trying to implement or maintain the project based solely on the provided documentation."
+      tip: "Assess documentation quality and clarity. Consider project sustainability."
     },
     {
-      category: 'polish',
-      name: 'Polish',
-      maxPoints: 20,
-      tip: "Consider the 'recency effect' - don't let a strong finish overshadow earlier shortcomings. Evaluate the overall level of polish throughout the entire project."
+      category: 'polish', name: 'Polish', maxPoints: 5,
+      tip: "Evaluate overall refinement and readiness for real-world use."
     },
     {
-      category: 'security',
-      name: 'Security',
-      subcriteria: [
-        { name: 'Data Protection', subcategory: 'dataProtection', maxPoints: 5 },
-        { name: 'Role-based Security', subcategory: 'roleBased', maxPoints: 5 }
+      category: 'security', name: 'Security', maxPoints: 10,
+      subCriteria: [
+        { name: 'Data Protection', key: 'securityData' },
+        { name: 'Role-based Security', key: 'securityRole' }
       ],
-      tip: "Security is critical for nonprofit projects. When evaluating, consider both the implemented measures and the team's awareness of potential security issues."
+      tip: "Assess data protection and role-based security implementation."
     }
   ];
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Event",
-    "name": "Opportunity Hack Judging",
-    "description": "Judge innovative tech solutions for nonprofits at Opportunity Hack. Gain valuable experience, network with industry leaders, and contribute to social good in person.",
-    "organizer": {
-      "@type": "Organization",
-      "name": "Opportunity Hack",
-      "url": "https://ohack.dev"
-    },
-    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-    "eventStatus": "https://schema.org/EventScheduled",
-    "location": {
-      "@type": "Place",
-      "name": "Opportunity Hack Venue",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Phoenix",
-        "addressRegion": "AZ",
-        "addressCountry": "US"
-      }
-    },
-    "image": "https://ohack.dev/images/opportunity-hack-judges.jpg",
-    "offers": {
-      "@type": "Offer",
-      "availability": "https://schema.org/InStock",
-      "price": "0",
-      "priceCurrency": "USD"
-    }
-  };
+  const renderSlider = (criterion, maxPoints) => (
+    <Box sx={{ width: '100%', mt: 2 }}>
+      <Typography variant="subtitle1">{criterion.name}</Typography>
+      <Slider
+        value={scores[criterion.key]}
+        onChange={handleScoreChange(criterion.key)}
+        valueLabelDisplay="auto"
+        step={1}
+        marks
+        min={1}
+        max={5}
+        sx={{ mt: 1 }}
+      />
+      <Typography variant="body2" sx={{ mt: 1 }}>
+        Score: {scores[criterion.key]} / 5 ({scores[criterion.key]} points)
+      </Typography>
+    </Box>
+  );
 
   return (
     <ThemeProvider theme={theme}>
-      <Head>
-        <title>Become an In-Person Judge at Opportunity Hack | Tech for Social Good</title>
-        <meta name="description" content="Join Opportunity Hack as an in-person judge. Evaluate innovative tech solutions for nonprofits, gain valuable experience, and boost your company's ESG profile. Perfect for visa applications and corporate social responsibility initiatives." />
-        <meta name="keywords" content="Opportunity Hack, in-person hackathon judge, tech for good, ESG, corporate social responsibility, visa application, nonprofit technology, social impact" />
-        <meta property="og:title" content="Become an In-Person Judge at Opportunity Hack | Tech for Social Good" />
-        <meta property="og:description" content="Evaluate innovative tech solutions for nonprofits in person, gain valuable experience, and boost your company's ESG profile. Join Opportunity Hack as a judge today!" />
-        <meta property="og:image" content="https://ohack.dev/images/opportunity-hack-judges.jpg" />
-        <meta property="og:url" content="https://ohack.dev/about/judges" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
-      </Head>
       <Container maxWidth="md">
         <Box sx={{ padding: 4 }}>
-          <Typography variant="h1" gutterBottom>
-            Become an In-Person Judge at Opportunity Hack
-          </Typography>
-
-          <Typography variant="h2" gutterBottom sx={{ mt: 4 }}>
+          <Typography variant="h1" gutterBottom>Become an In-Person Judge at Opportunity Hack</Typography>
+          
+           <Typography variant="h2" gutterBottom sx={{ mt: 4 }}>
             Why Judge at Opportunity Hack?
           </Typography>
           <List>
@@ -238,45 +169,30 @@ const AboutJudges = () => {
             </ListItem>
           </List>
 
-          <Typography variant="h2" gutterBottom sx={{ mt: 4 }}>
-            Judging Criteria and Practice Scoring
-          </Typography>
+          <Typography variant="h2" gutterBottom sx={{ mt: 4 }}>Judging Criteria and Practice Scoring</Typography>
           <Typography variant="body1" paragraph>
-            Use the sliders below to practice scoring a hypothetical project. This will help you familiarize yourself with the judging criteria and scoring system. Hover over the score labels to see detailed descriptions.
+            Use the sliders to practice scoring a hypothetical project. This will help you familiarize yourself with the judging criteria and scoring system.
           </Typography>
           
           {criteriaInfo.map((criterion) => (
             <Accordion key={criterion.category}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">{criterion.name}</Typography>
+                <Typography variant="h6">{criterion.name} ({criterion.maxPoints} points)</Typography>
+                <Tooltip title={criterion.tip} arrow>
+                  <InfoIcon color="primary" sx={{ ml: 1 }} />
+                </Tooltip>
               </AccordionSummary>
               <AccordionDetails>
-                {criterion.subcriteria ? (
-                  criterion.subcriteria.map((subcriterion) => (
-                    <JudgingCriteriaSlider
-                      key={`${criterion.category}-${subcriterion.subcategory}`}
-                      criterion={{...criterion, ...subcriterion}}
-                      value={scores[criterion.category][subcriterion.subcategory]}
-                      onChange={handleScoreChange}
-                      maxPoints={subcriterion.maxPoints}
-                    />
-                  ))
-                ) : (
-                  <JudgingCriteriaSlider
-                    criterion={criterion}
-                    value={scores[criterion.category]}
-                    onChange={handleScoreChange}
-                    maxPoints={criterion.maxPoints}
-                  />
-                )}
+                {criterion.subCriteria
+                  ? criterion.subCriteria.map((subCriterion) => renderSlider(subCriterion, 5))
+                  : renderSlider({ name: criterion.name, key: criterion.category }, criterion.maxPoints)
+                }
               </AccordionDetails>
             </Accordion>
           ))}
 
           <Paper elevation={3} sx={{ p: 3, mt: 2 }}>
-            <Typography variant="h6" align="right">
-              Total Score: {totalScore}/60
-            </Typography>
+            <Typography variant="h6" align="right">Total Score: {totalScore}/35</Typography>
           </Paper>
 
           <Typography variant="h2" gutterBottom sx={{ mt: 4 }}>
@@ -304,7 +220,11 @@ const AboutJudges = () => {
           </List>
 
           <Typography variant="body1" paragraph sx={{ mt: 4 }}>
-            Judging at Opportunity Hack offers a unique chance to engage with cutting-edge technology solutions for social good in person. Your on-site expertise will help identify and nurture projects that can make a real difference in the nonprofit sector. This hands-on experience not only contributes to your professional growth but also aligns with corporate social responsibility goals and can strengthen visa applications by demonstrating active community involvement and technical expertise.
+            Judging at Opportunity Hack offers a unique chance to engage with cutting-edge technology solutions for social good in person. Your on-site expertise will help identify and nurture projects that can make a real difference in the nonprofit sector.
+          </Typography>
+
+          <Typography variant="body1" paragraph>
+            This hands-on experience not only contributes to your professional growth but also aligns with corporate social responsibility goals and can strengthen visa applications by demonstrating active community involvement and technical expertise.
           </Typography>
 
           <Button 
@@ -317,6 +237,7 @@ const AboutJudges = () => {
           >
             Become an In-Person Judge Today
           </Button>
+
         </Box>
       </Container>
     </ThemeProvider>
