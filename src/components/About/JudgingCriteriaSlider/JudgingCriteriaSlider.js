@@ -11,7 +11,6 @@ const JudgingCriteriaSlider = ({ criterion, value, onChange, maxPoints }) => {
       4: "Very Good - Exceeds expectations",
       5: "Excellent - Significantly exceeds expectations"
     };
-
     return descriptions[score] || "";
   };
 

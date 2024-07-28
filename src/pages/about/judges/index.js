@@ -28,6 +28,17 @@ const AboutJudges = () => {
     setScores(prevScores => ({ ...prevScores, [criterion]: newValue }));
   };
 
+  const getDescription = (score) => {
+    const descriptions = {
+      1: "Poor - Significantly below expectations",
+      2: "Fair - Below expectations",
+      3: "Good - Meets expectations",
+      4: "Very Good - Exceeds expectations",
+      5: "Excellent - Significantly exceeds expectations"
+    };
+    return descriptions[score] || "";
+  };
+
   const criteriaInfo = [
     {
       category: 'scope', name: 'Scope of Solution', maxPoints: 10,
@@ -64,12 +75,13 @@ const AboutJudges = () => {
       <Typography variant="subtitle1">{criterion.name}</Typography>
       <Slider
         value={scores[criterion.key]}
+        valueLabelFormat={getDescription}
         onChange={handleScoreChange(criterion.key)}
         valueLabelDisplay="auto"
         step={1}
         marks
-        min={1}
-        max={5}
+        min={1}        
+        max={5}        
         sx={{ mt: 1 }}
       />
       <Typography variant="body2" sx={{ mt: 1 }}>
@@ -81,8 +93,8 @@ const AboutJudges = () => {
   return (
     <ThemeProvider theme={theme}>
       <Container maxWidth="md">
-        <Box sx={{ padding: 4 }}>
-          <Typography variant="h1" gutterBottom>Become an In-Person Judge at Opportunity Hack</Typography>
+        <Box sx={{ padding: 4, mt: 5 }}>
+          <Typography variant="h1" gutterBottom>OHack Judges</Typography>
           
            <Typography variant="h2" gutterBottom sx={{ mt: 4 }}>
             Why Judge at Opportunity Hack?
@@ -178,7 +190,7 @@ const AboutJudges = () => {
             <Accordion key={criterion.category}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="h6">{criterion.name} ({criterion.maxPoints} points)</Typography>
-                <Tooltip title={criterion.tip} arrow>
+                <Tooltip title={criterion.tip} enterDelay={0} enterTouchDelay={0} arrow>
                   <InfoIcon color="primary" sx={{ ml: 1 }} />
                 </Tooltip>
               </AccordionSummary>
@@ -206,7 +218,7 @@ const AboutJudges = () => {
               <ListItemText primary="Avoid order effects: Take breaks between projects to reset your mental state and avoid comparing projects directly to each other." />
             </ListItem>
             <ListItem>
-              <ListItemText 
+              <ListItemText                 
                 primary="Be aware of cognitive biases:" 
                 secondary="Confirmation bias: Don't let your initial impression color your entire evaluation. Bandwagon effect: Make your evaluations independently before discussing with other judges."
               />
