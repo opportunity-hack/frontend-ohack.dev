@@ -48,15 +48,20 @@ import Tooltip from '@mui/material/Tooltip';
 
 
 const pages = [
-  [ 'Submit Project', '/nonprofits/apply' ],
-  [ 'Projects', '/nonprofits' ],      
-  [ 'Join Slack', '/signup'],  
+  [ '📩 Submit Project', '/nonprofits/apply' ],
+  [ '📖 Projects', '/nonprofits' ],      
+  [ '#️⃣ Join Slack', '/signup'],
+  [ '🙏 Mentors', '/about/mentors' ],
+  [ '🏆 Judges', '/about/judges' ],
+  // Sponsors
+  [ '🎉 Sponsors', '/hack/2024_fall/sponsor' ],
+  
+  
   // ['[TODO] Dashboard', '/myprofile'],
 ];
 
 const about_settings = [
-  [ 'ℹ️ About Us', '/about' ],
-  [ '🙏 Mentors?', '/about/mentors' ],
+  [ 'ℹ️ About Us', '/about' ],  
   [ '❤️ Rewards', '/about/hearts' ],
   [ '✅ Project Completion', '/about/completion' ],
   [ '🎉 Hackathon?' ,'/hack'],

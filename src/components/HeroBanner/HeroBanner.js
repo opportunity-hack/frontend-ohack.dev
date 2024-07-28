@@ -105,12 +105,11 @@ function HeroBanner() {
           }
             
             <ButtonBasicStyle 
-              onClick={() => gaButton('button_donate', 'donate via PayPal')}
-              href='https://www.paypal.com/fundraiser/charity/4119839'
-              target="_blank"
+              onClick={() => gaButton('button_submit_project', 'Submit new nonprofit project')}
+              href='/nonprofits/apply'              
               style={{ color: 'white', backgroundColor: '#0070BA' }}
             >
-             Donate via PayPal
+             Send us a project
             </ButtonBasicStyle>
 
             <ButtonGoldStyle onClick={openCodeSample}>
@@ -147,7 +146,7 @@ function HeroBanner() {
               onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
               href='/nonprofits'
             >
-              See all nonprofit projects
+              All projects you can work on
             </ButtonBasicStyle>
 
           </ButtonContainers>

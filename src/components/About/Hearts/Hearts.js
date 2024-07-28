@@ -29,6 +29,8 @@ import { LayoutContainer, TitleContainer, ProjectsContainer } from '../../../sty
 import * as ga from "../../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
 import RewardStructure from './RewardStructure';
+import Link from 'next/link';
+import { FaGavel, FaChalkboardTeacher, FaHeart } from 'react-icons/fa';
 
 
 
@@ -38,6 +40,57 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
     fontSize: '13px',
   },
 }));
+
+const JudgeMentorHeartsCTA = () => {
+  return (
+    <Box sx={{ mb:4, mt: 4, p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+      <Typography variant="h5" gutterBottom>
+        Earn Hearts as a Judge or Mentor!
+      </Typography>
+      <Typography variant="body1" paragraph>
+        Did you know you can earn hearts by contributing as a judge or mentor? It's a great way to give back and boost your profile!
+      </Typography>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6}>
+          <Box display="flex" alignItems="center" mb={2}>
+            <FaGavel size={24} style={{ marginRight: '8px' }} />
+            <Typography variant="body1">
+              Judges earn 1 heart per 3-hour block
+            </Typography>
+          </Box>
+          <Link href="/about/judges" passHref>
+            <Button
+              component="a"
+              variant="contained"
+              color="primary"
+              startIcon={<FaHeart />}
+            >
+              Learn About Judging
+            </Button>
+          </Link>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Box display="flex" alignItems="center" mb={2}>
+            <FaChalkboardTeacher size={24} style={{ marginRight: '8px' }} />
+            <Typography variant="body1">
+              Mentors earn 1 heart per 3-hour block
+            </Typography>
+          </Box>
+          <Link href="/about/mentors" passHref>
+            <Button
+              component="a"
+              variant="contained"
+              color="secondary"
+              startIcon={<FaHeart />}
+            >
+              Learn About Mentoring
+            </Button>
+          </Link>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
 
 const StyledProjectsContainer = styled(ProjectsContainer)(({ theme }) => ({
   width: '100%',
@@ -190,6 +243,8 @@ const Hearts = () => {
         <StyledTypography paragraph>
           As a contributor, you play a vital role in the hearts system. Your contributions help nonprofits address real-world challenges and create sustainable solutions. By earning hearts, you not only showcase your skills but also make a lasting impact on the lives of others. Join us and be part of a community that uses technology to drive positive change.
         </StyledTypography>
+
+        <JudgeMentorHeartsCTA />
 
         <Typography variant="h4" gutterBottom>
           How the Hearts System Works
