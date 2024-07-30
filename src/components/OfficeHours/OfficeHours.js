@@ -1,5 +1,5 @@
-import React from 'react';
-import { Typography, Grid, Button, Box } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Typography, Grid, Button, Box, Skeleton } from '@mui/material';
 import Head from 'next/head';
 import { InstagramEmbed } from 'react-social-media-embed';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
@@ -13,6 +13,17 @@ import InfoIcon from '@mui/icons-material/Info';
 export default function OfficeHours({ previousPage }) {    
     const style = { fontSize: '16px' };
     const notificationEmail = 'officehours@ohack.org';
+
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Simulate content loading
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const generateICSContent = (isFirstWeek) => {
         const startDate = new Date();
@@ -112,60 +123,97 @@ END:VCALENDAR`;
                 <title>Office Hours - Opportunity Hack Developer Portal</title>
                 <meta name="description" content="Join Opportunity Hack's weekly office hours for guidance on nonprofit coding projects. Alternating every Friday between 10am and 2pm PST. Perfect for students, bootcampers, and experienced developers looking to give back." />
                 <meta name="keywords" content="Opportunity Hack, office hours, nonprofit coding, volunteer coding, tech mentorship, coding bootcamp projects, Friday office hours" />
+                 <style>{`
+                    body {
+                        overflow-y: scroll;
+                    }
+                `}</style>
             </Head>
             <InnerContainer container>
                 <SlackSignupContainer>
                     <Typography variant="h1" gutterBottom>Office Hours</Typography>
-                    <Typography variant="body1" style={style} paragraph>
-                        We provide weekly office hours using a <SlackLink target="_blank" href="https://opportunity-hack.slack.com/archives/C1Q6YHXQU">Slack huddle in #general</SlackLink> for anyone volunteering to write code for any nonprofit we support at Opportunity Hack.
-                        <Button
-                            variant="outlined"
-                            color="primary"
-                            size="small"
-                            startIcon={<InfoIcon />}
-                            href="https://slack.com/features/huddles"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{ ml: 1, verticalAlign: 'middle' }}
-                        >
-                            What's a Slack Huddle?
-                        </Button>
-                    </Typography>
-                    <Typography variant="body1" style={style} paragraph>
-                        Whether you're a student, bootcamp graduate, or experienced developer looking to give back, our office hours are the perfect opportunity to get guidance, share ideas, and make a real impact through coding.
-                    </Typography>
+                    {isLoading ? (
+                        <Skeleton variant="text" width="100%" height={100} />
+                    ) : (
+                        <Typography variant="body1" style={style} paragraph>
+                            We provide weekly office hours using a <SlackLink target="_blank" href="https://opportunity-hack.slack.com/archives/C1Q6YHXQU">Slack huddle in #general</SlackLink> for anyone volunteering to write code for any nonprofit we support at Opportunity Hack.
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                size="small"
+                                startIcon={<InfoIcon />}
+                                href="https://slack.com/features/huddles"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                sx={{ ml: 1, verticalAlign: 'middle' }}
+                            >
+                                What's a Slack Huddle?
+                            </Button>
+                        </Typography>
+                    )}
+                    {isLoading ? (
+                        <Skeleton variant="text" width="100%" height={80} />
+                    ) : (
+                        <Typography variant="body1" style={style} paragraph>
+                            Whether you're a student, bootcamp graduate, or experienced developer looking to give back, our office hours are the perfect opportunity to get guidance, share ideas, and make a real impact through coding.
+                        </Typography>
+                    )}
                     
                     <Typography variant="h4" mt={4} mb={2}>Office Hours Schedule (PST)</Typography>
-                    <Typography variant="body1" style={style} paragraph>
-                        We hold office hours every Friday, alternating between 10am and 2pm PST each week.
-                    </Typography>
+                    {isLoading ? (
+                        <Skeleton variant="text" width="100%" height={40} />
+                    ) : (
+                        <Typography variant="body1" style={style} paragraph>
+                            We hold office hours every Friday, alternating between 10am and 2pm PST each week.
+                        </Typography>
+                    )}
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={6}>
                             <Typography variant="h6">10am to 11am PST</Typography>
                             <Typography variant="body1" style={style}>First and third Fridays of the month</Typography>
-                            <CalendarOptions isFirstWeek={true} />
+                            {isLoading ? (
+                                <Box mt={2}>
+                                    <Skeleton variant="rectangular" width="100%" height={80} />
+                                </Box>
+                            ) : (
+                                <CalendarOptions isFirstWeek={true} />
+                            )}
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <Typography variant="h6">2pm to 3pm PST</Typography>
                             <Typography variant="body1" style={style}>Second and fourth Fridays of the month</Typography>
-                            <CalendarOptions isFirstWeek={false} />
+                            {isLoading ? (
+                                <Box mt={2}>
+                                    <Skeleton variant="rectangular" width="100%" height={80} />
+                                </Box>
+                            ) : (
+                                <CalendarOptions isFirstWeek={false} />
+                            )}
                         </Grid>
                     </Grid>
 
-                    <Typography variant="body1" style={style} mt={4}>
-                        Can't make it to our scheduled times? Don't worry! Reach out in the Slack channel, and we'll do our best to accommodate your schedule.
-                    </Typography>
+                    {isLoading ? (
+                        <Skeleton variant="text" width="100%" height={60} sx={{ mt: 4 }} />
+                    ) : (
+                        <Typography variant="body1" style={style} mt={4}>
+                            Can't make it to our scheduled times? Don't worry! Reach out in the Slack channel, and we'll do our best to accommodate your schedule.
+                        </Typography>
+                    )}
 
-                    <Box mt={4} mb={4}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<InsertInvitationIcon />}
-                            href="https://opportunity-hack.slack.com/archives/C1Q6YHXQU"
-                            target="_blank"
-                        >
-                            Join Slack Channel
-                        </Button>
+                     <Box mt={4} mb={4}>
+                        {isLoading ? (
+                            <Skeleton variant="rectangular" width={200} height={40} />
+                        ) : (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<InsertInvitationIcon />}
+                                href="https://opportunity-hack.slack.com/archives/C1Q6YHXQU"
+                                target="_blank"
+                            >
+                                Join Slack Channel
+                            </Button>
+                        )}
                     </Box>
 
                     <Box sx={{ 
@@ -173,13 +221,18 @@ END:VCALENDAR`;
                         justifyContent: 'center', 
                         width: '100%', 
                         maxWidth: '500px', 
-                        margin: '30px auto' 
+                        margin: '30px auto',
+                        height: '500px' // Set a fixed height for the Instagram embed container
                     }}>
-                        <InstagramEmbed 
-                            url="https://www.instagram.com/p/CqFz5PWB9Og/" 
-                            width="100%"
-                            height="auto"
-                        />
+                        {isLoading ? (
+                            <Skeleton variant="rectangular" width="100%" height="100%" />
+                        ) : (
+                            <InstagramEmbed 
+                                url="https://www.instagram.com/p/CqFz5PWB9Og/" 
+                                width="100%"
+                                height="100%"
+                            />
+                        )}
                     </Box>
 
                     <LoginOrRegister introText="Ready to make an impact? Join our community today!" previousPage={"/office-hours"} />
