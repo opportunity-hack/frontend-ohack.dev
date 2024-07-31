@@ -105,7 +105,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const org = userClass.getOrgByName("Opportunity Hack Org");  
   const orgId = org.orgId;
-  const isAdmin = org.hasAllPermissions(["heart.admin"]);
+  const isAdmin = org.hasPermission(["heart.admin"]);
   
   const handleHeartChange = (event) => {
     setSelectedHearts(event.target.value);

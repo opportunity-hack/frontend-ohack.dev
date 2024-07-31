@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
 import {
-  Typography,
+Typography,
   Box,
   Grid,
   Snackbar,
@@ -20,8 +20,17 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Chip,
+  Link,
+  Tooltip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import BusinessIcon from '@mui/icons-material/Business';
+import CheckroomIcon from '@mui/icons-material/Checkroom';
+import SchoolIcon from '@mui/icons-material/School';
+import WorkIcon from '@mui/icons-material/Work';
+import CodeIcon from '@mui/icons-material/Code';
 import { LayoutContainer, TitleContainer, ProjectsContainer } from '../../../styles/nonprofit/styles';
 import Head from 'next/head';
 import { styled } from '@mui/system';
@@ -66,6 +75,10 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+const StyledChip = styled(Chip)(({ theme }) => ({
+  margin: theme.spacing(0.5),
+}));
+
 const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
   const [profiles, setProfiles] = useState([]);
@@ -76,7 +89,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   const [filter, setFilter] = useState('');
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
-  const isAdmin = org.hasAllPermissions(["profile.admin"]);
+  const isAdmin = org.hasPermission("profile.admin");
   const orgId = org.orgId;
 
   const fetchProfiles = async () => {
@@ -111,6 +124,62 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
     }
   }, [isAdmin, accessToken]);
 
+  const calculateProfileCompleteness = (profile) => {
+    const fields = ['role', 'expertise', 'education', 'shirtSize', 'github', 'company', 'why'];
+    const filledFields = fields.filter(field => profile[field] && profile[field] !== '');
+    return filledFields.length;
+  };
+
+  const renderProfileDetails = (profile) => {
+    const details = [
+      { label: 'Role', value: profile.role, icon: <WorkIcon /> },
+      { label: 'Company', value: profile.company, icon: <BusinessIcon /> },
+      { label: 'Education', value: profile.education, icon: <SchoolIcon /> },
+      { label: 'Shirt Size', value: profile.shirt_size, icon: <CheckroomIcon /> },
+      
+    ];
+
+    return (
+      <Box>
+        {details.map((detail) => 
+          detail.value && (
+            <Tooltip key={detail.label} title={detail.label}>
+              <StyledChip
+                icon={detail.icon}
+                label={detail.value}
+                variant="outlined"
+              />
+            </Tooltip>
+          )
+        )}
+        {profile.expertise && profile.expertise.map((exp) => (
+          <Tooltip key={exp} title="Expertise">
+            <StyledChip
+              icon={<CodeIcon />}
+              label={exp}
+              color="primary"
+              variant="outlined"
+            />
+          </Tooltip>
+        ))}
+        {profile.github && (
+          <Tooltip title="GitHub Profile">
+            <StyledChip
+              icon={<GitHubIcon />}
+              label={profile.github}
+              clickable
+              component="a"
+              href={`https://github.com/${profile.github}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          </Tooltip>
+        )}
+      </Box>
+    );
+  };
+
+
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
@@ -118,22 +187,16 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   };
 
   const sortedProfiles = profiles.sort((a, b) => {    
-
     if (orderBy === 'email') {
-        // Handle null or undefined values for email_address
-        if( a.email_address === null || a.email_address === undefined ) {
-            a.email_address = "";
-        }
-        if( b.email_address === null || b.email_address === undefined ) {
-            b.email_address = "";
-        }
       return order === 'asc' ? (a.email_address || '').localeCompare(b.email_address || '') : (b.email_address || '').localeCompare(a.email_address || '');
     } else if (orderBy === 'name') {
       return order === 'asc' ? (a.name || '').localeCompare(b.name || '') : (b.name || '').localeCompare(a.name || '');
-    } else if (orderBy === 'lastName') {
-      return order === 'asc' ? (a.lastName || '').localeCompare(b.lastName || '') : (b.lastName || '').localeCompare(a.lastName || '');
     } else if (orderBy === 'last_login') {
       return order === 'asc' ? (a.last_login || '').localeCompare(b.last_login || '') : (b.last_login || '').localeCompare(a.last_login || '');
+    } else if (orderBy === 'completeness') {
+      const completenessA = calculateProfileCompleteness(a);
+      const completenessB = calculateProfileCompleteness(b);
+      return order === 'asc' ? completenessA - completenessB : completenessB - completenessA;
     }
     return 0;
   }).filter(profile => 
@@ -202,7 +265,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                       direction={orderBy === 'last_login' ? order : 'asc'}
                       onClick={() => handleRequestSort('last_login')}
                     >
-                        Last Login
+                      Last Login
                     </TableSortLabel>
                   </StyledTableCell>
                   <StyledTableCell>
@@ -214,35 +277,41 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                       Name
                     </TableSortLabel>
                   </StyledTableCell>
-                  
+                  <StyledTableCell>
+                    <TableSortLabel
+                      active={orderBy === 'completeness'}
+                      direction={orderBy === 'completeness' ? order : 'asc'}
+                      onClick={() => handleRequestSort('completeness')}
+                    >
+                      Profile Completeness
+                    </TableSortLabel>
+                  </StyledTableCell>
                   <StyledTableCell>Details</StyledTableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedProfiles.map((profile) => (
-                  <StyledTableRow key={profile.email}>
-                    <StyledTableCell data-label="Email">{profile.email_address}</StyledTableCell>
-                    <StyledTableCell data-label="Email">{profile.last_login}</StyledTableCell>
-                    <StyledTableCell data-label="Name">{profile.name}</StyledTableCell>
-                    
-                    <StyledTableCell data-label="Details">
-                      <Accordion>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography>View Details</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <Typography variant="subtitle1">Role: {profile.role}</Typography>
-                          <Typography variant="subtitle1">Expertise: {profile.expertise?.join(', ')}</Typography>
-                          <Typography variant="subtitle1">Education: {profile.education}</Typography>
-                          <Typography variant="subtitle1">Shirt Size: {profile.shirtSize}</Typography>
-                          <Typography variant="subtitle1">GitHub: {profile.github}</Typography>
-                          <Typography variant="subtitle1">Company: {profile.company}</Typography>
-                          <Typography variant="subtitle1">Why: {profile.why}</Typography>
-                        </AccordionDetails>
-                      </Accordion>
-                    </StyledTableCell>
-                  </StyledTableRow>
-                ))}
+                {sortedProfiles.map((profile) => {
+                  const completeness = calculateProfileCompleteness(profile);
+                  return (
+                    <StyledTableRow key={profile.email}>
+                      <StyledTableCell data-label="Email">{profile.email_address}</StyledTableCell>
+                      <StyledTableCell data-label="Last Login">{profile.last_login}</StyledTableCell>
+                      <StyledTableCell data-label="Name">{profile.name}</StyledTableCell>
+                      <StyledTableCell data-label="Profile Completeness">{completeness}/7</StyledTableCell>
+                      <StyledTableCell data-label="Profile Details">
+                        {renderProfileDetails(profile)}
+                        <Accordion>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography>More Details</Typography>
+                          </AccordionSummary>
+                          <AccordionDetails>
+                            <Typography variant="subtitle1">Why: {profile.why}</Typography>
+                          </AccordionDetails>
+                        </Accordion>
+                      </StyledTableCell>
+                    </StyledTableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </StyledTableContainer>
