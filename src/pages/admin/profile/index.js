@@ -77,7 +77,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasAllPermissions(["profile.admin"]);
-  // const orgId = org.orgId; PropelAuth likes you to pass this in as a req param, but we hardcoded this on the backend because we only have 1 organization
+  const orgId = org.orgId;
 
   const fetchProfiles = async () => {
     setLoading(true);
@@ -87,6 +87,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
         headers: {
           "authorization": `Bearer ${accessToken}`,
           "content-type": "application/json",
+          "X-Org-Id": orgId
         }
       });
 
