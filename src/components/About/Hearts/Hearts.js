@@ -175,9 +175,9 @@ const Hearts = () => {
   return (
     <LayoutContainer>
       <Head>
-        <title>Opportunity Hack - Hearts System</title>
+        <title>Earn Hearts, Make Impact: The Opportunity Hack Rewards System</title>
         <meta name="description" content="Join Opportunity Hack and earn hearts by contributing to open source projects for nonprofits around the world." />
-        <meta property="og:title" content="Opportunity Hack - Hearts System" />
+        <meta property="og:title" content="Earn Hearts, Make Impact: The Opportunity Hack Rewards System" />
         <meta property="og:description" content="Join Opportunity Hack and earn hearts by contributing to open source projects for nonprofits around the world. The Hearts System recognizes and rewards your contributions, allowing you to make a positive impact on the lives of others." />
         <meta property="og:image" content="https://i.imgur.com/pzcF1aj.jpg" />
         <meta property="og:url" content="https://hearts.ohack.dev" />

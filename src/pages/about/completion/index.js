@@ -13,7 +13,7 @@ export default function Mentors() {
 }
 
 export const getStaticProps = async () => {    
-    const title = "Opportunity Hack: Project Completion and Definition of Done";
+    const title = "Definition of Done: Opportunity Hack Project Completion Checklist";
     const description = "In software engineering, the definition of done is a checklist of things that need to be completed before a project can be considered finished. This page is a checklist of things that need to be completed before a project can be considered finished for Opportunity Hack.";
     
     return {

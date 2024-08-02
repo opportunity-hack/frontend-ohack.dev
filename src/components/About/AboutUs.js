@@ -59,7 +59,7 @@ const AboutUs = () => {
   return(
   <LayoutContainer key="mentorship" container>
     <Head>
-      <title>Opportunity Hack - About Us</title>
+      <title>Opportunity Hack: Coding for Social Good Since 2013</title>
       <meta property="og:title" content="Opportunity Hack - About Us" />
       <meta
         name="description"
@@ -73,7 +73,7 @@ const AboutUs = () => {
         name="og:description"
         content={`Learn about Opportunity Hack, our founders, board members (${board_members.join(', ')}), and community pledge. Join us as we harness the power of code for social good.`}
       />
-      <meta   property="og:image" content="https://i.imgur.com/pzcF1aj.jpg" />
+      <meta property="og:image" content="https://i.imgur.com/pzcF1aj.jpg" />
       <meta property="og:url" content="https://ohack.dev/about" />
       {board_members.map((member, i) => (
         <meta key={i} name="board_member" content={member} />

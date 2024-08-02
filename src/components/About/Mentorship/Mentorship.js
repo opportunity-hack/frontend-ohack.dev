@@ -51,7 +51,7 @@ const Mentorship = () => (
     <LayoutContainer key="mentorship" container>
       
   <Head>
-      <title>Opportunity Hack - Mentorship Program</title>
+      <title>Opportunity Hack Mentors: Guide Tech Innovation for Nonprofits | Join Our Community</title>
       <meta name="description" content="Join Opportunity Hack as a mentor and use your skills to make a difference for nonprofits around the world." />
       <meta name="keywords" content="Opportunity Hack, Hackathon, Mentorship, Nonprofits, Software Engineers, Product Managers, UX Designers, Project Managers" />
       <meta property="og:title" content="Opportunity Hack - Mentorship" />

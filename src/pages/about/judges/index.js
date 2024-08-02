@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import Head from 'next/head';
+
 import { 
   Typography, Box, List, ListItem, ListItemIcon, ListItemText, Button, Container, 
   ThemeProvider, createTheme, Paper, Slider, Tooltip, Accordion, AccordionSummary, AccordionDetails
@@ -116,6 +118,17 @@ const AboutJudges = () => {
 
 return (
     <ThemeProvider theme={theme}>
+    <Head>
+        <title>Opportunity Hack Judges: Elevate Your Impact Through In-Person Tech Evaluation</title>
+        <meta name="description" content="Become an Opportunity Hack judge to enhance your company's ESG profile, gain valuable experience, network with industry leaders, and evaluate innovative nonprofit solutions in person." />
+        <meta name="keywords" content="Opportunity Hack, hackathon judges, tech evaluation, ESG, corporate social responsibility, nonprofit solutions, in-person judging" />
+        <meta property="og:title" content="Opportunity Hack Judges: In-Person Tech Evaluation for Social Impact" />
+        <meta property="og:description" content="Judge at Opportunity Hack to enhance your ESG profile, gain experience, and network while evaluating innovative nonprofit tech solutions in person." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ohack.dev/judges" />
+        <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp" />
+        <link rel="canonical" href="https://ohack.dev/judges" />
+      </Head>
         <Container maxWidth="md">
             <Box sx={{ padding: 4, mt: 5 }}>
                 <Typography variant="h1" gutterBottom>OHack Judges</Typography>

@@ -1,8 +1,6 @@
-// Create page
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { Stack } from "@mui/material";
-import { Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import Head from "next/head";
 import { useEnv } from "../../context/env.context";
 import Image from "next/image";
@@ -25,10 +23,10 @@ export default function SlackSignup({ previousPage }) {
   const { slackSignupUrl } = useEnv();
 
   const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
+    autoConfig: true,
+    debug: false,
   };
-  const advancedMatching = undefined; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
+  const advancedMatching = undefined;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -41,7 +39,6 @@ export default function SlackSignup({ previousPage }) {
   }, []);
 
   const handleSignupClick = () => {
-    // Ref: https://developers.facebook.com/docs/meta-pixel/reference#standard-events
     ReactPixel.track("CompleteRegistration");
     ga.event({
       action: "CompleteRegistration",
@@ -53,89 +50,95 @@ export default function SlackSignup({ previousPage }) {
 
   return (
     <LayoutContainer container>
+      <Head>
+        <title>Join Opportunity Hack on Slack: Connect, Collaborate, and Code for Good</title>
+        <meta name="description" content="Sign up for Opportunity Hack's Slack community. Connect with fellow developers, collaborate on nonprofit projects, and make a positive impact through technology." />
+        <meta name="keywords" content="Opportunity Hack, Slack signup, tech volunteering, nonprofit coding, developer community" />
+        <meta property="og:title" content="Join Opportunity Hack on Slack: Connect, Collaborate, and Code for Good" />
+        <meta property="og:description" content="Sign up for Opportunity Hack's Slack community. Connect with fellow developers, collaborate on nonprofit projects, and make a positive impact through technology." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ohack.dev/slack-signup" />
+        <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_3.webp" />
+        <link rel="canonical" href="https://ohack.dev/slack-signup" />
+      </Head>
       <InnerContainer container>
-        <Head>
-          <title>Slack Signup - Opportunity Hack Developer Portal</title>
-        </Head>
         <SlackSignupContainer>
           <SlackSignupHeader container>
             <SlackSignupHeadline>
-              <Typography variant="h1">Slack Signup</Typography>
+              <Typography variant="h1">Join Opportunity Hack on Slack</Typography>
             </SlackSignupHeadline>
           </SlackSignupHeader>
           <SlackSignupDetailText>
-            <Typography variant="h5">
-              Click the button to register for a Slack account and join the
-              Opportunity Hack Slack workspace.
+            <Typography variant="h2">
+              Connect, Collaborate, and Code for Good
             </Typography>
           </SlackSignupDetailText>
-          <br />
+          <Typography variant="body1" paragraph>
+            Join our vibrant Slack community to collaborate with fellow developers, get support for your nonprofit projects, and stay updated on Opportunity Hack events.
+          </Typography>
           <Stack direction="column" spacing={1}>
-            <Link
-              target="_blank"
-              rel="noopener noreferrer"
-              href={slackSignupUrl}
-            >
+            <Link href={slackSignupUrl} passHref>
               <ButtonStyled
                 onClick={handleSignupClick}
-                href={`${slackSignupUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="contained"
                 color="primary"
               >
-                Signup for Opportunity Hack Slack
+                Sign Up for Opportunity Hack Slack
               </ButtonStyled>
             </Link>
           </Stack>
 
-          <br />
-          <br />
-          <Typography variant="h2" style={{ backgroundColor: "lightblue" }}>
-            Why Slack?
+          <Typography variant="h2" style={{ backgroundColor: "lightblue", marginTop: "2rem" }}>
+            Why Join Our Slack Community?
           </Typography>
-          <Typography variant="h4">
-            Slack is a great tool for communicating with your team and the rest
-            of the Opportunity Hack community. We use Slack to share important
-            information, answer questions, and provide support. We also use
-            Slack to have meetings and share other important information.
+          <Typography variant="body1" component="ul">
+            <li>Connect with like-minded developers passionate about social impact</li>
+            <li>Get real-time support for your nonprofit coding projects</li>
+            <li>Stay informed about hackathons, workshops, and other events</li>
+            <li>Collaborate on innovative solutions for nonprofits</li>
+            <li>Share your expertise and learn from others in the community</li>
           </Typography>
-          <br />
-          <Typography variant="h2" style={{ backgroundColor: "lightblue" }}>
-            What do you need to do?
+
+          <Typography variant="h2" style={{ backgroundColor: "lightblue", marginTop: "2rem" }}>
+            How to Join Our Slack Workspace
           </Typography>
-          <Typography>
-            <Typography variant="h4">
-              <strong>Step 1:</strong> Click on the "Signup for Opportunity Hack
-              Slack" button above to open the Slack signup page in a new tab.
-            </Typography>
-            <Typography variant="h4">
-              <strong>Step 2:</strong> Sign in with Google, Apple, or enter your
-              email address and click on the "Next" button.
-            </Typography>
-            <Typography variant="h4">
-              <strong>Step 3:</strong> Fill in your details. You can use your
-              real name or a nickname. You can also upload a profile picture if
-              you want.
-            </Typography>
+          <Typography component="ol">
+            <li>
+              <Typography variant="h4">
+                Click the "Sign Up for Opportunity Hack Slack" button above
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="h4">
+                Sign in with Google, Apple, or enter your email address
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="h4">
+                Complete your profile with your name and optional photo
+              </Typography>
+            </li>
+            {previousPage && (
+              <li>
+                <Typography variant="h4">
+                  <Link href={previousPage}>
+                    <SlackLink>
+                      Return to the previous page and sign in
+                    </SlackLink>
+                  </Link>
+                </Typography>
+              </li>
+            )}
           </Typography>
-          {previousPage && (
-            <Typography variant="h4">
-              <strong>Step 4:</strong>{" "}
-              <Link href={previousPage}>
-                <SlackLink>
-                  Head back to the page you were on and sign in.
-                </SlackLink>
-              </Link>
-            </Typography>
-          )}
-          <br />
+
           <ImageBorder>
             <Image
               src="/join_slack_1.png"
               width={797}
               height={607}
-              alt="Slack Signup 1"
+              alt="Opportunity Hack Slack Signup Process"
               layout="responsive"
             />
           </ImageBorder>
