@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 
-const SponsorIndex = dynamic(() => import('../../../components/Hackathon/SponsorIndex'), {
+const SponsorIndex = dynamic(() => import('../../components/Hackathon/SponsorIndex'), {
     ssr: false
 });
 
@@ -31,7 +31,7 @@ export default function SponsorIndexList() {
                 <link rel="canonical" href="https://www.ohack.dev/sponsor" />
                 <meta name="robots" content="index, follow" />
             </Head>
-            <SponsorIndex showBackButton={true} />
+            <SponsorIndex />
         </>
     );
 }
