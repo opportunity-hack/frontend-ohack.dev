@@ -29,7 +29,7 @@ const Hearts = () => (
     <LayoutContainer key="mentorship" container>
       
 <Head>
-    <title>Opportunity Hack: Project Completion and Definition of Done</title>    
+    <title>Definition of Done: Opportunity Hack Project Completion Checklist</title>    
 </Head>
       
         <TitleContainer container>  

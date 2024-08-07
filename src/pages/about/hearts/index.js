@@ -13,7 +13,7 @@ export default function Mentors() {
 }
 
 export const getStaticProps = async () => {    
-    const title = "Opportunity Hack Hearts";
+    const title = "Earn Hearts, Make Impact: The Opportunity Hack Rewards System";
     const description = "Opportunity Hack Hearts is a page dedicated to showcasing the hearts of Opportunity Hack participants. Join us and see the impact we're making together.";
     
     return {

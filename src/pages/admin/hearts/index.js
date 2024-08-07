@@ -103,10 +103,10 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const org = userClass.getOrgByName("Opportunity Hack Org");
-  const isAdmin = org?.isRole("Heart Admin");
-
+  const org = userClass.getOrgByName("Opportunity Hack Org");  
+  const orgId = org.orgId;
+  const isAdmin = org.hasPermission("heart.admin");
+  
   const handleHeartChange = (event) => {
     setSelectedHearts(event.target.value);
   };
@@ -159,6 +159,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
+          'X-Org-Id': orgId,
         },
         body: JSON.stringify({
           slackUsername,
