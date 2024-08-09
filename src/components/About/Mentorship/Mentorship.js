@@ -45,7 +45,7 @@ const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
     ReactPixel.trackCustom(buttonName + ' Click', {});   
 }
  
-const mentorGoogleForm = "https://forms.gle/gJgXeEsPoLqSJKgB6"
+const mentorGoogleForm = "https://forms.gle/WFBEwHVQcfpVXyYFA"
 
 const Mentorship = () => (
     <LayoutContainer key="mentorship" container>
@@ -72,7 +72,7 @@ const Mentorship = () => (
                 </Typography>
                 <Box sx={{ flexGrow: 1, margin: 2 }}>
                 <Button onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_1")} variant="contained" size='large' color="primary" href={mentorGoogleForm}>
-                    Mentor for OHack 2023!
+                    Mentor for OHack!
                 </Button>
                 </Box>
             </Grid>
@@ -108,7 +108,7 @@ const Mentorship = () => (
         </Typography>
         <Box sx={{ flexGrow: 1, margin: 2 }}>
         <Button onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_2")} variant="contained" size='large' color="primary" href={mentorGoogleForm}>
-            Sign up to mentor for OHack 2023!
+            Sign up to mentor for OHack!
         </Button>
         </Box>
 
@@ -215,7 +215,7 @@ const Mentorship = () => (
     
     <Box sx={{ flexGrow: 1, margin: 2 }}>
         <Button onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_3")} variant="contained" size='large' color="secondary" href={mentorGoogleForm}>
-            Be a mentor for OHack 2023!
+            Be a mentor for OHack!
         </Button>
     </Box>
     

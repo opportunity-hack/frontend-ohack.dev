@@ -54,7 +54,7 @@ const pages = [
   [ '🙏 Mentors', '/about/mentors' ],
   [ '🏆 Judges', '/about/judges' ],
   // Sponsors
-  [ '🎉 Sponsors', '/hack/2024_fall/sponsor' ],
+  [ '🎉 Sponsors', '/sponsor' ],
   
   
   // ['[TODO] Dashboard', '/myprofile'],

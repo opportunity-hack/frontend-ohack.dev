@@ -41,7 +41,7 @@ const benefitsData = [
   { benefit: 'Sponsored workshop', bronze: '-', silver: '-', gold: '30 min', platinum: '1 hour' },
 ];
 
-export default function SponsorIndex() {
+export default function SponsorIndex({showBackButton}) {
   const router = useRouter();
   const { event_id } = router.query;
   const theme = useTheme();
@@ -119,9 +119,11 @@ export default function SponsorIndex() {
         <meta name="keywords" content="Opportunity Hack, nonprofit hackathon, tech for good, sponsorship, social innovation" />
       </Head>
       <TitleContainer>
+      { showBackButton &&
         <Box mb={3}>
           <Button variant="outlined" href={`/hack/${event_id}`}>Back to the hack</Button>
         </Box>
+      }
         <Typography variant="h1" component="h1" gutterBottom>Sponsor Opportunity Hack</Typography>
         <Typography variant="h5" component="h2" paragraph>
           Empower Nonprofits Through Technology

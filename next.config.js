@@ -1,4 +1,12 @@
 module.exports = { 
+    async rewrites() {
+      return [
+        {
+          source: '/hack/:path*/sponsor',
+          destination: '/sponsor',
+        },
+      ];
+    },
     images : { 
     remotePatterns: [
       {
