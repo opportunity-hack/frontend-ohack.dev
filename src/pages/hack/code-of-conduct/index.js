@@ -8,6 +8,8 @@ import HearingIcon from '@mui/icons-material/Hearing';
 import PublicIcon from '@mui/icons-material/Public';
 import SecurityIcon from '@mui/icons-material/Security';
 import BlockIcon from '@mui/icons-material/Block';
+import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
+
 
 const CodeOfConduct = () => {
   return (
@@ -53,7 +55,41 @@ const CodeOfConduct = () => {
               secondary={<Typography sx={{ fontSize: '1.1rem' }}>Focus on creating solutions that have a positive impact on society. Consider the ethical implications of your work and strive to contribute to the greater good.</Typography>}
             />
           </ListItem>
+          <ListItem>
+            <ListItemIcon><AccessibilityNewIcon color="primary" sx={{ fontSize: '2rem' }} /></ListItemIcon>
+            <ListItemText 
+              primary={<Typography variant="h6" sx={{ fontSize: '1.5rem' }}>Embrace Diversity and Inclusion</Typography>}
+              secondary={<Typography sx={{ fontSize: '1.1rem' }}>Recognize and celebrate the diversity of our participants. Ensure that everyone, regardless of their abilities or background, has an equal opportunity to participate and contribute.</Typography>}
+            />
+          </ListItem>
         </List>
+
+        <Typography variant="h4" gutterBottom sx={{ mt: 4, fontSize: '2.2rem' }}>
+          Accommodations and Accessibility
+        </Typography>
+
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
+          Opportunity Hack is committed to providing an accessible and inclusive environment for all participants. We strive to accommodate various needs to ensure everyone can fully participate in our event.
+        </Typography>
+
+        <List>
+          <ListItem>
+            <ListItemText primary={<Typography sx={{ fontSize: '1.1rem' }}>If you require any specific accommodations (e.g., assistive technologies, sign language interpreters, mobility assistance, dietary requirements), please inform us during the registration process or contact our accessibility team at accessibility@ohack.org. We will try our best to accomodate you.</Typography>} />
+          </ListItem>
+          <ListItem>
+            <ListItemText primary={<Typography sx={{ fontSize: '1.1rem' }}>All venues that we select are wheelchair accessible, and we provide quiet spaces for participants who may need a break from the main event area.</Typography>} />
+          </ListItem>
+          <ListItem>
+            <ListItemText primary={<Typography sx={{ fontSize: '1.1rem' }}>We offer live captioning through YouTube streaming or video uploads to Slack for most presentations and can provide materials in alternative formats upon request.</Typography>} />
+          </ListItem>
+          <ListItem>
+            <ListItemText primary={<Typography sx={{ fontSize: '1.1rem' }}>Our mentors and staff can assist participants with various needs. Don't hesitate to ask for help or clarification at any time during the event.</Typography>} />
+          </ListItem>
+        </List>
+
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
+          We are continuously working to improve our accessibility. If you have suggestions or feedback, please let us know.
+        </Typography>
 
         <Typography variant="h4" gutterBottom sx={{ mt: 4, fontSize: '2.2rem' }}>
           Expected Behavior
@@ -78,7 +114,7 @@ const CodeOfConduct = () => {
 
         <List>
           {["Harassment, discrimination, or intimidation in any form",
-            "Offensive verbal comments or unwelcome sexual attention",
+            "Offensive verbal comments",
             "Deliberate intimidation, stalking, or following",
             "Photography or recording without consent",
             "Sustained disruption of talks or other events",
@@ -92,7 +128,7 @@ const CodeOfConduct = () => {
         </List>
 
         <Typography variant="h4" gutterBottom sx={{ mt: 4, fontSize: '2.2rem' }}>
-          Reporting and Enforcement
+          Maintaining a safe and welcoming environment for all
         </Typography>
 
         <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
@@ -100,7 +136,7 @@ const CodeOfConduct = () => {
         </Typography>
 
         <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
-          Hackathon organizers may take any action they deem appropriate, including warning the offender or expulsion from the hackathon with no refund.
+          Hackathon organizers may take any action they deem appropriate, including warning the offender or expulsion from the hackathon.
         </Typography>
 
         <Box sx={{ mt: 4, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
