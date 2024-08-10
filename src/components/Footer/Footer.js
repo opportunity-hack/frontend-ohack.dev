@@ -98,6 +98,9 @@ export default function Footer() {
             <LinkListItem key="slackohack">
               <StyledLink href="https://opportunity-hack.slack.com/">Join Us on Slack</StyledLink> <FaSlack />
             </LinkListItem>
+            <LinkListItem key="privacypolicy">
+              <StyledLink href="/about/privacy-policy">Privacy Policy</StyledLink>
+            </LinkListItem>
             <LinkListItem key="githubpublicgood">
               This website is a public good<br/><StyledLink href="https://github.com/opportunity-hack/frontend-ohack.dev">Fork this on GitHub</StyledLink>              
             </LinkListItem>

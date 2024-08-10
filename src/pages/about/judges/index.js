@@ -21,6 +21,28 @@ const AboutJudges = () => {
     securityData: 3, securityRole: 3
   });
 
+  const SponsorshipCTA = () => {
+    return (
+      <Box sx={{ mt: 4, p: 3, bgcolor: '#f0f8ff', borderRadius: 2, boxShadow: 1 }}>
+        <Typography variant="h5" gutterBottom>
+          Want to secure a judge position? Consider becoming a sponsor!
+        </Typography>
+        <Typography variant="body1" paragraph>
+          Most of our judges come from our corporate sponsors. Sponsorship not only guarantees a judging slot but also provides additional benefits and visibility for your company.
+        </Typography>
+        <Link href="/sponsor" passHref>
+          <Button
+            component="a"
+            variant="contained"
+            color="primary"
+          >
+            Learn About Sponsorship
+          </Button>
+        </Link>
+      </Box>
+    );
+  };
+
   const [totalScore, setTotalScore] = useState(0);
 
   useEffect(() => {
@@ -187,15 +209,18 @@ return (
                     </ListItem>
                 </List>
 
+                <SponsorshipCTA />
+
+
                 <Button 
-                    variant="contained" 
-                    color="primary" 
-                    href="https://forms.gle/2oVBDxCX2Axci3nJA"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{ mt: 2 }}
+                  variant="outlined" 
+                  color="primary" 
+                  href="https://forms.gle/2oVBDxCX2Axci3nJA"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ mt: 4 }}
                 >
-                    Apply to be an In-Person Judge
+                  Apply for Limited Individual Judge Positions
                 </Button>
 
                 <Typography variant="h2" gutterBottom sx={{ mt: 4 }}>
@@ -277,14 +302,24 @@ return (
                 </Typography>
 
                 <Button 
-                    variant="contained" 
-                    color="primary" 
-                    href="https://forms.gle/2oVBDxCX2Axci3nJA"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{ mt: 2 }}
+                  variant="contained" 
+                  color="primary" 
+                  component={Link}
+                  href="/sponsor"
+                  sx={{ mt: 2, mr: 2 }}
                 >
-                    Become an In-Person Judge Today
+                  Become a Sponsor to Secure Judge Position
+                </Button>
+
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  href="https://forms.gle/2oVBDxCX2Axci3nJA"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ mt: 2 }}
+                >
+                  Apply for Limited Individual Judge Positions
                 </Button>
 
                 <MentorCTA/>

@@ -1,10 +1,11 @@
 import React from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, Button, Grid } from '@mui/material';
 import { TitleContainer, LayoutContainer, ProjectsContainer } from '../../styles/nonprofit/styles';
 import HackathonList from '../../components/HackathonList/HackathonList';
 import PreviousHackathonList from '../../components/HackathonList/PreviousHackathonList';
+import Link from 'next/link';
 
 const HackathonIndex = () => {
   const style = { fontSize: '15px' };
@@ -72,6 +73,58 @@ const HackathonIndex = () => {
         <Typography variant="body1" style={style}>
           5. Career Opportunities: Network with tech companies and nonprofits from around the world, opening doors for future career possibilities.
         </Typography>
+      </Box>
+
+      <Box mt={4} p={2} bgcolor="background.paper">
+        <Typography variant="h3" component="h3" gutterBottom>
+          Important Information for Participants
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              component={Link}
+              href="/hack/code-of-conduct"
+              fullWidth
+            >
+              Code of Conduct
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              component={Link}
+              href="/hack/liability-waiver"
+              fullWidth
+            >
+              Liability Waiver
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              component={Link}
+              href="/hack/photo-release"
+              fullWidth
+            >
+              Photo Release
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              component={Link}
+              href="/sponsor"
+              fullWidth
+            >
+              Become a Sponsor
+            </Button>
+          </Grid>
+        </Grid>
       </Box>
     </LayoutContainer>
   );
