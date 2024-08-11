@@ -55,6 +55,7 @@ const pages = [
   [ '🏆 Judges', '/about/judges' ],
   // Sponsors
   [ '🎉 Sponsors', '/sponsor' ],
+
   
   
   // ['[TODO] Dashboard', '/myprofile'],
@@ -62,9 +63,12 @@ const pages = [
 
 const about_settings = [
   [ 'ℹ️ About Us', '/about' ],  
+  [ '🙌 Success Stories', '/about/success-stories' ],
+  [ '🎉 Hackathon?' ,'/hack'],
+
   [ '❤️ Rewards', '/about/hearts' ],
   [ '✅ Project Completion', '/about/completion' ],
-  [ '🎉 Hackathon?' ,'/hack'],
+ 
   [ '🚪 Office Hours', '/office-hours' ],
   // Style Guide
   [ '🎨 Style Guide', '/about/style-guide' ],
