@@ -5,9 +5,8 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Parallax } from "react-parallax";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import ReactPixel from 'react-facebook-pixel';
 import ReactRecaptcha3 from 'react-google-recaptcha3';
-import * as ga from '../../../lib/ga';
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 
 export default function Apply({ title, description, openGraphData }) {
   const theme = useTheme();
@@ -25,9 +24,7 @@ export default function Apply({ title, description, openGraphData }) {
 
 
   useEffect(() => {
-    // Initialize Facebook Pixel
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, {}, { debug: false, autoConfig: true });
-    ReactPixel.pageView();
+    initFacebookPixel();
 
     // Initialize Google reCAPTCHA v3
     ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY).then(
@@ -35,23 +32,20 @@ export default function Apply({ title, description, openGraphData }) {
         console.log(status);
       }
     );
-
-    // Google Analytics pageview
-    ga.pageview(window.location.pathname);
+    
   }, []);
 
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
     setFormData(prev => ({ ...prev, [name]: name === 'isNonProfit' ? checked : value }));
-
-    // Track form field changes with ReactPixel and GA
-    ReactPixel.track('FormFieldChange', { field: name });
-    ga.event({
-      action: "npo_form_field_change",
-      params: {
-        field_name: name
-      }
+    
+    trackEvent({
+        action: "npo_form_field_change",
+        params: {
+            field_name: name,
+            field_value: name === 'isNonProfit' ? checked : value
+        }
     });
   };
 
@@ -86,14 +80,15 @@ export default function Apply({ title, description, openGraphData }) {
       // Here you would typically send the form data to your server
       console.log(formDataWithToken);
 
-      // Track form submission with ReactPixel and GA
-      ReactPixel.track('SubmitApplication', formDataWithToken);
-      ga.event({
-        action: "submit_application",
+      // Track form submission with ReactPixel and GA      
+      trackEvent({
+        action: "npo_form_submit",
         params: {
-          form_data: formDataWithToken
+            form_data: formDataWithToken
         }
       });
+
+
 
       // Reset form after successful submission
       setFormData({
