@@ -1,16 +1,338 @@
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { Typography, TextField, Button, FormControlLabel, Checkbox, Container, Box, Grid, Paper, List, ListItem, ListItemIcon, ListItemText, CircularProgress } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { Parallax } from "react-parallax";
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ReactPixel from 'react-facebook-pixel';
+import ReactRecaptcha3 from 'react-google-recaptcha3';
+import * as ga from '../../../lib/ga';
 
-const NonProfitApply = dynamic(() =>  import('../../../components/NonProfitApply/NonProfitApply'), {
-    ssr: false
-});
+export default function Apply({ title, description, openGraphData }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    organization: '',
+    idea: '',
+    isNonProfit: false,
+  });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
+  useEffect(() => {
+    // Initialize Facebook Pixel
+    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, {}, { debug: false, autoConfig: true });
+    ReactPixel.pageView();
 
-export default function Apply() {
-    return (     
-        <NonProfitApply />     
+    // Initialize Google reCAPTCHA v3
+    ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY).then(
+      (status) => {
+        console.log(status);
+      }
     );
+
+    // Google Analytics pageview
+    ga.pageview(window.location.pathname);
+  }, []);
+
+
+  const handleChange = (e) => {
+    const { name, value, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: name === 'isNonProfit' ? checked : value }));
+
+    // Track form field changes with ReactPixel and GA
+    ReactPixel.track('FormFieldChange', { field: name });
+    ga.event({
+      action: "npo_form_field_change",
+      params: {
+        field_name: name
+      }
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Get reCAPTCHA token
+      const token = await ReactRecaptcha3.getToken();
+      
+      // Add token to form data
+      const formDataWithToken = { ...formData, token };
+    
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/submit-application`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formDataWithToken),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const result = await response.json();
+        console.log(result);
+      
+
+      // Here you would typically send the form data to your server
+      console.log(formDataWithToken);
+
+      // Track form submission with ReactPixel and GA
+      ReactPixel.track('SubmitApplication', formDataWithToken);
+      ga.event({
+        action: "submit_application",
+        params: {
+          form_data: formDataWithToken
+        }
+      });
+
+      // Reset form after successful submission
+      setFormData({
+        name: '',
+        email: '',
+        organization: '',
+        idea: '',
+        isNonProfit: false,
+      });
+
+     alert('Form submitted successfully!');
+
+
+    } catch (error) {
+      console.error('Error submitting form:', error);
+     alert('An error occurred while submitting the form. Please try again.');
+     } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <Head>
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        {openGraphData.map((og) => (
+          <meta key={og.key} name={og.name} property={og.property} content={og.content} />
+        ))}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "WebPage",
+              "name": "Nonprofit and Social Good Project Application - Opportunity Hack",
+              "description": "Submit your nonprofit project or social good idea for free software development support. Opportunity Hack connects innovators with skilled volunteers to create tech solutions for social impact.",
+              "url": "https://ohack.dev/nonprofits/apply",
+              "potentialAction": {
+                "@type": "ApplyAction",
+                "target": {
+                  "@type": "EntryPoint",
+                  "urlTemplate": "https://ohack.dev/nonprofits/apply",
+                  "actionPlatform": [
+                    "http://schema.org/DesktopWebPlatform",
+                    "http://schema.org/MobileWebPlatform"
+                  ]
+                },
+                "result": {
+                  "@type": "CreativeWork",
+                  "name": "Nonprofit Project Application"
+                }
+              }
+            }
+          `}
+        </script>
+      </Head>
+
+      <Container maxWidth="md">         
+        <Box my={4}>
+            <Parallax        
+                bgImage="https://cdn.ohack.dev/nonprofit_images/OHack_NonProfit_Application.webp"
+                strength={300}        
+                style={{ height: '250px' }}
+            >            
+                <div style={{
+                height: '250px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                }}>
+                <Typography 
+                    variant="h1" 
+                    component="h1" 
+                    gutterBottom 
+                    align="center" 
+                    sx={{ 
+                    fontSize: { xs: '2rem', sm: '3rem', md: '3.5rem' },
+                    color: 'white',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                    fontWeight: 'bold',
+                    padding: '0 20px',
+                    }}
+                >
+                    Free Social Good Solutions
+                </Typography>
+                <Typography 
+                    variant="h2" 
+                    component="h2" 
+                    gutterBottom 
+                    align="center" 
+                    sx={{ 
+                    fontSize: { xs: '1.2rem', sm: '1.5rem', md: '2rem' },
+                    color: 'white',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                    padding: '0 20px',
+                    }}
+                >
+                    Submit Your Project Idea Today
+                </Typography>
+                </div>
+            </Parallax>
+        </Box>
+
+        <Box my={4}>
+          <Typography variant="h3" component="h3" gutterBottom>
+            Why Apply to Opportunity Hack?
+          </Typography>
+          <List>
+            {[
+              'Free software development for your nonprofit or social good project',
+              'Connect with skilled tech volunteers passionate about social impact',
+              'Transform your ideas into real-world solutions',
+              'Boost your organization\'s efficiency and reach',
+              'No technical expertise required - we\'ll guide you through the process'
+            ].map((text, index) => (
+              <ListItem key={index}>
+                <ListItemIcon>
+                  <CheckCircleOutlineIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary={text} />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+
+        <Paper elevation={3} sx={{ p: isMobile ? 3 : 4 }}>
+          <Typography variant="h4" component="h4" gutterBottom>
+            Submit Your Project Idea
+          </Typography>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Your Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Organization (if applicable)"
+                  name="organization"
+                  value={formData.organization}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Your Idea or Problem to Solve"
+                  name="idea"
+                  multiline
+                  rows={4}
+                  value={formData.idea}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.isNonProfit}
+                      onChange={handleChange}
+                      name="isNonProfit"
+                      disabled={isSubmitting}
+                    />
+                  }
+                  label="I represent a nonprofit organization - it's okay if you don't! We want to help all social good projects."
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  type="submit" 
+                  fullWidth 
+                  size="large"
+                  disabled={isSubmitting}
+                  startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : null}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Your Project Idea'}
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+
+        <Box my={4}>
+          <Typography variant="body1" align="center" sx={{ fontSize: '1.25rem' }}>
+            From small local charities to global initiatives, we're here to help bring your vision to life through technology.
+          </Typography>
+        </Box>
+
+        <Box mb={4}>
+          <Typography variant="h5" component="h5" gutterBottom align="center" sx={{ fontSize: '1.5rem' }}>
+            Learn More About Opportunity Hack
+          </Typography>
+          <Box sx={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+            <iframe
+              src="https://www.youtube.com/embed/Ia_xsX-318E"
+              title="Opportunity Hack: Connecting Nonprofits with Tech Solutions"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 0
+              }}
+            />
+          </Box>
+        </Box>
+      </Container>
+    </>
+  );
 }
 
 export const getStaticProps = async () => {
@@ -18,8 +340,8 @@ export const getStaticProps = async () => {
     //const metadata = await data.json(); 
     return {
         props: {
-            title: "Nonprofit Application for Opportunity Hack 2024",
-            description: "Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem.",
+            title: "Apply for Free Tech Solutions - Nonprofit & Social Good Projects | Opportunity Hack",
+            description: "Submit your nonprofit or social good project idea for free software development support. Opportunity Hack connects innovators with skilled volunteers to create impactful tech solutions.",
             openGraphData: [
                 {
                     name: "title",
@@ -148,7 +470,7 @@ export const getStaticProps = async () => {
                 {
                     name: "twitter:data2",
                     property: "twitter:data2",
-                    value: "August 1, 2024",
+                    value: "September 15, 2024",
                     key: "twitterdata2"
                 }                
             ]
