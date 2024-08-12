@@ -10,7 +10,6 @@ import Image from "next/image";
 import { Typography, Grid, Card, CardContent } from "@mui/material";
 import LoginOrRegister from "../../LoginOrRegister/LoginOrRegister";
 import Button from "@mui/material/Button";
-import ReactPixel from "react-facebook-pixel";
 import { InstagramEmbed } from "react-social-media-embed";
 import TaskIcon from "@mui/icons-material/Task";
 import Link from "next/link";
