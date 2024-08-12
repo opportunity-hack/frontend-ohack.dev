@@ -69,6 +69,9 @@ const about_settings = [
   [ '❤️ Rewards', '/about/hearts' ],
   [ '✅ Project Completion', '/about/completion' ],
  
+  // Process
+  [ '📝 Process', '/about/process' ],
+ 
   [ '🚪 Office Hours', '/office-hours' ],
   // Style Guide
   [ '🎨 Style Guide', '/about/style-guide' ],
