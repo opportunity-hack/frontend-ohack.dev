@@ -1,4 +1,5 @@
 import React from "react";
+import { useEffect } from "react";
 import Head from "next/head";
 import {
   Typography,
@@ -20,14 +21,12 @@ import Link from "next/link";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GroupIcon from "@mui/icons-material/Group";
 import BusinessIcon from "@mui/icons-material/Business";
-import CodeIcon from "@mui/icons-material/Code";
 import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
-import BuildIcon from "@mui/icons-material/Build";
-import FutureIcon from "@mui/icons-material/Update";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SlideshowIcon from "@mui/icons-material/Slideshow";
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 
 const TestimonialBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.grey[100],
@@ -209,10 +208,78 @@ const successStories = [
     futureProspects:
       "The project's foundation can be built upon to create a comprehensive, AI-driven adoption management system, potentially revolutionizing how animal rescues operate and increasing successful adoptions. The insights gained about social media analysis complexity can inform future attempts to assess adopter suitability, possibly leading to more nuanced and ethical approaches. This experience has equipped Saving One Life with the knowledge to make more informed decisions about technology adoption in the future, potentially saving time and resources in their digital transformation journey.",
   },
+  {
+    title: "Modernized Website for Tribal Education Nonprofit",
+    nonprofit: "Vidyodaya",
+    hacker:
+      "Christian Bautista, Emily Adams, Marlon Del Rosario, Harry Henry Gebel (2020)",
+    sponsor: "PayPal and Galvanize",
+    image: "https://cdn.ohack.dev/nonprofit_images/vidyodaya.webp",
+    summary:
+      "Developed a modern, user-friendly website with improved navigation and admin functionality to better showcase Vidyodaya's mission of improving education for underprivileged Adivasi children.",
+    impact:
+      "The redesigned website significantly improved Vidyodaya's online presence, making it easier for visitors to find information and engage with the organization. The new admin functionality allows for easier content management, potentially increasing engagement with their audience.",
+    testimonial:
+      "Opportunity Hack brought together a talented team who understood our needs. Their redesign of our website has made it much more appealing and user-friendly, which we believe will help us better communicate our mission and engage with our community.",
+    caseStudyLink: "/about/success-stories/vidyodaya-website-modernization",
+    presentations: [
+      {
+        title: "2020 Fall Global Hackathon Presentation",
+        url: "https://www.ohack.org/about/history/2020-fall-global-hackathon/2020-fall-non-profits#h.e11jkzh61o8i",
+        type: "web",
+      },
+    ],
+    learnings: [
+      "Demonstrated the importance of user-friendly design in nonprofit websites",
+      "Highlighted the value of secure admin functionality for content management",
+      "Showed the benefits of responsive design for reaching a wider audience",
+      "Emphasized the need for culturally appropriate elements in website design",
+      "Revealed the potential of open-source technologies in creating cost-effective solutions for nonprofits",
+      "Illustrated the importance of clear navigation in improving user experience",
+      "Demonstrated the value of hackathons in providing rapid, high-quality solutions for nonprofits",
+    ],
+    technologiesUsed: [
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "React",
+      "Java",
+      "Spring",
+      "PostgreSQL",
+      "OAuth 2.0",
+      "Cloudinary",
+    ],
+    futureProspects:
+      "The new website provides a solid foundation for Vidyodaya to expand their online presence. Future enhancements could include a newsletter signup, chat feature for visitor engagement, volunteer and donor dashboards, and full mobile responsiveness. The project has equipped Vidyodaya with a modern digital platform to better support their mission of improving education for Adivasi children.",
+  },
   // ... other success stories
 ];
 
+const trackButtonClick = (title) => {
+  trackEvent({
+    action: "click_success",
+    params: {
+      category: "Success Stories",
+      label: title,
+    },
+  });
+};
+
+const trackPresentationClick = (title) => {
+  trackEvent({
+    action: "click_presentation",
+    params: {
+      category: "Success Stories",
+      label: title,
+    },
+  });
+};
+
 export default function SuccessStories() {
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
+
   return (
     <>
       <Head>
@@ -293,6 +360,9 @@ export default function SuccessStories() {
                       {story.presentations.map((presentation, i) => (
                         <PresentationChip
                           key={i}
+                          onClick={() =>
+                            trackPresentationClick(presentation.title)
+                          }
                           icon={
                             presentation.type === "pdf" ? (
                               <PictureAsPdfIcon />
@@ -311,7 +381,13 @@ export default function SuccessStories() {
                     </div>
                   )}
                   <TestimonialBox>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant="body2"
+                      style={{
+                        fontSize: "1.1rem",
+                      }}
+                      color="text.secondary"
+                    >
                       <FormatQuoteIcon /> {story.testimonial}
                     </Typography>
                   </TestimonialBox>
@@ -323,7 +399,11 @@ export default function SuccessStories() {
                         <ListItemIcon>
                           <EmojiObjectsIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText primary={learning} />
+                        <ListItemText
+                          disableTypography
+                          style={{ fontSize: "1em" }}
+                          primary={learning}
+                        />
                       </ListItem>
                     ))}
                   </List>
@@ -333,6 +413,7 @@ export default function SuccessStories() {
                     size="small"
                     color="primary"
                     href={story.caseStudyLink}
+                    onClick={() => trackButtonClick(story.title)}
                   >
                     Read Full Case Study
                   </Button>
