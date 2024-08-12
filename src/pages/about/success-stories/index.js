@@ -1,5 +1,5 @@
-import React from "react";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/router";
 import Head from "next/head";
 import {
   Typography,
@@ -67,6 +67,7 @@ const PresentationChip = styled(Chip)(({ theme }) => ({
 
 const successStories = [
   {
+    key: "matthews-crossing",
     title: "Automated Data Management and Reporting System",
     nonprofit: "Matthews Crossing Food Bank",
     hacker: "James Rowley and Mark Omo (2016, 2018)",
@@ -120,6 +121,7 @@ const successStories = [
       "The Matthews Crossing Data Manager has potential for wider adoption among food banks using similar systems. Future enhancements could include more advanced predictive analytics to forecast donation trends and needs, integration with other nonprofit management tools, and mobile applications for real-time data entry and reporting. The success of this project also opens doors for exploring other areas of Matthews Crossing's operations that could benefit from technological solutions, such as volunteer management or distribution logistics optimization.",
   },
   {
+    key: "zuris-circle",
     title: "Event Registration and Feedback Analysis System",
     nonprofit: "Zuri's Circle",
     hacker: "Trevor Moore, Jordan Riley, and Carter Rice (2019)",
@@ -167,6 +169,7 @@ const successStories = [
       "Zuri's Dashboard has potential for expansion to include more customized communication features, enhanced analytics, and integration with other nonprofit management tools. Future developments could focus on mobile app development for easier on-site event registration, advanced predictive analytics for event planning, and expanded machine learning capabilities for more nuanced feedback analysis. The success of this project opens opportunities for Zuri's Circle to further leverage technology in areas such as resource allocation, volunteer management, and impact assessment.",
   },
   {
+    key: "saving-one-life",
     title: "AI-Enhanced Adoption Process for Animal Rescue",
     nonprofit: "Saving One Life Animal Rescue and Sanctuary",
     hacker:
@@ -209,6 +212,7 @@ const successStories = [
       "The project's foundation can be built upon to create a comprehensive, AI-driven adoption management system, potentially revolutionizing how animal rescues operate and increasing successful adoptions. The insights gained about social media analysis complexity can inform future attempts to assess adopter suitability, possibly leading to more nuanced and ethical approaches. This experience has equipped Saving One Life with the knowledge to make more informed decisions about technology adoption in the future, potentially saving time and resources in their digital transformation journey.",
   },
   {
+    key: "vidyodaya",
     title: "Modernized Website for Tribal Education Nonprofit",
     nonprofit: "Vidyodaya",
     hacker:
@@ -276,9 +280,25 @@ const trackPresentationClick = (title) => {
 };
 
 export default function SuccessStories() {
+  const router = useRouter();
+
+
   useEffect(() => {
     initFacebookPixel();
   }, []);
+
+  useEffect(() => {
+    // Check if there's a hash in the URL
+    if (router.asPath.includes("#")) {
+      const id = router.asPath.split("#")[1];
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    }
+  }, [router.asPath]);
 
   return (
     <>
@@ -326,7 +346,7 @@ export default function SuccessStories() {
 
         <Grid container spacing={4} marginTop={4}>
           {successStories.map((story, index) => (
-            <Grid item key={index} xs={12} sm={6} md={4}>
+            <Grid item key={index} xs={12} sm={6} md={4} id={`${story.key}`}>
               <StyledCard>
                 <StyledCardMedia image={story.image} title={story.title} />
                 <StyledCardContent>
