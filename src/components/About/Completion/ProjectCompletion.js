@@ -1,31 +1,36 @@
 import React from 'react';
+import { useEffect } from 'react';
 import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../../styles/nonprofit/styles';
 import Head from 'next/head';
 import Image from 'next/image';
 import { Typography, Grid, Card, CardContent } from '@mui/material';
 import LoginOrRegister from '../../LoginOrRegister/LoginOrRegister';
 import Button from '@mui/material/Button';
-import * as ga from "../../../lib/ga";
 import ReactPixel from 'react-facebook-pixel';
 import { InstagramEmbed } from 'react-social-media-embed';
 import TaskIcon from '@mui/icons-material/Task';
 import Link from 'next/link';
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
+
 
 const style = { fontSize: '15px' };
 
 const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
-    ga.event({
-      action: "click",
-      params: {
-        event_category: "button",
-        event_label: buttonName,
-      },
-    });
-    ReactPixel.trackCustom(buttonName + ' Click', {});   
+    trackEvent({
+        action: 'click_project_completion_button',
+        category: 'project_completion',
+        label: buttonName,
+    });    
 }
  
 
-const Hearts = () => (
+const ProjectCompletion = () => {
+
+    useEffect(() => {
+    initFacebookPixel();
+}, []);
+
+return(
     <LayoutContainer key="mentorship" container>
       
 <Head>
@@ -44,7 +49,9 @@ const Hearts = () => (
                     </Typography>
                     <Grid container spacing={2}>
                         <Grid item>
-                            <Button variant="contained" color="primary" href="https://www.instagram.com/p/CVicxFMPiqo/" target="_blank">
+                            <Button onClick={
+                                () => trackOnClickButtonClickWithGoogleAndFacebook('example_statement_of_work_prize')
+                            } variant="contained" color="primary" href="https://www.instagram.com/p/CVicxFMPiqo/" target="_blank">
                                 Example statement of work prize
                             </Button>
                         </Grid>
@@ -105,7 +112,11 @@ const Hearts = () => (
                         <Typography variant="h6" component="h4" gutterBottom>
                             The nonprofit you're building this application for agrees that what you've built is usable for them as per the completion requirements.
                             <Link href="https://docs.google.com/document/d/1_B5uRZ7bOwYRfhK9SiSQ9uYUhaU9jmmhyO9LhDvFY1Q/edit#bookmark=id.c05tj14rfvg6" target="_blank">
-                            <Button>Example</Button>
+                            <Button
+                                onClick={
+                                    () => trackOnClickButtonClickWithGoogleAndFacebook('example_nonprofit_signoff')
+                                }
+                            >Example</Button>
                             </Link>
                         </Typography>                                                
                     </CardContent>
@@ -185,5 +196,5 @@ const Hearts = () => (
         </ProjectsContainer>
       </LayoutContainer>
     );
-
-    export default Hearts;
+}
+    export default ProjectCompletion;
