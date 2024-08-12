@@ -1,13 +1,14 @@
 import React from 'react';
+import { useEffect } from 'react';
+
 import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../../styles/nonprofit/styles';
 import Head from 'next/head';
 import { Typography, Grid, Card, CardContent, Box} from '@mui/material';
 import LoginOrRegister from '../../LoginOrRegister/LoginOrRegister';
 import Button from '@mui/material/Button';
-import * as ga from "../../../lib/ga";
-import ReactPixel from 'react-facebook-pixel';
 import { InstagramEmbed } from 'react-social-media-embed';
 import Link from 'next/link';
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 
 
 const style = { fontSize: '15px' };
@@ -35,19 +36,24 @@ const JudgeCTA = () => {
 };
 
 const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
-    ga.event({
-      action: "click",
-      params: {
-        event_category: "button",
-        event_label: buttonName,
-      },
-    });
-    ReactPixel.trackCustom(buttonName + ' Click', {});   
+    trackEvent({
+      action: "click_mentors",
+    category: "mentors",   
+    label: buttonName,
+    });    
 }
  
 const mentorGoogleForm = "https://forms.gle/WFBEwHVQcfpVXyYFA"
 
-const Mentorship = () => (
+const Mentorship = () => {
+
+    useEffect(() => {
+        initFacebookPixel();
+      }
+    , []);
+    
+
+return(
     <LayoutContainer key="mentorship" container>
       
   <Head>
@@ -242,5 +248,6 @@ const Mentorship = () => (
     </ProjectsContainer>
   </LayoutContainer>
 );
+}
 
 export default Mentorship;

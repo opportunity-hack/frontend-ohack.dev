@@ -47,7 +47,7 @@ export default function OpportunityHackProcess() {
 
   const trackButtonClick = (buttonName) => {
     trackEvent({
-      action: "click",
+      action: "click_process",
       params: {
         event_category: "button",
         event_label: buttonName,
