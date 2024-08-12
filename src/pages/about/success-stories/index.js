@@ -142,13 +142,13 @@ export default function SuccessStories() {
       </Head>
       
       <Container maxWidth="lg">
-        <Typography mt={10} variant="h1" align="center" gutterBottom>
+        <Typography mt={10} variant="h2" align="center" gutterBottom>
           Opportunity Hack Success Stories
         </Typography>
-        <Typography variant="h2" align="center" paragraph>
+        <Typography variant="h3" align="center" paragraph>
           Transforming Nonprofits Through Technology
         </Typography>
-        <Typography variant="h3" align="center" paragraph>
+        <Typography variant="h4" align="center" paragraph>
           Real-world impact, powered by innovation and compassion
         </Typography>
         
@@ -196,7 +196,7 @@ export default function SuccessStories() {
                       ))}
                     </div>
                   )}
-                  <Button size="small" color="primary" href={story.caseStudyLink}>
+                  <Button mt={3} size="small" color="primary" href={story.caseStudyLink}>
                     Read Full Case Study
                   </Button>
                 </StyledCardContent>

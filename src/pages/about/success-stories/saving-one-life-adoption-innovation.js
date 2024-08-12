@@ -47,7 +47,7 @@ export default function SavingOneLifeSuccessStory() {
       </Head>
 
       <Container maxWidth="lg">
-        <Typography mt={10} variant="h1" align="center" gutterBottom>
+        <Typography mt={10} variant="h2" align="center" gutterBottom>
           Saving One Life: Innovating Animal Adoption with AI
         </Typography>
 

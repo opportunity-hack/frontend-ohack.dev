@@ -47,7 +47,7 @@ export default function MatthewsCrossingSuccessStory() {
       </Head>
 
       <Container maxWidth="lg">
-        <Typography mt={10} variant="h1" align="center" gutterBottom>
+        <Typography mt={10} variant="h2" align="center" gutterBottom>
           Matthews Crossing: Revolutionizing Food Bank Operations
         </Typography>
 
