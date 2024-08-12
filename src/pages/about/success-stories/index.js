@@ -1,6 +1,6 @@
 import React from 'react';
 import Head from 'next/head';
-import { Typography, Card, CardContent, CardMedia, Grid, Button, Container, List, ListItem, ListItemIcon, ListItemText, Chip } from '@mui/material';
+import { Typography, Card, CardContent, CardMedia, Grid, Button, Container, List, ListItem, ListItemIcon, ListItemText, Chip, Box } from '@mui/material';
 import { styled } from '@mui/system';
 import Link from 'next/link';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -13,8 +13,15 @@ import FutureIcon from '@mui/icons-material/Update';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 
-
+const TestimonialBox = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[100],
+  padding: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  marginTop: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+}));
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -95,6 +102,48 @@ const successStories = [
   ],
   "futureProspects": "The Matthews Crossing Data Manager has potential for wider adoption among food banks using similar systems. Future enhancements could include more advanced predictive analytics to forecast donation trends and needs, integration with other nonprofit management tools, and mobile applications for real-time data entry and reporting. The success of this project also opens doors for exploring other areas of Matthews Crossing's operations that could benefit from technological solutions, such as volunteer management or distribution logistics optimization."
   },
+  {
+"title": "Event Registration and Feedback Analysis System",
+"nonprofit": "Zuri's Circle",
+"hacker": "Trevor Moore, Jordan Riley, and Carter Rice (2019)",
+"sponsor": "PayPal, GoDaddy, Repay, MDI Group, Splunk, Galvanize, InfusionSoft",
+"image": "https://cdn.ohack.dev/nonprofit_images/Zuris_Circle_2019.webp",
+"summary": "Created an automated system for event registration, email management, and feedback analysis to improve participant engagement and event evaluation.",
+"impact": "Streamlined event management process, improved communication with participants, and provided data-driven insights into event success through sentiment analysis.",
+"testimonial": "Zuri's Dashboard has revolutionized how we interact with our community. It's not just about collecting emails anymore; it's about understanding our impact and continuously improving our services. This technology allows us to focus more on what truly matters - helping families, the elderly, and the homeless in our community.",
+"caseStudyLink": "/about/success-stories/zuris-circle-event-management",
+"presentations": [
+{
+"title": "2019 Problem Presentation",
+"url": "https://cdn.ohack.dev/nonprofit_documents/2019.AZ.Opportunity.Hack.-.Zuri.s.Circle.pdf",
+"type": "pdf"
+}
+],
+"learnings": [
+"Highlighted the importance of user-friendly data collection systems for small nonprofits",
+"Demonstrated the value of automated communication in maintaining engagement",
+"Showed how machine learning can provide valuable insights from qualitative feedback",
+"Emphasized the need for cost-effective solutions in nonprofit technology",
+"Illustrated the power of cross-disciplinary teams in solving complex problems",
+"Revealed the potential of cloud-based solutions for scalability and accessibility",
+"Underscored the importance of data security and privacy in nonprofit operations"
+],
+"technologiesUsed": [
+"ASP.NET Core 3.0",
+"ML.NET",
+"MongoDB",
+"JSON Web Tokens",
+"Google OAuth 2.0",
+"Twilio / SendGrid",
+"React",
+"Redux",
+"Material UI",
+"Chart.js",
+"Azure",
+"Heroku"
+],
+"futureProspects": "Zuri's Dashboard has potential for expansion to include more customized communication features, enhanced analytics, and integration with other nonprofit management tools. Future developments could focus on mobile app development for easier on-site event registration, advanced predictive analytics for event planning, and expanded machine learning capabilities for more nuanced feedback analysis. The success of this project opens opportunities for Zuri's Circle to further leverage technology in areas such as resource allocation, volunteer management, and impact assessment."
+},
 {
   "title": "AI-Enhanced Adoption Process for Animal Rescue",
   "nonprofit": "Saving One Life Animal Rescue and Sanctuary",
@@ -105,6 +154,13 @@ const successStories = [
   "impact": "While not fully implemented, the project provided invaluable insights into the potential of AI in animal adoption processes. It allowed Saving One Life to explore various technological approaches without the time and money for initial concepts. The project revealed the complexity of using social media for risk assessment of potential animal adopters, a crucial insight that wouldn't have been uncovered without this collaborative effort.",
   "testimonial": "Opportunity Hack brought together passionate volunteers who understood our mission. Their innovative approach to our adoption process challenges opened our eyes to the potential of technology in animal rescue operations. The exploration of multiple solutions helped us understand what paths could work for us, without the usual risks associated with technology adoption.",
   "caseStudyLink": "/about/success-stories/saving-one-life-adoption-innovation",
+  "presentations": [
+    {
+      "title": "2019 Problem Presentation",
+      "url": "https://cdn.ohack.dev/nonprofit_documents/3%20-%20SavingOneLife%20-%20OpportunityHack%20Arizona%202019.pdf",
+      "type": "pdf"
+    }
+  ],
   "learnings": [
     "Demonstrated the potential of AI in matching pets with suitable adopters",
     "Highlighted the importance of data security and privacy in handling adopter information",
@@ -141,7 +197,7 @@ export default function SuccessStories() {
         <meta property="og:image" content="https://ohack.dev/images/opportunity-hack-success-banner.jpg" />
       </Head>
       
-      <Container maxWidth="lg">
+     <Container maxWidth="lg">
         <Typography mt={10} variant="h2" align="center" gutterBottom>
           Opportunity Hack Success Stories
         </Typography>
@@ -196,6 +252,24 @@ export default function SuccessStories() {
                       ))}
                     </div>
                   )}
+                  <TestimonialBox>
+                    <Typography variant="body2" color="text.secondary">
+                      <FormatQuoteIcon /> {story.testimonial}
+                    </Typography>
+                  </TestimonialBox>
+                 
+                  <Typography variant="subtitle1">Key Learnings:</Typography>
+                  <List dense>
+                    {story.learnings.slice(0, 3).map((learning, i) => (
+                      <ListItem key={i}>
+                        <ListItemIcon>
+                          <EmojiObjectsIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText primary={learning} />
+                      </ListItem>
+                    ))}
+                  </List>
+                  
                   <Button mt={3} size="small" color="primary" href={story.caseStudyLink}>
                     Read Full Case Study
                   </Button>

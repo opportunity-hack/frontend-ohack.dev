@@ -19,7 +19,7 @@ export const pageview = (url) => {
     window.gtag('config', process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS, {
       page_path: url,
     });
-    ReactPixel.pageView();
+    if (ReactPixel) ReactPixel.pageView();
   }
 }
 
@@ -30,7 +30,7 @@ export const trackEvent = ({ action, params }) => {
     window.gtag('event', action, params);
     
     // Facebook Pixel
-    ReactPixel.track(action, params);
+    if (ReactPixel) ReactPixel.track(action, params);
   }
 }
 
