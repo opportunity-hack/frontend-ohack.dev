@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEffect } from 'react';
 import { 
   Typography, 
   Grid, 
@@ -26,13 +27,20 @@ import Image from 'next/image';
 import { InstagramEmbed } from 'react-social-media-embed';
 import LoginOrRegister from '../../LoginOrRegister/LoginOrRegister';
 import { LayoutContainer, TitleContainer, ProjectsContainer } from '../../../styles/nonprofit/styles';
-import * as ga from "../../../lib/ga";
-import ReactPixel from 'react-facebook-pixel';
 import RewardStructure from './RewardStructure';
 import Link from 'next/link';
 import { FaGavel, FaChalkboardTeacher, FaHeart } from 'react-icons/fa';
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 
 
+ const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
+    trackEvent({
+      action: "click_hearts",
+      category:  "hearts",
+      label: buttonName,
+    });
+
+  }
 
 const StyledTypography = styled(Typography)(({ theme }) => ({
   fontSize: '15px',
@@ -64,6 +72,9 @@ const JudgeMentorHeartsCTA = () => {
               variant="contained"
               color="primary"
               startIcon={<FaHeart />}
+              onClick={
+                () => trackOnClickButtonClickWithGoogleAndFacebook("judges")
+              }
             >
               Learn About Judging
             </Button>
@@ -78,6 +89,9 @@ const JudgeMentorHeartsCTA = () => {
           </Box>
           <Link href="/about/mentors" passHref>
             <Button
+              onClick={ 
+                () => trackOnClickButtonClickWithGoogleAndFacebook("mentors")
+              }
               component="a"
               variant="contained"
               color="secondary"
@@ -161,16 +175,13 @@ const Hearts = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
-    ga.event({
-      action: "click",
-      params: {
-        event_category: "button",
-        event_label: buttonName,
-      },
-    });
-    ReactPixel.trackCustom(buttonName + ' Click', {});   
-  }
+
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
+
+
+ 
 
   return (
     <LayoutContainer>
@@ -195,22 +206,33 @@ const Hearts = () => {
             </StyledTypography>
             <Grid container spacing={2}>
               <Grid item>
-                <Button variant="contained" color="primary" href="https://docs.google.com/document/d/1J-1o5YOpdt4slyd_PxitNN0gZe7UcI1GjyTbhTem2qU/edit?usp=sharing" target="_blank">
+                <Button onClick={
+                  () => trackOnClickButtonClickWithGoogleAndFacebook("original_rfc")
+                } variant="contained" color="primary" href="https://docs.google.com/document/d/1J-1o5YOpdt4slyd_PxitNN0gZe7UcI1GjyTbhTem2qU/edit?usp=sharing" target="_blank">
                   See the Original RFC
                 </Button>
               </Grid>
               <Grid item>
-                <Button variant="outlined" color="primary" href="/about/completion">
+                <Button
+                  onClick={
+                    () => trackOnClickButtonClickWithGoogleAndFacebook("project_completion")
+                  }
+                variant="outlined" color="primary" href="/about/completion">
                   Project Completion
                 </Button>
               </Grid>
               <Grid item>
-                <Button variant="outlined" color="primary" href="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8" target="_blank">
+                <Button onClick={
+                  () => trackOnClickButtonClickWithGoogleAndFacebook("github_issue_8")
+                } 
+                variant="outlined" color="primary" href="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8" target="_blank">
                   GitHub Issue #8
                 </Button>
               </Grid>
               <Grid item>
-                <Button variant="outlined" color="primary" href="https://github.com/opportunity-hack/frontend-ohack.dev/issues/7" target="_blank">
+                <Button onClick={
+                  () => trackOnClickButtonClickWithGoogleAndFacebook("github_issue_7")
+                } variant="outlined" color="primary" href="https://github.com/opportunity-hack/frontend-ohack.dev/issues/7" target="_blank">
                   GitHub Issue #7
                 </Button>
               </Grid>
