@@ -1,9 +1,9 @@
 import React from 'react';
 import Head from 'next/head';
-import { Typography, Card, CardContent, CardMedia, Grid, Button, Container, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Typography, Card, CardContent, CardMedia, Grid, Button, Container, List, ListItem, ListItemIcon, ListItemText, Chip } from '@mui/material';
 import { styled } from '@mui/system';
 import Link from 'next/link';
-import PetsIcon from '@mui/icons-material/Pets';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import GroupIcon from '@mui/icons-material/Group';
 import BusinessIcon from '@mui/icons-material/Business';
 import CodeIcon from '@mui/icons-material/Code';
@@ -11,7 +11,8 @@ import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 import BuildIcon from '@mui/icons-material/Build';
 import FutureIcon from '@mui/icons-material/Update';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import SlideshowIcon from '@mui/icons-material/Slideshow';
 
 
 
@@ -40,6 +41,10 @@ const LargerTypography = styled(Typography)(({ theme }) => ({
   },
 }));
 
+const PresentationChip = styled(Chip)(({ theme }) => ({
+  margin: theme.spacing(0.5),
+}));
+
 const successStories = [
   {
   "title": "Automated Data Management and Reporting System",
@@ -47,10 +52,28 @@ const successStories = [
   "hacker": "James Rowley and Mark Omo (2016, 2018)",
   "sponsor": "PayPal, TechShop Chandler, Avnet, GoDaddy, Repay, MDI Group, Splunk, Galvanize, InfusionSoft",
   "image": "https://cdn.ohack.dev/nonprofit_images/matthews_crossing.webp",
-  "summary": "Developed a comprehensive data management system to automate donation tracking, report generation, and data visualization, significantly reducing manual effort and improving operational efficiency.",
-  "impact": "The solution drastically reduced the time spent on manual data entry and report generation, saving an estimated 5 hours per month for key staff. With over 35,000 volunteer users across 1,600 food banks using similar systems, the potential time savings could equate to over $150,000 in value. The system also improved data accuracy and enabled more timely and insightful reporting for decision-making.",
-  "testimonial": "Matthews Crossing Data Manager has transformed our operations. It's allowed us to redirect valuable volunteer time from paperwork to serving our community. The automated reports and visualizations have given us new insights into our donations and operations, helping us make more informed decisions to better serve the 623,300 people in Maricopa County facing food insecurity.",
+  "summary": "Developed a comprehensive data management system to automate donation tracking and reporting processes for food banks.",
+  "impact": "Saved an estimated 5 hours per month for key staff, with potential for $150,000 in time savings across 1,600 food banks that already use Food Bank Manager. Improved data accuracy and enabled more timely, insightful decision-making through automated visualizations and reports.",
+  "testimonial": "Matthews Crossing Data Manager has transformed our operations. It's allowed us to redirect valuable volunteer time from paperwork to serving our community. The automated reports and visualizations have given us new insights into our donations and operations, helping us make more informed decisions to better serve the 400,830 people in Maricopa County facing food insecurity where Matthew's Crossing serves about 80,000 people a year - having this solution opens the possibility to serving even more people.",
   "caseStudyLink": "/about/success-stories/matthews-crossing-data-automation",
+  "presentations": [
+      {
+        "title": "Hacker 2018 Solution Presentation",
+        "url": "https://cdn.ohack.dev/nonprofit_documents/Matthews%20Crossing%202018%20Solution%20Presentation.pdf",
+        "type": "pdf"
+      },
+      {
+        "title": "2018 Problem Presentation",
+        "url": "https://cdn.ohack.dev/nonprofit_documents/Matthews%20Crossing%202018%20Solution%20Presentation.pdf",
+        "type": "pdf"
+      },
+      {
+        "title": "2017 Problem Presentation",
+        "url": "https://cdn.ohack.dev/nonprofit_documents/OHack%202017%20-%20Nonprofit%20Presentation%20-%20Matthews%20Crossing.pdf",
+        "type": "pdf"
+      }
+
+    ],
   "learnings": [
   "Demonstrated the importance of sustainable, user-friendly solutions for nonprofits with limited technical resources",
   "Highlighted the value of iterative development and returning to improve solutions over multiple years",
@@ -79,7 +102,7 @@ const successStories = [
   "sponsor": "PayPal, Galvanize, Motion Recruitment, Tech Talent South, GoDaddy, Dick's Sporting Goods, Keap",
   "image": "https://cdn.ohack.dev/nonprofit_images/saving_one_life.webp",
   "summary": "Developed a multi-phase solution to streamline the adoption process, including an AI-powered compatibility scoring system and a risk assessment tool using social media analysis.",
-  "impact": "While not fully implemented, the project provided invaluable insights into the potential of AI in animal adoption processes. It allowed Saving One Life to explore various technological approaches without the financial and time costs of internal prototyping. The project revealed the complexity of using social media for adopter risk assessment, a crucial insight that wouldn't have been uncovered without this collaborative effort.",
+  "impact": "While not fully implemented, the project provided invaluable insights into the potential of AI in animal adoption processes. It allowed Saving One Life to explore various technological approaches without the time and money for initial concepts. The project revealed the complexity of using social media for risk assessment of potential animal adopters, a crucial insight that wouldn't have been uncovered without this collaborative effort.",
   "testimonial": "Opportunity Hack brought together passionate volunteers who understood our mission. Their innovative approach to our adoption process challenges opened our eyes to the potential of technology in animal rescue operations. The exploration of multiple solutions helped us understand what paths could work for us, without the usual risks associated with technology adoption.",
   "caseStudyLink": "/about/success-stories/saving-one-life-adoption-innovation",
   "learnings": [
@@ -88,7 +111,7 @@ const successStories = [
     "Showed the value of iterative development in complex nonprofit projects",
     "Emphasized the need for sustainable, long-term solutions in volunteer-driven organizations",
     "Revealed the benefits of exploring multiple technological approaches before committing resources to implementation",
-    "Uncovered the unexpected complexity in using social media data for adopter risk assessment",
+    "Uncovered the unexpected complexity in using social media data for risk assessment of animal adopterst",
     "Illustrated the value of hackathons in providing low-risk environments for nonprofits to experiment with new technologies"
   ],
   "technologiesUsed": [
@@ -156,6 +179,23 @@ export default function SuccessStories() {
                   <LargerTypography paragraph>
                     <CheckCircleOutlineIcon /> <strong>Impact:</strong> {story.impact}
                   </LargerTypography>
+                  {story.presentations && story.presentations.length > 0 && (
+                    <div>
+                      <Typography variant="subtitle1">Presentations:</Typography>
+                      {story.presentations.map((presentation, i) => (
+                        <PresentationChip
+                          key={i}
+                          icon={presentation.type === 'pdf' ? <PictureAsPdfIcon /> : <SlideshowIcon />}
+                          label={presentation.title}
+                          component="a"
+                          href={presentation.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          clickable
+                        />
+                      ))}
+                    </div>
+                  )}
                   <Button size="small" color="primary" href={story.caseStudyLink}>
                     Read Full Case Study
                   </Button>
