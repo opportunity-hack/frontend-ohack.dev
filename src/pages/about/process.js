@@ -69,11 +69,11 @@ export default function OpportunityHackProcess() {
       </Head>
 
       <div className="container mx-auto px-4 py-8">
-        <Typography mt={10} variant="h1" align="center" gutterBottom>
+        <Typography mt={10} variant="h2" align="center" gutterBottom>
           Opportunity Hack: Innovating for Nonprofits
         </Typography>
 
-        <Typography variant="h2" align="center" gutterBottom>
+        <Typography variant="h3" align="center" gutterBottom>
           Connecting Tech Talent with Nonprofit Needs
         </Typography>
 
