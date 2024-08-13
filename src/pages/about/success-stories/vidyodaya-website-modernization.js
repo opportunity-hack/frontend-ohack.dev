@@ -31,6 +31,20 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   marginBottom: theme.spacing(4),
 }));
 
+const VideoWrapper = styled("div")({
+  position: "relative",
+  paddingBottom: "56.25%", // 16:9 aspect ratio
+  height: 0,
+  overflow: "hidden",
+  "& iframe": {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+  },
+});
+
 export default function VidyodayaSuccessStory() {
   useEffect(() => {
     initFacebookPixel();
@@ -210,6 +224,21 @@ export default function VidyodayaSuccessStory() {
             and better showcasing their mission to improve education for Adivasi
             children.
           </Typography>
+
+          <Typography mt={3} variant="h3" gutterBottom>
+            Final Demo (Fall 2020)
+          </Typography>
+          <VideoWrapper>
+            <iframe
+              width="560"
+              height="315"
+              src="https://www.youtube.com/embed/03IeMq9qye4?si=aEdjB9nwQ-2GggBj"
+              title="Vidyodaya: Modernizing Education Outreach Demo"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </VideoWrapper>
         </StyledPaper>
 
         <Grid
