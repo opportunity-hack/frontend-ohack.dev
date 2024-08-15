@@ -151,10 +151,10 @@ export default function Apply({ title, description, openGraphData }) {
             <Parallax        
                 bgImage="https://cdn.ohack.dev/nonprofit_images/OHack_NonProfit_Application.webp"
                 strength={300}        
-                style={{ height: '250px' }}
+                style={{ height: '300px' }}
             >            
                 <div style={{
-                height: '250px',
+                height: '300px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
@@ -174,7 +174,7 @@ export default function Apply({ title, description, openGraphData }) {
                     padding: '0 20px',
                     }}
                 >
-                    Free Social Good Solutions
+                    Opportunity Hack 2024
                 </Typography>
                 <Typography 
                     variant="h2" 
@@ -188,7 +188,21 @@ export default function Apply({ title, description, openGraphData }) {
                     padding: '0 20px',
                     }}
                 >
-                    Submit Your Project Idea Today
+                    October 12-13, 2024 • ASU, Tempe, Arizona
+                </Typography>
+                <Typography 
+                    variant="h3" 
+                    component="h3" 
+                    gutterBottom 
+                    align="center" 
+                    sx={{ 
+                    fontSize: { xs: '1rem', sm: '1.2rem', md: '1.5rem' },
+                    color: 'white',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                    padding: '0 20px',
+                    }}
+                >
+                    Submit Your Nonprofit Project Today!
                 </Typography>
                 </div>
             </Parallax>
@@ -218,7 +232,7 @@ export default function Apply({ title, description, openGraphData }) {
 
         <Paper elevation={3} sx={{ p: isMobile ? 3 : 4 }}>
           <Typography variant="h4" component="h4" gutterBottom>
-            Submit Your Project Idea
+            Submit Your Project for Opportunity Hack 2024
           </Typography>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
@@ -300,9 +314,10 @@ export default function Apply({ title, description, openGraphData }) {
 
         <Box my={4}>
           <Typography variant="body1" align="center" sx={{ fontSize: '1.25rem' }}>
-            From small local charities to global initiatives, we're here to help bring your vision to life through technology.
+            Join us on October 12-13, 2024 at Arizona State University in Tempe for an incredible weekend of innovation and impact. From small local charities to global initiatives, we're here to help bring your vision to life through technology.
           </Typography>
-        </Box>
+        </Box>      
+        
 
         <Box mb={4}>
           <Typography variant="h5" component="h5" gutterBottom align="center" sx={{ fontSize: '1.5rem' }}>
@@ -335,13 +350,25 @@ export const getStaticProps = async () => {
     //const metadata = await data.json(); 
     return {
         props: {
-            title: "Apply for Free Tech Solutions - Nonprofit & Social Good Projects | Opportunity Hack",
-            description: "Submit your nonprofit or social good project idea for free software development support. Opportunity Hack connects innovators with skilled volunteers to create impactful tech solutions.",
+            title: "Apply for Opportunity Hack 2024 - Free Tech Solutions for Nonprofits",
+            description: "Submit your nonprofit project for Opportunity Hack 2024, happening October 12-13 at ASU in Tempe, Arizona. Get free software development support and connect with skilled tech volunteers.",
             openGraphData: [
+                {
+                    name: "og:title",
+                    property: "og:title",
+                    content: "Apply Now: Opportunity Hack 2024 - October 12-13 at ASU, Tempe",
+                    key: "ogtitle"
+                },
+                {
+                    name: "og:description",
+                    property: "og:description",
+                    content: "Submit your nonprofit project for Opportunity Hack 2024! Join us on October 12-13 at ASU in Tempe, Arizona for a weekend of free software development and innovation.",
+                    key: "ogdescription"
+                },
                 {
                     name: "title",
                     property: "title",
-                    content: "Nonprofit Application for Opportunity Hack 2024",
+                    content: "NApply Now: Opportunity Hack 2024 - October 12-13 at ASU, Tempe",
                     key: "title"
                 },
                 {
@@ -365,15 +392,9 @@ export const getStaticProps = async () => {
                 {
                     name: "publish_date",
                     property: "og:publish_date",
-                    content: "2024-06-04T00:00:00-0700",
+                    content: "2024-08-01T00:00:00-0700",
                     key: "publishdate"
-                },
-                {
-                    name: "og:description",
-                    property: "og:description",
-                    content: "Have a problem where you think software could help? Submit your application today! We'll match you with a team of developers to help you solve your problem!",
-                    key: "ogdescription"
-                },                                
+                },                                        
                 {
                     name: "image",
                     property: "og:image",
