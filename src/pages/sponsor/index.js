@@ -1,6 +1,31 @@
 import React from 'react';
 import { TitleContainer, LayoutContainer, ProjectsContainer, LinkStyled } from '../../styles/sponsors/styles';
-import { Button, Typography, Grid, Card, CardContent, CardActions, CardMedia, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, useTheme, useMediaQuery } from '@mui/material';
+import {
+  Grid,
+  Typography,
+  Paper,
+  Avatar,
+  Chip,
+  Box,
+  Tooltip,
+  IconButton,
+  CardActions,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
+import Button from "@mui/material/Button";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import LinkIcon from "@mui/icons-material/Link";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -52,65 +77,133 @@ export default function SponsorIndexList() {
     backgroundColor: '#f0f0f0' 
   };
 
+  const SponsorCard = ({ sponsor, level }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+    return (
+      <Paper
+        elevation={3}
+        sx={{
+          p: 2,
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: "center",
+          gap: 2,
+          backgroundColor: level.color,
+          transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+          "&:hover": {
+            transform: "translateY(-5px)",
+            boxShadow: 6,
+          },
+        }}
+      >
+        <Avatar
+          src={sponsor.logo}
+          alt={sponsor.name}
+          sx={{ width: 80, height: 80, bgcolor: "white" }}
+          variant="rounded"
+        />
+        <Box
+          sx={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 1 }}
+        >
+          <Typography variant="h6" noWrap>
+            {sponsor.name}
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            <Chip
+              icon={<AccessTimeIcon />}
+              label={`${sponsor.hours} hours`}
+              size="small"
+              color="primary"
+            />
+            {sponsor.donations > 0 && (
+              <Chip
+                icon={<AttachMoneyIcon />}
+                label={`$${sponsor.donations} donated`}
+                size="small"
+                color="secondary"
+              />
+            )}
+          </Box>
+        </Box>
+        <Tooltip title="Visit sponsor website">
+          <IconButton
+            aria-label="sponsor website"
+            onClick={() => window.open(sponsor.website, "_blank")}
+          >
+            <LinkIcon />
+          </IconButton>
+        </Tooltip>
+      </Paper>
+    );
+  };
+
   const getSponsorCard = (level, nextLevelMinSupport) => {
-    const levelSponsors = sponsors.filter(s => {
+    const levelSponsors = sponsors.filter((s) => {
       const totalSupport = calculateSupport(s.hours, s.donations);
-      return totalSupport >= level.minSupport && (nextLevelMinSupport ? totalSupport < nextLevelMinSupport : true);
+      return (
+        totalSupport >= level.minSupport &&
+        (nextLevelMinSupport ? totalSupport < nextLevelMinSupport : true)
+      );
     });
 
     return (
-      <Grid container spacing={isMobile ? 1 : 2}>
+      <Grid container spacing={isMobile ? 2 : 3}>
         {levelSponsors.length > 0 ? (
           levelSponsors.map((sponsor) => (
-            <Grid item key={sponsor.name} xs={12} sm={6} md={4}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardMedia
-                  sx={{ height: isMobile ? 80 : 100 }}
-                  image={sponsor.logo}
-                  title={sponsor.name}
-                />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography gutterBottom variant="h6" component="div" style={style}>
-                    {sponsor.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" style={style}>
-                    {sponsor.hours} hours volunteered
-                  </Typography>
-                  {sponsor.donations > 0 && (
-                    <Typography variant="body2" color="text.secondary" style={style}>
-                      ${sponsor.donations} donated
-                    </Typography>
-                  )}
-                </CardContent>
-                <CardActions>
-                  <Button size="small" href={sponsor.website}>Learn More</Button>
-                </CardActions>
-              </Card>
+            <Grid item key={sponsor.name} xs={12}>
+              <SponsorCard sponsor={sponsor} level={level} />
             </Grid>
           ))
         ) : (
           <Grid item xs={12}>
-            <Card sx={{ bgcolor: '#EEEEEE', borderStyle: 'outset' }}>
-              <CardContent>
-                <Typography gutterBottom variant="h6" component="div" style={style}>
-                  Be the first {level.name} sponsor!
-                </Typography>
-                <CardActions>
-                  <Button size="small" variant="outlined" href="/about/mentors">Mentor</Button>
-                  <Button size="small" variant="outlined" href="/about/judges">Judge</Button>
-                  <Button 
-                    size="small" 
-                    target='_blank'
-                    variant="contained" 
-                    color="primary" 
-                    href={getContactLink()}
-                  >
-                    Become a Sponsor
-                  </Button>
-                </CardActions>
-              </CardContent>
-            </Card>
-          </Grid>          
+            <Paper
+              sx={{
+                p: 3,
+                textAlign: "center",
+                bgcolor: "#EEEEEE",
+                borderStyle: "dashed",
+                borderColor: "grey.400",
+              }}
+            >
+              <Typography variant="h6" gutterBottom>
+                Be the first {level.name} sponsor!
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Support our mission by volunteering your time or making a
+                donation.
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 2,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Chip
+                  label="Become a Mentor"
+                  component="a"
+                  href="/about/mentors"
+                  clickable
+                />
+                <Chip
+                  label="Become a Judge"
+                  component="a"
+                  href="/about/judges"
+                  clickable
+                />
+                <Chip
+                  label="Contact Us to Sponsor"
+                  component="a"
+                  href={getContactLink()}
+                  clickable
+                  color="primary"
+                />
+              </Box>
+            </Paper>
+          </Grid>
         )}
       </Grid>
     );
@@ -177,6 +270,21 @@ export default function SponsorIndexList() {
           Join us in fostering innovation for social good. Your sponsorship
           fuels creativity, supports nonprofits, and connects you with
           passionate tech talent dedicated to making a difference.
+        </Typography>
+
+        <Typography variant="h5" gutterBottom>
+          Join us in empowering nonprofits through technology
+        </Typography>
+        <Button
+          variant="contained"
+          color="secondary"
+          size={isMobile ? "medium" : "large"}
+          href={getContactLink()}
+        >
+          Become a Sponsor Today
+        </Button>
+        <Typography variant="body1" style={{ marginTop: "1rem" }}>
+          Limited sponsorship spots available!
         </Typography>
       </TitleContainer>
 
