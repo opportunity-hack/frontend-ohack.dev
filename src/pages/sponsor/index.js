@@ -17,6 +17,8 @@ import Button from "@mui/material/Button";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+
 
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
@@ -288,6 +290,18 @@ export default function SponsorIndexList() {
         </Typography>
       </TitleContainer>
 
+      <Box mt={3} mb={3} display="flex" justifyContent="center">
+        <Button
+          variant="contained"
+          color="primary"
+          size={isMobile ? "medium" : "large"}
+          href="/hack/2024_fall"
+          startIcon={<CalendarTodayIcon />}
+        >
+          View Current Hackathon Details
+        </Button>
+      </Box>
+
       <ProjectsContainer>
         <Box mb={isMobile ? 3 : 6}>
           <Typography
@@ -303,15 +317,14 @@ export default function SponsorIndexList() {
               <Typography variant="body1" paragraph style={style}>
                 Opportunity Hack is a premier hackathon that brings together
                 talented students and professionals to create innovative
-                solutions for nonprofits. Our most recent event was held on
-                October 7-8, 2023, both in-person at ASU Tempe and online
-                globally.
+                solutions for nonprofits. Our upcoming event is scheduled for
+                Fall 2024, both in-person and online globally.
                 <br />
                 <Link
-                  href="/hack/2023_fall"
+                  href="/hack/2024_fall"
                   style={{ color: "blue", textDecoration: "underline" }}
                 >
-                  Learn more about our 2023 Fall Hackathon
+                  Learn more about our upcoming 2024 Fall Hackathon
                 </Link>
               </Typography>
               <Typography variant="body1" paragraph style={style}>
@@ -727,60 +740,47 @@ export default function SponsorIndexList() {
             Engagement Opportunities
           </Typography>
           <Grid container spacing={isMobile ? 2 : 3}>
-            <Grid item xs={12} sm={6} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography
-                    variant="h5"
-                    component="h4"
-                    gutterBottom
-                    style={style}
-                  >
-                    Sponsor Fair
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Showcase your brand and interact directly with participants
-                    at our dedicated Sponsor Fair.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography
-                    variant="h5"
-                    component="h4"
-                    gutterBottom
-                    style={style}
-                  >
-                    Tech Talks & Workshops
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Present your latest technologies and share your expertise
-                    through engaging tech talks and hands-on workshops.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography
-                    variant="h5"
-                    component="h4"
-                    gutterBottom
-                    style={style}
-                  >
-                    Branded Challenges
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Create a custom challenge for participants using your
-                    technologies, with dedicated prizes for the best solutions.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            {[
+              {
+                title: "Sponsor Fair",
+                description:
+                  "Showcase your brand and interact directly with participants at our dedicated Sponsor Fair.",
+              },
+              {
+                title: "Tech Talks & Workshops",
+                description:
+                  "Present your latest technologies and share your expertise through engaging tech talks and hands-on workshops.",
+              },
+              {
+                title: "Branded Challenges",
+                description:
+                  "Create a custom challenge for participants using your technologies, with dedicated prizes for the best solutions.",
+              },
+            ].map((item, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Card
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography
+                      variant="h5"
+                      component="h4"
+                      gutterBottom
+                      style={style}
+                    >
+                      {item.title}
+                    </Typography>
+                    <Typography variant="body1" style={style}>
+                      {item.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
         </Box>
 
