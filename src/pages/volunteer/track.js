@@ -31,6 +31,7 @@ import moment from "moment";
 import { withAuthInfo } from "@propelauth/react";
 import dynamic from "next/dynamic";
 import { styled } from "@mui/material";
+import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
 
 const LoginOrRegister = dynamic( () => import("../../components/LoginOrRegister/LoginOrRegister"), { ssr: false });
@@ -98,6 +99,8 @@ const VolunteerTrackingPage = withAuthInfo(
     ];
 
     useEffect(() => {
+        initFacebookPixel();
+
       if (isLoggedIn) {
         fetchTotalHours();
         loadVolunteeringState();
@@ -191,6 +194,11 @@ const VolunteerTrackingPage = withAuthInfo(
       setTotalTime(totalSeconds);
       saveVolunteeringState(totalSeconds);
 
+      trackEvent("volunteering_start", { 
+        commitmentHours: commitmentHours,
+        reason: reason,
+       });
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/volunteering`,
         {
@@ -212,6 +220,11 @@ const VolunteerTrackingPage = withAuthInfo(
 
     const endVolunteering = async () => {
       setIsVolunteering(false);
+
+      trackEvent("volunteering_end", {
+        finalHours: (totalTime - timeLeft) / 3600,
+        reason: reason,
+    });
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/volunteering`,

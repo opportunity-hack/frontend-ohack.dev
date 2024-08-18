@@ -25,7 +25,7 @@ export default function LoginOrRegister({ introText, previousPage }) {
     const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
     
     useEffect(() => {
-        initFacebookPixel(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching , options);
+        initFacebookPixel();
     }, []);
 
     const handleLoginClick = () => {
