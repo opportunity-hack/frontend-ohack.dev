@@ -300,7 +300,7 @@ const volunteerWords = [
       npo_id: npo_id,
       problem_statement_id: problem_statement.id,
       problem_statement_title: problem_statement.title,
-      user_id: user.userId // Propel User ID
+      user_id: user?.userId // Propel User ID
     }    
     ReactPixel.trackCustom("problem_statement_accordion", params);
     ga.event({

@@ -18,7 +18,7 @@ function HackathonList() {
   const [newsData, setNewsData] = useState([]);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=5`)
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=3`)
             .then(response => response.json())
             .then(data => setNewsData(data.text || null))
             .catch(error => console.error(error));

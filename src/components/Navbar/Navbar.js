@@ -54,7 +54,8 @@ const pages = [
   [ '🙏 Mentors', '/about/mentors' ],
   [ '🏆 Judges', '/about/judges' ],
   // Sponsors
-  [ '🎉 Sponsors', '/hack/2024_fall/sponsor' ],
+  [ '🎉 Sponsors', '/sponsor' ],
+
   
   
   // ['[TODO] Dashboard', '/myprofile'],
@@ -62,9 +63,15 @@ const pages = [
 
 const about_settings = [
   [ 'ℹ️ About Us', '/about' ],  
+  [ '🙌 Success Stories', '/about/success-stories' ],
+  [ '🎉 Hackathon?' ,'/hack'],
+
   [ '❤️ Rewards', '/about/hearts' ],
   [ '✅ Project Completion', '/about/completion' ],
-  [ '🎉 Hackathon?' ,'/hack'],
+ 
+  // Process
+  [ '📝 Process', '/about/process' ],
+ 
   [ '🚪 Office Hours', '/office-hours' ],
   // Style Guide
   [ '🎨 Style Guide', '/about/style-guide' ],

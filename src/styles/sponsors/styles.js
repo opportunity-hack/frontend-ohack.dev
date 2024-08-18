@@ -30,6 +30,8 @@ export const LayoutContainer = styling(Grid)({
   alignContent: "center",
   paddingTop: "9rem",    
   backgroundColor: "white",
+  
+  width: "95%",
 });
 
 export const ContentContainer = styling(Grid)({

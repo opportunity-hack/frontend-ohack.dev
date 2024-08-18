@@ -67,91 +67,104 @@ function HeroBanner() {
     });
   };
   return (
-    <GridStyled
-      container
-      direction='row'
-      justifyContent='center'
-      spacing={2} 
-    >
+    <GridStyled container direction="row" justifyContent="center" spacing={2}>
       <Suspense fallback={<div>Loading...</div>}>
         <BackgroundGrid />
       </Suspense>
       {/* Left Container */}
       <BlankContainer xs={12} md={7} lg={7}>
         <TitleContainer container>
-          <Grid key="mainTitleAndLeadForm" direction='row'>
+          <Grid key="mainTitleAndLeadForm" direction="row">
             <TitleStyled />
             <LeadForm />
           </Grid>
         </TitleContainer>
-        <CaptionContainer right={'true'} container>
-          {enabled && <TextStyled>
-            Want to code for social good?
-            <br />
-            Join us!
-          </TextStyled>
-          } 
-
+        <CaptionContainer right={"true"} container>
+          {enabled && (
+            <TextStyled>
+              Want to code for social good?
+              <br />
+              Join us!
+            </TextStyled>
+          )}
 
           <ButtonContainers container>
-          {/* Disable for new nonprofit form instead
+            {/* Disable for new nonprofit form instead
             <ButtonStyled
               onClick={gaButton('button_build_ohack', 'find_a_problem')}
               href='/nonprofit/tRK5YPrc8vpHQabMYIDO'
             >
               Help us build ohack.dev
             </ButtonStyled>
-            */
-          }
-            
-            <ButtonBasicStyle 
-              onClick={() => gaButton('button_submit_project', 'Submit new nonprofit project')}
-              href='/nonprofits/apply'              
-              style={{ color: 'white', backgroundColor: '#0070BA' }}
+            */}
+
+            <ButtonBasicStyle
+              onClick={() =>
+                gaButton(
+                  "button_submit_project",
+                  "Submit new nonprofit project"
+                )
+              }
+              href="/nonprofits/apply"
+              style={{ color: "white", backgroundColor: "#0070BA" }}
             >
-             Send us a project
+              Send us a project
             </ButtonBasicStyle>
 
             <ButtonGoldStyle onClick={openCodeSample}>
               Create an OHack Slack account
             </ButtonGoldStyle>
 
-            {!isLoggedIn && <LoginButton
+            {!isLoggedIn && (
+              <LoginButton
                 variant="contained"
                 disableElevation
-                  onClick={() => redirectToLoginPage()}
+                onClick={() => redirectToLoginPage()}
                 className="login-button"
               >
-                Log In                                                  
-              </LoginButton> 
-            }
+                Log In
+              </LoginButton>
+            )}
 
-            {isLoggedIn && <ButtonBasicStyle
-              style={{ color: 'white', backgroundColor: '#FFC107' }}
-              onClick={() => gaButton('button_profile', 'clicked to see profile')}
-              href='/profile'              
-            >
-              View your profile
-            </ButtonBasicStyle>
-            }
-            
+            {isLoggedIn && (
+              <ButtonBasicStyle
+                style={{ color: "white", backgroundColor: "#FFC107" }}
+                onClick={() =>
+                  gaButton("button_profile", "clicked to see profile")
+                }
+                href="/profile"
+              >
+                View your profile
+              </ButtonBasicStyle>
+            )}
+
             <ButtonBasicStyle
-              onClick={() => gaButton('button_about', 'about us')}
-              href='/about'
+              onClick={() => gaButton("button_donate", "donate")}
+              style={{ color: "white", backgroundColor: "blue" }}
+              target="_blank"
+              href="https://www.paypal.com/donate/?campaign_id=WWL4VPVBUS4SA"
+            >
+              Donate with PayPal
+            </ButtonBasicStyle>
+
+            <ButtonBasicStyle
+              onClick={() => gaButton("button_about", "about us")}
+              href="/about"
             >
               Read more about us
             </ButtonBasicStyle>
 
             <ButtonBasicStyle
-              onClick={() => gaButton('button_see_all', 'see_all_nonprofit_projects')}
-              href='/nonprofits'
+              onClick={() =>
+                gaButton("button_see_all", "see_all_nonprofit_projects")
+              }
+              href="/nonprofits"
             >
               All projects you can work on
             </ButtonBasicStyle>
-
           </ButtonContainers>
         </CaptionContainer>
-      </BlankContainer>   
+      </BlankContainer>
     </GridStyled>
   );
 }

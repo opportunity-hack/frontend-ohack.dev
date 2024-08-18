@@ -24,6 +24,29 @@ function SingleHackathonEvent( { event_id }) {
     icon: "💡"
   },
   {
+    question: "What makes Opportunity Hack unique?",
+    answer: (
+    <>
+    <Typography variant="body1" paragraph>
+    Opportunity Hack stands out in several ways:
+    </Typography>
+    <Typography component="ol">
+    <li><strong>Real-world impact:</strong> We focus on creating lasting solutions for nonprofits, not just demo projects.</li>
+    <li><strong>Open-ended challenges:</strong> Unlike hackathons with predefined ideas, we present open-ended problems from nonprofits, encouraging truly innovative and tailored solutions.</li>
+    <li><strong>Code-centric approach:</strong> We minimize workshops to maximize coding time, emphasizing hands-on learning and development.</li>
+    <li><strong>Professional leadership:</strong> Our events are run by industry professionals passionate about coding for social good, not by students.</li>
+    <li><strong>Long-term support:</strong> We provide resources and mentorship for teams to continue development post-event.</li>
+    <li><strong>Recognition system:</strong> Our 'Hearts' system acknowledges ongoing volunteer contributions.</li>
+    <li><strong>Year-round community:</strong> We foster a strong network of socially-conscious technologists through continuous engagement.</li>
+    </Typography>
+    <Typography variant="body1" paragraph>
+    This unique approach ensures meaningful projects, practical learning, and sustained impact in the nonprofit sector.
+    </Typography>
+    </>
+    ),
+    icon: "🌟"
+    },
+  {
     question: "When and where does Opportunity Hack take place?",
     answer: "Opportunity Hack hosts multiple events throughout the year, both in-person and virtually. Check our website for upcoming event dates and locations.",
     icon: "🗓️"
@@ -75,6 +98,32 @@ function SingleHackathonEvent( { event_id }) {
     answer: "The duration can vary, they are normally over a weekend, but our main events usually start Saturday morning and end Sunday evening.",
     icon: "⏱️"
   },
+  {
+question: "What's the most common question mentors receive?",
+answer: (
+<>
+<Typography variant="body1" paragraph>
+One of the most common questions mentors receive is: "How do we scope our project to be achievable within the hackathon timeframe?"
+</Typography>
+<Typography variant="body1" paragraph>
+Mentors typically advise teams to:
+</Typography>
+<Typography component="ul">
+<li>Focus on a core, MVP (Minimum Viable Product) feature set</li>
+<li>Break the project into smaller, manageable tasks</li>
+<li>Prioritize functionality over perfect design initially</li>
+<li>Consider using existing libraries or APIs to speed up development</li>
+<li>Plan for a demo-ready product, not a fully polished solution</li>
+<li>Build your solution based on the judging criteria</li>
+<li>Start your demo pitches early, like Sunday morning to give you 3 hours to build your video</li>
+</Typography>
+<Typography variant="body1">
+Remember, the goal is to create a working prototype that demonstrates your solution's potential impact for the nonprofit.
+</Typography>
+</>
+),
+icon: "⏱️"
+},
   {
     question: "What happens after the hackathon?",
     answer: (
