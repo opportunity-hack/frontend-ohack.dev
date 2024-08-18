@@ -224,7 +224,7 @@ const VolunteerTrackingPage = withAuthInfo(({ user, isLoggedIn, accessToken }) =
   };
 
   return (
-    <Box sx={{ maxWidth: 800, margin: "auto", mt: 4, p: 2 }}>
+    <Box sx={{ maxWidth: 800, margin: "auto", mt: 10, p: 2 }}>
       {showConfetti && <Confetti />}
       <Typography variant="h4" gutterBottom>
         Volunteer Time Tracking
