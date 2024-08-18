@@ -2,17 +2,17 @@
 import React, { useEffect } from 'react';
 import {useRedirectFunctions} from "@propelauth/react"
 import { useAuthInfo } from '@propelauth/react'
-
 import { Alert, AlertTitle, Stack, Typography } from '@mui/material';
-import ReactPixel from 'react-facebook-pixel';
+
 
 // Import ga
-import * as ga from '../../lib/ga';
+import { initFacebookPixel, trackEvent } from '../../lib/ga';
 
 import {
     ButtonStyled,
     ButtonStyledWithLink
 } from "./styles";
+import { track } from 'react-facebook-pixel';
 
 export default function LoginOrRegister({ introText, previousPage }) {
     const { isLoggedIn, user } = useAuthInfo();
@@ -25,19 +25,11 @@ export default function LoginOrRegister({ introText, previousPage }) {
     const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
     
     useEffect(() => {
-       if (typeof window !== 'undefined') {
-      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-    }
+        initFacebookPixel(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching , options);
     }, []);
 
     const handleLoginClick = () => {
-        ReactPixel.track('Login Slack');
-        ga.event({
-            action: "login_slack",
-            params: {
-                current_page: window.location.pathname
-            }
-        });
+        trackEvent('login_slack', { current_page: window.location.pathname });        
 
         redirectToLoginPage({
             postLoginRedirectUrl: window.location.href
@@ -46,13 +38,7 @@ export default function LoginOrRegister({ introText, previousPage }) {
     };
 
     const handleSignupClick = () => {
-        ReactPixel.track('Signup Slack');
-        ga.event({
-            action: "signup_slack",
-            params: {
-                current_page: window.location.pathname
-            }
-        });
+        trackEvent('signup_slack', { current_page: window.location.pathname });
     };
 
     if(user) {
