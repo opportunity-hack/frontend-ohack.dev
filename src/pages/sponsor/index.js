@@ -317,8 +317,7 @@ export default function SponsorIndexList() {
               <Typography variant="body1" paragraph style={style}>
                 Opportunity Hack is a premier hackathon that brings together
                 talented students and professionals to create innovative
-                solutions for nonprofits. Our upcoming event is scheduled for
-                Fall 2024, both in-person and online globally.
+                solutions for nonprofits. Our upcoming event is scheduled for October 12th & 13th 2024 and will be in-person at ASU in Tempe, Arizona.
                 <br />
                 <Link
                   href="/hack/2024_fall"
@@ -328,7 +327,7 @@ export default function SponsorIndexList() {
                 </Link>
               </Typography>
               <Typography variant="body1" paragraph style={style}>
-                <strong>Key Statistics:</strong>
+                <strong>Key Statistics from 2023:</strong>
                 <ul>
                   <li>Over 300 participants</li>
                   <li>25 projects submitted</li>

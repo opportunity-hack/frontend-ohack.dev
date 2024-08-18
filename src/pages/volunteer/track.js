@@ -10,36 +10,68 @@ import {
   InputLabel,
   Grid,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import FunVolunteerTimer from "../../components/FunVolunteerTimer/FunVolunteerTimer";
 import Confetti from "react-confetti";
+import moment from "moment";
 
-const VolunteerTrackingPage = () => {
+// Import PropelAuth
+
+import { withAuthInfo } from "@propelauth/react";
+
+const roundToOneDecimal = (number) => {
+  return parseFloat(number.toFixed(2));
+};
+
+const VolunteerTrackingPage = withAuthInfo(({ user, isLoggedIn, accessToken }) => {
+
   const [commitmentHours, setCommitmentHours] = useState(0.5);
   const [reason, setReason] = useState("");
   const [isVolunteering, setIsVolunteering] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
+
+  // Response from backend API with total hours of volunteering (not committed hours, but finalized hours)
   const [totalHours, setTotalHours] = useState(0);
+
+  // Use for reporting
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
+
+  // Used to keep things fun
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+
+  // Used to show table with volunteer history stats
+  const [volunteerStats, setVolunteerStats] = useState([]);
+
 
   const photos = [
     "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp",
     "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
     "https://cdn.ohack.dev/ohack.dev/2023_hackathon_3.webp",
     "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp",
+    "https://cdn.ohack.dev/ohack.dev/404/sleeping1.webp",
+    "https://cdn.ohack.dev/ohack.dev/404/sleeping2.webp",
+    "https://cdn.ohack.dev/ohack.dev/404/sleeping3.webp",
+    "https://cdn.ohack.dev/ohack.dev/icon-of-hearts-surrounding-a-technological-cyberpunk-heart-supernova-in-space-.jpeg",
+    "https://cdn.ohack.dev/ohack.dev/definition-of-done-65b90f271348b.webp",
+
   ];
 
   useEffect(() => {
     fetchTotalHours();
     loadVolunteeringState();
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     let timer;
@@ -68,7 +100,7 @@ const VolunteerTrackingPage = () => {
     if (isVolunteering) {
       photoTimer = setInterval(() => {
         setCurrentPhotoIndex((prevIndex) => (prevIndex + 1) % photos.length);
-      }, 60000);
+      }, 60000); // Change the photo every minute
     }
     return () => clearInterval(photoTimer);
   }, [isVolunteering]);
@@ -86,6 +118,9 @@ const VolunteerTrackingPage = () => {
       setTotalTime(savedState.totalTime);
       setCommitmentHours(savedState.commitmentHours);
       setReason(savedState.reason);
+
+      // Log everything
+        console.log("Loaded volunteering state: ", savedState);
     }
   };
 
@@ -101,8 +136,38 @@ const VolunteerTrackingPage = () => {
   };
 
   const fetchTotalHours = async () => {
-    // TODO: Implement API call to fetch total hours
-    setTotalHours(50);
+    // TODO: Implement API call to fetch total hours    
+
+    console.log("Fetching total hours...");
+    console.log("User: ", user);
+
+    if( !isLoggedIn ) {
+        console.log("User is not logged in");
+        return;
+    }
+
+    
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/volunteering?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,            
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Total hours: ", data.totalHours);
+        console.log("Volunteer data: ", data.volunteering);
+        setTotalHours(data.totalHours);
+        setVolunteerStats(data.volunteering);
+      }
+    } catch (error) {
+      console.log("Error fetching total hours: ", error);
+    }
   };
 
   const startVolunteering = async () => {
@@ -112,12 +177,49 @@ const VolunteerTrackingPage = () => {
     setTotalTime(totalSeconds);
     saveVolunteeringState(totalSeconds);
     // TODO: Implement API call to start volunteering session
+    // Call POST /api/users/volunteering with commitmentHours and reason
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/volunteering`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ 
+            "commitmentHours": commitmentHours,
+            "reason": reason
+        }),
+      }
+    );
+    if (response.ok) {
+      console.log("Volunteering session started successfully");
+    }
   };
 
   const endVolunteering = async () => {
     setIsVolunteering(false);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/volunteering`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          finalHours: (totalTime-timeLeft) / 3600,
+          reason: reason,
+        }),
+      }
+    );
+    if (response.ok) {
+      console.log("Volunteering session ended successfully");
+    }
+
     localStorage.removeItem("volunteeringState");
-    // TODO: Implement API call to end volunteering session
     fetchTotalHours();
   };
 
@@ -160,7 +262,8 @@ const VolunteerTrackingPage = () => {
                 <MenuItem value="event_organization">
                   Event Organization
                 </MenuItem>
-                <MenuItem value="coding">Coding</MenuItem>
+                <MenuItem value="judging">Judging</MenuItem>
+                <MenuItem value="coding">Coding (we track this with GitHub commits too)</MenuItem>
                 <MenuItem value="other">Other</MenuItem>
               </Select>
             </FormControl>
@@ -203,8 +306,9 @@ const VolunteerTrackingPage = () => {
           Volunteering Statistics
         </Typography>
         <Typography variant="body1" paragraph>
-          Total Hours Volunteered: {totalHours}
+          Total Hours Volunteered: { roundToOneDecimal(totalHours) }
         </Typography>
+
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={5}>
@@ -230,9 +334,39 @@ const VolunteerTrackingPage = () => {
             </Grid>
           </Grid>
         </LocalizationProvider>
+
+        <TableContainer component={Paper}>
+          <Table sx={{ minWidth: 650 }} aria-label="volunteer statistics table">
+            <TableHead>
+              <TableRow>
+                <TableCell>Date</TableCell>
+                <TableCell align="right">Hours</TableCell>
+                <TableCell>Reason</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {volunteerStats.map((stat, index) => (
+                <TableRow
+                  key={index}
+                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                >
+                  <TableCell component="th" scope="row">
+                    {moment
+                      .utc(stat.timestamp)
+                      .format("MMMM Do YYYY, h:mm:ss a")}
+                  </TableCell>
+                  <TableCell align="right">
+                    {roundToOneDecimal(stat.finalHours)}
+                  </TableCell>
+                  <TableCell>{stat.reason}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
     </Box>
   );
-};
+});
 
 export default VolunteerTrackingPage;
