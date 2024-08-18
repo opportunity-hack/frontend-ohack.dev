@@ -241,7 +241,7 @@ const VolunteerTrackingPage = withAuthInfo(
           width: "100%",
           maxWidth: 800,
           margin: "auto",
-          mt: { xs: 2, sm: 10 },
+          mt: { xs: 10, sm: 10 },
           p: { xs: 1, sm: 2 },
         }}
       >
