@@ -265,6 +265,9 @@ const VolunteerTrackingPage = withAuthInfo(
           <meta property="og:title" content={metaTitle} />
           <meta property="og:description" content={metaDescription} />
           <meta property="og:image" content={ogImage} />
+          <meta property="og:url" content="https://ohack.dev/volunteer/track" />
+          <meta property="og:site_name" content="Opportunity Hack" />
+          <meta property="image" content={ogImage} />
           <meta property="og:type" content="website" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={metaTitle} />
