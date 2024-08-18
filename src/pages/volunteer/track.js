@@ -81,8 +81,8 @@ const VolunteerTrackingPage = withAuthInfo(({ user, isLoggedIn, accessToken }) =
           const newTime = prevTime - 1;
           saveVolunteeringState(newTime);
 
-          // Trigger confetti every 30 minutes
-          if (newTime > 0 && (totalTime - newTime) % 1800 === 0) {
+          // Trigger confetti every 30 minutes (5 seconds before it hits 30 minutes to give time to render)
+          if (newTime > 0 && (totalTime - newTime) % 1795 === 0) {
             triggerConfetti();
           }
 
