@@ -39,18 +39,17 @@ export default function Footer() {
     commitURL = (
       <Link
         data-umami-event="click--github_commit"
-        href={`https://github.com/0xjessel/jessechen.net/commit/${commitSHA}`}
+        href={`https://github.com/opportunity-hack/frontend-ohack.dev/commit/${commitSHA}`}
         isExternal
       >
         <Tooltip
           hasArrow
           label={commitMessage}
-          gutter={12}
-          fontSize="xs"
+          gutter={12}          
           color="whiteAlpha"
           fontFamily="mono"
         >
-          <Typography as="span" display="inline" fontFamily="mono">
+          <Typography as="span" display="inline" fontFamily="mono" color="white">
             {commitSHA.slice(0, 7)}
           </Typography>
         </Tooltip>
