@@ -44,10 +44,12 @@ export default function Footer() {
       >
         <Tooltip
           hasArrow
-          label={commitMessage}
+          title={commitMessage}
           gutter={12}          
-          color="whiteAlpha"
-          fontFamily="mono"
+          placement="top"
+          color="black"
+          bg="white"
+          fontSize="md"          
         >
           <Typography as="span" display="inline" fontFamily="mono" color="white">
             {commitSHA.slice(0, 7)}
