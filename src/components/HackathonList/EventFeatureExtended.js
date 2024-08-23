@@ -12,6 +12,7 @@ import {
 } from "./styles";
 
 import { Grid, Button } from "@mui/material";
+import SponsorMinimal from "../Sponsors/SponsorMinimal";
 
 import { 
   CircularProgressbar
@@ -186,6 +187,7 @@ function EventFeatureExtended(props) {
               { donationCurrent && donationCurrent.thank_you.length > 0 ? `Special thanks to: ${donationCurrent?.thank_you} for donating!` : ""}
             </TypographyStyled>
           </ThankYouContainer>
+          <SponsorMinimal />
         </ProgressContainer>
       </EventExtendedCard>
 

@@ -5,6 +5,7 @@ import React, { Suspense, useEffect } from 'react';
 import * as ga from '../../lib/ga';
 import { LoginButton } from "../Navbar/styles";
 import { useFeatureIsOn } from "@growthbook/growthbook-react";
+import SponsorMinimal from "../Sponsors/SponsorMinimal";  // Add this import
 
 
 import {
@@ -163,6 +164,8 @@ function HeroBanner() {
               All projects you can work on
             </ButtonBasicStyle>
           </ButtonContainers>
+
+          <SponsorMinimal />
         </CaptionContainer>
       </BlankContainer>
     </GridStyled>

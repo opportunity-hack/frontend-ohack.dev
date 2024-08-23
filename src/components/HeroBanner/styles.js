@@ -83,7 +83,7 @@ export const BlankContainer = styled(Grid)({
 
 export const TitleContainer = styled(Grid)((props) => ({
   padding: "1rem 5% 0px 0px",
-  marginTop: "3rem",
+  marginTop: "0rem",
   minHeight: '200px',
   alignItems: "center",
   justifyContent: "center",

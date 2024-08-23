@@ -32,15 +32,12 @@ import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import SponsorshipSlider from '../../components/Hackathon/SponsorshipSlider';
+// Import sponsorLevels and sponsors from data/sponsorData.js
+const { sponsorLevels, sponsors, calculateSupport } = require('../../data/sponsorData');
 
 const getContactLink = () => 'https://forms.gle/giowXMQ4h8h6XwVF8';
 
-const sponsors = [
-  { name: "Meta", logo: "https://i.imgur.com/v1qjSIO.png", hours: 150, donations: 1000, website: "https://meta.com" },
-  { name: "Spotify", logo: "https://i.imgur.com/r9qB2L4.png", hours: 150, donations: 0, website: "https://spotify.com" }
-];
 
-const calculateSupport = (hours, donations) => hours * 100 + donations;
 
 const benefitsData = [
   { benefit: 'Logo on website', innovator: '3 months', changemaker: '6 months', transformer: '1 year', visionary: '2 years' },
@@ -58,12 +55,7 @@ const benefitsData = [
   { benefit: 'Recruiting/interviews', innovator: '-', changemaker: 'Post-event', transformer: 'During & post', visionary: 'Pre, during & post' },    
 ];
 
-const sponsorLevels = [
-  { name: 'Innovator', color: '#C8E6C9', minSupport: 1000, minHours: 20 },
-  { name: 'Changemaker', color: '#BBDEFB', minSupport: 2500, minHours: 50 },
-  { name: 'Transformer', color: '#FFECB3', minSupport: 5000, minHours: 100 },
-  { name: 'Visionary', color: '#E1BEE7', minSupport: 10000, minHours: 200 },
-];
+
 
 export default function SponsorIndexList() {  
   const theme = useTheme();
