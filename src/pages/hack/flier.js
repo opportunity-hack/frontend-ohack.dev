@@ -4,8 +4,8 @@ import QRCode from "react-qr-code";
 
 const FlierComponent = () => {
   const sponsorLogos = [
-    "https://imgur.com/v1qjSIO.png",
-    "https://imgur.com/r9qB2L4.png",
+    "https://cdn.ohack.dev/ohack.dev/sponsors/meta.webp",
+    "https://cdn.ohack.dev/ohack.dev/sponsors/spotify.webp",
   ];
 
   return (

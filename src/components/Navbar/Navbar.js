@@ -87,13 +87,47 @@ export default function NavBar() {
 
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "WebSite",
+    "@type": "Organization",
     name: "Opportunity Hack",
     url: "https://www.ohack.dev/",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://www.ohack.dev/search?q={search_term_string}",
-      "query-input": "required name=search_term_string",
+    logo: "https://cdn.ohack.dev/ohack.dev/ohack_white.webp",
+    description:
+      "Opportunity Hack connects technology with nonprofits to create innovative solutions through hackathons and ongoing projects. Based in Phoenix, Arizona.",
+    sameAs: [
+      "https://www.facebook.com/opportunityhack",
+      "https://twitter.com/opportunityhack",
+      "https://threads.net/opportunityhack",
+      "https://www.linkedin.com/company/opportunity-hack",
+      "https://www.instagram.com/opportunityhack",
+    ],
+    knowsAbout: [
+      "Hackathons",
+      "Nonprofit Technology",
+      "Social Impact",
+      "Volunteer Coding",
+      "Tech for Good",
+      "Arizona Tech",
+    ],
+    event: {
+      "@type": "Event",
+      name: "Opportunity Hack Arizona Hackathon",
+      startDate: "2024-10-12T08:00:00-07:00",
+      endDate: "2024-10-13T18:00:00-07:00",
+      location: {
+        "@type": "Place",
+        name: "ASU Tempe Engineering Center - Generator Labs",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "501 E Tyler Mall",
+          addressLocality: "Tempe",
+          addressRegion: "AZ",
+          postalCode: "85281",
+          addressCountry: "US",
+        },
+      },
+      description:
+        "Annual hackathon bringing together developers, designers, and nonprofits to create tech solutions for social good.",
+      url: "https://www.ohack.dev/hack",
     },
   };
 
@@ -130,8 +164,8 @@ export default function NavBar() {
               className="nav-bar__logo"
               src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
               alt="Opportunity Hack logo"
-              width={256/3}
-              height={122/3}
+              width={256 / 2.5}
+              height={122 / 2.5}
               priority
             />
           </Typography>
@@ -185,7 +219,7 @@ export default function NavBar() {
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <Link href="/" passHref>
               <Image
-                src="https://i.imgur.com/A3FpKQQ.png"
+                src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
                 alt="Opportunity Hack logo"
                 width={100}
                 height={46}
