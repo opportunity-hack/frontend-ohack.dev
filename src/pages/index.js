@@ -48,7 +48,7 @@ const TitleStyled = dynamic(
         Loading Title...
       </div>
     ),
-    ssr: true,
+    ssr: false,
   }
 );
 
