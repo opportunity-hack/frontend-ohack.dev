@@ -85,67 +85,73 @@ export default function SponsorIndexList() {
       label: 'sponsorship',
     });
   };
-  
+
 
   const SponsorCard = ({ sponsor, level }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-    return (      
-      <Paper
-        elevation={3}
-        sx={{
-          p: 2,
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
-          alignItems: "center",
-          gap: 2,
-          backgroundColor: level.color,
-          transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
-          "&:hover": {
-            transform: "translateY(-5px)",
-            boxShadow: 6,
-          },
-        }}
-      >
-        <Avatar
-          src={sponsor.logo}
-          alt={sponsor.name}
-          sx={{ width: 80, height: 80, bgcolor: "white" }}
-          variant="rounded"
-        />
-        <Box
-          sx={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 1 }}
+    return (
+      <Link href={sponsor.website} passHref>
+        <Paper
+          elevation={3}
+          component="a"
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{
+            p: 2,
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: "center",
+            gap: 2,
+            backgroundColor: level.color,
+            transition:
+              "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+            "&:hover": {
+              transform: "translateY(-5px)",
+              boxShadow: 6,
+              cursor: "pointer",
+            },
+            textDecoration: "none",
+            color: "inherit",
+          }}
         >
-          <Typography variant="h6" noWrap>
-            {sponsor.name}
-          </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-            <Chip
-              icon={<AccessTimeIcon />}
-              label={`${sponsor.hours} hours`}
-              size="small"
-              color="primary"
-            />
-            {sponsor.donations > 0 && (
-              <Chip
-                icon={<AttachMoneyIcon />}
-                label={`$${sponsor.donations} donated`}
-                size="small"
-                color="secondary"
-              />
-            )}
-          </Box>
-        </Box>
-        <Tooltip title="Visit sponsor website">
-          <IconButton
-            aria-label="sponsor website"
-            onClick={() => window.open(sponsor.website, "_blank")}
+          <Avatar
+            src={sponsor.logo}
+            alt={sponsor.name}
+            sx={{ width: 80, height: 80, bgcolor: "white" }}
+            variant="rounded"
+          />
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
           >
-            <LinkIcon />
-          </IconButton>
-        </Tooltip>
-      </Paper>
+            <Typography variant="h6" noWrap>
+              {sponsor.name}
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              <Chip
+                icon={<AccessTimeIcon />}
+                label={`${sponsor.hours} hours`}
+                size="small"
+                color="primary"
+              />
+              {sponsor.donations > 0 && (
+                <Chip
+                  icon={<AttachMoneyIcon />}
+                  label={`$${sponsor.donations} donated`}
+                  size="small"
+                  color="secondary"
+                />
+              )}
+            </Box>
+          </Box>
+        </Paper>
+      </Link>
     );
   };
 
@@ -180,7 +186,7 @@ export default function SponsorIndexList() {
               <Typography variant="h6" gutterBottom>
                 Be the first {level.name} sponsor!
               </Typography>
-              <Typography variant="body2" paragraph>
+              <Typography variant="body1" paragraph>
                 Support our mission by volunteering your time or making a
                 donation.
               </Typography>
@@ -403,7 +409,7 @@ export default function SponsorIndexList() {
                   <Typography variant="h6" style={style}>
                     Tech Giants
                   </Typography>
-                  <Typography variant="body2" style={style}>
+                  <Typography variant="body1" style={style}>
                     Meta, Spotify, PayPal, eBay
                   </Typography>
                 </CardContent>
@@ -415,7 +421,7 @@ export default function SponsorIndexList() {
                   <Typography variant="h6" style={style}>
                     Innovative Companies
                   </Typography>
-                  <Typography variant="body2" style={style}>
+                  <Typography variant="body1" style={style}>
                     Honeywell, World Wide Technology, Pixee
                   </Typography>
                 </CardContent>
@@ -427,7 +433,7 @@ export default function SponsorIndexList() {
                   <Typography variant="h6" style={style}>
                     Academic Institutions
                   </Typography>
-                  <Typography variant="body2" style={style}>
+                  <Typography variant="body1" style={style}>
                     Arizona State University, Rutgers, University of Toronto
                   </Typography>
                 </CardContent>
@@ -671,7 +677,7 @@ export default function SponsorIndexList() {
                   >
                     Matthews Crossing Food Bank
                   </Typography>
-                  <Typography variant="body2" paragraph style={style}>
+                  <Typography variant="body1" paragraph style={style}>
                     Streamlined donation tracking system, saving hundreds of
                     volunteer hours annually.
                   </Typography>
@@ -698,7 +704,7 @@ export default function SponsorIndexList() {
                   >
                     Zuri's Circle
                   </Typography>
-                  <Typography variant="body2" paragraph style={style}>
+                  <Typography variant="body1" paragraph style={style}>
                     Developed an event management system, increasing volunteer
                     engagement by 40%.
                   </Typography>
@@ -725,7 +731,7 @@ export default function SponsorIndexList() {
                   >
                     Vidyodaya
                   </Typography>
-                  <Typography variant="body2" paragraph style={style}>
+                  <Typography variant="body1" paragraph style={style}>
                     Created a modern, user-friendly website, boosting online
                     visibility and donations.
                   </Typography>

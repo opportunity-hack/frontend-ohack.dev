@@ -104,7 +104,7 @@ const Custom404 = () => {
           </Box>
         </Box>
         <Box mt={4}>
-          <Typography variant="body2" color="textSecondary">
+          <Typography variant="body1" color="textSecondary">
             If you believe this is an error, please contact us at{' '}
             <Link href="mailto:support@ohack.dev">
               support@ohack.dev

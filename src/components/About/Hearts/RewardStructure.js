@@ -133,10 +133,10 @@ const RewardStructure = () => {
               <CategoryTitle variant="subtitle1">What</CategoryTitle>
               {reward.what.map((item, itemIndex) => (
                 <ItemBox key={itemIndex}>
-                  <StyledTypography variant="body2" color="textSecondary">
+                  <StyledTypography variant="body1" color="textSecondary">
                     {item.primary}
                   </StyledTypography>
-                  <StyledTypography variant="body2">
+                  <StyledTypography variant="body1">
                     {item.secondary}
                   </StyledTypography>
                 </ItemBox>
@@ -144,10 +144,10 @@ const RewardStructure = () => {
               <CategoryTitle variant="subtitle1">How</CategoryTitle>
               {reward.how.map((item, itemIndex) => (
                 <ItemBox key={itemIndex}>
-                  <StyledTypography variant="body2" color="textSecondary">
+                  <StyledTypography variant="body1" color="textSecondary">
                     {item.primary}
                   </StyledTypography>
-                  <StyledTypography variant="body2">
+                  <StyledTypography variant="body1">
                     {item.secondary}
                   </StyledTypography>
                 </ItemBox>

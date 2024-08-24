@@ -123,7 +123,7 @@ const VolunteerPage = () => {
                   <Typography variant="h3" style={{ fontSize: "1.5em" }}>
                     {role.title}
                   </Typography>
-                  <Typography variant="body2" style={{ fontSize: "1em" }}>
+                  <Typography variant="body1" style={{ fontSize: "1em" }}>
                     {role.description}
                   </Typography>
                 </CardContent>

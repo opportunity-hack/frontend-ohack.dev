@@ -13,7 +13,7 @@ export const SlackButton = styled(Button)({
   marginTop: "0.5rem",
   fontWeight: 200,
   padding: "0.5rem 0.9rem",
-  fontSize: "11px",
+  fontSize: "12px",
   textTransform: "unset !important",  
   
   "&:hover": {
@@ -28,7 +28,7 @@ export const NewsLinkButton = styled(Button)({
   marginTop: "0.5rem",
 
   fontWeight: 200,
-  fontSize: "11px",
+  fontSize: "12px",
   textTransform: "unset !important",  
   
   "&:hover": {

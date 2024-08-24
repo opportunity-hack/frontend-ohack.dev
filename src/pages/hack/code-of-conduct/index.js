@@ -151,7 +151,7 @@ const CodeOfConduct = () => {
 
         <Divider sx={{ my: 4 }} />
 
-        <Typography variant="body2" paragraph sx={{ fontSize: '1rem' }}>
+        <Typography variant="body1" paragraph sx={{ fontSize: '1rem' }}>
           This Code of Conduct is adapted from the best practices of various tech communities and hackathons. We are committed to revisiting and refining these guidelines to ensure they best serve our community.
         </Typography>
 

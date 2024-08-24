@@ -7,6 +7,7 @@ import {
   calculateSupport,
 } from "../../data/sponsorData";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
+import Image from "next/image";
 
 const SponsorMinimal = () => {
   useEffect(() => {
@@ -79,7 +80,7 @@ const SponsorMinimal = () => {
                   mb: 1,
                 }}
               >
-                <img
+                <Image
                   src={sponsor.logo}
                   alt={sponsor.name}
                   style={{
@@ -87,10 +88,12 @@ const SponsorMinimal = () => {
                     maxHeight: "100%",
                     objectFit: "contain",
                   }}
+                  width={60}
+                  height={60}
                 />
               </Box>
               <Typography
-                variant="subtitle2"
+                variant="subtitle1"
                 align="center"
                 sx={{ minHeight: 40, display: "flex", alignItems: "center" }}
               >
@@ -112,7 +115,7 @@ const SponsorMinimal = () => {
         }
         sx={{ mt: 1 }}
       >
-        <Typography variant="body2">View all sponsors</Typography>
+        <Typography variant="body1">View all sponsors</Typography>
       </Link>
     </Box>
   );

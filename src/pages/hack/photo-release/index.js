@@ -50,7 +50,7 @@ const PhotoRelease = () => {
           <Typography variant="body1" sx={{ mt: 1, fontSize: '1.1rem' }}>
             As a nonprofit dedicated to coding for social good, we pledge to use your images responsibly. Our goal is to inspire others, showcase the positive impact of technology on society, and encourage more people to join our mission of using coding skills to make the world a better place.
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', fontSize: '1rem' }}>
+          <Typography variant="body1" sx={{ mt: 1, fontStyle: 'italic', fontSize: '1rem' }}>
             Remember: Your participation helps us demonstrate the power of technology in creating positive change!
           </Typography>
         </Paper>
@@ -63,7 +63,7 @@ const PhotoRelease = () => {
           <Typography variant="body1" sx={{ mt: 1, fontSize: '1.1rem' }}>
             By signing this agreement, you also consent to having your "eureka moment" captured when you finally solve that complex algorithm for a nonprofit's project. Don't worry, we promise to showcase your brilliance, not your caffeine-induced coding frenzy!
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', fontSize: '1rem' }}>
+          <Typography variant="body1" sx={{ mt: 1, fontStyle: 'italic', fontSize: '1rem' }}>
             Remember: In the world of coding for good, every snapshot tells a story of positive change!
           </Typography>
         </Paper>

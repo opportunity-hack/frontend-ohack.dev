@@ -8,19 +8,18 @@ export const sponsorLevels = [
 export const sponsors = [
   {
     name: "Meta",
-    logo: "https://i.imgur.com/v1qjSIO.png",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/meta.webp",
     hours: 150,
     donations: 1000,
     website: "https://meta.com",
   },
   {
     name: "Spotify",
-    logo: "https://i.imgur.com/r9qB2L4.png",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/spotify.webp",
     hours: 150,
     donations: 0,
     website: "https://spotify.com",
   },
-  
 ];
 
 export const calculateSupport = (hours, donations) => hours * 100 + donations;

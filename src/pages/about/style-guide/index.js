@@ -63,7 +63,7 @@ export default function StyleGuide(){
       </Head>
 
       <TitleContainer container>
-        <Typography variant="h1">
+        <Typography variant="h2">
           Opportunity Hack Brand and Style Guide
         </Typography>
         <Typography variant="body1">
@@ -97,7 +97,7 @@ export default function StyleGuide(){
                 >
                   {name}
                 </Box>
-                <Typography variant="body2">{value}</Typography>
+                <Typography variant="body1">{value}</Typography>
               </Grid>
             ))}
           </Grid>
@@ -213,7 +213,7 @@ export default function StyleGuide(){
                   height={80}
                 />            
               </Box>
-              <Typography variant="body2" mt={1}>{color.replace('_', ' ')}</Typography>
+              <Typography variant="body1" mt={1}>{color.replace('_', ' ')}</Typography>
               <LogoDownloadButton type="2-letter" color={color} />
             </Grid>
           ))}
