@@ -1,123 +1,129 @@
-import dynamic from "next/dynamic";
-import React, { Fragment } from "react";
+import React, { Fragment, Suspense } from "react";
 import Head from "next/head";
-import { GrowthBook } from "@growthbook/growthbook-react";
-import { useEffect } from "react";
-import { GrowthBookProvider } from "@growthbook/growthbook-react";
+import dynamic from "next/dynamic";
 import { useAuthInfo } from "@propelauth/react";
+// Separate GrowthBook initialization
+import { initGrowthBook } from "../lib/growthbook";
 
-// Import ga
-import * as ga from "../lib/ga";
 
+// Dynamically import GrowthBook components
+const GrowthBookProvider = dynamic(
+  () =>
+    import("@growthbook/growthbook-react").then(
+      (mod) => mod.GrowthBookProvider
+    ),
+  { ssr: false }
+);
+
+// Lazy load components
 const HeroBanner = dynamic(
   () => import("../components/HeroBanner/HeroBanner"),
   {
-    loading: () => <p>Loading...</p>,
-    ssr: false,
+    loading: () => (
+      <div style={{ height: "400px", background: "#f0f0f0" }}>
+        Loading Hero...
+      </div>
+    ),
+    ssr: true,
   }
 );
 
 const HackathonList = dynamic(
   () => import("../components/HackathonList/HackathonList"),
   {
-    loading: () => <p>Loading...</p>,
+    loading: () => (
+      <div style={{ height: "600px", background: "#f0f0f0" }}>
+        Loading Hackathons...
+      </div>
+    ),
     ssr: false,
   }
 );
 
-const growthbook = new GrowthBook({
-  apiHost: "https://cdn.growthbook.io",
-  clientKey: "sdk-09TvTBUc2phrLe",
-  enableDevMode: true,
-  trackingCallback: (experiment, result) => {
-    console.log("Viewed Experiment", {
-      experimentId: experiment.key,
-      variationId: result.key,
-    });
+const TitleStyled = dynamic(
+  () => import("../components/HeroBanner/TitleStyledComponent"),
+  {
+    loading: () => (
+      <div style={{ height: "55px", background: "#f0f0f0" }}>
+        Loading Title...
+      </div>
+    ),
+    ssr: true,
+  }
+);
 
-    ga.event({
-      action: "experiment_viewed",
-      params: {
-        experiment_id: experiment.key,
-        variation_id: result.key,
-      },
-    });
-  },
+const LeadForm = dynamic(() => import("../components/LeadForm/LeadForm"), {
+  loading: () => (
+    <div style={{ height: "55px", background: "#f0f0f0" }}>
+      Loading Form...
+    </div>
+  ),
+  ssr: false,
 });
+
+
+const BackgroundGrid = dynamic(
+  () => import("../components/HeroBanner/BackgroundGridComponent"),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+);
+
 
 export default function Home() {
   const { user } = useAuthInfo();
+  const growthbook = React.useMemo(() => initGrowthBook(user?.userId), [user]);
 
-  var experimentUserId = Math.random().toString(36).substring(7);
-  if (user && user.userId) {
-    experimentUserId = user.userId;
-  }
-  console.log(experimentUserId);
-
-  growthbook.setAttributes({
-    id: experimentUserId,
-  });
-
-  useEffect(() => {
+  React.useEffect(() => {
     growthbook.init({ streaming: true });
-  }, []);
+  }, [growthbook]);
 
   return (
     <Fragment>
       <Head>
-        <title>
-          Opportunity Hack: Tech Hackathons for Social Good, Empowering
-          Nonprofits, Learn how to code, Solve end-to-end problems
-        </title>
-                
+        <title>Opportunity Hack: Tech Hackathons for Social Good</title>
+        <meta
+          name="description"
+          content="Empowering volunteers to create tech solutions for nonprofits, fostering community bonds."
+        />
+        <link rel="preconnect" href="https://cdn.growthbook.io" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" />        
       </Head>
       <GrowthBookProvider growthbook={growthbook}>
-        <HeroBanner />
+        <Suspense
+          fallback={
+            <div style={{ height: "100vh", background: "#f0f0f0" }}>
+              Loading...
+            </div>
+          }
+        >
+          <BackgroundGrid />
+          <TitleStyled />
+          <LeadForm />
+          <HeroBanner />
+        </Suspense>
       </GrowthBookProvider>
       <HackathonList />
     </Fragment>
   );
 }
 
-export const getStaticProps = async ({ params = {} } = {}) => {
-  var title =
+export async function getStaticProps() {
+  const title =
     "Opportunity Hack: Tech Hackathons for Social Good, Empowering Nonprofits, Learn how to code, Solve end-to-end problems";
-  var metaDescription =
+  const metaDescription =
     "Empowering volunteers to create tech solutions for nonprofits, fostering community bonds. Join us at Opportunity Hack to use your skills for good, boost your resume, and find purpose in work.";
 
-  // Helpful Docs:
-  // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
-  // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags
-  // https://github.com/vercel/next.js/issues/35172#issuecomment-1169362010
   return {
     props: {
-      title: title,
+      title,
       openGraphData: [
-        {
-          name: "title",
-          content: title,
-          key: "title",
-        },
-        {
-          property: "og:title",
-          content: title,
-          key: "ogtitle",
-        },
-        {
-          name: "description",
-          content: metaDescription,
-          key: "desc",
-        },
-        {
-          property: "og:description",
-          content: metaDescription,
-          key: "ogdesc",
-        },
-        {
-          property: "og:type",
-          content: "website",
-          key: "website",
-        },
+        { name: "title", content: title, key: "title" },
+        { property: "og:title", content: title, key: "ogtitle" },
+        { name: "description", content: metaDescription, key: "desc" },
+        { property: "og:description", content: metaDescription, key: "ogdesc" },
+        { property: "og:type", content: "website", key: "website" },
         {
           property: "og:image",
           content: "https://i.imgur.com/xYrA32J.png",
@@ -146,4 +152,4 @@ export const getStaticProps = async ({ params = {} } = {}) => {
       ],
     },
   };
-};
+}

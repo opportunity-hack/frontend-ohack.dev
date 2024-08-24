@@ -58,14 +58,14 @@ export const ButtonBasicStyle = styled(Button)({
 
 // Grid
 export const GridStyled = styled(Grid)((props) => ({
-  padding: "8rem 6rem 6rem 6rem",
+  padding: "2rem",
   height: "100%",
   width: "80%",
   margin: "auto",
   justifyContent: "center",
 
   [props.theme.breakpoints.down("lg")]: {
-    padding: "8rem 0rem 6rem 0rem",
+    padding: "2rem 0rem 2rem 0rem",
   },
 
   [props.theme.breakpoints.down("md")]: {
