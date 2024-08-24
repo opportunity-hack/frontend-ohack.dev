@@ -1,9 +1,17 @@
 import React from "react";
 import Link from "next/link";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import { FaSlack } from "react-icons/fa";
+
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import { FaThreads } from "react-icons/fa6";
+
+import {
+  Instagram,
+  Facebook,
+  LinkedIn,
+  Twitter,
+  GitHub,
+} from "@mui/icons-material";
+
+import { FaThreads, FaSlack } from "react-icons/fa6";
 
 import {
   FooterContainer,
@@ -17,13 +25,6 @@ import {
   IconLink,
   Hashtag,
 } from "./styles";
-import {
-  Instagram,
-  Facebook,
-  LinkedIn,
-  Twitter,
-  GitHub,
-} from "@mui/icons-material";
 import { Typography } from "@mui/material";
 import { Tooltip } from "@mui/material";
 
@@ -59,6 +60,27 @@ export default function Footer() {
     );
   }
 
+  const SocialIcon = ({ href, ariaLabel, icon: Icon }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={ariaLabel}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "44px",
+        height: "44px",
+        marginRight: "1rem",
+        color: "inherit",
+        textDecoration: "none",
+      }}
+    >
+      <Icon style={{ width: "24px", height: "24px" }} />
+    </a>
+  );
+
   return (
     <FooterContainer container>
       <InnerContainer container>
@@ -73,73 +95,43 @@ export default function Footer() {
           </MutedText>
 
           <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
-          <IconLink
-            href="https://www.instagram.com/opportunityhack/"
-            target="_blank"
-          >
-            <Instagram
-              fontSize="large"
-              style={{ marginRight: "2rem", width: "24px", height: "24px" }}
-            >
-              {" "}
-            </Instagram>
-          </IconLink>
-          <IconLink
-            href="https://www.facebook.com/OpportunityHack/"
-            target="_blank"
-          >
-            <Facebook
-              fontSize="large"
-              style={{ marginRight: "2rem", width: "24px", height: "24px" }}
-            />
-          </IconLink>
-          <IconLink
-            href="https://www.linkedin.com/company/opportunity-hack/"
-            target="_blank"
-          >
-            <LinkedIn
-              fontSize="large"
-              style={{ marginRight: "2rem", width: "24px", height: "24px" }}
-            />
-          </IconLink>
-          <IconLink
-            href="https://www.threads.net/@opportunityhack"
-            target="_blank"
-          >
-            <FaThreads
-              fontSize="large"
-              style={{
-                marginRight: "2rem",
-                marginBottom: "0.25rem",
-                width: "24px",
-                height: "24px",
-              }}
-            />
-          </IconLink>
-          <IconLink href="https://opportunity-hack.slack.com" target="_blank">
-            <FaSlack
-              fontSize="large"
-              style={{
-                marginRight: "2rem",
-                marginBottom: "0.25rem",
-                width: "24px",
-                height: "24px",
-              }}
-            />
-          </IconLink>
-          <IconLink href="https://twitter.com/opportunityhack" target="_blank">
-            <Twitter
-              fontSize="large"
-              style={{ marginRight: "2rem", width: "24px", height: "24px" }}
-            />
-          </IconLink>
-          <IconLink href="https://github.com/opportunity-hack/" target="_blank">
-            <GitHub
-              fontSize="large"
-              style={{ marginRight: "2rem", width: "24px", height: "24px" }}
-            />
-            <br></br>
-          </IconLink>
+          <nav aria-label="Social media links">
+          <SocialIcon 
+            href="https://www.instagram.com/opportunityhack/" 
+            ariaLabel="Follow us on Instagram"
+            icon={Instagram}
+          />
+          <SocialIcon 
+            href="https://www.facebook.com/OpportunityHack/" 
+            ariaLabel="Follow us on Facebook"
+            icon={Facebook}
+          />
+          <SocialIcon 
+            href="https://www.linkedin.com/company/opportunity-hack/" 
+            ariaLabel="Connect with us on LinkedIn"
+            icon={LinkedIn}
+          />
+          <SocialIcon 
+            href="https://www.threads.net/@opportunityhack" 
+            ariaLabel="Follow us on Threads"
+            icon={FaThreads}
+          />
+          <SocialIcon 
+            href="https://opportunity-hack.slack.com" 
+            ariaLabel="Join our Slack community"
+            icon={FaSlack}
+          />
+          <SocialIcon 
+            href="https://twitter.com/opportunityhack" 
+            ariaLabel="Follow us on Twitter"
+            icon={Twitter}
+          />
+          <SocialIcon 
+            href="https://github.com/opportunity-hack/" 
+            ariaLabel="View our projects on GitHub"
+            icon={GitHub}
+          />
+        </nav>
           <div style={{ marginTop: "1rem" }}>
             <Hashtag>#socialgood</Hashtag> &nbsp;
             <Hashtag>#nonprofit</Hashtag> &nbsp;
@@ -170,13 +162,7 @@ export default function Footer() {
                 Sponsor Social Good
               </StyledLink>{" "}
               <OpenInNewIcon />
-            </LinkListItem>
-            <LinkListItem key="githubohack">
-              <StyledLink href="https://github.com/opportunity-hack/">
-                GitHub
-              </StyledLink>{" "}
-              <GitHubIcon />
-            </LinkListItem>
+            </LinkListItem>            
             <LinkListItem key="faqohack">
               <StyledLink href="https://www.ohack.org/about/faq">
                 FAQ
