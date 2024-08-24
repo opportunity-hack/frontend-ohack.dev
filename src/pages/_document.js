@@ -69,12 +69,7 @@ export default function Document() {
                         `,
                     }}
                 />
-
-                <style data-href="https://cdn.jsdelivr.net/npm/react-circular-progressbar@2.1.0/dist/styles.css" />
-
-                <style data-href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Inter&family=Space+Grotesk&display=optional" />
-
-                <style data-href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" />
+                
             </Head>
             <body>
                 <Main />

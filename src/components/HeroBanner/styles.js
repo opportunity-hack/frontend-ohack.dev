@@ -122,16 +122,16 @@ export const ButtonContainers = styled(Grid)((props) => ({
 
 export const TitleStyled = styled(Typography)(({ theme }) => ({
   fontDisplay: "swap",
-  fontSize: "clamp(24px, 5vw, 48px)",
+  fontSize: "clamp(18px, 3vw, 20px)",
   lineHeight: 1.2,
-  fontWeight: 400,
+  fontWeight: 250,
   color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-  letterSpacing: "-0.05em",
+  letterSpacing: "-0.03em",
   textAlign: "center",
   maxWidth: "100%",
   margin: "0 auto",
-  padding: "16px",
+  padding: "14px",
 
   "& .highlight": {
     color: theme.palette.primary.main,
@@ -139,7 +139,7 @@ export const TitleStyled = styled(Typography)(({ theme }) => ({
   },
 
   [theme.breakpoints.down("md")]: {
-    fontSize: "clamp(20px, 8vw, 36px)",
+    fontSize: "clamp(14px, 5vw, 18px)",
   },
 }));
 

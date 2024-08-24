@@ -37,7 +37,7 @@ function HeroBanner() {
 
   useEffect(() => {
     // Simulate loading delay (remove this in production)
-    const timer = setTimeout(() => setLoading(false), 1550);
+    const timer = setTimeout(() => setLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
 
@@ -114,8 +114,10 @@ function HeroBanner() {
       ) : (
         <BlankContainer xs={12} md={7} lg={7}>
           <TitleContainer container>
-            <Grid key="mainTitleAndLeadForm" direction="row">
+            <Grid key="mainTitle" direction="row">
               <TitleStyled />
+            </Grid>
+            <Grid key="leadForm" direction="row">
               <LeadForm />
             </Grid>
           </TitleContainer>

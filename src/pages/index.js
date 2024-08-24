@@ -69,52 +69,7 @@ export default function Home() {
           Opportunity Hack: Tech Hackathons for Social Good, Empowering
           Nonprofits, Learn how to code, Solve end-to-end problems
         </title>
-
-        {/* Font Preloading */}
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          as="style"
-          href="https://fonts.googleapis.com/css2?family=Your+Font+Family&display=swap"
-        />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Your+Font+Family&display=swap"
-          media="print"
-          onLoad="this.media='all'"
-        />
-
-        {/* Inline Critical CSS */}
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-          /* Critical styles for TitleStyled component */
-          .MuiTypography-root {
-            font-display: swap;
-            font-size: clamp(24px, 5vw, 48px);
-            line-height: 1.2;
-            font-weight: 400;
-            color: #333333;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            letter-spacing: -0.05em;
-            text-align: center;
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 16px;
-          }
-          @media (max-width: 900px) {
-            .MuiTypography-root {
-              font-size: clamp(20px, 8vw, 36px);
-            }
-          }
-          /* Add other critical styles here */
-        `,
-          }}
-        />
+                
       </Head>
       <GrowthBookProvider growthbook={growthbook}>
         <HeroBanner />
