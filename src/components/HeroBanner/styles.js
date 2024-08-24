@@ -4,7 +4,7 @@ import {
   Typography,
   css,
   keyframes,
-  styled,
+  styled,  
 } from "@mui/material";
 
 // Button
@@ -119,22 +119,27 @@ export const ButtonContainers = styled(Grid)((props) => ({
   justifyContent: "center",
 }));
 
-// Typography
-export const TitleStyled = styled(Typography)((props) => ({
+
+export const TitleStyled = styled(Typography)(({ theme }) => ({
   fontDisplay: "swap",
-  fontSize: "1.9em",
-  lineHeight: "1em",
-  fontWeight: "400",
+  fontSize: "clamp(24px, 5vw, 48px)",
+  lineHeight: 1.2,
+  fontWeight: 400,
   color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-  letterSpacing: "-0.1rem",
-  alignItems: "center",
-  minHeight: "100px",
-  display: "flex",  
+  letterSpacing: "-0.05em",
+  textAlign: "center",
+  maxWidth: "100%",
+  margin: "0 auto",
+  padding: "16px",
 
-  [props.theme.breakpoints.down("md")]: {
-    fontSize: "8vw",
-    lineHeight: "8.25vw",
+  "& .highlight": {
+    color: theme.palette.primary.main,
+    display: "inline",
+  },
+
+  [theme.breakpoints.down("md")]: {
+    fontSize: "clamp(20px, 8vw, 36px)",
   },
 }));
 
