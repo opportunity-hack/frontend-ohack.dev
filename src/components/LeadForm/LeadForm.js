@@ -6,7 +6,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import ReactRecaptcha3 from 'react-google-recaptcha3';
 import CheckIcon from '@mui/icons-material/Check';
 
 const LeadForm = () => {
@@ -28,39 +27,38 @@ const LeadForm = () => {
         setName(event.target.value);
     };
 
-    const handleClose = () => {
-        ReactRecaptcha3.getToken().then((token) => {                
-                fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/lead` , {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, email, token }),
-            })
-            .then(response => {
-                // Handle response
-                if (response.ok) {                    
-                    setSubmitted(true);                    
-                } else {                    
-                    setSubmitted(false);
-                }
-            })
-            .catch(error => {
-                setSubmitted(false);                
-            });
-        });
-
-
-        setOpen(false);
-    };
-
-    useEffect(() => {     
-        ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY).then(
-        (status) => {
-            // console.log(status); // Should log SUCCESS
-        }
+    const handleClose = async () => {
+      try {
+        const ReactRecaptcha3 = (await import("react-google-recaptcha3"))
+          .default;
+        await ReactRecaptcha3.init(
+          process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY
         );
-    }, []);    
+        const token = await ReactRecaptcha3.getToken();
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/lead`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, email, token }),
+          }
+        );
+
+        if (response.ok) {
+          setSubmitted(true);
+        } else {
+          setSubmitted(false);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        setSubmitted(false);
+      }
+
+      setOpen(false);
+    };
 
     return (
         <form onSubmit={handleSubmit}>
