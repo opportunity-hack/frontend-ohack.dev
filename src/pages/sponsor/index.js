@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TitleContainer, LayoutContainer, ProjectsContainer, LinkStyled, ButtonBasicStyle } from '../../styles/sponsors/styles';
 import {
   Grid,
@@ -18,7 +18,7 @@ import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-
+import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
@@ -62,6 +62,11 @@ export default function SponsorIndexList() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedAmount, setSelectedAmount] = useState(0);
 
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
+
+
 
   const mobileStyle = { fontSize: '12px' };
   const desktopStyle = { fontSize: '14px' };
@@ -72,6 +77,15 @@ export default function SponsorIndexList() {
     fontWeight: 'bold', 
     backgroundColor: '#f0f0f0' 
   };
+
+  const gaButton = (category, action) => {
+    trackEvent({
+      action: action,
+      category: category,
+      label: 'sponsorship',
+    });
+  };
+  
 
   const SponsorCard = ({ sponsor, level }) => {
     const theme = useTheme();
