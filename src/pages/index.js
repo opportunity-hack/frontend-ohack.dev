@@ -87,8 +87,7 @@ export default function Home() {
           name="description"
           content="Empowering volunteers to create tech solutions for nonprofits, fostering community bonds."
         />
-        <link rel="preconnect" href="https://cdn.growthbook.io" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" />        
+        <link rel="preconnect" href="https://cdn.growthbook.io" />        
       </Head>
       <GrowthBookProvider growthbook={growthbook}>
         <Suspense
