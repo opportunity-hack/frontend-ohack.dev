@@ -6,7 +6,7 @@ import { Grid } from "@mui/material";
 
 const TitleStyledComponent = () => {
   return (
-    <Grid mt={10} container spacing={0.5} alignItems="center">
+    <Grid mt={1} container spacing={0.5} alignItems="center">
       <TitleStyled mt={10} component="h2" variant="h2">
         The place where{" "}
         <span className="highlight">

@@ -89,7 +89,7 @@ const LeadForm = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Grid mt={1} container spacing={0.5} alignItems="center">
+      <Grid mt={10} container spacing={0.5} alignItems="center">
         <Grid item xs={7} sm={7} md={7}>
           <TextField
             label="Email Address"
