@@ -1,5 +1,5 @@
-import React from 'react';
-import { TitleContainer, LayoutContainer, ProjectsContainer, LinkStyled } from '../../styles/sponsors/styles';
+import React, { useState } from "react";
+import { TitleContainer, LayoutContainer, ProjectsContainer, LinkStyled, ButtonBasicStyle } from '../../styles/sponsors/styles';
 import {
   Grid,
   Typography,
@@ -60,6 +60,8 @@ const benefitsData = [
 export default function SponsorIndexList() {  
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [selectedAmount, setSelectedAmount] = useState(0);
+
 
   const mobileStyle = { fontSize: '12px' };
   const desktopStyle = { fontSize: '14px' };
@@ -75,7 +77,7 @@ export default function SponsorIndexList() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-    return (
+    return (      
       <Paper
         elevation={3}
         sx={{
@@ -309,7 +311,9 @@ export default function SponsorIndexList() {
               <Typography variant="body1" paragraph style={style}>
                 Opportunity Hack is a premier hackathon that brings together
                 talented students and professionals to create innovative
-                solutions for nonprofits. Our upcoming event is scheduled for October 12th & 13th 2024 and will be in-person at ASU in Tempe, Arizona.
+                solutions for nonprofits. Our upcoming event is scheduled for
+                October 12th & 13th 2024 and will be in-person at ASU in Tempe,
+                Arizona.
                 <br />
                 <Link
                   href="/hack/2024_fall"
@@ -482,7 +486,23 @@ export default function SponsorIndexList() {
           <SponsorshipSlider
             sponsorLevels={sponsorLevels}
             isMobile={isMobile}
+            setSelectedAmount={setSelectedAmount}
           />
+          {selectedAmount > 0 && (
+            <Box mt={2}>
+              <Typography variant="h6" gutterBottom>
+                Donate ${selectedAmount} via PayPal:
+              </Typography>
+              <ButtonBasicStyle
+                onClick={() => gaButton("button_donate", "donate")}
+                style={{ color: "white", backgroundColor: "blue" }}
+                target="_blank"
+                href="https://www.paypal.com/donate/?campaign_id=WWL4VPVBUS4SA"
+              >
+                Donate with PayPal
+              </ButtonBasicStyle>
+            </Box>
+          )}
         </Box>
 
         <Box mt={isMobile ? 3 : 6}>
