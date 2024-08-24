@@ -129,7 +129,8 @@ export const TitleStyled = styled(Typography)((props) => ({
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
   letterSpacing: "-0.1rem",
   alignItems: "center",
-
+  minHeight: "100px",
+  display: "flex",  
 
   [props.theme.breakpoints.down("md")]: {
     fontSize: "8vw",

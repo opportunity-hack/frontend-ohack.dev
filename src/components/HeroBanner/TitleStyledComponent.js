@@ -1,19 +1,25 @@
-import React from 'react';
+import React from "react";
+import { TitleStyled, SpanText } from "./styles";
 
-import {
-  TitleStyled,
-  SpanText
-} from './styles';
-
-const TitleStyledComponent = () => (
+const TitleStyledComponent = () => {
+  return (
     <TitleStyled>
-      <div class="headline">
-        The place where 
-            <SpanText> Nonprofits, Hackers, Mentors, Volunteers </SpanText>
-        
+      <h1 className="headline">
+        The place where{" "}
+        <SpanText aria-label="Nonprofits, Hackers, Mentors, Volunteers">
+          <span className="visually-hidden">Nonprofits, </span>
+          <span>Nonprofits</span>
+          <span className="visually-hidden">, </span>
+          <span>Hackers</span>
+          <span className="visually-hidden">, </span>
+          <span>Mentors</span>
+          <span className="visually-hidden">, </span>
+          <span>Volunteers</span>
+        </SpanText>{" "}
         unite
-        </div>
+      </h1>
     </TitleStyled>
-);
+  );
+};
 
-export default TitleStyledComponent;
+export default React.memo(TitleStyledComponent);
