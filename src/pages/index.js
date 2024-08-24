@@ -36,7 +36,7 @@ const HackathonList = dynamic(
         Loading Hackathons...
       </div>
     ),
-    ssr: false,
+    ssr: true,
   }
 );
 
