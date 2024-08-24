@@ -9,13 +9,21 @@ import { useAuthInfo } from '@propelauth/react'
 // Import ga
 import * as ga from '../lib/ga';
 
-const HeroBanner = dynamic(() => import('../components/HeroBanner/HeroBanner'), {
-  ssr: false,
-});
+const HeroBanner = dynamic(
+  () => import("../components/HeroBanner/HeroBanner"),
+  {
+    loading: () => <p>Loading...</p>,
+    ssr: false,
+  }
+);
 
-const HackathonList = dynamic(() => import('../components/HackathonList/HackathonList'), {
-  ssr: false
-});
+const HackathonList = dynamic(
+  () => import("../components/HackathonList/HackathonList"),
+  {
+    loading: () => <p>Loading...</p>,
+    ssr: false,
+  }
+);
 
 
 const growthbook = new GrowthBook({

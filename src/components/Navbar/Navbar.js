@@ -223,6 +223,7 @@ export default function NavBar() {
                 alt="Opportunity Hack logo"
                 width={100}
                 height={46}
+                priority
               />
             </Link>
           </Box>
