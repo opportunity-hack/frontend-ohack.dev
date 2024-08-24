@@ -16,14 +16,28 @@ const LeadForm = () => {
   const [submitted, setSubmitted] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
 
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setOpen(true);
+    setIsLoading(true);
+    try {
+      const ReactRecaptcha3 = (await import("react-google-recaptcha3")).default;
+      await ReactRecaptcha3.init(
+        process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY
+      );
+      setRecaptchaLoaded(true);
+    } catch (error) {
+      console.error("Error loading reCAPTCHA:", error);
+      setError("Failed to load reCAPTCHA. Please try again.");
+    } finally {
+      setIsLoading(false);
+      setOpen(true);
+    }
   };
 
   const handleNameChange = (event) => {
@@ -31,14 +45,16 @@ const LeadForm = () => {
   };
 
   const handleClose = async () => {
+    if (!recaptchaLoaded) {
+      setError("reCAPTCHA not loaded. Please try again.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
       const ReactRecaptcha3 = (await import("react-google-recaptcha3")).default;
-      await ReactRecaptcha3.init(
-        process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY
-      );
       const token = await ReactRecaptcha3.getToken();
 
       if (!token) {
@@ -122,7 +138,11 @@ const LeadForm = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleClose} color="success" disabled={isLoading}>
+          <Button
+            onClick={handleClose}
+            color="success"
+            disabled={isLoading || !recaptchaLoaded}
+          >
             {isLoading ? <CircularProgress size={24} /> : "Ship it"}
           </Button>
         </DialogActions>
