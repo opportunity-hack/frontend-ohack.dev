@@ -6,7 +6,7 @@
     ".next/cache"
   ],
   "dependencies": {
-    "@date-io/date-fns": "^3.0.0",
+    "@date-io/date-fns": "^2.17.0",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@growthbook/growthbook-react": "^1.2.0",
@@ -14,10 +14,10 @@
     "@mui/lab": "^5.0.0-alpha.173",
     "@mui/material": "^5.16.7",
     "@mui/x-data-grid": "^7.14.0",
-    "@mui/x-date-pickers": "^7.14.0",
+    "@mui/x-date-pickers": "^6.18.2",
     "@propelauth/react": "^2.0.22",
     "axios": "^1.7.5",
-    "date-fns": "^2.29.3",
+    "date-fns": "^2.30.0",
     "eslint-config-next": "^14.2.6",
     "eslint-config-react-app": "^7.0.1",
     "lodash": "^4.17.21",
