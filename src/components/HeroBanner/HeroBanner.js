@@ -37,7 +37,7 @@ function HeroBanner() {
 
   useEffect(() => {
     // Simulate loading delay (remove this in production)
-    const timer = setTimeout(() => setLoading(false), 750);
+    const timer = setTimeout(() => setLoading(false), 1550);
     return () => clearTimeout(timer);
   }, []);
 
