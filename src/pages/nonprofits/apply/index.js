@@ -6,7 +6,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { Parallax } from "react-parallax";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ReactRecaptcha3 from 'react-google-recaptcha3';
-import { initFacebookPixel, trackEvent } from '../../../lib/ga';
+import { initFacebookPixel, trackEvent, set } from '../../../lib/ga';
 
 export default function Apply({ title, description, openGraphData }) {
   const theme = useTheme();
@@ -78,7 +78,7 @@ export default function Apply({ title, description, openGraphData }) {
       
 
       // Here you would typically send the form data to your server
-      console.log(formDataWithToken);
+      // console.log(formDataWithToken);
 
       // Track form submission with ReactPixel and GA      
       trackEvent({
@@ -88,6 +88,10 @@ export default function Apply({ title, description, openGraphData }) {
         }
       });
 
+      // if formData has email then call set function
+      if (formData.email) {
+        set(formData.email);
+      }
 
 
       // Reset form after successful submission

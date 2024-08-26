@@ -79,11 +79,7 @@ export default function SponsorIndexList() {
   };
 
   const gaButton = (category, action) => {
-    trackEvent({
-      action: action,
-      category: category,
-      label: 'sponsorship',
-    });
+    trackEvent( category, action );
   };
 
 

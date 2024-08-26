@@ -34,12 +34,7 @@ import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 
 
  const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
-    trackEvent({
-      action: "click_hearts",
-      category:  "hearts",
-      label: buttonName,
-    });
-
+    trackEvent("click_hearts", buttonName);
   }
 
 const StyledTypography = styled(Typography)(({ theme }) => ({
