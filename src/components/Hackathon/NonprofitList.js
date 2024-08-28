@@ -112,7 +112,7 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
               </NonprofitContent>
               <Button
                 component={Link}
-                href={`/hack/${eventId}/nonprofit/${nonprofit.id}`}
+                href={`/nonprofit/${nonprofit.id}`}
                 variant="contained"
                 color="primary"
                 fullWidth
