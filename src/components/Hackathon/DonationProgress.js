@@ -3,6 +3,7 @@ import { Grid, Typography, Paper, Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import SponsorMinimal from "../Sponsors/SponsorMinimal";
 
 const ProgressContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -82,6 +83,7 @@ const DonationProgress = ({ donationGoals, donationCurrent }) => {
       >
         Become a Sponsor
       </Button>
+      <SponsorMinimal />
     </ProgressContainer>
   );
 };

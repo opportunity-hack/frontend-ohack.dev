@@ -8,9 +8,11 @@ import {
   CardMedia,
   Button,
   Chip,
+  Box,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Link from "next/link";
+import AddIcon from "@mui/icons-material/Add";
 
 const ListContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -38,9 +40,38 @@ const TeamChip = styled(Chip)(({ theme }) => ({
   margin: theme.spacing(0.5),
 }));
 
+const EmptyStateContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: theme.spacing(4),
+  textAlign: "center",
+}));
+
 const NonprofitList = ({ nonprofits, teams, eventId }) => {
   if (!nonprofits || nonprofits.length === 0) {
-    return null;
+    return (
+      <ListContainer elevation={2}>
+        <EmptyStateContainer>
+          <Typography variant="h5" gutterBottom>
+            No Nonprofits Yet
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Be the first nonprofit to participate in this event!
+          </Typography>
+          <Button
+            component={Link}
+            href="/nonprofits/apply"
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+          >
+            Apply as a Nonprofit
+          </Button>
+        </EmptyStateContainer>
+      </ListContainer>
+    );
   }
 
   const getTeamsForNonprofit = (nonprofitId) => {

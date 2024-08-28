@@ -34,108 +34,6 @@ const InteractiveFAQ = dynamic(
   { ssr: false }
 );
 
-const mentors = [
-  {
-    "Timestamp": "8/19/2024 6:25:41",
-    "Email Address": "momo@marcusengineering.com",
-    "Your Name": "Mark Omo",
-    "Your pronouns (Optional)": "He/Him",
-    "What company are you working for?": "Marcus Engineering",
-    "Short bio (Optional)": "Leads the Engineering team at Marcus Engineering, Background in regulated device design in the Medical, Industrial, Aerospace, and Consumer market segments, Former System Engineering Lead at Google, may have won a few Hackathons in the past.",
-    "Can you send us a picture of you? (Optional)": "https://drive.google.com/open?id=1jGdXSav2DBfc6Aetmicvo52-isgcFW4m",
-    "LinkedIn Profile (Optional)": "https://www.linkedin.com/in/markomo/",
-    "Joining us in-person at ASU Tempe?": "No",
-    "What kind of brain power can you help supply us with?": "Software engineering",
-    "How many times have you participated in Opportunity Hack?": "This will be the 3rd time ☘️",
-    "Software Engineering Specifics": "Back-end (Java, Python, Ruby, etc), Data Science & Machine Learning, Data Analysis, AWS, Google Cloud, Heroku, GitHub ninja",
-    "Which days will be you available?": "Oct 13th: Sunday Early Morning (7am - 9am), Sunday Morning (9am - 12pm PST), Sunday Afternoon (1p - 3p PST)",
-    "Which country are you in?": "USA",
-    "Which state are you in?": "AZ",
-    "Do you agree to our code of conduct? https://www.ohack.dev/hack/code-of-conduct": "Yes",
-    "Any questions or comments for us?": "",
-    "Shirt Size?": "4XL"
-  },
-  {
-    "Timestamp": "8/21/2024 1:46:05",
-    "Email Address": "hparanjape@meta.com",
-    "Your Name": "Hrishikesh Paranjape",
-    "Your pronouns (Optional)": "",
-    "What company are you working for?": "Meta Platforms Inc",
-    "Short bio (Optional)": "I am a software engineer and a computer science researcher with industry experience of 12 years.",
-    "Can you send us a picture of you? (Optional)": "https://drive.google.com/open?id=1OAKGAXXNPqPGPH8DQKVuE0jcEu79nlwc",
-    "LinkedIn Profile (Optional)": "https://www.linkedin.com/in/hrishikeshparanjape",
-    "Joining us in-person at ASU Tempe?": "Yes!",
-    "What kind of brain power can you help supply us with?": "Software engineering",
-    "How many times have you participated in Opportunity Hack?": "This is my first year! 👆",
-    "Software Engineering Specifics": "Front-end (CSS/JS, Node, Angular, React, etc), Back-end (Java, Python, Ruby, etc), Data Science & Machine Learning, AWS, Google Cloud, Heroku",
-    "Which days will be you available?": "Saturday Evening (4p - 7p PST), Sunday Morning (9am - 12pm PST)",
-    "Which country are you in?": "United States of America",
-    "Which state are you in?": "California",
-    "Do you agree to our code of conduct? https://www.ohack.dev/hack/code-of-conduct": "Yes",
-    "Any questions or comments for us?": "",
-    "Shirt Size?": "L"
-  },
-  {
-    "Timestamp": "8/18/2024 9:57:22",
-    "Email Address": "sage7alvarez@gmail.com",
-    "Your Name": "Zachary Alvarez",
-    "Your pronouns (Optional)": "He/Him",
-    "What company are you working for?": "Commonwealth Casualty Company",
-    "Short bio (Optional)": "I'm a software engineer with a passion for reducing dev time by focusing on automated solutions such as SQLc that allows a developer to spend more time designing rather than wasting time on creating objects and other tasks. Outside of software engineering, I like to write fantasy and sci-fiction novels. And my current plans is to release a short story fantasy collection this fall and a free tool for designing stories in a visual manner.",
-    "Can you send us a picture of you? (Optional)": "",
-    "LinkedIn Profile (Optional)": "www.linkedin.com/in/zachary-alvarez-8021b765",
-    "Joining us in-person at ASU Tempe?": "Yes!",
-    "What kind of brain power can you help supply us with?": "Software engineering",
-    "How many times have you participated in Opportunity Hack?": "This will be the 2nd time ✌️",
-    "Software Engineering Specifics": "Front-end (CSS/JS, Node, Angular, React, etc), Back-end (Java, Python, Ruby, etc), AWS, Google Cloud, Heroku",
-    "Which days will be you available?": "Oct 12th: Saturday Morning (9am - 12pm PST), Saturday Afternoon (1p - 3p PST), Saturday Evening (4p - 7p PST), Saturday Night (8p - 11p PST), Oct 13th: Sunday Early Morning (7am - 9am), Sunday Morning (9am - 12pm PST), Sunday Afternoon (1p - 3p PST)",
-    "Which country are you in?": "United States of America",
-    "Which state are you in?": "Arizona",
-    "Do you agree to our code of conduct? https://www.ohack.dev/hack/code-of-conduct": "Yes",
-    "Any questions or comments for us?": "",
-    "Shirt Size?": "L"
-  }
-];
-
-
-const judges = [
-  {
-    "Timestamp": "8/19/2024 10:30:28",
-    "Email Address": "mwolfson@gmail.com",
-    "Selected?": "",
-    "Joining us in-person at ASU Tempe?": "Yes!",
-    "Have you helped us before?": "Yes, I was a judge",
-    "Your Name": "Mike Wolfson",
-    "Your title": "Software Architect",
-    "A (short) biography - aim for 200 words": "Product focused software leader with a decade of Android and 20 years of software experience. Author of a successful Android programming book and recognized by Google as one of the first 15 Android Developer Experts in the world. Excellent communicator, with a comprehensive knowledge of development process and design. Enthusiastic team-mate, with an eye for simplicity, and passion for helping teams deliver great products.",
-    "A photo of you we can use on the DevPost site": "https://drive.google.com/open?id=1QQRlE5JiQGmfRwL1LjK5q6UQCs13Z69Q",
-    "Why do you want to be a judge for Opportunity Hack?": "It was a great fun last time and was neat to help engineers.",
-    "Availability": "I have time to be a judge",
-    "Are you joining us in-person at ASU in Tempe, Arizona?": "Yes - I'll be judging in-person",
-    "(Optional) Anything else to share?": "I also would like to volunteer to be a mentor, please let me know how I can participate throughout the weekend.",
-    "Company Name": "Able Android",
-    "Do you agree to our code of conduct?": "Yes",
-    "Which areas best describe your background?": "Software Engineering, Product Management, Design, UI or UX"
-  },
-  {
-    "Timestamp": "8/19/2024 10:32:54",
-    "Email Address": "ajghadge@expediagroup.com",
-    "Selected?": "",
-    "Joining us in-person at ASU Tempe?": "Yes!",
-    "Have you helped us before?": "No, I haven't helped with Opportunity Hack before",
-    "Your Name": "Ajinkya Ghadge",
-    "Your title": "Software Engineering Lead",
-    "A (short) biography - aim for 200 words": "Ajinkya is one of the lead engineers at Expedia. Prior to this, he was one of the core members to develop an AI marketing platform for KPI-driven marketing company called Amplero, Inc (now Curinos). While at Amplero, Ajinkya leveraged multi-armed bandit experimentation to optimize customer lifetime value at scale for B2C marketers of global brands. In addition, he also has a strong background in leading research initiatives in robotics which were funded by the National Science Foundation.",
-    "A photo of you we can use on the DevPost site": "https://drive.google.com/open?id=1QCuuLjpH3yRovZlEeTo_JCi0DCLBI6jm",
-    "Why do you want to be a judge for Opportunity Hack?": "I currently lead engineering teams and have extensive experience guiding and evaluating top technological solutions when I see one. I have judged several hackathons in the Seattle area in the past, and I would love to participate in this event.",
-    "Availability": "I have time to be a judge",
-    "Are you joining us in-person at ASU in Tempe, Arizona?": "Yes - I'll be judging in-person",
-    "(Optional) Anything else to share?": "LinkedIn: https://www.linkedin.com/in/ajinkya-ghadge/\nSome of my articles, as seen on InformationWeek, TechStrong.AI, Dzone\nPress coverage: TechBullion, MSN\n\nLooking forward to participating in this event.",
-    "Company Name": "Expedia Group",
-    "Do you agree to our code of conduct?": "Yes",
-    "Which areas best describe your background?": "Software Engineering"
-  }
-];
 
 
 const faqData = [
@@ -331,13 +229,12 @@ export default function HackathonEvent({ initialData }) {
   const [event, setEvent] = useState(initialData);
   const [loading, setLoading] = useState(!initialData);
 
-  console.log("Countdowns: ", event?.countdowns);
 
   useEffect(() => {
     if (!initialData && event_id) {
       setLoading(true);
       handle_get_hackathon(event_id, (data) => {
-        setEvent(data);
+        setEvent(data);        
         setLoading(false);
       });
     }
@@ -354,13 +251,60 @@ export default function HackathonEvent({ initialData }) {
   return (
     <>
       <Head>
-        <title>{`Hackathon: ${event.title}`}</title>
-        <meta
-          name="description"
-          content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`}
-        />
-        {/* Add more meta tags for SEO here */}
-      </Head>
+      <title>{`Hackathon: ${event.title}`}</title>
+      <meta name="description" content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`} />
+      
+      {/* Open Graph tags for social media sharing */}
+      <meta property="og:title" content={`Hackathon: ${event.title}`} />
+      <meta property="og:description" content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`} />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={`https://ohack.dev/hack/${event_id}`} />
+      <meta property="og:image" content={event.image_url || "https://ohack.dev/default-event-image.jpg"} />
+      <meta property="og:site_name" content="Opportunity Hack" />
+
+      {/* Twitter Card tags */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:site" content="@OpportunityHack" />
+      <meta name="twitter:title" content={`Hackathon: ${event.title}`} />
+      <meta name="twitter:description" content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`} />
+      <meta name="twitter:image" content={event.image_url || "https://ohack.dev/default-event-image.jpg"} />
+
+      {/* Additional SEO-friendly meta tags */}
+      <meta name="keywords" content={`hackathon, ${event.title}, opportunity hack, nonprofit, tech for good, ${event.location}`} />
+      <meta name="author" content="Opportunity Hack" />
+      <meta name="robots" content="index, follow" />
+      <meta name="language" content="English" />
+
+      {/* Canonical URL */}
+      <link rel="canonical" href={`https://ohack.dev/hack/${event_id}`} />
+
+      {/* Structured data for events */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "http://schema.org",
+          "@type": "Event",
+          "name": event.title,
+          "description": event.description,
+          "startDate": event.start_date,
+          "endDate": event.end_date,
+          "location": {
+            "@type": "Place",
+            "name": event.location,
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": event.location
+            }
+          },
+          "image": event.image_url || "https://ohack.dev/default-event-image.jpg",
+          "url": `https://ohack.dev/hack/${event_id}`,
+          "organizer": {
+            "@type": "Organization",
+            "name": "Opportunity Hack",
+            "url": "https://ohack.dev"
+          }
+        })}
+      </script>
+    </Head>
 
       <Container maxWidth="lg">
         <HackathonHeader         
@@ -392,8 +336,8 @@ export default function HackathonEvent({ initialData }) {
             />
           </Grid>
           <Grid item xs={12}>
-            <VolunteerList volunteers={mentors} type="mentor" />
-            <VolunteerList volunteers={judges} type="judge" />
+            <VolunteerList volunteers={event.mentors} type="mentor" />
+            <VolunteerList volunteers={event.judges} type="judge" />
           </Grid>          
           <Grid item xs={12}>
             <EventCountdown countdowns={event.countdowns} />

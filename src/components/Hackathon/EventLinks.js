@@ -1,5 +1,5 @@
 import React from "react";
-import { Paper, Typography, Button, Grid, Box } from "@mui/material";
+import { Paper, Typography, Button, Grid } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
@@ -11,7 +11,8 @@ const LinksContainer = styled(Paper)(({ theme }) => ({
   flexDirection: "column",
   height: "100%",
   minHeight: "400px",
-  overflow: "hidden", // Prevent content from spilling out
+  overflowX: "hidden", // Prevent horizontal scroll
+  overflowY: "auto", // Allow vertical scroll if needed
 }));
 
 const LinkButton = styled(Button, {
@@ -24,7 +25,7 @@ const LinkButton = styled(Button, {
     );
 
   return {
-    margin: theme.spacing(1),
+    margin: theme.spacing(1, 0),
     backgroundColor: isCustomColor
       ? customcolor
       : theme.palette[customcolor || "primary"].main,
@@ -33,22 +34,22 @@ const LinkButton = styled(Button, {
     ),
     "&:hover": {
       backgroundColor: isCustomColor
-        ? customcolor
+        ? theme.palette.augmentColor({ color: { main: customcolor } }).dark
         : theme.palette[customcolor || "primary"].dark,
     },
-    width: "100%", // Make all buttons the same width
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    padding: theme.spacing(1, 2),
+    minWidth: "auto",
+    maxWidth: "100%",
+    whiteSpace: "normal",
+    wordWrap: "break-word",
+    textAlign: "left",
+    justifyContent: "flex-start",
+    textTransform: "none",
+    lineHeight: 1.2,
+    "& .MuiButton-startIcon": {
+      marginRight: theme.spacing(1),
+    },
   };
-});
-
-const ButtonContainer = styled(Box)({
-  flexGrow: 1,
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  overflow: "auto", // Add scrolling if content exceeds container
 });
 
 const EventLinks = ({ links }) => {
@@ -61,24 +62,24 @@ const EventLinks = ({ links }) => {
       <Typography variant="h6" gutterBottom>
         Important Links
       </Typography>
-      <ButtonContainer>
-        <Grid container spacing={1}>
-          {links.map((link, index) => (
-            <Grid item xs={12} key={index}>
-              <LinkButton
-                variant="contained"
-                customcolor={link.color}
-                href={link.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                startIcon={<OpenInNewIcon />}
-              >
-                {link.name}
-              </LinkButton>
-            </Grid>
-          ))}
-        </Grid>
-      </ButtonContainer>
+      <Grid container spacing={2}>
+        {links.map((link, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <LinkButton
+              variant="contained"
+              customcolor={link.color}
+              href={link.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              startIcon={<OpenInNewIcon />}
+              aria-label={`Open ${link.name} in a new tab`}
+              fullWidth
+            >
+              {link.name}
+            </LinkButton>
+          </Grid>
+        ))}
+      </Grid>
     </LinksContainer>
   );
 };

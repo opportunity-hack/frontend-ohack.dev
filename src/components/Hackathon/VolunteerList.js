@@ -54,18 +54,6 @@ const InPersonBadge = styled(Box)(({ theme }) => ({
   fontWeight: "bold",
 }));
 
-const RemoteBadge = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  bottom: 0,
-  right: 0,
-  backgroundColor: theme.palette.info.main,
-  color: theme.palette.info.contrastText,
-  padding: "4px 8px",
-  borderRadius: "12px",
-  fontSize: "0.75rem",
-  fontWeight: "bold",
-}));
-
 const VolunteerContent = styled(CardContent)({
   flexGrow: 1,
 });
@@ -108,33 +96,32 @@ const VolunteerList = ({ volunteers, type }) => {
 
   const renderVolunteerCard = (volunteer) => {
     const isMentor = type === "mentor";
-    const isInPerson =
-      volunteer["Joining us in-person at ASU Tempe?"] === "Yes!";
-    const pronouns = volunteer["Your pronouns (Optional)"];
-    const softwareSpecifics = volunteer["Software Engineering Specifics"];
+    const isSelected = volunteer.isSelected;
+    const googleDriveImage = volunteer.photoUrl?.includes("drive.google.com");
+
+    if( !isSelected ) return null;
 
     return (
-      <Grid item xs={12} sm={6} md={4} key={volunteer["Email Address"]}>
+      <Grid item xs={12} sm={6} md={4} key={volunteer.name}>
         <VolunteerCard>
           <VolunteerMediaContainer>
             <VolunteerMedia
               image={
-                volunteer["Can you send us a picture of you? (Optional)"] ||
-                "https://via.placeholder.com/150"
+                (volunteer.photoUrl && !googleDriveImage  ) ||
+                "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png"
               }
-              title={volunteer["Your Name"]}
+              title={volunteer.name}
             />
-            {isInPerson && <InPersonBadge>In-Person</InPersonBadge>}
-            {!isInPerson && <RemoteBadge>Remote</RemoteBadge>}
+            {volunteer.isInPerson && <InPersonBadge>In-Person</InPersonBadge>}
           </VolunteerMediaContainer>
           <VolunteerContent>
             <Typography gutterBottom variant="h5" component="div">
-              {volunteer["Your Name"]}
-              {pronouns && (
+              {volunteer.name}
+              {volunteer.pronouns && (
                 <Tooltip title="Pronouns">
                   <Chip
                     icon={<PersonIcon />}
-                    label={pronouns}
+                    label={volunteer.pronouns}
                     size="small"
                     style={{ marginLeft: "8px" }}
                   />
@@ -142,35 +129,33 @@ const VolunteerList = ({ volunteers, type }) => {
               )}
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
-              {isMentor
-                ? volunteer["What company are you working for?"]
-                : volunteer["Your title"]}
+              {isMentor ? volunteer.company : volunteer.title}
             </Typography>
             <ChipContainer>
-              {volunteer["What company are you working for?"] && (
+              {volunteer.company && (
                 <Chip
                   icon={<WorkIcon />}
-                  label={volunteer["What company are you working for?"]}
+                  label={volunteer.company}
                   size="small"
                 />
               )}
-              {volunteer["Which state are you in?"] && (
+              {volunteer.state && (
                 <Chip
                   icon={<LocationOnIcon />}
-                  label={volunteer["Which state are you in?"]}
+                  label={volunteer.state}
                   size="small"
                 />
               )}
               {isMentor && (
                 <Chip
                   icon={<VolunteerActivismIcon />}
-                  label={`${volunteer["How many times have you participated in Opportunity Hack?"]}`}
+                  label={volunteer.participationCount}
                   size="small"
                 />
               )}
-              {volunteer["LinkedIn Profile (Optional)"] && (
+              {volunteer.linkedinProfile && (
                 <Link
-                  href={volunteer["LinkedIn Profile (Optional)"]}
+                  href={volunteer.linkedinProfile}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -184,41 +169,27 @@ const VolunteerList = ({ volunteers, type }) => {
               )}
             </ChipContainer>
             <Typography variant="body2" paragraph sx={{ mt: 2 }}>
-              {isMentor
-                ? volunteer["Short bio (Optional)"]
-                : volunteer["A (short) biography - aim for 200 words"]}
+              {volunteer.shortBio || volunteer.shortBiography}
             </Typography>
             {isMentor && (
               <>
                 <Typography variant="body2" paragraph>
-                  <strong>Expertise:</strong>{" "}
-                  {
-                    volunteer[
-                      "What kind of brain power can you help supply us with?"
-                    ]
-                  }
+                  <strong>Expertise:</strong> {volunteer.expertise}
                 </Typography>
-                {softwareSpecifics && (
+                {volunteer.softwareEngineeringSpecifics && (
                   <Typography variant="body2" paragraph>
-                    <strong>Software Specifics:</strong> {softwareSpecifics}
+                    <strong>Software Specifics:</strong>{" "}
+                    {volunteer.softwareEngineeringSpecifics}
                   </Typography>
                 )}
               </>
             )}
             {!isMentor && (
               <Typography variant="body2" paragraph>
-                <strong>Why volunteering:</strong>{" "}
-                {
-                  volunteer[
-                    "Why do you want to be a judge for Opportunity Hack?"
-                  ]
-                }
+                <strong>Why volunteering:</strong> {volunteer.whyJudge}
               </Typography>
             )}
-            {isMentor &&
-              renderAvailability(
-                volunteer["Which days will be you available?"]
-              )}
+            {isMentor && renderAvailability(volunteer.availability)}
           </VolunteerContent>
         </VolunteerCard>
       </Grid>
