@@ -112,7 +112,7 @@ const EventCountdown = ({ countdowns }) => {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = Moment();
-      const upcoming = countdowns.find(event => Moment(event.time).isAfter(now));
+      const upcoming = countdowns?.find(event => Moment(event.time).isAfter(now));
       
       if (upcoming) {
         setNextEvent(upcoming);
@@ -196,8 +196,8 @@ const EventCountdown = ({ countdowns }) => {
         Event Timeline
       </Typography>
       {renderMainCountdown()}
-      <Divider style={{ margin: '20px 0' }} />
-      {countdowns.map(renderEventItem)}
+      <Divider style={{ margin: "20px 0" }} />
+      {countdowns && countdowns.map(renderEventItem)}
     </TimelineContainer>
   );
 };

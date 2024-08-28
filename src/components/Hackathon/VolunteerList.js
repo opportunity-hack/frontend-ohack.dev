@@ -202,7 +202,7 @@ const VolunteerList = ({ volunteers, type }) => {
         Our Amazing {type === "mentor" ? "Mentors" : "Judges"}
       </Typography>
       <Grid container spacing={3}>
-        {volunteers.map(renderVolunteerCard)}
+        {volunteers && volunteers.map(renderVolunteerCard)}
       </Grid>
     </Box>
   );
