@@ -208,7 +208,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
  
   if (!isAdmin) {
     return (
-      <AdminPage title="Volunteer Management">
+      <AdminPage title="Volunteer Management" isAdmin={false}>
         <Typography>You do not have permission to view this page.</Typography>
       </AdminPage>
     );
@@ -219,6 +219,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       title="Volunteer Management"
       snackbar={snackbar}
       onSnackbarClose={() => setSnackbar({ ...snackbar, open: false })}
+      isAdmin={isAdmin}
     >
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center">

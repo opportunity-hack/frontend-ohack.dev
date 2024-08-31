@@ -3,6 +3,7 @@ import { Typography, Box, Snackbar, Alert } from "@mui/material";
 import Head from "next/head";
 import { LayoutContainer, TitleContainer } from "../../styles/nonprofit/styles";
 import { styled } from "@mui/system";
+import AdminNavigation from "./AdminNavigation";
 
 const WideProjectsContainer = styled(Box)(({ theme }) => ({
   width: "95%",
@@ -14,12 +15,13 @@ const WideProjectsContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const AdminPage = ({ title, children, snackbar, onSnackbarClose }) => {
+const AdminPage = ({ title, children, snackbar, onSnackbarClose, isAdmin }) => {
   return (
     <LayoutContainer>
       <Head>
         <title>Admin - {title}</title>
       </Head>
+      {isAdmin && <AdminNavigation />}
       <TitleContainer>
         <Typography variant="h4" gutterBottom>
           {title}
