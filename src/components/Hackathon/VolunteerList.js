@@ -8,18 +8,16 @@ import {
   Chip,
   Box,
   Link,
-  Tooltip,
-  Badge,
-  useMediaQuery,
+  Tooltip
 } from "@mui/material";
-import { styled, useTheme } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import WorkIcon from "@mui/icons-material/Work";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
-import CodeIcon from "@mui/icons-material/Code";
+import Moment from "moment";
 
 const VolunteerCard = styled(Card)(({ theme }) => ({
   display: "flex",
@@ -65,31 +63,57 @@ const ChipContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(1),
 }));
 
-const AvailabilityChip = styled(Chip)(({ theme }) => ({
+const AvailabilityChip = styled(Chip)(({ theme, isavailablenow }) => ({
   margin: theme.spacing(0.5),
-  backgroundColor: theme.palette.success.light,
+  backgroundColor: isavailablenow ? theme.palette.info.main : theme.palette.success.light,
+  color: isavailablenow ? theme.palette.success.contrastText : theme.palette.text.primary,
+  '&:hover': {
+    backgroundColor: isavailablenow ? theme.palette.success.dark : theme.palette.success.main,
+  },
 }));
 
 const VolunteerList = ({ volunteers, type }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isCurrentlyAvailable = (timeSpan) => {
+    if (!timeSpan) return false;
+
+    const now = Moment(new Date(), 'America/Los_Angeles'); // Everything is going to be in PST - we don't want to get the user's local time
+
+    timeSpan = timeSpan.replace(/.*?\(/g, '');
+    timeSpan = timeSpan.replace(/\)/g, '');
+    timeSpan = timeSpan.replace(/PST/g, '');
+    timeSpan = timeSpan.replace(/p\s/g, 'pm');
+    timeSpan = timeSpan.replace(/a\s/g, 'am');
+
+    const [startTime, endTime] = timeSpan.split('-');
+    console.log("Start Time: ", startTime);
+    console.log("End Time: ", endTime);
+    const startMoment = Moment(`${startTime}`, 'h:mma', 'America/Los_Angeles');
+    const endMoment = Moment(`${endTime}`, 'h:mma', 'America/Los_Angeles');
+    
+    return now.isBetween(startMoment, endMoment);
+  };
 
   const renderAvailability = (availability) => {
     if (!availability) return null;
-    const availabilityArray = availability.split(", ");
+    const availabilityArray = availability.split(', ');
     return (
       <Box mt={2}>
         <Typography variant="subtitle2" gutterBottom>
           Available Times:
         </Typography>
-        {availabilityArray.map((time, index) => (
-          <AvailabilityChip
-            key={index}
-            icon={<AccessTimeIcon />}
-            label={time}
-            size="small"
-          />
-        ))}
+        {availabilityArray.map((time, index) => {
+          const isAvailableNow = isCurrentlyAvailable(time);
+          return (
+            <Tooltip title={isAvailableNow ? <span style={{fontSize: "14px"}}>Available now (during the hackathon)!</span> : time} key={index}>
+              <AvailabilityChip
+                icon={<AccessTimeIcon />}
+                label={time}
+                size="small"
+                isavailablenow={isAvailableNow ? 1 : 0}
+              />
+            </Tooltip>
+          );
+        })}
       </Box>
     );
   };

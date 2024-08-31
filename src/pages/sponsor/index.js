@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TitleContainer, LayoutContainer, ProjectsContainer, LinkStyled, ButtonBasicStyle } from '../../styles/sponsors/styles';
+import { TitleContainer, LayoutContainer, ProjectsContainer, ButtonBasicStyle } from '../../styles/sponsors/styles';
 import {
   Grid,
   Typography,
@@ -7,8 +7,6 @@ import {
   Avatar,
   Chip,
   Box,
-  Tooltip,
-  IconButton,
   CardActions,
   useTheme,
   useMediaQuery,
@@ -25,7 +23,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import LinkIcon from "@mui/icons-material/Link";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import Head from 'next/head';

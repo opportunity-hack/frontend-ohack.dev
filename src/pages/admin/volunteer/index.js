@@ -124,7 +124,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         setVolunteers((prev) => ({
           ...prev,
           [editingVolunteer.type]: prev[editingVolunteer.type].map((v) =>
-            v.id === editingVolunteer.id ? editingVolunteer : v
+            v.name === editingVolunteer.name ? editingVolunteer : v
           ),
         }));
       } else {
