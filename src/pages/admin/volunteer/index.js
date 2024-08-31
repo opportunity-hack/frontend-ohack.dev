@@ -12,11 +12,15 @@ import {
 import AdminPage from "../../../components/admin/AdminPage";
 import VolunteerTable from "../../../components/admin/VolunteerTable";
 import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";
+import VolunteerBulkAdd from "../../../components/admin/VolunteerBulkAdd";
+
 import { Typography } from "@mui/material";
 
 
 const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
+
   const [volunteers, setVolunteers] = useState({ mentors: [], judges: [] });
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -34,6 +38,44 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
   const orgId = org.orgId;
+
+  const handleAddVolunteers = async (type, newVolunteers) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/volunteers/bulk`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            "content-type": "application/json",
+            "X-Org-Id": orgId,
+          },
+          body: JSON.stringify({ type: type, volunteers: newVolunteers }),
+        }
+      );
+
+      if (response.ok) {
+        setSnackbar({
+          open: true,
+          message: "Volunteers added successfully",
+          severity: "success",
+        });
+        fetchVolunteers(); // Refresh the volunteer list
+      } else {
+        throw new Error("Failed to add volunteers");
+      }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: "Failed to add volunteers. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+      setShowBulkAdd(false);
+    }
+  };
 
   const fetchVolunteers = async () => {
     setLoading(true);
@@ -185,6 +227,14 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               Refresh Data
             </Button>
           </Grid>
+          <Grid item>
+            <Button
+              onClick={() => setShowBulkAdd(!showBulkAdd)}
+              variant="outlined"
+            >
+              {showBulkAdd ? "Hide Bulk Add" : "Bulk Add Volunteers"}
+            </Button>
+          </Grid>
           <Grid item xs>
             <TextField
               fullWidth
@@ -195,6 +245,12 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
           </Grid>
         </Grid>
       </Box>
+
+      {showBulkAdd && (
+        <Box sx={{ mb: 3 }}>
+          <VolunteerBulkAdd onAddVolunteers={handleAddVolunteers} />
+        </Box>
+      )}
 
       <Tabs
         value={tabValue}

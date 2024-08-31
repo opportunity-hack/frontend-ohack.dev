@@ -78,6 +78,7 @@ const VolunteerTable = ({
           { id: "isSelected", label: "Selected", minWidth: 100 },
           { id: "country", label: "Country", minWidth: 100 },
           { id: "state", label: "State", minWidth: 100 },
+          { id: "slack_user_id", label: "SlackID", minWidth: 50 },
         ]
       : [
           { id: "name", label: "Name", minWidth: 120 },
@@ -85,7 +86,8 @@ const VolunteerTable = ({
           { id: "title", label: "Title", minWidth: 150 },
           { id: "companyName", label: "Company", minWidth: 120 },
           { id: "isInPerson", label: "In Person", minWidth: 100 },
-          { id: "isSelected", label: "Selected", minWidth: 100 },          
+          { id: "isSelected", label: "Selected", minWidth: 100 },
+          { id: "slack_user_id", label: "SlackID", minWidth: 50 },
         ];
 
   const selectedCount = useMemo(() => {

@@ -259,7 +259,7 @@ export default function HackathonEvent({ initialData }) {
       <meta property="og:description" content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`} />
       <meta property="og:type" content="website" />
       <meta property="og:url" content={`https://ohack.dev/hack/${event_id}`} />
-      <meta property="og:image" content={event.image_url || "https://ohack.dev/default-event-image.jpg"} />
+      <meta property="og:image" content={event.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"} />
       <meta property="og:site_name" content="Opportunity Hack" />
 
       {/* Twitter Card tags */}
@@ -267,7 +267,7 @@ export default function HackathonEvent({ initialData }) {
       <meta name="twitter:site" content="@OpportunityHack" />
       <meta name="twitter:title" content={`Hackathon: ${event.title}`} />
       <meta name="twitter:description" content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`} />
-      <meta name="twitter:image" content={event.image_url || "https://ohack.dev/default-event-image.jpg"} />
+      <meta name="twitter:image" content={event.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"} />
 
       {/* Additional SEO-friendly meta tags */}
       <meta name="keywords" content={`hackathon, ${event.title}, opportunity hack, nonprofit, tech for good, ${event.location}`} />
@@ -295,7 +295,7 @@ export default function HackathonEvent({ initialData }) {
               "addressLocality": event.location
             }
           },
-          "image": event.image_url || "https://ohack.dev/default-event-image.jpg",
+          "image": event.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp",
           "url": `https://ohack.dev/hack/${event_id}`,
           "organizer": {
             "@type": "Organization",

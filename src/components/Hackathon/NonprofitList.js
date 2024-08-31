@@ -74,8 +74,9 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
     );
   }
 
-  const getTeamsForNonprofit = (nonprofitId) => {
-    return teams?.filter((team) => team.nonprofit_id === nonprofitId) || [];
+  // TODO: Logic is complex and we're not showing teams right now anyway
+  const getTeamsForNonprofit = (problem_statements) => {
+    return teams?.filter((team) => team.problem_statements.includes(problem_statements)  ) || [];
   };
 
   return (
@@ -89,7 +90,7 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
             <NonprofitCard>
               <NonprofitMedia
                 image={
-                  nonprofit.logo_url ||
+                  nonprofit.image ||
                   "https://via.placeholder.com/300x200?text=No+Image"
                 }
                 title={nonprofit.name}
@@ -103,12 +104,7 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
                     ? `${nonprofit.description.substring(0, 100)}...`
                     : nonprofit.description}
                 </Typography>
-                <Typography variant="subtitle2" style={{ marginTop: "10px" }}>
-                  Teams:
-                </Typography>
-                {getTeamsForNonprofit(nonprofit.id).map((team) => (
-                  <TeamChip key={team.id} label={team.name} size="small" />
-                ))}
+                
               </NonprofitContent>
               <Button
                 component={Link}

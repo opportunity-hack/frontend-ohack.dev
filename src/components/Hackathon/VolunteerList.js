@@ -84,9 +84,7 @@ const VolunteerList = ({ volunteers, type }) => {
     timeSpan = timeSpan.replace(/p\s/g, 'pm');
     timeSpan = timeSpan.replace(/a\s/g, 'am');
 
-    const [startTime, endTime] = timeSpan.split('-');
-    console.log("Start Time: ", startTime);
-    console.log("End Time: ", endTime);
+    const [startTime, endTime] = timeSpan.split('-');    
     const startMoment = Moment(`${startTime}`, 'h:mma', 'America/Los_Angeles');
     const endMoment = Moment(`${endTime}`, 'h:mma', 'America/Los_Angeles');
     

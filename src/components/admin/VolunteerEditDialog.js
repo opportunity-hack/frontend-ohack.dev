@@ -26,6 +26,8 @@ const VolunteerEditDialog = ({
     { name: "linkedinProfile", label: "LinkedIn Profile", type: "text" },
     { name: "isInPerson", label: "In Person", type: "switch" },
     { name: "isSelected", label: "Selected", type: "switch" },
+    { name: "pronouns", label: "Pronouns", type: "text" },
+    { name: "slack_user_id", label: "Slack User ID", type: "text" },
   ];
 
   const mentorFields = [
