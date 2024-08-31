@@ -1,10 +1,7 @@
 import React from "react";
 import { Typography, Box, Snackbar, Alert } from "@mui/material";
 import Head from "next/head";
-import {
-  LayoutContainer,
-  TitleContainer,
-} from "../../styles/nonprofit/styles";
+import { LayoutContainer, TitleContainer } from "../../styles/nonprofit/styles";
 import { styled } from "@mui/system";
 
 const WideProjectsContainer = styled(Box)(({ theme }) => ({
@@ -31,15 +28,17 @@ const AdminPage = ({ title, children, snackbar, onSnackbarClose }) => {
       <WideProjectsContainer>
         <Box sx={{ width: "100%" }}>{children}</Box>
       </WideProjectsContainer>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={onSnackbarClose}
-      >
-        <Alert onClose={onSnackbarClose} severity={snackbar.severity}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {snackbar && (
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={onSnackbarClose}
+        >
+          <Alert onClose={onSnackbarClose} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      )}
     </LayoutContainer>
   );
 };
