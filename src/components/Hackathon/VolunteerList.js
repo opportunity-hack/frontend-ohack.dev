@@ -98,6 +98,10 @@ const VolunteerList = ({ volunteers, type }) => {
     const isMentor = type === "mentor";
     const isSelected = volunteer.isSelected;
     const googleDriveImage = volunteer.photoUrl?.includes("drive.google.com");
+    let imageToDisplay = "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png"
+    if(volunteer.photoUrl && !googleDriveImage){
+      imageToDisplay = volunteer.photoUrl
+    }
 
     if( !isSelected ) return null;
 
@@ -106,10 +110,8 @@ const VolunteerList = ({ volunteers, type }) => {
         <VolunteerCard>
           <VolunteerMediaContainer>
             <VolunteerMedia
-              image={
-                (volunteer.photoUrl && !googleDriveImage  ) ||
-                "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png"
-              }
+              key={volunteer.name}              
+              image={imageToDisplay}
               title={volunteer.name}
             />
             {volunteer.isInPerson && <InPersonBadge>In-Person</InPersonBadge>}
