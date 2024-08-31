@@ -68,6 +68,7 @@ const VolunteerEditDialog = ({
               fullWidth
               value={volunteer[field.name] || ""}
               onChange={(e) => onChange(field.name, e.target.value)}
+              disabled={field.name === "name"}
             />
           )
         )}
