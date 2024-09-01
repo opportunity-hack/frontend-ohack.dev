@@ -23,7 +23,7 @@ const NonprofitList = dynamic(
 );
 const EventCountdown = dynamic(
   () => import("../../components/Hackathon/EventCountdown"),
-  { ssr: false }
+  { ssr: true }
 );
 const EventConstraints = dynamic(
   () => import("../../components/Hackathon/EventConstraints"),

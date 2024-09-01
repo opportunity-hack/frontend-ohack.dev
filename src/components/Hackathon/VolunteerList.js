@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import {
   Grid,
   Card,
@@ -73,6 +73,18 @@ const AvailabilityChip = styled(Chip)(({ theme, isavailablenow }) => ({
 }));
 
 const VolunteerList = ({ volunteers, type }) => {
+
+  useEffect(() => {
+    // Check if the URL hash matches this FAQ's id
+    if (window.location.hash === `#${type}`) {
+      // Scroll to this element
+      const element = document.getElementById(type);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [type]);
+
   const isCurrentlyAvailable = (timeSpan) => {
     if (!timeSpan) return false;
 
@@ -222,7 +234,7 @@ const VolunteerList = ({ volunteers, type }) => {
   };
 
   return (
-    <Box sx={{ mt: 4 }}>
+    <Box sx={{ mt: 4 }} id={type}>
       <Typography variant="h4" gutterBottom>
         Our Amazing {type === "mentor" ? "Mentors" : "Judges"}
       </Typography>
