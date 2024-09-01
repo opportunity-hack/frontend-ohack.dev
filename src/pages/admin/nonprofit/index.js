@@ -35,8 +35,7 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
           headers: {
             authorization: `Bearer ${accessToken}`,
             "content-type": "application/json",
-            "X-Org-Id": orgId,
-            "Cache-Control": "no-cache",            
+            "X-Org-Id": orgId                 
           },
         }
       );      
