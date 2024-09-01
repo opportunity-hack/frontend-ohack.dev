@@ -27,14 +27,15 @@ const HeroBanner = ({ children }) => {
     initFacebookPixel();
   }, []);
 
+  const gaButton = React.useCallback((action, actionName) => {
+    trackEvent({ action, params: { action_name: actionName } });
+  }, []);
+  
   const openCodeSample = React.useCallback(() => {
     gaButton("slack_button", "open_join_slack");
     window.open(slackSignupUrl, "_blank", "noopener noreferrer");
   }, [slackSignupUrl]);
-
-  const gaButton = React.useCallback(async (action, actionName) => {
-    trackEvent(action, actionName);
-  }, []);
+  
 
   return (
     <GridStyled container direction="row" justifyContent="center" spacing={2}>
