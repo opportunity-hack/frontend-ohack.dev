@@ -153,7 +153,8 @@ const VolunteerList = ({ volunteers, type }) => {
               )}
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
-              {isMentor ? volunteer.company : volunteer.title}
+              {isMentor ? volunteer.company : volunteer.companyName}
+              {!isMentor && volunteer.title && ` - ${volunteer.title}`}
             </Typography>
             <ChipContainer>
               {volunteer.company && (

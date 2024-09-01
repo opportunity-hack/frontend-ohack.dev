@@ -55,11 +55,15 @@ const NonprofitApplicationTable = ({
 }) => {
   const columns = [
     { id: "name", label: "Name", minWidth: 120 },
+    { id: "idea", label: "Idea", minWidth: 150 },
     { id: "organization", label: "Organization", minWidth: 150 },
     { id: "email", label: "Email", minWidth: 150 },
     { id: "isNonProfit", label: "Is Nonprofit", minWidth: 100 },
     { id: "timestamp", label: "Timestamp", minWidth: 120 },
-    { id: "notes", label: "Notes", minWidth: 150 },
+    { id: "notes", label: "Notes", minWidth: 150 },    
+    { id: "contactName", label: "Contact Name", minWidth: 150 },
+    { id: "charityName", label: "Charity Name", minWidth: 150 },
+    { id: "technicalProblem", label: "Technical Problem", minWidth: 150 },
   ];
 
   return (
