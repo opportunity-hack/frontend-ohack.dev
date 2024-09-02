@@ -9,6 +9,7 @@ import Button from '@mui/material/Button';
 import { InstagramEmbed } from 'react-social-media-embed';
 import Link from 'next/link';
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
+import MentorChecklist from './MentorChecklist';
 
 
 const style = { fontSize: '15px' };
@@ -211,118 +212,134 @@ return (
         </Grid>
       </Grid>
 
-      <SponsorshipCTA />
+      <MentorChecklist />
 
+      <SponsorshipCTA />
 
       <Typography variant="h4" gutterBottom>
         Types of Mentors
       </Typography>
 
-      <Grid container spacing={1}>
-        <Grid item xs={12} sm={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5" component="h3" gutterBottom>
-                General Mentor
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                As a general mentor, you help steer the teams in the right
-                direction. You'll leverage your experience and knowledge to help
-                teams narrow down their project scope and assess the feasibility
-                of their ideas. You'll be critical in ensuring projects are
-                unique, viable, and considerate of their target demographic.
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <Typography variant="h5" component="h3" gutterBottom>
-                Product Mentor
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                In this role, you'll bridge the gap between the nonprofit's
-                needs and the user experience. Your focus will be on design
-                thinking, project scoping, and customer requirements. You'll
-                help teams to prioritize their work and ensure they keep their
-                vision in alignment with the needs of the customer.
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <Typography variant="h5" component="h3" gutterBottom>
-                Project Manager Mentor
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                Your organizational skills are a lifeline for teams. You'll help
-                define deliverables, set outcomes, and remove any roadblocks
-                that teams may face. You ensure the teams stay on track and
-                progress smoothly.
-              </Typography>
-            </CardContent>
-          </Card>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Grid container direction="column" spacing={3}>
+            <Grid item>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="h5" component="h3" gutterBottom>
+                    General Mentor
+                  </Typography>
+                  <Typography variant="body1" paragraph style={style}>
+                    As a general mentor, you help steer the teams in the right
+                    direction. You'll leverage your experience and knowledge to
+                    help teams narrow down their project scope and assess the
+                    feasibility of their ideas. You'll be critical in ensuring
+                    projects are unique, viable, and considerate of their target
+                    demographic.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="h5" component="h3" gutterBottom>
+                    Product Mentor
+                  </Typography>
+                  <Typography variant="body1" paragraph style={style}>
+                    In this role, you'll bridge the gap between the nonprofit's
+                    needs and the user experience. Your focus will be on design
+                    thinking, project scoping, and customer requirements. You'll
+                    help teams to prioritize their work and ensure they keep
+                    their vision in alignment with the needs of the customer.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="h5" component="h3" gutterBottom>
+                    Project Manager Mentor
+                  </Typography>
+                  <Typography variant="body1" paragraph style={style}>
+                    Your organizational skills are a lifeline for teams. You'll
+                    help define deliverables, set outcomes, and remove any
+                    roadblocks that teams may face. You ensure the teams stay on
+                    track and progress smoothly.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Grid>
 
-        <Grid item xs={12} sm={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5" component="h3" gutterBottom>
-                Presentation Mentor
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                Your job will be to guide teams in pitching their ideas
-                effectively. You'll move from one team to another, helping them
-                refine their presentation skills and make the best use of their
-                presentation time. You will ensure that the team's pitch is
-                coherent, succinct, and compelling.
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <Typography variant="h5" component="h3" gutterBottom>
-                GitHub Mentor
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                As a GitHub mentor, you'll support teams in understanding code
-                commits, solving merge conflicts, and meeting all GitHub-related
-                requirements. You may also need to assist teams with submitting
-                their projects on DevPost.
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <Typography variant="h5" component="h3" gutterBottom>
-                Cloud Services Mentor
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                Your expertise will help transform ideas from local prototypes
-                into global solutions. You'll support teams in deploying their
-                projects on the cloud, be it Heroku, AWS, or Google Cloud,
-                ensuring their ideas can reach the audience they're intended
-                for.
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <Typography variant="h5" component="h3" gutterBottom>
-                Software Engineering Mentor
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                In the early stages, you'll guide teams in defining the right
-                technology stack for their projects. As the event progresses,
-                you'll switch gears to troubleshoot NullPointers, solve runtime
-                exceptions, and help resolve UI display issues.
-              </Typography>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} md={6}>
+          <Grid container direction="column" spacing={3}>
+            <Grid item>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="h5" component="h3" gutterBottom>
+                    Presentation Mentor
+                  </Typography>
+                  <Typography variant="body1" paragraph style={style}>
+                    Your job will be to guide teams in pitching their ideas
+                    effectively. You'll move from one team to another, helping
+                    them refine their presentation skills and make the best use
+                    of their presentation time. You will ensure that the team's
+                    pitch is coherent, succinct, and compelling.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="h5" component="h3" gutterBottom>
+                    GitHub Mentor
+                  </Typography>
+                  <Typography variant="body1" paragraph style={style}>
+                    As a GitHub mentor, you'll support teams in understanding
+                    code commits, solving merge conflicts, and meeting all
+                    GitHub-related requirements. You may also need to assist
+                    teams with submitting their projects on DevPost.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="h5" component="h3" gutterBottom>
+                    Cloud Services Mentor
+                  </Typography>
+                  <Typography variant="body1" paragraph style={style}>
+                    Your expertise will help transform ideas from local
+                    prototypes into global solutions. You'll support teams in
+                    deploying their projects on the cloud, be it Heroku, AWS, or
+                    Google Cloud, ensuring their ideas can reach the audience
+                    they're intended for.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="h5" component="h3" gutterBottom>
+                    Software Engineering Mentor
+                  </Typography>
+                  <Typography variant="body1" paragraph style={style}>
+                    In the early stages, you'll guide teams in defining the
+                    right technology stack for their projects. As the event
+                    progresses, you'll switch gears to troubleshoot
+                    NullPointers, solve runtime exceptions, and help resolve UI
+                    display issues.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
 
