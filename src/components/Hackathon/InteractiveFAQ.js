@@ -68,24 +68,13 @@ const FAQItem = ({ item, expanded, onChange, onExpand }) => (
   </Accordion>
 );
 
-export default function InteractiveFAQ({ faqData, title = "FAQ", id = "faq" }) {
+export default function InteractiveFAQ({ faqData, title = "FAQ" }) {
   const [expanded, setExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
-
-  useEffect(() => {
-    // Check if the URL hash matches this FAQ's id
-    if (window.location.hash === `#${id}`) {
-      // Scroll to this element
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  }, [id]);
 
   const handleExpand = (question) => {
     // Google Analytics event
@@ -131,7 +120,7 @@ export default function InteractiveFAQ({ faqData, title = "FAQ", id = "faq" }) {
   });
 
   return (
-    <Box id={id} sx={{ maxWidth: '800px', margin: '0 auto', p: 4, scrollMarginTop: '2rem' }}>
+    <Box sx={{ maxWidth: '800px', margin: '0 auto', p: 4, scrollMarginTop: '2rem' }}>
       <Typography variant="h4" gutterBottom align="center">{title}</Typography>
       <TextField
         fullWidth

@@ -64,7 +64,7 @@ const DonationProgress = ({ donationGoals, donationCurrent }) => {
                 textColor: "#003486",
               })}
             />
-            <Typography variant="body2" style={{ marginTop: "8px" }}>
+            <Typography variant="body1" style={{ marginTop: "8px" }}>
               ${donationCurrent[category.key]} / ${donationGoals[category.key]}
             </Typography>
           </ProgressItem>

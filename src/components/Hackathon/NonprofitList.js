@@ -99,7 +99,7 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
                 <Typography gutterBottom variant="h6" component="h2">
                   {nonprofit.name}
                 </Typography>
-                <Typography variant="body2" color="textSecondary" component="p">
+                <Typography variant="body1" color="textSecondary" component="p">
                   {nonprofit.description?.length > 100
                     ? `${nonprofit.description.substring(0, 100)}...`
                     : nonprofit.description}

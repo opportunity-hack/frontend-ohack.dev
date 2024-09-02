@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React from "react";
 import {
   Grid,
   Card,
@@ -8,7 +8,7 @@ import {
   Chip,
   Box,
   Link,
-  Tooltip
+  Tooltip,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
@@ -18,6 +18,7 @@ import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import Moment from "moment";
+import NextLink from "next/link";
 
 const VolunteerCard = styled(Card)(({ theme }) => ({
   display: "flex",
@@ -52,6 +53,22 @@ const InPersonBadge = styled(Box)(({ theme }) => ({
   fontWeight: "bold",
 }));
 
+const HeadingContainer = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  marginBottom: "16px",
+});
+
+const StyledLink = styled(Link)(({ theme }) => ({
+  marginLeft: theme.spacing(2),
+  fontSize: "1rem",
+  fontWeight: "normal",
+  textDecoration: "none",
+  "&:hover": {
+    textDecoration: "underline",
+  },
+}));
+
 const VolunteerContent = styled(CardContent)({
   flexGrow: 1,
 });
@@ -65,47 +82,41 @@ const ChipContainer = styled(Box)(({ theme }) => ({
 
 const AvailabilityChip = styled(Chip)(({ theme, isavailablenow }) => ({
   margin: theme.spacing(0.5),
-  backgroundColor: isavailablenow ? theme.palette.info.main : theme.palette.success.light,
-  color: isavailablenow ? theme.palette.success.contrastText : theme.palette.text.primary,
-  '&:hover': {
-    backgroundColor: isavailablenow ? theme.palette.success.dark : theme.palette.success.main,
+  backgroundColor: isavailablenow
+    ? theme.palette.info.main
+    : theme.palette.success.light,
+  color: isavailablenow
+    ? theme.palette.success.contrastText
+    : theme.palette.text.primary,
+  "&:hover": {
+    backgroundColor: isavailablenow
+      ? theme.palette.success.dark
+      : theme.palette.success.main,
   },
 }));
 
 const VolunteerList = ({ volunteers, type }) => {
-
-  useEffect(() => {
-    // Check if the URL hash matches this FAQ's id
-    if (window.location.hash === `#${type}`) {
-      // Scroll to this element
-      const element = document.getElementById(type);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
-    }
-  }, [type]);
-
   const isCurrentlyAvailable = (timeSpan) => {
     if (!timeSpan) return false;
 
-    const now = Moment(new Date(), 'America/Los_Angeles'); // Everything is going to be in PST - we don't want to get the user's local time
+    const now = Moment(new Date(), "America/Los_Angeles"); // Everything is going to be in PST - we don't want to get the user's local time
 
-    timeSpan = timeSpan.replace(/.*?\(/g, '');
-    timeSpan = timeSpan.replace(/\)/g, '');
-    timeSpan = timeSpan.replace(/PST/g, '');
-    timeSpan = timeSpan.replace(/p\s/g, 'pm');
-    timeSpan = timeSpan.replace(/a\s/g, 'am');
+    timeSpan = timeSpan.replace(/.*?\(/g, "");
+    timeSpan = timeSpan.replace(/\)/g, "");
+    timeSpan = timeSpan.replace(/PST/g, "");
+    timeSpan = timeSpan.replace(/p\s/g, "pm");
+    timeSpan = timeSpan.replace(/a\s/g, "am");
 
-    const [startTime, endTime] = timeSpan.split('-');    
-    const startMoment = Moment(`${startTime}`, 'h:mma', 'America/Los_Angeles');
-    const endMoment = Moment(`${endTime}`, 'h:mma', 'America/Los_Angeles');
-    
+    const [startTime, endTime] = timeSpan.split("-");
+    const startMoment = Moment(`${startTime}`, "h:mma", "America/Los_Angeles");
+    const endMoment = Moment(`${endTime}`, "h:mma", "America/Los_Angeles");
+
     return now.isBetween(startMoment, endMoment);
   };
 
   const renderAvailability = (availability) => {
     if (!availability) return null;
-    const availabilityArray = availability.split(', ');
+    const availabilityArray = availability.split(", ");
     return (
       <Box mt={2}>
         <Typography variant="subtitle2" gutterBottom>
@@ -114,7 +125,18 @@ const VolunteerList = ({ volunteers, type }) => {
         {availabilityArray.map((time, index) => {
           const isAvailableNow = isCurrentlyAvailable(time);
           return (
-            <Tooltip title={isAvailableNow ? <span style={{fontSize: "14px"}}>Available now (during the hackathon)!</span> : time} key={index}>
+            <Tooltip
+              title={
+                isAvailableNow ? (
+                  <span style={{ fontSize: "14px" }}>
+                    Available now (during the hackathon)!
+                  </span>
+                ) : (
+                  time
+                )
+              }
+              key={index}
+            >
               <AvailabilityChip
                 icon={<AccessTimeIcon />}
                 label={time}
@@ -132,19 +154,20 @@ const VolunteerList = ({ volunteers, type }) => {
     const isMentor = type === "mentor";
     const isSelected = volunteer.isSelected;
     const googleDriveImage = volunteer.photoUrl?.includes("drive.google.com");
-    let imageToDisplay = "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png"
-    if(volunteer.photoUrl && !googleDriveImage){
-      imageToDisplay = volunteer.photoUrl
+    let imageToDisplay =
+      "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png";
+    if (volunteer.photoUrl && !googleDriveImage) {
+      imageToDisplay = volunteer.photoUrl;
     }
 
-    if( !isSelected ) return null;
+    if (!isSelected) return null;
 
     return (
       <Grid item xs={12} sm={6} md={4} key={volunteer.name}>
         <VolunteerCard>
           <VolunteerMediaContainer>
             <VolunteerMedia
-              key={volunteer.name}              
+              key={volunteer.name}
               image={imageToDisplay}
               title={volunteer.name}
             />
@@ -205,24 +228,31 @@ const VolunteerList = ({ volunteers, type }) => {
                 </Link>
               )}
             </ChipContainer>
-            <Typography variant="body2" paragraph sx={{ mt: 2 }}>
+            <Typography variant="body1" paragraph sx={{ mt: 2 }}>
               {volunteer.shortBio || volunteer.shortBiography}
             </Typography>
             {isMentor && (
               <>
-                <Typography variant="body2" paragraph>
+                <Typography variant="body1" paragraph>
                   <strong>Expertise:</strong> {volunteer.expertise}
                 </Typography>
                 {volunteer.softwareEngineeringSpecifics && (
-                  <Typography variant="body2" paragraph>
+                  <Typography variant="body1" paragraph>
                     <strong>Software Specifics:</strong>{" "}
                     {volunteer.softwareEngineeringSpecifics}
                   </Typography>
                 )}
               </>
             )}
+            {(!isMentor && volunteer.background) && (
+              <>
+                <Typography variant="body1" paragraph>
+                  <strong>Expertise:</strong> {volunteer.background}
+                </Typography>                
+              </>
+            )}
             {!isMentor && (
-              <Typography variant="body2" paragraph>
+              <Typography variant="body1" paragraph>
                 <strong>Why volunteering:</strong> {volunteer.whyJudge}
               </Typography>
             )}
@@ -234,10 +264,18 @@ const VolunteerList = ({ volunteers, type }) => {
   };
 
   return (
-    <Box sx={{ mt: 4 }} id={type}>
-      <Typography variant="h4" gutterBottom>
-        Our Amazing {type === "mentor" ? "Mentors" : "Judges"}
-      </Typography>
+    <Box sx={{ mt: 4 }}>
+      <HeadingContainer>
+        <Typography variant="h4">
+          Our Amazing {type === "mentor" ? "Mentors" : "Judges"}
+        </Typography>
+        <NextLink
+          href={type === "mentor" ? "/about/mentors" : "/about/judges"}
+          passHref
+        >
+          <StyledLink color="secondary">(Learn more)</StyledLink>
+        </NextLink>
+      </HeadingContainer>
       <Grid container spacing={3}>
         {volunteers && volunteers.map(renderVolunteerCard)}
       </Grid>

@@ -145,7 +145,7 @@ const EventCountdown = ({ countdowns }) => {
       <MainCountdown>
         <NextEventInfo>
           <Typography variant="h6" gutterBottom={isMobile}>Next: {nextEvent.name}</Typography>
-          <Typography variant="body2" display="flex" alignItems="center" justifyContent={isMobile ? 'center' : 'flex-start'}>
+          <Typography variant="body1" display="flex" alignItems="center" justifyContent={isMobile ? 'center' : 'flex-start'}>
             <AccessTimeIcon fontSize="small" style={{ marginRight: '4px' }} />
             {Moment(nextEvent.time).format('ddd MMM Do, h:mm a')}
           </Typography>

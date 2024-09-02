@@ -3,10 +3,12 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { CircularProgress, Container, Grid } from "@mui/material";
-import useHackathonEvents from "../../hooks/use-hackathon-events";
 import HackathonHeader from "../../components/Hackathon/HackathonHeader";
 import { Typography, Button } from "@mui/material";
 import VolunteerList from '../../components/Hackathon/VolunteerList';
+import TableOfContents from '../../components/Hackathon/TableOfContents';
+import Script from 'next/script';
+
 
 // Dynamically import components for better code splitting
 const DonationProgress = dynamic(
@@ -222,23 +224,28 @@ const faqData = [
     },
   ];
 
-export default function HackathonEvent({ initialData }) {
+export default function HackathonEvent({ eventData }) {
   const router = useRouter();
   const { event_id } = router.query;
-  const { handle_get_hackathon } = useHackathonEvents();
-  const [event, setEvent] = useState(initialData);
-  const [loading, setLoading] = useState(!initialData);
+  const [event, setEvent] = useState(eventData);
+  const [loading, setLoading] = useState(!eventData);
 
 
   useEffect(() => {
-    if (!initialData && event_id) {
-      setLoading(true);
-      handle_get_hackathon(event_id, (data) => {
-        setEvent(data);        
-        setLoading(false);
-      });
+    // Handle scrolling to the correct section when the page loads
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash) {
+        const id = hash.replace('#', '');
+        const element = document.getElementById(id);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }, 100); // Small delay to ensure the page has rendered
+        }
+      }
     }
-  }, [event_id, initialData]);
+  }, []);
 
   if (loading) {
     return <CircularProgress />;
@@ -248,63 +255,73 @@ export default function HackathonEvent({ initialData }) {
     return <div>Event not found</div>;
   }
 
+  const metaDescription = event
+    ? `${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`
+    : "Join us for an exciting Opportunity Hack event!";
+  const metaImage = event?.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp";
+  const metaTitle = event ? `Hackathon: ${event.title}` : "Opportunity Hack Event";
+  const structuredData = event ? {
+    "@context": "http://schema.org",
+    "@type": "Event",
+    "name": event.title,
+    "description": event.description,
+    "startDate": event.start_date,
+    "endDate": event.end_date,
+    "location": {
+      "@type": "Place",
+      "name": event.location,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": event.location
+      }
+    },
+    "image": metaImage,
+    "url": `https://ohack.dev/hack/${event_id}`,
+    "organizer": {
+      "@type": "Organization",
+      "name": "Opportunity Hack",
+      "url": "https://ohack.dev"
+    }
+  } : null;
+
   return (
     <>
       <Head>
-      <title>{`Hackathon: ${event.title}`}</title>
-      <meta name="description" content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`} />
-      
-      {/* Open Graph tags for social media sharing */}
-      <meta property="og:title" content={`Hackathon: ${event.title}`} />
-      <meta property="og:description" content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`} />
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={`https://ohack.dev/hack/${event_id}`} />
-      <meta property="og:image" content={event.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"} />
-      <meta property="og:site_name" content="Opportunity Hack" />
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        
+        {/* Open Graph tags for social media sharing */}
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://ohack.dev/hack/${event_id}`} />
+        <meta property="og:image" content={metaImage} />
+        <meta property="og:site_name" content="Opportunity Hack" />
 
-      {/* Twitter Card tags */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@OpportunityHack" />
-      <meta name="twitter:title" content={`Hackathon: ${event.title}`} />
-      <meta name="twitter:description" content={`${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`} />
-      <meta name="twitter:image" content={event.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"} />
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@OpportunityHack" />
+        <meta name="twitter:title" content={metaTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={metaImage} />
 
-      {/* Additional SEO-friendly meta tags */}
-      <meta name="keywords" content={`hackathon, ${event.title}, opportunity hack, nonprofit, tech for good, ${event.location}`} />
-      <meta name="author" content="Opportunity Hack" />
-      <meta name="robots" content="index, follow" />
-      <meta name="language" content="English" />
+        {/* Additional SEO-friendly meta tags */}
+        <meta name="keywords" content={`hackathon, ${event?.title || 'opportunity hack'}, nonprofit, tech for good, ${event?.location || 'various locations'}`} />
+        <meta name="author" content="Opportunity Hack" />
+        <meta name="robots" content="index, follow" />
+        <meta name="language" content="English" />
 
-      {/* Canonical URL */}
-      <link rel="canonical" href={`https://ohack.dev/hack/${event_id}`} />
+        {/* Canonical URL */}
+        <link rel="canonical" href={`https://ohack.dev/hack/${event_id}`} />
+      </Head>
 
-      {/* Structured data for events */}
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "http://schema.org",
-          "@type": "Event",
-          "name": event.title,
-          "description": event.description,
-          "startDate": event.start_date,
-          "endDate": event.end_date,
-          "location": {
-            "@type": "Place",
-            "name": event.location,
-            "address": {
-              "@type": "PostalAddress",
-              "addressLocality": event.location
-            }
-          },
-          "image": event.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp",
-          "url": `https://ohack.dev/hack/${event_id}`,
-          "organizer": {
-            "@type": "Organization",
-            "name": "Opportunity Hack",
-            "url": "https://ohack.dev"
-          }
-        })}
-      </script>
-    </Head>
+      {structuredData && (
+        <Script
+          id="structured-data-script"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      )}
 
       <Container maxWidth="lg">
         <HackathonHeader         
@@ -314,6 +331,9 @@ export default function HackathonEvent({ initialData }) {
           location={event.location}
           description={event.description}
         />
+
+        <TableOfContents />
+
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -328,21 +348,23 @@ export default function HackathonEvent({ initialData }) {
           <Grid item xs={12}>
             <EventConstraints constraints={event.constraints} />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} id="nonprofit">
             <NonprofitList
               nonprofits={event.nonprofits}
               teams={event.teams}
               eventId={event_id}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} id="mentor">
             <VolunteerList volunteers={event.mentors} type="mentor" />
+          </Grid>
+          <Grid item xs={12} id="judge">
             <VolunteerList volunteers={event.judges} type="judge" />
-          </Grid>          
-          <Grid item xs={12}>
+          </Grid>                            
+          <Grid item xs={12} id="countdown">
             <EventCountdown countdowns={event.countdowns} />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} id="faq">
             <InteractiveFAQ
               faqData={faqData}
               title={`${event.title} FAQ`}
@@ -354,23 +376,7 @@ export default function HackathonEvent({ initialData }) {
   );
 }
 
-export async function getStaticPaths() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathons?current=true`
-  );
-  const data = await res.json();
-
-  const paths = data.hackathons.map((hackathon) => ({
-    params: { event_id: hackathon.event_id },
-  }));
-
-  return {
-    paths,
-    fallback: true,
-  };
-}
-
-export async function getStaticProps({ params }) {
+export async function getServerSideProps({ params }) {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${params.event_id}`
@@ -379,17 +385,15 @@ export async function getStaticProps({ params }) {
 
     return {
       props: {
-        initialData: data,
+        eventData: data,
       },
-      revalidate: 60, // Revalidate every 60 seconds
     };
   } catch (error) {
     console.error("Error fetching hackathon data:", error);
     return {
       props: {
-        initialData: null,
+        eventData: null,
       },
-      revalidate: 60,
     };
   }
 }

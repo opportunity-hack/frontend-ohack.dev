@@ -270,8 +270,7 @@ function SingleHackathonEvent({ event_id }) {
 
             <InteractiveFAQ
               faqData={faqData}
-              title={`${event.title} FAQ`}
-              id="faq"
+              title={`${event.title} FAQ`}              
             />
           </ProjectsContainer>
         </div>
