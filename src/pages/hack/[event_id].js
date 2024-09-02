@@ -289,12 +289,15 @@ export default function HackathonEvent({ eventData }) {
       <Head>
         <title>{metaTitle}</title>
         <meta name="description" content={metaDescription} />
-        
+
         {/* Open Graph tags for social media sharing */}
         <meta property="og:title" content={metaTitle} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={`https://ohack.dev/hack/${event_id}`} />
+        <meta
+          property="og:url"
+          content={`https://ohack.dev/hack/${event_id}`}
+        />
         <meta property="og:image" content={metaImage} />
         <meta property="og:site_name" content="Opportunity Hack" />
 
@@ -306,7 +309,10 @@ export default function HackathonEvent({ eventData }) {
         <meta name="twitter:image" content={metaImage} />
 
         {/* Additional SEO-friendly meta tags */}
-        <meta name="keywords" content={`hackathon, ${event?.title || 'opportunity hack'}, nonprofit, tech for good, ${event?.location || 'various locations'}`} />
+        <meta
+          name="keywords"
+          content={`hackathon, ${event?.title || "opportunity hack"}, nonprofit, tech for good, ${event?.location || "various locations"}`}
+        />
         <meta name="author" content="Opportunity Hack" />
         <meta name="robots" content="index, follow" />
         <meta name="language" content="English" />
@@ -324,7 +330,7 @@ export default function HackathonEvent({ eventData }) {
       )}
 
       <Container maxWidth="lg">
-        <HackathonHeader         
+        <HackathonHeader
           title={event.title}
           startDate={event.start_date}
           endDate={event.end_date}
@@ -333,7 +339,6 @@ export default function HackathonEvent({ eventData }) {
         />
 
         <TableOfContents />
-
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -348,6 +353,9 @@ export default function HackathonEvent({ eventData }) {
           <Grid item xs={12}>
             <EventConstraints constraints={event.constraints} />
           </Grid>
+          <Grid item xs={12} id="countdown">
+            <EventCountdown countdowns={event.countdowns} />
+          </Grid>
           <Grid item xs={12} id="nonprofit">
             <NonprofitList
               nonprofits={event.nonprofits}
@@ -360,15 +368,9 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
           <Grid item xs={12} id="judge">
             <VolunteerList volunteers={event.judges} type="judge" />
-          </Grid>                            
-          <Grid item xs={12} id="countdown">
-            <EventCountdown countdowns={event.countdowns} />
           </Grid>
           <Grid item xs={12} id="faq">
-            <InteractiveFAQ
-              faqData={faqData}
-              title={`${event.title} FAQ`}
-            />
+            <InteractiveFAQ faqData={faqData} title={`${event.title} FAQ`} />
           </Grid>
         </Grid>
       </Container>
