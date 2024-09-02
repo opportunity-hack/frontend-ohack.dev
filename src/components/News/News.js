@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import { Alert, Snackbar, Skeleton } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import Box from "@mui/material/Box";
 import {
   BlankContainer,
   ButtonContainersSmall,
@@ -21,11 +22,16 @@ import {
 import { Divider } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
-import * as ga from "../../lib/ga";
+import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
 function News({ newsData, frontpage, loading }) {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
+  
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
@@ -40,32 +46,7 @@ function News({ newsData, frontpage, loading }) {
 
   const gaButton = async (action, actionName) => {
     console.log("gaButton", "action:", action, "actionName:", actionName);
-
-    const ReactPixel =  require('react-facebook-pixel');
-    
-    const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-    };
-    var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-    
-    ReactPixel.default.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-
-    ReactPixel.track(action, { action_name: actionName });
-
-    ga.event({ 
-        action: "conversion",
-        params: {
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
-    ga.event({
-      action: action,
-      params: {
-        action_name: actionName,
-      },
-    });    
+    trackEvent({ action, params: { action_name: actionName } });
   };
 
   const renderSkeleton = () => (
@@ -119,47 +100,53 @@ function News({ newsData, frontpage, loading }) {
             <BlankContainer xs={12} md={12} lg={12} key={newsItem.id}>
               <TitleContainer container>
                 <Grid item xs={12} md={12} lg={12}>
-                  {newsItem.image && (
-                    <div
-                      style={{
-                        width: "70px",
-                        height: "70px",
-                        position: "relative",
-                        marginBottom: "0.5em",
-                      }}
-                    >
-                      <Image
-                        src={newsItem.image}
-                        alt={newsItem.title}
-                        layout="fill"
-                        objectFit="cover"
-                      />
-                    </div>
-                  )}
-                  <TitleStyled variant="h1">
-                    <Link prefetch={false} href={`/blog/${newsItem.id}`}>
-                      <StyledTextLink>{newsItem.title}</StyledTextLink>
-                    </Link>
-                    <SlackButton
-                      onClick={() =>
-                        gaButton("button_slack_post", newsItem.slack_permalink)
-                      }
-                      target="_blank"
-                      variant="outlined"
-                    >
-                      <Link href={newsItem.slack_permalink} target="_blank">
-                        Original Slack Post
+                  <Box display="flex" alignItems="center" mb={1}>
+                    {newsItem.image && (
+                      <Box
+                        style={{
+                          width: "70px",
+                          height: "70px",
+                          position: "relative",
+                          marginRight: "1em",
+                        }}
+                      >
+                        <Image
+                          src={newsItem.image}
+                          alt={newsItem.title}                          
+                          objectFit="cover"
+                          width={50}
+                          height={50}
+                        />
+                      </Box>
+                    )}
+                    <TitleStyled variant="h1" style={{ flex: 1 }}>
+                      <Link prefetch={false} href={`/blog/${newsItem.id}`}>
+                        <StyledTextLink>{newsItem.title}</StyledTextLink>
                       </Link>
-                    </SlackButton>
-                    <FileCopyIcon
-                      onClick={() =>
-                        handleCopy(
-                          `${newsItem.title} ${newsItem.description} More at https://ohack.dev/blog/${newsItem.id}`
-                        )
-                      }
-                      style={{ cursor: "pointer", marginLeft: "5px" }}
-                    />
-                  </TitleStyled>
+                      <SlackButton
+                        onClick={() =>
+                          gaButton(
+                            "button_slack_post",
+                            newsItem.slack_permalink
+                          )
+                        }
+                        target="_blank"
+                        variant="outlined"
+                      >
+                        <Link href={newsItem.slack_permalink} target="_blank">
+                          Original Slack Post
+                        </Link>
+                      </SlackButton>
+                      <FileCopyIcon
+                        onClick={() =>
+                          handleCopy(
+                            `${newsItem.title} ${newsItem.description} More at https://ohack.dev/blog/${newsItem.id}`
+                          )
+                        }
+                        style={{ cursor: "pointer", marginLeft: "5px" }}
+                      />
+                    </TitleStyled>
+                  </Box>
                 </Grid>
                 <Grid item xs={12} md={12} lg={12}>
                   <TextMuted>
@@ -168,6 +155,7 @@ function News({ newsData, frontpage, loading }) {
                   </TextMuted>
                 </Grid>
               </TitleContainer>
+
               <CaptionContainer>{newsItem.description}</CaptionContainer>
               <ButtonContainersSmall
                 style={{
