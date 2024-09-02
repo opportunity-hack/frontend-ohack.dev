@@ -53,6 +53,18 @@ const InPersonBadge = styled(Box)(({ theme }) => ({
   fontWeight: "bold",
 }));
 
+const RemoteBadge = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  bottom: 0,
+  right: 0,
+  backgroundColor: theme.palette.info.main,
+  color: theme.palette.success.contrastText,
+  padding: "4px 8px",
+  borderRadius: "12px",
+  fontSize: "0.75rem",
+  fontWeight: "bold",
+}));
+
 const HeadingContainer = styled(Box)({
   display: "flex",
   alignItems: "center",
@@ -171,7 +183,8 @@ const VolunteerList = ({ volunteers, type }) => {
               image={imageToDisplay}
               title={volunteer.name}
             />
-            {volunteer.isInPerson && <InPersonBadge>In-Person</InPersonBadge>}
+            {volunteer.isInPerson ? <InPersonBadge>In-Person</InPersonBadge> : <RemoteBadge>Remote</RemoteBadge>}            
+
           </VolunteerMediaContainer>
           <VolunteerContent>
             <Typography gutterBottom variant="h5" component="div">
