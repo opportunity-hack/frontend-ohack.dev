@@ -65,7 +65,7 @@ const EventConstraints = ({ constraints }) => {
   return (
     <ConstraintsContainer elevation={2}>
       <Typography variant="subtitle1" gutterBottom>
-        Event Constraints
+        Team Guidelines
       </Typography>
       <Grid container spacing={2}>
         {constraintItems.map(
@@ -75,7 +75,7 @@ const EventConstraints = ({ constraints }) => {
                 <ConstraintItem>
                   <ConstraintIcon>{item.icon}</ConstraintIcon>
                   <Typography variant="body1">
-                    {item.label.split(" ")[0]}:{" "}
+                    {item.label}:{" "}
                     <strong>{constraints[item.key]}</strong>
                   </Typography>
                   {item.explanation && (
