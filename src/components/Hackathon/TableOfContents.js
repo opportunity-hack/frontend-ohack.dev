@@ -1,21 +1,19 @@
 import React, { useEffect } from "react";
-import { Grid, Button, Box } from "@mui/material";
+import { Grid, Button, Box, Typography, Paper } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
 const sections = [
-  { id: "nonprofit", name: "Nonprofit List" },
   { id: "countdown", name: "Event Countdown" },
-  { id: "faq", name: "FAQ" },
+  { id: "nonprofit", name: "Nonprofit List" },
   { id: "mentor", name: "Mentors" },
   { id: "judge", name: "Judges" },
+  { id: "faq", name: "FAQ" },
 ];
 
 const trackNavigation = (sectionName) => {
   trackEvent({
     action: "navigate_section",
-    params: {
-      section_name: sectionName,
-    },
+    params: { section_name: sectionName },
   });
 };
 
@@ -35,22 +33,34 @@ const TableOfContents = () => {
   };
 
   return (
-    <Box sx={{ my: 2 }}>
-      <Grid container spacing={1} justifyContent="center" alignItems="center">
+    <Paper elevation={3} sx={{ p: 3, my: 4, borderRadius: 2 }}>
+      <Typography variant="h5" gutterBottom align="center" fontWeight="bold">
+        Table of Contents
+      </Typography>
+      <Grid container spacing={2} justifyContent="center" alignItems="center">
         {sections.map((section) => (
           <Grid item key={section.id}>
             <Button
-              variant="text"
-              size="small"
+              variant="contained"
+              color="primary"
+              size="large"
               href={`#${section.id}`}
               onClick={(event) => handleClick(event, section.id, section.name)}
+              sx={{
+                borderRadius: 4,
+                textTransform: "none",
+                fontWeight: "bold",
+                "&:hover": {
+                  backgroundColor: "secondary.main",
+                },
+              }}
             >
               {section.name}
             </Button>
           </Grid>
         ))}
       </Grid>
-    </Box>
+    </Paper>
   );
 };
 
