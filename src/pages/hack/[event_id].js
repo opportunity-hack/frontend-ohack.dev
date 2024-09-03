@@ -353,10 +353,10 @@ export default function HackathonEvent({ eventData }) {
           <Grid item xs={12}>
             <EventConstraints constraints={event.constraints} />
           </Grid>
-          <Grid item xs={12} id="countdown">
+          <Grid item xs={12} md={6} id="countdown">
             <EventCountdown countdowns={event.countdowns} />
           </Grid>
-          <Grid item xs={12} id="nonprofit">
+          <Grid item xs={12} md={6} id="nonprofit">
             <NonprofitList
               nonprofits={event.nonprofits}
               teams={event.teams}
