@@ -50,9 +50,9 @@ function EventFeature(props) {
   return (
     
     <EventCards container direction="column">      
-    <Link prefetch={false} href={`/hack/${event_id}`}>
+    <Link prefetch={true} href={`/hack/${event_id}`}>
 
-      <EventLink prefetch={false} variant="h3"><a href={`/hack/${event_id}`}>{title}</a></EventLink>
+      <EventLink prefetch={true} variant="h3"><a href={`/hack/${event_id}`}>{title}</a></EventLink>
       <EventText variant="h3">{description}</EventText>
       
       <br />
