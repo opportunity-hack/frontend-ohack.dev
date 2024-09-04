@@ -22,7 +22,9 @@ import {
   EngineeringRounded,
   SchoolRounded,
   EmojiEventsRounded,
-  WorkRounded,
+  WorkRounded,  
+  VolunteerActivismRounded,
+  LabelImportantRounded,
 } from "@mui/icons-material";
 
 const VolunteerPage = () => {
@@ -31,37 +33,74 @@ const VolunteerPage = () => {
       title: "Software Engineering",
       icon: <CodeRounded />,
       description:
-        "Develop solutions for nonprofits, full-stack development, mobile apps",
+        "Develop solutions for nonprofits, full-stack development, mobile apps.  This includes DevOps and cloud infrastructure as we want to have a fully deployed solution for the nonprofit and not something that runs on localhost.",
     },
     {
       title: "Product Management",
       icon: <AssignmentRounded />,
       description:
-        "Define project scope, prioritize features, ensure product-market fit",
+        "Define project scope, prioritize features, ensure product-market fit.  Most nonprofits need help with defining the scope of their project, and prioritizing features.  You would help them with this process, and then build the solution for them.",
     },
     {
       title: "UX/UI Design",
       icon: <BrushRounded />,
       description:
-        "Create user-friendly interfaces, improve user experience for nonprofit solutions",
+        "Create user-friendly interfaces, improve user experience for nonprofit solutions. This could be mockups with Figma or Miro, or it could be actual code with React or Angular.",
     },
     {
       title: "Data Science",
       icon: <BarChartRounded />,
       description:
-        "Analyze nonprofit data, create visualizations, develop predictive models",
+        "Analyze nonprofit data, create visualizations, develop predictive models. Most nonprofits have data that they don't know how to use or need help illustrating impact or metrics to track. You would help them with this process, and then build the solution for them.",
     },
     {
       title: "Project Management",
       icon: <AccountTreeRounded />,
-      description: "Coordinate hackathon teams, ensure timely project delivery",
-    },   
+      description: "Coordinate hackathon teams, ensure timely project delivery.  Most of our projects start with a hackathon, then continue with a statement of work that typically takes 3 months to complete.",
+    },
     {
       title: "Engineering Management",
       icon: <EngineeringRounded />,
       description:
-        "Lead tech teams, make architectural decisions, ensure project scalability",
+        "Lead tech teams, make architectural decisions, ensure project scalability. You would be responsible for the morale, communicative, cohesiveness, feedback, and productivity of the team, and ensuring that the project is completed on time.",
     },
+    {
+      title: "Coordination Volunteer",
+      icon: <LabelImportantRounded />,
+      description:
+        "Help with event planning, logistics, and coordination of events. This could be a hackathon, a workshop, or a training session. Virtual or in-person.",
+    },
+    {
+      title: "General Volunteer",
+      icon: <VolunteerActivismRounded />,
+      description:
+        "Assist with hackathon logistics, energize participants, make the event a success",
+    },
+    {
+      title: "Marketing & Communications",
+      icon: <PeopleRounded />,
+      description:
+        "Promote Opportunity Hack, create marketing materials, manage social media",        
+    },
+    {
+      title: "Business Development",
+      icon: <WorkRounded />,
+      description:
+        "Build partnerships, secure sponsorships, grow the Opportunity Hack community",
+    },
+    {
+      title: "Creative Arts and Media",
+      icon: <BrushRounded />,
+      description:
+        "Design graphics, create videos, develop multimedia content",        
+    },
+    {
+      title: "Finance & Accounting",
+      icon: <BarChartRounded />,
+      description:
+        "Manage budgets, financial planning, accounting",        
+    },    
+
   ];
 
   const benefits = [
@@ -173,7 +212,7 @@ const VolunteerPage = () => {
           </ListItem>
           <ListItem>
             <ListItemText
-              primary="3. Attend an orientation session to learn more about our work"
+              primary="3. Register for one of our events or programs"
               primaryTypographyProps={{ style: { fontSize: "1.1em" } }}
             />
           </ListItem>
@@ -281,8 +320,19 @@ const VolunteerPage = () => {
         </Typography>
 
         <Grid container spacing={2}>
-          <Grid item>
+          <Grid item>         
             <Button
+              variant="contained"
+              color="secondary"
+              href="/signup"
+              style={{ fontSize: "1.1em" }}
+            >
+              Join Slack
+            </Button>
+          </Grid>
+          
+          <Grid item>
+          <Button
               variant="contained"
               color="primary"
               href="/nonprofits"
