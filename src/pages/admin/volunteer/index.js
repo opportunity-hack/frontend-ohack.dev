@@ -37,6 +37,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingVolunteer, setEditingVolunteer] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
@@ -139,45 +140,65 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       type:
         tabValue === 0 ? "mentors" : tabValue === 1 ? "judges" : "volunteers",
     });
+    setIsAdding(false);
+    setEditDialogOpen(true);
+  };
+
+  const handleAddSingleVolunteer = () => {
+    setEditingVolunteer({
+      type:
+        tabValue === 0 ? "mentors" : tabValue === 1 ? "judges" : "volunteers",
+      name: "",
+      photoUrl: "",
+      linkedinProfile: "",
+      isInPerson: false,
+      isSelected: false,
+      pronouns: "",
+      slack_user_id: "",
+    });
+    setIsAdding(true);
     setEditDialogOpen(true);
   };
 
   const handleSaveEdit = async () => {
     setLoading(true);
     try {
-      console.log("Sending edit for: ", editingVolunteer);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/volunteers`,
-        {
-          method: "PATCH",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            "content-type": "application/json",
-            "X-Org-Id": orgId,
-          },
-          body: JSON.stringify(editingVolunteer),
-        }
-      );
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/volunteers`;
+      const method = isAdding ? "POST" : "PATCH";
+
+      const volunteerData = {
+        ...editingVolunteer,
+        timestamp: new Date().toISOString(), // Add timestamp
+      };
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "content-type": "application/json",
+          "X-Org-Id": orgId,
+        },
+        body: JSON.stringify(volunteerData),
+      });
 
       if (response.ok) {
         setSnackbar({
           open: true,
-          message: "Volunteer updated successfully",
+          message: isAdding
+            ? "Volunteer added successfully"
+            : "Volunteer updated successfully",
           severity: "success",
         });
-        setVolunteers((prev) => ({
-          ...prev,
-          [editingVolunteer.type]: prev[editingVolunteer.type].map((v) =>
-            v.name === editingVolunteer.name ? editingVolunteer : v
-          ),
-        }));
+        fetchVolunteers();
       } else {
-        throw new Error("Failed to update volunteer");
+        throw new Error(
+          isAdding ? "Failed to add volunteer" : "Failed to update volunteer"
+        );
       }
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Failed to update volunteer. Please try again.",
+        message: `Failed to ${isAdding ? "add" : "update"} volunteer. Please try again.`,
         severity: "error",
       });
     } finally {
@@ -235,6 +256,15 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               variant="outlined"
             >
               {showBulkAdd ? "Hide Bulk Add" : "Bulk Add Volunteers"}
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button
+              onClick={handleAddSingleVolunteer}
+              variant="outlined"
+              color="primary"
+            >
+              Add Single Volunteer
             </Button>
           </Grid>
           <Grid item xs>
@@ -297,6 +327,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         volunteer={editingVolunteer}
         onSave={handleSaveEdit}
         onChange={handleEditChange}
+        isAdding={isAdding}
       />
     </AdminPage>
   );

@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { is } from "date-fns/locale";
 
 const VolunteerEditDialog = ({
   open,
@@ -20,6 +21,7 @@ const VolunteerEditDialog = ({
   volunteer,
   onSave,
   onChange,
+  isAdding,
 }) => {
   if (!volunteer) return null;
 
@@ -76,7 +78,11 @@ const VolunteerEditDialog = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Edit {volunteer.type}</DialogTitle>
+      <DialogTitle>
+        {isAdding
+          ? `Add ${volunteer.type.slice(0, -1)}`
+          : `Edit ${volunteer.type.slice(0, -1)}`}
+      </DialogTitle>
       <DialogContent>
         {fields.map((field) =>
           field.type === "switch" ? (
@@ -84,7 +90,7 @@ const VolunteerEditDialog = ({
               <Typography>{field.label}:</Typography>
               <Switch
                 checked={volunteer[field.name] || false}
-                onChange={(e) => onChange(field.name, e.target.checked)}
+                onChange={(e) => onChange(field.name, e.target.checked)}                
               />
             </Box>
           ) : (
@@ -96,7 +102,7 @@ const VolunteerEditDialog = ({
               fullWidth
               value={volunteer[field.name] || ""}
               onChange={(e) => onChange(field.name, e.target.value)}
-              disabled={field.name === "name"}
+              disabled={field.name === "name" && !isAdding}
             />
           )
         )}
@@ -158,7 +164,7 @@ const VolunteerEditDialog = ({
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={onSave} color="primary">
-          Save
+          {isAdding ? "Add" : "Save"}
         </Button>
       </DialogActions>
     </Dialog>
