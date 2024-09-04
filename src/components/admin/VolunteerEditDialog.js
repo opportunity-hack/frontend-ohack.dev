@@ -41,6 +41,7 @@ const VolunteerEditDialog = ({
         return [
           { name: "expertise", label: "Expertise", type: "text" },
           { name: "company", label: "Company", type: "text" },
+          { name: "shortBio", label: "Short Bio", type: "text" },
         ];
       case "judges":
         return [
