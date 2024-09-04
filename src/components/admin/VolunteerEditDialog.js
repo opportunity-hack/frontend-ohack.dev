@@ -9,7 +9,10 @@ import {
   Box,
   Typography,
   Switch,
+  IconButton,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const VolunteerEditDialog = ({
   open,
@@ -30,27 +33,50 @@ const VolunteerEditDialog = ({
     { name: "slack_user_id", label: "Slack User ID", type: "text" },
   ];
 
-  const mentorFields = [
-    { name: "expertise", label: "Expertise", type: "text" },
-    { name: "company", label: "Company", type: "text" },
-  ];
+  const typeSpecificFields = (() => {
+    switch (volunteer.type) {
+      case "mentors":
+        return [
+          { name: "expertise", label: "Expertise", type: "text" },
+          { name: "company", label: "Company", type: "text" },
+        ];
+      case "judges":
+        return [
+          { name: "title", label: "Title", type: "text" },
+          { name: "companyName", label: "Company Name", type: "text" },
+          { name: "whyJudge", label: "Why Judge", type: "text" },
+        ];
+      case "volunteers":
+        return [{ name: "company", label: "Company", type: "text" }];
+      default:
+        return [];
+    }
+  })();
 
-  const judgeFields = [
-    { name: "title", label: "Title", type: "text" },
-    { name: "companyName", label: "Company Name", type: "text" },
-    { name: "whyJudge", label: "Why Judge", type: "text" },
-  ];
+  const fields = [...commonFields, ...typeSpecificFields];
 
-  const fields =
-    volunteer.type === "mentors"
-      ? [...commonFields, ...mentorFields]
-      : [...commonFields, ...judgeFields];
+  const handleArtifactChange = (index, field, value) => {
+    const newArtifacts = [...volunteer.artifacts];
+    newArtifacts[index] = { ...newArtifacts[index], [field]: value };
+    onChange("artifacts", newArtifacts);
+  };
+
+  const addArtifact = () => {
+    const newArtifacts = [
+      ...(volunteer.artifacts || []),
+      { type: "", label: "", comment: "", url: [""] },
+    ];
+    onChange("artifacts", newArtifacts);
+  };
+
+  const removeArtifact = (index) => {
+    const newArtifacts = volunteer.artifacts.filter((_, i) => i !== index);
+    onChange("artifacts", newArtifacts);
+  };
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>
-        Edit {volunteer.type === "mentors" ? "Mentor" : "Judge"}
-      </DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>Edit {volunteer.type}</DialogTitle>
       <DialogContent>
         {fields.map((field) =>
           field.type === "switch" ? (
@@ -73,6 +99,60 @@ const VolunteerEditDialog = ({
               disabled={field.name === "name"}
             />
           )
+        )}
+        {volunteer.type === "volunteers" && (
+          <>
+            <Typography variant="h6" style={{ marginTop: 16 }}>
+              Artifacts
+            </Typography>
+            {volunteer.artifacts?.map((artifact, index) => (
+              <Box
+                key={index}
+                display="flex"
+                alignItems="center"
+                marginBottom={2}
+              >
+                <TextField
+                  label="Type"
+                  value={artifact.type}
+                  onChange={(e) =>
+                    handleArtifactChange(index, "type", e.target.value)
+                  }
+                  style={{ marginRight: 8 }}
+                />
+                <TextField
+                  label="Label"
+                  value={artifact.label}
+                  onChange={(e) =>
+                    handleArtifactChange(index, "label", e.target.value)
+                  }
+                  style={{ marginRight: 8 }}
+                />
+                <TextField
+                  label="Comment"
+                  value={artifact.comment}
+                  onChange={(e) =>
+                    handleArtifactChange(index, "comment", e.target.value)
+                  }
+                  style={{ marginRight: 8 }}
+                />
+                <TextField
+                  label="URL"
+                  value={artifact.url?.[0] || ""}
+                  onChange={(e) =>
+                    handleArtifactChange(index, "url", [e.target.value])
+                  }
+                  style={{ marginRight: 8 }}
+                />
+                <IconButton onClick={() => removeArtifact(index)}>
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            ))}
+            <Button startIcon={<AddIcon />} onClick={addArtifact}>
+              Add Artifact
+            </Button>
+          </>
         )}
       </DialogContent>
       <DialogActions>

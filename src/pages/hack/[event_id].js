@@ -363,6 +363,9 @@ export default function HackathonEvent({ eventData }) {
               eventId={event_id}
             />
           </Grid>
+          <Grid item xs={12} id="volunteer">
+            <VolunteerList volunteers={event.volunteers} type="volunteer" />
+          </Grid>
           <Grid item xs={12} id="mentor">
             <VolunteerList volunteers={event.mentors} type="mentor" />
           </Grid>

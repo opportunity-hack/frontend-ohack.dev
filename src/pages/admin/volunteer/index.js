@@ -16,12 +16,15 @@ import VolunteerBulkAdd from "../../../components/admin/VolunteerBulkAdd";
 
 import { Typography } from "@mui/material";
 
-
 const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
   const [showBulkAdd, setShowBulkAdd] = useState(false);
 
-  const [volunteers, setVolunteers] = useState({ mentors: [], judges: [] });
+  const [volunteers, setVolunteers] = useState({
+    mentors: [],
+    judges: [],
+    volunteers: [],
+  });
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -61,7 +64,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
           message: "Volunteers added successfully",
           severity: "success",
         });
-        fetchVolunteers(); // Refresh the volunteer list
+        fetchVolunteers();
       } else {
         throw new Error("Failed to add volunteers");
       }
@@ -94,10 +97,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
 
       if (response.ok) {
         const data = await response.json();
-        const mentors = data.mentors;
-        const judges = data.judges;
-        setVolunteers({ mentors, judges });
-        //setVolunteers(data);
+        const { mentors, judges, volunteers } = data;
+        setVolunteers({ mentors, judges, volunteers });
       } else {
         throw new Error("Failed to fetch volunteers");
       }
@@ -135,7 +136,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const handleEditVolunteer = (volunteer) => {
     setEditingVolunteer({
       ...volunteer,
-      type: tabValue === 0 ? "mentors" : "judges",
+      type:
+        tabValue === 0 ? "mentors" : tabValue === 1 ? "judges" : "volunteers",
     });
     setEditDialogOpen(true);
   };
@@ -143,7 +145,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const handleSaveEdit = async () => {
     setLoading(true);
     try {
-        console.log("Sending edit for: ", editingVolunteer);
+      console.log("Sending edit for: ", editingVolunteer);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/volunteers`,
         {
@@ -200,12 +202,11 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       .filter(
         (volunteer) =>
           volunteer.name?.toLowerCase().includes(filter.toLowerCase()) ||
-          volunteer.expertise?.toLowerCase().includes(filter.toLowerCase())
+          volunteer.expertise?.toLowerCase().includes(filter.toLowerCase()) ||
+          volunteer.company?.toLowerCase().includes(filter.toLowerCase())
       );
   };
 
- 
- 
   if (!isAdmin) {
     return (
       <AdminPage title="Volunteer Management" isAdmin={false}>
@@ -239,7 +240,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
           <Grid item xs>
             <TextField
               fullWidth
-              label="Filter by Name or Expertise"
+              label="Filter by Name, Expertise, or Company"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
@@ -260,6 +261,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       >
         <Tab label="Mentors" />
         <Tab label="Judges" />
+        <Tab label="Volunteers" />
       </Tabs>
 
       {loading ? (
@@ -267,8 +269,20 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       ) : (
         <Box sx={{ mt: 2 }}>
           <VolunteerTable
-            volunteers={sortedVolunteers(tabValue === 0 ? "mentors" : "judges")}
-            type={tabValue === 0 ? "mentors" : "judges"}
+            volunteers={sortedVolunteers(
+              tabValue === 0
+                ? "mentors"
+                : tabValue === 1
+                  ? "judges"
+                  : "volunteers"
+            )}
+            type={
+              tabValue === 0
+                ? "mentors"
+                : tabValue === 1
+                  ? "judges"
+                  : "volunteers"
+            }
             orderBy={orderBy}
             order={order}
             onRequestSort={handleRequestSort}

@@ -12,6 +12,7 @@ import {
   Avatar,
   Typography,
   Chip,
+  Tooltip,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -67,37 +68,76 @@ const VolunteerTable = ({
   onRequestSort,
   onEditVolunteer,
 }) => {
-  const columns =
-    type === "mentors"
-      ? [
-          { id: "name", label: "Name", minWidth: 120 },
-          { id: "pronouns", label: "Pronouns", minWidth: 100 },
-          { id: "expertise", label: "Expertise", minWidth: 150 },
-          { id: "company", label: "Company", minWidth: 120 },
-          { id: "isInPerson", label: "In Person", minWidth: 100 },
-          { id: "isSelected", label: "Selected", minWidth: 100 },
-          { id: "country", label: "Country", minWidth: 100 },
-          { id: "state", label: "State", minWidth: 100 },
-          { id: "slack_user_id", label: "SlackID", minWidth: 50 },
-        ]
-      : [
-          { id: "name", label: "Name", minWidth: 120 },
-          { id: "pronouns", label: "Pronouns", minWidth: 100 },
-          { id: "title", label: "Title", minWidth: 150 },
-          { id: "companyName", label: "Company", minWidth: 120 },
-          { id: "isInPerson", label: "In Person", minWidth: 100 },
-          { id: "isSelected", label: "Selected", minWidth: 100 },
-          { id: "slack_user_id", label: "SlackID", minWidth: 50 },
-        ];
+  const columns = useMemo(() => {
+    const baseColumns = [
+      { id: "name", label: "Name", minWidth: 120 },
+      { id: "pronouns", label: "Pronouns", minWidth: 100 },
+      { id: "company", label: "Company", minWidth: 120 },
+      { id: "isInPerson", label: "In Person", minWidth: 100 },
+      { id: "isSelected", label: "Selected", minWidth: 100 },
+      { id: "slack_user_id", label: "SlackID", minWidth: 50 },
+    ];
+
+    if (type === "mentors") {
+      return [
+        ...baseColumns,
+        { id: "expertise", label: "Expertise", minWidth: 150 },
+        { id: "country", label: "Country", minWidth: 100 },
+        { id: "state", label: "State", minWidth: 100 },
+      ];
+    } else if (type === "judges") {
+      return [
+        ...baseColumns,
+        { id: "title", label: "Title", minWidth: 150 },
+        { id: "background", label: "Background", minWidth: 150 },
+      ];
+    } else if (type === "volunteers") {
+      return [
+        ...baseColumns,
+        { id: "artifacts", label: "Contributions", minWidth: 200 },
+      ];
+    }
+
+    return baseColumns;
+  }, [type]);
 
   const selectedCount = useMemo(() => {
     return volunteers.filter((volunteer) => volunteer.isSelected).length;
   }, [volunteers]);
 
+  const renderCellContent = (volunteer, column) => {
+    switch (column.id) {
+      case "isInPerson":
+        return volunteer[column.id] ? "Yes" : "No";
+      case "isSelected":
+        return volunteer[column.id] ? (
+          <SelectedChip
+            icon={<CheckCircleIcon />}
+            label="Selected"
+            size="small"
+          />
+        ) : (
+          <NotSelectedChip
+            icon={<CancelIcon />}
+            label="Not Selected"
+            size="small"
+          />
+        );
+      case "artifacts":
+        return volunteer.artifacts?.map((artifact, index) => (
+          <Tooltip key={index} title={artifact.comment}>
+            <Chip label={artifact.label} size="small" style={{ margin: 2 }} />
+          </Tooltip>
+        ));
+      default:
+        return volunteer[column.id];
+    }
+  };
+
   return (
     <>
       <Typography variant="h6" gutterBottom>
-        Total Volunteers: {volunteers.length} | Selected: {selectedCount}
+        Total {type}: {volunteers.length} | Selected: {selectedCount}
       </Typography>
       <StyledTableContainer component={Paper}>
         <Table stickyHeader>
@@ -142,29 +182,7 @@ const VolunteerTable = ({
                 </StyledTableCell>
                 {columns.map((column) => (
                   <StyledTableCell key={column.id} data-label={column.label}>
-                    {column.id === "isInPerson" ? (
-                      volunteer[column.id] ? (
-                        "Yes"
-                      ) : (
-                        "No"
-                      )
-                    ) : column.id === "isSelected" ? (
-                      volunteer[column.id] ? (
-                        <SelectedChip
-                          icon={<CheckCircleIcon />}
-                          label="Selected"
-                          size="small"
-                        />
-                      ) : (
-                        <NotSelectedChip
-                          icon={<CancelIcon />}
-                          label="Not Selected"
-                          size="small"
-                        />
-                      )
-                    ) : (
-                      volunteer[column.id]
-                    )}
+                    {renderCellContent(volunteer, column)}
                   </StyledTableCell>
                 ))}
                 <StyledTableCell data-label="Actions">

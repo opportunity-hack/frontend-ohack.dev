@@ -8,18 +8,29 @@ const StyledChip = styled(Chip)(({ theme }) => ({
 }));
 
 const VolunteerDetails = ({ volunteer, type }) => {
-  const details =
-    type === "mentors"
-      ? [
+  const details = (() => {
+    switch (type) {
+      case "mentors":
+        return [
           { label: "Expertise", value: volunteer.expertise },
           { label: "Company", value: volunteer.company },
           { label: "Participation", value: volunteer.participationCount },
-        ]
-      : [
+        ];
+      case "judges":
+        return [
           { label: "Company", value: volunteer.companyName },
           { label: "Title", value: volunteer.title },
           { label: "Background", value: volunteer.background },
         ];
+      case "volunteers":
+        return [
+          { label: "Company", value: volunteer.company },
+          { label: "Contributions", value: volunteer.artifacts?.length || 0 },
+        ];
+      default:
+        return [];
+    }
+  })();
 
   return (
     <Box>
@@ -47,6 +58,20 @@ const VolunteerDetails = ({ volunteer, type }) => {
           />
         </Tooltip>
       )}
+      {type === "volunteers" &&
+        volunteer.artifacts?.map((artifact, index) => (
+          <Tooltip key={index} title={artifact.comment}>
+            <StyledChip
+              label={artifact.label}
+              variant="outlined"
+              component="a"
+              href={artifact.url?.[0]}
+              target="_blank"
+              rel="noopener noreferrer"
+              clickable
+            />
+          </Tooltip>
+        ))}
     </Box>
   );
 };
