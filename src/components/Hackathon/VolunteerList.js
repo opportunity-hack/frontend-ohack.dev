@@ -9,6 +9,10 @@ import {
   Box,
   Link,
   Tooltip,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
@@ -17,8 +21,21 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
+import CodeIcon from '@mui/icons-material/Code';
+import BugReportIcon from '@mui/icons-material/BugReport';
+import ForumIcon from '@mui/icons-material/Forum';
+import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import Moment from "moment";
 import NextLink from "next/link";
+import ShareVolunteer from "./ShareVolunteer";
+
+const ArtifactList = styled(List)({
+  padding: 0,
+});
+
+const ArtifactListItem = styled(ListItem)({
+  padding: '4px 0',
+});
 
 const VolunteerCard = styled(Card)(({ theme }) => ({
   display: "flex",
@@ -126,6 +143,44 @@ const VolunteerList = ({ volunteers, type }) => {
     return now.isBetween(startMoment, endMoment);
   };
 
+  const renderArtifacts = (artifacts) => {
+    if (!artifacts || artifacts.length === 0) return null;
+    return (
+      <Box mt={2}>
+        <Typography variant="subtitle2" gutterBottom>
+          Contributions:
+        </Typography>
+        <ArtifactList>
+          {artifacts.map((artifact, index) => (
+            <ArtifactListItem key={index}>
+              <ListItemIcon>
+                {artifact.type === 'pull_request' && <CodeIcon />}
+                {artifact.type === 'issue' && <BugReportIcon />}
+                {artifact.type === 'coordination' && <ForumIcon />}
+                {artifact.type === 'user_experience' && <DesignServicesIcon />}
+                {artifact.type === 'standup' && <AccessTimeIcon />}
+              </ListItemIcon>
+              <ListItemText
+                primary={artifact.label}
+                secondary={
+                  <>
+                    {artifact.comment}
+                    {artifact.url && artifact.url.length > 0 && (
+                      <Link href={artifact.url[0]} target="_blank" rel="noopener noreferrer">
+                        {" "}
+                        (Link)
+                      </Link>
+                    )}
+                  </>
+                }
+              />
+            </ArtifactListItem>
+          ))}
+        </ArtifactList>
+      </Box>
+    );
+  };
+
   const renderAvailability = (availability) => {
     if (!availability) return null;
     const availabilityArray = availability.split(", ");
@@ -162,8 +217,10 @@ const VolunteerList = ({ volunteers, type }) => {
     );
   };
 
-  const renderVolunteerCard = (volunteer) => {
+   const renderVolunteerCard = (volunteer) => {
     const isMentor = type === "mentor";
+    const isJudge = type === "judge";
+    const isVolunteer = type === "volunteer";
     const isSelected = volunteer.isSelected;
     const googleDriveImage = volunteer.photoUrl?.includes("drive.google.com");
     let imageToDisplay =
@@ -183,23 +240,25 @@ const VolunteerList = ({ volunteers, type }) => {
               image={imageToDisplay}
               title={volunteer.name}
             />
-            {volunteer.isInPerson ? <InPersonBadge>In-Person</InPersonBadge> : <RemoteBadge>Remote</RemoteBadge>}            
-
+            {volunteer.isInPerson ? <InPersonBadge>In-Person</InPersonBadge> : <RemoteBadge>Remote</RemoteBadge>}
           </VolunteerMediaContainer>
           <VolunteerContent>
-            <Typography gutterBottom variant="h5" component="div">
-              {volunteer.name}
-              {volunteer.pronouns && (
-                <Tooltip title="Pronouns">
-                  <Chip
-                    icon={<PersonIcon />}
-                    label={volunteer.pronouns}
-                    size="small"
-                    style={{ marginLeft: "8px" }}
-                  />
-                </Tooltip>
-              )}
-            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography gutterBottom variant="h5" component="div">
+                {volunteer.name}
+                {volunteer.pronouns && (
+                  <Tooltip title="Pronouns">
+                    <Chip
+                      icon={<PersonIcon />}
+                      label={volunteer.pronouns}
+                      size="small"
+                      style={{ marginLeft: "8px" }}
+                    />
+                  </Tooltip>
+                )}
+              </Typography>
+              <ShareVolunteer volunteer={volunteer} type={type} />
+            </Box>
             <Typography variant="subtitle1" color="text.secondary">
               {isMentor ? volunteer.company : volunteer.companyName}
               {!isMentor && volunteer.title && ` - ${volunteer.title}`}
@@ -257,19 +316,20 @@ const VolunteerList = ({ volunteers, type }) => {
                 )}
               </>
             )}
-            {(!isMentor && volunteer.background) && (
+            {(isJudge && volunteer.background) && (
               <>
                 <Typography variant="body1" paragraph>
                   <strong>Expertise:</strong> {volunteer.background}
                 </Typography>                
               </>
             )}
-            {!isMentor && (
+            {isJudge && (
               <Typography variant="body1" paragraph>
                 <strong>Why volunteering:</strong> {volunteer.whyJudge}
               </Typography>
             )}
             {isMentor && renderAvailability(volunteer.availability)}
+            {isVolunteer && renderArtifacts(volunteer.artifacts)}
           </VolunteerContent>
         </VolunteerCard>
       </Grid>
@@ -280,10 +340,10 @@ const VolunteerList = ({ volunteers, type }) => {
     <Box sx={{ mt: 4 }}>
       <HeadingContainer>
         <Typography variant="h4">
-          Our Amazing {type === "mentor" ? "Mentors" : "Judges"}
+          Our Amazing {type === "mentor" ? "Mentors" : type === "judge" ? "Judges" : "Volunteers"}
         </Typography>
         <NextLink
-          href={type === "mentor" ? "/about/mentors" : "/about/judges"}
+          href={type === "mentor" ? "/about/mentors" : type === "judge" ? "/about/judges" : "/volunteer"}
           passHref
         >
           <StyledLink color="secondary">(Learn more)</StyledLink>
