@@ -47,9 +47,13 @@ const VolunteerEditDialog = ({
           { name: "title", label: "Title", type: "text" },
           { name: "companyName", label: "Company Name", type: "text" },
           { name: "whyJudge", label: "Why Judge", type: "text" },
+          { name: "shortBiography", label: "Short Biography", type: "text" }, 
         ];
       case "volunteers":
-        return [{ name: "company", label: "Company", type: "text" }];
+        return [
+          { name: "company", label: "Company", type: "text" },
+          { name: "shortBio" , label: "Short Bio", type: "text" },
+        ];
       default:
         return [];
     }
