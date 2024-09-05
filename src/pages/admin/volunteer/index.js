@@ -165,11 +165,14 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     try {
       const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/volunteers`;
       const method = isAdding ? "POST" : "PATCH";
+      let volunteerData = editingVolunteer;
 
-      const volunteerData = {
-        ...editingVolunteer,
-        timestamp: new Date().toISOString(), // Add timestamp
-      };
+      if( isAdding ) { // If we're adding something we need to add the timestamp we are addiing, but since the timestamp is a PK for edits, we don't want to touch it
+        volunteerData = {
+          ...editingVolunteer,
+          timestamp: new Date().toISOString(), // Add timestamp
+        };
+      }
 
       const response = await fetch(url, {
         method: method,
