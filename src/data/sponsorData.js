@@ -20,6 +20,20 @@ export const sponsors = [
     donations: 0,
     website: "https://spotify.com",
   },
+  {
+    name: "Readme",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/readme.webp",
+    hours: 10,
+    donations: 0,
+    website: "https://readme.com",
+  },
+  {
+    name: "MX",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/mx.webp",
+    hours: 30,
+    donations: 0,
+    website: "https://mx.com",
+  },
 ];
 
 export const calculateSupport = (hours, donations) => hours * 100 + donations;
