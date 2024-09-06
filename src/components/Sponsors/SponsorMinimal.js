@@ -20,7 +20,7 @@ const SponsorMinimal = () => {
         calculateSupport(b.hours, b.donations) -
         calculateSupport(a.hours, a.donations)
     )
-    .slice(0, 3);
+    .slice(0, 5);
 
   // Helper function to get the highest level for a sponsor
   const getSponsorLevel = (sponsor) => {
