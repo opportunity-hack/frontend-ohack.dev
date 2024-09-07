@@ -129,14 +129,22 @@ export default function SponsorIndexList() {
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               <Chip
                 icon={<AccessTimeIcon />}
-                label={`${sponsor.hours} hours`}
+                label={
+                  <span style={{ fontSize: "13px" }}>
+                    {sponsor.hours} hours
+                  </span>
+                }
                 size="small"
                 color="primary"
               />
               {sponsor.donations > 0 && (
                 <Chip
-                  icon={<AttachMoneyIcon />}
-                  label={`$${sponsor.donations} donated`}
+                  icon={<AttachMoneyIcon />}                  
+                  label={
+                    <span style={{ fontSize: "13px" }}>
+                      ${sponsor.donations} donated
+                    </span>
+                  }
                   size="small"
                   color="secondary"
                 />

@@ -34,6 +34,20 @@ export const sponsors = [
     donations: 0,
     website: "https://mx.com",
   },
+  {
+    name: "Scooptacular",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/scooptacular.webp",
+    hours: 5,
+    donations: 500,
+    website: "https://scooptacular.net",
+  },
+  {
+    name: "Shift Caffeine",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/shift.webp",
+    hours: 5,
+    donations: 500,
+    website: "https://shiftcaffeine.com",
+  },
 ];
 
 export const calculateSupport = (hours, donations) => hours * 100 + donations;
