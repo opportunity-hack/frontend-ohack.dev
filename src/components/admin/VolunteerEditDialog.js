@@ -31,7 +31,7 @@ const VolunteerEditDialog = ({
     { name: "isInPerson", label: "In Person", type: "switch" },
     { name: "isSelected", label: "Selected", type: "switch" },
     { name: "pronouns", label: "Pronouns", type: "text" },
-    { name: "slack_user_id", label: "Slack User ID", type: "text" },
+    { name: "slack_user_id", label: "Slack User ID", type: "text" },    
   ];
 
   const typeSpecificFields = (() => {
@@ -41,18 +41,36 @@ const VolunteerEditDialog = ({
           { name: "expertise", label: "Expertise", type: "text" },
           { name: "company", label: "Company", type: "text" },
           { name: "shortBio", label: "Short Bio", type: "text" },
+          {
+            name: "participationCount",
+            label: "Participation Count",
+            type: "text",
+          },
+          { name: "country", label: "Country", type: "text" },
+          { name: "state", label: "State", type: "text" },
         ];
       case "judges":
         return [
           { name: "title", label: "Title", type: "text" },
           { name: "companyName", label: "Company Name", type: "text" },
           { name: "whyJudge", label: "Why Judge", type: "text" },
-          { name: "shortBiography", label: "Short Biography", type: "text" }, 
+          { name: "shortBiography", label: "Short Biography", type: "text" },
+          { name: "background", label: "Background", type: "text" },
+          {
+            name: "hasHelpedBefore",
+            label: "Has Helped Before",
+            type: "text",
+          },
         ];
       case "volunteers":
         return [
           { name: "company", label: "Company", type: "text" },
-          { name: "shortBio" , label: "Short Bio", type: "text" },
+          { name: "shortBio", label: "Short Bio", type: "text" },
+          {
+            name: "hasHelpedBefore",
+            label: "Has Helped Before",
+            type: "text",
+          },
         ];
       default:
         return [];
