@@ -135,13 +135,21 @@ const VolunteerList = ({ volunteers, type }) => {
     timeSpan = timeSpan.replace(/PST/g, "");
     timeSpan = timeSpan.replace(/p\s/g, "pm");
     timeSpan = timeSpan.replace(/a\s/g, "am");
+    console.log("Time Span: ", timeSpan);
 
     let [startTime, endTime] = timeSpan.split("-");
     // Add :59 to the end time to make it inclusive of the entire hour
-    endTime = endTime + ":59";
+    endTime = endTime.replace(/(.*)([ap]m)/, "$1:59$2");
+    console.log("Start Time: ", startTime);
+    console.log("End Time: ", endTime);
 
     const startMoment = Moment(`${startTime}`, "h:mma", "America/Los_Angeles");
     const endMoment = Moment(`${endTime}`, "h:mma", "America/Los_Angeles");
+
+    console.log("Now: ", now.format("h:mma"));
+    console.log("Start: ", startMoment.format("h:mma"));
+    console.log("End: ", endMoment.format("h:mma"));
+
 
     return now.isBetween(startMoment, endMoment);
   };

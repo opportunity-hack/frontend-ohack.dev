@@ -48,6 +48,7 @@ const VolunteerEditDialog = ({
           },
           { name: "country", label: "Country", type: "text" },
           { name: "state", label: "State", type: "text" },
+          { name: "availability", label: "Availability", type: "text" },
         ];
       case "judges":
         return [
