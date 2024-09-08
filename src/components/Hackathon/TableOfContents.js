@@ -5,6 +5,7 @@ import { initFacebookPixel, trackEvent } from "../../lib/ga";
 const sections = [
   { id: "countdown", name: "Event Countdown" },
   { id: "nonprofit", name: "Nonprofit List" },
+  { id: "volunteer", name: "Volunteers" },
   { id: "mentor", name: "Mentors" },
   { id: "judge", name: "Judges" },
   { id: "faq", name: "FAQ" },
