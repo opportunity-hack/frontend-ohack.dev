@@ -509,21 +509,22 @@ export default function SponsorIndexList() {
             isMobile={isMobile}
             setSelectedAmount={setSelectedAmount}
           />
-          {selectedAmount > 0 && (
-            <Box mt={2}>
+
+          <Box mt={2}>
+            {selectedAmount > 0 && (
               <Typography variant="h6" gutterBottom>
                 Donate ${selectedAmount} via PayPal:
               </Typography>
-              <ButtonBasicStyle
-                onClick={() => gaButton("button_donate", "donate")}
-                style={{ color: "white", backgroundColor: "blue" }}
-                target="_blank"
-                href="https://www.paypal.com/donate/?campaign_id=WWL4VPVBUS4SA"
-              >
-                Donate with PayPal
-              </ButtonBasicStyle>
-            </Box>
-          )}
+            )}
+            <ButtonBasicStyle
+              onClick={() => gaButton("button_donate", "donate")}
+              style={{ color: "white", backgroundColor: "blue" }}
+              target="_blank"
+              href="https://www.paypal.com/donate/?campaign_id=WWL4VPVBUS4SA"
+            >
+              Donate with PayPal
+            </ButtonBasicStyle>
+          </Box>
         </Box>
 
         <Box mt={isMobile ? 3 : 6}>
