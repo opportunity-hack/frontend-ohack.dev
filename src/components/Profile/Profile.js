@@ -1,21 +1,35 @@
-import { useAuthInfo } from '@propelauth/react'
-import React from "react";
-import { FormControl, TextField, InputLabel, MenuItem, Select } from "@mui/material";
+import React, { useState, useEffect } from 'react';
+import { useAuthInfo } from '@propelauth/react';
+import { 
+  Typography, 
+  FormControl, 
+  TextField, 
+  InputLabel, 
+  MenuItem, 
+  Select,
+  Checkbox,
+  ListItemText,
+  Button,
+  Stack,
+  Link,
+  useTheme,
+  useMediaQuery
+} from "@mui/material";
 import useProfileApi from "../../hooks/use-profile-api.js";
 import BadgeList from "../../components/badge-list";
 import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import Stack from '@mui/material/Stack';
-import Checkbox from '@mui/material/Checkbox';
-import ListItemText from '@mui/material/ListItemText';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 import HeartGauge from '../HeartGauge/HeartGauge';
-import { initFacebookPixel, trackEvent, set } from '../../lib/ga';
+import GitHubContributions from './GitHubContributions';
+import ShareableGitHubContributions from './ShareableGitHubContributions';
+import RaffleEntries from './RaffleEntries';
 
+import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack.js";
+import { initFacebookPixel, trackEvent, set } from '../../lib/ga';
 import Head from "next/head";
 import Moment from "react-moment";
-
 import {
   InnerContainer,
   LayoutContainer,
@@ -26,15 +40,16 @@ import {
   ProfileHeader,
   ProfileHeadline,
 } from "../../styles/profile/styles";
-import { Link, Typography, useTheme, useMediaQuery } from "@mui/material";
-import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack.js";
-import { init } from 'react-facebook-pixel';
 
 export default function Profile(props) {
   const { isLoggedIn, user } = useAuthInfo();
-  const { badges, hackathons, profile, feedback_url, update_profile_metadata } = useProfileApi({ });  
+  const { badges, hackathons, profile, feedback_url, update_profile_metadata } =
+    useProfileApi({});
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [githubHistory, setGithubHistory] = useState([]);
+
+
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [role, setRole] = React.useState("");
   const [expertise, setExpertise] = React.useState([]);
@@ -50,31 +65,48 @@ export default function Profile(props) {
 
   // Update expertise, education, and shirt size from the profile
   React.useEffect(() => {
-    if (!profile || !profile?.role || !profile?.education || !profile?.shirt_size) {
+    if (
+      !profile ||
+      !profile?.role ||
+      !profile?.education ||
+      !profile?.shirt_size
+    ) {
       return;
     }
-    
-    setRole(profile?.role);    
+
+    setRole(profile?.role);
     setEducation(profile?.education);
     setShirtSize(profile?.shirt_size);
     setWhy(profile?.why);
     setGithub(profile?.github);
 
-    
     if (profile?.expertise) {
       setExpertise(profile?.expertise);
     }
 
-    setCompany(profile?.company);    
+    setCompany(profile?.company);
 
     initFacebookPixel();
 
-    if (user && user.email) {      
+    if (user && user.email) {
       set(user.email);
     }
-
   }, [profile]);
 
+  useEffect(() => {
+    if (github) {
+      const github_history_url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/github/${github}`;
+
+      fetch(github_history_url)
+        .then((response) => response.json())
+        .then((data) => {
+          setGithubHistory(data.github_history || []);
+        })
+        .catch((error) => {
+          console.error("Error fetching GitHub history", error);
+        });
+    }
+  }, [github]);
 
   const expertiseListLabels = [
     "Software Engineering",
@@ -101,12 +133,12 @@ export default function Profile(props) {
 
     const onComplete = () => {
       console.log("Profile role updated");
-    }
+    };
 
-    update_profile_metadata({ "role": event.target.value }, onComplete );    
+    update_profile_metadata({ role: event.target.value }, onComplete);
 
     setRole(event.target.value);
-  }
+  };
 
   const handleExpertiseChange = (event) => {
     const {
@@ -120,16 +152,15 @@ export default function Profile(props) {
 
     // Call the API to save the user's profile
     console.log("Save to backend", {
-      toSet
+      toSet,
     });
 
     const onComplete = () => {
       console.log("Profile expertise updated");
-    }
+    };
 
-    update_profile_metadata({ "expertise": toSet }, onComplete );
-  }
-  
+    update_profile_metadata({ expertise: toSet }, onComplete);
+  };
 
   const handleEducationChange = (event) => {
     // Call the API to save the user's profile
@@ -137,12 +168,12 @@ export default function Profile(props) {
 
     const onComplete = () => {
       console.log("Profile education updated");
-    }
+    };
 
-    update_profile_metadata({ "education": event.target.value }, onComplete );
+    update_profile_metadata({ education: event.target.value }, onComplete);
 
     setEducation(event.target.value);
-  }
+  };
 
   const handleShirtSizeChange = (event) => {
     // Call the API to save the user's profile
@@ -150,21 +181,21 @@ export default function Profile(props) {
 
     const onComplete = () => {
       console.log("Profile shirt size updated");
-    }
+    };
 
-    update_profile_metadata({ "shirt_size": event.target.value }, onComplete );
+    update_profile_metadata({ shirt_size: event.target.value }, onComplete);
 
     setShirtSize(event.target.value);
-  }
+  };
 
   const handleCompanyChange = (event) => {
-   // Since company is a text field, wait a few seconds for the user to type before calling to save
+    // Since company is a text field, wait a few seconds for the user to type before calling to save
     // Call the API to save the user's profile
     console.log("Save to backend", event.target.value);
 
     const onComplete = () => {
       console.log("Profile company updated");
-    }
+    };
 
     // To prevent too many calls to the backend we'll wait a few seconds before calling the API
     // This is a common pattern to prevent too many calls to the backend
@@ -175,10 +206,12 @@ export default function Profile(props) {
     clearTimeout(lastCompanyUpdate);
 
     // Set a new timeout
-    setLastCompanyUpdate(setTimeout(() => {
-      update_profile_metadata({ "company": event.target.value }, onComplete );
-    }, 2000));
-  }
+    setLastCompanyUpdate(
+      setTimeout(() => {
+        update_profile_metadata({ company: event.target.value }, onComplete);
+      }, 2000)
+    );
+  };
 
   const handleGithubChange = (event) => {
     // Since company is a text field, wait a few seconds for the user to type before calling to save
@@ -187,7 +220,7 @@ export default function Profile(props) {
 
     const onComplete = () => {
       console.log("GitHub updated");
-    }
+    };
 
     // To prevent too many calls to the backend we'll wait a few seconds before calling the API
     // This is a common pattern to prevent too many calls to the backend
@@ -198,21 +231,21 @@ export default function Profile(props) {
     clearTimeout(lastGithubUpdate);
 
     // Set a new timeout
-    setLastGithubUpdate(setTimeout(() => {
-      update_profile_metadata({ "github": event.target.value }, onComplete );
-    }, 2000));
-  }
+    setLastGithubUpdate(
+      setTimeout(() => {
+        update_profile_metadata({ github: event.target.value }, onComplete);
+      }, 2000)
+    );
+  };
 
-
-
-   const handleWhyChange = (event) => {
-   // Since company is a text field, wait a few seconds for the user to type before calling to save
+  const handleWhyChange = (event) => {
+    // Since company is a text field, wait a few seconds for the user to type before calling to save
     // Call the API to save the user's profile
     console.log("Save to backend", event.target.value);
 
     const onComplete = () => {
       console.log("Why updated");
-    }
+    };
 
     // To prevent too many calls to the backend we'll wait a few seconds before calling the API
     // This is a common pattern to prevent too many calls to the backend
@@ -223,70 +256,82 @@ export default function Profile(props) {
     clearTimeout(lastWhyUpdate);
 
     // Set a new timeout
-    setLastWhyUpdate(setTimeout(() => {
-      update_profile_metadata({ "why": event.target.value }, onComplete );
-    }, 2000));
-  }
-
-
+    setLastWhyUpdate(
+      setTimeout(() => {
+        update_profile_metadata({ why: event.target.value }, onComplete);
+      }, 2000)
+    );
+  };
 
   const style = {
-    fontSize: 14
+    fontSize: 14,
   };
+
+  if (!isLoggedIn) {
+    return (
+      <LayoutContainer>
+        <Typography variant="h4">You must be logged in to view this page.</Typography>
+        <LoginOrRegister introText="Ready to join us?" previousPage="/profile" />
+      </LayoutContainer>
+    );
+  }
 
   return (
     <LayoutContainer container>
-      <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
-        <Head>
-          <title>Profile - Opportunity Hack Developer Portal</title>
-        </Head>
+  <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
+    <Head>
+      <title>Profile - Opportunity Hack Developer Portal</title>
+    </Head>
+    
+    {isLoggedIn ? (
+      <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: isMobile ? 2 : 4 }}>
+        <ProfileHeader container>
+          <ProfileAvatar
+            src={user?.pictureUrl}
+            alt="Profile"
+            width={60}
+            height={60}
+          />
+          <ProfileHeadline>
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 600,
+                fontSize: isMobile ? "2rem" : "3rem",
+                marginBottom: "0.5rem",
+              }}
+            >
+              {user?.firstName} {user?.lastName}{" "}
+              <VerifiedUserIcon color="success" fontSize="large" />
+            </Typography>
+            <ProfileDetailText>{user?.email}</ProfileDetailText>
+            <ProfileDetailText>
+              Created: <Moment fromNow>{user?.createdAt * 1000}</Moment>
+            </ProfileDetailText>
+          </ProfileHeadline>
+        </ProfileHeader>
         
-        {isLoggedIn && (
-          <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: isMobile ? 2 : 4 }}>
-            <ProfileHeader container>
-              <ProfileAvatar
-                src={user?.pictureUrl}
-                alt="Profile"
-                width={60}
-                height={60}
-              />
+        <HeartGauge history={profile.history} />
 
-              <ProfileHeadline>
-                <Typography
-                  variant="h2"
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: isMobile ? "2rem" : "3rem",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  {user?.firstName} {user?.lastName}{" "}
-                  <VerifiedUserIcon color="success" fontSize="large" />
-                </Typography>
-                <ProfileDetailText>{user?.email}</ProfileDetailText>
-                <ProfileDetailText>
-                  Created: <Moment fromNow>{user?.createdAt * 1000}</Moment>
-                </ProfileDetailText>
-              </ProfileHeadline>
-            </ProfileHeader>
-            
-            <HeartGauge history={profile.history} />
+        <RaffleEntries profile={profile} githubHistory={githubHistory} />
 
-            <Link href={profile.profile_url}>
-              <ProfileButton className="button button--compact button--primary">
-                See Your Public Profile
-              </ProfileButton>
-            </Link>
+        <ShareableGitHubContributions githubHistory={githubHistory} userName={user?.firstName || 'Anonymous'} />
 
-            <Typography variant="h2" mt={2} sx={{ fontWeight: 600, fontSize: isMobile ? "1.5rem" : "2rem" }}>
-              Tell us more about yourself and why you're here
-            </Typography>
-            <Typography variant="body1" mt={2}>
-              We ask because we want to make sure we're providing the right resources and opportunities for you.
-            </Typography>
+        <Link href={profile.profile_url}>
+          <ProfileButton className="button button--compact button--primary">
+            See Your Public Profile
+          </ProfileButton>
+        </Link>
 
-            <Stack direction="column" spacing={2} mt={2} sx={{ width: '100%' }}>
-              <FormControl>
+        <Typography variant="h2" mt={2} sx={{ fontWeight: 600, fontSize: isMobile ? "1.5rem" : "2rem" }}>
+          Tell us more about yourself and why you're here
+        </Typography>
+        <Typography variant="body1" mt={2}>
+          We ask because we want to make sure we're providing the right resources and opportunities for you.
+        </Typography>
+
+        <Stack direction="column" spacing={2} mt={2} sx={{ width: '100%' }}>
+          <FormControl>
             <InputLabel id="role-label" style={style}>What hat are you currently wearing?</InputLabel>
             <Select
               labelId="role-label"
@@ -294,7 +339,7 @@ export default function Profile(props) {
               value={role}
               label="Role"
               style={{ width: "300px" }}
-              onChange={(event) => onRoleChange( event ) }
+              onChange={(event) => onRoleChange(event)}
             >
               <MenuItem value="">Select a role</MenuItem>
               <MenuItem value="hacker_in_school">Hacker (In School)</MenuItem>
@@ -306,10 +351,9 @@ export default function Profile(props) {
               <MenuItem value="sponsor">Sponsor</MenuItem>
               <MenuItem value="organizer">Organizer</MenuItem>
             </Select>
-            </FormControl>
+          </FormControl>
 
-
-            <FormControl>            
+          <FormControl>            
             <TextField
               id="github"
               onChange={handleGithubChange}
@@ -317,72 +361,64 @@ export default function Profile(props) {
               label="What's your GitHub username? (not email)"
               value={github}              
               style={{
-                  width: "300px",                                    
-                }}                        
+                width: "300px",                                    
+              }}                        
             />
           </FormControl>
 
-            <FormControl>
-              <InputLabel id="expertise-label" style={style}>Areas of Expertise</InputLabel>
-              <Select
-                labelId="expertise-label"
-                id="expertise-select"
-                value={expertise}
-                onChange={handleExpertiseChange}
-                label="Area of Expertise"
-                style={{ width: "300px" }}
-                multiple                
-                renderValue={(selected) => selected.join(', ')}
-              >
-                
-                { expertiseListLabels.map((e, index) => (
-                  <MenuItem key={e} value={e}>
-                    <Checkbox checked={expertise.indexOf(e) > -1} />
-                    <ListItemText primary={e} />
-                    
-                  </MenuItem>
-                ))}
-
-
-              </Select>
-            </FormControl>
+          <FormControl>
+            <InputLabel id="expertise-label" style={style}>Areas of Expertise</InputLabel>
+            <Select
+              labelId="expertise-label"
+              id="expertise-select"
+              value={expertise}
+              onChange={handleExpertiseChange}
+              label="Area of Expertise"
+              style={{ width: "300px" }}
+              multiple                
+              renderValue={(selected) => selected.join(', ')}
+            >
+              {expertiseListLabels.map((e, index) => (
+                <MenuItem key={e} value={e}>
+                  <Checkbox checked={expertise.indexOf(e) > -1} />
+                  <ListItemText primary={e} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <FormControl>  
-              <InputLabel id="education-label" style={style}>Level of Education</InputLabel>
-              <Select
-                labelId="education-label"
-                id="education-select"
-                value={education}
-                label="Level of Education"
-                style={{ width: "300px" }}
-                onChange={(event) => handleEducationChange(event)}
-              >
-                <MenuItem value="">Select a level of education</MenuItem>
-                <MenuItem value="high-school">High School</MenuItem>
-                <MenuItem value="some-college">Some College</MenuItem>
-                <MenuItem value="completed-undergraduate-school">Completed Undergraduate</MenuItem>
-                
-                <MenuItem value="some-graduate-school">Some Graduate School</MenuItem>
-                <MenuItem value="completed-graduate-school">Completed Graduate School</MenuItem>
-                
-                <MenuItem value="coding-bootcamp">Some Coding Bootcamp</MenuItem>
-                <MenuItem value="coding-bootcamp">Completed Coding Bootcamp</MenuItem>
-                
-                <MenuItem value="other">Other</MenuItem>
-
-              </Select>        
+            <InputLabel id="education-label" style={style}>Level of Education</InputLabel>
+            <Select
+              labelId="education-label"
+              id="education-select"
+              value={education}
+              label="Level of Education"
+              style={{ width: "300px" }}
+              onChange={(event) => handleEducationChange(event)}
+            >
+              <MenuItem value="">Select a level of education</MenuItem>
+              <MenuItem value="high-school">High School</MenuItem>
+              <MenuItem value="some-college">Some College</MenuItem>
+              <MenuItem value="completed-undergraduate-school">Completed Undergraduate</MenuItem>
+              <MenuItem value="some-graduate-school">Some Graduate School</MenuItem>
+              <MenuItem value="completed-graduate-school">Completed Graduate School</MenuItem>
+              <MenuItem value="coding-bootcamp">Some Coding Bootcamp</MenuItem>
+              <MenuItem value="coding-bootcamp">Completed Coding Bootcamp</MenuItem>
+              <MenuItem value="other">Other</MenuItem>
+            </Select>        
           </FormControl>
           
           <FormControl>            
             <TextField
-              id="company"
+              id="why"
               onChange={handleWhyChange}
               aria-describedby="learning-helper-text"
               label="Why are you here with us at OHack?"
               value={why}
               style={{
-                  width: "400px",                                    
-                }}     
+                width: "400px",                                    
+              }}     
             />
           </FormControl>
 
@@ -394,8 +430,8 @@ export default function Profile(props) {
               label="If you're working, what company do you work for?"
               value={company}
               style={{
-                  width: "300px",                                    
-                }}     
+                width: "300px",                                    
+              }}     
             />
           </FormControl>
 
@@ -417,14 +453,16 @@ export default function Profile(props) {
               <MenuItem value="xx-large">XX-Large</MenuItem> 
             </Select>          
           </FormControl>
-            </Stack>
+        </Stack>
 
-            <HelpUsBuildOHack
-              github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6"
-              github_name="Issue #6"
-            />
+        <GitHubContributions githubHistory={githubHistory} />        
 
-            <div className="profile__details">
+        <HelpUsBuildOHack
+          github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6"
+          github_name="Issue #6"
+        />
+
+        <div className="profile__details">
           <h2 className="profile__title">Badges</h2>
           <BadgeList badges={badges} />
 
@@ -459,19 +497,17 @@ export default function Profile(props) {
             github_name="Issue #8"
           />
         </div>
-          </ProfileContainer>
-        )}
-
-        {!isLoggedIn && (
-          <div>
-            <h1>Not logged in</h1>
-            <p>
-              You must be logged in to view this page.{" "}
-              <LoginOrRegister introText="Ready to join us?" previousPage={"/profile"} />
-            </p>
-          </div>
-        )}
-      </InnerContainer>
-    </LayoutContainer>
+      </ProfileContainer>
+    ) : (
+      <div>
+        <h1>Not logged in</h1>
+        <p>
+          You must be logged in to view this page.{" "}
+          <LoginOrRegister introText="Ready to join us?" previousPage={"/profile"} />
+        </p>
+      </div>
+    )}
+  </InnerContainer>
+</LayoutContainer>
   );
 }
