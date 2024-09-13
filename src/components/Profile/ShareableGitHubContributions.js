@@ -129,4 +129,3 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
 };
 
 export default ShareableGitHubContributions;
-c
