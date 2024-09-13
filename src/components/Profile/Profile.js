@@ -23,7 +23,7 @@ import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 import HeartGauge from '../HeartGauge/HeartGauge';
 
-import GitHubContributions from './GitHubContributions';
+import GitHubContributions from './GitHubContribution';
 
 import ShareableGitHubContributions from './ShareableGitHubContributions';
 
