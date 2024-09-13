@@ -22,8 +22,11 @@ import FeedbackLite from "../../components/feedback-lite";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 import HeartGauge from '../HeartGauge/HeartGauge';
+
 import GitHubContributions from './GitHubContributions';
+
 import ShareableGitHubContributions from './ShareableGitHubContributions';
+
 import RaffleEntries from './RaffleEntries';
 
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack.js";
