@@ -26,23 +26,46 @@ const GitHubContributions = ({ githubHistory }) => {
   }
 
   const totalCommits = githubHistory.reduce(
-    (sum, repo) => sum + repo.commit_count,
+    (sum, contribution) => sum + contribution.commits,
     0
   );
-  const totalPRs = githubHistory.reduce((sum, repo) => sum + repo.pr_count, 0);
+  const totalPRs = githubHistory.reduce(
+    (sum, contribution) => sum + contribution.pull_requests.total,
+    0
+  );
   const totalIssues = githubHistory.reduce(
-    (sum, repo) => sum + repo.issue_count,
+    (sum, contribution) => sum + contribution.issues.total,
     0
   );
   const totalReviews = githubHistory.reduce(
-    (sum, repo) => sum + repo.review_count,
+    (sum, contribution) => sum + contribution.reviews,
     0
   );
 
+  // Group contributions by repository
+  const repoContributions = githubHistory.reduce((acc, contribution) => {
+    const key = `${contribution.org_name}/${contribution.repo_name}`;
+    if (!acc[key]) {
+      acc[key] = {
+        org_name: contribution.org_name,
+        repo_name: contribution.repo_name,
+        commits: 0,
+        pull_requests: 0,
+        issues: 0,
+        reviews: 0,
+      };
+    }
+    acc[key].commits += contribution.commits;
+    acc[key].pull_requests += contribution.pull_requests.total;
+    acc[key].issues += contribution.issues.total;
+    acc[key].reviews += contribution.reviews;
+    return acc;
+  }, {});
+
   // Sort repositories by total contributions
-  const sortedRepos = [...githubHistory].sort((a, b) => {
-    const totalA = a.commit_count + a.pr_count + a.issue_count + a.review_count;
-    const totalB = b.commit_count + b.pr_count + b.issue_count + b.review_count;
+  const sortedRepos = Object.values(repoContributions).sort((a, b) => {
+    const totalA = a.commits + a.pull_requests + a.issues + a.reviews;
+    const totalB = b.commits + b.pull_requests + b.issues + b.reviews;
     return totalB - totalA;
   });
 
@@ -50,7 +73,7 @@ const GitHubContributions = ({ githubHistory }) => {
     <Paper elevation={3} sx={{ p: 3, mt: 3, mb: 3 }}>
       <Typography variant="h5" gutterBottom display="flex" alignItems="center">
         <GitHub sx={{ mr: 1 }} />
-        GitHub Contributions
+        GitHub Contributions for @<strong>{githubHistory[0].login}</strong>
       </Typography>
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} sm={6} md={3}>
@@ -88,42 +111,51 @@ const GitHubContributions = ({ githubHistory }) => {
       </Typography>
       <Grid container spacing={2}>
         {sortedRepos.map((repo) => (
-          <Grid item xs={12} sm={6} md={4} key={repo.repo_name}>
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={4}
+            key={`${repo.org_name}/${repo.repo_name}`}
+          >
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom noWrap>
                   {repo.repo_name}
                 </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {repo.org_name}
+                </Typography>
                 <Box display="flex" justifyContent="space-between" mb={1}>
                   <Typography variant="body2" color="text.secondary">
                     <Code fontSize="small" /> Commits
                   </Typography>
-                  <Typography variant="body2">{repo.commit_count}</Typography>
+                  <Typography variant="body2">{repo.commits}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" mb={1}>
                   <Typography variant="body2" color="text.secondary">
                     <MergeType fontSize="small" /> PRs
                   </Typography>
-                  <Typography variant="body2">{repo.pr_count}</Typography>
+                  <Typography variant="body2">{repo.pull_requests}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" mb={1}>
                   <Typography variant="body2" color="text.secondary">
                     <BugReport fontSize="small" /> Issues
                   </Typography>
-                  <Typography variant="body2">{repo.issue_count}</Typography>
+                  <Typography variant="body2">{repo.issues}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="body2" color="text.secondary">
                     <RateReview fontSize="small" /> Reviews
                   </Typography>
-                  <Typography variant="body2">{repo.review_count}</Typography>
+                  <Typography variant="body2">{repo.reviews}</Typography>
                 </Box>
               </CardContent>
               <CardActions>
                 <Button
                   size="small"
                   startIcon={<Visibility />}
-                  href={`https://github.com/${repo.repo_full_name}`}
+                  href={`https://github.com/${repo.org_name}/${repo.repo_name}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -138,7 +170,7 @@ const GitHubContributions = ({ githubHistory }) => {
         <Box mt={2}>
           <Typography variant="body2" color="text.secondary">
             Last updated:{" "}
-            {new Date(githubHistory[0].collected_at).toLocaleString()}
+            {new Date(githubHistory[0].timestamp).toLocaleString()}
           </Typography>
         </Box>
       )}

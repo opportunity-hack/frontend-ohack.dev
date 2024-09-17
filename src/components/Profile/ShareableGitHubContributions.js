@@ -1,5 +1,14 @@
 import React, { useRef } from "react";
-import { Typography, Paper, Grid, Chip, Box, Button } from "@mui/material";
+import {
+  Typography,
+  Paper,
+  Grid,
+  Chip,
+  Box,
+  Button,
+  Alert,
+  AlertTitle,
+} from "@mui/material";
 import {
   GitHub,
   Code,
@@ -8,7 +17,6 @@ import {
   RateReview,
   Share,
 } from "@mui/icons-material";
-import html2canvas from "html2canvas";
 
 const ShareableGitHubContributions = ({ githubHistory, userName }) => {
   const shareableRef = useRef(null);
@@ -18,22 +26,34 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
   }
 
   const totalCommits = githubHistory.reduce(
-    (sum, repo) => sum + repo.commit_count,
+    (sum, contribution) => sum + contribution.commits,
     0
   );
-  const totalPRs = githubHistory.reduce((sum, repo) => sum + repo.pr_count, 0);
+  const totalPRs = githubHistory.reduce(
+    (sum, contribution) => sum + contribution.pull_requests.total,
+    0
+  );
   const totalIssues = githubHistory.reduce(
-    (sum, repo) => sum + repo.issue_count,
+    (sum, contribution) => sum + contribution.issues.total,
     0
   );
   const totalReviews = githubHistory.reduce(
-    (sum, repo) => sum + repo.review_count,
+    (sum, contribution) => sum + contribution.reviews,
     0
   );
+
+  const uniqueRepos = [
+    ...new Set(
+      githubHistory.map(
+        (contribution) => `${contribution.org_name}/${contribution.repo_name}`
+      )
+    ),
+  ];
 
   const handleShare = async () => {
     if (shareableRef.current) {
       try {
+        const html2canvas = (await import("html2canvas")).default;
         const canvas = await html2canvas(shareableRef.current);
         const image = canvas.toDataURL("image/png");
         const link = document.createElement("a");
@@ -74,8 +94,7 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
           display="flex"
           alignItems="center"
         >
-          <GitHub sx={{ mr: 1 }} />
-          {userName}'s GitHub Impact
+          <GitHub sx={{ mr: 1 }} />@{userName}'s GitHub Impact
         </Typography>
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={3}>
@@ -107,14 +126,14 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
             />
           </Grid>
         </Grid>
-        <Typography variant="body2" color="text.secondary" align="center">
-          Contributed to {githubHistory.length} repositories
-        </Typography>
-        <Typography variant="body2" color="text.secondary" align="center">
-          Join us at ohack.dev
-        </Typography>
+        <Alert severity="info">
+          <AlertTitle>
+            Repositories Contributed To ({uniqueRepos.length})
+          </AlertTitle>
+          <Typography variant="body2">{uniqueRepos.join(", ")}</Typography>
+        </Alert>
       </Paper>
-      <Box mt={2} display="flex" justifyContent="center">
+      <Box display="flex" justifyContent="center" mt={2}>
         <Button
           variant="contained"
           color="primary"

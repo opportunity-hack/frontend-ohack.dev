@@ -18,23 +18,32 @@ const RaffleEntries = ({ profile, githubHistory }) => {
   ).length;
   const profileEntries = completedFields * 5;
 
-  const githubEntries = githubHistory.reduce((total, repo) => {
+  const githubEntries = githubHistory.reduce((total, contribution) => {
     return (
       total +
-      repo.commit_count +
-      repo.pr_count +
-      repo.issue_count +
-      repo.review_count
+      contribution.commits +
+      contribution.pull_requests.total +
+      contribution.issues.total +
+      contribution.reviews
     );
   }, 0);
 
   const totalEntries = profileEntries + githubEntries;
 
+  // Get unique repositories
+  const uniqueRepos = [
+    ...new Set(
+      githubHistory.map(
+        (contribution) => `${contribution.org_name}/${contribution.repo_name}`
+      )
+    ),
+  ];
+
   return (
     <Paper elevation={3} sx={{ p: 3, mt: 3, mb: 3 }}>
       <Typography variant="h5" gutterBottom display="flex" alignItems="center">
         <Star sx={{ mr: 1 }} color="primary" />
-        Your Raffle Entries
+        Your Giveaway Entries
       </Typography>
 
       <Box display="flex" justifyContent="center" mb={2}>
@@ -54,7 +63,7 @@ const RaffleEntries = ({ profile, githubHistory }) => {
             primary={
               <Typography variant="h6" display="flex" alignItems="center">
                 <Person sx={{ mr: 1 }} />
-                Profile Completeness
+                OHack.dev Profile Completeness
               </Typography>
             }
             secondary={`${profileEntries} entries (${completedFields} / ${profileFields.length} fields completed)`}
@@ -65,11 +74,17 @@ const RaffleEntries = ({ profile, githubHistory }) => {
           <ListItemText
             primary={
               <Typography variant="h6" display="flex" alignItems="center">
-                <GitHub sx={{ mr: 1 }} />
-                GitHub Contributions
+                <GitHub sx={{ mr: 1 }} />@
+                <strong>{githubHistory[0]?.login}</strong>'s GitHub
+                Contributions
               </Typography>
             }
-            secondary={`${githubEntries} entries`}
+            secondary={
+              <>
+                <Typography>{`${githubEntries} entries`}</Typography>
+                <Typography variant="body2">{`Contributions across ${uniqueRepos.length} repositories`}</Typography>
+              </>
+            }
           />
         </ListItem>
       </List>
