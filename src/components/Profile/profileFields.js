@@ -7,6 +7,6 @@ export const profileFields = [
   { name: "why", label: "Why are you here with us at OHack?", type: "text" },
   { name: "company", label: "Company", type: "text" },
   { name: "shirt_size", label: "Shirt Size", type: "select" },
-  { name: "instagram", label: "Instagram Profile", type: "text" },
-  { name: "linkedin", label: "LinkedIn Profile", type: "text" },
+  { name: "instagram_url", label: "Instagram Profile", type: "text" },
+  { name: "linkedin_url", label: "LinkedIn Profile", type: "text" },
 ];

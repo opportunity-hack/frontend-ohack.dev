@@ -130,7 +130,7 @@ export default function useProfileApi(){
                 /* profileData is expected to have the form:
                     {role: '', education: '', shirt_size: '', profile_url: ''}
                 */
-
+                    
                 var profileData = {
                     role: data.text.role,
                     education: data.text.education,
@@ -140,11 +140,13 @@ export default function useProfileApi(){
                     company: data.text.company,
                     github: data.text.github,
                     history: data.text.history,
-                    profile_url: window.location.href + "/" + data.text.id  // /profile/<db id>
+                    profile_url: window.location.href + "/" + data.text.id,  // /profile/<db id>
+                    linkedin_url: data.text.linkedin_url,
+                    instagram_url: data.text.instagram_url,                    
                 };
 
                 setProfile(profileData);
-                setFeedbackUrl(window.location.href.replace("profile", "feedback") + "/" + data.id);
+                setFeedbackUrl(window.location.href.replace("profile", "feedback") + "/" + data.text.id);
 
             }
             else {

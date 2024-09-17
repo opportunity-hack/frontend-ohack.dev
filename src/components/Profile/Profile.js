@@ -28,8 +28,8 @@ import GitHubContributions from './GitHubContribution';
 import ShareableGitHubContributions from './ShareableGitHubContributions';
 
 import RaffleEntries from './RaffleEntries';
-
-import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack.js";
+import CustomSelect from './CustomSelect';
+import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 import { initFacebookPixel, trackEvent, set } from '../../lib/ga';
 import Head from "next/head";
 import Moment from "react-moment";
@@ -43,6 +43,8 @@ import {
   ProfileHeader,
   ProfileHeadline,
 } from "../../styles/profile/styles";
+
+
 
 export default function Profile(props) {
   const { isLoggedIn, user } = useAuthInfo();
@@ -58,6 +60,8 @@ export default function Profile(props) {
   const [expertise, setExpertise] = React.useState([]);
   const [education, setEducation] = React.useState("");
   const [shirtSize, setShirtSize] = React.useState("");
+  const [linkedInUrl, setLinkedInUrl] = React.useState("");
+  const [instagramUrl, setInstagramUrl] = React.useState("");
   const [why, setWhy] = React.useState("");
   const [github, setGithub] = React.useState("");
   const [lastGithubUpdate, setLastGithubUpdate] = React.useState(0);
@@ -77,6 +81,8 @@ export default function Profile(props) {
       return;
     }
 
+    setInstagramUrl(profile?.instagram_url);
+    setLinkedInUrl(profile?.linkedin_url);
     setRole(profile?.role);
     setEducation(profile?.education);
     setShirtSize(profile?.shirt_size);
@@ -99,10 +105,10 @@ export default function Profile(props) {
   useEffect(() => {
     if (github) {
       const github_history_url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/github/${github}`;
-
+      
       fetch(github_history_url)
         .then((response) => response.json())
-        .then((data) => {
+        .then((data) => {          
           setGithubHistory(data.github_history || []);
         })
         .catch((error) => {
@@ -110,25 +116,25 @@ export default function Profile(props) {
         });
     }
   }, [github]);
-
-  const expertiseListLabels = [
-    "Software Engineering",
-    "Software Engineering: Front-end (CSS/JS, Node, Angular, React, etc)",
-    "Software Engineering: Back-end (Java, Python, Ruby, etc)",
-    "Software Engineering: Mobile (iOS, Android)",
-    "Software Engineering: Data Science & Machine Learning",
-    "DevOps: AWS, Fly.io, Google Cloud, Heroku",
-    "GitHub ninja",
-    "Product Management",
-    "Project Manager",
-    "User Experience",
-    "Data Science",
-    "Data Analysis",
-    "Nonprofit Mindset",
-    "Marketing",
-    "Business",
-    "Finance",
-  ];
+  
+  const expertiseOptions = [
+  { value: "Software Engineering", label: "Software Engineering" },
+  { value: "Software Engineering: Front-end", label: "Software Engineering: Front-end (CSS/JS, Node, Angular, React, etc)" },
+  { value: "Software Engineering: Back-end", label: "Software Engineering: Back-end (Java, Python, Ruby, etc)" },
+  { value: "Software Engineering: Mobile", label: "Software Engineering: Mobile (iOS, Android)" },
+  { value: "Software Engineering: Data Science & Machine Learning", label: "Software Engineering: Data Science & Machine Learning" },
+  { value: "DevOps", label: "DevOps: AWS, Fly.io, Google Cloud, Heroku" },
+  { value: "GitHub ninja", label: "GitHub ninja" },
+  { value: "Product Management", label: "Product Management" },
+  { value: "Project Manager", label: "Project Manager" },
+  { value: "User Experience", label: "User Experience" },
+  { value: "Data Science", label: "Data Science" },
+  { value: "Data Analysis", label: "Data Analysis" },
+  { value: "Nonprofit Mindset", label: "Nonprofit Mindset" },
+  { value: "Marketing", label: "Marketing" },
+  { value: "Business", label: "Business" },
+  { value: "Finance", label: "Finance" },
+];
 
   const onRoleChange = (event) => {
     // Call the API to save the user's profile
@@ -266,6 +272,68 @@ export default function Profile(props) {
     );
   };
 
+  const handleLinkedInChange = (event) => {
+    // Call the API to save the user's profile
+    console.log("Save to backend", event.target.value);
+
+    const onComplete = () => {
+      console.log("LinkedIn updated");
+    };
+
+    setLinkedInUrl(event.target.value);
+
+    update_profile_metadata({ linkedin_url: event.target.value }, onComplete);
+  }
+
+  const handleInstagramChange = (event) => {
+    // Call the API to save the user's profile
+    console.log("Save to backend", event.target.value);
+
+    const onComplete = () => {
+      console.log("Instagram updated");
+    };
+
+    setInstagramUrl(event.target.value);
+
+    update_profile_metadata({ instagram_url: event.target.value }, onComplete);
+  }
+
+  const roleOptions = [
+    { value: "", label: "Select a role" },
+    { value: "hacker_in_school", label: "Hacker (In School)" },
+    { value: "hacker_pro", label: "Hacker (working in industry)" },
+    { value: "mentor", label: "Mentor" },
+    { value: "volunteer", label: "Volunteer" },
+    { value: "judge", label: "Judge" },
+    { value: "nonprofit", label: "Nonprofit" },
+    { value: "sponsor", label: "Sponsor" },
+    { value: "organizer", label: "Organizer" }
+  ];
+
+  const educationOptions = [
+    { value: "", label: "Select a level of education" },
+    { value: "high-school", label: "High School" },
+    { value: "some-college", label: "Some College" },
+    { value: "completed-undergraduate-school", label: "Completed Undergraduate" },
+    { value: "some-graduate-school", label: "Some Graduate School" },
+    { value: "completed-graduate-school", label: "Completed Graduate School" },
+    { value: "coding-bootcamp", label: "Some Coding Bootcamp" },
+    { value: "completed-coding-bootcamp", label: "Completed Coding Bootcamp" },
+    { value: "other", label: "Other" }
+  ];
+
+  
+
+  const shirtSizeOptions = [
+    { value: "", label: "Select a shirt size" },
+    { value: "small", label: "Small" },
+    { value: "medium", label: "Medium" },
+    { value: "large", label: "Large" },
+    { value: "x-large", label: "X-Large" },
+    { value: "xx-large", label: "XX-Large" },
+    { value: "xxx-large", label: "XXX-Large" }
+  ];
+
   const style = {
     fontSize: 14,
   };
@@ -318,7 +386,7 @@ export default function Profile(props) {
 
         <RaffleEntries profile={profile} githubHistory={githubHistory} />
 
-        <ShareableGitHubContributions githubHistory={githubHistory} userName={user?.firstName || 'Anonymous'} />
+        <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
 
         <Link href={profile.profile_url}>
           <ProfileButton className="button button--compact button--primary">
@@ -334,27 +402,13 @@ export default function Profile(props) {
         </Typography>
 
         <Stack direction="column" spacing={2} mt={2} sx={{ width: '100%' }}>
-          <FormControl>
-            <InputLabel id="role-label" style={style}>What hat are you currently wearing?</InputLabel>
-            <Select
-              labelId="role-label"
-              id="role-select"
-              value={role}
-              label="Role"
-              style={{ width: "300px" }}
-              onChange={(event) => onRoleChange(event)}
-            >
-              <MenuItem value="">Select a role</MenuItem>
-              <MenuItem value="hacker_in_school">Hacker (In School)</MenuItem>
-              <MenuItem value="hacker_pro">Hacker (working in industry)</MenuItem>
-              <MenuItem value="mentor">Mentor</MenuItem>
-              <MenuItem value="volunteer">Volunteer</MenuItem>
-              <MenuItem value="judge">Judge</MenuItem>
-              <MenuItem value="nonprofit">Nonprofit</MenuItem>
-              <MenuItem value="sponsor">Sponsor</MenuItem>
-              <MenuItem value="organizer">Organizer</MenuItem>
-            </Select>
-          </FormControl>
+          <CustomSelect
+            label="What hat are you currently wearing?"
+            value={role}
+            onChange={onRoleChange}
+            options={roleOptions}
+            id="role-select"
+          />        
 
           <FormControl>            
             <TextField
@@ -369,48 +423,22 @@ export default function Profile(props) {
             />
           </FormControl>
 
-          <FormControl>
-            <InputLabel id="expertise-label" style={style}>Areas of Expertise</InputLabel>
-            <Select
-              labelId="expertise-label"
-              id="expertise-select"
-              value={expertise}
-              onChange={handleExpertiseChange}
-              label="Area of Expertise"
-              style={{ width: "300px" }}
-              multiple                
-              renderValue={(selected) => selected.join(', ')}
-            >
-              {expertiseListLabels.map((e, index) => (
-                <MenuItem key={e} value={e}>
-                  <Checkbox checked={expertise.indexOf(e) > -1} />
-                  <ListItemText primary={e} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <CustomSelect
+            label="Areas of Expertise"
+            value={expertise}
+            onChange={handleExpertiseChange}
+            options={expertiseOptions}
+            id="expertise-select"
+            multiple
+          />      
 
-          <FormControl>  
-            <InputLabel id="education-label" style={style}>Level of Education</InputLabel>
-            <Select
-              labelId="education-label"
-              id="education-select"
-              value={education}
-              label="Level of Education"
-              style={{ width: "300px" }}
-              onChange={(event) => handleEducationChange(event)}
-            >
-              <MenuItem value="">Select a level of education</MenuItem>
-              <MenuItem value="high-school">High School</MenuItem>
-              <MenuItem value="some-college">Some College</MenuItem>
-              <MenuItem value="completed-undergraduate-school">Completed Undergraduate</MenuItem>
-              <MenuItem value="some-graduate-school">Some Graduate School</MenuItem>
-              <MenuItem value="completed-graduate-school">Completed Graduate School</MenuItem>
-              <MenuItem value="coding-bootcamp">Some Coding Bootcamp</MenuItem>
-              <MenuItem value="coding-bootcamp">Completed Coding Bootcamp</MenuItem>
-              <MenuItem value="other">Other</MenuItem>
-            </Select>        
-          </FormControl>
+          <CustomSelect
+            label="Level of Education"
+            value={education}
+            onChange={handleEducationChange}
+            options={educationOptions}
+            id="education-select"
+          />
           
           <FormControl>            
             <TextField
@@ -438,32 +466,42 @@ export default function Profile(props) {
             />
           </FormControl>
 
+          <CustomSelect
+            label="Shirt Size"
+            value={shirtSize}
+            onChange={handleShirtSizeChange}
+            options={shirtSizeOptions}
+            id="shirt-size-select"
+          />
+
+          <FormControl>            
+            <TextField
+              id="linkedin"
+              onChange={handleLinkedInChange}
+              aria-describedby="linkedin-helper-text"
+              label="LinkedIn Profile URL"
+              value={linkedInUrl}
+              style={{
+                width: "300px",                                    
+              }}
+            />            
+          </FormControl>
+
           <FormControl>
-            <InputLabel id="shirt-label" style={style}>Shirt Size</InputLabel>
-            <Select
-              labelId="shirt-label"
-              id="shirt-select"
-              value={shirtSize}
-              label="Shirt Size"
-              style={{ width: "300px" }}
-              onChange={(event) => handleShirtSizeChange(event)}
-            >
-              <MenuItem value="">Select a shirt size</MenuItem>
-              <MenuItem value="small">Small</MenuItem>
-              <MenuItem value="medium">Medium</MenuItem>
-              <MenuItem value="large">Large</MenuItem>
-              <MenuItem value="x-large">X-Large</MenuItem>
-              <MenuItem value="xx-large">XX-Large</MenuItem> 
-            </Select>          
+            <TextField
+              id="instagram"
+              onChange={handleInstagramChange}
+              aria-describedby="instagram-helper-text"
+              label="Instagram Profile URL"
+              value={instagramUrl}
+              style={{
+                width: "300px",                                    
+              }}
+            />
           </FormControl>
         </Stack>
 
-        <GitHubContributions githubHistory={githubHistory} />        
-
-        <HelpUsBuildOHack
-          github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/6"
-          github_name="Issue #6"
-        />
+        <GitHubContributions githubHistory={githubHistory} />               
 
         <div className="profile__details">
           <h2 className="profile__title">Badges</h2>
