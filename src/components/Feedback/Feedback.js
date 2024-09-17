@@ -1,79 +1,283 @@
-import React from "react";
-import { useAuthInfo } from "@propelauth/react";
-
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Head from "next/head";
+import {
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  Chip,
+  CircularProgress,
+  Alert,
+  LinearProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Tooltip,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import InfoIcon from "@mui/icons-material/Info";
 import LoginOrRegister from "../LoginOrRegister/LoginOrRegister";
+import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
+import { roles, feedbackAreas, generalFeedbackAreas } from "./feedbackData"; // Assume this is imported from a separate file
 
-import Head from 'next/head';
-export default function Feedback(){ 
-    const { user } = useAuthInfo();  
+const FeedbackCategory = ({ title, data, tooltips }) => (
+  <Accordion>
+    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+      <Typography variant="h6">{title}</Typography>
+    </AccordionSummary>
+    <AccordionDetails>
+      <Grid container spacing={2}>
+        {Object.entries(data).map(([key, value]) => (
+          <Grid item xs={12} sm={6} key={key}>
+            <Box display="flex" alignItems="center">
+              <Typography variant="subtitle1">{key}</Typography>
+              <Tooltip title=<span style={{fontSize:'14px'}}>{tooltips[key] || ""}</span>>
+                <InfoIcon fontSize="small" sx={{ ml: 1 }} />
+              </Tooltip>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={value}
+              sx={{ height: 10, borderRadius: 5 }}
+            />
+            <Typography variant="caption">{value}/100</Typography>
+          </Grid>
+        ))}
+      </Grid>
+    </AccordionDetails>
+  </Accordion>
+);
 
-    if (!user) {
-        return (
-            <div className="content-layout">                            
-                    <LoginOrRegister />            
-            </div>
-        );
+const Feedback = withRequiredAuthInfo(({ userClass }) => {
+  const { user, accessToken } = useAuthInfo();
+  const [feedback, setFeedback] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchFeedback();
     }
- 
-    /*
-    This page should show the detailed feedback for a logged-in user
+  }, [user]);
 
-    */
+  const fetchFeedback = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/feedback`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      setFeedback(response.data.feedback);
+    } catch (err) {
+      setError("Failed to fetch feedback. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  if (!user) {
     return (
-        <div className="content-layout">
-        <Head>
-            <title>Feedback - Opportunity Hack Developer Portal</title>
-        </Head>
-            <h1 className="content__title">Your Feedback</h1>
-            
-            <div className="content__body">
-                <p>
-                    If you are a new graduate, or currently in school:
-                    <ul>
-                        <li>Think of this as a an addendum to your resume.</li>
-                        <li>Something that you can use, alongside your experience with Opportunity Hack to already be able to speak to industry experience you have.</li>
-                    </ul>
-                    If you are currently working in a tech role in industry (as a software engineer, technical product manager, program manager, UX designer, etc.)
-                    <ul>
-                        <li>Think of this as a an addendum to your work experience that you aren't able to get from the opportunities currently available to you.  You likely are using Opportunity Hack to fill in experience gaps at your work.</li>
-                        <li>You can use what you learned or led here to justify your next assignment, and/or add this mentorship to your performance review</li>
-                    </ul>
-                    If you currently aren't working in a tech role, but are looking to gain experience to move roles at work
-                    <ul>
-                        <li>Think of this as a an addendum to your work experience that you aren't able to get from the opportunities currently available to you.  You likely are using Opportunity Hack to fill in experience gaps at your work.</li>
-                        <li>You can use what you learned or led here to justify your move to a tech role (e.g. Business Analyst to Software Engineer), and/or add this mentorship to your performance review</li>
-                    </ul>
-                </p>
-                <div className="profile-grid">
-                    <div className="profile__header">
-                        <img src={user.picture} alt="Profile" className="profile__avatar" />
-
-                        <div className="profile__headline">
-                            <h2 className="profile__title"><span className="material-symbols-outlined">verified_user</span>
-                                {user.name} - here's your feedback breakdown</h2>                                                                                    
-                        </div>
-                    </div>
-
-                    <div className="profile__details">
-                        <h2 className="profile__title">What</h2>
-                        <h3 className="profile__title">Code Quality</h3>
-                        <ul>                           
-                            <li>Unit Tests</li>
-                            <li>Test Coverage</li>
-                            <li>Reliability</li>
-                            <li>...</li> 
-                        </ul>
-                        <h2 className="profile__title">How</h2>
-                        <h3 className="profile__title">Communication</h3>
-                        <ul>
-                            <li># of Slacks per day</li>
-                            <li># of Standups per week</li>                            
-                            <li>...</li> 
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div className="content-layout">
+        <LoginOrRegister />
+      </div>
     );
-};
+  }
+
+  if (loading) {
+    return <CircularProgress />;
+  }
+
+  if (error) {
+    return <Alert severity="error">{error}</Alert>;
+  }
+
+  const aggregateFeedback = () => {
+    const aggregated = {
+      roleSpecific: {},
+      general: {},
+      overall: { score: 0, count: 0 },
+    };
+
+    feedback.forEach((item) => {
+      const role = item.feedback.role;
+      if (!aggregated.roleSpecific[role]) {
+        aggregated.roleSpecific[role] = {};
+      }
+
+      Object.entries(item.feedback).forEach(([key, value]) => {
+        if (typeof value === "number") {
+          if (feedbackAreas[role]?.some((area) => area.name === key)) {
+            if (!aggregated.roleSpecific[role][key]) {
+              aggregated.roleSpecific[role][key] = { sum: 0, count: 0 };
+            }
+            aggregated.roleSpecific[role][key].sum += value;
+            aggregated.roleSpecific[role][key].count++;
+          } else if (generalFeedbackAreas.some((area) => area.name === key)) {
+            if (!aggregated.general[key]) {
+              aggregated.general[key] = { sum: 0, count: 0 };
+            }
+            aggregated.general[key].sum += value;
+            aggregated.general[key].count++;
+          }
+          aggregated.overall.score += value;
+          aggregated.overall.count++;
+        }
+      });
+    });
+
+    // Calculate averages
+    Object.keys(aggregated.roleSpecific).forEach((role) => {
+      Object.keys(aggregated.roleSpecific[role]).forEach((key) => {
+        const { sum, count } = aggregated.roleSpecific[role][key];
+        aggregated.roleSpecific[role][key] = Math.round(sum / count);
+      });
+    });
+
+    Object.keys(aggregated.general).forEach((key) => {
+      const { sum, count } = aggregated.general[key];
+      aggregated.general[key] = Math.round(sum / count);
+    });
+
+    aggregated.overall.score = Math.round(
+      aggregated.overall.score / aggregated.overall.count
+    );
+
+    return aggregated;
+  };
+
+  const aggregatedFeedback = aggregateFeedback();
+
+  if (feedback.length === 0) {
+    return (
+      <div className="content-layout">
+        <Head>
+          <title>Your Feedback - Opportunity Hack Developer Portal</title>
+        </Head>
+        <Box sx={{ maxWidth: 800, margin: "auto", padding: 3 }}>
+          <Typography variant="h4" gutterBottom>
+            Your Feedback Journey
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Opportunity Hack is unique in providing this detailed feedback. Use
+            it to grow and showcase your skills!
+          </Alert>
+          <Alert severity="warning">
+            No feedback available. Please check back later.
+          </Alert>
+        </Box>
+      </div>
+    );
+  }
+
+  return (
+    <div className="content-layout">
+      <Head>
+        <title>Your Feedback - Opportunity Hack Developer Portal</title>
+      </Head>
+      <Box sx={{ maxWidth: 800, margin: "auto", padding: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Your Feedback Journey
+        </Typography>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Opportunity Hack is unique in providing this detailed feedback. Use it
+          to grow and showcase your skills!
+        </Alert>
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h5" gutterBottom>
+              Overall Performance
+            </Typography>
+            <Box display="flex" alignItems="center">
+              <CircularProgress
+                variant="determinate"
+                value={aggregatedFeedback.overall.score}
+                size={80}
+                thickness={4}
+                sx={{ mr: 2 }}
+              />
+              <Typography variant="h4">
+                {aggregatedFeedback.overall.score}
+                /100
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Based on {feedback.length} feedback submission
+              {feedback.length !== 1 ? "s" : ""}
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {Object.entries(aggregatedFeedback.roleSpecific).map(([role, data]) => (
+          <FeedbackCategory
+            key={role}
+            title={`${role} Skills`}
+            data={data}
+            tooltips={Object.fromEntries(
+              feedbackAreas[role].map((area) => [area.name, area.tooltip])
+            )}
+          />
+        ))}
+
+        <FeedbackCategory
+          title="General Skills"
+          data={aggregatedFeedback.general}
+          tooltips={Object.fromEntries(
+            generalFeedbackAreas.map((area) => [area.name, area.tooltip])
+          )}
+        />
+
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Feedback Details
+          </Typography>
+          {feedback.map((item, index) => (
+            <Card key={index} sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography color="text.secondary" gutterBottom>
+                  {new Date(item.timestamp).toLocaleDateString()}
+                </Typography>
+                <Typography variant="body2">
+                  {item.feedback["Overall Performance"]}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
+                  Areas for Improvement:{" "}
+                  {item.feedback["Areas for Improvement"]}
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <Chip
+                    label={`Role: ${item.feedback.role}`}
+                    size="small"
+                    sx={{ mr: 1 }}
+                  />
+                  <Chip
+                    label={`Confidence: ${item.confidence_level}`}
+                    size="small"
+                    sx={{ mr: 1 }}
+                  />
+                  <Chip label={`Duration: ${item.duration}`} size="small" />
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+
+        <Alert severity="success" sx={{ mt: 3 }}>
+          Your feedback journey is ongoing. Keep seeking opportunities to grow
+          and improve!
+        </Alert>
+      </Box>
+    </div>
+  );
+});
+
+export default Feedback;
