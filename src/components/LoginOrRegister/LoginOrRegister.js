@@ -12,7 +12,6 @@ import {
     ButtonStyled,
     ButtonStyledWithLink
 } from "./styles";
-import { track } from 'react-facebook-pixel';
 
 export default function LoginOrRegister({ introText, previousPage }) {
     const { isLoggedIn, user } = useAuthInfo();
