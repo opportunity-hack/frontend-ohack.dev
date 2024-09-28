@@ -14,6 +14,7 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
 const adminPages = [
   { path: "/admin/hearts", label: "Hearts" },
   { path: "/admin/nonprofit", label: "Nonprofit" },
+  { path: "/admin/nonprofit/application", label: "Nonprofit Application" },
   { path: "/admin/profile", label: "Profile" },
   { path: "/admin/volunteer", label: "Volunteer" },
 ];
