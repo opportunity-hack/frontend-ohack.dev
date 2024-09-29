@@ -37,7 +37,10 @@ const pages = [
 
 const about_settings = [
   ["ℹ️ About Us", "/about"],
+  ["🛜 Get Feedback", "/feedback"],
+  ["⌛️ Track Volunteer Time", "/volunteer/track"],
   ["🙌 Success Stories", "/about/success-stories"],
+  ["🤚 Volunteering", "/volunteer"],
   ["🎉 What is a Hackathon?", "/hack"],
   ["❤️ Rewards", "/about/hearts"],
   ["✅ Project Completion", "/about/completion"],
