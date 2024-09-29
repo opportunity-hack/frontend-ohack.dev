@@ -48,10 +48,15 @@ const HackathonHeader = ({
           <EventChip
             icon={<CalendarTodayIcon />}
             label={`${formatDate(startDate)} - ${formatDate(endDate)}`}
+            style={{ fontSize: "14px" }}
           />
         </Grid>
         <Grid item>
-          <EventChip icon={<LocationOnIcon />} label={location} />
+          <EventChip
+            icon={<LocationOnIcon />}
+            label={location}
+            style={{ fontSize: "14px" }}
+          />
         </Grid>
       </EventInfo>
 
