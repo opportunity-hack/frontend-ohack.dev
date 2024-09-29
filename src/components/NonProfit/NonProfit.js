@@ -299,7 +299,15 @@ export default function NonProfit(props) {
 
               {nonprofit.contact_people ? (
                 <DescriptionStyled>
-                  Point of Contact: {nonprofit.contact_people}
+                  Point of Contact: {nonprofit.contact_people.map ((person) => {
+                    return (
+                      <LinkStyled mr={1} target="_blank" href={`https://opportunity-hack.slack.com/app_redirect?channel=${nonprofit.slack_channel}`} key={person}>
+                        {person}
+                      </LinkStyled>                                            
+                    );
+
+                  }
+                  )}
                 </DescriptionStyled>
               ) : (
                 ''
