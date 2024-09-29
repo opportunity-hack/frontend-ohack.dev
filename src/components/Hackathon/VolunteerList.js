@@ -13,6 +13,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Skeleton,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
@@ -28,6 +29,7 @@ import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import Moment from "moment";
 import NextLink from "next/link";
 import ShareVolunteer from "./ShareVolunteer";
+import { useEffect } from "react";
 
 const ArtifactList = styled(List)({
   padding: 0,
@@ -124,7 +126,39 @@ const AvailabilityChip = styled(Chip)(({ theme, isavailablenow }) => ({
   },
 }));
 
-const VolunteerList = ({ volunteers, type }) => {
+const VolunteerList = ({ event_id, type }) => {
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  const [volunteers, setVolunteers] = React.useState([]);
+
+
+  useEffect(() => {
+    // Call API to get data based on type
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}/${type}`);
+        if (res.ok) {
+          const data = await res.json();          
+          
+          setVolunteers(data.data);
+        } else {
+          throw new Error("Failed to fetch volunteers");
+        }
+      } catch (error) {
+        console.error("Error fetching volunteers:", error);
+        setError("Failed to fetch volunteers. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [event_id, type]);
+
+
+
+
   const isCurrentlyAvailable = (timeSpan) => {
     if (!timeSpan) return false;
 
@@ -135,21 +169,13 @@ const VolunteerList = ({ volunteers, type }) => {
     timeSpan = timeSpan.replace(/PST/g, "");
     timeSpan = timeSpan.replace(/p\s/g, "pm");
     timeSpan = timeSpan.replace(/a\s/g, "am");
-    console.log("Time Span: ", timeSpan);
 
     let [startTime, endTime] = timeSpan.split("-");
     // Add :59 to the end time to make it inclusive of the entire hour
     endTime = endTime.replace(/(.*)([ap]m)/, "$1:59$2");
-    console.log("Start Time: ", startTime);
-    console.log("End Time: ", endTime);
 
     const startMoment = Moment(`${startTime}`, "h:mma", "America/Los_Angeles");
     const endMoment = Moment(`${endTime}`, "h:mma", "America/Los_Angeles");
-
-    console.log("Now: ", now.format("h:mma"));
-    console.log("Start: ", startMoment.format("h:mma"));
-    console.log("End: ", endMoment.format("h:mma"));
-
 
     return now.isBetween(startMoment, endMoment);
   };
@@ -228,7 +254,7 @@ const VolunteerList = ({ volunteers, type }) => {
     );
   };
 
-   const renderVolunteerCard = (volunteer) => {
+   const renderVolunteerCard = (volunteer) => {    
     const isMentor = type === "mentor";
     const isJudge = type === "judge";
     const isVolunteer = type === "volunteer";
@@ -240,7 +266,7 @@ const VolunteerList = ({ volunteers, type }) => {
       imageToDisplay = volunteer.photoUrl;
     }
 
-    if (!isSelected) return null;
+    if (!isSelected) return null;    
 
     return (
       <Grid item xs={12} sm={6} md={4} key={volunteer.name}>
@@ -346,6 +372,11 @@ const VolunteerList = ({ volunteers, type }) => {
       </Grid>
     );
   };
+
+  if( loading ) 
+  {
+    return(<Skeleton marginTop={5} variant="rect" width={210} height={300} />);
+  }
 
   return (
     <Box sx={{ mt: 4 }}>

@@ -229,6 +229,7 @@ export default function HackathonEvent({ eventData }) {
   const { event_id } = router.query;
   const [event, setEvent] = useState(eventData);
   const [loading, setLoading] = useState(!eventData);
+  
 
 
   useEffect(() => {
@@ -364,13 +365,13 @@ export default function HackathonEvent({ eventData }) {
             />
           </Grid>
           <Grid item xs={12} id="volunteer">
-            <VolunteerList volunteers={event.volunteers} type="volunteer" />
+            <VolunteerList event_id={event_id} type="volunteer" />
           </Grid>
           <Grid item xs={12} id="mentor">
-            <VolunteerList volunteers={event.mentors} type="mentor" />
+            <VolunteerList event_id={event_id} type="mentor" />
           </Grid>
           <Grid item xs={12} id="judge">
-            <VolunteerList volunteers={event.judges} type="judge" />
+            <VolunteerList event_id={event_id} type="judge" />
           </Grid>
           <Grid item xs={12} id="faq">
             <InteractiveFAQ faqData={faqData} title={`${event.title} FAQ`} />

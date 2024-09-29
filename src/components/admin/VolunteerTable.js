@@ -68,8 +68,10 @@ const VolunteerTable = ({
   onRequestSort,
   onEditVolunteer,
 }) => {
+  console.log("VolunteerTable", volunteers);
   const columns = useMemo(() => {
     const baseColumns = [
+      { id: "id", label: "ID", minWidth: 100 }, // New column for ID
       { id: "name", label: "Name", minWidth: 120 },
       { id: "pronouns", label: "Pronouns", minWidth: 100 },
       { id: "company", label: "Company", minWidth: 120 },
@@ -107,6 +109,8 @@ const VolunteerTable = ({
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
+      case "id":
+        return volunteer.id || "N/A";
       case "isInPerson":
         return volunteer[column.id] ? "Yes" : "No";
       case "isSelected":
@@ -145,6 +149,9 @@ const VolunteerTable = ({
             <TableRow>
               <StyledTableCell style={{ minWidth: 50 }}>#</StyledTableCell>
               <StyledTableCell style={{ minWidth: 80 }}>Photo</StyledTableCell>
+              <StyledTableCell style={{ minWidth: 100 }}>
+                Actions
+              </StyledTableCell>
               {columns.map((column) => (
                 <StyledTableCell
                   key={column.id}
@@ -159,9 +166,6 @@ const VolunteerTable = ({
                   </TableSortLabel>
                 </StyledTableCell>
               ))}
-              <StyledTableCell style={{ minWidth: 100 }}>
-                Actions
-              </StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -180,16 +184,16 @@ const VolunteerTable = ({
                     key={`${volunteer.name}-${volunteer.photoUrl}`}
                   />
                 </StyledTableCell>
-                {columns.map((column) => (
-                  <StyledTableCell key={column.id} data-label={column.label}>
-                    {renderCellContent(volunteer, column)}
-                  </StyledTableCell>
-                ))}
                 <StyledTableCell data-label="Actions">
                   <Button onClick={() => onEditVolunteer(volunteer)}>
                     Edit
                   </Button>
                 </StyledTableCell>
+                {columns.map((column) => (
+                  <StyledTableCell key={column.id} data-label={column.label}>
+                    {renderCellContent(volunteer, column)}
+                  </StyledTableCell>
+                ))}
               </StyledTableRow>
             ))}
           </TableBody>

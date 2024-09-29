@@ -25,18 +25,19 @@ const VolunteerEditDialog = ({
   if (!volunteer) return null;
 
   const commonFields = [
+    { name: "id", label: "ID", type: "text", readOnly: true }, // New field for ID
     { name: "name", label: "Name", type: "text" },
     { name: "photoUrl", label: "Photo URL", type: "text" },
     { name: "linkedinProfile", label: "LinkedIn Profile", type: "text" },
     { name: "isInPerson", label: "In Person", type: "switch" },
     { name: "isSelected", label: "Selected", type: "switch" },
     { name: "pronouns", label: "Pronouns", type: "text" },
-    { name: "slack_user_id", label: "Slack User ID", type: "text" },    
+    { name: "slack_user_id", label: "Slack User ID", type: "text" },
   ];
 
   const typeSpecificFields = (() => {
-    switch (volunteer.type) {
-      case "mentors":
+    switch (volunteer.volunteer_type) {
+      case "mentor":
         return [
           { name: "expertise", label: "Expertise", type: "text" },
           { name: "company", label: "Company", type: "text" },
@@ -50,7 +51,7 @@ const VolunteerEditDialog = ({
           { name: "state", label: "State", type: "text" },
           { name: "availability", label: "Availability", type: "text" },
         ];
-      case "judges":
+      case "judge":
         return [
           { name: "title", label: "Title", type: "text" },
           { name: "companyName", label: "Company Name", type: "text" },
@@ -63,7 +64,7 @@ const VolunteerEditDialog = ({
             type: "text",
           },
         ];
-      case "volunteers":
+      case "volunteer":
         return [
           { name: "company", label: "Company", type: "text" },
           { name: "shortBio", label: "Short Bio", type: "text" },
@@ -103,8 +104,8 @@ const VolunteerEditDialog = ({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         {isAdding
-          ? `Add ${volunteer.type.slice(0, -1)}`
-          : `Edit ${volunteer.type.slice(0, -1)}`}
+          ? `Add ${volunteer.volunteer_type}`
+          : `Edit ${volunteer.volunteer_type}`}
       </DialogTitle>
       <DialogContent>
         {fields.map((field) =>
@@ -113,7 +114,7 @@ const VolunteerEditDialog = ({
               <Typography>{field.label}:</Typography>
               <Switch
                 checked={volunteer[field.name] || false}
-                onChange={(e) => onChange(field.name, e.target.checked)}                
+                onChange={(e) => onChange(field.name, e.target.checked)}
               />
             </Box>
           ) : (
@@ -125,11 +126,13 @@ const VolunteerEditDialog = ({
               fullWidth
               value={volunteer[field.name] || ""}
               onChange={(e) => onChange(field.name, e.target.value)}
-              disabled={field.name === "name" && !isAdding}
+              InputProps={{
+                readOnly: field.readOnly, // Apply readOnly prop
+              }}
             />
           )
         )}
-        {volunteer.type === "volunteers" && (
+        {volunteer.volunteer_type === "volunteer" && (
           <>
             <Typography variant="h6" style={{ marginTop: 16 }}>
               Artifacts

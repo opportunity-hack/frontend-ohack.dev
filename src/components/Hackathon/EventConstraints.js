@@ -64,8 +64,11 @@ const EventConstraints = ({ constraints }) => {
 
   return (
     <ConstraintsContainer elevation={2}>
-      <Typography variant="subtitle1" gutterBottom>
-        Team Guidelines
+      <Typography variant="h5" gutterBottom>
+        Team Formation Guidelines
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        We want to ensure that every nonprofit has at least one team.  After nonprofit pitches, teams will form around the nonprofits they want to help.  Teams should consider their top three nonprofit choices as they review problem statements to facilitate this process. If you didn't come with a team, that's okay! Think of the nonprofits you want to work with, and we'll pair you up with people who have similar interests.
       </Typography>
       <Grid container spacing={2}>
         {constraintItems.map(

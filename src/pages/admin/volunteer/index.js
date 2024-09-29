@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import {
   Box,
@@ -13,13 +13,11 @@ import AdminPage from "../../../components/admin/AdminPage";
 import VolunteerTable from "../../../components/admin/VolunteerTable";
 import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";
 import VolunteerBulkAdd from "../../../components/admin/VolunteerBulkAdd";
-
 import { Typography } from "@mui/material";
 
 const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
   const [showBulkAdd, setShowBulkAdd] = useState(false);
-
   const [volunteers, setVolunteers] = useState({
     mentors: [],
     judges: [],
@@ -37,73 +35,64 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingVolunteer, setEditingVolunteer] = useState(null);
-  const [isAdding, setIsAdding] = useState(false);
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
   const orgId = org.orgId;
 
-  const handleAddVolunteers = async (type, newVolunteers) => {
+  const fetchVolunteers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/volunteers/bulk`,
-        {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            "content-type": "application/json",
-            "X-Org-Id": orgId,
-          },
-          body: JSON.stringify({ type: type, volunteers: newVolunteers }),
-        }
-      );
+      const eventId = "2024_fall"; // You might want to make this dynamic
+      const [mentorsResponse, judgesResponse, volunteersResponse] =
+        await Promise.all([
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/mentor`,
+            {
+              headers: {
+                authorization: `Bearer ${accessToken}`,
+                "content-type": "application/json",
+                "X-Org-Id": orgId,
+              },
+            }
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/judge`,
+            {
+              headers: {
+                authorization: `Bearer ${accessToken}`,
+                "content-type": "application/json",
+                "X-Org-Id": orgId,
+              },
+            }
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/volunteer`,
+            {
+              headers: {
+                authorization: `Bearer ${accessToken}`,
+                "content-type": "application/json",
+                "X-Org-Id": orgId,
+              },
+            }
+          ),
+        ]);
 
-      if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: "Volunteers added successfully",
-          severity: "success",
+      if (mentorsResponse.ok && judgesResponse.ok && volunteersResponse.ok) {
+        const mentorsData = await mentorsResponse.json();
+        const judgesData = await judgesResponse.json();
+        const volunteersData = await volunteersResponse.json();
+
+        setVolunteers({
+          mentors: mentorsData.data,
+          judges: judgesData.data,
+          volunteers: volunteersData.data,
         });
-        fetchVolunteers();
-      } else {
-        throw new Error("Failed to add volunteers");
-      }
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: "Failed to add volunteers. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-      setShowBulkAdd(false);
-    }
-  };
-
-  const fetchVolunteers = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall`,
-        {
-          method: "GET",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            "content-type": "application/json",
-            "X-Org-Id": orgId,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const { mentors, judges, volunteers } = data;
-        setVolunteers({ mentors, judges, volunteers });
       } else {
         throw new Error("Failed to fetch volunteers");
       }
     } catch (error) {
+      console.error("Error fetching volunteers:", error);
       setSnackbar({
         open: true,
         message: "Failed to fetch volunteers. Please try again.",
@@ -112,42 +101,42 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessToken, orgId]);
 
   useEffect(() => {
     if (isAdmin) {
       fetchVolunteers();
     }
-  }, [isAdmin, accessToken]);
+  }, [isAdmin, fetchVolunteers]);
 
-  const handleRequestSort = (property) => {
-    const isAsc = orderBy === property && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(property);
-  };
+  const handleRequestSort = useCallback(
+    (property) => {
+      const isAsc = orderBy === property && order === "asc";
+      setOrder(isAsc ? "desc" : "asc");
+      setOrderBy(property);
+    },
+    [order, orderBy]
+  );
 
-  const handleTabChange = (event, newValue) => {
+  const handleTabChange = useCallback((event, newValue) => {
     setTabValue(newValue);
-  };
+  }, []);
 
-  const handleEditChange = (field, value) => {
+  const handleEditChange = useCallback((field, value) => {
     setEditingVolunteer((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const handleEditVolunteer = (volunteer) => {
+  const handleEditVolunteer = useCallback((volunteer) => {
     setEditingVolunteer({
       ...volunteer,
-      type:
-        tabValue === 0 ? "mentors" : tabValue === 1 ? "judges" : "volunteers",
+      type: getCurrentVolunteerType(),
     });
-    setIsAdding(false);
     setEditDialogOpen(true);
-  };
+  }, []);
 
-  const handleAddSingleVolunteer = () => {
+  const handleAddSingleVolunteer = useCallback(() => {
     setEditingVolunteer({
-      type:
-        tabValue === 0 ? "mentors" : tabValue === 1 ? "judges" : "volunteers",
+      type: getCurrentVolunteerType(),
       name: "",
       photoUrl: "",
       linkedinProfile: "",
@@ -156,23 +145,20 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       pronouns: "",
       slack_user_id: "",
     });
-    setIsAdding(true);
     setEditDialogOpen(true);
-  };
+  }, []);
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = useCallback(async () => {
     setLoading(true);
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/volunteers`;
-      const method = isAdding ? "POST" : "PATCH";
-      let volunteerData = editingVolunteer;
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/${getCurrentVolunteerTypeSingular()}`;
+      const method = editingVolunteer.id ? "PATCH" : "POST";
 
-      if( isAdding ) { // If we're adding something we need to add the timestamp we are addiing, but since the timestamp is a PK for edits, we don't want to touch it
-        volunteerData = {
-          ...editingVolunteer,
-          timestamp: new Date().toISOString(), // Add timestamp
-        };
-      }
+      console.log("editingVolunteer", editingVolunteer);
+
+      const volunteerData = editingVolunteer.id
+        ? editingVolunteer
+        : { ...editingVolunteer, timestamp: new Date().toISOString() };
 
       const response = await fetch(url, {
         method: method,
@@ -187,34 +173,64 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       if (response.ok) {
         setSnackbar({
           open: true,
-          message: isAdding
-            ? "Volunteer added successfully"
-            : "Volunteer updated successfully",
+          message: editingVolunteer.id
+            ? "Volunteer updated successfully"
+            : "Volunteer added successfully",
           severity: "success",
         });
         fetchVolunteers();
       } else {
         throw new Error(
-          isAdding ? "Failed to add volunteer" : "Failed to update volunteer"
+          editingVolunteer.id
+            ? "Failed to update volunteer"
+            : "Failed to add volunteer"
         );
       }
     } catch (error) {
       setSnackbar({
         open: true,
-        message: `Failed to ${isAdding ? "add" : "update"} volunteer. Please try again.`,
+        message: `Failed to ${editingVolunteer.id ? "update" : "add"} volunteer. Please try again.`,
         severity: "error",
       });
     } finally {
       setLoading(false);
       setEditDialogOpen(false);
     }
-  };
+  }, [editingVolunteer, accessToken, orgId, fetchVolunteers]);
 
-  const sortedVolunteers = (type) => {
-    return volunteers[type]
+  const getCurrentVolunteerType = useCallback(() => {
+    switch (tabValue) {
+      case 0:
+        return "mentors";
+      case 1:
+        return "judges";
+      case 2:
+        return "volunteers";
+      default:
+        return "";
+    }
+  }, [tabValue]);
+
+  const getCurrentVolunteerTypeSingular = useCallback(() => {
+    switch (tabValue) {
+      case 0:
+        return "mentor";
+      case 1:
+        return "judge";
+      case 2:
+        return "volunteer";
+      default:
+        return "";
+    }
+  }, [tabValue]);
+
+  const sortedVolunteers = useMemo(() => {
+    const currentVolunteers = volunteers[getCurrentVolunteerType()] || [];    
+
+    return currentVolunteers
       .sort((a, b) => {
-        const valueA = a[orderBy] || "";
-        const valueB = b[orderBy] || "";
+        const valueA = (a[orderBy] || "").toString().toLowerCase();
+        const valueB = (b[orderBy] || "").toString().toLowerCase();
         if (valueA < valueB) {
           return order === "asc" ? -1 : 1;
         }
@@ -223,13 +239,16 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         }
         return 0;
       })
-      .filter(
-        (volunteer) =>
-          volunteer.name?.toLowerCase().includes(filter.toLowerCase()) ||
-          volunteer.expertise?.toLowerCase().includes(filter.toLowerCase()) ||
-          volunteer.company?.toLowerCase().includes(filter.toLowerCase())
-      );
-  };
+      .filter((volunteer) => {
+        if (!volunteer) return false;
+        const searchValue = filter.toLowerCase();
+        return (
+          volunteer.name?.toLowerCase().includes(searchValue) ||
+          volunteer.expertise?.toLowerCase().includes(searchValue) ||
+          volunteer.company?.toLowerCase().includes(searchValue)
+        );
+      });
+  }, [volunteers, getCurrentVolunteerType, orderBy, order, filter]);
 
   if (!isAdmin) {
     return (
@@ -283,7 +302,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
 
       {showBulkAdd && (
         <Box sx={{ mb: 3 }}>
-          <VolunteerBulkAdd onAddVolunteers={handleAddVolunteers} />
+          <VolunteerBulkAdd onAddVolunteers={fetchVolunteers} />
         </Box>
       )}
 
@@ -302,20 +321,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       ) : (
         <Box sx={{ mt: 2 }}>
           <VolunteerTable
-            volunteers={sortedVolunteers(
-              tabValue === 0
-                ? "mentors"
-                : tabValue === 1
-                  ? "judges"
-                  : "volunteers"
-            )}
-            type={
-              tabValue === 0
-                ? "mentors"
-                : tabValue === 1
-                  ? "judges"
-                  : "volunteers"
-            }
+            volunteers={sortedVolunteers}
+            type={getCurrentVolunteerType()}
             orderBy={orderBy}
             order={order}
             onRequestSort={handleRequestSort}
@@ -330,7 +337,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         volunteer={editingVolunteer}
         onSave={handleSaveEdit}
         onChange={handleEditChange}
-        isAdding={isAdding}
+        isAdding={!editingVolunteer?.id}
       />
     </AdminPage>
   );
