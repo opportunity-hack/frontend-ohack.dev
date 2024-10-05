@@ -1,13 +1,10 @@
 import React, { useRef } from "react";
 import { Typography, Box, Grid, Button, Link } from "@mui/material";
 import QRCode from "react-qr-code";
+import { sponsors } from "../../data/sponsorData";
 
 const FlierComponent = () => {
-  const sponsorLogos = [
-    "https://cdn.ohack.dev/ohack.dev/sponsors/meta.webp",
-    "https://cdn.ohack.dev/ohack.dev/sponsors/spotify.webp",
-  ];
-
+  const sponsorLogos = sponsors.map((sponsor) => sponsor.logo);
   return (
     <>
       <Box
