@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   Box,
@@ -12,6 +12,7 @@ import {
   LinearProgress,
   Tooltip,
   Collapse,
+  Link,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Moment from "moment";
@@ -19,8 +20,6 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CircularProgress from "@mui/material/CircularProgress";
 import { initFacebookPixel, trackEvent } from "../../../lib/ga";
-
-
 
 const ChecklistContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -30,7 +29,7 @@ const ChecklistContainer = styled(Paper)(({ theme }) => ({
 
 const SectionTitle = styled(Typography)(({ theme, active }) => ({
   fontWeight: active ? "bold" : "normal",
-  color: active ? theme.palette.primary.main : "inherit",  
+  color: active ? theme.palette.primary.main : "inherit",
   marginTop: theme.spacing(2),
   marginBottom: theme.spacing(1),
   display: "flex",
@@ -44,7 +43,7 @@ const ProgressBar = styled(LinearProgress)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-const MentorChecklist = () => {
+const MentorChecklist = ({ hackathonStart, hackathonEnd }) => {
   const [currentSection, setCurrentSection] = useState("");
   const [checklist, setChecklist] = useState({});
   const [expandedSections, setExpandedSections] = useState({});
@@ -52,139 +51,213 @@ const MentorChecklist = () => {
 
   useEffect(() => {
     initFacebookPixel();
+    initializeChecklist();
   }, []);
 
-  const trackOnClickButtonClickWithGoogleAndFacebook = (eventName) => (e) => {
-    trackEvent(eventName);    
+  const initializeChecklist = () => {
+    const initialChecklist = {
+      before: [
+        {
+          title: "Review the judging criteria thoroughly",
+          details:
+            "Understand the metrics teams will be evaluated on to provide targeted guidance.",
+          checked: false,
+        },
+        {
+          title: "Familiarize yourself with the hackathon schedule",
+          details:
+            "Know key timelines to align your mentoring with event milestones.",
+          checked: false,
+        },
+        {
+          title: "Set up and test your Slack account",
+          details:
+            "Ensure you can access the Opportunity Hack Slack workspace.",
+          checked: false,
+        },
+        {
+          title: "Review provided materials on mentoring best practices",
+          details:
+            "Refresh your knowledge on effective mentoring techniques for hackathons. Review the judging criteria, and peek at DevPost to understand prizes.",
+          checked: false,
+        },
+        {
+          title: "Block off your mentoring time in your calendar",
+          details:
+            "Commit to your 3-hour shift and any additional time you can offer.",
+          checked: false,
+        },
+        {
+          title: "Track your volunteer time",
+          details:
+            "Click the button above to log your volunteer hours for the event.",
+          checked: false,
+        },
+      ],
+      early: [
+        {
+          title: "Join the #ask-a-mentor Slack channel",
+          details: "This is the main channel for mentor coordination.",
+          checked: false,
+        },
+        {
+          title:
+            "Say hello in the #ask-a-mentor channel to let everyone know you're available",
+          details:
+            "Peoeple can look at our mentor section to learn more about you, but it's important to let them know you're available and maybe provide a short bio.",
+          checked: false,
+        },
+        {
+          title: "Review the list of teams and their project ideas",
+          details:
+            "Familiarize yourself with ongoing projects to offer targeted assistance.",
+          checked: false,
+        },
+        {
+          title: "Join team Slack channels",
+          details:
+            "Connect with teams working on projects relevant to your expertise. Find the Slack channels for each team in the README of their GitHub repository.",
+          checked: false,
+        },
+        {
+          title: "Help teams refine their project scope",
+          details:
+            "Guide teams to define achievable goals within the hackathon timeframe.",
+          checked: false,
+        },
+        {
+          title: "Track your volunteer time",
+          details:
+            "Click the button above to log your volunteer hours for the event.",
+          checked: false,
+        },
+      ],
+      during: [
+        {
+          title: "Regularly check team Slack channels",
+          details:
+            "Monitor discussions and offer help when needed. Find the Slack channels for each team in the README of their GitHub repos.",
+          checked: false,
+        },
+        {
+          title: "Review team GitHub repositories",
+          details:
+            "Understand project progress and offer code-level suggestions. Remember that they aren't trying to make a perfect project, just an MVP for the hackathon.",
+          checked: false,
+        },
+        {
+          title: "Use Slack Huddles for remote assistance",
+          details:
+            "Offer screen sharing and voice chat for in-depth problem-solving.  It's much easier to explain code in a call than in text. You can also use tools like Figma, Miro, Excalidraw for drawing, and Google Docs/Sheets or Slack Canvas for quick collaboration.",
+          checked: false,
+        },
+        {
+          title: "Provide constructive feedback",
+          details:
+            "Offer insights on code quality, project direction, and presentation skills. Use the private mentor Slack channel if you aren't able to get a response from a team.",
+          checked: false,
+        },
+        {
+          title: "Encourage teams to seek help",
+          details: "Remind teams to utilize mentor resources when stuck.",
+          checked: false,
+        },
+        {
+          title: "Track your volunteer time",
+          details:
+            "Click the button above to log your volunteer hours for the event.",
+          checked: false,
+        },
+      ],
+      wrapping: [
+        {
+          title: "Help teams prepare final presentations",
+          details:
+            "Guide teams on highlighting their project's impact and technical achievements according to the judging criteria.",
+          checked: false,
+        },
+        {
+          title: "Encourage teams to practice their pitches",
+          details:
+            "Offer to be a test audience and provide feedback on presentations.",
+          checked: false,
+        },
+        {
+          title: "Remind teams about DevPost submissions",
+          details:
+            "Ensure teams understand the submission process and requirements.",
+          checked: false,
+        },
+        {
+          title: "Offer final feedback and encouragement",
+          details: "Provide last-minute suggestions and boost team morale.",
+          checked: false,
+        },
+        {
+          title: "Track your volunteer time",
+          details:
+            "Click the button above to log your volunteer hours for the event.",
+          checked: false,
+        },
+      ],
+      after: [
+        {
+          title: "Provide feedback to the organizing team",
+          details:
+            "Share insights on the mentoring experience and event organization.",
+          checked: false,
+        },
+        {
+          title: "Ask for feedback",
+          details:
+            "Share your feedback link from your profile with your team to ask for feedback.",
+          checked: false,
+        },
+        {
+          title: "Reflect on your mentoring experience",
+          details:
+            "Note any suggestions for improving the mentoring process in future events. Consider posting about your experience on LinkedIn.",
+          checked: false,
+        },
+        {
+          title: "Stay connected with teams",
+          details:
+            "Offer to be a resource for teams continuing their projects post-hackathon.",
+          checked: false,
+        },
+      ],
+    };
+    setChecklist(initialChecklist);
+    setExpandedSections({
+      before: true,
+      early: true,
+      during: true,
+      wrapping: true,
+      after: true,
+    });
   };
-
-  useEffect(() => {
-    const storedChecklist = localStorage.getItem("mentorChecklist");
-    if (storedChecklist) {
-      setChecklist(JSON.parse(storedChecklist));
-    } else {
-      const initialChecklist = {
-        before: [
-          { text: "Review the judging criteria thoroughly", checked: false },
-          {
-            text: "Familiarize yourself with the hackathon schedule",
-            checked: false,
-          },
-          { text: "Set up and test your Slack account", checked: false },
-          {
-            text: "Review any provided materials on mentoring best practices",
-            checked: false,
-          },          
-          {
-            text: "Block off your mentoring time in your calendar",
-            checked: false,
-          },
-        ],
-        early: [
-          { text: "Join the #mentor-hangout Slack channel", checked: false },
-          { text: "Introduce yourself in the channel", checked: false },
-          {
-            text: "Review the list of teams and their project ideas",
-            checked: false,
-          },
-          {
-            text: "Join assigned team's Slack channel (if applicable)",
-            checked: false,
-          },
-          { text: "Help teams refine their project scope", checked: false },
-        ],
-        during: [
-          { text: "Stay primarily with your chosen team(s)", checked: false },
-          {
-            text: "Regularly check in with your primary team(s) via their Slack channel",
-            checked: false,
-          },
-          {
-            text: "Ask for quick demos to understand their progress",
-            checked: false,
-          },
-          {
-            text: "Use Slack Huddles for screen sharing when providing remote assistance",
-            checked: false,
-          },
-          {
-            text: "Provide constructive feedback and encouragement",
-            checked: false,
-          },
-        ],
-        wrapping: [
-          {
-            text: "Help teams prepare for their final presentations",
-            checked: false,
-          },
-          { text: "Encourage teams to practice their pitches", checked: false },
-          {
-            text: "Remind teams to complete their DevPost submissions",
-            checked: false,
-          },
-          { text: "Offer final feedback and encouragement", checked: false },
-        ],
-        after: [
-          {
-            text: "Provide any final feedback to the organizing team",
-            checked: false,
-          },
-          {
-            text: "Reflect on your mentoring experience and note any suggestions for improvement",
-            checked: false,
-          },
-        ],
-      };
-      setChecklist(initialChecklist);
-      localStorage.setItem("mentorChecklist", JSON.stringify(initialChecklist));
-    }
-
-    const storedExpandedSections = localStorage.getItem("expandedSections");
-    if (storedExpandedSections) {
-      setExpandedSections(JSON.parse(storedExpandedSections));
-    } else {
-      const initialExpandedSections = {
-        before: true,
-        early: true,
-        during: true,
-        wrapping: true,
-        after: true,
-      };
-      setExpandedSections(initialExpandedSections);
-      localStorage.setItem(
-        "expandedSections",
-        JSON.stringify(initialExpandedSections)
-      );
-    }
-  }, []);
 
   useEffect(() => {
     const updateCurrentSection = () => {
       const now = Moment();
-      // TODO: Update these dynamically for each hackathon and consider adding it into the hackathon page instead
+      const start = Moment(hackathonStart);
+      const end = Moment(hackathonEnd);
       
-      const hackathonStart = Moment(
-        "2024-10-12 09:00:00",
-        "YYYY-MM-DD HH:mm:ss",
-        "America/Los_Angeles"
-      );
-      const hackathonEnd = Moment("2024-10-13 15:00:00", "YYYY-MM-DD HH:mm:ss", "America/Los_Angeles");
-
-      if (now.isBefore(hackathonStart)) {
+      if (now.isBefore(start)) {
         setCurrentSection("before");
       } else if (
-        now.isBetween(hackathonStart, hackathonStart.clone().add(6, "hours"))
+        now.isBetween(start, start.clone().add(6, "hours"))
       ) {
         setCurrentSection("early");
       } else if (
         now.isBetween(
-          hackathonStart.clone().add(6, "hours"),
-          hackathonEnd.clone().subtract(3, "hours")
+          start.clone().add(6, "hours"),
+          end.clone().subtract(3, "hours")
         )
       ) {
         setCurrentSection("during");
       } else if (
-        now.isBetween(hackathonEnd.clone().subtract(3, "hours"), hackathonEnd)
+        now.isBetween(end.clone().subtract(3, "hours"), end)
       ) {
         setCurrentSection("wrapping");
       } else {
@@ -196,7 +269,7 @@ const MentorChecklist = () => {
     const interval = setInterval(updateCurrentSection, 60000); // Update every minute
 
     return () => clearInterval(interval);
-  }, []);
+  }, [hackathonStart, hackathonEnd]);
 
   useEffect(() => {
     const totalTasks = Object.values(checklist).flat().length;
@@ -207,37 +280,19 @@ const MentorChecklist = () => {
   }, [checklist]);
 
   const handleToggle = (section, index) => {
-    const updatedChecklist = {
-      ...checklist,
-      [section]: checklist[section].map((item, i) =>
+    setChecklist((prevChecklist) => ({
+      ...prevChecklist,
+      [section]: prevChecklist[section].map((item, i) =>
         i === index ? { ...item, checked: !item.checked } : item
       ),
-    };
-    setChecklist(updatedChecklist);
-    localStorage.setItem("mentorChecklist", JSON.stringify(updatedChecklist));
-  };
-
-  const handleResetChecklist = () => {
-    const resetChecklist = Object.fromEntries(
-      Object.entries(checklist).map(([key, value]) => [
-        key,
-        value.map((item) => ({ ...item, checked: false })),
-      ])
-    );
-    setChecklist(resetChecklist);
-    localStorage.setItem("mentorChecklist", JSON.stringify(resetChecklist));
+    }));
   };
 
   const toggleSection = (section) => {
-    const updatedExpandedSections = {
-      ...expandedSections,
-      [section]: !expandedSections[section],
-    };
-    setExpandedSections(updatedExpandedSections);
-    localStorage.setItem(
-      "expandedSections",
-      JSON.stringify(updatedExpandedSections)
-    );
+    setExpandedSections((prevSections) => ({
+      ...prevSections,
+      [section]: !prevSections[section],
+    }));
   };
 
   const renderSection = (title, items, section) => (
@@ -247,20 +302,18 @@ const MentorChecklist = () => {
         active={currentSection === section}
         onClick={() => toggleSection(section)}
       >
-        <Box sx={{ display: 'flex' }}>
-          {currentSection === section ? (
-            <CircularProgress size={15} thickness={1} color="secondary" />
-          ) : (
-            ""
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          {currentSection === section && (
+            <CircularProgress size={20} thickness={5} sx={{ marginRight: 1 }} />
           )}
-        {title}
+          {title}
         </Box>
         {expandedSections[section] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
       </SectionTitle>
       <Collapse in={expandedSections[section]}>
         <List dense>
           {items.map((item, index) => (
-            <ListItem key={index} disablePadding>
+            <ListItem key={index} alignItems="flex-start">
               <ListItemIcon>
                 <Checkbox
                   edge="start"
@@ -270,8 +323,10 @@ const MentorChecklist = () => {
                 />
               </ListItemIcon>
               <ListItemText
-                primaryTypographyProps={{ fontSize: "14px" }}
-                primary={item.text}
+                primary={item.title}
+                secondary={item.details}                
+                primaryTypographyProps={{ fontWeight: "bold", fontSize: "16px" }}
+                secondaryTypographyProps={{ style: { whiteSpace: "normal", fontSize: "14px" } }}
               />
             </ListItem>
           ))}
@@ -280,17 +335,18 @@ const MentorChecklist = () => {
     </Box>
   );
 
+  const style = {
+    fontSize: "14px"
+  }
+
   return (
     <ChecklistContainer elevation={3}>
       <Typography variant="h5" gutterBottom>
         Mentor Checklist
       </Typography>
-      {
-        // Add a button to track time here
-      }
       <Box sx={{ flexGrow: 1, margin: 2 }}>
         <Button
-          onClick={trackOnClickButtonClickWithGoogleAndFacebook("track_volunteer_time")}
+          onClick={() => trackEvent("track_volunteer_time")}
           variant="contained"
           size="large"
           color="secondary"
@@ -299,7 +355,51 @@ const MentorChecklist = () => {
           Track your volunteer time here
         </Button>
       </Box>
+      <Typography variant="body1" style={style} paragraph>
+        Join the{" "}
+        <Link
+          href="https://opportunity-hack.slack.com/archives/C01E5CGDQ74"
+          target="_blank"
+          rel="noopener"
+        >
+          #ask-a-mentor Slack channel
+        </Link>{" "}
+        to handle reachouts from teams.  Once a team reaches out to you, you'll want to stay with them for the duration of the hackathon.  Having this shared context with the people in the team, the problem they are solving, and the tech they are using allows for less context switching and a more durable relationship that improves team productivity.
+      </Typography>
+      <Typography variant="body1" paragraph>
+        Join the{" "}
+        <Link
+          href="https://opportunity-hack.slack.com/archives/C07JBKSPWP7"
+          target="_blank"
+          rel="noopener"
+        >
+          🔒 #2024-mentors
+        </Link>{" "}
+        private Slack channel for mentor-specific announcements.
+      </Typography>
 
+      <Typography variant="body1" paragraph>
+        View team projects on GitHub:{" "}
+        <Link
+          href="https://github.com/2024-Arizona-Opportunity-Hack"
+          target="_blank"
+          rel="noopener"
+        >
+          2024 Arizona Opportunity Hack
+        </Link>{" "}
+        - this is where teams will be committing their open-source code. You can find the Slack channel for each team in the README of their GitHub repository.
+      </Typography>
+      <Typography variant="body1" paragraph>
+        See DevPost:{" "}
+        <Link
+          href="https://opportunity-hack-2024-arizona.devpost.com/"
+          target="_blank"
+          rel="noopener"
+        >
+          2024 DevPost
+        </Link>{" "}
+        - this is what the teams will be submitting their projects to.
+      </Typography>
       <Tooltip title={`${Math.round(progress)}% completed`} placement="top">
         <ProgressBar variant="determinate" value={progress} />
       </Tooltip>
@@ -310,7 +410,7 @@ const MentorChecklist = () => {
             : section === "early"
               ? "Early Hours (First 4-6 hours)"
               : section === "during"
-                ? "Throughout the Hackathon"
+                ? "Throughout Your Shift"
                 : section === "wrapping"
                   ? "Wrapping Up (The Last 3 Hours)"
                   : "After the Event",
@@ -318,15 +418,6 @@ const MentorChecklist = () => {
           section
         )
       )}
-      <Box mt={2}>
-        <Button
-          variant="outlined"
-          color="secondary"
-          onClick={handleResetChecklist}
-        >
-          Reset Checklist
-        </Button>
-      </Box>
     </ChecklistContainer>
   );
 };
