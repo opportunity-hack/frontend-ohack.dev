@@ -6,7 +6,8 @@ import {
   CardMedia,
   Typography,
   Chip,
-  Box,
+  Box,  
+  Paper,
   Link,
   Tooltip,
   List,
@@ -30,6 +31,8 @@ import Moment from "moment";
 import NextLink from "next/link";
 import ShareVolunteer from "./ShareVolunteer";
 import { useEffect } from "react";
+import MentorAvailability from './MentorAvailability';
+
 
 const ArtifactList = styled(List)({
   padding: 0,
@@ -51,19 +54,20 @@ const VolunteerCard = styled(Card)(({ theme }) => ({
 
 const VolunteerMediaContainer = styled(Box)({
   position: "relative",
-  width: "60%",
+  width: "50%",
   margin: "16px auto 0",
 });
 
 const VolunteerMedia = styled(CardMedia)({
-  paddingTop: "100%", // 1:1 Aspect Ratio
+  paddingTop: "100%", // 1:1 Aspect Ratio  
   borderRadius: "50%",
+    
 });
 
 const InPersonBadge = styled(Box)(({ theme }) => ({
   position: "absolute",
   bottom: 0,
-  right: 0,
+  right: 0,    
   backgroundColor: theme.palette.success.main,
   color: theme.palette.success.contrastText,
   padding: "4px 8px",
@@ -126,11 +130,48 @@ const AvailabilityChip = styled(Chip)(({ theme, isavailablenow }) => ({
   },
 }));
 
+const AvailableMentorsSection = styled(Box)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+}));
+
+const AvailableMentorChip = styled(Chip)(({ theme, isInPerson }) => ({
+  margin: theme.spacing(0.5),
+  backgroundColor: isInPerson ? theme.palette.success.main : theme.palette.info.main,
+  color: theme.palette.success.contrastText,
+  '&:hover': {
+    backgroundColor: theme.palette.success.dark,
+  },
+}));
+
 const VolunteerList = ({ event_id, type }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [volunteers, setVolunteers] = React.useState([]);
-
+  const [availableMentors, setAvailableMentors] = React.useState([]);
+  
+  
+const getAvailabilityCounts = (volunteers) => {
+  const counts = {
+    Saturday: {},
+    Sunday: {}
+  };
+  volunteers.forEach(volunteer => {
+    if (volunteer.availability) {
+      volunteer.availability.split(", ").forEach(slot => {
+        if (slot.includes("Saturday") || slot.includes("Sunday")) {
+          const [day, time] = slot.split(" (");
+          const cleanTime = time.replace(")", "");
+          if (!counts[day]) counts[day] = {};
+          counts[day][cleanTime] = (counts[day][cleanTime] || 0) + 1;
+        }
+      });
+    }
+  });
+  return counts;
+};
 
   useEffect(() => {
     // Call API to get data based on type
@@ -154,15 +195,35 @@ const VolunteerList = ({ event_id, type }) => {
     };
 
     fetchData();
-  }, [event_id, type]);
+  }, [event_id, type]);  
 
+  useEffect(() => {
+    if (type === "mentor" && volunteers.length > 0) {
+      // Determine if currently available for each volunteer.availability that is a list of available times
+      const currentlyAvailable = volunteers.filter((volunteer) => {
+        if (volunteer.availability && volunteer.isSelected) {
+          const availabilityArray = volunteer.availability.split(", ");
+          return availabilityArray.some(isCurrentlyAvailable);
+        }
+        return false;
+      }
+      );
+      setAvailableMentors(currentlyAvailable);
 
+    }
+  }, [volunteers, type]);
 
 
   const isCurrentlyAvailable = (timeSpan) => {
     if (!timeSpan) return false;
-
+    
     const now = Moment(new Date(), "America/Los_Angeles"); // Everything is going to be in PST - we don't want to get the user's local time
+    const nowDay = now.format("dddd");
+
+    // Get the day which is either Saturday or Sunday within the string
+    const day = timeSpan.match(/(Saturday|Sunday)/g);
+
+    const dayMatch = day && day.length > 0 && day[0] === nowDay;
 
     timeSpan = timeSpan.replace(/.*?\(/g, "");
     timeSpan = timeSpan.replace(/\)/g, "");
@@ -177,7 +238,7 @@ const VolunteerList = ({ event_id, type }) => {
     const startMoment = Moment(`${startTime}`, "h:mma", "America/Los_Angeles");
     const endMoment = Moment(`${endTime}`, "h:mma", "America/Los_Angeles");
 
-    return now.isBetween(startMoment, endMoment);
+    return now.isBetween(startMoment, endMoment) && dayMatch;
   };
 
   const renderArtifacts = (artifacts) => {
@@ -269,7 +330,7 @@ const VolunteerList = ({ event_id, type }) => {
     if (!isSelected) return null;    
 
     return (
-      <Grid item xs={12} sm={6} md={4} key={volunteer.name}>
+      <Grid item xs={12} sm={6} md={4} key={volunteer.name} id={`mentor-${volunteer.name}`}>
         <VolunteerCard>
           <VolunteerMediaContainer>
             <VolunteerMedia
@@ -373,29 +434,66 @@ const VolunteerList = ({ event_id, type }) => {
     );
   };
 
+  const scrollToMentor = (mentorName) => {
+    const element = document.getElementById(`mentor-${mentorName}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+ 
+
   if( loading ) 
   {
     return(<Skeleton marginTop={5} variant="rect" width={210} height={300} />);
   }
 
   return (
-    <Box sx={{ mt: 4 }}>
-      <HeadingContainer>
-        <Typography variant="h4">
-          Our Amazing {type === "mentor" ? "Mentors" : type === "judge" ? "Judges" : "Volunteers"}
+  <Box sx={{ mt: 4 }}>
+    <HeadingContainer>
+      <Typography variant="h4">
+        Our Amazing {type === "mentor" ? "Mentors" : type === "judge" ? "Judges" : "Volunteers"}
+      </Typography>
+      <NextLink
+        href={type === "mentor" ? "/about/mentors" : type === "judge" ? "/about/judges" : "/volunteer"}
+        passHref
+      >
+        <StyledLink color="secondary">(Learn more)</StyledLink>
+      </NextLink>
+    </HeadingContainer>    
+
+    {type === "mentor" && <MentorAvailability volunteers={volunteers} /> }
+
+    {type === "mentor" && availableMentors.length > 0 && (
+      <AvailableMentorsSection>
+        <Typography variant="h6" gutterBottom>
+          Currently Available Mentors:
         </Typography>
-        <NextLink
-          href={type === "mentor" ? "/about/mentors" : type === "judge" ? "/about/judges" : "/volunteer"}
-          passHref
-        >
-          <StyledLink color="secondary">(Learn more)</StyledLink>
-        </NextLink>
-      </HeadingContainer>
-      <Grid container spacing={3}>
-        {volunteers && volunteers.map(renderVolunteerCard)}
-      </Grid>
-    </Box>
-  );
+        {availableMentors.map((mentor) => (
+          <Tooltip            
+            title=<span style={{ fontSize: "14px" }}>{
+              mentor.isInPerson
+                ? "Available now (in-person)"
+                : "Available now (remote)"            
+            }</span>
+            key={mentor.name}
+          >
+          <AvailableMentorChip
+            key={mentor.name}
+            label={mentor.name}            
+            onClick={() => scrollToMentor(mentor.name)}
+            isInPerson={mentor.isInPerson}
+            clickable
+          />
+          </Tooltip>
+        ))}
+      </AvailableMentorsSection>
+    )}
+    
+    <Grid container spacing={3}>
+      {volunteers && volunteers.map((volunteer) => renderVolunteerCard(volunteer))}
+    </Grid>
+  </Box>
+);
 };
 
 export default VolunteerList;
