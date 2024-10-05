@@ -48,6 +48,20 @@ export const sponsors = [
     donations: 500,
     website: "https://shiftcaffeine.com",
   },
+  {
+    name: "Devils Invent",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/devilsinvent.webp",
+    hours: 20,
+    donations: 10000,
+    website: "https://students.engineering.asu.edu/devils-invent",
+  },
+  {
+    name: "The Buzz Eatery",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/thebuzz.webp",
+    hours: 5,
+    donations: 2000,
+    website: "https://thebuzzeatery.com/",
+  },
 ];
 
 export const calculateSupport = (hours, donations) => hours * 100 + donations;
