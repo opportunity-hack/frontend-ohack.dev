@@ -212,7 +212,13 @@ return (
         </Grid>
       </Grid>
 
-      <MentorChecklist />
+      <MentorChecklist hackathonStart={
+        new Date("2024-10-12T08:00:00-07:00")
+      } 
+      hackathonEnd={        
+        new Date("2024-10-13T18:00:00-07:00")
+      }
+      />
 
       <SponsorshipCTA />
 
