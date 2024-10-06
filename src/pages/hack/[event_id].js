@@ -8,6 +8,7 @@ import { Typography, Button } from "@mui/material";
 import VolunteerList from '../../components/Hackathon/VolunteerList';
 import TableOfContents from '../../components/Hackathon/TableOfContents';
 import Script from 'next/script';
+import TeamList from '../../components/Hackathon/TeamList';
 
 
 // Dynamically import components for better code splitting
@@ -118,10 +119,22 @@ const faqData = [
       icon: "🤝",
     },
     {
+      question: "Do people sleep?",
+      answer:
+        "For in-person events, we provide a quiet space for participants to rest. However, many hackers choose to work through the night. For virtual events, you can sleep in your own bed!",
+      icon: "💤",
+    },
+    {
       question: "What should I bring?",
       answer:
-        "For in-person events, bring your laptop, charger, and any other devices you might need. For virtual events, ensure you have a stable internet connection.",
+        "For in-person events, bring your laptop, charger, and any other devices you might need. If you want to sleep overnight, bring a pillow or something comfortable to wear that will keep you warm. For virtual events, ensure you have a stable internet connection.",
       icon: "🎒",
+    },
+    {
+      question: "What if I'm in high school?",
+      answer:
+        "High school students are welcome to participate in Opportunity Hack. We encourage you to join a team with other students or professionals to learn and contribute to real-world projects. You must have a parent or guardian's permission to participate. If you win a prize, we will send it to your parent or guardian.",
+      icon: "🎓",
     },
     {
       question: "Are there any costs involved?",
@@ -211,9 +224,24 @@ const faqData = [
       icon: "📚",
     },
     {
-      question: "Is there a code of conduct?",
-      answer:
-        "Yes, we have a code of conduct that all participants must adhere to, ensuring a safe and inclusive environment for everyone.",
+      question: "Is there a code of conduct?",      
+      answer: (
+        <>
+          Yes, we have a code of conduct that all participants must adhere to, ensuring a safe and inclusive environment for everyone.
+          <br />
+          <br />
+          <Button variant="contained" color="primary" href="/hack/code-of-conduct">
+            Code of Conduct
+          </Button>
+          <Button variant="contained" color="primary" href="/hack/liability-waiver">
+            Liability Waiver
+          </Button>          
+          <Button variant="contained" color="primary" href="/hack/photo-release">
+            Photo Release Agreement
+          </Button>
+          
+        </>
+      ),
       icon: "📜",
     },
     {
@@ -372,6 +400,9 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
           <Grid item xs={12} id="judge">
             <VolunteerList event_id={event_id} type="judge" />
+          </Grid>
+          <Grid item xs={12} id="teams">
+            <TeamList teams={event.teams} eventId={event_id} />
           </Grid>
           <Grid item xs={12} id="faq">
             <InteractiveFAQ faqData={faqData} title={`${event.title} FAQ`} />
