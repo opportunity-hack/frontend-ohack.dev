@@ -8,6 +8,7 @@ const sections = [
   { id: "volunteer", name: "Volunteers" },
   { id: "mentor", name: "Mentors" },
   { id: "judge", name: "Judges" },
+  { id: "teams", name: "Teams" },
   { id: "faq", name: "FAQ" },
 ];
 
