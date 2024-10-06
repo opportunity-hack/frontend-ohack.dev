@@ -56,7 +56,8 @@ const AboutJudges = () => {
     scopeComplexity: 3,
     documentationCode: 3,
     documentationEase: 3,
-    polish: 3,
+    polishWorkRemaining: 3,
+    polishCanUseToday: 3,    
     securityData: 3,
     securityRole: 3,
   });
@@ -142,8 +143,14 @@ const AboutJudges = () => {
       name: "Scope of Solution",
       maxPoints: 10,
       subCriteria: [
-        { name: "Impact on Community", key: "scopeImpact" },
-        { name: "Complexity of Problem Solved", key: "scopeComplexity" },
+        {
+          name: "Impact on Community - how many people and nonprofits are impacted by this solution?",
+          key: "scopeImpact",
+        },
+        {
+          name: "Complexity of Problem Solved - how hard was this to do versus what is already out there?",
+          key: "scopeComplexity",
+        },
       ],
       tip: "Consider both breadth and depth of impact. Evaluate community impact and problem complexity.",
     },
@@ -152,15 +159,31 @@ const AboutJudges = () => {
       name: "Documentation",
       maxPoints: 10,
       subCriteria: [
-        { name: "Code and UX Documentation", key: "documentationCode" },
-        { name: "Ease of Understanding", key: "documentationEase" },
+        {
+          name: "Code and UX Documentation - clear how to use the solution",
+          key: "documentationCode",
+        },
+        {
+          name: "Ease of Understanding - straightforward design",
+          key: "documentationEase",
+        },
       ],
       tip: "Assess documentation quality and clarity. Consider project sustainability.",
     },
     {
       category: "polish",
       name: "Polish",
-      maxPoints: 5,
+      maxPoints: 10,
+      subCriteria: [
+        {
+          name: "Work remaining - minimal work remaining for MVP",
+          key: "polishWorkRemaining",
+        },
+        {
+          name: "Can use today - deployed in the cloud, able to be shipped now",
+          key: "polishCanUseToday",
+        },
+      ],
       tip: "Evaluate overall refinement and readiness for real-world use.",
     },
     {
@@ -168,8 +191,14 @@ const AboutJudges = () => {
       name: "Security",
       maxPoints: 10,
       subCriteria: [
-        { name: "Data Protection", key: "securityData" },
-        { name: "Role-based Security", key: "securityRole" },
+        {
+          name: "Data Protection - hard to gain access to data because of security controls",
+          key: "securityData",
+        },
+        {
+          name: "Role-based Security - admin versus public access (where applicable)",
+          key: "securityRole",
+        },
       ],
       tip: "Assess data protection and role-based security implementation.",
     },
@@ -228,11 +257,11 @@ const AboutJudges = () => {
       </Head>
       <Container maxWidth="md">
         <Box sx={{ padding: 4, mt: 5 }}>
-          <Typography variant="h2" gutterBottom>
+          <Typography variant="h3" gutterBottom>
             Opportunity Hack Phoenix: Hackathon Judge Opportunities
           </Typography>
 
-          <Typography variant="h3" gutterBottom sx={{ mt: 4 }}>
+          <Typography variant="h4" gutterBottom sx={{ mt: 4 }}>
             Why Judge at Opportunity Hack?
           </Typography>
           <List>
@@ -274,7 +303,7 @@ const AboutJudges = () => {
             </ListItem>
           </List>
 
-          <Typography variant="h3" gutterBottom sx={{ mt: 4 }}>
+          <Typography variant="h4" gutterBottom sx={{ mt: 4 }}>
             How to Become a Judge
           </Typography>
           <List>
@@ -311,7 +340,7 @@ const AboutJudges = () => {
             Apply for Limited Individual Judge Positions
           </Button>
 
-          <Typography variant="h3" gutterBottom sx={{ mt: 4 }}>
+          <Typography variant="h4" gutterBottom sx={{ mt: 4 }}>
             In-Person (Tempe, Arizona) Judging Process
           </Typography>
           <List>
@@ -321,7 +350,7 @@ const AboutJudges = () => {
               </ListItemIcon>
               <ListItemText
                 primary="Stage 1: On-Site Video Reviews"
-                secondary="Evaluate 3-minute pitch videos showcasing innovative nonprofit solutions together with other judges."
+                secondary="Evaluate 4-minute pitch videos showcasing innovative nonprofit solutions together with other judges."
               />
             </ListItem>
             <ListItem>
@@ -351,7 +380,7 @@ const AboutJudges = () => {
                   {criterion.name} ({criterion.maxPoints} points)
                 </Typography>
                 <Tooltip
-                  title={criterion.tip}
+                  title=<span style={{ fontSize: 14 }}>{criterion.tip}</span>
                   enterDelay={0}
                   enterTouchDelay={0}
                   arrow
@@ -374,7 +403,7 @@ const AboutJudges = () => {
 
           <Paper elevation={3} sx={{ p: 3, mt: 2 }}>
             <Typography variant="h6" align="right">
-              Total Score: {totalScore}/35
+              Total Score: {totalScore}/40
             </Typography>
           </Paper>
 
