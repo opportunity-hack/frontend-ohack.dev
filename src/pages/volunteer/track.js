@@ -181,6 +181,8 @@ const VolunteerTrackingPage = withAuthInfo(
           const data = await response.json();
           setTotalHours(data.totalHours);
           setVolunteerStats(data.volunteering);
+          console.log("Data fetched: ", data);
+          
         }
       } catch (error) {
         console.log("Error fetching total hours: ", error);
