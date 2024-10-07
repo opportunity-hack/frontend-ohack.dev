@@ -10,6 +10,8 @@ import {
   Button,
   Snackbar,
   Box,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
@@ -208,7 +210,7 @@ const TeamList = ({ teams, eventId }) => {
 
       <Box mb={2}>
         <Button variant="contained" color="primary" href={`/hack/newteam`}>
-            Create a Team
+          Create a Team
         </Button>
       </Box>
 
@@ -246,17 +248,46 @@ const TeamList = ({ teams, eventId }) => {
                       (user) =>
                         user && (
                           <Grid item key={user.id}>
-                            <Link href={`/profile/${user.id}`}>
-                              <Avatar
-                                src={user.profile_image}
-                                alt={user.name || user.nickname}
-                                title={user.name || user.nickname}
+                            <Tooltip
+                              title=<span style={{ fontSize: "12px" }}>
+                              {`View ${user.name || user.nickname}'s profile`}
+                            </span>
+                            >
+                              <IconButton
+                                component={Link}
+                                href={`/profile/${user.id}`}
+                                aria-label={`${user.name || user.nickname}'s profile`}
+                                sx={{
+                                  p: 0,
+                                  "&:hover": {
+                                    backgroundColor: "rgba(0, 0, 0, 0.04)",
+                                  },
+                                }}
                               >
-                                {user.name || user.nickname
-                                  ? (user.name || user.nickname)[0]
-                                  : "?"}
-                              </Avatar>
-                            </Link>
+                                <Avatar
+                                  src={user.profile_image}
+                                  alt={user.name || user.nickname}
+                                >
+                                  {user.name || user.nickname
+                                    ? (user.name || user.nickname)[0]
+                                    : "?"}
+                                </Avatar>
+                              </IconButton>
+                            </Tooltip>
+                            <Typography
+                              variant="caption"
+                              display="block"
+                              align="center"
+                              sx={{
+                                mt: 0.5,
+                                maxWidth: 64,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {user.name || user.nickname}
+                            </Typography>
                           </Grid>
                         )
                     )}
