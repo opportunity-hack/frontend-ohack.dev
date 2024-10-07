@@ -24,10 +24,28 @@ const VolunteerEditDialog = ({
 }) => {
   if (!volunteer) return null;
 
+  // Convert our Google Cloud Storage URL to a CDN URL - we do this to make sure we can always change CDNs in the future
+  const transformPhotoUrl = (url) => {
+    return url.replace(
+      "https://storage.googleapis.com/ohack-dev_cdn",
+      "https://cdn.ohack.dev"
+    );
+  };
+
+  const handlePhotoUrlChange = (e) => {
+    const transformedUrl = transformPhotoUrl(e.target.value);
+    onChange("photoUrl", transformedUrl);
+  };
+
   const commonFields = [
-    { name: "id", label: "ID", type: "text", readOnly: true }, // New field for ID
+    { name: "id", label: "ID", type: "text", readOnly: true },
     { name: "name", label: "Name", type: "text" },
-    { name: "photoUrl", label: "Photo URL", type: "text" },
+    {
+      name: "photoUrl",
+      label: "Photo URL",
+      type: "text",
+      onChange: handlePhotoUrlChange,
+    },
     { name: "linkedinProfile", label: "LinkedIn Profile", type: "text" },
     { name: "isInPerson", label: "In Person", type: "switch" },
     { name: "isSelected", label: "Selected", type: "switch" },
@@ -58,21 +76,13 @@ const VolunteerEditDialog = ({
           { name: "whyJudge", label: "Why Judge", type: "text" },
           { name: "shortBiography", label: "Short Biography", type: "text" },
           { name: "background", label: "Background", type: "text" },
-          {
-            name: "hasHelpedBefore",
-            label: "Has Helped Before",
-            type: "text",
-          },
+          { name: "hasHelpedBefore", label: "Has Helped Before", type: "text" },
         ];
       case "volunteer":
         return [
           { name: "company", label: "Company", type: "text" },
           { name: "shortBio", label: "Short Bio", type: "text" },
-          {
-            name: "hasHelpedBefore",
-            label: "Has Helped Before",
-            type: "text",
-          },
+          { name: "hasHelpedBefore", label: "Has Helped Before", type: "text" },
         ];
       default:
         return [];
@@ -125,9 +135,11 @@ const VolunteerEditDialog = ({
               type={field.type}
               fullWidth
               value={volunteer[field.name] || ""}
-              onChange={(e) => onChange(field.name, e.target.value)}
+              onChange={
+                field.onChange || ((e) => onChange(field.name, e.target.value))
+              }
               InputProps={{
-                readOnly: field.readOnly, // Apply readOnly prop
+                readOnly: field.readOnly,
               }}
             />
           )
