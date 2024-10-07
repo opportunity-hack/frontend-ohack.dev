@@ -64,20 +64,9 @@ const PublicProfile = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Public Profile
         </Typography>
-        <Chip
-          label="Under Construction"
-          color="warning"
-          sx={{ position: "absolute", top: 0, right: 0 }}
-        />
+     
       </Box>
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
-        <Image
-          src="https://media.giphy.com/media/3o7btQ0NH6Kl8CxCfK/giphy.gif"
-          alt="Under Construction"
-          width={200}
-          height={200}
-        />
-      </Box>
+      
       <Card>
         <CardContent>
           <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
