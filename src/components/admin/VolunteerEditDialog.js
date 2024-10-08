@@ -65,7 +65,7 @@ const VolunteerEditDialog = ({
         return [
           { name: "expertise", label: "Expertise", type: "text" },
           { name: "company", label: "Company", type: "text" },
-          { name: "shortBio", label: "Short Bio", type: "text" },
+          { name: "shortBio", label: "Short Bio", type: "textarea" },
           {
             name: "participationCount",
             label: "Participation Count",
@@ -90,12 +90,20 @@ const VolunteerEditDialog = ({
         return [
           { name: "title", label: "Title", type: "text" },
           { name: "companyName", label: "Company Name", type: "text" },
-          { name: "whyJudge", label: "Why Judge", type: "text" },
-          { name: "shortBiography", label: "Short Biography", type: "text" },
+          { name: "whyJudge", label: "Why Judge", type: "textarea" },
+          {
+            name: "shortBiography",
+            label: "Short Biography",
+            type: "textarea",
+          },
           { name: "background", label: "Background", type: "text" },
           { name: "hasHelpedBefore", label: "Has Helped Before", type: "text" },
           { name: "availability", label: "Availability", type: "text" },
-          { name: "additionalInfo", label: "Additional Info", type: "text" },
+          {
+            name: "additionalInfo",
+            label: "Additional Info",
+            type: "textarea",
+          },
           {
             name: "agreedToCodeOfConduct",
             label: "Agreed to Code of Conduct",
@@ -105,7 +113,7 @@ const VolunteerEditDialog = ({
       case "volunteers":
         return [
           { name: "company", label: "Company", type: "text" },
-          { name: "shortBio", label: "Short Bio", type: "text" },
+          { name: "shortBio", label: "Short Bio", type: "textarea" },
           { name: "hasHelpedBefore", label: "Has Helped Before", type: "text" },
         ];
       default:
@@ -139,14 +147,45 @@ const VolunteerEditDialog = ({
   };
 
   const processBulkData = () => {
-    const rows = bulkData.trim().split("\n");
-    const headers = rows[0].split("\t");
-    const dataRow = rows[1].split("\t");
+    const lines = bulkData.trim().split("\n");
+    const headers = lines[0].split("\t").map((header) => header.trim());
+
+    let dataValues = [];
+    let currentValue = "";
+    let inQuotes = false;
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "\t" && !inQuotes) {
+          dataValues.push(currentValue.trim());
+          currentValue = "";
+        } else {
+          currentValue += char;
+        }
+      }
+      if (inQuotes) {
+        currentValue += "\n";
+      } else {
+        dataValues.push(currentValue.trim());
+        break;
+      }
+    }
 
     const rawData = {};
     headers.forEach((header, index) => {
-      rawData[header.trim()] = dataRow[index]?.trim() || "";
+      if (index < dataValues.length) {
+        let value = dataValues[index];
+        // Remove surrounding quotes and replace double quotes with single quotes
+        value = value.replace(/^"(.*)"$/, "$1").replace(/""/g, '"');
+        rawData[header] = value;
+      }
     });
+
+    console.log("Raw data:", rawData); // For debugging
 
     let transformedData;
     if (volunteer.type === "mentors") {
@@ -154,9 +193,10 @@ const VolunteerEditDialog = ({
     } else if (volunteer.type === "judges") {
       transformedData = transformJudgeData(rawData);
     } else {
-      // Handle general volunteer parsing here if needed
       transformedData = rawData;
     }
+
+    console.log("Transformed data:", transformedData); // For debugging
 
     Object.keys(transformedData).forEach((key) => {
       onChange(key, transformedData[key]);
@@ -168,7 +208,7 @@ const VolunteerEditDialog = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {isAdding ? `Add ${ volunteer.type }` : `Edit ${volunteer.type}`}
+        {isAdding ? `Add ${volunteer.type}` : `Edit ${volunteer.type}`}
       </DialogTitle>
       <DialogContent>
         {isAdding && (
@@ -199,6 +239,17 @@ const VolunteerEditDialog = ({
                 onChange={(e) => onChange(field.name, e.target.checked)}
               />
             </Box>
+          ) : field.type === "textarea" ? (
+            <TextField
+              key={field.name}
+              margin="dense"
+              label={field.label}
+              multiline
+              rows={4}
+              fullWidth
+              value={volunteer[field.name] || ""}
+              onChange={(e) => onChange(field.name, e.target.value)}
+            />
           ) : (
             <TextField
               key={field.name}

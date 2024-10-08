@@ -21,7 +21,8 @@ const mentorHeaderMapping = {
   "Which days will be you available?": "availability",
   "Which country are you in?": "country",
   "Which state are you in?": "state",
-  "Do you agree to our code of conduct?": "agreedToCodeOfConduct",
+  "Do you agree to our code of conduct? https://www.ohack.dev/hack/code-of-conduct":
+    "agreedToCodeOfConduct",
   "Shirt Size?": "shirtSize",
 };
 
