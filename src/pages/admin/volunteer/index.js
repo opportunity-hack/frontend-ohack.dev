@@ -11,13 +11,13 @@ import {
 } from "@mui/material";
 import AdminPage from "../../../components/admin/AdminPage";
 import VolunteerTable from "../../../components/admin/VolunteerTable";
-import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";
-import VolunteerBulkAdd from "../../../components/admin/VolunteerBulkAdd";
+import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";  
+
 import { Typography } from "@mui/material";
 
 const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
-  const [showBulkAdd, setShowBulkAdd] = useState(false);
+
   const [volunteers, setVolunteers] = useState({
     mentors: [],
     judges: [],
@@ -35,6 +35,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingVolunteer, setEditingVolunteer] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
@@ -84,9 +85,9 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         const volunteersData = await volunteersResponse.json();
 
         setVolunteers({
-          mentors: mentorsData.data,
-          judges: judgesData.data,
-          volunteers: volunteersData.data,
+          mentors: mentorsData.data || [],
+          judges: judgesData.data || [],
+          volunteers: volunteersData.data || [],
         });
       } else {
         throw new Error("Failed to fetch volunteers");
@@ -119,6 +120,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   );
 
   const handleTabChange = useCallback((event, newValue) => {
+    console.log("tab value", newValue);
     setTabValue(newValue);
   }, []);
 
@@ -126,17 +128,22 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     setEditingVolunteer((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleEditVolunteer = useCallback((volunteer) => {
-    setEditingVolunteer({
-      ...volunteer,
-      type: getCurrentVolunteerType(),
-    });
-    setEditDialogOpen(true);
-  }, []);
+  const handleEditVolunteer = useCallback(
+    (volunteer) => {
+      setEditingVolunteer({
+        ...volunteer,
+        type: getCurrentVolunteerType(tabValue),
+      });
+      setIsAdding(false);
+      setEditDialogOpen(true);
+    },
+    [tabValue]
+  );
 
   const handleAddSingleVolunteer = useCallback(() => {
+    console.log("Adding/Editing Type: ", getCurrentVolunteerType(tabValue));
     setEditingVolunteer({
-      type: getCurrentVolunteerType(),
+      type: getCurrentVolunteerType(tabValue),
       name: "",
       photoUrl: "",
       linkedinProfile: "",
@@ -145,20 +152,49 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       pronouns: "",
       slack_user_id: "",
     });
+    setIsAdding(true);
     setEditDialogOpen(true);
+  }, [tabValue]);
+
+  const getCurrentVolunteerType = useCallback((currentTabValue) => {
+    switch (currentTabValue) {
+      case 0:
+        return "mentors";
+      case 1:
+        return "judges";
+      case 2:
+        return "volunteers";
+      default:
+        return "";
+    }
+  }, []);
+
+  const getCurrentVolunteerTypeSingular = useCallback((currentTabValue) => {
+    switch (currentTabValue) {
+      case 0:
+        return "mentor";
+      case 1:
+        return "judge";
+      case 2:
+        return "volunteer";
+      default:
+        return "";
+    }
   }, []);
 
   const handleSaveEdit = useCallback(async () => {
     setLoading(true);
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/2024_fall/${getCurrentVolunteerTypeSingular()}`;
-      const method = editingVolunteer.id ? "PATCH" : "POST";
+      const eventId = "2024_fall"; // You might want to make this dynamic
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/${getCurrentVolunteerTypeSingular(tabValue)}`;
+      const method = isAdding ? "POST" : "PATCH";
 
-      console.log("editingVolunteer", editingVolunteer);
-
-      const volunteerData = editingVolunteer.id
-        ? editingVolunteer
-        : { ...editingVolunteer, timestamp: new Date().toISOString() };
+      const volunteerData = {
+        ...editingVolunteer,
+        timestamp: isAdding
+          ? new Date().toISOString()
+          : editingVolunteer.timestamp,
+      };
 
       const response = await fetch(url, {
         method: method,
@@ -173,59 +209,40 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       if (response.ok) {
         setSnackbar({
           open: true,
-          message: editingVolunteer.id
-            ? "Volunteer updated successfully"
-            : "Volunteer added successfully",
+          message: isAdding
+            ? "Volunteer added successfully"
+            : "Volunteer updated successfully",
           severity: "success",
         });
         fetchVolunteers();
       } else {
         throw new Error(
-          editingVolunteer.id
-            ? "Failed to update volunteer"
-            : "Failed to add volunteer"
+          isAdding ? "Failed to add volunteer" : "Failed to update volunteer"
         );
       }
     } catch (error) {
       setSnackbar({
         open: true,
-        message: `Failed to ${editingVolunteer.id ? "update" : "add"} volunteer. Please try again.`,
+        message: `Failed to ${isAdding ? "add" : "update"} volunteer. Please try again.`,
         severity: "error",
       });
     } finally {
       setLoading(false);
       setEditDialogOpen(false);
     }
-  }, [editingVolunteer, accessToken, orgId, fetchVolunteers]);
-
-  const getCurrentVolunteerType = useCallback(() => {
-    switch (tabValue) {
-      case 0:
-        return "mentors";
-      case 1:
-        return "judges";
-      case 2:
-        return "volunteers";
-      default:
-        return "";
-    }
-  }, [tabValue]);
-
-  const getCurrentVolunteerTypeSingular = useCallback(() => {
-    switch (tabValue) {
-      case 0:
-        return "mentor";
-      case 1:
-        return "judge";
-      case 2:
-        return "volunteer";
-      default:
-        return "";
-    }
-  }, [tabValue]);
+  }, [
+    editingVolunteer,
+    isAdding,
+    accessToken,
+    orgId,
+    fetchVolunteers,
+    getCurrentVolunteerTypeSingular,
+    tabValue,
+  ]);
 
   const sortedVolunteers = useMemo(() => {
-    const currentVolunteers = volunteers[getCurrentVolunteerType()] || [];    
+    const currentVolunteers =
+      volunteers[getCurrentVolunteerType(tabValue)] || [];
 
     return currentVolunteers
       .sort((a, b) => {
@@ -248,7 +265,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
           volunteer.company?.toLowerCase().includes(searchValue)
         );
       });
-  }, [volunteers, getCurrentVolunteerType, orderBy, order, filter]);
+  }, [volunteers, getCurrentVolunteerType, orderBy, order, filter, tabValue]);
 
   if (!isAdmin) {
     return (
@@ -272,14 +289,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               Refresh Data
             </Button>
           </Grid>
-          <Grid item>
-            <Button
-              onClick={() => setShowBulkAdd(!showBulkAdd)}
-              variant="outlined"
-            >
-              {showBulkAdd ? "Hide Bulk Add" : "Bulk Add Volunteers"}
-            </Button>
-          </Grid>
+       
           <Grid item>
             <Button
               onClick={handleAddSingleVolunteer}
@@ -300,11 +310,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         </Grid>
       </Box>
 
-      {showBulkAdd && (
-        <Box sx={{ mb: 3 }}>
-          <VolunteerBulkAdd onAddVolunteers={fetchVolunteers} />
-        </Box>
-      )}
+  
 
       <Tabs
         value={tabValue}
@@ -322,7 +328,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         <Box sx={{ mt: 2 }}>
           <VolunteerTable
             volunteers={sortedVolunteers}
-            type={getCurrentVolunteerType()}
+            type={getCurrentVolunteerType(tabValue)}
             orderBy={orderBy}
             order={order}
             onRequestSort={handleRequestSort}
@@ -337,7 +343,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         volunteer={editingVolunteer}
         onSave={handleSaveEdit}
         onChange={handleEditChange}
-        isAdding={!editingVolunteer?.id}
+        isAdding={isAdding}
       />
     </AdminPage>
   );
