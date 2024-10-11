@@ -199,31 +199,7 @@ const volunteerWords = [
   const [teamsLoaded, setTeamsLoaded] = useState(false);
   const [teamsError, setTeamsError] = useState(false);
   const [teamsErrorDetails, setTeamsErrorDetails] = useState(null);
-  useEffect(() => {
-    if (hackathonEvents) {      
-      const teamsArray = [];
-      const promises = [];
-      hackathonEvents.forEach((event) => {          
-          event.teams && event.teams.forEach((team) => {            
-            promises.push(
-              handle_get_team(team, (team) => {
-                teamsArray.push(team);
-              })
-            );
-          }
-        );
-      });                            
-        Promise.all(promises)
-          .then((values) => {
-            setTeams(teamsArray);
-            setTeamsLoaded(true);
-          })
-          .catch((error) => {
-            setTeamsError(true);
-            setTeamsErrorDetails(error);
-          });
-      }
-    }, [hackathonEvents]);
+
 
 
   const { get_user_by_id, profile, handle_help_toggle} = useProfileApi();
