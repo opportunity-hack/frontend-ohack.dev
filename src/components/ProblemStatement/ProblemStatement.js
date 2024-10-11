@@ -238,16 +238,17 @@ const volunteerWords = [
       const userDetailsMap = {};
       const promises = [];
       teams.forEach((team) => {
-        team.users && team.users.forEach((user_id) => {
-          promises.push(
-            get_user_by_id(user_id, (user) => {
-              userDetailsMap[user_id] = user;
-            })
-          );
-        });
+        team.users &&
+          team.users.forEach((user_id) => {
+            promises.push(
+              get_user_by_id(user_id, (user) => {
+                userDetailsMap[user_id] = user;
+              })
+            );
+          });
       });
       Promise.all(promises)
-        .then((values) => {            
+        .then((values) => {
           setUserDetails(userDetailsMap);
           setUserLoaded(true);
         })
@@ -256,7 +257,7 @@ const volunteerWords = [
           setUserErrorDetails(error);
         });
     }
-  }, [teams]);
+  }, [problem_statement_id]);
 
 
   const [open, setOpen] = useState(false);
@@ -1399,7 +1400,10 @@ const volunteerWords = [
     </Dialog>
 
     <Stack spacing={2} direction="row">      
-        {helpingSwitch}      
+        {false && helpingSwitch
+          // FIXME: Hard disable ability to join a team
+
+        }      
       <Box sx={{ width: "75%" }}>{callToAction}</Box>      
     </Stack>
   </ProjectCard>

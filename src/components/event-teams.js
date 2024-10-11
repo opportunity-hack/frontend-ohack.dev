@@ -222,7 +222,8 @@ export default function EventTeams(
             )}
         </div>
 
-        {!isHelping &&
+        { // FIXME: Hard disable the create team button so that people have to use http://localhost:3000/hack/newteam
+        false && !isHelping &&
           !isLoggedInUserAlreadyOnTeam &&
           !isEventStartDateOlderThanToday && (
             <Tooltip
