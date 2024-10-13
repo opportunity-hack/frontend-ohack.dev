@@ -77,15 +77,21 @@ const RaffleEntries = ({ profile, githubHistory }) => {
   };
 
   const handleEnterGiveaway = async () => {
+
+    // Limit gitHubEntries to maximum of 45
+    const realGitHubEntries = githubEntries > 45 ? 45 : githubEntries;
+    const realTotalEntries = profileEntries + realGitHubEntries;
+    
+
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/giveaway`,
         {
-          entries: totalEntries,
+          entries: realTotalEntries,
           giveaway_id: "2024_fall",
           giveaway_data: {
             profileEntries: profileEntries,
-            githubEntries: githubEntries,
+            githubEntries: realGitHubEntries,
           },
         }
       );
@@ -174,7 +180,7 @@ const RaffleEntries = ({ profile, githubHistory }) => {
 
       <Typography variant="body2" color="text.secondary" gutterBottom>
         You get 5 entries for each completed profile field and 1 entry for each
-        GitHub contribution (commit, PR, issue, or review).
+        GitHub contribution (commit, PR, issue, or review). Maximum of 45 entries.
       </Typography>
 
       <Box mt={2}>
