@@ -116,6 +116,8 @@ export default function NonProfitApply() {
   });
 
   const [ip, setIP] = useState(null);
+  const [ImageLoaded, setImageLoaded] = useState(false);
+
 
   const getIP = async () => {
     const res = await axios.get("https://api.ipify.org/?format=json");

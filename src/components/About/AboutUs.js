@@ -1,7 +1,7 @@
-import React from 'react';
+import React , { useState } from 'react';
 import { TitleContainer, LayoutContainer, ProjectsContainer } from '../../styles/nonprofit/styles';
 import Head from 'next/head';
-import { Typography, Grid, Card, CardContent } from '@mui/material';
+import { Typography, Grid, Card, CardContent, Skeleton } from '@mui/material';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -36,7 +36,9 @@ const pledge = [
   'Nurture a Supportive Community: We pledge to create a safe and supportive environment where everyone is encouraged to learn, grow, and contribute.'
 ]
 
-const AboutUs = () => {  
+const AboutUs = () => { 
+  
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const gaButton = async (action, actionName) => {
     ReactPixel.track(action, { action_name: actionName });
@@ -88,17 +90,15 @@ const AboutUs = () => {
       <Typography variant="body1" style={style} paragraph>
         Founded in 2013 as a part of eBay/PayPal Inc., Opportunity Hack was created to meet the technological needs of nonprofits. Our vision has since grown to harness the power of code for social good, fostering an inclusive society, and championing impactful, sustainable change.        
       </Typography>
-
-      <iframe
-                  width={560/2}
-                  height={315/2}
-                  src="https://www.youtube.com/embed/Ia_xsX-318E"
-                  title="YouTube video player"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen
-                ></iframe>
-
+      <Box sx={{ position: 'relative', top: 0, left: 0, width: '280', height: '157.5' }}>  
+        <iframe
+          src="https://www.youtube.com/embed/Ia_xsX-318E"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </Box> 
       <Typography variant="h2">
         Why Opportunity Hack?
       </Typography>
@@ -192,7 +192,26 @@ const AboutUs = () => {
       <Typography variant="h4">
         We have coding bootcamp and senior capstone projects for you!
       </Typography>
-      <Image src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp"  layout="responsive" alt="Coding Bootcamp Projects" width={4032/9} height={3024/9}  />
+      <Box sx={{ position: 'relative', width: '100%', height: 'auto' }}>
+            {!imageLoaded && (
+              <Skeleton
+                variant="rectangular"
+                width="100%"
+                height="auto"
+                sx={{ paddingTop: '56.25%' }} 
+              />
+            )}
+            <Image
+              src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp"
+              layout="responsive"
+              width={4032 / 9}
+              height={3024 / 9}
+              alt="Coding Bootcamp Projects"
+              onLoadingComplete={() => setImageLoaded(true)} 
+              // style={{ display: imageLoaded ? 'block' : 'none' }} // Hide until loaded
+            />
+        </Box>
+        
         <Box key="bootcamp" my={2}>
           <Typography variant="body1" paragraph style={style}>
           If you are part of a coding bootcamp and want to build your portfolio, you should consider writing code for charity with Opportunity Hack. Opportunity Hack is a social good hackathon that connects you with nonprofit organizations that need your tech skills and solutions. 

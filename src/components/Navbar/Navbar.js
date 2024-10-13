@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
@@ -22,6 +22,7 @@ import {
   Tooltip,
   MenuItem,
   Menu,
+  Skeleton,
 } from "@mui/material";
 
 import { LoginButton, NavbarLink, NavbarButton } from "./styles";
@@ -59,6 +60,7 @@ export default function NavBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [anchorElAbout, setAnchorElAbout] = React.useState(null);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
 
   useEffect(() => {
     if (isLoggedIn && user?.email) {
@@ -163,14 +165,16 @@ export default function NavBar() {
               textDecoration: "none",
             }}
           >
-            <Image
-              className="nav-bar__logo"
-              src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
-              alt="Opportunity Hack logo"
-              width={256 / 2.5}
-              height={122 / 2.5}
-              priority
-            />
+            <Box sx={{ position: "relative", width: 256 / 2.5, height: 122 / 2.5 }}>
+              <Image
+                className="nav-bar__logo"
+                src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
+                alt="Opportunity Hack logo"
+                layout="fill"
+                objectFit="contain"
+                priority
+              />
+            </Box>
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
@@ -221,13 +225,15 @@ export default function NavBar() {
 
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <Link href="/" passHref>
-              <Image
-                src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
-                alt="Opportunity Hack logo"
-                width={100}
-                height={46}
-                priority
-              />
+              <Box sx={{ position: "relative", width: 100, height: 46 }}>
+                <Image
+                  src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
+                  alt="Opportunity Hack logo"
+                  layout="fill"
+                  objectFit="contain"
+                  priority
+                />
+              </Box>
             </Link>
           </Box>
 
@@ -281,7 +287,22 @@ export default function NavBar() {
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt={user?.firstName} src={user?.pictureUrl} />
+                  <Box sx={{ position: "relative", width: 40, height: 40 }}>
+                    {!avatarLoaded && (
+                      <Skeleton
+                        variant="circular"
+                        width={40}
+                        height={40}
+                        sx={{ position: "absolute", top: 0, left: 0 }}
+                      />
+                    )}
+                    <Avatar
+                      alt={user?.firstName}
+                      src={user?.pictureUrl}
+                      sx={{ width: 40, height: 40, position: "absolute", top: 0, left: 0 }}
+                      onLoad={() => setAvatarLoaded(true)}
+                    />
+                  </Box>
                 </IconButton>
               </Tooltip>
               <Menu

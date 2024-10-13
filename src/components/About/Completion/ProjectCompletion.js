@@ -1,5 +1,5 @@
 import React from "react";
-import { useEffect } from "react";
+import { useEffect, useState  } from "react";
 import {
   TitleContainer,
   LayoutContainer,
@@ -7,7 +7,7 @@ import {
 } from "../../../styles/nonprofit/styles";
 import Head from "next/head";
 import Image from "next/image";
-import { Typography, Grid, Card, CardContent } from "@mui/material";
+import { Typography, Grid, Card, CardContent, Skeleton  } from "@mui/material";
 import LoginOrRegister from "../../LoginOrRegister/LoginOrRegister";
 import Button from "@mui/material/Button";
 import { InstagramEmbed } from "react-social-media-embed";
@@ -22,8 +22,27 @@ const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
 };
 
 const ProjectCompletion = () => {
+
+  const [imageLoaded, setImageLoaded] = useState(false); 
+  const [embedLoaded1, setEmbedLoaded1] = useState(false); 
+  const [embedLoaded2, setEmbedLoaded2] = useState(false); 
+
   useEffect(() => {
     initFacebookPixel();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setEmbedLoaded1(true); 
+    }, 2000);
+    return () => clearTimeout(timer); 
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setEmbedLoaded2(true); 
+    }, 2000);
+    return () => clearTimeout(timer); 
   }, []);
 
   return (
@@ -74,12 +93,21 @@ const ProjectCompletion = () => {
               style={{ marginTop: "10px" }}
             >
               <Grid item>
+              {!imageLoaded && (
+                  <Skeleton
+                    variant="rectangular"
+                    width={485.5}
+                    height={485.5}
+                  />
+                )}
                 <Image
                   src="https://cdn.ohack.dev/ohack.dev/definition-of-done-65b90f271348b.webp"
-                  width={971 / 2}
-                  height={971 / 2}
+                  width={485.5} //971 / 2
+                  height={485.5} //971 / 2
                   layout="responsive"
+                  // layout="intrinsic"
                   alt="A happy dog completing an Opportunity Hack project for social good"
+                  onLoadingComplete={() => setImageLoaded(true)} 
                 />
               </Grid>
               <Grid item>
@@ -91,11 +119,22 @@ const ProjectCompletion = () => {
             </Grid>
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
-            <InstagramEmbed
-              url="https://www.instagram.com/p/CoBFS8hvcnB/"
-              maxWidth={328}
-              height={500}
-            />
+          {!embedLoaded1 && (
+              <Skeleton
+                variant="rectangular"
+                width={328}
+                height={500}
+                style={{ position: 'absolute' }}
+              />
+            )}
+            <div style={{ maxWidth: "328px", height: "500px" }}>
+              <InstagramEmbed
+                url="https://www.instagram.com/p/CoBFS8hvcnB/"
+                maxWidth={328}
+                height={500}
+                onLoad={() => setEmbedLoaded1(true)} 
+              />
+            </div>  
           </Grid>
         </Grid>
       </TitleContainer>
@@ -225,11 +264,24 @@ const ProjectCompletion = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <InstagramEmbed
-            url="https://www.instagram.com/p/CVicxFMPiqo/"
-            maxWidth={328}
-            height={500}
-          />
+
+        {!embedLoaded2 && (
+              <Skeleton
+                variant="rectangular"
+                width={328}
+                height={500}
+                style={{ position: 'absolute' }}
+              />
+            )}
+           <div style={{ maxWidth: "328px", height: "500px" }}>
+              <InstagramEmbed
+                url="https://www.instagram.com/p/CVicxFMPiqo/"
+                maxWidth={328}
+                height={500}
+                onLoad={() => setEmbedLoaded2(true)} 
+              />
+            </div> 
+          
         </Grid>
 
         <LoginOrRegister

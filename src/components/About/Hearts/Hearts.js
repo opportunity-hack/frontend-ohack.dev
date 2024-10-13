@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Typography, 
   Grid, 
@@ -18,7 +18,8 @@ import {
   Box,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  Skeleton
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { styled } from '@mui/system';
@@ -169,6 +170,8 @@ const heartCategories = [
 const Hearts = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [embedLoaded, setEmbedLoaded] = useState(false);
 
 
   useEffect(() => {
@@ -233,19 +236,46 @@ const Hearts = () => {
               </Grid>
             </Grid>
             <Box mt={2}>
+              {!imageLoaded && (
+                  <Skeleton
+                    variant="rectangular"
+                    width="100%"
+                    height="100%"
+                    style={{ position: 'absolute', top: 0, left: 0 }}
+                  />
+                )}
+
               <Image 
                 src="https://cdn.ohack.dev/8d2a68667a6911ee9e03e2f442f28a46.png"
                 width={971/3}
                 height={971/3}
-                alt="Opportunity Hack Hearts Certificate Example"                
+                alt="Opportunity Hack Hearts Certificate Example"  
+                onLoadingComplete={() => setImageLoaded(true)}              
               />
               <StyledTypography variant="caption" display="block">
                 Example Hearts Certificate
               </StyledTypography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>                
-            <InstagramEmbed url="https://www.instagram.com/p/CoupvGxuiLX/" maxWidth={328} height={500} />
+          <Grid item xs={12} sm={6} md={4}>  
+          <div style={{ position: 'relative', width: '328px', height: '500px' }}>
+              {!embedLoaded && (
+                <Skeleton
+                  variant="rectangular"
+                  maxWidth={328}
+                  height={500}
+                  style={{ position: 'absolute'}}
+                />
+              )}
+              <div style={{ maxWidth: "328px", height: "500px" }}>
+                <InstagramEmbed
+                  url="https://www.instagram.com/p/CoupvGxuiLX/"
+                  maxWidth={328}
+                  height={500}
+                  onLoad={() => setEmbedLoaded(true)}
+                />
+              </div>              
+            </div>{/* <InstagramEmbed url="https://www.instagram.com/p/CoupvGxuiLX/" maxWidth={328} height={500} /> */}
           </Grid>                                
         </Grid>
       </TitleContainer>
