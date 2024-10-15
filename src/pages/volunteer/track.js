@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import Head from 'next/head';
-import Link from 'next/link';
-
+import Head from "next/head";
+import Link from "next/link";
 import {
   Button,
   TextField,
@@ -13,19 +12,23 @@ import {
   InputLabel,
   Grid,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import FunVolunteerTimer from "../../components/FunVolunteerTimer/FunVolunteerTimer";
+import VolunteerStatsTable from "../../components/VolunteerStatsTable/VolunteerStatsTable";
 import Confetti from "react-confetti";
 import moment from "moment";
 import { withAuthInfo } from "@propelauth/react";
@@ -33,12 +36,13 @@ import dynamic from "next/dynamic";
 import { styled } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
-
-const LoginOrRegister = dynamic( () => import("../../components/LoginOrRegister/LoginOrRegister"), { ssr: false });
+const LoginOrRegister = dynamic(
+  () => import("../../components/LoginOrRegister/LoginOrRegister"),
+  { ssr: false }
+);
 
 export const StyledLink = styled(Link)({
   textDecoration: "none",
-  
   color: "#0000ff",
   transitionDuration: "0.3s",
   "&:hover": {
@@ -47,15 +51,17 @@ export const StyledLink = styled(Link)({
 });
 
 const roundToOneDecimal = (number) => {
-  return parseFloat(number.toFixed(2));
+  return isNaN(number) ? 0 : parseFloat(number.toFixed(2));
 };
 
 export async function getStaticProps() {
   return {
     props: {
       metaTitle: "Volunteer Time Tracking - Opportunity Hack",
-      metaDescription: "Track your volunteer hours with Opportunity Hack. Our easy-to-use platform helps you record and manage your contributions to the community.",
-      metaKeywords: "volunteer tracking, time tracking, community service, opportunity hack, volunteer hours",
+      metaDescription:
+        "Track your volunteer hours with Opportunity Hack. Our easy-to-use platform helps you record and manage your contributions to the community.",
+      metaKeywords:
+        "volunteer tracking, time tracking, community service, opportunity hack, volunteer hours",
       ogImage: "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp",
     },
   };
@@ -79,8 +85,13 @@ const VolunteerTrackingPage = withAuthInfo(
     const [isVolunteering, setIsVolunteering] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
     const [totalTime, setTotalTime] = useState(0);
-    const [totalHours, setTotalHours] = useState(0);
-    const [startDate, setStartDate] = useState(new Date());
+    const [totalActiveHours, setTotalActiveHours] = useState(0);
+    const [totalCommittmentHours, setTotalCommittmentHours] = useState(0);
+    const [startDate, setStartDate] = useState(() => {
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 6);
+      return lastMonth;
+    });
     const [endDate, setEndDate] = useState(new Date());
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
@@ -99,10 +110,9 @@ const VolunteerTrackingPage = withAuthInfo(
     ];
 
     useEffect(() => {
-        initFacebookPixel();
-
+      initFacebookPixel();
       if (isLoggedIn) {
-        fetchTotalHours();
+        fetchtotalActiveHours();
         loadVolunteeringState();
       }
     }, [isLoggedIn]);
@@ -163,12 +173,10 @@ const VolunteerTrackingPage = withAuthInfo(
       localStorage.setItem("volunteeringState", JSON.stringify(stateToSave));
     };
 
-    const fetchTotalHours = async () => {
+    const fetchtotalActiveHours = async () => {
       try {
         const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_API_SERVER_URL
-          }/api/users/volunteering?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/volunteering?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
           {
             method: "GET",
             headers: {
@@ -179,10 +187,9 @@ const VolunteerTrackingPage = withAuthInfo(
         );
         if (response.ok) {
           const data = await response.json();
-          setTotalHours(data.totalHours);
-          setVolunteerStats(data.volunteering);
-          console.log("Data fetched: ", data);
-          
+          setTotalActiveHours(data.totalActiveHours);
+          setTotalCommittmentHours(data.totalCommitmentHours);
+          setVolunteerStats(data.allVolunteering);
         }
       } catch (error) {
         console.log("Error fetching total hours: ", error);
@@ -196,10 +203,10 @@ const VolunteerTrackingPage = withAuthInfo(
       setTotalTime(totalSeconds);
       saveVolunteeringState(totalSeconds);
 
-      trackEvent("volunteering_start", { 
+      trackEvent("volunteering_start", {
         commitmentHours: commitmentHours,
         reason: reason,
-       });
+      });
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/volunteering`,
@@ -226,7 +233,7 @@ const VolunteerTrackingPage = withAuthInfo(
       trackEvent("volunteering_end", {
         finalHours: (totalTime - timeLeft) / 3600,
         reason: reason,
-    });
+      });
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/volunteering`,
@@ -247,7 +254,15 @@ const VolunteerTrackingPage = withAuthInfo(
       }
 
       localStorage.removeItem("volunteeringState");
-      fetchTotalHours();
+      fetchtotalActiveHours();
+    };
+
+    const prepareChartData = () => {
+      return volunteerStats.map((stat) => ({
+        date: moment.utc(stat.timestamp).format("MM/DD/YY"),
+        Committed: roundToOneDecimal(stat.commitmentHours),
+        "Actively Tracked": roundToOneDecimal(stat.finalHours),
+      }));
     };
 
     return (
@@ -301,12 +316,14 @@ const VolunteerTrackingPage = withAuthInfo(
             .
           </Typography>
           <Typography variant="body1" paragraph>
-          Like all code for Opportunity Hack, this code is open-source and available on GitHub. If you'd like to contribute, please check out the{" "}
+            Like all code for Opportunity Hack, this code is open-source and
+            available on GitHub. If you'd like to contribute, please check out
+            the{" "}
             <StyledLink href="https://github.com/opportunity-hack/frontend-ohack.dev/blob/main/src/pages/volunteer/track.js">
-                source code
+              source code
             </StyledLink>
             .
-            </Typography>
+          </Typography>
         </Paper>
 
         {!isLoggedIn ? (
@@ -403,7 +420,12 @@ const VolunteerTrackingPage = withAuthInfo(
                 Volunteering Statistics
               </Typography>
               <Typography variant="body1" paragraph>
-                Total Hours Volunteered: {roundToOneDecimal(totalHours)}
+                Total Hours Committed:{" "}
+                {roundToOneDecimal(totalCommittmentHours)}
+              </Typography>
+              <Typography variant="body1" paragraph>
+                Total Hours Actively Tracked:{" "}
+                {roundToOneDecimal(totalActiveHours)}
               </Typography>
 
               <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -431,7 +453,7 @@ const VolunteerTrackingPage = withAuthInfo(
                   <Grid item xs={12} sm={2}>
                     <Button
                       variant="outlined"
-                      onClick={fetchTotalHours}
+                      onClick={fetchtotalActiveHours}
                       fullWidth
                     >
                       Fetch Report
@@ -440,44 +462,38 @@ const VolunteerTrackingPage = withAuthInfo(
                 </Grid>
               </LocalizationProvider>
 
-              <TableContainer
-                component={Paper}
-                sx={{ mt: 2, overflowX: "auto" }}
-              >
-                <Table aria-label="volunteer statistics table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Date</TableCell>
-                      <TableCell align="right">Hours</TableCell>
-                      <TableCell>Reason</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {volunteerStats.map((stat, index) => (
-                      <TableRow
-                        key={index}
-                        sx={{
-                          "&:last-child td, &:last-child th": { border: 0 },
-                        }}
-                      >
-                        <TableCell component="th" scope="row">
-                          {moment
-                            .utc(stat.timestamp)
-                            .format(
-                              isMobile
-                                ? "MM/DD/YY HH:mm"
-                                : "MMMM Do YYYY, h:mm:ss a"
-                            )}
-                        </TableCell>
-                        <TableCell align="right">
-                          {roundToOneDecimal(stat.finalHours)}
-                        </TableCell>
-                        <TableCell>{stat.reason}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              {/* Stacked Bar Chart */}
+              <Box sx={{ height: 300, mt: 2 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={prepareChartData()}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Committed" stackId="a" fill="#8884d8" />
+                    <Bar
+                      dataKey="Actively Tracked"
+                      stackId="a"
+                      fill="#82ca9d"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+
+              {/* Explanation */}
+              <Typography variant="body2" sx={{ mt: 2, fontStyle: "italic" }}>
+                The chart above shows your committed hours (purple) and actively
+                tracked hours (green) for each volunteering session. Committed
+                hours represent your intended volunteer time, while actively
+                tracked hours show the time you spent with the browser window
+                open.
+              </Typography>
+
+              {/* Use the new VolunteerStatsTable component */}
+              <VolunteerStatsTable volunteerStats={volunteerStats} />
             </Paper>
           </>
         )}
