@@ -136,11 +136,11 @@ export default function CreateHackathon() {
         />
       </Head>
       <Container maxWidth="md">
-        <Box my={4}>
-          <Typography variant="h1" component="h1" gutterBottom>
+        <Box mt={10}>
+          <Typography variant="h3" component="h1" gutterBottom>
             Create a High-Impact Corporate Hackathon
           </Typography>
-          <Typography variant="h2" component="h2" gutterBottom>
+          <Typography variant="h4" component="h2" gutterBottom>
             Transform Your Company's Social Impact with Opportunity Hack
           </Typography>
           <Typography variant="body1" paragraph>
@@ -190,11 +190,12 @@ export default function CreateHackathon() {
               required
             />
             <FormControl fullWidth margin="normal">
-              <InputLabel>Number of Employees</InputLabel>
+              <InputLabel>Number of Employees who would participate</InputLabel>
               <Select
                 name="employeeCount"
                 value={formData.employeeCount}
                 onChange={handleChange}
+                label="Number of Employees who would participate"
                 required
               >
                 <MenuItem value="1-50">1-50</MenuItem>
