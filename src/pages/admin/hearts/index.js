@@ -48,6 +48,14 @@ const heartOptions = [
     value: "iterations_of_code_pushed_to_production",
     label: "Code Iterations Pushed to Production",
   },
+  {
+    value: "judge",
+    label: "Judging Projects",
+  },
+  {
+    value: "mentor",
+    label: "Mentoring Teams",
+  },
 ];
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
