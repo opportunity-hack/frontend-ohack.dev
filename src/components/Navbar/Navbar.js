@@ -30,6 +30,7 @@ const pages = [
   ["📩 Submit Project", "/nonprofits/apply"],
   ["📖 Projects", "/nonprofits"],
   ["#️⃣ Join Slack", "/signup"],
+  ["📍 Request a Hack", "/hack/request"],
   ["🙏 Mentors", "/about/mentors"],
   ["🏆 Judges", "/about/judges"],
   ["🎉 Sponsors", "/sponsor"],

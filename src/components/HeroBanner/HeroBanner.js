@@ -59,7 +59,7 @@ const HeroBanner = ({ children }) => {
                 )
               }
               href="/nonprofits/apply"
-              style={{ color: "white", backgroundColor: "#0070BA" }}
+              
             >
               Send us a project
             </ButtonBasicStyle>
@@ -102,10 +102,10 @@ const HeroBanner = ({ children }) => {
             </ButtonBasicStyle>
 
             <ButtonBasicStyle
-              onClick={() => gaButton("button_about", "about us")}
-              href="/about"
+              onClick={() => gaButton("button_request", "request_hackathon")}
+              href="/hack/request"
             >
-              Read more about us
+              Request a hackathon
             </ButtonBasicStyle>
 
             <ButtonBasicStyle
