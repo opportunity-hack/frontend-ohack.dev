@@ -1,9 +1,9 @@
 import React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState} from 'react';
 
 import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../../styles/nonprofit/styles';
 import Head from 'next/head';
-import { Typography, Grid, Card, CardContent, Box, Alert } from "@mui/material";
+import { Typography, Grid, Card, CardContent, Box, Alert, Skeleton } from "@mui/material";
 import LoginOrRegister from '../../LoginOrRegister/LoginOrRegister';
 import Button from '@mui/material/Button';
 import { InstagramEmbed } from 'react-social-media-embed';
@@ -69,10 +69,27 @@ const mentorGoogleForm = "https://forms.gle/WFBEwHVQcfpVXyYFA"
 
 const Mentorship = () => {
 
+  const [embedLoaded1, setEmbedLoaded1] = useState(false);
+  const [embedLoaded2, setEmbedLoaded2] = useState(false);
+
     useEffect(() => {
         initFacebookPixel();
       }
     , []);
+
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setEmbedLoaded1(true); 
+      }, 2000);
+      return () => clearTimeout(timer); 
+    }, []);
+  
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setEmbedLoaded2(true); 
+      }, 2000);
+      return () => clearTimeout(timer); 
+    }, []);
 
 
 return (
@@ -128,11 +145,25 @@ return (
           </Box>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <InstagramEmbed
-            url="https://www.instagram.com/p/CxVnPC5vLYa/"
-            maxWidth={328}
-            height={500}
-          />
+
+         <div style={{ position: 'relative', width: '328px', height: '500px' }}>
+              {!embedLoaded1 && (
+                <Skeleton
+                  variant="rectangular"
+                  width="100%"
+                  height="100%"
+                  style={{ position: 'absolute', top: 0, left: 0 }}
+                />
+              )}
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                <InstagramEmbed
+                  url="https://www.instagram.com/p/CxVnPC5vLYa/"
+                  maxWidth={328}
+                  height={500}
+                  onLoad={() => setEmbedLoaded1(true)}
+                />
+              </div>
+          </div>
         </Grid>
       </Grid>
     </TitleContainer>
@@ -204,11 +235,29 @@ return (
           </Typography>
         </Grid>
         <Grid item xs={12} sm={6} md={4} marginTop={1} marginBottom={2}>
-          <InstagramEmbed
+            <div style={{ position: 'relative', width: '328px', height: '500px' }}>
+              {!embedLoaded2 && (
+                <Skeleton
+                  variant="rectangular"
+                  width="100%"
+                  height="100%"
+                  style={{ position: 'absolute', top: 0, left: 0 }}
+                />
+              )}
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                <InstagramEmbed
+                  url="https://www.instagram.com/p/CxQ7ycBh66q/"
+                  maxWidth={328}
+                  height={500}
+                  onLoad={() => setEmbedLoaded2(true)}
+                />
+              </div>
+            </div>
+          {/* <InstagramEmbed
             url="https://www.instagram.com/p/CxQ7ycBh66q/"
             maxWidth={328}
             height={500}
-          />
+          /> */}
         </Grid>
       </Grid>
 

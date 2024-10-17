@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { Typography, TextField, Button, FormControlLabel, Checkbox, Container, Box, Grid, Paper, List, ListItem, ListItemIcon, ListItemText, CircularProgress } from '@mui/material';
+import { Typography, TextField, Button, FormControlLabel, Checkbox, Container, Box, Grid, Paper, List, ListItem, ListItemIcon, ListItemText, CircularProgress, Skeleton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Parallax } from "react-parallax";
@@ -21,6 +21,8 @@ export default function Apply({ title, description, openGraphData }) {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ImageLoaded, setImageLoaded] = useState(false);
+  const [parallaxImageLoaded, setParallaxImageLoaded] = useState(false);
 
 
   useEffect(() => {
@@ -119,6 +121,7 @@ export default function Apply({ title, description, openGraphData }) {
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
+        <link rel="preload" href="https://cdn.ohack.dev/nonprofit_images/OHack_NonProfit_Application.webp" as="image" />
         {openGraphData.map((og) => (
           <meta key={og.key} name={og.name} property={og.property} content={og.content} />
         ))}
@@ -150,13 +153,16 @@ export default function Apply({ title, description, openGraphData }) {
         </script>
       </Head>
 
-      <Container maxWidth="md">         
-        <Box my={4}>
+      <Container maxWidth="md" >         
+        <Box my={4} sx={{ position: 'relative', height: '300px', width: '100%' }}>
+          {!parallaxImageLoaded && (
+            <Skeleton variant="rectangular" width="100%" height="100%" sx={{ position: 'absolute', top: 0, left: 0 }} />
+          )}
             <Parallax        
                 bgImage="https://cdn.ohack.dev/nonprofit_images/OHack_NonProfit_Application.webp"
                 strength={300}        
                 style={{ height: '300px' }}
-            >            
+                onImageLoaded={() => setParallaxImageLoaded(true)}>            
                 <div style={{
                 height: '300px',
                 display: 'flex',
@@ -327,7 +333,10 @@ export default function Apply({ title, description, openGraphData }) {
           <Typography variant="h5" component="h5" gutterBottom align="center" sx={{ fontSize: '1.5rem' }}>
             Learn More About Opportunity Hack
           </Typography>
-          <Box sx={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+          {!ImageLoaded && (
+            <Skeleton variant="rectangular" width="100%" height={479} />
+          )}
+          <Box sx={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', display: ImageLoaded ? 'block' : 'none' }}>
             <iframe
               src="https://www.youtube.com/embed/Ia_xsX-318E"
               title="Opportunity Hack: Connecting Nonprofits with Tech Solutions"
@@ -341,6 +350,7 @@ export default function Apply({ title, description, openGraphData }) {
                 height: '100%',
                 border: 0
               }}
+              onLoad={() => setImageLoaded(true)}
             />
           </Box>
         </Box>

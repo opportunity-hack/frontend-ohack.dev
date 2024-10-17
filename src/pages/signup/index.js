@@ -142,6 +142,7 @@ export default function Signup() {
                 height={607}
                 alt="Opportunity Hack Community Signup Process"
                 layout="responsive"
+                priority
               />
             </Box>
           </Grid>
