@@ -56,7 +56,11 @@ const EventLinks = ({ links }) => {
     const ButtonContent = <LinkButton {...buttonProps}>{link.name}</LinkButton>;
 
     return link.open_new === "True" || link.link.startsWith("http") ? (
-      <a href={link.link} style={{ textDecoration: "none" }}>
+      <a href={link.link} target={
+        link.open_new === "True" ? "_blank" : "_self"
+      }
+          rel={link.open_new === "True" ? "noopener noreferrer" : ""}
+      style={{ textDecoration: "none" }}>
         {ButtonContent}
       </a>
     ) : (

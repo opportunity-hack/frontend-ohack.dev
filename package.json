@@ -16,6 +16,7 @@
     "@mui/x-data-grid": "^7.14.0",
     "@mui/x-date-pickers": "^6.18.2",
     "@propelauth/react": "^2.0.22",
+    "@uiw/react-md-editor": "^4.0.4",
     "axios": "^1.7.5",
     "date-fns": "^2.30.0",
     "eslint-config-next": "^14.2.6",
@@ -43,6 +44,7 @@
     "react-responsive-carousel": "^3.2.23",
     "react-social-media-embed": "^2.5.13",
     "react-table": "^7.8.0",
+    "react-timezone-select": "^3.2.8",
     "recharts": "^2.12.7",
     "sharp": "^0.33.5"
   },
