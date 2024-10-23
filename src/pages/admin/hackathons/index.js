@@ -35,6 +35,7 @@ import AdminPage from "../../../components/admin/AdminPage";
 import DonationManagement from "../../../components/admin/DonationManagement";
 import CountdownManagement from "../../../components/admin/CountdownManagement";
 import LinkManagement from "../../../components/admin/LinkManagement";
+import HackathonDuplicator from "../../../components/admin/HackathonDuplicator";
 
 const AdminHackathonPage = () => {
 
@@ -321,6 +322,19 @@ const AdminHackathonPage = () => {
                     <IconButton onClick={() => handleEditHackathon(hackathon)}>
                       <EditIcon />
                     </IconButton>
+                    <HackathonDuplicator
+                      hackathon={hackathon}
+                      onDuplicate={(newHackathon) => {
+                        fetchHackathons(); // Refresh the list after duplication
+                        setSnackbar({
+                          open: true,
+                          message: "Hackathon duplicated successfully",
+                          severity: "success",
+                        });
+                      }}
+                      accessToken={accessToken}
+                      orgId={orgId}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
