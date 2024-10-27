@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   Box,
+  Chip,
 } from "@mui/material";
 import {
   School as SchoolIcon,
@@ -15,8 +16,11 @@ import {
   CloudQueue as CloudIcon,
   Groups as TeamsIcon,
   TrendingUp as CareerIcon,
+  Lightbulb as ImpactIcon,
+  Search as FindProjectIcon,
 } from "@mui/icons-material";
 
+import { whyPages } from "../../../data/why-content";
 import {
   TitleContainer,
   LayoutContainer,
@@ -80,33 +84,49 @@ const careerPathContent = [
   },
 ];
 
-// Skill development paths
-const skillPathways = [
+// Additional pathways utilizing our complete content
+const impactPathways = [
   {
-    slug: "remote-work-experience-nonprofit",
-    title: "Master Remote Collaboration",
-    icon: CloudIcon,
-    description: "Build essential remote work skills through nonprofit projects",
+    slug: "coding-for-good-how-to-use-your-programming-skills-to-make-a-difference-in-the-world",
+    title: "Code for Social Impact",
+    icon: ImpactIcon,
+    description:
+      "Use your programming skills to create positive change in communities",
+  },
+  {
+    slug: "how-to-find-and-work-on-nonprofit-projects-that-match-your-coding-interests-and-expertise",
+    title: "Find Your Perfect Project",
+    icon: FindProjectIcon,
+    description:
+      "Match your skills and interests with impactful nonprofit projects",
   },
   {
     slug: "open-source-contribution",
     title: "Contribute to Open Source",
     icon: CodeIcon,
-    description: "Make meaningful open source contributions that help nonprofits",
+    description:
+      "Make meaningful open source contributions that help nonprofits",
+  },
+  {
+    slug: "remote-work-experience-nonprofit",
+    title: "Master Remote Collaboration",
+    icon: CloudIcon,
+    description:
+      "Build essential remote work skills through nonprofit projects",
   },
 ];
 
 const CareerPathCard = ({ title, icon: Icon, description, links }) => (
-  <Card 
-    sx={{ 
-      height: "100%", 
-      display: "flex", 
+  <Card
+    sx={{
+      height: "100%",
+      display: "flex",
       flexDirection: "column",
       transition: "transform 0.2s",
       "&:hover": {
         transform: "translateY(-4px)",
-        boxShadow: 3
-      }
+        boxShadow: 3,
+      },
     }}
   >
     <CardContent>
@@ -116,25 +136,44 @@ const CareerPathCard = ({ title, icon: Icon, description, links }) => (
           {title}
         </Typography>
       </Box>
-      <Typography variant="body1" style={style} gutterBottom color="text.secondary">
+      <Typography
+        variant="body1"
+        style={style}
+        gutterBottom
+        color="text.secondary"
+      >
         {description}
       </Typography>
       <Box sx={{ mt: 2 }}>
-        {links.map((link, index) => (
+        {links.map((link) => (
           <Button
-            key={index}
+            key={link.slug}
             variant="outlined"
             fullWidth
-            sx={{ 
+            sx={{
               mb: 1,
               justifyContent: "flex-start",
               textAlign: "left",
-              py: 1.5
+              py: 1.5,
             }}
             component={Link}
             href={`/about/why/${link.slug}`}
           >
             {link.title}
+            {whyPages[link.slug]?.highlights && (
+              <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {whyPages[link.slug].highlights
+                  .slice(0, 2)
+                  .map((highlight, i) => (
+                    <Chip
+                      key={i}
+                      label={highlight}
+                      size="small"
+                      sx={{ fontSize: "0.7rem" }}
+                    />
+                  ))}
+              </Box>
+            )}
           </Button>
         ))}
       </Box>
@@ -142,15 +181,15 @@ const CareerPathCard = ({ title, icon: Icon, description, links }) => (
   </Card>
 );
 
-const SkillPathwayCard = ({ slug, title, icon: Icon, description }) => (
-  <Card 
-    sx={{ 
+const ImpactPathwayCard = ({ slug, title, icon: Icon, description }) => (
+  <Card
+    sx={{
       mb: 2,
       transition: "transform 0.2s",
       "&:hover": {
         transform: "translateX(4px)",
-        boxShadow: 2
-      }
+        boxShadow: 2,
+      },
     }}
   >
     <CardContent>
@@ -161,30 +200,58 @@ const SkillPathwayCard = ({ slug, title, icon: Icon, description }) => (
         startIcon={<Icon sx={{ fontSize: 28 }} />}
         component={Link}
         href={`/about/why/${slug}`}
-        sx={{ 
-          justifyContent: "flex-start", 
+        sx={{
+          justifyContent: "flex-start",
           textAlign: "left",
           flexDirection: "column",
           alignItems: "flex-start",
-          py: 2
+          py: 2,
         }}
       >
         <Typography variant="h6" component="div" gutterBottom>
           {title}
         </Typography>
-        <Typography variant="body2" color="text.secondary" style={style}>
+        <Typography variant="body1" color="text.secondary" style={style}>
           {description}
         </Typography>
+        {whyPages[slug]?.highlights && (
+          <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+            {whyPages[slug].highlights.slice(0, 2).map((highlight, i) => (
+              <Chip
+                key={i}
+                label={highlight}
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: "0.7rem" }}
+              />
+            ))}
+          </Box>
+        )}
       </Button>
     </CardContent>
   </Card>
 );
 
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: careerPathContent.map((path) => ({
+    "@type": "Question",
+    name: `Why choose Opportunity Hack for ${path.title.toLowerCase()}?`,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: path.description,
+    },
+  })),
+};
+
 export default function WhyIndex() {
   return (
     <>
       <Head>
-        <title>Why Code with Opportunity Hack? | Build Skills, Make Impact</title>
+        <title>
+          Why Code with Opportunity Hack? | Build Skills, Make Impact
+        </title>
         <meta
           name="description"
           content="Join Opportunity Hack to build real-world experience, transition careers, or grow leadership skills while creating technology that matters. Perfect for students, career changers, and tech leaders."
@@ -192,6 +259,10 @@ export default function WhyIndex() {
         <meta
           name="keywords"
           content="tech volunteering, coding bootcamp projects, remote work experience, tech leadership, career transition, nonprofit technology, social impact coding"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </Head>
 
@@ -202,9 +273,11 @@ export default function WhyIndex() {
           </Typography>
 
           <Typography variant="body1" style={style} paragraph>
-            Whether you're starting your journey in tech, making a career transition, or looking to grow as a leader - 
-            Opportunity Hack provides real-world experience building technology that makes a difference. 
-            Work on meaningful projects, learn from experienced mentors, and build a portfolio that stands out.
+            Whether you're starting your journey in tech, making a career
+            transition, or looking to grow as a leader - Opportunity Hack
+            provides real-world experience building technology that makes a
+            difference. Work on meaningful projects, learn from experienced
+            mentors, and build a portfolio that stands out.
           </Typography>
         </TitleContainer>
 
@@ -218,12 +291,12 @@ export default function WhyIndex() {
           </Grid>
 
           <Typography variant="h4" gutterBottom>
-            Develop Essential Skills
+            Make an Impact
           </Typography>
 
           <Box mb={4}>
-            {skillPathways.map((pathway, index) => (
-              <SkillPathwayCard key={index} {...pathway} />
+            {impactPathways.map((pathway, index) => (
+              <ImpactPathwayCard key={index} {...pathway} />
             ))}
           </Box>
 
@@ -243,12 +316,14 @@ export async function getStaticProps() {
       openGraphData: [
         {
           property: "og:title",
-          content: "Why Code with Opportunity Hack? | Build Skills, Make Impact",
+          content:
+            "Why Code with Opportunity Hack? | Build Skills, Make Impact",
           key: "ogtitle",
         },
         {
           property: "og:description",
-          content: "Join Opportunity Hack to build real-world experience, transition careers, or grow leadership skills while creating technology that matters. Perfect for students, career changers, and tech leaders.",
+          content:
+            "Join Opportunity Hack to build real-world experience, transition careers, or grow leadership skills while creating technology that matters. Perfect for students, career changers, and tech leaders.",
           key: "ogdesc",
         },
         {
@@ -260,8 +335,9 @@ export async function getStaticProps() {
           property: "og:image",
           content: "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp",
           key: "ogimage",
-        }
+        },
       ],
     },
+    revalidate: 3600,
   };
 }
