@@ -1,61 +1,53 @@
 // Helper function to generate meta tags
-export const generateMetaTags = (content) => [
-  {
-    name: "title",
-    content: content.title,
-    key: "title",
-  },
-  {
-    property: "og:title",
-    content: content.title,
-    key: "ogtitle",
-  },
-  {
-    name: "description",
-    content: content.description,
-    key: "desc",
-  },
-  {
-    property: "og:description",
-    content: content.description,
-    key: "ogdesc",
-  },
-  {
-    property: "og:type",
-    content: "website",
-    key: "website",
-  },
-  {
-    property: "og:image",
-    content: content.image,
-    key: "ogimage",
-  },
-  {
-    property: "twitter:image",
-    content: content.image,
-    key: "twitterimage",
-  },
-  {
-    property: "og:site_name",
-    content: "Opportunity Hack Developer Portal",
-    key: "ogsitename",
-  },
-  {
-    property: "twitter:card",
-    content: "summary_large_image",
-    key: "twittercard",
-  },
-  {
-    property: "twitter:domain",
-    content: "ohack.dev",
-    key: "twitterdomain",
-  },
-  {
-    name: "keywords",
-    content: content.keywords.join(", "),
-    key: "keywords",
-  },
-];
+export const generateOpenGraphData = (content) => {
+  const title = `${content.title} - Opportunity Hack`;
+  const description = content.description;
+  const image = content.image;
+  const keywords = content.keywords.join(", ");
+
+  return [
+    {
+      name: "title",
+      content: title,
+    },
+    {
+      property: "og:title",
+      content: title,
+    },
+    {
+      name: "description",
+      content: description,
+    },
+    {
+      property: "og:description",
+      content: description,
+    },
+    {
+      name: "keywords",
+      content: keywords,
+    },
+    {
+      property: "og:image",
+      content: image,
+    },
+    {
+      property: "twitter:image",
+      content: image,
+    },
+    {
+      property: "og:site_name",
+      content: "Opportunity Hack",
+    },
+    {
+      property: "twitter:card",
+      content: "summary_large_image",
+    },
+    {
+      property: "twitter:domain",
+      content: "ohack.dev",
+    },
+  ];
+}
 
 // Helper function to generate structured data
 export const generateStructuredData = (content) => ({
@@ -74,7 +66,7 @@ export const generateStructuredData = (content) => ({
     name: "Opportunity Hack",
     logo: {
       "@type": "ImageObject",
-      url: "https://ohack.dev/logo.png",
+      url: "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Black_Cropped.png",
     },
   },
   datePublished: new Date().toISOString(),

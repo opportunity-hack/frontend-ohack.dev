@@ -9,7 +9,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { whyPages } from "../../../data/why-content";
 import {
-  generateMetaTags,
+  generateOpenGraphData,
   generateStructuredData,
 } from "../../../data/why-pages";
 import {
@@ -183,17 +183,22 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params = {} } = {}) {
   const pageData = whyPages[params.title];
+  const keywords = pageData?.keywords || [];
+  const structuredData = generateStructuredData(pageData);
+  const openGraphData = generateOpenGraphData(pageData, keywords);
 
   if (!pageData) {
     return { notFound: true };
   }
 
   return {
-    props: {
-      openGraphData: pageData.metaTags || [],
+    props: {      
+      title: pageData.title,
+      openGraphData: openGraphData,
+      structuredData
     },
-    revalidate: 3600,
   };
+  
 }
 
 export default WhyPage;

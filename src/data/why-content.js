@@ -8,6 +8,7 @@ import SeniorDeveloperContent from "../components/content/SeniorDeveloperContent
 import OpenSourceContent from "../components/content/OpenSourceContent";
 import CodingForGoodContent from "../components/content/CodingForGoodContent";
 import FindNonprofitProjectContent from "../components/content/FindNonprofitProjectContent";
+import ExperienceAfterLayoffContent from "../components/content/ExperienceAfterLayoffContent";
 
 export const whyPages = {
   "open-source-contribution": {
@@ -453,4 +454,56 @@ export const whyPages = {
         "Make meaningful impact",
       ],
     },
+    "how-to-get-experience-coding-when-laid-off": {
+      title: "Laid Off? Help a Nonprofit",
+      subtitle:
+        "Use your tech skills for good by contributing to nonprofit projects and building your portfolio",
+      Content: ExperienceAfterLayoffContent,
+      description:
+        "Make a positive impact and build your tech portfolio by contributing to nonprofit projects. Learn how to find and work on projects that match your skills and interests.",
+      image: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_3.webp",
+      keywords: [
+        "Laid Off? Help a nonprofit",
+        "tech volunteering",
+        "Tech Skills for Good",
+        "coding skills",
+        "volunteer coding",
+        "Code for Good",
+        "Volunteer Software Engineering Near me",
+        "Skill-based volunteering",
+        "nonprofit technology",
+        "volunteer developer",
+      ],
+      relatedLinks: [
+        {
+          slug: "open-source-contribution",
+          title: "Contributing to Open Source Projects",
+        },
+        {
+          slug: "remote-work-experience-nonprofit",
+          title: "Working on Remote Teams",
+        },
+      ],
+      slug: "how-to-get-experience-coding-when-laid-off",
+      metaTags: [
+        { name: "robots", content: "index, follow" },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: "Laid Off? Help a Nonprofit",
+        description:
+          "Make a positive impact and build your tech portfolio by contributing to nonprofit projects. Learn how to find and work on projects that match your skills and interests.",
+        image: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_3.webp",
+        author: { "@type": "Organization", name: "Opportunity Hack" },
+      },
+      highlights: [
+        "Match skills to projects",
+        "Evaluate project fit",
+        "Contribute effectively",
+        "Make meaningful impact",
+      ],
+    },
+
 };
