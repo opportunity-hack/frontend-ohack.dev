@@ -65,6 +65,10 @@ const careerPathContent = [
         slug: "remote-work-experience-nonprofit",
         title: "Gain Remote Work Experience",
       },
+      {
+        "slug": "how-to-get-experience-coding-when-laid-off",
+        "title": "Build your Portfolio After a Layoff"
+      }
     ],
   },
   {
