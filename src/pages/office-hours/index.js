@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { Typography, Grid, Button, Box, Skeleton } from '@mui/material';
-import { InstagramEmbed } from 'react-social-media-embed';
-
 import InsertInvitationIcon from '@mui/icons-material/InsertInvitation';
 import AppleIcon from '@mui/icons-material/Apple';
 import GoogleIcon from '@mui/icons-material/Google';
 import { LayoutContainer, InnerContainer, SlackSignupContainer, SlackLink } from "../../components/OfficeHours/styles";
 import InfoIcon from '@mui/icons-material/Info';
 import dynamic from 'next/dynamic';
-
-
 
 export default function OfficeHoursPage({ title, openGraphData }) {
     const style = { fontSize: '16px' };
@@ -51,8 +47,8 @@ export default function OfficeHoursPage({ title, openGraphData }) {
             return `${year}${month}${day}`;
         };
 
-        const startTime = isFirstWeek ? '100000' : '140000';
-        const endTime = isFirstWeek ? '110000' : '150000';
+        const startTime = isFirstWeek ? '120000' : '150000';
+        const endTime = isFirstWeek ? '130000' : '160000';
 
         return `BEGIN:VCALENDAR
 VERSION:2.0
@@ -80,31 +76,6 @@ END:VCALENDAR`;
         document.body.removeChild(link);
     };
 
-    const getGoogleCalendarLink = (isFirstWeek) => {
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() + (5 + 7 - startDate.getDay()) % 7);
-        if (!isFirstWeek) startDate.setDate(startDate.getDate() + 7);
-
-        const formatDate = (date) => {
-            const utc = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
-            return utc.toISOString().replace(/-|:|\.\d\d\d/g, "");
-        };
-
-        const startTime = isFirstWeek ? '10:00:00' : '14:00:00';
-        const endTime = isFirstWeek ? '11:00:00' : '15:00:00';
-
-        const start = `${formatDate(startDate).slice(0, 8)}T${startTime.replace(/:/g, '')}`;
-        const end = `${formatDate(startDate).slice(0, 8)}T${endTime.replace(/:/g, '')}`;
-
-        const rrule = 'RRULE:FREQ=WEEKLY;INTERVAL=2';
-
-        const details = encodeURIComponent('Join us for weekly office hours to discuss your nonprofit coding projects!');
-        const location = encodeURIComponent('Slack huddle in #general channel https://opportunity-hack.slack.com/archives/C1Q6YHXQU');
-        const timeZone = encodeURIComponent('America/Los_Angeles');
-
-        return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Opportunity Hack Office Hours')}&dates=${start}/${end}&details=${details}&location=${location}&recur=${encodeURIComponent(rrule)}&ctz=${timeZone}&add=${encodeURIComponent(notificationEmail)}`;
-    };
-
     const CalendarOptions = ({ isFirstWeek }) => (
         <Box mt={2}>
             <Button
@@ -121,7 +92,10 @@ END:VCALENDAR`;
                 variant="outlined"
                 color="secondary"
                 startIcon={<GoogleIcon />}
-                href={getGoogleCalendarLink(isFirstWeek)}
+                href={isFirstWeek 
+                    ? "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=bXZ0bmRrZDdlMGlxMDZwYWJrZ3M4N2gzZWxfMjAyNDExMjJUMjAwMDAwWiBjXzE1YzZmMjVkZGM2MTEwODFhMWM1OWVmOTE3YzY0N2ZiNDhhNThhZTcxNjkxNmM1NzkyZWVkZTZhMjIzNmVkMTBAZw&tmsrc=c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com&scp=ALL"
+                    : "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=Y3BoMzBwajRjcGltYWI5a2Nvc202YjlrNzBwbTRiOW9jNWkzYWI5aTZrcmppZHBnY2tvMzRwOW42NF8yMDI0MTEyOVQyMjAwMDBaIGNfMTVjNmYyNWRkYzYxMTA4MWExYzU5ZWY5MTdjNjQ3ZmI0OGE1OGFlNzE2OTE2YzU3OTJlZWRlNmEyMjM2ZWQxMEBn&tmsrc=c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com&scp=ALL"
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 fullWidth
@@ -174,39 +148,56 @@ END:VCALENDAR`;
                         </Typography>
                     )}
                     
-                    <Typography variant="h4" mt={4} mb={2}>Office Hours Schedule (PST)</Typography>
+                    <Typography variant="h4" mt={4} mb={2}>Office Hours Schedule</Typography>
                     {isLoading ? (
-                        <Skeleton variant="text" width="100%" height={40} />
+                        <Skeleton variant="rectangular" width="100%" height={400} />
                     ) : (
-                        <Typography variant="body1" style={style} paragraph>
-                            We hold office hours every Friday, alternating between 10am and 2pm PST each week.
-                        </Typography>
+                        <>
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="body1" style={style}>
+                                    • First & Third Fridays: 12pm - 1pm PST
+                                    <br />
+                                    • Second & Fourth Fridays: 2pm - 3pm PST
+                                </Typography>
+                            </Box>
+                            <Box sx={{ 
+                                width: '100%',
+                                height: '600px',
+                                mb: 4,
+                                overflow: 'hidden',
+                                position: 'relative'
+                            }}>
+                                <iframe 
+                                    src="https://calendar.google.com/calendar/embed?src=c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com"
+                                    style={{
+                                        border: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0
+                                    }}
+                                    frameBorder="0"
+                                    scrolling="no"
+                                />
+                            </Box>
+                            <Box mt={2}>
+                                <Button
+                                    variant="outlined"
+                                    color="secondary"
+                                    startIcon={<InsertInvitationIcon />}
+                                    href="https://calendar.google.com/calendar/ical/c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com/public/basic.ics"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    fullWidth
+                                    sx={{ mb: 1 }}
+                                >
+                                    Subscribe to Calendar (iCal)
+                                </Button>
+                            </Box>
+                        </>
                     )}
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={6}>
-                            <Typography variant="h6">10am to 11am PST</Typography>
-                            <Typography variant="body1" style={style}>First and third Fridays of the month</Typography>
-                            {isLoading ? (
-                                <Box mt={2}>
-                                    <Skeleton variant="rectangular" width="100%" height={80} />
-                                </Box>
-                            ) : (
-                                <CalendarOptions isFirstWeek={true} />
-                            )}
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Typography variant="h6">2pm to 3pm PST</Typography>
-                            <Typography variant="body1" style={style}>Second and fourth Fridays of the month</Typography>
-                            {isLoading ? (
-                                <Box mt={2}>
-                                    <Skeleton variant="rectangular" width="100%" height={80} />
-                                </Box>
-                            ) : (
-                                <CalendarOptions isFirstWeek={false} />
-                            )}
-                        </Grid>
-                    </Grid>
-
+                    
                     {isLoading ? (
                         <Skeleton variant="text" width="100%" height={60} sx={{ mt: 4 }} />
                     ) : (
