@@ -249,27 +249,69 @@ END:VCALENDAR`;
 }
 
 export const getStaticProps = async ({ params = {} } = {}) => {
-    var title = "Office Hours: Opportunity Hack Developer Portal";
-    var metaDescription = 'We provide weekly office hours using a Slack huddle in #general for anyone volunteering to write code for any nonprofit we support at Opportunity Hack. We know that it\'s hard to find time to volunteer, so we\'re here to help you get started and make the most of your time.';
-    var image = "https://cdn.ohack.dev/ohack.dev/officehours.webp";
+    const title = "Code for Social Good: Free Developer Office Hours | Opportunity Hack";
+    const metaDescription = 'Join our free weekly developer office hours to code for social good. Get mentorship, improve your coding skills, and help nonprofits. Perfect for students, bootcamp graduates, and experienced developers looking to make a social impact through technology.';
+    const image = "https://cdn.ohack.dev/ohack.dev/officehours.webp";
+    
+    // Schema.org structured data for events
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "Schedule",
+        "scheduleTimezone": "America/Phoenix",
+        "eventSchedule": {
+            "@type": "Schedule",
+            "byDay": ["Friday"],
+            "startTime": "12:00",
+            "endTime": "15:00",
+            "repeatFrequency": "P1W",
+            "scheduleTimezone": "America/Phoenix"
+        },
+        "subEvent": {
+            "@type": "Event",
+            "name": "Opportunity Hack Developer Office Hours",
+            "description": "Free mentorship and guidance for developers working on nonprofit projects",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            },
+            "organizer": {
+                "@type": "Organization",
+                "name": "Opportunity Hack",
+                "url": "https://ohack.dev"
+            }
+        }
+    };
 
     return {
         props: {
-            title: title,
+            title,
             openGraphData: [
-                { name: 'title', content: title, key: 'title' },
-                { property: 'og:title', content: title, key: 'ogtitle' },
-                { name: 'description', content: metaDescription, key: 'desc' },
-                { property: 'og:description', content: metaDescription, key: 'ogdesc' },
-                { property: 'og:type', content: 'website', key: 'website' },
-                { property: 'og:image', content: image, key: 'ogimage' },
-                { property: 'twitter:image', content: image, key: 'twitterimage' },
-                { property: 'og:site_name', content: 'Opportunity Hack Developer Portal', key: 'ogsitename' },
-                { property: 'twitter:card', content: 'summary_large_image', key: 'twittercard' },
-                { property: 'twitter:domain', content: 'ohack.dev', key: 'twitterdomain' },
-                { property: 'twitter:label1', value: 'Office Hours', key: 'twitterlabel1' },
-                { property: 'twitter:data1', value: "Every Friday at 10am and 2pm PST", key: 'twitterdata1' }
+                { name: "title", content: title, key: "title" },
+                { property: "og:title", content: title, key: "ogtitle" },
+                { name: "description", content: metaDescription, key: "desc" },
+                { property: "og:description", content: metaDescription, key: "ogdesc" },
+                { property: "og:type", content: "website", key: "website" },
+                { property: "og:image", content: image, key: "ogimage" },
+                { property: "twitter:image", content: image, key: "twitterimage" },
+                { property: "og:site_name", content: "Opportunity Hack Developer Portal", key: "ogsitename" },
+                { property: "twitter:card", content: "summary_large_image", key: "twittercard" },
+                { property: "twitter:domain", content: "ohack.dev", key: "twitterdomain" },
+                { property: "twitter:label1", value: "Free Developer Office Hours", key: "twitterlabel1" },
+                { property: "twitter:data1", value: "Every Friday - Learn, Code, Make Impact", key: "twitterdata1" },
+                // Additional meta tags for better SEO
+                { name: "keywords", content: "code for social good, developer mentorship, nonprofit coding, tech volunteering, learn to code, social impact coding, free developer help, programming mentorship, tech for good, coding office hours", key: "keywords" },
+                { name: "author", content: "Opportunity Hack", key: "author" },
+                { property: "article:publisher", content: "https://www.linkedin.com/company/opportunity-hack", key: "publisher" },
+                { property: "og:locale", content: "en_US", key: "locale" },
+                { name: "twitter:creator", content: "@opportunityhack", key: "twittercreator" },
+                { name: "twitter:site", content: "@opportunityhack", key: "twittersite" },
+                // Additional social sharing optimizations
+                { property: "og:url", content: "https://ohack.dev/office-hours", key: "ogurl" },
+                { property: "og:image:alt", content: "Opportunity Hack Developer Office Hours - Code for Social Good", key: "ogimagealt" }
             ],
+            // Add structured data for search engines
+            structuredData: JSON.stringify(structuredData)
         },
     };
 };
