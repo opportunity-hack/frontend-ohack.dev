@@ -59,7 +59,11 @@ export default function Projects({ projects, hackathons, stats }) {
                 "hasCourseInstance": {
                     "@type": "CourseInstance",
                     "courseMode": "online",
-                    "courseWorkload": "As needed per each project",
+                    "courseSchedule": {
+                        "@type": "Schedule",
+                        "repeatCount": 12,
+                        "repeatFrequency": "Weekly"
+                        }, 
                     "provider": {
                         "@type": "Organization",
                         "name": "Opportunity Hack",
