@@ -53,11 +53,13 @@ export default function Projects({ projects, hackathons, stats }) {
                 "offers": {
                     "@type": "Offer",
                     "price": "0",
-                    "priceCurrency": "USD"
+                    "priceCurrency": "USD",
+                    "category": "Free"
                     },
                 "hasCourseInstance": {
                     "@type": "CourseInstance",
                     "courseMode": "online",
+                    "courseWorkload": "As needed per each project",
                     "provider": {
                         "@type": "Organization",
                         "name": "Opportunity Hack",
