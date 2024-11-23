@@ -42,7 +42,7 @@ export default function Projects({ projects, hackathons, stats }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "CollectionPage",
-              "name": title,
+              "name": title,              
               "description": metaDescription,
               "url": canonicalUrl,
               "numberOfItems": stats.total,
@@ -50,6 +50,20 @@ export default function Projects({ projects, hackathons, stats }) {
                 "@type": "Course",
                 "position": index + 1,
                 "name": project.title,
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD"
+                    },
+                "hasCourseInstance": {
+                    "@type": "CourseInstance",
+                    "courseMode": "online",
+                    "provider": {
+                        "@type": "Organization",
+                        "name": "Opportunity Hack",
+                        "sameAs": "https://ohack.dev"
+                    }
+                    },
                 "description": project.description,
                 "provider": {
                   "@type": "Organization",
