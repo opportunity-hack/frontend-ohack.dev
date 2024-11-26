@@ -227,9 +227,7 @@ const AdminProblemsPage = () => {
                     >
                       First Thought Of
                     </TableSortLabel>
-                  </TableCell>
-                  <TableCell>Rank</TableCell>
-                  <TableCell>First Thought Of</TableCell>
+                  </TableCell>                                    
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
