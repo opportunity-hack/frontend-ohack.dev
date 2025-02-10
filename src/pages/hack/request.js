@@ -35,6 +35,19 @@ function ValueLabelComponent(props) {
   );
 }
 
+const calculatePerPersonBudget = (totalBudget, employeeCount) => {
+  const countRanges = {
+    "50": 50,
+    "100": 100,    
+    "200": 200,
+    "300": 300,
+    "500": 500,
+    "1000+": 1000
+  };
+  const averageCount = countRanges[employeeCount] || 0;
+  return averageCount ? Math.round(totalBudget / averageCount) : 0;
+};
+
 export default function CreateHackathon() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -155,7 +168,7 @@ export default function CreateHackathon() {
             <TextField
               fullWidth
               margin="normal"
-              label="Company Name"
+              label="Company or University Name"
               name="companyName"
               value={formData.companyName}
               onChange={handleChange}
@@ -190,7 +203,9 @@ export default function CreateHackathon() {
               required
             />
             <FormControl fullWidth margin="normal">
-              <InputLabel>Number of Employees who would participate</InputLabel>
+              <InputLabel>
+                Number of Students or Employees who would participate
+              </InputLabel>
               <Select
                 name="employeeCount"
                 value={formData.employeeCount}
@@ -198,9 +213,11 @@ export default function CreateHackathon() {
                 label="Number of Employees who would participate"
                 required
               >
-                <MenuItem value="1-50">1-50</MenuItem>
-                <MenuItem value="51-200">51-200</MenuItem>
-                <MenuItem value="201-1000">201-1000</MenuItem>
+                <MenuItem value="50">50</MenuItem>
+                <MenuItem value="100">100</MenuItem>
+                <MenuItem value="200">200</MenuItem>
+                <MenuItem value="300">300</MenuItem>
+                <MenuItem value="500">500</MenuItem>
                 <MenuItem value="1000+">1000+</MenuItem>
               </Select>
             </FormControl>
@@ -237,14 +254,21 @@ export default function CreateHackathon() {
                   Opportunity Hack Problems
                 </MenuItem>
                 <MenuItem value="Custom Problem Statements">
-                  Custom Problem Statements
+                  Custom Problem Statements (please provide details below)
                 </MenuItem>
               </Select>
             </FormControl>
             <Box mt={4} mb={2}>
               <Typography variant="h6" gutterBottom>
                 Estimated Budget for Social Impact
-                <Tooltip title="This budget helps us tailor the event to your needs and maximizes the social impact we can achieve together. It covers event organization, travel, materials, and a donation to support our ongoing nonprofit work.">
+                <Tooltip
+                  title=<span style={{ fontSize: "1.2rem" }}>
+                    This budget helps us tailor the event to your needs and
+                    maximizes the social impact we can achieve together. It
+                    covers event organization, travel, materials, and a donation
+                    to support our ongoing nonprofit work.
+                  </span>
+                >
                   <InfoIcon
                     fontSize="small"
                     sx={{ ml: 1, verticalAlign: "middle" }}
@@ -268,6 +292,42 @@ export default function CreateHackathon() {
               <Typography variant="body2" color="textSecondary" align="center">
                 Suggested budget: ${formData.budget.toLocaleString()}
               </Typography>
+              {formData.employeeCount && (
+                <>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    align="center"
+                    sx={{ mt: 1 }}
+                  >
+                    Estimated per-person budget: $
+                    {calculatePerPersonBudget(
+                      formData.budget,
+                      formData.employeeCount
+                    )}
+                  </Typography>
+                  <Box
+                    sx={{ mt: 2, p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}
+                  >
+                    <Typography variant="body2" color="textSecondary">
+                      Typical costs per participant:
+                      <ul style={{ margin: "8px 0" }}>
+                        <li>
+                          $97 - Meals and refreshments for the weekend (36 hours
+                          of continous hacking)
+                        </li>
+                        <li>
+                          $19 - Participant swag pack (shirt, hat, stickers)
+                        </li>
+                        <li>
+                          Additional costs include prizes, venue, equipment, and
+                          event support
+                        </li>
+                      </ul>
+                    </Typography>
+                  </Box>
+                </>
+              )}
             </Box>
             <TextField
               fullWidth
