@@ -41,7 +41,7 @@ const AdminProblemsPage = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statements`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -126,9 +126,10 @@ const AdminProblemsPage = () => {
   };
 
   const handleSaveProblem = async () => {
+    console.log(editingProblem);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problems/problem_statement`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements`,
         {
           method: "POST",
           headers: {
