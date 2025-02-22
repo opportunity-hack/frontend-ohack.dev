@@ -87,6 +87,21 @@ import {useRedirectFunctions} from "@propelauth/react"
 
 import * as ga from '../../lib/ga';
 
+const VideoWrapper = styled("div")({
+  position: "relative",
+  paddingBottom: "56.25%", // 16:9 aspect ratio
+  height: 0,
+  overflow: "hidden",
+  marginBottom: "1rem",
+  "& iframe": {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+  },
+});
+
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
   const isLargeScreen = useMediaQuery('(min-width: 768px)');
 
@@ -251,7 +266,6 @@ const volunteerWords = [
   const [newTeamProblemStatementId, setNewTeamProblemStatementId] =
     useState("");
   const [newGithubUsername, setNewGithubUsername] = useState("");
-
 
 
   const options = {
@@ -691,6 +705,73 @@ const volunteerWords = [
     
   }
 
+  function getVideoId(url) {
+    // YouTube URL patterns
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const youtubeMatch = url.match(youtubeRegex);
+    if (youtubeMatch) return { platform: 'youtube', id: youtubeMatch[1] };
+  
+    // Vimeo URL patterns
+    const vimeoRegex = /(?:vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|))(\d+)(?:[a-zA-Z0-9_\-]+)?/;
+    const vimeoMatch = url.match(vimeoRegex);
+    if (vimeoMatch) return { platform: 'vimeo', id: vimeoMatch[1] };
+  
+    return null;
+  }
+  
+  function ReferenceItem({ reference }) {
+    const videoInfo = reference.link ? getVideoId(reference.link) : null;
+  
+    if (videoInfo) {
+      return (
+        <Box sx={{ width: '100%', maxWidth: '600px', margin: '1rem 0' }}>
+          <Typography variant="subtitle1" gutterBottom>
+            {reference.name}
+          </Typography>
+          <VideoWrapper>
+            {videoInfo.platform === 'youtube' && (
+              <iframe
+                width="560"
+                height="315"
+                src={`https://www.youtube.com/embed/${videoInfo.id}`}
+                title={reference.name}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            )}
+            {videoInfo.platform === 'vimeo' && (
+              <iframe
+                width="560"
+                height="315"
+                src={`https://player.vimeo.com/video/${videoInfo.id}`}
+                title={reference.name}
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            )}
+          </VideoWrapper>
+        </Box>
+      );
+    }
+  
+    return (
+      <Button
+        key={reference.name}
+        variant="outlined"
+        href={reference.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ margin: "0.5rem", fontSize: '13px' }}
+      >
+        {getIconForReferenceLinkOrName(reference.link, reference.name)}
+        &nbsp;
+        {reference.name}
+      </Button>
+    );
+  }
+
   var TeamText = "";
   if (hackathonEvents != null) {
     var teamCounter = teams.filter((team) => team.problem_statements?.includes(problem_statement_id)).length;
@@ -877,28 +958,17 @@ const volunteerWords = [
 
   var reference_count = 0;
   var references_buttons = "";
-  if (
-    problem_statement.references != null &&
-    problem_statement.references.length > 0
-  ) {
+  if (problem_statement.references != null && problem_statement.references.length > 0) {
     reference_count = problem_statement.references.length;
-    references_buttons = problem_statement.references.map((reference) => {
-      return (
-        <a target="_blank" rel="noopener noreferrer" href={reference.link}>
-          <Button
-            key={reference.name}
-            variant="outlined"
-            style={{ margin: "0.5rem", fontSize: '13px' }}
-          >
-            { getIconForReferenceLinkOrName(reference.link, reference.name)}
-            &nbsp;
-            {reference.name}
-          </Button>
-        </a>
-      );
-    });
+    references_buttons = (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {problem_statement.references.map((reference, index) => (
+          <ReferenceItem key={index} reference={reference} />
+        ))}
+      </Box>
+    );
   } else {
-    references_buttons = <p>No references yet</p>;
+    references_buttons = <Typography>No references yet</Typography>;
   }
 
   var mentorsAddPlural = [];
@@ -913,7 +983,7 @@ const volunteerWords = [
   }
 
   if (countOfMentors === 0 || countOfMentors > 1) {
-    mentorsAddPlural[0] = "s";
+    mentorsAddPlural[0] = "";
     mentorsAddPlural[1] = "are";
   } else {
     mentorsAddPlural[0] = "";
@@ -1356,30 +1426,27 @@ const volunteerWords = [
           onClick={handleConfirmTeamCreate}                              
         >
           Submit
-            {" "}
-            { sendingTeamDetails && 
-              <CircularProgress size={20} />
-            }
-            <Typography variant="body1">Takes ~14 seconds :(</Typography>
+          {" "}
+          { sendingTeamDetails && 
+            <CircularProgress size={20} />
+          }
+          <Typography variant="body1">Takes ~14 seconds :(</Typography>
         </Button>
         }
         </Stack>
-      <Stack spacing={0} direction="row" alignContent={"right"} alignItems={"right"} justifyContent={"right"}>
-      <Typography>
-        {teamCreationErrorDetails}
-      </Typography>      
-      </Stack>                
+        <Stack spacing={0} direction="row" alignContent={"right"} alignItems={"right"} justifyContent={"right"}>
+          <Typography>
+            {teamCreationErrorDetails}
+          </Typography>      
+        </Stack>                
       </Stack>
-        
       </DialogActions>
-      
     </Dialog>
 
     <Stack spacing={2} direction="row">      
-        {false && helpingSwitch
-          // FIXME: Hard disable ability to join a team
-
-        }      
+      {false && helpingSwitch
+        // FIXME: Hard disable ability to join a team
+      }      
       <Box sx={{ width: "75%" }}>{callToAction}</Box>      
     </Stack>
   </ProjectCard>

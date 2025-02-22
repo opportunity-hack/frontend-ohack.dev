@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
+import LinkManagement from "../../../components/admin/LinkManagement";
 
 const AdminProblemsPage = () => {
   const { accessToken, userClass } = useAuthInfo();
@@ -113,15 +114,16 @@ const AdminProblemsPage = () => {
       slack_channel: "",
       helping: [],
       rank: "",
-
-
-
     });
     setDialogOpen(true);
   };
 
   const handleEditProblem = (problem) => {
-    setEditingProblem(problem);
+    const adaptedProblem = {
+      ...problem,
+      references: adaptReferencesToLinkFormat(problem.references)
+    };
+    setEditingProblem(adaptedProblem);
     setDialogOpen(true);
   };
 
@@ -149,6 +151,27 @@ const AdminProblemsPage = () => {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleReferencesChange = (newReferences) => {
+    setEditingProblem((prev) => ({
+      ...prev,
+      references: newReferences.map(ref => ({
+        name: ref.name,
+        link: ref.link
+      }))
+    }));
+  };
+
+  const adaptReferencesToLinkFormat = (references) => {
+    return (references || []).map(ref => ({
+      name: ref.name || '',
+      link: ref.link || '',
+      color: 'primary',
+      size: 'medium',
+      variant: 'text',
+      open_new: 'True'
+    }));
   };
 
   if (!isAdmin) {
@@ -335,9 +358,13 @@ const AdminProblemsPage = () => {
             margin="normal"
             />
 
-        
-
-
+            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+              References
+            </Typography>
+            <LinkManagement
+              links={adaptReferencesToLinkFormat(editingProblem?.references)}
+              onChange={handleReferencesChange}
+            />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
