@@ -86,21 +86,7 @@ import useHackathonEvents from "../../hooks/use-hackathon-events";
 import {useRedirectFunctions} from "@propelauth/react"
 
 import * as ga from '../../lib/ga';
-
-const VideoWrapper = styled("div")({
-  position: "relative",
-  paddingBottom: "56.25%", // 16:9 aspect ratio
-  height: 0,
-  overflow: "hidden",
-  marginBottom: "1rem",
-  "& iframe": {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-  },
-});
+import VideoDisplay from "../VideoDisplay/VideoDisplay";
 
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
   const isLargeScreen = useMediaQuery('(min-width: 768px)');
@@ -720,40 +706,18 @@ const volunteerWords = [
   }
   
   function ReferenceItem({ reference }) {
-    const videoInfo = reference.link ? getVideoId(reference.link) : null;
-  
-    if (videoInfo) {
-      return (
-        <Box sx={{ width: '100%', maxWidth: '600px', margin: '1rem 0' }}>
-          <Typography variant="subtitle1" gutterBottom>
-            {reference.name}
-          </Typography>
-          <VideoWrapper>
-            {videoInfo.platform === 'youtube' && (
-              <iframe
-                width="560"
-                height="315"
-                src={`https://www.youtube.com/embed/${videoInfo.id}`}
-                title={reference.name}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            )}
-            {videoInfo.platform === 'vimeo' && (
-              <iframe
-                width="560"
-                height="315"
-                src={`https://player.vimeo.com/video/${videoInfo.id}`}
-                title={reference.name}
-                frameBorder="0"
-                allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            )}
-          </VideoWrapper>
-        </Box>
+    const isVideoUrl = (url) => {
+      return url && (
+        url.includes('youtube.com') || 
+        url.includes('youtu.be') ||
+        url.includes('vimeo.com') ||
+        url.includes('loom.com') ||
+        url.includes('drive.google.com/file')
       );
+    };
+  
+    if (reference.link && isVideoUrl(reference.link)) {
+      return <VideoDisplay url={reference.link} title={reference.name} />;
     }
   
     return (
