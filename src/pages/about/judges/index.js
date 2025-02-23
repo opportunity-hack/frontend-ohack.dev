@@ -4,6 +4,18 @@ import dynamic from 'next/dynamic';
 import Link from "next/link";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
+// Static imports for frequently used icons
+import BusinessIcon from '@mui/icons-material/Business';
+import SchoolIcon from '@mui/icons-material/School';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import WorkIcon from '@mui/icons-material/Work';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import MovieIcon from '@mui/icons-material/Movie';
+import LiveTvIcon from '@mui/icons-material/LiveTv';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoIcon from '@mui/icons-material/Info';
+import { initFacebookPixel, trackEvent } from "../../../lib/ga";
+
 // Core MUI components
 import {
   Typography,
@@ -24,22 +36,13 @@ const AccordionDetails = dynamic(() => import('@mui/material/AccordionDetails'))
 const Slider = dynamic(() => import('@mui/material/Slider'));
 const Tooltip = dynamic(() => import('@mui/material/Tooltip'));
 
-// Static imports for frequently used icons
-import BusinessIcon from '@mui/icons-material/Business';
-import SchoolIcon from '@mui/icons-material/School';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import WorkIcon from '@mui/icons-material/Work';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import MovieIcon from '@mui/icons-material/Movie';
-import LiveTvIcon from '@mui/icons-material/LiveTv';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import InfoIcon from '@mui/icons-material/Info';
+
 
 // Lazy loaded components
 const SponsorshipCTA = lazy(() => import('../../../components/SponsorshipCTA'));
 const MentorCTA = lazy(() => import('../../../components/MentorCTA'));
 
-import { initFacebookPixel, trackEvent } from "../../../lib/ga";
+
 
 const theme = createTheme({
   typography: { 
