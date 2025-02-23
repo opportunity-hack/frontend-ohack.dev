@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-import { EmptyGrid, OuterGrid, MoreNewsStyle } from "./styles";
+import { EmptyGrid, OuterGrid, MoreNewsStyle, HackathonGrid, NewsContainer, NewsSection, NewsSectionTitle } from "./styles";
 import EventFeature from "./EventFeature";
 import { SectionTitle } from "./styles";
 import Link from "next/link";
@@ -50,39 +50,37 @@ function HackathonList() {
     >
       <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
 
-      <EmptyGrid
-        container
-        justifyContent="center"
-        style={{ minHeight: "500px" }}
-      >
+      <EmptyGrid>
         {hackathonsLoading ? (
-          Array(3)
-            .fill(0)
-            .map((_, index) => (
+          <HackathonGrid>
+            {Array(4).fill(0).map((_, index) => (
               <React.Fragment key={`event-skeleton-${index}`}>
                 {renderEventSkeleton()}
               </React.Fragment>
-            ))
+            ))}
+          </HackathonGrid>
         ) : hackathons && hackathons.length > 0 ? (
-          hackathons.map((event) => (
-            <EventFeature
-              title={event?.title}
-              event_id={event?.event_id}
-              description={event?.description}
-              key={event?.title}
-              type={event?.type}
-              nonprofits={event?.nonprofits}
-              start_date={event?.start_date}
-              end_date={event?.end_date}
-              location={event?.location}
-              devpostUrl={event?.devpost_url}
-              rawEventLinks={event?.links}
-              icon={event?.image_url}
-              donationUrl={event?.donation_url}
-              donationGoals={event?.donation_goals}
-              donationCurrent={event?.donation_current}
-            />
-          ))
+          <HackathonGrid>
+            {hackathons.map((event) => (
+              <EventFeature
+                title={event?.title}
+                event_id={event?.event_id}
+                description={event?.description}
+                key={event?.title}
+                type={event?.type}
+                nonprofits={event?.nonprofits}
+                start_date={event?.start_date}
+                end_date={event?.end_date}
+                location={event?.location}
+                devpostUrl={event?.devpost_url}
+                rawEventLinks={event?.links}
+                icon={event?.image_url}
+                donationUrl={event?.donation_url}
+                donationGoals={event?.donation_goals}
+                donationCurrent={event?.donation_current}
+              />
+            ))}
+          </HackathonGrid>
         ) : (
           <Link prefetch={false} href="/hack">
             <MoreNewsStyle>
@@ -92,11 +90,16 @@ function HackathonList() {
           </Link>
         )}
 
-        {newsLoading ? (
-            <News newsData={[]} frontpage={"true"} loading={true} />
-          ) : (
-            <News newsData={newsData} frontpage={"true"} loading={false} />
-          )}
+        <NewsSection>
+          <NewsSectionTitle>Latest Updates</NewsSectionTitle>
+          <NewsContainer>
+            {newsLoading ? (
+              <News newsData={[]} frontpage={"true"} loading={true} />
+            ) : (
+              <News newsData={newsData} frontpage={"true"} loading={false} />
+            )}
+          </NewsContainer>
+        </NewsSection>
       </EmptyGrid>
     </OuterGrid>
   );

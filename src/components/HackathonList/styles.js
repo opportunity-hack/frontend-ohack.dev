@@ -35,23 +35,72 @@ export const MoreNewsStyle = styled(Button)({
 });
 
 export const EmptyGrid = styled(Grid)({
-  gap: "30px",
-  marginTop: "5%",
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '20px',
+  marginTop: '2%',
+});
+
+export const HackathonGrid = styled(Grid)({
+  width: '100%',
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, 450px)', // Fixed width columns
+  gap: '20px',
+  marginBottom: '40px',
+  justifyContent: 'center', // Center the grid itself
+  
+  '@media (max-width: 960px)': {
+    gridTemplateColumns: 'minmax(300px, 450px)', // Single column for mobile
+  },
+});
+
+export const NewsSection = styled(Grid)({
+  width: '100%',
+  backgroundColor: '#f8f9fa',
+  padding: '40px 0',
+  marginTop: '20px',
+  borderRadius: '20px',
+});
+
+export const NewsSectionTitle = styled(Typography)({
+  fontSize: '2rem',
+  fontWeight: '600',
+  marginBottom: '30px',
+  color: '#1a1a1a',
+  borderBottom: '3px solid var(--blue)',
+  display: 'inline-block',
+  paddingBottom: '8px',
+});
+
+export const NewsContainer = styled(Grid)({
+  width: '100%',
+  maxWidth: '1600px',  // Even wider
+  margin: '0 auto',
+  padding: '0 20px',
+  
+  '@media (max-width: 960px)': {
+    maxWidth: '100%',
+    padding: '0 15px',
+  }
 });
 
 export const EventCards = styled(Grid)((props) => ({
-  height: "auto",
-  padding: "2%",
-  maxWidth: "30%",
-  boxShadow: "10px",
-  backgroundColor: "#e6f7ff",
-  borderRadius: "15px",
-  // margin: "3% 2% 2% 0%",
+  height: 'auto',
+  padding: '20px',
+  width: '100%',
+  backgroundColor: '#e6f7ff',
+  borderRadius: '15px',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+  },
 
-  [props.theme.breakpoints.down("md")]: {
-    maxWidth: "100%",
-    width: "100%",
-    marginTop: "3%",
+  [props.theme.breakpoints.down('md')]: {
+    padding: '15px',
   },
 }));
 
@@ -117,8 +166,13 @@ export const EventLink = styled(Typography)({
 });
 
 export const EventText = styled(Typography)({
-  fontSize: "1.5rem",
-  textTransform: "none",
+  fontSize: '1.2rem',
+  textTransform: 'none',
+  display: '-webkit-box',
+  WebkitLineClamp: 3,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 });
 
 export const EventGreyText = styled(Typography)({
