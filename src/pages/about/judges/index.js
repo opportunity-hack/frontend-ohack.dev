@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import Head from "next/head";
+import dynamic from 'next/dynamic';
+import Link from "next/link";
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
+// Core MUI components
 import {
   Typography,
   Box,
@@ -10,47 +14,72 @@ import {
   ListItemText,
   Button,
   Container,
-  ThemeProvider,
-  createTheme,
-  Paper,
-  Slider,
-  Tooltip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
 } from "@mui/material";
-import {
-  Gavel,
-  School,
-  Security,
-  Build,
-  Movie,
-  LiveTv,
-  Business,
-  EmojiEvents,
-  Work,
-  LocationOn,
-} from "@mui/icons-material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import InfoIcon from "@mui/icons-material/Info";
-import Link from "next/link";
+
+// Dynamic imports for heavy components
+const Paper = dynamic(() => import('@mui/material/Paper'));
+const Accordion = dynamic(() => import('@mui/material/Accordion'));
+const AccordionSummary = dynamic(() => import('@mui/material/AccordionSummary'));
+const AccordionDetails = dynamic(() => import('@mui/material/AccordionDetails'));
+const Slider = dynamic(() => import('@mui/material/Slider'));
+const Tooltip = dynamic(() => import('@mui/material/Tooltip'));
+
+// Static imports for frequently used icons
+import BusinessIcon from '@mui/icons-material/Business';
+import SchoolIcon from '@mui/icons-material/School';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import WorkIcon from '@mui/icons-material/Work';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import MovieIcon from '@mui/icons-material/Movie';
+import LiveTvIcon from '@mui/icons-material/LiveTv';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoIcon from '@mui/icons-material/Info';
+
+// Lazy loaded components
+const SponsorshipCTA = lazy(() => import('../../../components/SponsorshipCTA'));
+const MentorCTA = lazy(() => import('../../../components/MentorCTA'));
+
 import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 
-const theme = createTheme({ typography: { fontSize: 16 } });
+const theme = createTheme({
+  typography: { 
+    fontSize: 16,
+    h3: {
+      fontSize: '2rem',
+      '@media (min-width:600px)': {
+        fontSize: '2.5rem',
+      }
+    },
+    h4: {
+      fontSize: '1.5rem',
+      '@media (min-width:600px)': {
+        fontSize: '2rem',
+      }
+    }
+  },
+  components: {
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          '@media (max-width:600px)': {
+            padding: '0 16px',
+          }
+        }
+      }
+    }
+  }
+});
+
+const handleSponsorClick = () => {
+  trackEvent({ action: "click_sponsor_judge", params: { action_name: "Sponsorship CTA" } });
+};
+
+const handleApplyClick = () => {
+  trackEvent({ action: "click_apply_judge", params: { action_name: "Apply for Judge" } });
+};
+
 
 const AboutJudges = () => {
-  useEffect(() => {
-    initFacebookPixel();
-  }, []);
-
-  const handleApplyClick = () => {
-    trackEvent("ApplyJudge", "Judges Page");
-  };
-
-  const handleSponsorClick = () => {
-    trackEvent("ViewSponsorInfo", "Judges Page");
-  };
-
   const [scores, setScores] = useState({
     scopeImpact: 3,
     scopeComplexity: 3,
@@ -62,68 +91,23 @@ const AboutJudges = () => {
     securityRole: 3,
   });
 
-  const SponsorshipCTA = () => {
-    return (
-      <Box
-        sx={{ mt: 4, p: 3, bgcolor: "#f0f8ff", borderRadius: 2, boxShadow: 1 }}
-      >
-        <Typography variant="h5" gutterBottom>
-          Want to secure a judge position? Consider becoming a sponsor!
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Most of our judges come from our corporate sponsors. Sponsorship not
-          only guarantees a judging slot but also provides additional benefits
-          and visibility for your company.
-        </Typography>
-        <Link href="/sponsor" passHref>
-          <Button component="a" variant="contained" color="primary">
-            Learn About Sponsorship
-          </Button>
-        </Link>
-      </Box>
-    );
-  };
-
   const [totalScore, setTotalScore] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const newTotalScore = Object.values(scores).reduce(
-      (sum, score) => sum + score,
-      0
-    );
-    setTotalScore(newTotalScore);
-  }, [scores]);
+    setMounted(true);
+    initFacebookPixel();
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      const newTotalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
+      setTotalScore(newTotalScore);
+    }
+  }, [scores, mounted]);
 
   const handleScoreChange = (criterion) => (_, newValue) => {
     setScores((prevScores) => ({ ...prevScores, [criterion]: newValue }));
-  };
-
-  const MentorCTA = () => {
-    return (
-      <Box
-        sx={{
-          mt: 4,
-          p: 3,
-          bgcolor: "background.paper",
-          borderRadius: 2,
-          boxShadow: 1,
-        }}
-      >
-        <Typography variant="h5" gutterBottom>
-          Not interested in judging? Consider becoming a mentor!
-        </Typography>
-        <Typography variant="body1" paragraph>
-          As a mentor, you can share your expertise, guide teams through
-          challenges, and make a lasting impact on innovative nonprofit
-          solutions.
-        </Typography>
-        <Link href="/about/mentors" passHref>
-          <Button component="a" variant="contained" color="primary">
-            Learn About Mentoring
-          </Button>
-        </Link>
-      </Box>
-    );
   };
 
   const getDescription = (score) => {
@@ -267,7 +251,7 @@ const AboutJudges = () => {
           <List>
             <ListItem>
               <ListItemIcon>
-                <Business />
+                <BusinessIcon />
               </ListItemIcon>
               <ListItemText
                 primary="Enhance Your Company's ESG Profile"
@@ -276,7 +260,7 @@ const AboutJudges = () => {
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <EmojiEvents />
+                <EmojiEventsIcon />
               </ListItemIcon>
               <ListItemText
                 primary="Gain Valuable In-Person Experience"
@@ -285,7 +269,7 @@ const AboutJudges = () => {
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <Work />
+                <WorkIcon />
               </ListItemIcon>
               <ListItemText
                 primary="Network with Industry Leaders Face-to-Face"
@@ -294,7 +278,7 @@ const AboutJudges = () => {
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <LocationOn />
+                <LocationOnIcon />
               </ListItemIcon>
               <ListItemText
                 primary="On-Site Judging Experience"
@@ -309,7 +293,7 @@ const AboutJudges = () => {
           <List>
             <ListItem>
               <ListItemIcon>
-                <Business />
+                <BusinessIcon />
               </ListItemIcon>
               <ListItemText
                 primary="Corporate Sponsorship"
@@ -318,7 +302,7 @@ const AboutJudges = () => {
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <School />
+                <SchoolIcon />
               </ListItemIcon>
               <ListItemText
                 primary="Individual Application"
@@ -327,7 +311,14 @@ const AboutJudges = () => {
             </ListItem>
           </List>
 
-          <SponsorshipCTA />
+          <Suspense fallback={<Box sx={{ height: 100 }} />}>
+            {mounted && (
+              <>
+                <SponsorshipCTA />
+                <MentorCTA />
+              </>
+            )}
+          </Suspense>
 
           <Button
             variant="outlined"
@@ -346,7 +337,7 @@ const AboutJudges = () => {
           <List>
             <ListItem>
               <ListItemIcon>
-                <Movie />
+                <MovieIcon />
               </ListItemIcon>
               <ListItemText
                 primary="Stage 1: On-Site Video Reviews"
@@ -355,7 +346,7 @@ const AboutJudges = () => {
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <LiveTv />
+                <LiveTvIcon />
               </ListItemIcon>
               <ListItemText
                 primary="Stage 2: Live In-Person Demos"
@@ -373,14 +364,14 @@ const AboutJudges = () => {
             scoring system.
           </Typography>
 
-          {criteriaInfo.map((criterion) => (
+          {mounted && criteriaInfo.map((criterion) => (
             <Accordion key={criterion.category}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="h6">
                   {criterion.name} ({criterion.maxPoints} points)
                 </Typography>
                 <Tooltip
-                  title=<span style={{ fontSize: 14 }}>{criterion.tip}</span>
+                  title={<span style={{ fontSize: 14 }}>{criterion.tip}</span>}
                   enterDelay={0}
                   enterTouchDelay={0}
                   arrow
@@ -467,8 +458,6 @@ const AboutJudges = () => {
           >
             Apply for Limited Individual Judge Positions 
           </Button>
-
-          <MentorCTA />
         </Box>
       </Container>
     </ThemeProvider>
