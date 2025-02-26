@@ -1408,9 +1408,8 @@ const volunteerWords = [
     </Dialog>
 
     <Stack spacing={2} direction="row">      
-      {false && helpingSwitch
-        // FIXME: Hard disable ability to join a team
-      }      
+      {helpingSwitch}
+        
       <Box sx={{ width: "75%" }}>{callToAction}</Box>      
     </Stack>
   </ProjectCard>
