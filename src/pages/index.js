@@ -28,6 +28,13 @@ const HeroBanner = dynamic(
   }
 );
 
+const Logo = dynamic(() => import("../components/HeroBanner/Logo"), {
+  loading: () => (
+    <div style={{ height: "55px", background: "#f0f0f0" }}>Loading Logo...</div>
+  ),
+  ssr: false,
+});
+
 const HackathonList = dynamic(
   () => import("../components/HackathonList/HackathonList"),
   {
@@ -98,9 +105,10 @@ export default function Home() {
           }
         >
           <BackgroundGrid />
-
           <LeadForm />
+          <Logo />
           <TitleStyled />
+
           <HeroBanner />
         </Suspense>
       </GrowthBookProvider>
