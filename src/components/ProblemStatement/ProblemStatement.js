@@ -446,11 +446,11 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
 
     setOpen(false);
     setHelpedChecked("checked");
-    setHelpingType(event.target.value);
+    setHelpingType(helperType);
     handle_help_toggle(
       "helping",
       problem_statement.id,
-      event.target.value,
+      helperType,
       npo_id
     );
   };
