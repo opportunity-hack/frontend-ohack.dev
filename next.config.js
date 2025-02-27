@@ -1,4 +1,15 @@
 module.exports = {
+  // Enable production optimizations in development
+  // This will help with more accurate performance testing
+  productionBrowserSourceMaps: false,
+  swcMinify: true,
+  
+  // Optimize bundle size
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  
+  // Rewrites configuration
   async rewrites() {
     return [
       {
@@ -7,7 +18,11 @@ module.exports = {
       },
     ];
   },
+  
+  // Optimize images
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 86400,
     remotePatterns: [
       {
         protocol: "https",
@@ -48,10 +63,11 @@ module.exports = {
     ],
   },
   
+  // Improve caching headers
   async headers() {
     return [
       {
-        source: "/:all*(svg|jpg|png)",
+        source: "/:all*(svg|jpg|png|webp|avif|gif|ico)",
         locale: false,
         headers: [
           {
@@ -62,6 +78,15 @@ module.exports = {
       },
       {
         source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/_next/image/:path*",
         headers: [
           {
             key: "Cache-Control",

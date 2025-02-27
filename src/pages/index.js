@@ -15,68 +15,36 @@ const GrowthBookProvider = dynamic(
   { ssr: false }
 );
 
-// Hero Banner Loading Skeleton
-const HeroBannerSkeleton = () => (
-  <Box sx={{ width: "100%", padding: 3 }}>
-    <Skeleton variant="rectangular" width="100%" height={100} sx={{ mb: 2 }} />
-    <Skeleton variant="text" width="80%" height={60} sx={{ mb: 2 }} />
-    <Skeleton variant="text" width="60%" height={30} sx={{ mb: 2 }} />
-    <Grid container spacing={1} sx={{ mt: 2 }}>
-      <Grid item xs={6} sm={4} md={3}>
-        <Skeleton variant="rectangular" width="100%" height={40} />
-      </Grid>
-      <Grid item xs={6} sm={4} md={3}>
-        <Skeleton variant="rectangular" width="100%" height={40} />
-      </Grid>
-      <Grid item xs={6} sm={4} md={3}>
-        <Skeleton variant="rectangular" width="100%" height={40} />
-      </Grid>
-    </Grid>
-  </Box>
+// Simplified loading placeholder - avoiding detailed skeletons to prevent layout shifts
+const SimplePlaceholder = () => (
+  <Box sx={{ width: "100%", height: "100%", opacity: 0 }} />
 );
 
-// Logo Loading Skeleton
-const LogoSkeleton = () => (
-  <Box sx={{ width: "100%", display: "flex", justifyContent: "center", my: 2 }}>
-    <Skeleton variant="rectangular" width={120} height={60} animation="wave" />
-  </Box>
-);
+// Using the simplified placeholder for all components
+const HeroBannerSkeleton = SimplePlaceholder;
+const LogoSkeleton = SimplePlaceholder;
+const TitleSkeleton = SimplePlaceholder;
+const FormSkeleton = SimplePlaceholder;
 
-// Title Loading Skeleton
-const TitleSkeleton = () => (
-  <Box sx={{ width: "100%", textAlign: "center", my: 2 }}>
-    <Skeleton variant="text" width="80%" height={60} sx={{ mx: "auto" }} />
-  </Box>
-);
-
-// Form Loading Skeleton
-const FormSkeleton = () => (
-  <Box sx={{ width: "100%", maxWidth: 400, mx: "auto", my: 2, p: 2 }}>
-    <Skeleton variant="text" width="100%" height={30} sx={{ mb: 2 }} />
-    <Skeleton variant="rectangular" width="100%" height={50} sx={{ mb: 2 }} />
-    <Skeleton variant="rectangular" width="100%" height={50} />
-  </Box>
-);
-
-// Lazy load components
+// Lazy load components with SSR enabled for critical components
 const HeroBanner = dynamic(
   () => import("../components/HeroBanner/HeroBanner"),
   {
     loading: () => <HeroBannerSkeleton />,
-    ssr: true,
+    ssr: true, // Enable SSR for critical component
   }
 );
 
 const Logo = dynamic(() => import("../components/HeroBanner/Logo"), {
   loading: () => <LogoSkeleton />,
-  ssr: false,
+  ssr: true, // Enable SSR to reduce CLS
 });
 
 const HackathonList = dynamic(
   () => import("../components/HackathonList/HackathonList"),
   {
-    loading: () => <Box sx={{ width: "100%" }}></Box>,
-    ssr: true,
+    loading: () => <SimplePlaceholder />,
+    ssr: true, // Enable SSR for critical component
   }
 );
 
@@ -84,49 +52,49 @@ const TitleStyled = dynamic(
   () => import("../components/HeroBanner/TitleStyledComponent"),
   {
     loading: () => <TitleSkeleton />,
-    ssr: false,
+    ssr: true, // Enable SSR to reduce CLS
   }
 );
 
 const LeadForm = dynamic(() => import("../components/LeadForm/LeadForm"), {
   loading: () => <FormSkeleton />,
-  ssr: false,
+  ssr: true, // Enable SSR to reduce CLS
 });
 
+// Lower priority component, can load client-side
 const BackgroundGrid = dynamic(
   () => import("../components/HeroBanner/BackgroundGridComponent"),
   {
     loading: () => null,
-    ssr: false,
+    ssr: false, // Keep as client-side only since it's decorative
   }
 );
 
-// Page skeleton to show when entire page is loading
+// Much simpler page skeleton to avoid layout shifts
 const PageSkeleton = () => (
-  <Box sx={{ width: "100%", pb: 4 }}>
-    <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1100 }}>
-      <Skeleton variant="rectangular" width="100%" height={64} />
-    </Box>
-    
-    <Container maxWidth="lg" sx={{ pt: 8 }}>
-      <LogoSkeleton />
-      <TitleSkeleton />
-      <FormSkeleton />
-      <HeroBannerSkeleton />
-      
-      <Box sx={{ mt: 6 }}>
-        <Skeleton variant="text" width="60%" height={50} sx={{ mx: "auto", mb: 3 }} />
-        <Grid container spacing={2}>
-          {[1, 2, 3, 4].map((item) => (
-            <Grid item xs={12} md={6} key={item}>
-              <Skeleton variant="rectangular" width="100%" height={200} sx={{ mb: 1 }} />
-              <Skeleton variant="text" width="80%" />
-              <Skeleton variant="text" width="60%" />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    </Container>
+  <Box 
+    sx={{ 
+      width: "100%", 
+      height: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "#ffffff"
+    }}
+  >
+    {/* Minimize skeleton usage to reduce layout shifts */}
+    <Skeleton 
+      variant="rectangular" 
+      width={120} 
+      height={60} 
+      animation="wave"
+      sx={{ borderRadius: 1 }}
+    />
   </Box>
 );
 
@@ -136,33 +104,11 @@ export default function Home() {
   const growthbook = React.useMemo(() => initGrowthBook(user?.userId), [user]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // Preload critical components
-  React.useEffect(() => {
-    // Preload important components in the background
-    const preloadComponents = async () => {
-      // Load in parallel
-      const components = [
-        import("../components/HeroBanner/HeroBanner"),
-        import("../components/HeroBanner/Logo"),
-        import("../components/HackathonList/HackathonList")
-      ];
-      
-      await Promise.all(components);
-    };
-    
-    // Preload without blocking
-    preloadComponents();
-  }, []);
-
   React.useEffect(() => {
     growthbook.init({ streaming: true });
     
-    // Simulate page loading state, but keep it brief
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 300); // Small delay to avoid flash of loading state for fast connections
-    
-    return () => clearTimeout(timer);
+    // Don't delay rendering to improve FCP
+    setIsLoading(false);
   }, [growthbook]);
 
   if (isLoading) {
@@ -177,31 +123,33 @@ export default function Home() {
           name="description"
           content="Empowering volunteers to create tech solutions for nonprofits, fostering community bonds."
         />
-        <link rel="preconnect" href="https://cdn.growthbook.io" />
-        <link rel="preload" href="/ohack.png" as="image" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
+        
+        {/* Performance optimizations */}
+        <link rel="preconnect" href="https://cdn.growthbook.io" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* Preload critical assets with higher fetchpriority */}
+        <link 
+          rel="preload" 
+          href="/ohack.png" 
+          as="image" 
+          fetchpriority="high" 
+          type="image/png"
+        />
+        
+        {/* For better caching */}
+        <meta httpEquiv="Cache-Control" content="max-age=86400" />
       </Head>
       <GrowthBookProvider growthbook={growthbook}>
-        <Suspense
-          fallback={
-            <Container maxWidth="lg">
-              <Box sx={{ width: "100%", py: 4 }}>
-                <LogoSkeleton />
-                <TitleSkeleton />
-                <FormSkeleton />
-                <HeroBannerSkeleton />
-              </Box>
-            </Container>
-          }
-        >
-          <BackgroundGrid />
-          <LeadForm />
-          <Logo />
-          <TitleStyled />
-
-          <HeroBanner />
-        </Suspense>
+        {/* Eliminate Suspense outer wrapper - rely on SSR instead */}
+        <BackgroundGrid />
+        <LeadForm />
+        <Logo />
+        <TitleStyled />
+        <HeroBanner />
       </GrowthBookProvider>
       <HackathonList />
     </Fragment>
