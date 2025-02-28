@@ -221,7 +221,6 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
                 <TableCell>Website</TableCell>
                 <TableCell>Slack Channel</TableCell>
                 <TableCell>Contact People</TableCell>
-                <TableCell>Contact Emails</TableCell>
                 <TableCell>Problem Statements</TableCell>
                 <TableCell>Image</TableCell>
                 <TableCell>Rank</TableCell>
@@ -236,7 +235,7 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
                   <TableCell>{nonprofit.website}</TableCell>
                   <TableCell>{nonprofit.slack_channel}</TableCell>
                   <TableCell>{nonprofit.contact_people?.join(", ")}</TableCell>
-                  <TableCell>{nonprofit.contact_email?.join(", ")}</TableCell>
+                  
                   <TableCell>
                     {nonprofit.problem_statements?.map((ps) => (
                       <Chip
