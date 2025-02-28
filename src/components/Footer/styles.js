@@ -1,89 +1,90 @@
+import styled from "@emotion/styled";
 import { Grid, Typography, Link } from "@mui/material";
-import { styled } from "@mui/material";
 
-export const FooterContainer = styled(Grid)({
-  marginTop: "10rem",
-  width: "100%",
-  padding: "5rem 0rem",
-  // backgroundColor: "#003486",
-  backgroundColor: "#353535",
-  justifyContent: "center",
-  alignItems: "center",
-  // background: "linear-gradient(to top, #000000 23%, #222222 89%)",
-});
+export const FooterContainer = styled(Grid)`
+  background-color: ${(props) => props.theme.palette.primary.main};
+  color: white;
+  padding: 3rem 1rem;
+  min-height: 500px;
+`;
 
-export const InnerContainer = styled(Grid)((props) => ({
-  width: "80%",
-  color: "white",
-  fontSize: "1.5rem",
+export const InnerContainer = styled(Grid)`
+  max-width: 1200px;
+  margin: 0 auto;
+`;
 
-  [props.theme.breakpoints.down("md")]: {
-    width: "100%",
-    flexDirection: "column-reverse",
-  },
-}));
+export const TextContainer = styled(Grid)`
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+`;
 
-export const TextContainer = styled(Grid)({
-  padding: "0rem 5rem",
-});
+export const StyledText = styled(Typography)`
+  font-weight: bold;
+  font-size: 1.5rem; /* Increased from 1.25rem */
+  margin-bottom: 1rem;
+  color: white;
+`;
 
-export const StyledText = styled(Typography)({
-  fontDisplay: "swap",
-  fontSize: "1.5rem",
-  textTransform: "uppercase",
-  fontWeight: 600,
-  padding: "1rem 0",
-  letterSpacing: "0.2em",
-  width: "100%",
-  color: "white"
-});
+export const MutedText = styled(Typography)`
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem; /* Increased from 0.875rem */
+  margin-bottom: 1rem;
+  
+  p {
+    margin-top: 0;
+    line-height: 1.5;
+  }
+`;
 
-export const MutedText = styled(Typography)({
-  fontDisplay: "swap",
-  fontSize: "1.5rem",
-  color: "#c7c7c7",
-  width: "100%",
-});
+export const StyledLink = styled(Link)`
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  font-size: 1rem; /* Increased font size */
+  
+  &:hover {
+    text-decoration: underline;
+  }
+  
+  svg {
+    margin-left: 4px;
+    font-size: 1rem;
+  }
+`;
 
-export const IconLink = styled(Link)({
-  color: "#c7c7c7",
-  transition: "0.25s",
-  "&:hover": {
-    color: "white",
-  },
-});
+export const LinkList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1rem;
+`;
 
-export const Hashtag = styled(Typography)({
-  fontDisplay: "swap",
-  fontSize: "1.5rem",
-  color: "#c7c7c7",
-  display: "inline-block",
-  transitionDuration: "0.3s",
-  "&:hover": {
-    color: "white",
-  },
-})
+export const LinkListItem = styled.li`
+  margin-bottom: 1.2rem; /* Increased spacing between items */
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  
+  svg {
+    margin-left: 4px;
+    font-size: 1.1rem;
+  }
+`;
 
-export const LinkList = styled("ul")({
-  fontDisplay: "swap",
-  listStyle: "none",
-  position: "relative",
-  padding: "0",
-  paddingBottom: "2rem",
-  margin: "0",
-});
+export const IconLink = styled.a`
+  color: white;
+  margin-right: 1rem;
+  font-size: 1.6rem; /* Increased from 1.5rem */
+  
+  &:hover {
+    opacity: 0.8;
+  }
+`;
 
-export const LinkListItem = styled("li")({
-  padding: "0.5rem 0rem",
-  fontWeight: 700,
-});
-
-export const StyledLink = styled(Link)({
-  textDecoration: "none",
-  fontSize: "1.5rem",
-  color: "#c7c7c7",
-  transitionDuration: "0.3s",
-  "&:hover": {
-    color: "white",
-  },
-});
+export const Hashtag = styled.span`
+  color: rgba(255, 255, 255, 0.8);
+  display: inline-block;
+  font-size: 1rem; /* Increased from default */
+`;

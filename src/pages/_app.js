@@ -3,37 +3,29 @@ import dynamic from 'next/dynamic'
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AuthProvider } from "@propelauth/react";
-
-
-
-
 import { ThemeProvider } from "@mui/material/styles";
+import { Box } from "@mui/material";
 import theme from "../assets/theme";
 
-
-
-// TODO: What is this component? What does it do? Is it needed?
-// import { Loader } from "../components/loader";
-
-// import NavBar from "../components/nav-bar";
-// import NavBar from "../components/Navbar/Navbar";
-
-// TODO: Set up MUI for server side rendering: https://github.com/mui/material-ui/tree/HEAD/examples/material-next
-
-
+// Simple placeholder components to reduce CLS
+const NavBarPlaceholder = () => <Box sx={{ height: '64px', width: '100%' }} />;
+const FooterPlaceholder = () => <Box sx={{ height: '500px', width: '100%', bgcolor: theme.palette.primary.main }} />;
 
 // NOTE: Load dynamics below static imports to avoid eslint errors.
 
 const AxiosWrapper = dynamic(() => import('../components/axios-wrapper'), {
   ssr: false,
+  loading: () => null
 })
 
 const NavBar = dynamic(() => import('../components/Navbar/Navbar'), {
   ssr: false,
+  loading: () => <NavBarPlaceholder />
 })
 
 const Footer = dynamic(() => import('../components/Footer/Footer'), {
-  ssr: false
+  ssr: false,
+  loading: () => <FooterPlaceholder />
 });
 
 const GA = dynamic(() => import('../components/GA/GA'), {
@@ -44,39 +36,33 @@ const GA = dynamic(() => import('../components/GA/GA'), {
 export default function MyApp({ Component, pageProps }) {
   const { openGraphData = [] } = pageProps;
   
-
-  // Helpful Docs:
-  // https://progressivewebninja.com/how-to-setup-nextjs-meta-tags-dynamically-using-next-head/#3-nextjs-dynamic-meta-tags
-  // https://github.com/vercel/next.js/issues/35172#issuecomment-1169362010
   return (
-    
-    <span>
-      {/* TODO: Why do we have block level elements inside a <span>? */}
+    <>
       <Head>
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* TODO: Better meta tags for SEO: https://developers.google.com/search/docs/crawling-indexing/special-tags */}
 
-        {openGraphData.map((og) => (
-          <meta {...og} />
+        {openGraphData.map((og, index) => (
+          <meta key={index} {...og} />
         ))}
 
         <title>{pageProps.title}</title>
       </Head>
-       <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
-          <AxiosWrapper>
-            <ThemeProvider theme={theme}>
+      <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
+        <AxiosWrapper>
+          <ThemeProvider theme={theme}>
             <CssBaseline>
-              <div className="page-layout">
-                <NavBar />
-                <Component {...pageProps} />
+              <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                <NavBar />                
+                <Component {...pageProps} />                
                 <Footer />              
-              </div>
+              </Box>
             </CssBaseline>
           </ThemeProvider>
         </AxiosWrapper>
       </AuthProvider>
       <GA/>
-    </span>
+    </>
   );
 }

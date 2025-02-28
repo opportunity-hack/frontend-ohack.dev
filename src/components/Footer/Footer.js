@@ -53,7 +53,7 @@ export default function Footer() {
           fontSize="md"          
         >
           <Typography as="span" display="inline" fontFamily="mono" color="white">
-            {commitSHA.slice(0, 7)}
+            {commitSHA ? commitSHA.slice(0, 7) : ""}
           </Typography>
         </Tooltip>
       </Link>
@@ -70,32 +70,41 @@ export default function Footer() {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        width: "44px",
-        height: "44px",
+        width: "40px",
+        height: "40px", 
         marginRight: "1rem",
         color: "inherit",
         textDecoration: "none",
       }}
     >
-      <Icon style={{ width: "24px", height: "24px" }} />
+      <Icon style={{ width: "28px", height: "28px" }} /> {/* Increased from 24px */}
     </a>
   );
 
   return (
     <FooterContainer container>
       <InnerContainer container>
-        <TextContainer container xs={12} md={7} lg={8}>
-          <StyledText>Our Mission</StyledText>
-          <MutedText>
-            <p>
-              We empower volunteers to make a difference by creating technical
-              solutions for nonprofit organizations while fostering lasting
-              connections within their communities.
-            </p>
-          </MutedText>
+        <TextContainer container xs={12} md={7} lg={8} style={{ minHeight: '220px' }}> {/* Increased height */}
+          <div style={{ width: '100%' }}>
+            <StyledText>Our Mission</StyledText>
+            <MutedText style={{ minHeight: '70px' }}> {/* Increased height for larger text */}
+              <p>
+                To empower students, professionals, and nonprofits to collaboratively 
+                create sustainable tech solutions that drive social impact and foster learning.
+              </p>
+            </MutedText>
+
+            <StyledText style={{ marginTop: "2rem" }}>Our Vision</StyledText>
+            <MutedText style={{ minHeight: '70px' }}> {/* Increased height for larger text */}
+              <p>
+                To build a global community where individuals can accelerate their career 
+                growth while making a lasting impact for nonprofits.
+              </p>
+            </MutedText>
+          </div>
 
           <StyledText style={{ marginTop: "2rem" }}>Follow Us</StyledText>
-          <nav aria-label="Social media links">
+          <nav aria-label="Social media links" style={{ height: '48px' }}> 
           <SocialIcon 
             href="https://www.instagram.com/opportunityhack/" 
             ariaLabel="Follow us on Instagram"
@@ -132,7 +141,7 @@ export default function Footer() {
             icon={GitHub}
           />
         </nav>
-          <div style={{ marginTop: "1rem" }}>
+          <div style={{ marginTop: "2rem", minHeight: '60px' }}>
             <Hashtag>#socialgood</Hashtag> &nbsp;
             <Hashtag>#nonprofit</Hashtag> &nbsp;
             <Hashtag>#volunteer</Hashtag> &nbsp;
@@ -149,8 +158,8 @@ export default function Footer() {
             Opportunity Hack Inc. EIN: 84-5113049
           </MutedText>
         </TextContainer>
-        <TextContainer container xs={12} md={5} lg={4}>
-          <LinkList>
+        <TextContainer container xs={12} md={5} lg={4} style={{ minHeight: '320px' }}> {/* Increased height */}
+          <LinkList style={{ width: '100%' }}>
             {/* Link integration with icons for a single-click interaction */}
             <LinkListItem key="whatisohack">
               <StyledLink href="https://www.ohack.org/">
@@ -187,7 +196,7 @@ export default function Footer() {
               </StyledLink>
             </LinkListItem>
             <LinkListItem key="githubpublicgood">
-              This website is a public good
+              This website is a public good.&nbsp; 
               <br />
               <StyledLink href="https://github.com/opportunity-hack/frontend-ohack.dev">
                 Fork this on GitHub
