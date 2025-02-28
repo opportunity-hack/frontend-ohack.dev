@@ -4,8 +4,7 @@ import { Stack, Typography } from "@mui/material";
 import Head from "next/head";
 import { useEnv } from "../../context/env.context";
 import Image from "next/image";
-import ReactPixel from "react-facebook-pixel";
-import * as ga from "../../lib/ga";
+import { trackEvent, initFacebookPixel } from "../../lib/ga";
 
 import {
   InnerContainer,
@@ -22,25 +21,13 @@ import {
 export default function SlackSignup({ previousPage }) {
   const { slackSignupUrl } = useEnv();
 
-  const options = {
-    autoConfig: true,
-    debug: false,
-  };
-  const advancedMatching = undefined;
-
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      ReactPixel.init(
-        process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID,
-        advancedMatching,
-        options
-      );
-    }
+    // Initialize Facebook Pixel
+    initFacebookPixel();
   }, []);
 
   const handleSignupClick = () => {
-    ReactPixel.track("CompleteRegistration");
-    ga.event({
+    trackEvent({
       action: "CompleteRegistration",
       params: {
         current_page: window.location.pathname,

@@ -18,9 +18,8 @@ import { red } from '@mui/material/colors';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 // Analytics
-import * as ga from '../../lib/ga';
+import { trackEvent, initFacebookPixel } from '../../lib/ga';
 import { useFeatureValue } from "@growthbook/growthbook-react";
-import ReactPixel from 'react-facebook-pixel';
 
 import {
   ChannelChip,
@@ -63,21 +62,14 @@ const NonProfit = React.memo(function NonProfit(props) {
   
   // Initialize Facebook Pixel only once
   useEffect(() => {
-    if (typeof window !== 'undefined' && !isPixelInitialized) {
-      const options = {
-        autoConfig: true,
-        debug: false,
-      };
-      
-      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, undefined, options);
+    if (!isPixelInitialized) {
+      initFacebookPixel();
       setIsPixelInitialized(true);
     }
   }, [isPixelInitialized]);
 
   const gaButton = useCallback(async (action, actionName) => {
-    ReactPixel.track(action, { action_name: actionName });
-    
-    ga.event({
+    trackEvent({
       action: action,
       params: {
         action_name: actionName,

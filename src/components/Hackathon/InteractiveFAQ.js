@@ -10,8 +10,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ReactPixel from 'react-facebook-pixel';
-import * as ga from '../../lib/ga'; // Adjust this import path as necessary
+import { trackEvent } from '../../lib/ga'; // Adjust this import path as necessary
 import { debounce } from 'lodash';
 
 // Improved helper function to safely extract text content from React elements
@@ -77,30 +76,24 @@ export default function InteractiveFAQ({ faqData, title = "FAQ" }) {
   };
 
   const handleExpand = (question) => {
-    // Google Analytics event
-    ga.event({
+    // Track event for both Google Analytics and Facebook Pixel
+    trackEvent({
       action: "faq_item_expanded",
       params: {
         faq_question: question
       }
     });
-
-    // Facebook Pixel event
-    ReactPixel.track('FAQ Item Expanded', { question: question });
   };
 
   const trackSearch = (term) => {
     if (term.length > 0) {
-      // Google Analytics event
-      ga.event({
+      // Track event for both Google Analytics and Facebook Pixel
+      trackEvent({
         action: "faq_search",
         params: {
           search_term: term
         }
       });
-
-      // Facebook Pixel event
-      ReactPixel.track('FAQ Search', { search_term: term });
     }
   };
 

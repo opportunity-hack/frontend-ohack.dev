@@ -19,8 +19,7 @@ import {
 } from "react-circular-progressbar";
 
 import { Typography } from "@mui/material";
-import * as ga from "../../lib/ga";
-import ReactPixel from 'react-facebook-pixel';
+import { initFacebookPixel, trackEvent } from "../../lib/ga";
 import NonProfitHackathonTile from "../NonProfitListTile/NonProfitHackathonTile";
 import Countdown from "../Countdown/Countdown";
 
@@ -45,37 +44,24 @@ function EventFeatureExtended(props) {
     icon,
     constraints,
   } = props;
-
-  const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-  };
-  var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
   
   useEffect(() => {
-       if (typeof window !== 'undefined') {
-      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-    }
-    }, []);
+    // Initialize Facebook Pixel
+    initFacebookPixel();
+  }, []);
 
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
 
   const trackClick = (link, name) => {    
-    ga.event({
-      action: "eventClick",
+    // Track the event in both Google Analytics and Facebook Pixel
+    trackEvent({
+      action: "eventClick", 
       params: {
         event_category: "event",
         event_label: name,
         value: link,
-      },
+      }
     });
-
-    ReactPixel.trackCustom("ClickEvent", {
-      event_category: "eventClick",
-      event_label: name,
-      value: link,
-    });
-
   };  
 
   // Shuffle the nonprofits so that they are in a random order and check for null
@@ -201,7 +187,7 @@ function EventFeatureExtended(props) {
         >
           {          
               eventLinks?.map((Link) => {
-                return <ExtendedEventButton onClick={trackClick(Link?.link, Link?.name)} color={Link.color} variant={Link.variant} href={Link?.link}>{Link?.name}</ExtendedEventButton>;
+                return <ExtendedEventButton onClick={() => trackClick(Link?.link, Link?.name)} color={Link.color} variant={Link.variant} href={Link?.link}>{Link?.name}</ExtendedEventButton>;
               })
         }
         </ButtonContainer>                

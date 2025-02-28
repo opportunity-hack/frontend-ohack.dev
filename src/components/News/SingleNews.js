@@ -14,14 +14,12 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Snackbar } from '@mui/material';
 import { Alert } from '@mui/material';
 import { Typography } from '@mui/material';
-import ReactPixel from 'react-facebook-pixel';
-
 import InfoIcon from '@mui/icons-material/Info';
-import * as ga from '../../lib/ga';
+import { trackEvent, initFacebookPixel } from '../../lib/ga';
 import React from 'react';
 
 import Image from 'next/image'
@@ -33,6 +31,11 @@ function SingleNews( {newsItem} ) {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  
+  // Initialize Facebook Pixel
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text + " More at www.ohack.dev/blog"); // Copy the text to clipboard
@@ -49,25 +52,16 @@ function SingleNews( {newsItem} ) {
   const gaButton = async (action, actionName) => {
     console.log("gaButton", "action:", action, "actionName:", actionName);
     
-    
-    const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-    };
-    var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-    
-    ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+    // Track Google Ads conversion
+    trackEvent({ 
+      action: "conversion",
+      params: {
+        send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
+      }      
+    });
 
-    ReactPixel.track(action, { action_name: actionName });
-
-    ga.event({ 
-        action: "conversion",
-        params: {
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
-    ga.event({
+    // Track regular event
+    trackEvent({
       action: action,
       params: {
         action_name: actionName,

@@ -35,11 +35,10 @@ import ProjectProgress from "../ProjectProgress/ProjectProgress";
 import useTeams from "../../hooks/use-teams";
 import SkillSet from "../skill-set";
 import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
-import ReactPixel from 'react-facebook-pixel';
 import useProblemstatements from "../../hooks/use-problem-statements";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
 import {useRedirectFunctions} from "@propelauth/react";
-import * as ga from '../../lib/ga';
+import { trackEvent, initFacebookPixel } from '../../lib/ga';
 import { 
   ProjectCard,
   ProjectDescText,
@@ -157,15 +156,8 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   }));
 
   // Initialize Facebook Pixel
-  const options = {
-    autoConfig: true,
-    debug: false,
-  };
-  
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, undefined, options);
-    }
+    initFacebookPixel();
   }, []);
 
   // Generate team name suggestions and fetch hackathon events
@@ -255,8 +247,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       user_id: user?.userId
     };
     
-    ReactPixel.trackCustom("problem_statement_accordion", params);
-    ga.event({
+    trackEvent({
       action: "problem_statement_accordion",
       params: params
     });
@@ -267,19 +258,25 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const handleClickOpen = (event) => {
     if (event.target.checked) {
       setOpen(true);
-      ReactPixel.track("Helping Dialog Opened", {
-        problem_statement_id: problem_statement?.id,
-        problem_statement_title: problem_statement?.title,
-        npo_id: npo_id,
-        user_id: user?.userId
+      trackEvent({
+        action: "Helping Dialog Opened",
+        params: {
+          problem_statement_id: problem_statement?.id,
+          problem_statement_title: problem_statement?.title,
+          npo_id: npo_id,
+          user_id: user?.userId
+        }
       });
     } else {
       setOpenUnhelp(true);
-      ReactPixel.track("Not Helping Dialog Opened", {
-        problem_statement_id: problem_statement?.id,
-        problem_statement_title: problem_statement?.title,
-        npo_id: npo_id,
-        user_id: user?.userId 
+      trackEvent({
+        action: "Not Helping Dialog Opened",
+        params: {
+          problem_statement_id: problem_statement?.id,
+          problem_statement_title: problem_statement?.title,
+          npo_id: npo_id,
+          user_id: user?.userId 
+        }
       });
     }
   };
@@ -287,8 +284,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const handleLeavingTeam = (teamId) => {
     handle_unjoin_a_team(teamId, handleTeamLeavingResponse);
 
-    ReactPixel.track("Team Left", { team_id: teamId });
-    ga.event({
+    trackEvent({
       action: "team_left",
       params: { team_id: teamId }
     });
@@ -297,8 +293,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const handleJoiningTeam = (teamId) => {
     handle_join_team(teamId, handleTeamLeavingResponse);
 
-    ReactPixel.track("Team Joined", { team_id: teamId });
-    ga.event({
+    trackEvent({
       action: "team_joined",
       params: { team_id: teamId }
     });
@@ -309,12 +304,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     setNewTeamEventId(eventId);
     setCreateTeamOpen(true);
 
-    ReactPixel.track("Team Create Dialog Opened", {
-      problem_statement_id: problemStatementId,
-      event_id: eventId
-    });
-
-    ga.event({
+    trackEvent({
       action: "team_create_dialog_opened",
       params: {
         problem_statement_id: problemStatementId,
@@ -327,8 +317,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     const value = event.target.value;   
     setNewTeamName(value);
 
-    ReactPixel.track("Team Name Updated", { team_name: value });
-    ga.event({
+    trackEvent({
       action: "team_name_updated",
       params: { team_name: value }
     });
@@ -338,8 +327,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     const value = event.target.value;
     setNewTeamSlackChannel(value);
 
-    ReactPixel.track("Slack Channel Entered", { slack_channel: value });
-    ga.event({
+    trackEvent({
       action: "slack_channel_entered",
       params: { slack_channel: value }
     });
@@ -349,8 +337,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     const value = event.target.value;
     setNewGithubUsername(value);
 
-    ReactPixel.track("Github Username Entered", { github_username: value });
-    ga.event({
+    trackEvent({
       action: "github_username_event",
       params: { github_username: value }
     });
@@ -366,8 +353,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       event_id: newTeamEventId      
     };
     
-    ReactPixel.trackCustom("team_create", params);
-    ga.event({
+    trackEvent({
       action: "team_create",
       params: params
     });
@@ -383,11 +369,12 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   };
 
   const handleTeamLeavingResponse = () => {
-    ReactPixel.track("Team Left");
-    ga.event({
-      category: "Team",
+    trackEvent({
       action: "Team Left",
-      label: "Team",
+      params: {
+        category: "Team",
+        label: "Team",
+      }
     });
   };
 
@@ -420,28 +407,29 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
 
   const handleCloseTeamCreate = () => {
     setCreateTeamOpen(false);
-    ReactPixel.track("Team Creation Dialog Closed", { user_id: user?.userId });
-    ga.event({
-      category: "Team Creation",
+    trackEvent({
       action: "Team Creation Dialog Closed",
-      label: "Team Creation",
+      params: {
+        category: "Team Creation",
+        label: "Team Creation",
+        user_id: user?.userId
+      }
     });
   };
 
   const handleClose = (helperType) => {
     console.log("handleClose", helperType);
-    ReactPixel.track("Helping: User Finalized Start Helping", {
-      problem_statement_id: problem_statement?.id,
-      problem_statement_title: problem_statement?.title,
-      npo_id: npo_id,
-      user_id: user?.userId,
-      mentor_or_hacker: helperType
-    });
-    
-    ga.event({
-      category: "Helping",
-      action: "User Finalized Helping",
-      label: "Helping",
+    trackEvent({
+      action: "Helping: User Finalized Start Helping",
+      params: {
+        category: "Helping",
+        label: "Helping",
+        problem_statement_id: problem_statement?.id,
+        problem_statement_title: problem_statement?.title,
+        npo_id: npo_id,
+        user_id: user?.userId,
+        mentor_or_hacker: helperType
+      }
     });
 
     setOpen(false);
@@ -456,17 +444,16 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   };
 
   const handleCancel = () => {
-    ReactPixel.track("Helping: User Canceled Helping", {
-      problem_statement_id: problem_statement?.id,
-      problem_statement_title: problem_statement?.title,
-      npo_id: npo_id,
-      user_id: user?.userId
-    });
-    
-    ga.event({
-      category: "Helping",
-      action: "User Canceled Helping",
-      label: "Helping",
+    trackEvent({
+      action: "Helping: User Canceled Helping",
+      params: {
+        category: "Helping",
+        label: "Helping",
+        problem_statement_id: problem_statement?.id,
+        problem_statement_title: problem_statement?.title,
+        npo_id: npo_id,
+        user_id: user?.userId
+      }
     });
 
     setOpen(false);
@@ -475,17 +462,16 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   };
 
   const handleCloseUnhelp = () => {
-    ReactPixel.track("Helping: User Finalized Stop Helping", {
-      problem_statement_id: problem_statement?.id,
-      problem_statement_title: problem_statement?.title,
-      npo_id: npo_id,
-      user_id: user?.userId
-    });
-    
-    ga.event({
-      category: "Helping",
-      action: "User Finalized Stop Helping",
-      label: "Helping",
+    trackEvent({
+      action: "Helping: User Finalized Stop Helping",
+      params: {
+        category: "Helping",
+        label: "Helping",
+        problem_statement_id: problem_statement?.id,
+        problem_statement_title: problem_statement?.title,
+        npo_id: npo_id,
+        user_id: user?.userId
+      }
     });
 
     setOpenUnhelp(false);
@@ -495,11 +481,12 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   };
 
   const handleCloseUnhelpCancel = () => {
-    ReactPixel.track("Helping: User Canceled Stop Helping");
-    ga.event({
-      category: "Helping",
-      action: "User Canceled Stop Helping",
-      label: "Helping",
+    trackEvent({
+      action: "Helping: User Canceled Stop Helping",
+      params: {
+        category: "Helping",
+        label: "Helping"
+      }
     });
 
     setOpenUnhelp(false);
