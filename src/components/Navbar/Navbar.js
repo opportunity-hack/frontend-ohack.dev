@@ -3,9 +3,8 @@ import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
 import MenuIcon from "@mui/icons-material/Menu";
-import * as ga from "../../lib/ga";
+import { trackEvent, initFacebookPixel, set } from "../../lib/ga";
 import Button from "@mui/material/Button";
-import ReactPixel from "react-facebook-pixel";
 import {
   useLogoutFunction,
   useAuthInfo,
@@ -22,6 +21,8 @@ import {
   Tooltip,
   MenuItem,
   Menu,
+  Divider,
+  ListSubheader,
 } from "@mui/material";
 
 import { LoginButton, NavbarLink, NavbarButton } from "./styles";
@@ -31,24 +32,45 @@ const pages = [
   ["📖 Projects", "/nonprofits"],
   ["#️⃣ Join Slack", "/signup"],
   ["📍 Request a Hack", "/hack/request"],
-  ["🙏 Mentors", "/about/mentors"],
   ["🏆 Judges", "/about/judges"],
   ["🎉 Sponsors", "/sponsor"],
 ];
 
-const about_settings = [
-  ["ℹ️ About Us", "/about"],
-  ["❓ What's your why?", "/about/why"],
-  ["🛜 Get Feedback", "/feedback"],
-  ["⌛️ Track Volunteer Time", "/volunteer/track"],
-  ["🙌 Success Stories", "/about/success-stories"],
-  ["🤚 Volunteering", "/volunteer"],
-  ["🎉 What is a Hackathon?", "/hack"],
-  ["❤️ Rewards", "/about/hearts"],
-  ["✅ Project Completion", "/about/completion"],
-  ["📝 Process", "/about/process"],
-  ["🚪 Office Hours", "/office-hours"],
-  ["🎨 Style Guide", "/about/style-guide"],
+// Reorganized about_settings with logical groupings
+const aboutMenuGroups = [
+  {
+    title: "About Us",
+    items: [
+      ["ℹ️ About Us", "/about"],
+      ["❓ What's your why?", "/about/why"],
+      ["🙌 Success Stories", "/about/success-stories"],
+    ]
+  },
+  {
+    title: "Get Involved",
+    items: [
+      ["🤚 Volunteering", "/volunteer"],
+      ["⌛️ Track Volunteer Time", "/volunteer/track"],
+      ["🙏 Mentors", "/about/mentors"],
+      ["🚪 Office Hours", "/office-hours"],
+    ]
+  },
+  {
+    title: "Hackathons & Projects",
+    items: [
+      ["🎉 What is a Hackathon?", "/hack"],
+      ["📝 Process", "/about/process"],
+      ["✅ Project Completion", "/about/completion"],
+      ["❤️ Rewards", "/about/hearts"],
+    ]
+  },
+  {
+    title: "Other Resources",
+    items: [
+      ["🛜 Get Feedback", "/feedback"],
+      ["🎨 Style Guide", "/about/style-guide"],
+    ]
+  }
 ];
 
 const auth_settings = [["Profile", "/profile"]];
@@ -64,23 +86,18 @@ export default function NavBar() {
 
   useEffect(() => {
     if (isLoggedIn && user?.email) {
-      ga.set(user.email);
-      ReactPixel.track("Login Email Set");
+      // Set user data for analytics
+      set(user.email);
+      
+      // Track login event
+      trackEvent({
+        action: "Login Email Set",
+        params: {}
+      });
     }
 
-    if (typeof window !== "undefined") {
-      const advancedMatching =
-        isLoggedIn && user?.email ? { em: user.email } : undefined;
-      const options = {
-        autoConfig: true,
-        debug: false,
-      };
-      ReactPixel.init(
-        process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID,
-        advancedMatching,
-        options
-      );
-    }
+    // Initialize Facebook Pixel
+    initFacebookPixel();
   }, [isLoggedIn, user]);
 
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
@@ -202,6 +219,8 @@ export default function NavBar() {
               onClose={handleCloseNavMenu}
               sx={{
                 display: { xs: "block", md: "none" },
+                maxHeight: "75vh",
+                overflowY: "auto"
               }}
             >
               {pages.map((page) => (
@@ -211,12 +230,20 @@ export default function NavBar() {
                   </MenuItem>
                 </Link>
               ))}
-              {about_settings.map((setting) => (
-                <Link href={setting[1]} key={setting[0]} passHref>
-                  <MenuItem onClick={handleCloseNavMenu}>
-                    <Typography textAlign="center">{setting[0]}</Typography>
-                  </MenuItem>
-                </Link>
+              <Divider />
+              <ListSubheader>About Opportunity Hack</ListSubheader>
+              {aboutMenuGroups.map((group, index) => (
+                <React.Fragment key={group.title}>
+                  {index > 0 && <Divider />}
+                  <ListSubheader>{group.title}</ListSubheader>
+                  {group.items.map((setting) => (
+                    <Link href={setting[1]} key={setting[0]} passHref>
+                      <MenuItem onClick={handleCloseNavMenu} sx={{ pl: 3 }}>
+                        <Typography textAlign="center">{setting[0]}</Typography>
+                      </MenuItem>
+                    </Link>
+                  ))}
+                </React.Fragment>
               ))}
             </Menu>
           </Box>
@@ -254,7 +281,11 @@ export default function NavBar() {
               </NavbarButton>
             </Tooltip>
             <Menu
-              sx={{ mt: "45px" }}
+              sx={{ 
+                mt: "45px",
+                maxHeight: "75vh",
+                overflowY: "auto"
+              }}
               id="menu-appbar"
               anchorEl={anchorElAbout}
               anchorOrigin={{
@@ -269,12 +300,18 @@ export default function NavBar() {
               open={Boolean(anchorElAbout)}
               onClose={handleCloseAboutMenu}
             >
-              {about_settings.map((setting) => (
-                <Link href={setting[1]} key={setting[0]} passHref>
-                  <MenuItem onClick={handleCloseAboutMenu}>
-                    <Typography textAlign="center">{setting[0]}</Typography>
-                  </MenuItem>
-                </Link>
+              {aboutMenuGroups.map((group, index) => (
+                <React.Fragment key={group.title}>
+                  {index > 0 && <Divider />}
+                  <ListSubheader>{group.title}</ListSubheader>
+                  {group.items.map((setting) => (
+                    <Link href={setting[1]} key={setting[0]} passHref>
+                      <MenuItem onClick={handleCloseAboutMenu}>
+                        <Typography textAlign="center">{setting[0]}</Typography>
+                      </MenuItem>
+                    </Link>
+                  ))}
+                </React.Fragment>
               ))}
             </Menu>
           </Box>
