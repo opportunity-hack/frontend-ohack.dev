@@ -15,9 +15,9 @@ export const FooterContainer = styled(Grid)(() => ({
   width: "100%",
   backgroundColor: highContrastTheme.background,
   color: highContrastTheme.textPrimary,
-  paddingTop: "3rem",
-  paddingBottom: "3rem",
-  marginTop: 0,
+  paddingTop: "2rem",
+  paddingBottom: "1rem",
+  marginTop: "2rem",
   marginBottom: 0,
 }));
 
