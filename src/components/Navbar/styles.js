@@ -64,6 +64,9 @@ export const NavbarButton = styled(Button)({
   letterSpacing: "0em",
   color: "#F0F0F0",
   transitionDuration: "0.3s",
+  padding: "8px 16px", // Increased padding for better touch targets
+  minWidth: "48px", // Minimum width for touch targets
+  minHeight: "48px", // Minimum height for touch targets
   
   "&:hover": {
     color: "#6a6a6a",
@@ -76,6 +79,7 @@ export const NavbarLink = styled(Link)({
   letterSpacing: "0em",
   color: "#F0F0F0",
   transitionDuration: "0.3s",
+  display: "inline-block", // Ensure the link has proper block behavior
   
   "&:hover": {
     color: "#6a6a6a",
@@ -86,10 +90,14 @@ export const LoginButton = styled(Button)({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",
   paddingRight: "1.5rem",
+  paddingTop: "8px",
+  paddingBottom: "8px",
   fontWeight: 600,
   fontSize: "1.5rem",
   textTransform: "unset !important",
   backgroundColor: "#003486",
+  minWidth: "48px", // Minimum width for touch targets
+  minHeight: "48px", // Minimum height for touch targets
 });
 
 export const ProfileContainer = styled(Grid)({});

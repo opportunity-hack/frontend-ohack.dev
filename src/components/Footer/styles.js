@@ -1,90 +1,117 @@
-import styled from "@emotion/styled";
-import { Grid, Typography, Link } from "@mui/material";
+import { styled } from '@mui/system';
+import { Grid, Box } from '@mui/material';
+import Link from 'next/link';
 
-export const FooterContainer = styled(Grid)`
-  background-color: ${(props) => props.theme.palette.primary.main};
-  color: white;
-  padding: 3rem 1rem;
-  min-height: 500px;
-`;
+// Define high contrast colors for accessibility
+const highContrastTheme = {
+  background: "#1A1A2E", // Darker blue background
+  textPrimary: "#FFFFFF", // Bright white for text
+  textSecondary: "#E0E0E0", // Light gray with sufficient contrast
+  accentColor: "#FFEB3B", // Bright yellow for accent/hover
+  linkHoverBackground: "rgba(255, 255, 255, 0.1)" // Subtle hover effect
+};
 
-export const InnerContainer = styled(Grid)`
-  max-width: 1200px;
-  margin: 0 auto;
-`;
+export const FooterContainer = styled(Grid)(() => ({
+  width: "100%",
+  backgroundColor: highContrastTheme.background,
+  color: highContrastTheme.textPrimary,
+  paddingTop: "3rem",
+  paddingBottom: "3rem",
+  marginTop: 0,
+  marginBottom: 0,
+}));
 
-export const TextContainer = styled(Grid)`
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-`;
+export const InnerContainer = styled(Grid)(() => ({
+  maxWidth: "1200px",
+  margin: "0 auto",
+  padding: "0 1.5rem",
+}));
 
-export const StyledText = styled(Typography)`
-  font-weight: bold;
-  font-size: 1.5rem; /* Increased from 1.25rem */
-  margin-bottom: 1rem;
-  color: white;
-`;
+export const TextContainer = styled(Grid)(() => ({
+  padding: "0 1rem",
+  marginBottom: "2rem",
+}));
 
-export const MutedText = styled(Typography)`
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1rem; /* Increased from 0.875rem */
-  margin-bottom: 1rem;
-  
-  p {
-    margin-top: 0;
-    line-height: 1.5;
+export const MutedText = styled('div')(() => ({
+  fontSize: "1.05rem", // Slightly larger for better readability
+  color: highContrastTheme.textSecondary,
+  lineHeight: 1.6,
+  marginTop: "0.5rem",
+}));
+
+export const StyledLink = styled(Link)(() => ({
+  color: highContrastTheme.textPrimary,
+  textDecoration: "none",
+  fontWeight: 500,
+  transition: "all 0.2s ease",
+  '&:hover, &:focus': {
+    color: highContrastTheme.accentColor,
+    textDecoration: "underline",
+  },
+  // Ensure proper focus indicators for keyboard navigation
+  '&:focus-visible': {
+    outline: `2px solid ${highContrastTheme.accentColor}`,
+    outlineOffset: '2px',
   }
-`;
+}));
 
-export const StyledLink = styled(Link)`
-  color: white;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  font-size: 1rem; /* Increased font size */
+export const LinkList = styled('ul')(() => ({
+  listStyle: "none",
+  padding: 0,
+  margin: 0,
+}));
+
+export const LinkListItem = styled('li')(() => ({
+  fontSize: "1.05rem",
+  marginBottom: "1rem",
+  color: highContrastTheme.textPrimary,
+  display: "flex",
+  alignItems: "center",
   
-  &:hover {
-    text-decoration: underline;
-  }
+  '& svg': {
+    marginLeft: "0.5rem",
+    fontSize: "1rem",
+    color: highContrastTheme.textPrimary,
+  },
   
-  svg {
-    margin-left: 4px;
-    font-size: 1rem;
+  '&:hover': {
+    '& svg': {
+      color: highContrastTheme.accentColor,
+    }
   }
-`;
+}));
 
-export const LinkList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 1rem;
-`;
+export const StyledText = styled('div')(() => ({
+  fontSize: "1.2rem",
+  fontWeight: 600,
+  color: highContrastTheme.textPrimary,
+}));
 
-export const LinkListItem = styled.li`
-  margin-bottom: 1.2rem; /* Increased spacing between items */
-  display: flex;
-  align-items: center;
-  font-size: 1rem;
-  
-  svg {
-    margin-left: 4px;
-    font-size: 1.1rem;
+export const IconLink = styled('a')(() => ({
+  color: highContrastTheme.textPrimary,
+  fontSize: "1.5rem",
+  marginRight: "1rem",
+  transition: "color 0.2s ease",
+  '&:hover': {
+    color: highContrastTheme.accentColor,
+  },
+  // Ensure proper focus indicators for keyboard navigation
+  '&:focus-visible': {
+    outline: `2px solid ${highContrastTheme.accentColor}`,
+    outlineOffset: '2px',
   }
-`;
+}));
 
-export const IconLink = styled.a`
-  color: white;
-  margin-right: 1rem;
-  font-size: 1.6rem; /* Increased from 1.5rem */
-  
-  &:hover {
-    opacity: 0.8;
+export const Hashtag = styled('span')(() => ({
+  color: highContrastTheme.textPrimary,
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
+  borderRadius: "5px",
+  padding: "0.35rem 0.6rem",
+  marginBottom: "0.5rem",
+  display: "inline-block",
+  fontSize: "0.9rem",
+  fontWeight: 500,
+  '&:hover': {
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
   }
-`;
-
-export const Hashtag = styled.span`
-  color: rgba(255, 255, 255, 0.8);
-  display: inline-block;
-  font-size: 1rem; /* Increased from default */
-`;
+}));

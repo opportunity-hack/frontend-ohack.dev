@@ -200,6 +200,11 @@ export default function NavBar() {
               aria-haspopup="true"
               onClick={handleOpenNavMenu}
               color="inherit"
+              sx={{ 
+                padding: "12px",
+                minWidth: "48px", 
+                minHeight: "48px"
+              }}
             >
               <MenuIcon />
             </IconButton>
@@ -225,7 +230,10 @@ export default function NavBar() {
             >
               {pages.map((page) => (
                 <Link href={page[1]} key={page[0]} passHref>
-                  <MenuItem onClick={handleCloseNavMenu}>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
                     <Typography textAlign="center">{page[0]}</Typography>
                   </MenuItem>
                 </Link>
@@ -238,7 +246,10 @@ export default function NavBar() {
                   <ListSubheader>{group.title}</ListSubheader>
                   {group.items.map((setting) => (
                     <Link href={setting[1]} key={setting[0]} passHref>
-                      <MenuItem onClick={handleCloseNavMenu} sx={{ pl: 3 }}>
+                      <MenuItem 
+                        onClick={handleCloseNavMenu} 
+                        sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
+                      >
                         <Typography textAlign="center">{setting[0]}</Typography>
                       </MenuItem>
                     </Link>
@@ -265,7 +276,14 @@ export default function NavBar() {
               <NavbarLink href={page[1]} key={page[0]}>
                 <Button
                   onClick={handleCloseNavMenu}
-                  sx={{ my: 2, color: "white", display: "block" }}
+                  sx={{ 
+                    my: 2, 
+                    color: "white", 
+                    display: "block",
+                    px: 2,
+                    minWidth: "48px",
+                    minHeight: "48px"
+                  }}
                 >
                   {page[0]}
                 </Button>
@@ -306,7 +324,10 @@ export default function NavBar() {
                   <ListSubheader>{group.title}</ListSubheader>
                   {group.items.map((setting) => (
                     <Link href={setting[1]} key={setting[0]} passHref>
-                      <MenuItem onClick={handleCloseAboutMenu}>
+                      <MenuItem 
+                        onClick={handleCloseAboutMenu}
+                        sx={{ py: 1.5, minHeight: "48px" }}
+                      >
                         <Typography textAlign="center">{setting[0]}</Typography>
                       </MenuItem>
                     </Link>
@@ -319,7 +340,15 @@ export default function NavBar() {
           {isLoggedIn && (
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
-                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                <IconButton 
+                  onClick={handleOpenUserMenu} 
+                  sx={{ 
+                    p: 0,
+                    minWidth: "48px", 
+                    minHeight: "48px",
+                    margin: "4px" 
+                  }}
+                >
                   <Avatar alt={user?.firstName} src={user?.pictureUrl} />
                 </IconButton>
               </Tooltip>
@@ -341,12 +370,18 @@ export default function NavBar() {
               >
                 {auth_settings.map((setting) => (
                   <Link href={setting[1]} key={setting[0]} passHref>
-                    <MenuItem onClick={handleCloseUserMenu}>
+                    <MenuItem 
+                      onClick={handleCloseUserMenu}
+                      sx={{ py: 1.5, minHeight: "48px" }}
+                    >
                       <Typography textAlign="center">{setting[0]}</Typography>
                     </MenuItem>
                   </Link>
                 ))}
-                <MenuItem onClick={() => logout(true)}>
+                <MenuItem 
+                  onClick={() => logout(true)}
+                  sx={{ py: 1.5, minHeight: "48px" }}
+                >
                   <Typography textAlign="center">Log Out</Typography>
                 </MenuItem>
               </Menu>
