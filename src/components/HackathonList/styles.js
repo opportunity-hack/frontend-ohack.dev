@@ -86,13 +86,14 @@ export const NewsContainer = styled(Grid)({
 });
 
 export const EventCards = styled(Grid)((props) => ({
-  height: 'auto',
+  height: '400px', // Set a fixed height to prevent layout shifts
   padding: '20px',
   width: '100%',
   backgroundColor: '#e6f7ff',
   borderRadius: '15px',
   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  overflow: 'auto', // Add scrolling for overflow content
   
   '&:hover': {
     transform: 'translateY(-2px)',
@@ -101,6 +102,7 @@ export const EventCards = styled(Grid)((props) => ({
 
   [props.theme.breakpoints.down('md')]: {
     padding: '15px',
+    height: '450px', // Slightly taller on mobile
   },
 }));
 
@@ -173,6 +175,7 @@ export const EventText = styled(Typography)({
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
+  minHeight: '4.8rem', // Fixed height for 3 lines of text at 1.2rem font size with 1.33 line height
 });
 
 export const EventGreyText = styled(Typography)({

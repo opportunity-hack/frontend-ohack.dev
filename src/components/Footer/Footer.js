@@ -107,11 +107,11 @@ export default function Footer() {
           <div style={{ width: '100%' }}>
             <StyledText style={{ color: accessibilityStyles.linkColor, fontWeight: "600" }}>Our Mission</StyledText>
             <MutedText style={{ 
-              minHeight: '70px',
+              height: '70px',
               color: accessibilityStyles.mutedTextColor,
               fontSize: "1.05rem", // Slightly larger for better readability
             }}>
-              <p>
+              <p style={{ margin: '0' }}>
                 To empower students, professionals, and nonprofits to collaboratively 
                 create sustainable tech solutions that drive social impact and foster learning.
               </p>
@@ -123,11 +123,11 @@ export default function Footer() {
               fontWeight: "600" 
             }}>Our Vision</StyledText>
             <MutedText style={{ 
-              minHeight: '70px',
+              height: '70px',
               color: accessibilityStyles.mutedTextColor,
               fontSize: "1.05rem", // Slightly larger for better readability
             }}>
-              <p>
+              <p style={{ margin: '0' }}>
                 To build a global community where individuals can accelerate their career 
                 growth while making a lasting impact for nonprofits.
               </p>

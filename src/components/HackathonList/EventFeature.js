@@ -76,16 +76,48 @@ function EventFeature(props) {
       
       <EventGreyText variant="button">{location}</EventGreyText>
       
-      <ProgressContainer
-        container
-        justifyContent="space-around"
-        direction="column"
-      >
-        <BlankContainer container justifyContent="center" direction="row" gap="20px">
-          {donationCurrent?.food > 0 && (
+      {/* Only render the donation progress if there is data */}
+      {(donationCurrent?.food > 0 || donationCurrent?.prize > 0 || donationCurrent?.swag > 0) && (
+        <ProgressContainer
+          container
+          justifyContent="space-around"
+          direction="column"
+          style={{ height: '160px' }} // Fixed height to prevent layout shifts
+        >
+          <BlankContainer container justifyContent="center" direction="row" gap="20px">
+            {donationCurrent?.food > 0 && (
+              <ProgressBarHolder container justifyContent="center">
+                <Typography variant="h5" marginBottom="12%" fontWeight="bold">
+                  Food
+                </Typography>
+                <CircularProgressbar
+                  styles={{
+                    path: {
+                      stroke: "#003486",
+                    },
+                    trail: {
+                      stroke: "#ffffff",
+                    },
+                    text: {
+                      fill: "#003486",
+                    },
+                  }}
+                  value={(donationCurrent.food / donationGoals.food) * 100}
+                  text={`${(
+                    (donationCurrent.food / donationGoals.food) *
+                    100
+                  ).toFixed(0)}%`}
+                />
+                <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
+                  ${donationCurrent.food}/{donationGoals.food}
+                </TypographyStyled>
+              </ProgressBarHolder>
+            )}
+
+            {donationCurrent?.prize > 0 && (
             <ProgressBarHolder container justifyContent="center">
               <Typography variant="h5" marginBottom="12%" fontWeight="bold">
-                Food
+                Prize
               </Typography>
               <CircularProgressbar
                 styles={{
@@ -99,85 +131,61 @@ function EventFeature(props) {
                     fill: "#003486",
                   },
                 }}
-                value={(donationCurrent.food / donationGoals.food) * 100}
+                value={(donationCurrent.prize / donationGoals.prize) * 100}
                 text={`${(
-                  (donationCurrent.food / donationGoals.food) *
+                  (donationCurrent.prize / donationGoals.prize) *
                   100
                 ).toFixed(0)}%`}
               />
               <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-                ${donationCurrent.food}/{donationGoals.food}
+                ${donationCurrent?.prize}/{donationGoals?.prize}
               </TypographyStyled>
             </ProgressBarHolder>
-          )}
+            )}
 
-          {donationCurrent?.prize > 0 && (
-          <ProgressBarHolder container justifyContent="center">
-            <Typography variant="h5" marginBottom="12%" fontWeight="bold">
-              Prize
-            </Typography>
-            <CircularProgressbar
-              styles={{
-                path: {
-                  stroke: "#003486",
-                },
-                trail: {
-                  stroke: "#ffffff",
-                },
-                text: {
-                  fill: "#003486",
-                },
-              }}
-              value={(donationCurrent.prize / donationGoals.prize) * 100}
-              text={`${(
-                (donationCurrent.prize / donationGoals.prize) *
-                100
-              ).toFixed(0)}%`}
-            />
-            <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-              ${donationCurrent?.prize}/{donationGoals?.prize}
+            {donationCurrent?.swag > 0 && (
+              <ProgressBarHolder container justifyContent="center">
+                <Typography variant="h5" marginBottom="12%" fontWeight="bold">
+                  Swag
+                </Typography>
+                <CircularProgressbar
+                  styles={{
+                    path: {
+                      stroke: "#003486",
+                    },
+                    trail: {
+                      stroke: "#ffffff",
+                    },
+                    text: {
+                      fill: "#003486",
+                    },
+                  }}
+                  value={(donationCurrent?.swag / donationGoals?.swag) * 100}
+                  text={`${(
+                    (donationCurrent?.swag / donationGoals?.swag) *
+                    100
+                  ).toFixed(0)}%`}
+                />
+                <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
+                  ${donationCurrent.swag}/{donationGoals.swag}
+                </TypographyStyled>
+              </ProgressBarHolder>
+            )}
+          </BlankContainer>
+
+          <ThankYouContainer>
+            <TypographyStyled variant="h6">
+              {donationCurrent?.thank_you?.length > 0
+                ? `Special thanks to: ${donationCurrent?.thank_you} for donating!`
+                : ""}
             </TypographyStyled>
-          </ProgressBarHolder>
-          )}
-
-          {donationCurrent?.swag > 0 && (
-            <ProgressBarHolder container justifyContent="center">
-              <Typography variant="h5" marginBottom="12%" fontWeight="bold">
-                Swag
-              </Typography>
-              <CircularProgressbar
-                styles={{
-                  path: {
-                    stroke: "#003486",
-                  },
-                  trail: {
-                    stroke: "#ffffff",
-                  },
-                  text: {
-                    fill: "#003486",
-                  },
-                }}
-                value={(donationCurrent?.swag / donationGoals?.swag) * 100}
-                text={`${(
-                  (donationCurrent?.swag / donationGoals?.swag) *
-                  100
-                ).toFixed(0)}%`}
-              />
-              <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-                ${donationCurrent.swag}/{donationGoals.swag}
-              </TypographyStyled>
-            </ProgressBarHolder>
-          )}
-        </BlankContainer>
-
-        <ThankYouContainer>
-          <TypographyStyled variant="h6">
-            {donationCurrent?.thank_you?.length > 0
-              ? `Special thanks to: ${donationCurrent?.thank_you} for donating!`
-              : ""}
-          </TypographyStyled>
-        </ThankYouContainer>
-      </ProgressContainer>
+          </ThankYouContainer>
+        </ProgressContainer>
+      )}
+      {/* Empty placeholder with fixed height when no donation data */}
+      {!donationCurrent?.food && !donationCurrent?.prize && !donationCurrent?.swag && (
+        <div style={{ height: '20px' }} /> // Small spacer when no donation data
+      )}
 
       <ButtonContainer
         container

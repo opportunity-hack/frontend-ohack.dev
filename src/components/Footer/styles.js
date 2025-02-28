@@ -17,8 +17,13 @@ export const FooterContainer = styled(Grid)(() => ({
   color: highContrastTheme.textPrimary,
   paddingTop: "2rem",
   paddingBottom: "1rem",
+  paddingLeft: "0",
+  paddingRight: "0",
   marginTop: "2rem",
   marginBottom: 0,
+  marginLeft: "0",
+  marginRight: "0",
+  boxSizing: "border-box",
 }));
 
 export const InnerContainer = styled(Grid)(() => ({
@@ -30,6 +35,7 @@ export const InnerContainer = styled(Grid)(() => ({
 export const TextContainer = styled(Grid)(() => ({
   padding: "0 1rem",
   marginBottom: "2rem",
+  boxSizing: "border-box",
 }));
 
 export const MutedText = styled('div')(() => ({

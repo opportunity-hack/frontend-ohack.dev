@@ -36,7 +36,7 @@ function HackathonList() {
     <Skeleton
       variant="rectangular"
       width="100%"
-      height={200}
+      height={400} // Match the fixed height of EventCards
       style={{ marginBottom: "20px" }}
     />
   );    
