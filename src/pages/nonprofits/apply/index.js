@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { 
   Typography, TextField, Button, FormControlLabel, Checkbox, 
@@ -16,6 +16,17 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { useTheme } from '@mui/material/styles';
 import ReactRecaptcha3 from 'react-google-recaptcha3';
 import { initFacebookPixel, trackEvent, set } from '../../../lib/ga';
+
+// Debounce function to limit the number of events sent
+const debounce = (func, delay) => {
+  let timeoutId;
+  return function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+};
 
 const InfoCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(2),
@@ -43,19 +54,49 @@ export default function Apply({ title, description, openGraphData }) {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [lastTrackedValues, setLastTrackedValues] = useState({
+    name: '',
+    email: '',
+    organization: '',
+    idea: '',
+    isNonProfit: false,
+  });
 
   useEffect(() => {
     initFacebookPixel();
     ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY);
   }, []);
 
+  // Debounced tracking function to reduce event frequency
+  const debouncedTrackFieldChange = useCallback(
+    debounce((fieldName, fieldValue) => {
+      // Only track if the value has changed significantly
+      if (fieldValue !== lastTrackedValues[fieldName]) {
+        trackEvent({
+          action: "npo_form_field_change",
+          params: { field_name: fieldName, field_value: fieldValue }
+        });
+        
+        setLastTrackedValues(prev => ({
+          ...prev,
+          [fieldName]: fieldValue
+        }));
+      }
+    }, 800), // 800ms delay
+    [lastTrackedValues]
+  );
+
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'isNonProfit' ? checked : value }));
-    trackEvent({
-      action: "npo_form_field_change",
-      params: { field_name: name, field_value: name === 'isNonProfit' ? checked : value }
-    });
+    const fieldValue = name === 'isNonProfit' ? checked : value;
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: fieldValue 
+    }));
+    
+    // Track changes with debounce to reduce tracking frequency
+    debouncedTrackFieldChange(name, fieldValue);
   };
 
   const handleSubmit = async (e) => {
@@ -100,6 +141,28 @@ export default function Apply({ title, description, openGraphData }) {
       setIsSubmitting(false);
     }
   };
+
+  // For significant text fields, add specialized debounced handlers for smarter tracking
+  const handleIdeaChange = useCallback((e) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, idea: value }));
+    
+    // Only track significant changes (when they pause typing or at certain lengths)
+    const significantThresholds = [20, 50, 100, 200];
+    const previousLength = formData.idea.length;
+    const currentLength = value.length;
+    
+    // If they've crossed a threshold, track it
+    const previousThreshold = significantThresholds.findIndex(threshold => previousLength < threshold);
+    const currentThreshold = significantThresholds.findIndex(threshold => currentLength < threshold);
+    
+    if (previousThreshold !== currentThreshold && currentThreshold !== -1) {
+      debouncedTrackFieldChange('idea', `Reached ${significantThresholds[currentThreshold]} characters`);
+    } else {
+      // Otherwise use normal debounced tracking
+      debouncedTrackFieldChange('idea', value);
+    }
+  }, [formData.idea, debouncedTrackFieldChange]);
 
   return (
     <>
@@ -344,7 +407,8 @@ export default function Apply({ title, description, openGraphData }) {
                     multiline
                     rows={4}
                     value={formData.idea}
-                    onChange={handleChange}
+                    // Use specialized handler for the idea field which may contain longer text
+                    onChange={handleIdeaChange}
                     required
                     disabled={isSubmitting}
                   />
