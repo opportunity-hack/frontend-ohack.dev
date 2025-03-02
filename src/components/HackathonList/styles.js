@@ -86,8 +86,8 @@ export const NewsContainer = styled(Grid)({
 });
 
 export const EventCards = styled(Grid)((props) => ({
-  height: '400px', // Set a fixed height to prevent layout shifts
-  padding: '20px',
+  height: '500px', // Set a fixed height to prevent layout shifts
+  padding: '15px',
   width: '100%',
   backgroundColor: '#e6f7ff',
   borderRadius: '15px',
