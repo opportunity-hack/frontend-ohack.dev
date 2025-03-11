@@ -175,7 +175,10 @@ export const EventText = styled(Typography)({
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-  minHeight: '4.8rem', // Fixed height for 3 lines of text at 1.2rem font size with 1.33 line height
+  lineHeight: '1.5',
+  maxHeight: '5.4rem', // 3 lines × 1.2rem font × 1.5 line height
+  margin: 0,
+  wordBreak: 'break-word',
 });
 
 export const EventGreyText = styled(Typography)({
