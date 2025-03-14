@@ -6,7 +6,7 @@ import { SectionTitle } from "./styles";
 import Link from "next/link";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import dynamic from "next/dynamic";
-import { Skeleton } from "@mui/material"; // Import Skeleton component
+import { Skeleton, Typography, Box } from "@mui/material"; // Import Skeleton component
 
 const News = dynamic(() => import("../../components/News/News"), {
   ssr: true,
@@ -48,12 +48,16 @@ function HackathonList() {
       direction="column"
       textAlign="center"
     >
-      <SectionTitle variant="h1">Upcoming and Current Events</SectionTitle>
+      <SectionTitle variant="h2" component="h2">Upcoming and Current Events</SectionTitle>
+      
+      <Typography variant="body1" color="textSecondary" sx={{ mb: 3, maxWidth: '800px' }}>
+        Join our upcoming hackathons and make a difference! Work with nonprofits to solve real-world challenges using technology.
+      </Typography>
 
       <EmptyGrid>
         {hackathonsLoading ? (
           <HackathonGrid>
-            {Array(4).fill(0).map((_, index) => (
+            {Array(2).fill(0).map((_, index) => (
               <React.Fragment key={`event-skeleton-${index}`}>
                 {renderEventSkeleton()}
               </React.Fragment>
@@ -66,7 +70,7 @@ function HackathonList() {
                 title={event?.title}
                 event_id={event?.event_id}
                 description={event?.description}
-                key={event?.title}
+                key={event?.title || index}
                 type={event?.type}
                 nonprofits={event?.nonprofits}
                 start_date={event?.start_date}
@@ -82,12 +86,20 @@ function HackathonList() {
             ))}
           </HackathonGrid>
         ) : (
-          <Link prefetch={false} href="/hack">
-            <MoreNewsStyle>
-              See older hacks
-              <ArrowForwardIcon />
-            </MoreNewsStyle>
-          </Link>
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="h6" color="textSecondary" gutterBottom>
+              No upcoming events at the moment
+            </Typography>
+            <Typography variant="body1" color="textSecondary" paragraph>
+              Check back soon or view our past events below
+            </Typography>
+            <Link prefetch={false} href="#previous-events">
+              <MoreNewsStyle>
+                See previous hackathons
+                <ArrowForwardIcon sx={{ ml: 1 }} />
+              </MoreNewsStyle>
+            </Link>
+          </Box>
         )}
 
         <NewsSection>

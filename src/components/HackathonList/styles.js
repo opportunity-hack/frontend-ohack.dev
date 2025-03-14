@@ -4,6 +4,8 @@ import {
   Typography,
   CircularProgress,
   Chip,
+  Box,
+  Paper
 } from "@mui/material";
 import { styled } from "@mui/material";
 
@@ -52,6 +54,79 @@ export const HackathonGrid = styled(Grid)({
   
   '@media (max-width: 960px)': {
     gridTemplateColumns: 'minmax(300px, 450px)', // Single column for mobile
+  },
+});
+
+// New grid for past events - more compact, showing more items at once
+export const PastEventGrid = styled(Grid)({
+  width: '100%',
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+  gap: '16px',
+  marginTop: '20px',
+  
+  '@media (max-width: 600px)': {
+    gridTemplateColumns: '1fr', // Single column on very small screens
+  },
+});
+
+// Card design for past events - more compact than current events
+export const PastEventCard = styled(Paper)({
+  padding: '16px',
+  height: '260px', // Fixed height for consistency
+  borderRadius: '8px',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+  cursor: 'pointer',
+  backgroundColor: '#f0f8ff',
+  
+  '&:hover': {
+    transform: 'translateY(-3px)',
+    boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+  },
+});
+
+export const PastEventYear = styled(Box)({
+  color: '#0066cc',
+  fontWeight: 'bold',
+  fontSize: '0.9rem',
+  marginBottom: '8px',
+  display: 'flex',
+  alignItems: 'center',
+});
+
+export const PastEventText = styled(Typography)({
+  fontSize: '0.9rem',
+  color: '#555',
+  display: '-webkit-box',
+  WebkitLineClamp: 3,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  marginTop: '8px',
+  lineHeight: '1.4',
+});
+
+export const PastEventLocation = styled(Box)({
+  color: '#555',
+  fontSize: '0.85rem',
+  marginTop: '8px',
+  display: 'flex',
+  alignItems: 'center',
+});
+
+export const ToggleButton = styled(Button)({
+  borderRadius: '20px',
+  textTransform: 'none',
+  fontWeight: '500',
+  fontSize: '0.85rem',
+  padding: '6px 12px',
+  
+  '&:hover': {
+    backgroundColor: '#e3f2fd',
   },
 });
 
@@ -146,6 +221,7 @@ export const ThankYouContainer = styled(Grid)({
 export const SectionTitle = styled(Typography)({
   fontSize: "2.5rem",
   fontWeight: "600",
+  marginBottom: "20px",
 });
 
 export const EventTitle = styled(Typography)({
@@ -154,17 +230,16 @@ export const EventTitle = styled(Typography)({
 });
 
 export const EventLink = styled(Typography)({
-  fontSize: "2.0rem",  
-  color: "#0000FF",
-  textDecoration: "underline",
+  fontSize: "1.25rem",  
+  color: "#0066cc",
+  textDecoration: "none", // Changed to none for cleaner look
   textTransform: "none",
   fontWeight: "bold",
   "&:hover": {
     color: "#003486",
     textDecoration: "underline",
   },
-  marginBottom: "6px"
-
+  marginBottom: "8px"
 });
 
 export const EventText = styled(Typography)({
