@@ -70,7 +70,7 @@ function HackathonList() {
                 title={event?.title}
                 event_id={event?.event_id}
                 description={event?.description}
-                key={event?.title || index}
+                key={event?.title || event?.event_id}
                 type={event?.type}
                 nonprofits={event?.nonprofits}
                 start_date={event?.start_date}
