@@ -158,14 +158,20 @@ const getAvailabilityCounts = (volunteers) => {
     Saturday: {},
     Sunday: {}
   };
+  
+  if (!Array.isArray(volunteers)) return counts;
+  
   volunteers.forEach(volunteer => {
-    if (volunteer.availability) {
+    if (volunteer?.availability) {
       volunteer.availability.split(", ").forEach(slot => {
         if (slot.includes("Saturday") || slot.includes("Sunday")) {
-          const [day, time] = slot.split(" (");
-          const cleanTime = time.replace(")", "");
-          if (!counts[day]) counts[day] = {};
-          counts[day][cleanTime] = (counts[day][cleanTime] || 0) + 1;
+          const parts = slot.split(" (");
+          if (parts.length >= 2) {
+            const day = parts[0];
+            const cleanTime = parts[1].replace(")", "") || "";
+            if (!counts[day]) counts[day] = {};
+            counts[day][cleanTime] = (counts[day][cleanTime] || 0) + 1;
+          }
         }
       });
     }
@@ -198,10 +204,10 @@ const getAvailabilityCounts = (volunteers) => {
   }, [event_id, type]);  
 
   useEffect(() => {
-    if (type === "mentor" && volunteers.length > 0) {
+    if (type === "mentor" && Array.isArray(volunteers) && volunteers.length > 0) {
       // Determine if currently available for each volunteer.availability that is a list of available times
       const currentlyAvailable = volunteers.filter((volunteer) => {
-        if (volunteer.availability && volunteer.isSelected) {
+        if (volunteer?.availability && volunteer?.isSelected) {
           const availabilityArray = volunteer.availability.split(", ");
           return availabilityArray.some(isCurrentlyAvailable);
         }
@@ -215,34 +221,52 @@ const getAvailabilityCounts = (volunteers) => {
 
 
   const isCurrentlyAvailable = (timeSpan) => {
-    if (!timeSpan) return false;
+    if (!timeSpan || typeof timeSpan !== 'string') return false;
     
     const now = Moment(new Date(), "America/Los_Angeles"); // Everything is going to be in PST - we don't want to get the user's local time
     const nowDay = now.format("dddd");
 
     // Get the day which is either Saturday or Sunday within the string
-    const day = timeSpan.match(/(Saturday|Sunday)/g);
+    const dayMatch = timeSpan.match(/(Saturday|Sunday)/g);
+    const isDayMatch = dayMatch && dayMatch.length > 0 && dayMatch[0] === nowDay;
+    
+    if (!isDayMatch) return false;
 
-    const dayMatch = day && day.length > 0 && day[0] === nowDay;
+    // Safe string manipulation with proper error checking
+    let timeRange = timeSpan;
+    try {
+      // Extract the time portion from the string
+      const timeMatch = timeSpan.match(/\((.*?)\)/);
+      if (!timeMatch || !timeMatch[1]) return false;
+      
+      timeRange = timeMatch[1];
+      timeRange = timeRange.replace(/PST/g, "").trim();
+      timeRange = timeRange.replace(/p\s/g, "pm");
+      timeRange = timeRange.replace(/a\s/g, "am");
 
-    timeSpan = timeSpan.replace(/.*?\(/g, "");
-    timeSpan = timeSpan.replace(/\)/g, "");
-    timeSpan = timeSpan.replace(/PST/g, "");
-    timeSpan = timeSpan.replace(/p\s/g, "pm");
-    timeSpan = timeSpan.replace(/a\s/g, "am");
+      const timeParts = timeRange.split("-");
+      if (timeParts.length !== 2) return false;
 
-    let [startTime, endTime] = timeSpan.split("-");
-    // Add :59 to the end time to make it inclusive of the entire hour
-    endTime = endTime.replace(/(.*)([ap]m)/, "$1:59$2");
+      let [startTime, endTime] = timeParts;
+      // Add :59 to the end time to make it inclusive of the entire hour
+      endTime = endTime.trim().replace(/(\d+)([ap]m)$/, "$1:59$2");
+      startTime = startTime.trim();
 
-    const startMoment = Moment(`${startTime}`, "h:mma", "America/Los_Angeles");
-    const endMoment = Moment(`${endTime}`, "h:mma", "America/Los_Angeles");
+      const startMoment = Moment(startTime, "h:mma", "America/Los_Angeles");
+      const endMoment = Moment(endTime, "h:mma", "America/Los_Angeles");
 
-    return now.isBetween(startMoment, endMoment) && dayMatch;
+      if (!startMoment.isValid() || !endMoment.isValid()) return false;
+
+      return now.isBetween(startMoment, endMoment);
+    } catch (error) {
+      console.error("Error parsing time span:", error, timeSpan);
+      return false;
+    }
   };
 
   const renderArtifacts = (artifacts) => {
-    if (!artifacts || artifacts.length === 0) return null;
+    if (!artifacts || !Array.isArray(artifacts) || artifacts.length === 0) return null;
+    
     return (
       <Box mt={2}>
         <Typography variant="subtitle2" gutterBottom>
@@ -252,18 +276,19 @@ const getAvailabilityCounts = (volunteers) => {
           {artifacts.map((artifact, index) => (
             <ArtifactListItem key={index}>
               <ListItemIcon>
-                {artifact.type === 'pull_request' && <CodeIcon />}
-                {artifact.type === 'issue' && <BugReportIcon />}
-                {artifact.type === 'coordination' && <ForumIcon />}
-                {artifact.type === 'user_experience' && <DesignServicesIcon />}
-                {artifact.type === 'standup' && <AccessTimeIcon />}
+                {artifact?.type === 'pull_request' && <CodeIcon />}
+                {artifact?.type === 'issue' && <BugReportIcon />}
+                {artifact?.type === 'coordination' && <ForumIcon />}
+                {artifact?.type === 'user_experience' && <DesignServicesIcon />}
+                {artifact?.type === 'standup' && <AccessTimeIcon />}
+                {!artifact?.type && <CodeIcon />} {/* Default icon */}
               </ListItemIcon>
               <ListItemText
-                primary={artifact.label}
+                primary={artifact?.label || "Contribution"}
                 secondary={
                   <>
-                    {artifact.comment}
-                    {artifact.url && artifact.url.length > 0 && (
+                    {artifact?.comment || ""}
+                    {artifact?.url && Array.isArray(artifact.url) && artifact.url.length > 0 && (
                       <Link href={artifact.url[0]} target="_blank" rel="noopener noreferrer">
                         {" "}
                         (Link)
@@ -280,70 +305,84 @@ const getAvailabilityCounts = (volunteers) => {
   };
 
   const renderAvailability = (availability) => {
-    if (!availability) return null;
-    const availabilityArray = availability.split(", ");
-    return (
-      <Box mt={2}>
-        <Typography variant="subtitle2" gutterBottom>
-          Available Times:
-        </Typography>
-        {availabilityArray.map((time, index) => {
-          const isAvailableNow = isCurrentlyAvailable(time);
-          return (
-            <Tooltip
-              title={
-                isAvailableNow ? (
-                  <span style={{ fontSize: "14px" }}>
-                    Available now (during the hackathon)!
-                  </span>
-                ) : (
-                  time
-                )
-              }
-              key={index}
-            >
-              <AvailabilityChip
-                icon={<AccessTimeIcon />}
-                label={time}
-                size="small"
-                isavailablenow={isAvailableNow ? 1 : 0}
-              />
-            </Tooltip>
-          );
-        })}
-      </Box>
-    );
+    if (!availability || typeof availability !== 'string') return null;
+    
+    try {
+      const availabilityArray = availability.split(", ").filter(Boolean);
+      if (availabilityArray.length === 0) return null;
+      
+      return (
+        <Box mt={2}>
+          <Typography variant="subtitle2" gutterBottom>
+            Available Times:
+          </Typography>
+          {availabilityArray.map((time, index) => {
+            const isAvailableNow = isCurrentlyAvailable(time);
+            return (
+              <Tooltip
+                title={
+                  isAvailableNow ? (
+                    <span style={{ fontSize: "14px" }}>
+                      Available now (during the hackathon)!
+                    </span>
+                  ) : (
+                    time
+                  )
+                }
+                key={index}
+              >
+                <AvailabilityChip
+                  icon={<AccessTimeIcon />}
+                  label={time}
+                  size="small"
+                  isavailablenow={isAvailableNow ? 1 : 0}
+                />
+              </Tooltip>
+            );
+          })}
+        </Box>
+      );
+    } catch (error) {
+      console.error("Error rendering availability:", error);
+      return null;
+    }
   };
 
    const renderVolunteerCard = (volunteer) => {    
+    // Check if volunteer exists
+    if (!volunteer) return null;
+
     const isMentor = type === "mentor";
     const isJudge = type === "judge";
     const isVolunteer = type === "volunteer";
-    const isSelected = volunteer.isSelected;
-    const googleDriveImage = volunteer.photoUrl?.includes("drive.google.com");
-    let imageToDisplay =
-      "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png";
-    if (volunteer.photoUrl && !googleDriveImage) {
-      imageToDisplay = volunteer.photoUrl;
-    }
-
+    const isSelected = !!volunteer.isSelected;
+    
+    // Skip rendering if not selected
     if (!isSelected) return null;    
 
+    // Safely handle photo URL
+    let imageToDisplay = "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png";
+    if (volunteer.photoUrl && typeof volunteer.photoUrl === 'string') {
+      const googleDriveImage = volunteer.photoUrl.includes("drive.google.com");
+      if (!googleDriveImage) {
+        imageToDisplay = volunteer.photoUrl;
+      }
+    }
+
     return (
-      <Grid item xs={12} sm={6} md={4} key={volunteer.name} id={`mentor-${volunteer.name}`}>
+      <Grid item xs={12} sm={6} md={4} key={volunteer.name || `volunteer-${Math.random().toString(36)}`} id={`mentor-${volunteer.name || "unknown"}`}>
         <VolunteerCard>
           <VolunteerMediaContainer>
             <VolunteerMedia
-              key={volunteer.name}
               image={imageToDisplay}
-              title={volunteer.name}
+              title={volunteer.name || "Volunteer"}
             />
             {volunteer.isInPerson ? <InPersonBadge>In-Person</InPersonBadge> : <RemoteBadge>Remote</RemoteBadge>}
           </VolunteerMediaContainer>
           <VolunteerContent>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography gutterBottom variant="h5" component="div">
-                {volunteer.name}
+                {volunteer.name || "Volunteer"}
                 {volunteer.pronouns && (
                   <Tooltip title="Pronouns">
                     <Chip
@@ -358,7 +397,7 @@ const getAvailabilityCounts = (volunteers) => {
               <ShareVolunteer volunteer={volunteer} type={type} />
             </Box>
             <Typography variant="subtitle1" color="text.secondary">
-              {isMentor ? volunteer.company : volunteer.companyName}
+              {isMentor ? (volunteer.company || "") : (volunteer.companyName || "")}
               {!isMentor && volunteer.title && ` - ${volunteer.title}`}
             </Typography>
             <ChipContainer>
@@ -376,7 +415,7 @@ const getAvailabilityCounts = (volunteers) => {
                   size="small"
                 />
               )}
-              {isMentor && (
+              {isMentor && typeof volunteer.participationCount !== 'undefined' && (
                 <Chip
                   icon={<VolunteerActivismIcon />}
                   label={volunteer.participationCount}
@@ -399,12 +438,12 @@ const getAvailabilityCounts = (volunteers) => {
               )}
             </ChipContainer>
             <Typography variant="body1" paragraph sx={{ mt: 2 }}>
-              {volunteer.shortBio || volunteer.shortBiography}
+              {volunteer.shortBio || volunteer.shortBiography || ""}
             </Typography>
             {isMentor && (
               <>
                 <Typography variant="body1" paragraph>
-                  <strong>Expertise:</strong> {volunteer.expertise}
+                  <strong>Expertise:</strong> {volunteer.expertise || "Not specified"}
                 </Typography>
                 {volunteer.softwareEngineeringSpecifics && (
                   <Typography variant="body1" paragraph>
@@ -421,7 +460,7 @@ const getAvailabilityCounts = (volunteers) => {
                 </Typography>                
               </>
             )}
-            {isJudge && (
+            {isJudge && volunteer.whyJudge && (
               <Typography variant="body1" paragraph>
                 <strong>Why volunteering:</strong> {volunteer.whyJudge}
               </Typography>
@@ -463,25 +502,25 @@ const getAvailabilityCounts = (volunteers) => {
 
     {type === "mentor" && <MentorAvailability volunteers={volunteers} /> }
 
-    {type === "mentor" && availableMentors.length > 0 && (
+    {type === "mentor" && Array.isArray(availableMentors) && availableMentors.length > 0 && (
       <AvailableMentorsSection>
         <Typography variant="h6" gutterBottom>
           Currently Available Mentors:
         </Typography>
         {availableMentors.map((mentor) => (
           <Tooltip            
-            title=<span style={{ fontSize: "14px" }}>{
-              mentor.isInPerson
+            title={<span style={{ fontSize: "14px" }}>{
+              mentor?.isInPerson
                 ? "Available now (in-person)"
                 : "Available now (remote)"            
-            }</span>
-            key={mentor.name}
+            }</span>}
+            key={mentor?.name || `mentor-${Math.random().toString(36)}`}
           >
           <AvailableMentorChip
-            key={mentor.name}
-            label={mentor.name}            
-            onClick={() => scrollToMentor(mentor.name)}
-            isInPerson={mentor.isInPerson}
+            key={mentor?.name || `mentor-chip-${Math.random().toString(36)}`}
+            label={mentor?.name || "Mentor"}            
+            onClick={() => scrollToMentor(mentor?.name || "")}
+            isInPerson={!!mentor?.isInPerson}
             clickable
           />
           </Tooltip>
@@ -490,7 +529,7 @@ const getAvailabilityCounts = (volunteers) => {
     )}
     
     <Grid container spacing={3}>
-      {volunteers && volunteers.map((volunteer) => renderVolunteerCard(volunteer))}
+      {Array.isArray(volunteers) && volunteers.map((volunteer) => renderVolunteerCard(volunteer))}
     </Grid>
   </Box>
 );
