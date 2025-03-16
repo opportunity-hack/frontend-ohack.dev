@@ -199,7 +199,9 @@ function EventFeature(props) {
               
               const isExternal = alink?.link?.startsWith('http');
               return (
-                <Link prefetch={false} href={alink?.link} target={isExternal ? '_blank' : '_self'} onClick={(e) => {
+                <Link
+                key={alink?.name} 
+                prefetch={false} href={alink?.link} target={isExternal ? '_blank' : '_self'} onClick={(e) => {
                   if (isExternal) {
                     e.preventDefault();
                     window.open(alink?.link, '_blank');

@@ -35,6 +35,7 @@ export default function ProjectProgress({ state }) {
       if (statusList[index] === 2) {
         return (
           <Tooltip
+            key={index}
             title={
               <span style={{ fontSize: "14px" }}>{description[index]}</span>
             }
@@ -50,6 +51,7 @@ export default function ProjectProgress({ state }) {
       } else if (statusList[index] === 1) {
         return (
           <Tooltip
+            key={index}
             title={
               <span style={{ fontSize: "14px" }}>{description[index]}</span>
             }
@@ -65,6 +67,7 @@ export default function ProjectProgress({ state }) {
       } else {
         return (
           <Tooltip
+            key={index}
             title={
               <span style={{ fontSize: "14px" }}>{description[index]}</span>
             }

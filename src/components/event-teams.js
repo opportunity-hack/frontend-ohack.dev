@@ -190,7 +190,9 @@ export default function EventTeams(
             const isOnTeam = isUserOnThisTeam.includes(true);            
 
             
-        return (<Team team={team} userDetails={userDetails} isHelping={isHelping} _isOnTeam={isOnTeam} _isOnAnyTeam={isLoggedInUserAlreadyOnTeam} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} />);
+        return (<Team key={
+         team.id 
+        } team={team} userDetails={userDetails} isHelping={isHelping} _isOnTeam={isOnTeam} _isOnAnyTeam={isLoggedInUserAlreadyOnTeam} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} />);
     });
     
     

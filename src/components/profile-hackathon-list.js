@@ -90,9 +90,12 @@ export default function ProfileHackathonList ({hackathons}){
         <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
             <thead>
                 {headerGroups.map(headerGroup => (
-                    <tr {...headerGroup.getHeaderGroupProps()}>
+                    <tr key={
+                        headerGroup.id
+                    } {...headerGroup.getHeaderGroupProps()}>
                         {headerGroup.headers.map(column => (
-                            <th
+                            <th        
+                                key={column.id}                    
                                 {...column.getHeaderProps()}
                                 style={{
                                     borderBottom: 'solid 3px red',
@@ -111,10 +114,13 @@ export default function ProfileHackathonList ({hackathons}){
                 {rows.map(row => {
                     prepareRow(row)
                     return (
-                        <tr {...row.getRowProps()}>
+                        <tr 
+                            key={row.id}
+                        {...row.getRowProps()}>
                             {row.cells.map(cell => {
                                 return (
                                     <td
+                                        key={cell.column.id}
                                         {...cell.getCellProps()}
                                         style={{
                                             padding: '10px',

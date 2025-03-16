@@ -27,6 +27,7 @@ export default function Document() {
           />
 
           <Script
+            id='growthbook'
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
@@ -41,6 +42,7 @@ export default function Document() {
           />
 
           <Script
+            id="google-analytics"
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
@@ -56,6 +58,7 @@ export default function Document() {
           />
 
           <Script
+            id="facebook-pixel"
             strategy="lazyOnLoad"
             dangerouslySetInnerHTML={{
               __html: `

@@ -54,10 +54,10 @@ const PraisePage = () => {
           name="keywords"
           content="Opportunity Hack, community praise, recognition, tech volunteers, nonprofit tech, community appreciation, kudos"
         />
-        <meta property="og:title" content="O-Hack Community Praise Board" />
+        <meta property="og:title" content="OHack Community Praise Board" />
         <meta
           property="og:description"
-          content="Celebrating the amazing contributions of our O-Hack community members."
+          content="Celebrating the amazing contributions of our OHack community members."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://ohack.dev/praise" />

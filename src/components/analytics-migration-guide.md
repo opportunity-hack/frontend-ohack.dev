@@ -1,4 +1,4 @@
-# O-Hack Analytics Migration Guide
+# OHack Analytics Migration Guide
 
 This guide provides instructions for migrating existing Google Analytics event tracking to the new enhanced tracking system.
 

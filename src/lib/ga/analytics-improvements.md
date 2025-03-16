@@ -1,4 +1,4 @@
-# O-Hack Analytics Enhancement Strategy
+# OHack Analytics Enhancement Strategy
 
 ## Current Implementation Assessment
 

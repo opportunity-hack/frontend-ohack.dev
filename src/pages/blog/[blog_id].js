@@ -176,7 +176,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
         }
 
         const blogPost = data.text;
-        const title = "O-Hack Blog: " + blogPost.title; // Improved title format
+        const title = "OHack Blog: " + blogPost.title; // Improved title format
         const metaDescription = blogPost.description ? 
             (blogPost.description.length > 160 ? 
                 blogPost.description.substring(0, 157) + '...' : 

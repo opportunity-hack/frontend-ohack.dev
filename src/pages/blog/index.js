@@ -39,7 +39,7 @@ export default function BlogIndexPage({ posts }) {
     return (
       <>
         <Head>
-          <title>O-Hack Blog - Tech for Social Good | Opportunity Hack</title>
+          <title>OHack Blog - Tech for Social Good | Opportunity Hack</title>
           <meta
             name="description"
             content="Read the latest updates, success stories, and tech insights from Opportunity Hack. Learn how our volunteer developers build technology solutions for nonprofits and social good."
@@ -51,7 +51,7 @@ export default function BlogIndexPage({ posts }) {
           <link rel="canonical" href="https://ohack.dev/blog" />
           <meta
             property="og:title"
-            content="O-Hack Blog - Tech for Social Good | Opportunity Hack"
+            content="OHack Blog - Tech for Social Good | Opportunity Hack"
           />
           <meta
             property="og:description"

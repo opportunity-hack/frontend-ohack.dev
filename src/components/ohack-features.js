@@ -33,6 +33,7 @@ export default function OHackFeatures(){
 
   const features = details.map((item) => (
     <OHackFeature
+      key={item.title}
       title={item.title}
       description={item.description}
       icon={item.icon}

@@ -1,10 +1,12 @@
-# O-Hack Frontend Development Guidelines
+# OHack Frontend Development Guidelines
 
 ## Commands
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run postbuild` - Generate sitemap (runs automatically after build)
+- `npm run test` - Run Jest unit tests
+- `npm run test:e2e` - Run Playwright E2E tests
 - `npx eslint src/**/*.js` - Run ESLint on specific files
 - `npx prettier --write src/**/*.js` - Format code with Prettier
 
@@ -29,3 +31,10 @@
 - Node v20.x
 - Next.js 14.x
 - Material UI for components
+
+## Testing
+- Jest for unit tests
+- Playwright for end-to-end tests
+- Test files located in `__tests__` folders for components
+- E2E tests located in `/src/tests/e2e/`
+- Mock implementation examples available in test files

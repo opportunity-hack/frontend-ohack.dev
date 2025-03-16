@@ -19,6 +19,34 @@ See the
 [Development Setup instructions](./docs/DevSetup.md) 
 to get up and running quickly.
 
+## Testing
+
+### Unit Tests
+
+Run unit tests with Jest:
+
+```bash
+npm run test
+```
+
+### End-to-End Tests
+
+Run end-to-end tests with Playwright:
+
+```bash
+# Install Playwright dependencies (first time only)
+npx playwright install --with-deps chromium
+
+# Run E2E tests
+npm run test:e2e
+```
+
+View the Playwright test report:
+
+```bash
+npx playwright show-report
+```
+
 # References
 ## React UI Tools
 We're using Material UI (MUI) as much as possible, [check out their website](https://mui.com/) for more information.

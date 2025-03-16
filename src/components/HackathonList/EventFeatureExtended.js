@@ -187,7 +187,9 @@ function EventFeatureExtended(props) {
         >
           {          
               eventLinks?.map((Link) => {
-                return <ExtendedEventButton onClick={() => trackClick(Link?.link, Link?.name)} color={Link.color} variant={Link.variant} href={Link?.link}>{Link?.name}</ExtendedEventButton>;
+                return <ExtendedEventButton 
+                key={Link?.name}
+                 onClick={() => trackClick(Link?.link, Link?.name)} color={Link.color} variant={Link.variant} href={Link?.link}>{Link?.name}</ExtendedEventButton>;
               })
         }
         </ButtonContainer>                
@@ -236,7 +238,14 @@ function EventFeatureExtended(props) {
         <Grid container spacing={2} justifyContent="center" marginTop={1}>          
         { 
           nonprofitsShuffle?.map((nonprofit) => {
-            return <NonProfitHackathonTile eventId={event_id} npo={nonprofit} teams={teams}  />
+            return (
+              <NonProfitHackathonTile
+                key={event_id}
+                eventId={event_id}
+                npo={nonprofit}
+                teams={teams}
+              />
+            );
           })
         } 
         </Grid>        
@@ -247,7 +256,9 @@ function EventFeatureExtended(props) {
       {
         countdowns && countdowns.length > 0 && (
           countdowns.map((countdown) => {
-            return <Countdown details={countdown} />
+            return <Countdown 
+            key={countdown.name}
+             details={countdown} />
           }
         ))
 

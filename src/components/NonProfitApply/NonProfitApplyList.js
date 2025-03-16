@@ -162,7 +162,9 @@ export default function NonProfitApplyList() {
                     <ul>
                         {
                             nonprofitApplications.map((nonprofitApplication, index) => (
-                            <div>
+                            <div
+                            key={`nonprofit_application_${index}`}
+                            >
                             <h3>{nonprofitApplication.charityName} - {nonprofitApplication.charityLocation} - {new Date(nonprofitApplication.timeStamp._seconds *1000).toLocaleDateString("en-US")}</h3>
                             {
                                 // Add nonprofit selection dropdown 

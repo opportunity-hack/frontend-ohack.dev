@@ -101,8 +101,12 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
         }        
 
         return (
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack             
+             direction="row" alignItems="center" spacing={1}
+                key={auser}
+             >
                 { extendedDetails && <Image className="ohack-feature__icon"
+                    alt={extendedDetails.name}                    
                     src={extendedDetails.profile_image}
                     width={50}
                     height={50} />
@@ -137,7 +141,9 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
                         return team.github_links.map((link) => {
                             if (link.link != null && link.link !== "")
                             {
-                                return <Link href={link.link} target="_blank"  ><GitHubIcon style={{ color: "black", marginLeft: 2, marginRight: 2 }} /></Link>
+                                return <Link 
+                                key={link.name}
+                                href={link.link} target="_blank"  ><GitHubIcon style={{ color: "black", marginLeft: 2, marginRight: 2 }} /></Link>
                             }                            
                         });
                                                 
