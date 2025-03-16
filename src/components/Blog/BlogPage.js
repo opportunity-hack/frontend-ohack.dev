@@ -11,11 +11,54 @@ import { styled } from '@mui/material/styles';
 
 // Styled components for better visual design
 const BlogHeader = styled(Box)(({ theme }) => ({
-  marginBottom: theme.spacing(4),
-  padding: theme.spacing(4, 0),
-  backgroundImage: 'linear-gradient(120deg, #093170 0%, #0a4da8 100%)',
-  color: theme.palette.common.white,
-  borderRadius: theme.shape.borderRadius,
+    marginBottom: theme.spacing(4),
+    padding: theme.spacing(4, 2),
+    backgroundImage: 'linear-gradient(135deg, #093170 0%, #0a4da8 70%, #1976d2 100%)',
+    color: theme.palette.common.white,
+    borderRadius: theme.shape.borderRadius,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+    position: 'relative',
+    overflow: 'hidden',
+    width: '100%',
+    
+    '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: 'radial-gradient(circle at 20% 150%, rgba(255, 255, 255, 0.15) 0%, transparent 60%)',
+        pointerEvents: 'none'
+    },
+    [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(3, 1.5),
+        marginBottom: theme.spacing(3),        
+        '& h1': {
+            fontSize: '1.75rem',
+            margin: '0 0 8px 0',
+            wordBreak: 'break-word',
+        },
+        '& h2': {
+            fontSize: '1rem',
+            lineHeight: 1.4,
+        }
+    },
+    [theme.breakpoints.between('sm', 'md')]: {
+        padding: theme.spacing(5, 2),
+        marginBottom: theme.spacing(4),
+        '& h1': {
+            fontSize: '2.25rem',
+        },
+        '& h2': {
+            fontSize: '1.25rem',
+        }
+    },
+    [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(10, 4),
+        borderRadius: theme.shape.borderRadius * 2,
+        marginBottom: theme.spacing(6),
+    }
 }));
 
 const SearchContainer = styled(Paper)(({ theme }) => ({
@@ -24,6 +67,10 @@ const SearchContainer = styled(Paper)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1.5),
+    marginBottom: theme.spacing(3),
+  }
 }));
 
 const BlogPage = ({ posts }) => {
@@ -251,8 +298,7 @@ const BlogPage = ({ posts }) => {
                             <Button 
                                 variant="contained" 
                                 color="primary" 
-                                href="https://opportunity-hack.slack.com/join/shared_invite/zt-n9qhf65h-eZYbdnrFAfeAiY1yjsYJsg" 
-                                target="_blank"
+                                href="/signup"                                 
                                 fullWidth
                                 onClick={() => {
                                     ga.trackStructuredEvent(
@@ -263,25 +309,7 @@ const BlogPage = ({ posts }) => {
                                 }}
                             >
                                 Join Slack
-                            </Button>
-                            
-                            <Divider sx={{ my: 2 }} />
-                            
-                            <Button 
-                                variant="outlined"
-                                startIcon={<RssFeedIcon />}
-                                fullWidth
-                                href="/api/rss"
-                                onClick={() => {
-                                    ga.trackStructuredEvent(
-                                        ga.EventCategory.CONTENT,
-                                        ga.EventAction.DOWNLOAD,
-                                        'rss_feed'
-                                    );
-                                }}
-                            >
-                                Subscribe via RSS
-                            </Button>
+                            </Button>                                                        
                         </Paper>
                     </Box>
                 </Grid>
