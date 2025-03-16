@@ -15,7 +15,9 @@ import BuildIcon from '@mui/icons-material/Build';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { useTheme } from '@mui/material/styles';
 import ReactRecaptcha3 from 'react-google-recaptcha3';
-import { initFacebookPixel, trackEvent, set } from '../../../lib/ga';
+import * as ga from '../../../lib/ga';
+import ScrollTracker from '../../../components/ScrollTracker';
+import JourneyTracker, { JourneyTypes } from '../../../components/JourneyTracker';
 
 // Debounce function to limit the number of events sent
 const debounce = (func, delay) => {
@@ -61,10 +63,70 @@ export default function Apply({ title, description, openGraphData }) {
     idea: '',
     isNonProfit: false,
   });
+  const [formStartTime, setFormStartTime] = useState(null);
 
   useEffect(() => {
-    initFacebookPixel();
+    // Initialize tracking
+    ga.initFacebookPixel();
     ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY);
+    
+    // Set form start time for time-to-completion tracking
+    setFormStartTime(new Date());
+
+    // Track page view with enhanced metadata
+    const pageMetadata = {
+      page_type: 'application_form',
+      form_type: 'nonprofit_application',
+      referrer: document.referrer || 'direct'
+    };
+
+    // Track this page view as part of the nonprofit journey
+    ga.trackJourneyStep(
+      JourneyTypes.NONPROFIT.name,
+      JourneyTypes.NONPROFIT.steps.VIEW_APPLY,
+      pageMetadata
+    );
+    
+    // Track form view as a structured event
+    ga.trackStructuredEvent(
+      ga.EventCategory.FORM,
+      ga.EventAction.VIEW,
+      'nonprofit_application',
+      null,
+      pageMetadata
+    );
+    
+    // Track form start
+    ga.trackForm(
+      'nonprofit_application',
+      ga.EventAction.START,
+      null,
+      null
+    );
+    
+    // Return cleanup function
+    return () => {
+      // Track form abandonment if not submitted
+      if (!submitSuccess && formStartTime) {
+        const timeSpent = Math.round((new Date() - formStartTime) / 1000);
+        ga.trackForm(
+          'nonprofit_application',
+          'abandon',
+          null,
+          timeSpent
+        );
+      }
+    };
+  }, []);
+
+  // Enhanced form field tracking
+  const trackFormField = useCallback((fieldName, fieldValue, interactionType = 'change') => {
+    ga.trackForm(
+      'nonprofit_application',
+      interactionType,
+      fieldName,
+      typeof fieldValue === 'string' ? fieldValue.length : fieldValue
+    );
   }, []);
 
   // Debounced tracking function to reduce event frequency
@@ -72,10 +134,8 @@ export default function Apply({ title, description, openGraphData }) {
     debounce((fieldName, fieldValue) => {
       // Only track if the value has changed significantly
       if (fieldValue !== lastTrackedValues[fieldName]) {
-        trackEvent({
-          action: "npo_form_field_change",
-          params: { field_name: fieldName, field_value: fieldValue }
-        });
+        // Track form field interaction with enhanced tracking
+        trackFormField(fieldName, fieldValue);
         
         setLastTrackedValues(prev => ({
           ...prev,
@@ -83,7 +143,7 @@ export default function Apply({ title, description, openGraphData }) {
         }));
       }
     }, 800), // 800ms delay
-    [lastTrackedValues]
+    [lastTrackedValues, trackFormField]
   );
 
   const handleChange = (e) => {
@@ -103,6 +163,14 @@ export default function Apply({ title, description, openGraphData }) {
     e.preventDefault();
     setIsSubmitting(true);
     
+    // Track form submission attempt
+    ga.trackForm(
+      'nonprofit_application',
+      'submit_attempt',
+      null,
+      null
+    );
+    
     try {
       const token = await ReactRecaptcha3.getToken();
       const formDataWithToken = { ...formData, token };
@@ -118,12 +186,31 @@ export default function Apply({ title, description, openGraphData }) {
       const result = await response.json();
       console.log(result);
 
-      trackEvent({
-        action: "npo_form_submit",
-        params: { form_data: formDataWithToken }
-      });
+      // Calculate time to complete form
+      const timeToComplete = formStartTime ? Math.round((new Date() - formStartTime) / 1000) : null;
 
-      if (formData.email) set(formData.email);
+      // Track successful submission with enhanced data
+      ga.trackForm(
+        'nonprofit_application',
+        ga.EventAction.COMPLETE,
+        null,
+        timeToComplete
+      );
+      
+      // Track as part of nonprofit journey
+      ga.trackJourneyStep(
+        JourneyTypes.NONPROFIT.name,
+        JourneyTypes.NONPROFIT.steps.SUBMIT_APPLICATION,
+        {
+          organization_provided: !!formData.organization,
+          is_nonprofit: formData.isNonProfit,
+          idea_length: formData.idea.length,
+          time_to_complete: timeToComplete
+        }
+      );
+
+      // Associate user with their email for future tracking
+      if (formData.email) ga.set(formData.email);
 
       setFormData({
         name: '',
@@ -136,6 +223,14 @@ export default function Apply({ title, description, openGraphData }) {
       setSubmitSuccess(true);
     } catch (error) {
       console.error('Error submitting form:', error);
+      
+      // Track form submission error
+      ga.trackError(
+        'form_submission_error',
+        error.message,
+        'nonprofit_application'
+      );
+      
       alert('An error occurred while submitting the form. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -157,7 +252,13 @@ export default function Apply({ title, description, openGraphData }) {
     const currentThreshold = significantThresholds.findIndex(threshold => currentLength < threshold);
     
     if (previousThreshold !== currentThreshold && currentThreshold !== -1) {
-      debouncedTrackFieldChange('idea', `Reached ${significantThresholds[currentThreshold]} characters`);
+      // Track milestone reached
+      ga.trackForm(
+        'nonprofit_application',
+        'milestone',
+        'idea_length',
+        significantThresholds[currentThreshold]
+      );
     } else {
       // Otherwise use normal debounced tracking
       debouncedTrackFieldChange('idea', value);
@@ -199,6 +300,15 @@ export default function Apply({ title, description, openGraphData }) {
           `}
         </script>
       </Head>
+
+      {/* Track journey step */}
+      <JourneyTracker 
+        journey={JourneyTypes.NONPROFIT.name}
+        step={JourneyTypes.NONPROFIT.steps.START_APPLICATION}
+      />
+      
+      {/* Track scroll depth for engagement */}
+      <ScrollTracker pageType="nonprofit_application" />
 
       <Container maxWidth="md">
         <Box my={4}>

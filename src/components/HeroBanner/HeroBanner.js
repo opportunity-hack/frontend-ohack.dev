@@ -13,7 +13,7 @@ import {
 import SponsorMinimal from "../Sponsors/SponsorMinimal";
 import { LoginButton } from "../Navbar/styles";
 import { useEnv } from "../../context/env.context";
-import { trackEvent, initFacebookPixel } from "../../lib/ga";
+import * as ga from "../../lib/ga";
 // Lazy load non-critical components
 
 
@@ -24,18 +24,64 @@ const HeroBanner = ({ children }) => {
   const enabled = useFeatureIsOn("afeature");
 
   useEffect(() => {
-    initFacebookPixel();
-  }, []);
+    // Initialize tracking
+    ga.initFacebookPixel();
+    
+    // Track hero banner view as content engagement
+    ga.trackContentEngagement(
+      'home_page',
+      'hero_banner',
+      ga.EventAction.VIEW,
+      { has_feature_enabled: enabled }
+    );
+  }, [enabled]);
 
-  const gaButton = React.useCallback((action, actionName) => {
-    trackEvent({ action, params: { action_name: actionName } });
+  /**
+   * Enhanced tracking for button clicks using the new structured approach
+   */
+  const trackButtonClick = React.useCallback((buttonId, buttonText, additionalParams = {}) => {
+    ga.trackStructuredEvent(
+      ga.EventCategory.NAVIGATION,
+      ga.EventAction.CLICK,
+      buttonId,
+      null,
+      {
+        button_text: buttonText,
+        ...additionalParams
+      }
+    );
+  }, []);
+  
+  /**
+   * Track conversion events for high-value actions
+   */
+  const trackConversion = React.useCallback((actionType, actionDetail) => {
+    ga.trackStructuredEvent(
+      ga.EventCategory.CONVERSION, 
+      actionType,
+      actionDetail
+    );
   }, []);
   
   const openCodeSample = React.useCallback(() => {
-    gaButton("slack_button", "open_join_slack");
+    // Track both as navigation and conversion event (joining Slack is a key metric)
+    trackButtonClick("slack_signup_button", "Create an OHack Slack account");
+    trackConversion("community_join", "slack_signup");
+    
+    // Also track as part of user journey
+    ga.trackJourneyStep(
+      'volunteer',
+      'join_slack',
+      { source: 'hero_banner' }
+    );
+    
     window.open(slackSignupUrl, "_blank", "noopener noreferrer");
-  }, [slackSignupUrl]);
+  }, [slackSignupUrl, trackButtonClick, trackConversion]);
   
+  const handleLoginClick = React.useCallback(() => {
+    trackButtonClick("login_button", "Log In", { user_status: "anonymous" });
+    redirectToLoginPage();
+  }, [redirectToLoginPage, trackButtonClick]);
 
   return (
     <GridStyled container direction="row" justifyContent="center" spacing={2}>
@@ -52,14 +98,21 @@ const HeroBanner = ({ children }) => {
 
           <ButtonContainers container>
             <ButtonBasicStyle
-              onClick={() =>
-                gaButton(
-                  "button_submit_project",
-                  "Submit new nonprofit project"
-                )
-              }
+              onClick={() => {
+                trackButtonClick(
+                  "nonprofit_apply_button", 
+                  "Send us a project",
+                  { destination: "nonprofits/apply" }
+                );
+                
+                // Track as part of nonprofit journey
+                ga.trackJourneyStep(
+                  ga.JourneyTypes.NONPROFIT.name,
+                  ga.JourneyTypes.NONPROFIT.steps.VIEW_APPLY,
+                  { source: 'hero_banner' }
+                );
+              }}
               href="/nonprofits/apply"
-              
             >
               Send us a project
             </ButtonBasicStyle>
@@ -72,7 +125,7 @@ const HeroBanner = ({ children }) => {
               <LoginButton
                 variant="contained"
                 disableElevation
-                onClick={() => redirectToLoginPage()}
+                onClick={handleLoginClick}
                 className="login-button"
               >
                 Log In
@@ -82,9 +135,12 @@ const HeroBanner = ({ children }) => {
             {isLoggedIn && (
               <ButtonBasicStyle
                 style={{ color: "white", backgroundColor: "#FFC107" }}
-                onClick={() =>
-                  gaButton("button_profile", "clicked to see profile")
-                }
+                onClick={() => {
+                  trackButtonClick("profile_button", "View your profile", { 
+                    user_status: "logged_in",
+                    destination: "profile" 
+                  });
+                }}
                 href="/profile"
               >
                 View your profile
@@ -92,7 +148,17 @@ const HeroBanner = ({ children }) => {
             )}
 
             <ButtonBasicStyle
-              onClick={() => gaButton("button_donate", "donate")}
+              onClick={() => {
+                trackButtonClick("donate_button", "Donate with PayPal");
+                trackConversion("donation_click", "paypal");
+                
+                // Track as part of donation journey
+                ga.trackJourneyStep(
+                  ga.JourneyTypes.DONATION.name,
+                  ga.JourneyTypes.DONATION.steps.VIEW_DONATE,
+                  { source: 'hero_banner', button: 'paypal' }
+                );
+              }}
               style={{ color: "white", backgroundColor: "blue" }}
               target="_blank"
               rel="noopener noreferrer"
@@ -102,16 +168,34 @@ const HeroBanner = ({ children }) => {
             </ButtonBasicStyle>
 
             <ButtonBasicStyle
-              onClick={() => gaButton("button_request", "request_hackathon")}
+              onClick={() => {
+                trackButtonClick("hackathon_request_button", "Request a hackathon");
+                
+                // Track as part of hackathon journey
+                ga.trackJourneyStep(
+                  ga.JourneyTypes.HACKATHON.name,
+                  ga.JourneyTypes.HACKATHON.steps.VIEW_INFO,
+                  { source: 'hero_banner' }
+                );
+              }}
               href="/hack/request"
             >
               Request a hackathon
             </ButtonBasicStyle>
 
             <ButtonBasicStyle
-              onClick={() =>
-                gaButton("button_see_all", "see_all_nonprofit_projects")
-              }
+              onClick={() => {
+                trackButtonClick("all_projects_button", "All projects you can work on", {
+                  destination: "nonprofits"
+                });
+                
+                // Track as part of volunteer journey
+                ga.trackJourneyStep(
+                  ga.JourneyTypes.VOLUNTEER.name,
+                  ga.JourneyTypes.VOLUNTEER.steps.VIEW_OPPORTUNITIES,
+                  { source: 'hero_banner' }
+                );
+              }}
               href="/nonprofits"
             >
               All projects you can work on
