@@ -1,0 +1,847 @@
+{
+  "summary": {
+    "total_grants": 123,
+    "average_funding": 119408.40654205608,
+    "volunteer_opportunities": 42,
+    "remote_participation": 2,
+    "hackathon_eligible": 119,
+    "timestamp": "2025-03-16T21:22:12.596130"
+  },
+  "tech_focus": {
+    "ai": 123,
+    "ar": 123,
+    "go": 119,
+    "rest": 85,
+    "api": 70,
+    "rust": 45,
+    "database": 31,
+    "ios": 27,
+    "machine learning": 27,
+    "iot": 26,
+    "artificial intelligence": 18,
+    "product management": 18,
+    "aws": 17,
+    "data science": 13,
+    "scala": 11,
+    "design thinking": 10,
+    "react": 9,
+    "cloud": 9,
+    "user experience": 8,
+    "agile": 7,
+    "cybersecurity": 6,
+    "vr": 6,
+    "data analysis": 5,
+    "python": 4,
+    "javascript": 4,
+    "java": 4,
+    ".net": 4,
+    "redis": 3,
+    "computer vision": 3,
+    "deep learning": 3,
+    "swift": 3,
+    "project management": 2,
+    "blockchain": 2,
+    "natural language processing": 2,
+    "augmented reality": 2,
+    "virtual reality": 2,
+    "devops": 2,
+    "internet of things": 2,
+    "azure": 2,
+    "web development": 2,
+    "continuous integration": 1,
+    "nlp": 1,
+    "php": 1,
+    "frontend": 1,
+    "android": 1,
+    "product design": 1,
+    "node.js": 1,
+    "ruby": 1,
+    "full stack": 1,
+    "ci/cd": 1,
+    "kubernetes": 1,
+    "serverless": 1,
+    "sql": 1,
+    "nosql": 1,
+    "postgresql": 1,
+    "mysql": 1,
+    "mixed reality": 1
+  },
+  "nonprofit_sectors": {
+    "education": 114,
+    "culture": 67,
+    "environment": 63,
+    "arts": 60,
+    "youth": 45,
+    "healthcare": 34,
+    "disabilities": 31,
+    "veterans": 27,
+    "economic development": 27,
+    "homelessness": 21,
+    "lgbtq+": 20,
+    "climate change": 17,
+    "conservation": 16,
+    "workforce development": 11,
+    "poverty": 8,
+    "public health": 8,
+    "community development": 8,
+    "advocacy": 8,
+    "mental health": 6,
+    "disaster relief": 6,
+    "refugees": 6,
+    "social justice": 5,
+    "sanitation": 4,
+    "renewable energy": 4,
+    "civic engagement": 3,
+    "immigration": 3,
+    "racial equity": 3,
+    "criminal justice": 3,
+    "clean water": 2,
+    "human rights": 2,
+    "digital literacy": 2,
+    "hunger": 2,
+    "food security": 2,
+    "affordable housing": 2,
+    "legal aid": 1,
+    "gender equality": 1
+  },
+  "grants_by_relevance": [
+    {
+      "title": "Nonprofit Technology Grants: How To Find And Win Them",
+      "source": "blog.instil.io",
+      "url": "https://blog.instil.io/nonprofit-technology-grants-how-to-find-and-win-them",
+      "relevance_score": 0.6035190918472653
+    },
+    {
+      "title": "NEA Awards $445,000 to Arizona Arts Organizations and Projects",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/news/nea-awards-445000-to-arizona-arts-organizations-and-projects/",
+      "relevance_score": 0.6035190918472653
+    },
+    {
+      "title": "Research Commercialization",
+      "source": "research.arizona.edu",
+      "url": "https://research.arizona.edu/research-category/research-commercialization",
+      "relevance_score": 0.5951909184726522
+    },
+    {
+      "title": "Deadline: Creative Youth Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-creative-youth/?instance_id=1759",
+      "relevance_score": 0.5703818369453044
+    },
+    {
+      "title": "Creative Youth Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grant/creative-youth/",
+      "relevance_score": 0.5703818369453044
+    },
+    {
+      "title": "Deadline: Creative Youth Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-creative-youth/",
+      "relevance_score": 0.5703818369453044
+    },
+    {
+      "title": "NEA Awards Grants to 17 Arizona Arts Programs, Projects",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/news/nea-awards-grants-to-10-arizona-arts-programs-projects-2/",
+      "relevance_score": 0.5643034055727554
+    },
+    {
+      "title": "Arizona Poet Laureate",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/programs/arizona-poet-laureate/",
+      "relevance_score": 0.5643034055727554
+    },
+    {
+      "title": "Arizona Arts Education Research",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/resources/arizona-arts-education-research/",
+      "relevance_score": 0.5643034055727554
+    },
+    {
+      "title": "State Seeks Nominations for Arizona Poet Laureate",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/press/state-seeks-nominations-for-arizona-poet-laureate/",
+      "relevance_score": 0.5643034055727554
+    },
+    {
+      "title": "Arizona Poetry Out Loud State Finals Livestream",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/news/arizona-poetry-out-loud-state-finals-livestream/",
+      "relevance_score": 0.5643034055727554
+    },
+    {
+      "title": "YAM Fest brings Youth Arts Month to Arizona\u2019s Capitol this March",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/news/yam-fest-brings-youth-arts-month-to-arizonas-capitol-this-march/",
+      "relevance_score": 0.5643034055727554
+    },
+    {
+      "title": "Deadline: Festival Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-festival-grants/",
+      "relevance_score": 0.5488132094943241
+    },
+    {
+      "title": "Deadline: Festival Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-festival-grants/?instance_id=1778",
+      "relevance_score": 0.5488132094943241
+    },
+    {
+      "title": "From Snake Detection to Water Purification, Tech Launch Arizona Supports Student Solutions to Real-World Problems",
+      "source": "news.arizona.edu",
+      "url": "https://news.arizona.edu/story/snake-detection-water-purification-tech-launch-arizona-supports-student-solutions-real-world",
+      "relevance_score": 0.5475438596491229
+    },
+    {
+      "title": "Official Site of The State of New Jersey",
+      "source": "www.nj.gov",
+      "url": "https://www.nj.gov/state/volunteer-grant-opportunities.shtml",
+      "relevance_score": 0.5352941176470589
+    },
+    {
+      "title": "Artist Opportunity Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grant/artist-opportunity/",
+      "relevance_score": 0.5311661506707946
+    },
+    {
+      "title": "Deadline: Creative Capacity Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-creative-capacity-grant/?instance_id=1784",
+      "relevance_score": 0.5295975232198142
+    },
+    {
+      "title": "Deadline: Creative Capacity Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-creative-capacity-grant/",
+      "relevance_score": 0.5295975232198142
+    },
+    {
+      "title": "Top Non-Profit Software Companies in Phoenix, AZ",
+      "source": "gregslist.com",
+      "url": "https://gregslist.com/phoenix/software-companies-industry/non-profit/",
+      "relevance_score": 0.5250877192982456
+    },
+    {
+      "title": "Civic Tech Institute",
+      "source": "www.equitechfutures.com",
+      "url": "https://www.equitechfutures.com/program/cti",
+      "relevance_score": 0.5159752321981425
+    },
+    {
+      "title": "Festival Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grant/festival/",
+      "relevance_score": 0.5095975232198142
+    },
+    {
+      "title": "Deadline: Lifelong Arts Engagement Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-lifelong-arts-engagement-grant/?instance_id=1783",
+      "relevance_score": 0.5095975232198142
+    },
+    {
+      "title": "Deadline: Youth Arts Engagement Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-youth-arts-engamgent-grant/",
+      "relevance_score": 0.5095975232198142
+    },
+    {
+      "title": "Deadline: Lifelong Arts Engagement Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-lifelong-arts-engagement-grant/",
+      "relevance_score": 0.5095975232198142
+    },
+    {
+      "title": "Deadline: Youth Arts Engagement Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/event/deadline-youth-arts-engamgent-grant/?instance_id=1786",
+      "relevance_score": 0.5095975232198142
+    },
+    {
+      "title": "Undergraduate Research at the University of Arizona",
+      "source": "ur.arizona.edu",
+      "url": "https://ur.arizona.edu/",
+      "relevance_score": 0.5067595459236327
+    },
+    {
+      "title": "State Board Programming Grants",
+      "source": "www.archives.gov",
+      "url": "https://www.archives.gov/nhprc/announcement/state.html",
+      "relevance_score": 0.506078431372549
+    },
+    {
+      "title": "State Board Programming Grants",
+      "source": "www.archives.gov",
+      "url": "https://www.archives.gov/nhprc/announcement/state.html#main-col",
+      "relevance_score": 0.506078431372549
+    },
+    {
+      "title": "State Board Programming Grants",
+      "source": "www.archives.gov",
+      "url": "https://www.archives.gov/nhprc/announcement/state.html#page-header",
+      "relevance_score": 0.506078431372549
+    },
+    {
+      "title": "Digital Inclusion Fund",
+      "source": "www.sjplf.org",
+      "url": "https://www.sjplf.org/digital-inclusion-fund/",
+      "relevance_score": 0.4975438596491229
+    },
+    {
+      "title": "Creative Capacity Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grant/creative-capacity-grant/",
+      "relevance_score": 0.49038183694530446
+    },
+    {
+      "title": "Scholarships",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/current-students/scholarships",
+      "relevance_score": 0.4859752321981424
+    },
+    {
+      "title": "Northern Arizona University 90/30 Program",
+      "source": "www.maricopa.edu",
+      "url": "https://www.maricopa.edu/degrees-certificates/special-programs/nau-9030",
+      "relevance_score": 0.4843034055727554
+    },
+    {
+      "title": "Grants",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grants/",
+      "relevance_score": 0.48195046439628486
+    },
+    {
+      "title": "Grants",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grants/#collapseOne",
+      "relevance_score": 0.48195046439628486
+    },
+    {
+      "title": "Alumni Consulting Team Volunteers",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/alumni/volunteering/act/leadership/governance-structure",
+      "relevance_score": 0.4776470588235294
+    },
+    {
+      "title": "Alumni Consulting Team Volunteers",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/alumni/volunteering/act",
+      "relevance_score": 0.4776470588235294
+    },
+    {
+      "title": "Alumni Consulting Team Volunteers",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/alumni/volunteering/act/leadership/individual-positions",
+      "relevance_score": 0.4776470588235294
+    },
+    {
+      "title": "Alumni Consulting Team Volunteers",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/alumni/volunteering/act/leadership/purpose-management-board",
+      "relevance_score": 0.4776470588235294
+    },
+    {
+      "title": "Alumni Consulting Team Volunteers",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/alumni/volunteering/act/leadership",
+      "relevance_score": 0.4776470588235294
+    },
+    {
+      "title": "Alumni Consulting Team Volunteers",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/alumni/volunteering/act/leadership/role-overview",
+      "relevance_score": 0.4776470588235294
+    },
+    {
+      "title": "Alumni Consulting Team Volunteers",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/alumni/volunteering/act/leadership/building-leadership",
+      "relevance_score": 0.4776470588235294
+    },
+    {
+      "title": "Lifelong Arts Engagement Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grant/lifelong-arts-engagement/",
+      "relevance_score": 0.47038183694530444
+    },
+    {
+      "title": "Youth Arts Engagement Grant",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grant/youth-arts-engagement/",
+      "relevance_score": 0.47038183694530444
+    },
+    {
+      "title": "Big Idea Challenge",
+      "source": "research.arizona.edu",
+      "url": "https://research.arizona.edu/impact/big-idea-challenge",
+      "relevance_score": 0.46675954592363267
+    },
+    {
+      "title": "Digital Humanities Advancement Grants",
+      "source": "www.neh.gov",
+      "url": "https://www.neh.gov/grants/odh/digital-humanities-advancement-grants",
+      "relevance_score": 0.45686274509803926
+    },
+    {
+      "title": "Grant Opportunities",
+      "source": "www.hfpg.org",
+      "url": "https://www.hfpg.org/nonprofits/current-grant-opportunities",
+      "relevance_score": 0.45686274509803926
+    },
+    {
+      "title": "Digital Humanities Advancement Grants",
+      "source": "www.neh.gov",
+      "url": "https://www.neh.gov/grants/odh/digital-humanities-advancement-grants#instructions",
+      "relevance_score": 0.45686274509803926
+    },
+    {
+      "title": "Digital Humanities Advancement Grants",
+      "source": "www.neh.gov",
+      "url": "https://www.neh.gov/grants/odh/digital-humanities-advancement-grants#main",
+      "relevance_score": 0.45686274509803926
+    },
+    {
+      "title": "Digital Humanities Advancement Grants",
+      "source": "www.neh.gov",
+      "url": "https://www.neh.gov/grants/odh/digital-humanities-advancement-grants#about",
+      "relevance_score": 0.45686274509803926
+    },
+    {
+      "title": "Bachelor of Landscape Architecture",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/academics/bachelor-landscape-architecture",
+      "relevance_score": 0.45675954592363266
+    },
+    {
+      "title": "Bachelor of Science in Sustainable Built Environments",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/academics/bachelor-science-sustainable-built-environments",
+      "relevance_score": 0.45675954592363266
+    },
+    {
+      "title": "Northern Arizona Technology & Business Incubator",
+      "source": "www.guidestar.org",
+      "url": "https://www.guidestar.org/profile/86-1019180",
+      "relevance_score": 0.45508771929824565
+    },
+    {
+      "title": "Master of Global Management",
+      "source": "thunderbird.asu.edu",
+      "url": "https://thunderbird.asu.edu/degree/graduate/master-global-management",
+      "relevance_score": 0.4535190918472652
+    },
+    {
+      "title": "Bachelor of Architecture",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/academic-programs/undergraduate-degrees-minors/bachelor-architecture",
+      "relevance_score": 0.44675954592363265
+    },
+    {
+      "title": "ORHPC Grants and Funding",
+      "source": "www.health.state.mn.us",
+      "url": "https://www.health.state.mn.us/facilities/ruralhealth/funding/grants",
+      "relevance_score": 0.44529411764705884
+    },
+    {
+      "title": "Stanford LEAD Online Business Program",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/exec-ed/programs/stanford-lead-online-business-program",
+      "relevance_score": 0.4384313725490196
+    },
+    {
+      "title": "Essential Open Source Software for Science (Cycle 6)",
+      "source": "chanzuckerberg.com",
+      "url": "https://chanzuckerberg.com/rfa/essential-open-source-software-for-science/",
+      "relevance_score": 0.43686274509803924
+    },
+    {
+      "title": "Growth Partners Arizona Earns Thrid Platinum Transparency Seal from Candid",
+      "source": "www.growthpartnersaz.org",
+      "url": "https://www.growthpartnersaz.org/",
+      "relevance_score": 0.43508771929824563
+    },
+    {
+      "title": "Arizona Teachers Academy",
+      "source": "www.maricopa.edu",
+      "url": "https://www.maricopa.edu/degrees-certificates/special-programs/arizona-teachers-academy",
+      "relevance_score": 0.4343034055727555
+    },
+    {
+      "title": "Phoenix Forge",
+      "source": "www.maricopa.edu",
+      "url": "https://www.maricopa.edu/community/phoenix-forge",
+      "relevance_score": 0.4343034055727555
+    },
+    {
+      "title": "Digital Divide Grant Program",
+      "source": "www.grants.ca.gov",
+      "url": "https://www.grants.ca.gov/grants/digital-divide-grant-program-2/",
+      "relevance_score": 0.4328379772961817
+    },
+    {
+      "title": "Accelerate For Success Grants",
+      "source": "research.arizona.edu",
+      "url": "https://research.arizona.edu/development/find-funding/internal-funding/accelerate-success-grants",
+      "relevance_score": 0.4075438596491228
+    },
+    {
+      "title": "News \u2013 Community Foundation for Southern Arizona",
+      "source": "cfsaz.org",
+      "url": "https://cfsaz.org/news/",
+      "relevance_score": 0.4075438596491228
+    },
+    {
+      "title": "19 Grants for Nonprofits to Explore in 2025",
+      "source": "www.classy.org",
+      "url": "https://www.classy.org/blog/grants-for-nonprofits/",
+      "relevance_score": 0.4068627450980392
+    },
+    {
+      "title": "MS Architecture Student Sara Ghaemi Wins Tech Launch Arizona Student Innovation Challenge Funding",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/studio/ms-architecture-student-sara-ghaemi-wins-tech-launch-arizona-student-innovation-challenge",
+      "relevance_score": 0.4067595459236326
+    },
+    {
+      "title": "MS Architecture Student Sara Ghaemi Wins Tech Launch Arizona Student Innovation Challenge Funding",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/studio/ms-architecture-student-sara-ghaemi-wins-tech-launch-arizona-student-innovation-challenge#content",
+      "relevance_score": 0.4067595459236326
+    },
+    {
+      "title": "NEH Award Search",
+      "source": "apps.neh.gov",
+      "url": "https://apps.neh.gov/publicquery/default.aspx?q=1&a=0&n=0&o=0&ot=0&k=0&f=0&s=0&cd=0&p=1&pv=311&d=0&at=0&y=1&yf=2020&yt=2024&prd=0&cov=0&prz=0&wp=0&sp=0&ca=0&ob=year&or=DESC",
+      "relevance_score": 0.4067595459236326
+    },
+    {
+      "title": "Apply Now: Creative Youth Grants",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/news/apply-now-creative-youth-grants-2/",
+      "relevance_score": 0.40351909184726525
+    },
+    {
+      "title": "Grant Opportunities",
+      "source": "azhumanities.org",
+      "url": "https://azhumanities.org/grants/grant-opportunities/",
+      "relevance_score": 0.4019504643962848
+    },
+    {
+      "title": "Social Impact Technology Grant",
+      "source": "www.schools.campuslush.com",
+      "url": "https://www.schools.campuslush.com/social/social-impact-grant-for-hbcus",
+      "relevance_score": 0.3975438596491228
+    },
+    {
+      "title": "Maryland \nDepartment of Housing andCommunity Development",
+      "source": "dhcd.maryland.gov",
+      "url": "https://dhcd.maryland.gov/Broadband/Pages/MD-DIG.aspx",
+      "relevance_score": 0.39440660474716205
+    },
+    {
+      "title": "Governor Hobbs Announces $187.5M in Grant Funding Opportunities for Education",
+      "source": "azgovernor.gov",
+      "url": "https://azgovernor.gov/office-arizona-governor/news/2023/03/governor-hobbs-announces-1875m-grant-funding-opportunities",
+      "relevance_score": 0.39351909184726525
+    },
+    {
+      "title": "Grantee Resources",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grants/resources/",
+      "relevance_score": 0.39195046439628484
+    },
+    {
+      "title": "AWS Imagine Grant",
+      "source": "aws.amazon.com",
+      "url": "https://aws.amazon.com/government-education/nonprofits/aws-imagine-grant-program/",
+      "relevance_score": 0.38921568627450975
+    },
+    {
+      "title": "Coding and Mobile App Development Grant",
+      "source": "www.dpi.nc.gov",
+      "url": "https://www.dpi.nc.gov/districts-schools/classroom-resources/computer-science-it-and-technology-education/coding-and-mobile-app-development-grant",
+      "relevance_score": 0.3884313725490196
+    },
+    {
+      "title": "2019 Awardees",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/experience/learning/social-innovation/fellowships/idif/2019-awardees",
+      "relevance_score": 0.3884313725490196
+    },
+    {
+      "title": "Meet the Team (RDS)",
+      "source": "research.arizona.edu",
+      "url": "https://research.arizona.edu/development/meet-the-team",
+      "relevance_score": 0.3875438596491228
+    },
+    {
+      "title": "Arizona PBS Selected for Public Media Digital Transformation Program",
+      "source": "cronkite.asu.edu",
+      "url": "https://cronkite.asu.edu/news/2021/arizona-pbs-selected-for-public-media-digital-transformation-program/",
+      "relevance_score": 0.38508771929824565
+    },
+    {
+      "title": "Arizona PBS Selected for Public Media Digital Transformation Program",
+      "source": "cronkite.asu.edu",
+      "url": "https://cronkite.asu.edu/news/2021/arizona-pbs-selected-for-public-media-digital-transformation-program/#footlink-resources",
+      "relevance_score": 0.38508771929824565
+    },
+    {
+      "title": "Arizona PBS Selected for Public Media Digital Transformation Program",
+      "source": "cronkite.asu.edu",
+      "url": "https://cronkite.asu.edu/news/2021/arizona-pbs-selected-for-public-media-digital-transformation-program/#footlink-impact",
+      "relevance_score": 0.38508771929824565
+    },
+    {
+      "title": "Arizona PBS Selected for Public Media Digital Transformation Program",
+      "source": "cronkite.asu.edu",
+      "url": "https://cronkite.asu.edu/news/2021/arizona-pbs-selected-for-public-media-digital-transformation-program/#footlink-academics",
+      "relevance_score": 0.38508771929824565
+    },
+    {
+      "title": "Arizona PBS Selected for Public Media Digital Transformation Program",
+      "source": "cronkite.asu.edu",
+      "url": "https://cronkite.asu.edu/news/2021/arizona-pbs-selected-for-public-media-digital-transformation-program/#footlink-connect",
+      "relevance_score": 0.38508771929824565
+    },
+    {
+      "title": "Projects - Get funding",
+      "source": "directory.civictech.guide",
+      "url": "https://directory.civictech.guide/listing-category/get-funding",
+      "relevance_score": 0.3850877192982456
+    },
+    {
+      "title": "Apply Now: Grants for arts Organizations, Festivals and Engagement Programs",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/news/apply-now-grants-for-arts-organizations-festivals-and-engagement-programs-2/",
+      "relevance_score": 0.38195046439628483
+    },
+    {
+      "title": "Application Materials",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/programs/phd/admission/application-materials",
+      "relevance_score": 0.37764705882352945
+    },
+    {
+      "title": "Payment & Cancellation",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/exec-ed/admission/payment-cancellation",
+      "relevance_score": 0.37764705882352945
+    },
+    {
+      "title": "Google Grants Eligibility: Will Your Nonprofit Be Approved?",
+      "source": "gettingattention.org",
+      "url": "https://gettingattention.org/google-grant-eligibility/",
+      "relevance_score": 0.37764705882352945
+    },
+    {
+      "title": "Google Grants Eligibility: Will Your Nonprofit Be Approved?",
+      "source": "gettingattention.org",
+      "url": "https://gettingattention.org/google-grants-eligibility/",
+      "relevance_score": 0.37764705882352945
+    },
+    {
+      "title": "4 Reasons That Nonprofit Technology Is a Good Investment",
+      "source": "blog.instil.io",
+      "url": "https://blog.instil.io/4-reasons-that-nonprofit-technology-is-a-good-investment",
+      "relevance_score": 0.37754385964912285
+    },
+    {
+      "title": "Grand Challenges Research Building",
+      "source": "research.arizona.edu",
+      "url": "https://research.arizona.edu/grand-challenges-research-building",
+      "relevance_score": 0.3775438596491228
+    },
+    {
+      "title": "ReConnect Loan and Grant Program",
+      "source": "www.usda.gov",
+      "url": "https://www.usda.gov/sustainability/infrastructure/broadband/reconnect-loan-and-grant-program",
+      "relevance_score": 0.3768627450980392
+    },
+    {
+      "title": "",
+      "source": "justcommunitiesarizona.org",
+      "url": "https://justcommunitiesarizona.org/",
+      "relevance_score": 0.3767595459236326
+    },
+    {
+      "title": "2022 Awardees",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/experience/learning/social-innovation/fellowships/idif/2022-awardees",
+      "relevance_score": 0.37597523219814244
+    },
+    {
+      "title": "ARIZONA@WORK Pinal County Youth Program",
+      "source": "centralaz.edu",
+      "url": "https://centralaz.edu/community/education-outreach/wioa/",
+      "relevance_score": 0.37519091847265224
+    },
+    {
+      "title": "How to Attend Conferences, Hackathons, and Travel the World in College",
+      "source": "medium.com",
+      "url": "https://medium.com/@jessicamleee/how-to-hack-international-conferences-hackathons-and-world-travel-in-college-ab59ebbcb32e",
+      "relevance_score": 0.3735190918472652
+    },
+    {
+      "title": "Computer Science Scholarships and Financial Aid",
+      "source": "www.computerscience.org",
+      "url": "https://www.computerscience.org/scholarships-overview/",
+      "relevance_score": 0.36843137254901964
+    },
+    {
+      "title": "Aspire Program",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/seed/programs/aspire/curriculum",
+      "relevance_score": 0.36764705882352944
+    },
+    {
+      "title": "Stanford Impact Leader Prizes",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/experience/learning/social-innovation/fellowships/post-graduate/sil",
+      "relevance_score": 0.36764705882352944
+    },
+    {
+      "title": "Deferred Enrollment",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/programs/mba/admission/deferred-enrollment",
+      "relevance_score": 0.36764705882352944
+    },
+    {
+      "title": "Aspire Program",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/seed/programs/aspire",
+      "relevance_score": 0.36764705882352944
+    },
+    {
+      "title": "Aspire Program",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/seed/programs/aspire/participant-profile",
+      "relevance_score": 0.36764705882352944
+    },
+    {
+      "title": "Skip to content\n\n\n\n          Rita Allen Foundation\n\n\n            Civic Tech",
+      "source": "ritaallen.org",
+      "url": "https://ritaallen.org/tag/civic-tech/",
+      "relevance_score": 0.36754385964912284
+    },
+    {
+      "title": "Maximizing Impact With Corporate Volunteer Grant Programs",
+      "source": "doublethedonation.com",
+      "url": "https://doublethedonation.com/volunteer-grant-basics/",
+      "relevance_score": 0.3668627450980392
+    },
+    {
+      "title": "Funding Opportunities",
+      "source": "environment.arizona.edu",
+      "url": "https://environment.arizona.edu/researchers/funding-opportunities",
+      "relevance_score": 0.3667595459236326
+    },
+    {
+      "title": "Santa Cruz River moves closer to national designation with guidance from U of A experts",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/studio/santa-cruz-river-moves-closer-national-designation-guidance-u-experts",
+      "relevance_score": 0.3667595459236326
+    },
+    {
+      "title": "Master of Landscape Architecture",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/academics/master-landscape-architecture",
+      "relevance_score": 0.36597523219814243
+    },
+    {
+      "title": "Cost & Financial Aid",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/admissions/cost-financial-aid",
+      "relevance_score": 0.36597523219814243
+    },
+    {
+      "title": "The University of Arizona Land Acknowledgment",
+      "source": "www.arizona.edu",
+      "url": "https://www.arizona.edu/university-arizona-land-acknowledgment",
+      "relevance_score": 0.3650877192982457
+    },
+    {
+      "title": "Arts Opportunities",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/opportunities/arts-opportunities/",
+      "relevance_score": 0.3643034055727554
+    },
+    {
+      "title": "Applicant Resources",
+      "source": "azarts.gov",
+      "url": "https://azarts.gov/grants/applicant-resources/",
+      "relevance_score": 0.362734778121775
+    },
+    {
+      "title": "Government Services",
+      "source": "www.gsb.stanford.edu",
+      "url": "https://www.gsb.stanford.edu/faculty-research/labs-initiatives/sil/research/domains/government-services",
+      "relevance_score": 0.35843137254901963
+    },
+    {
+      "title": "Local Youth Learn How to Use Technology for Social Good at \u201cHackathon\u201d",
+      "source": "newsletter.blogs.wesleyan.edu",
+      "url": "https://newsletter.blogs.wesleyan.edu/2018/03/02/local-youth-learn-how-to-use-technology-for-social-good-at-hackathon/",
+      "relevance_score": 0.35754385964912283
+    },
+    {
+      "title": "6 Tips for Convincing Your Board to Invest in Nonprofit Technology",
+      "source": "blog.instil.io",
+      "url": "https://blog.instil.io/6-tips-for-convincing-your-board-to-invest-in-nonprofit-technology",
+      "relevance_score": 0.35754385964912283
+    },
+    {
+      "title": "Nonprofit Security Grant Program",
+      "source": "www.fema.gov",
+      "url": "https://www.fema.gov/grants/preparedness/nonprofit-security",
+      "relevance_score": 0.3568627450980392
+    },
+    {
+      "title": "Colorado\u2019s internet authority launches grant program for digital services projects",
+      "source": "statescoop.com",
+      "url": "https://statescoop.com/colorado-civic-tech-grant-program/",
+      "relevance_score": 0.3567595459236327
+    },
+    {
+      "title": "Community Engaged Partnerships Grants",
+      "source": "research.arizona.edu",
+      "url": "https://research.arizona.edu/development/find-funding/internal-funding/community-engaged-partnerships-grants",
+      "relevance_score": 0.3567595459236327
+    },
+    {
+      "title": "CAPLA Design/Build",
+      "source": "capla.arizona.edu",
+      "url": "https://capla.arizona.edu/design-build",
+      "relevance_score": 0.3567595459236327
+    },
+    {
+      "title": "Native American Advancement, Initiatives, and Research",
+      "source": "naair.arizona.edu",
+      "url": "https://naair.arizona.edu",
+      "relevance_score": 0.3567595459236327
+    },
+    {
+      "title": "A Great Google Grant Agency in 2024: 10 Best Partners",
+      "source": "gettingattention.org",
+      "url": "https://gettingattention.org/google-grant-agency/",
+      "relevance_score": 0.3551909184726522
+    },
+    {
+      "title": "Spark Good Local Grants Guidelines",
+      "source": "www.walmart.org",
+      "url": "https://www.walmart.org/how-we-give/program-guidelines/spark-good-local-grants-guidelines",
+      "relevance_score": 0.352734778121775
+    },
+    {
+      "title": "Build in the cloud free with Azure for Students",
+      "source": "azure.microsoft.com",
+      "url": "https://azure.microsoft.com/en-us/free/students/",
+      "relevance_score": 0.35
+    }
+  ]
+}

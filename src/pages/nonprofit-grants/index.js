@@ -1,39 +1,59 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Box, Container, Typography, Grid, Card, CardContent, TextField, 
-  InputAdornment, Button, Divider, Chip, useMediaQuery } from '@mui/material';
+  InputAdornment, Button, Divider, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LinkIcon from '@mui/icons-material/Link';
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import PeopleIcon from '@mui/icons-material/People';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import Footer from '../../components/Footer/Footer';
 import Navbar from '../../components/Navbar/Navbar';
-import grantsData from '../../data/opportunity_hack_grants_20250316_194609.json';
+import grantsData from "../../data/opportunity_hack_grants_20250316_211052.json";
+import reportData from '../../data/report_data_20250316_212212.json';
 
 const NonprofitGrants = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTechFocus, setSelectedTechFocus] = useState('');
 
-  // Extract unique tech focus areas
-  const techFocusAreas = [...new Set(grantsData.flatMap(grant => 
-    grant.tech_focus ? grant.tech_focus : []))];
+  // Format date from timestamp
+  const formatReportDate = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
 
-  // Filter grants based on search and tech focus
+  // Format currency with commas
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  // Filter grants based on search
   const filteredGrants = grantsData.filter(grant => {
-    const matchesSearch = searchTerm === '' || 
+    return searchTerm === '' || 
       grant.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       grant.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       grant.source_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesTechFocus = selectedTechFocus === '' || 
-      (grant.tech_focus && grant.tech_focus.includes(selectedTechFocus));
-    
-    return matchesSearch && matchesTechFocus;
   });
+
+  // Get top nonprofit sectors from the report data
+  const topNonprofitSectors = Object.entries(reportData.nonprofit_sectors || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([sector, count]) => ({ sector, count }));
 
   return (
     <>
@@ -69,6 +89,82 @@ const NonprofitGrants = () => {
             Free access to technology grant opportunities for nonprofits - no paywall, no fees
           </Typography>
 
+          {/* Report Summary Stats */}
+          {reportData.summary && (
+            <Box sx={{ mb: 6 }}>
+              <Card sx={{ mb: 4 }}>
+                <CardContent>
+                  <Typography variant="h6" component="h3" gutterBottom>
+                    Grants Report Summary
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" gutterBottom>
+                    Last updated: {formatReportDate(reportData.summary.timestamp)}
+                  </Typography>
+                  
+                  <Grid container spacing={3} sx={{ mt: 1 }}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card elevation={0} sx={{ bgcolor: 'primary.light', p: 2, height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <AttachMoneyIcon color="primary" sx={{ mr: 1 }} />
+                          <Typography variant="subtitle2" color="black">Available Grants</Typography>
+                        </Box>
+                        <Typography variant="h4">{reportData.summary.total_grants}</Typography>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card elevation={0} sx={{ bgcolor: 'success.light', p: 2, height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <MonetizationOnIcon color="success" sx={{ mr: 1 }} />
+                          <Typography variant="subtitle2" color="black">Average Funding</Typography>
+                        </Box>
+                        <Typography variant="h4">{formatCurrency(reportData.summary.average_funding)}</Typography>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card elevation={0} sx={{ bgcolor: 'info.light', p: 2, height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <VolunteerActivismIcon color="info" sx={{ mr: 1 }} />
+                          <Typography variant="subtitle2" color="black">Volunteer Opportunities</Typography>
+                        </Box>
+                        <Typography variant="h4">{reportData.summary.volunteer_opportunities}</Typography>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card elevation={0} sx={{ bgcolor: 'warning.light', p: 2, height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <EventAvailableIcon color="warning" sx={{ mr: 1 }} />
+                          <Typography variant="subtitle2" color="black">Hackathon Eligible</Typography>
+                        </Box>
+                        <Typography variant="h4">{reportData.summary.hackathon_eligible}</Typography>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="h3" gutterBottom>
+                    Top Nonprofit Sectors Receiving Grants
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mt: 1 }}>
+                    {topNonprofitSectors.map(({ sector, count }) => (
+                      <Grid item xs={6} md={2.4} key={sector}>
+                        <Box sx={{ textAlign: 'center', p: 1 }}>
+                          <Typography variant="h4" color="primary">{count}</Typography>
+                          <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>{sector}</Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Box>
+          )}
+
           <Box sx={{ mb: 6, maxWidth: '800px', mx: 'auto' }}>
             <Typography paragraph>
               At Opportunity Hack, we believe in empowering nonprofits with the technology resources they need to succeed. 
@@ -81,7 +177,7 @@ const NonprofitGrants = () => {
           </Box>
 
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 variant="outlined"
@@ -96,24 +192,6 @@ const NonprofitGrants = () => {
                   ),
                 }}
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Chip 
-                  icon={<FilterListIcon />} 
-                  label="All Technologies" 
-                  onClick={() => setSelectedTechFocus('')}
-                  color={selectedTechFocus === '' ? 'primary' : 'default'}
-                />
-                {techFocusAreas.slice(0, 10).map((tech) => (
-                  <Chip 
-                    key={tech}
-                    label={tech}
-                    onClick={() => setSelectedTechFocus(tech)}
-                    color={selectedTechFocus === tech ? 'primary' : 'default'}
-                  />
-                ))}
-              </Box>
             </Grid>
           </Grid>
 
@@ -148,12 +226,6 @@ const NonprofitGrants = () => {
                     <Typography variant="body1" color="text.secondary" paragraph>
                       {grant.description}
                     </Typography>
-                    
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      {grant.tech_focus && grant.tech_focus.slice(0, 5).map((tech) => (
-                        <Chip size="small" label={tech} key={tech} />
-                      ))}
-                    </Box>
                     
                     <Divider sx={{ my: 2 }} />
                     
@@ -215,7 +287,7 @@ const NonprofitGrants = () => {
           {filteredGrants.length === 0 && (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6">No grants found matching your criteria</Typography>
-              <Typography variant="body1" color="textSecondary">Try adjusting your search or filter</Typography>
+              <Typography variant="body1" color="textSecondary">Try adjusting your search</Typography>
             </Box>
           )}
 
