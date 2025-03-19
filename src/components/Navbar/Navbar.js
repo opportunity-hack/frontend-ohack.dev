@@ -241,7 +241,7 @@ export default function NavBar() {
               <Divider />
               <ListSubheader>About Opportunity Hack</ListSubheader>
               {aboutMenuGroups.map((group, index) => (
-                <React.Fragment key={group.title}>
+                <div key={group.title}>
                   {index > 0 && <Divider />}
                   <ListSubheader>{group.title}</ListSubheader>
                   {group.items.map((setting) => (
@@ -254,7 +254,7 @@ export default function NavBar() {
                       </MenuItem>
                     </Link>
                   ))}
-                </React.Fragment>
+                </div>
               ))}
             </Menu>
           </Box>
@@ -319,7 +319,7 @@ export default function NavBar() {
               onClose={handleCloseAboutMenu}
             >
               {aboutMenuGroups.map((group, index) => (
-                <React.Fragment key={group.title}>
+                <div key={group.title}>
                   {index > 0 && <Divider />}
                   <ListSubheader>{group.title}</ListSubheader>
                   {group.items.map((setting) => (
@@ -332,7 +332,7 @@ export default function NavBar() {
                       </MenuItem>
                     </Link>
                   ))}
-                </React.Fragment>
+                </div>
               ))}
             </Menu>
           </Box>
