@@ -103,7 +103,7 @@ export default function Footer() {
       color: accessibilityStyles.linkColor,
     }}>
       <InnerContainer container>
-        <TextContainer container xs={12} md={7} lg={8} style={{ minHeight: '220px' }}>
+        <TextContainer container item xs={12} md={7} lg={8} style={{ minHeight: '220px' }}>
           <div style={{ width: '100%' }}>
             <StyledText style={{ color: accessibilityStyles.linkColor, fontWeight: "600" }}>Our Mission</StyledText>
             <MutedText style={{ 
@@ -252,7 +252,7 @@ export default function Footer() {
             Opportunity Hack Inc. EIN: 84-5113049
           </MutedText>
         </TextContainer>
-        <TextContainer container xs={12} md={5} lg={4} style={{ minHeight: '320px' }}>
+        <TextContainer container item xs={12} md={5} lg={4} style={{ minHeight: '320px' }}>
           <LinkList style={{ width: '100%' }}>
             {/* Link integration with icons for a single-click interaction */}
             <LinkListItem key="whatisohack">
