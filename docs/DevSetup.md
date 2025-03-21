@@ -61,9 +61,8 @@ npm install
 npm run dev
 ```
 * To force this to run on port 3000, you can use the following
-```bash
-PORT=3000 npm run dev
-```
+    * MacOS/Linux: `PORT=3000 npm run dev`
+    * Windows: `set PORT=3000 && npm run dev`
 
 You have successfully set up your frontend development environment!
 
