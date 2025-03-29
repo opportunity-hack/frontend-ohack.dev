@@ -136,24 +136,38 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
           severity: "success",
         });
         fetchNonprofits();
+        setEditDialogOpen(false);
       } else {
-        throw new Error(
-          nonprofit.id
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || 
+          (nonprofit.id
             ? "Failed to update nonprofit"
-            : "Failed to add nonprofit"
-        );
+            : "Failed to add nonprofit");
+            
+        // Special handling for duplicate nonprofit name error
+        if (errorMessage.includes("already exists")) {
+          setSnackbar({
+            open: true,
+            message: `A nonprofit with this name already exists. Please use a different name.`,
+            severity: "error",
+          });
+        } else {
+          setSnackbar({
+            open: true,
+            message: errorMessage,
+            severity: "error",
+          });
+        }
       }
     } catch (error) {
+      console.error("Error saving nonprofit:", error);
       setSnackbar({
         open: true,
-        message: `Failed to ${
-          nonprofit.id ? "update" : "add"
-        } nonprofit. Please try again.`,
+        message: `Failed to ${nonprofit.id ? "update" : "add"} nonprofit: ${error.message || "Unknown error"}`,
         severity: "error",
       });
     } finally {
       setLoading(false);
-      setEditDialogOpen(false);
     }
   };
 
