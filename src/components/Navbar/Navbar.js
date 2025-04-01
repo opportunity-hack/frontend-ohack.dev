@@ -29,7 +29,7 @@ import { LoginButton, NavbarLink, NavbarButton } from "./styles";
 
 const pages = [
   ["📩 Submit Project", "/nonprofits/apply"],
-  ["📖 Projects", "/nonprofits"],
+  ["📖 Projects", "/projects"],  
   ["#️⃣ Join Slack", "/signup"],
   ["📍 Request a Hack", "/hack/request"],
   ["🏆 Judges", "/about/judges"],
@@ -44,16 +44,17 @@ const aboutMenuGroups = [
       ["ℹ️ About Us", "/about"],
       ["❓ What's your why?", "/about/why"],
       ["🙌 Success Stories", "/about/success-stories"],
-    ]
+    ],
   },
   {
     title: "Get Involved",
     items: [
+      ["🏢 Nonprofits", "/nonprofits"],
       ["🤚 Volunteering", "/volunteer"],
       ["⌛️ Track Volunteer Time", "/volunteer/track"],
       ["🙏 Mentors", "/about/mentors"],
       ["🚪 Office Hours", "/office-hours"],
-    ]
+    ],
   },
   {
     title: "Hackathons & Projects",
@@ -62,15 +63,15 @@ const aboutMenuGroups = [
       ["📝 Process", "/about/process"],
       ["✅ Project Completion", "/about/completion"],
       ["❤️ Rewards", "/about/hearts"],
-    ]
+    ],
   },
   {
     title: "Other Resources",
     items: [
       ["🛜 Get Feedback", "/feedback"],
       ["🎨 Style Guide", "/about/style-guide"],
-    ]
-  }
+    ],
+  },
 ];
 
 const auth_settings = [["Profile", "/profile"]];
