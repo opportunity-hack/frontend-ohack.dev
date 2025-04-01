@@ -16,25 +16,34 @@ export default function Projects({ projects, hackathons, stats, topNonprofits })
         <title>{title}</title>
         <meta name="description" content={metaDescription} />
         <link rel="canonical" href={canonicalUrl} />
-        
+
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={metaDescription} />
-        <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp" />
-        
+        <meta
+          property="og:image"
+          content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp"
+        />
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@opportunityhack" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp" />
+        <meta
+          name="twitter:image"
+          content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp"
+        />
 
         {/* Additional SEO tags */}
-        <meta name="keywords" content={`social impact projects, tech for good, nonprofit tech solutions, volunteer coding, career growth, ${stats.topSkills.join(', ')}`} />
+        <meta
+          name="keywords"
+          content={`social impact projects, tech for good, nonprofit tech solutions, volunteer coding, career growth, ${stats.topSkills.join(", ")}`}
+        />
         <meta name="robots" content="index, follow" />
-        
+
         {/* JSON-LD structured data */}
         <script
           type="application/ld+json"
@@ -42,42 +51,45 @@ export default function Projects({ projects, hackathons, stats, topNonprofits })
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "CollectionPage",
-              "name": title,              
-              "description": metaDescription,
-              "url": canonicalUrl,
-              "numberOfItems": stats.total,
-              "mainEntity": {
+              name: title,
+              description: metaDescription,
+              url: canonicalUrl,
+              numberOfItems: stats.total,
+              mainEntity: {
                 "@type": "Organization",
-                "name": "Opportunity Hack",
-                "url": "https://ohack.dev",
-                "logo": "https://cdn.ohack.dev/ohack.dev/ohack.png",
-                "description": "Empowering students, professionals, and nonprofits to collaboratively create sustainable tech solutions that drive social impact and foster learning.",
-                "mission": "To empower students, professionals, and nonprofits to collaboratively create sustainable tech solutions that drive social impact and foster learning.",
-                "sameAs": [
+                name: "Opportunity Hack",
+                url: "https://ohack.dev",
+                logo: "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Dark_Blue.png",
+                description:
+                  "Empowering students, professionals, and nonprofits to collaboratively create sustainable tech solutions that drive social impact and foster learning.",
+                mission:
+                  "To empower students, professionals, and nonprofits to collaboratively create sustainable tech solutions that drive social impact and foster learning.",
+                sameAs: [
                   "https://github.com/opportunity-hack",
                   "https://www.linkedin.com/company/opportunity-hack",
-                  "https://twitter.com/opportunityhack"
-                ]
+                  "https://twitter.com/opportunityhack",
+                ],
               },
-              "itemListElement": projects.map((project, index) => ({
+              itemListElement: projects.map((project, index) => ({
                 "@type": "Project",
-                "position": index + 1,
-                "name": project.title,
-                "description": project.description,
-                "keywords": project.skills?.join(', ') || "",
-                "status": project.status,
-                "url": `https://ohack.dev/project/${project.id}`,
-                "provider": {
+                position: index + 1,
+                name: project.title,
+                description: project.description,
+                keywords: project.skills?.join(", ") || "",
+                status: project.status,
+                url: `https://ohack.dev/project/${project.id}`,
+                provider: {
                   "@type": "Organization",
-                  "name": "Opportunity Hack",
-                  "url": "https://ohack.dev"
+                  name: "Opportunity Hack",
+                  url: "https://ohack.dev",
                 },
-                "audience": {
+                audience: {
                   "@type": "Audience",
-                  "audienceType": "Software Developers, UX Designers, Data Scientists, Product Managers"
-                }
-              }))
-            })
+                  audienceType:
+                    "Software Developers, UX Designers, Data Scientists, Product Managers",
+                },
+              })),
+            }),
           }}
         />
       </Head>
