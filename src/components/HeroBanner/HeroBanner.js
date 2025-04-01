@@ -100,16 +100,16 @@ const HeroBanner = ({ children }) => {
             <ButtonBasicStyle
               onClick={() => {
                 trackButtonClick(
-                  "nonprofit_apply_button", 
+                  "nonprofit_apply_button",
                   "Send us a project",
                   { destination: "nonprofits/apply" }
                 );
-                
+
                 // Track as part of nonprofit journey
                 ga.trackJourneyStep(
                   ga.JourneyTypes.NONPROFIT.name,
                   ga.JourneyTypes.NONPROFIT.steps.VIEW_APPLY,
-                  { source: 'hero_banner' }
+                  { source: "hero_banner" }
                 );
               }}
               href="/nonprofits/apply"
@@ -136,9 +136,9 @@ const HeroBanner = ({ children }) => {
               <ButtonBasicStyle
                 style={{ color: "white", backgroundColor: "#FFC107" }}
                 onClick={() => {
-                  trackButtonClick("profile_button", "View your profile", { 
+                  trackButtonClick("profile_button", "View your profile", {
                     user_status: "logged_in",
-                    destination: "profile" 
+                    destination: "profile",
                   });
                 }}
                 href="/profile"
@@ -149,14 +149,36 @@ const HeroBanner = ({ children }) => {
 
             <ButtonBasicStyle
               onClick={() => {
+                trackButtonClick(
+                  "all_projects_button",
+                  "All projects you can work on",
+                  {
+                    destination: "projects",
+                  }
+                );
+
+                // Track as part of volunteer journey
+                ga.trackJourneyStep(
+                  ga.JourneyTypes.VOLUNTEER.name,
+                  ga.JourneyTypes.VOLUNTEER.steps.VIEW_OPPORTUNITIES,
+                  { source: "hero_banner" }
+                );
+              }}
+              href="/projects"
+            >
+              All projects you can work on
+            </ButtonBasicStyle>
+
+            <ButtonBasicStyle
+              onClick={() => {
                 trackButtonClick("donate_button", "Donate with PayPal");
                 trackConversion("donation_click", "paypal");
-                
+
                 // Track as part of donation journey
                 ga.trackJourneyStep(
                   ga.JourneyTypes.DONATION.name,
                   ga.JourneyTypes.DONATION.steps.VIEW_DONATE,
-                  { source: 'hero_banner', button: 'paypal' }
+                  { source: "hero_banner", button: "paypal" }
                 );
               }}
               style={{ color: "white", backgroundColor: "blue" }}
@@ -169,36 +191,21 @@ const HeroBanner = ({ children }) => {
 
             <ButtonBasicStyle
               onClick={() => {
-                trackButtonClick("hackathon_request_button", "Request a hackathon");
-                
+                trackButtonClick(
+                  "hackathon_request_button",
+                  "Request a hackathon"
+                );
+
                 // Track as part of hackathon journey
                 ga.trackJourneyStep(
                   ga.JourneyTypes.HACKATHON.name,
                   ga.JourneyTypes.HACKATHON.steps.VIEW_INFO,
-                  { source: 'hero_banner' }
+                  { source: "hero_banner" }
                 );
               }}
               href="/hack/request"
             >
               Request a hackathon
-            </ButtonBasicStyle>
-
-            <ButtonBasicStyle
-              onClick={() => {
-                trackButtonClick("all_projects_button", "All projects you can work on", {
-                  destination: "nonprofits"
-                });
-                
-                // Track as part of volunteer journey
-                ga.trackJourneyStep(
-                  ga.JourneyTypes.VOLUNTEER.name,
-                  ga.JourneyTypes.VOLUNTEER.steps.VIEW_OPPORTUNITIES,
-                  { source: 'hero_banner' }
-                );
-              }}
-              href="/nonprofits"
-            >
-              All projects you can work on
             </ButtonBasicStyle>
           </ButtonContainers>
 
