@@ -107,9 +107,9 @@ export async function getStaticProps() {
     const [projectsRes, hackathonsRes, volunteersRes] = await Promise.all([
       fetch(`${apiUrl}/api/messages/problem_statements`),
       fetch(`${apiUrl}/api/messages/hackathons`),
-      fetch(`${apiUrl}/api/messages/volunteer_count`) // Assuming this endpoint exists
+      fetch(`${apiUrl}/api/messages/volunteer_count`) // TODO: Assuming this endpoint exists
         .then(res => res.json())
-        .catch(() => ({ count: 500 })) // Fallback volunteer count if endpoint doesn't exist
+        .catch(() => ({ count: 500 })) // FIXME: Fallback volunteer count if endpoint doesn't exist
     ]);
 
     const projectsData = await projectsRes.json();
