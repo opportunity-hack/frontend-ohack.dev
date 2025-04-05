@@ -1,0 +1,974 @@
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useAuthInfo } from '@propelauth/react';
+import {
+  Typography,
+  Container,
+  Box,
+  TextField,
+  Button,
+  FormControlLabel,
+  CircularProgress,
+  Checkbox,
+  FormControl,
+  FormHelperText,
+  RadioGroup,
+  Radio,
+  Paper,
+  Divider,
+  Alert,
+  Link,
+  InputLabel,
+  Select,
+  MenuItem,
+  OutlinedInput,
+  ListItemText,
+  Chip,
+  Stepper,
+  Step,
+  StepLabel,
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import Head from 'next/head';
+import { useEnv } from '../../../context/env.context';
+import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister';
+import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
+import InfoIcon from '@mui/icons-material/Info';
+
+const JudgeApplicationPage = () => {
+  const router = useRouter();
+  const { event_id } = router.query;
+  const { isLoggedIn, user, accessToken } = useAuthInfo();
+  const { apiServerUrl } = useEnv();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Form navigation state
+  const [activeStep, setActiveStep] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [eventData, setEventData] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    timestamp: new Date().toISOString(),
+    email: '',
+    selected: false,
+    helpedBefore: '',
+    name: '',
+    title: '',
+    biography: '',
+    whyJudge: '',
+    availability: '',
+    canAttendJudging: '', // New field for judging availability confirmation
+    inPerson: '',
+    additionalInfo: '',
+    companyName: '',
+    codeOfConduct: false,
+    backgroundAreas: [], // Changed from string to array
+    otherBackground: '', // New field for "Other" option
+    participationCount: '', // Added participation count field
+    agreedToCodeOfConduct: false,
+    linkedinProfile: '',
+    shortBio: '',
+    photoUrl: '',
+    pronouns: '',
+    country: '',
+    state: '',
+    event_id: '' // Ensure event_id is included
+  });
+
+  // Common background areas for judges
+  const backgroundOptions = [
+    "Software Development",
+    "Product Management",
+    "UX/UI Design",
+    "Data Science & Analytics",
+    "Cloud Architecture",
+    "Nonprofit Experience",
+    "Entrepreneurship",
+    "Digital Marketing",
+    "Project Management",
+    "Business Strategy",
+    "Cybersecurity",
+    "Education Technology",
+    "AI/Machine Learning",
+    "Healthcare Technology",
+    "Other" // Option to specify custom background
+  ];
+
+  // fetch event data from the backend API
+  useEffect(() => {
+    if (!event_id || !apiServerUrl) return;
+
+    const fetchEventData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch event data from the actual API
+        const response = await fetch(`${apiServerUrl}/api/messages/hackathon/${event_id}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch event data: ${response.status} ${response.statusText}`);
+        }
+        
+        const eventData = await response.json();
+        
+        if (!eventData || !eventData.start_date || !eventData.end_date) {
+          throw new Error('Invalid event data received');
+        }
+        
+        // Format dates for display
+        const startDate = new Date(eventData.start_date);
+        const endDate = new Date(eventData.end_date);
+        const formattedStartDate = startDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const formattedEndDate = endDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        setEventData({
+          name: eventData.title || `Opportunity Hack - ${event_id}`,
+          description: eventData.description || "Annual hackathon for nonprofits",
+          date: new Date(eventData.start_date).getFullYear().toString(),
+          startDate: eventData.start_date,
+          endDate: eventData.end_date,
+          formattedStartDate,
+          formattedEndDate,
+          location: eventData.location || "Tempe, Arizona",
+          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+        });
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching event data:', err);
+        setError('Failed to load event data. Please try again later.');
+        setLoading(false);
+      }
+    };
+
+    fetchEventData();
+    
+    // If user is logged in, pre-fill email and name
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || '',
+        name: user.firstName && user.lastName 
+          ? `${user.firstName} ${user.lastName}` 
+          : user.username || '',
+        event_id: event_id // Set event_id from router parameter
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        event_id: event_id // Set event_id from router parameter
+      }));
+    }
+  }, [event_id, user, apiServerUrl]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  // Handle changes for multi-select fields
+  const handleMultiSelectChange = (event, fieldName) => {
+    const {
+      target: { value },
+    } = event;
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: typeof value === 'string' ? value.split(',') : value,
+      // Clear otherBackground when Other is removed from backgroundAreas
+      ...(fieldName === 'backgroundAreas' && !value.includes('Other') ? { otherBackground: '' } : {})
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhotoFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Define steps for stepper
+  const steps = ['Basic Info', 'Background & Experience', 'Availability', 'Finish'];
+
+  const handleNext = () => {
+    if (activeStep === 0 && !validateBasicInfo()) return;
+    if (activeStep === 1 && !validateBackgroundAndExperience()) return;
+    if (activeStep === 2 && !validateAvailability()) return;
+    
+    if (activeStep === steps.length - 1) {
+      handleSubmit();
+    } else {
+      setActiveStep(prev => prev + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setActiveStep(prev => prev - 1);
+  };
+  
+  const validateBasicInfo = () => {
+    const requiredFields = ['email', 'name'];
+    
+    for (const field of requiredFields) {
+      if (!formData[field]) {
+        setError(`Please fill out the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field`);
+        return false;
+      }
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    
+    setError('');
+    return true;
+  };
+  
+  const validateBackgroundAndExperience = () => {
+    const requiredFields = ['helpedBefore', 'participationCount'];
+    
+    for (const field of requiredFields) {
+      if (!formData[field]) {
+        setError(`Please fill out the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field`);
+        return false;
+      }
+    }
+    
+    // Validate backgroundAreas field
+    if (!formData.backgroundAreas || formData.backgroundAreas.length === 0) {
+      setError('Please select at least one background area');
+      return false;
+    }
+    
+    // Validate otherBackground if "Other" is selected
+    if (formData.backgroundAreas.includes('Other') && !formData.otherBackground) {
+      setError('Please specify your other background area');
+      return false;
+    }
+    
+    setError('');
+    return true;
+  };
+  
+  const validateAvailability = () => {
+    const requiredFields = ['inPerson', 'canAttendJudging'];
+    
+    for (const field of requiredFields) {
+      if (!formData[field]) {
+        setError(`Please fill out the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field`);
+        return false;
+      }
+    }
+    
+    setError('');
+    return true;
+  };
+
+  const validateForm = () => {
+    return (
+      validateBasicInfo() &&
+      validateBackgroundAndExperience() &&
+      validateAvailability() &&
+      formData.codeOfConduct
+    );
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    
+    if (!formData.codeOfConduct) {
+      setError('You must agree to the code of conduct');
+      return;
+    }
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setSubmitting(true);
+    setError('');
+    
+    try {
+      // Process background areas for submission
+      const backgroundAreasFormatted = formData.backgroundAreas.includes('Other')
+        ? [...formData.backgroundAreas.filter(area => area !== 'Other'), formData.otherBackground].join(', ')
+        : formData.backgroundAreas.join(', ');
+
+      // In a real implementation, you would send the data to your API
+      // Update the timestamp before submitting
+      const submissionData = {
+        ...formData,
+        timestamp: new Date().toISOString(),
+        photoFile: photoFile ? photoFile.name : null,
+        background: backgroundAreasFormatted, // Replace the original background field with formatted list
+        volunteer_type: 'judge',
+        isInPerson: formData.inPerson === 'Yes',
+        isSelected: false, // Default to false, admin will select later
+        agreedToCodeOfConduct: formData.codeOfConduct,
+        type: 'judges',
+        shortBio: formData.biography, // Map to appropriate field
+        shortBiography: formData.biography, // Ensure we have both formats
+        photoUrl: photoPreview || formData.photoUrl, // Use preview if available
+      };
+      
+      console.log('Submitting judge application:', submissionData);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setSuccess(true);
+    } catch (err) {
+      console.error('Error submitting application:', err);
+      setError('Failed to submit your application. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  
+  // Render basic information form
+  const renderBasicInfoForm = () => (
+    <Box sx={{ mb: 4 }}>
+      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
+        Basic Information
+      </Typography>
+      
+      <Box sx={{ mb: 3 }}>
+        <TextField
+          label="Email Address"
+          name="email"
+          type="email"
+          required
+          fullWidth
+          value={formData.email}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
+        
+        <TextField
+          label="Your Name"
+          name="name"
+          required
+          fullWidth
+          value={formData.name}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
+        
+        <TextField
+          label="Your Title"
+          name="title"
+          fullWidth
+          value={formData.title}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
+        
+        <TextField
+          label="Company Name"
+          name="companyName"
+          fullWidth
+          value={formData.companyName}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
+      </Box>
+    </Box>
+  );
+  
+  // Render background and experience form
+  const renderBackgroundAndExperienceForm = () => (
+    <Box sx={{ mb: 4 }}>
+      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
+        Background & Experience
+      </Typography>
+      
+      <Box sx={{ mb: 3 }}>
+        <FormControl required component="fieldset" sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Have you helped us before?
+          </Typography>
+          <RadioGroup
+            name="helpedBefore"
+            value={formData.helpedBefore}
+            onChange={handleChange}
+          >
+            <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+            <FormControlLabel value="No" control={<Radio />} label="No" />
+          </RadioGroup>
+        </FormControl>
+
+        <FormControl fullWidth required sx={{ mb: 3 }}>
+          <InputLabel id="participation-count-label">How many times have you participated in Opportunity Hack?</InputLabel>
+          <Select
+            labelId="participation-count-label"
+            id="participation-count"
+            name="participationCount"
+            value={formData.participationCount}
+            onChange={handleChange}
+            label="How many times have you participated in Opportunity Hack?"
+          >
+            <MenuItem value="This is my first year! 👆">This is my first year! 👆</MenuItem>
+            <MenuItem value="This will be the 2nd time ✌️">This will be the 2nd time ✌️</MenuItem>
+            <MenuItem value="This will be the 3rd time ☘️">This will be the 3rd time ☘️</MenuItem>
+            <MenuItem value="I've been here 4+ times 🔥">I've been here 4+ times 🔥</MenuItem>
+          </Select>
+        </FormControl>
+        
+        <FormControl fullWidth required sx={{ mb: formData.backgroundAreas.includes('Other') ? 1 : 3 }}>
+          <InputLabel id="background-areas-label">Which areas best describe your background?</InputLabel>
+          <Select
+            labelId="background-areas-label"
+            id="background-areas"
+            multiple
+            value={formData.backgroundAreas}
+            onChange={(e) => handleMultiSelectChange(e, 'backgroundAreas')}
+            input={<OutlinedInput label="Which areas best describe your background?" />}
+            renderValue={(selected) => (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {selected.map((value) => (
+                  <Chip key={value} label={value} />
+                ))}
+              </Box>
+            )}
+          >
+            {backgroundOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                <Checkbox checked={formData.backgroundAreas.indexOf(option) > -1} />
+                <ListItemText primary={option} />
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>Select all areas that apply to your expertise</FormHelperText>
+        </FormControl>
+        
+        {formData.backgroundAreas.includes('Other') && (
+          <TextField
+            label="Please specify your background"
+            name="otherBackground"
+            required
+            fullWidth
+            value={formData.otherBackground}
+            onChange={handleChange}
+            helperText="Tell us about your specific area of expertise"
+            sx={{ mb: 3 }}
+          />
+        )}
+        
+        <TextField
+          label="A (short) biography - aim for 200 words"
+          name="biography"
+          multiline
+          rows={4}
+          fullWidth
+          value={formData.biography}
+          onChange={handleChange}
+          helperText="Tell us about your professional background and expertise"
+          sx={{ mb: 3 }}
+        />
+        
+        <TextField
+          label="Why do you want to be a judge for Opportunity Hack?"
+          name="whyJudge"
+          multiline
+          rows={3}
+          fullWidth
+          value={formData.whyJudge}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
+        
+        <Box sx={{ mb: 3 }}>
+          <InputLabel htmlFor="photo-upload" sx={{ mb: 1 }}>
+            A photo of you we can use on the DevPost site
+          </InputLabel>
+          <Button
+            component="label"
+            variant="outlined"
+            startIcon={<CloudUploadIcon />}
+            sx={{ mb: 1 }}
+          >
+            Upload Photo
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleFileChange}
+            />
+          </Button>
+          <FormHelperText>Please upload a professional photo of yourself</FormHelperText>
+          
+          {photoPreview && (
+            <Box sx={{ mt: 2, maxWidth: 200 }}>
+              <img 
+                src={photoPreview} 
+                alt="Preview" 
+                style={{ width: '100%', borderRadius: '4px' }} 
+              />
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
+  
+  // Render availability form
+  const renderAvailabilityForm = () => (
+    <Box sx={{ mb: 4 }}>
+      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
+        Availability & Logistics
+      </Typography>
+      
+      <Box sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" fontWeight="bold">
+            Important Judging Schedule
+          </Typography>
+          <Typography variant="body2">
+            Judging starts at 3:00 PM on the last day of the hackathon (typically Sunday). We expect to complete judging and announce the winning teams by 5:30 PM. Your presence during this entire timeframe is crucial.
+          </Typography>
+        </Alert>
+        
+        {eventData && eventData.endDate && (
+          <Box sx={{ mb: 3, bgcolor: 'background.paper', p: 2, borderRadius: 1, border: '1px dashed'}}>
+            <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+              For this event: 
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Judging will take place on{' '}
+              <Box component="span" fontWeight="bold">
+                {new Date(eventData.endDate).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </Box>{' '}
+              from{' '}
+              <Box component="span" fontWeight="bold">
+                3:00 PM to approximately 5:30 PM
+              </Box>
+            </Typography>
+          </Box>
+        )}
+        
+        <FormControl required component="fieldset" sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Can you commit to being present for the entire judging period (3:00 PM to 5:30 PM on the last day)?
+          </Typography>
+          <RadioGroup
+            name="canAttendJudging"
+            value={formData.canAttendJudging}
+            onChange={handleChange}
+          >
+            <FormControlLabel 
+              value="Yes" 
+              control={<Radio />} 
+              label="Yes, I can be present for the entire judging period" 
+            />
+            <FormControlLabel 
+              value="No" 
+              control={<Radio />} 
+              label="No, I cannot commit to this time period" 
+            />
+            <FormControlLabel 
+              value="Partial" 
+              control={<Radio />} 
+              label="I can attend part of the judging period (please explain in availability)" 
+            />
+          </RadioGroup>
+          {formData.canAttendJudging === "No" && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              Please note that availability during the judging period is a key requirement for judges. Your application may still be considered, but priority will be given to those who can attend the full judging session.
+            </Alert>
+          )}
+        </FormControl>
+        
+        <TextField
+          label="Additional availability details"
+          name="availability"
+          multiline
+          rows={2}
+          fullWidth
+          value={formData.availability}
+          onChange={handleChange}
+          helperText="Please specify any additional availability details or constraints"
+          sx={{ mb: 3 }}
+        />
+        
+        <FormControl required component="fieldset" sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Are you joining us in-person at ASU in Tempe, Arizona?
+          </Typography>
+          <RadioGroup
+            name="inPerson"
+            value={formData.inPerson}
+            onChange={handleChange}
+          >
+            <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+            <FormControlLabel value="No" control={<Radio />} label="No" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
+    </Box>
+  );
+  
+  // Render review form
+  const renderReviewForm = () => (
+    <Box sx={{ mb: 4 }}>
+      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
+        Review & Submit
+      </Typography>
+      
+      <TextField
+        label="(Optional) Anything else to share?"
+        name="additionalInfo"
+        multiline
+        rows={3}
+        fullWidth
+        value={formData.additionalInfo}
+        onChange={handleChange}
+        sx={{ mb: 4 }}
+      />
+      
+      <FormControlLabel
+        control={
+          <Checkbox
+            name="codeOfConduct"
+            checked={formData.codeOfConduct}
+            onChange={handleChange}
+            color="primary"
+            required
+          />
+        }
+        label={
+          <Typography variant="body2">
+            I agree to the{" "}
+            <Link
+              href="/hack/code-of-conduct"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Code of Conduct
+            </Link>
+          </Typography>
+        }
+        sx={{ mb: 2 }}
+      />
+      
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <Typography variant="body2">
+          By submitting this form, you're expressing interest in judging at Opportunity Hack. 
+          Our team will review your application and reach out with further details about judging logistics and criteria.
+        </Typography>
+      </Alert>
+      
+      {/* Selected field is not shown to users but stored in state */}
+      <input 
+        type="hidden" 
+        name="selected" 
+        value={formData.selected} 
+      />
+    </Box>
+  );
+  
+  // Function to render the current step form
+  const getStepContent = (step) => {
+    switch (step) {
+      case 0:
+        return renderBasicInfoForm();
+      case 1:
+        return renderBackgroundAndExperienceForm();
+      case 2:
+        return renderAvailabilityForm();
+      case 3:
+        return renderReviewForm();
+      default:
+        return 'Unknown step';
+    }
+  };
+
+  // SEO metadata and descriptions
+  const pageTitle = eventData 
+    ? `Judge Application for ${eventData.name} - Opportunity Hack`
+    : "Judge Application - Opportunity Hack";
+  const pageDescription = eventData
+    ? `Apply to be a judge for ${eventData.name} in ${eventData.location}. Help evaluate innovative solutions for nonprofits and make a real impact.`
+    : "Apply to be a judge for our social good hackathon. Help evaluate innovative solutions for nonprofits and make a real impact.";
+  const canonicalUrl = `https://ohack.dev/hack/${event_id}/judge-application`;
+  
+  const imageUrl = eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
+
+  // If form submitted successfully, show success message
+  if (success) {
+    return (
+      <Container>
+        <Head>
+          <title>{pageTitle}</title>
+          <meta name="description" content={pageDescription} />
+          <link rel="canonical" href={canonicalUrl} />
+        </Head>
+        
+        <Box my={8} textAlign="center">
+          <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4, mt: 12 }}>
+            Application Submitted!
+          </Typography>
+          
+          <Alert severity="success" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
+            Thank you for applying to be a judge at Opportunity Hack. We'll review your application and contact you soon.
+          </Alert>
+          
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => router.push(`/hack/${event_id}`)}
+            sx={{ mt: 2 }}
+          >
+            Return to Hackathon Page
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
+  return (
+    <Container>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="hackathon judge, judge application, tech for good, nonprofit hackathon, opportunity hack, judging, volunteer, tech judging"
+        />
+        <link rel="canonical" href={canonicalUrl} />
+
+        {/* Open Graph tags */}
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={imageUrl} />
+
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={imageUrl} />
+      </Head>
+
+      <Box my={8}>
+        <Typography
+          variant="h1"
+          component="h1"
+          sx={{ fontSize: "2.5rem", mb: 2, mt: 12 }}
+        >
+          Judge Application
+        </Typography>
+
+        {loading ? (
+          <Box display="flex" justifyContent="center" my={4}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box>
+            {eventData && (
+              <>
+                <Typography
+                  variant="h2"
+                  component="h2"
+                  sx={{ fontSize: "1.75rem", mb: 1 }}
+                >
+                  {eventData.name}
+                </Typography>
+
+                <Typography
+                  variant="h3"
+                  component="h3"
+                  sx={{
+                    fontSize: "1.25rem",
+                    mb: 1,
+                    color: "text.secondary",
+                  }}
+                >
+                  {eventData.location}
+                </Typography>
+
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    mb: 3,
+                    color: "text.secondary",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{ display: "inline-flex", alignItems: "center" }}
+                  >
+                    📆 {eventData.formattedStartDate}
+                  </Box>
+                  {eventData.formattedStartDate !==
+                    eventData.formattedEndDate && (
+                    <>
+                      <Box component="span" sx={{ mx: 0.5 }}>
+                        to
+                      </Box>
+                      <Box
+                        component="span"
+                        sx={{ display: "inline-flex", alignItems: "center" }}
+                      >
+                        {eventData.formattedEndDate}
+                      </Box>
+                    </>
+                  )}
+                </Typography>
+              </>
+            )}
+
+            {/* Add ApplicationNav component */}
+            <ApplicationNav eventId={event_id} currentType="judge" />
+
+            <Box sx={{ mb: 4 }}>
+              <Stepper
+                activeStep={activeStep}
+                alternativeLabel={!isMobile}
+                orientation={isMobile ? "vertical" : "horizontal"}
+                sx={{ mb: 4 }}
+              >
+                {steps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+
+              <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                <Typography variant="body1" paragraph>
+                  Thank you for your interest in judging at Opportunity Hack!
+                  Judges play a crucial role in evaluating the projects created
+                  by our participants and providing valuable feedback.
+                </Typography>
+
+                {eventData && eventData.description && (
+                  <Typography variant="body1" sx={{ mb: 3 }}>
+                    <strong>About this event:</strong> {eventData.description}
+                  </Typography>
+                )}
+
+                
+                  <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
+                    <Typography variant="body1" paragraph>
+                      <strong>
+                        Want to learn more about judging at Opportunity Hack?
+                      </strong>{" "}
+                      Visit our{" "}
+                      <Link
+                        href="/about/judges"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ fontWeight: "bold" }}
+                      >
+                        Judges Information Page
+                      </Link>{" "}
+                      for details about the evaluation criteria, judging
+                      process, and commitment.
+                    </Typography>
+                  </Alert>
+                
+
+                <Typography variant="body1" paragraph>
+                  As a judge, you'll review innovative solutions developed for
+                  nonprofits and help recognize outstanding contributions. Your
+                  expertise will help ensure the success of our hackathon.
+                </Typography>
+
+                {error && (
+                  <Alert severity="error" sx={{ mb: 4 }}>
+                    {error}
+                  </Alert>
+                )}
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                  }}
+                >
+                  {getStepContent(activeStep)}
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mt: 4,
+                    }}
+                  >
+                    <Button
+                      disabled={activeStep === 0 || submitting}
+                      onClick={handleBack}
+                      variant="outlined"
+                    >
+                      Back
+                    </Button>
+
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleNext}
+                      disabled={submitting}
+                    >
+                      {activeStep === steps.length - 1 ? (
+                        submitting ? (
+                          <CircularProgress size={24} />
+                        ) : (
+                          "Submit Application"
+                        )
+                      ) : (
+                        "Next"
+                      )}
+                    </Button>
+                  </Box>
+                </form>
+              </Paper>
+            </Box>
+          </Box>
+        )}
+      </Box>
+    </Container>
+  );
+};
+
+export default JudgeApplicationPage;
