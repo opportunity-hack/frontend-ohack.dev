@@ -36,6 +36,8 @@ import { useEnv } from '../../../context/env.context';
 import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
 import InfoIcon from '@mui/icons-material/Info';
+import FormPersistenceControls from '../../../components/FormPersistenceControls';
+import { useFormPersistence } from '../../../hooks/use-form-persistence';
 
 const JudgeApplicationPage = () => {
   const router = useRouter();
@@ -47,7 +49,6 @@ const JudgeApplicationPage = () => {
   
   // Form navigation state
   const [activeStep, setActiveStep] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -55,8 +56,8 @@ const JudgeApplicationPage = () => {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   
-  // Form state
-  const [formData, setFormData] = useState({
+  // Initial form state
+  const initialFormData = {
     timestamp: new Date().toISOString(),
     email: '',
     selected: false,
@@ -82,8 +83,34 @@ const JudgeApplicationPage = () => {
     country: '',
     state: '',
     event_id: '' // Ensure event_id is included
-  });
+  };
 
+  // Use form persistence hook
+  const {
+    formData,
+    setFormData,
+    formRef,
+    handleFormChange,
+    handleMultiSelectChange,
+    loadFromLocalStorage,
+    saveToLocalStorage,
+    clearSavedData,
+    loadPreviousSubmission,
+    previouslySubmitted,
+    setPreviouslySubmitted,
+    notification,
+    closeNotification,
+    isLoading,
+    setIsLoading
+  } = useFormPersistence({
+    formType: 'judge',
+    eventId: event_id,
+    userId: user?.userId,
+    initialFormData,
+    apiServerUrl,
+    accessToken
+  });
+  
   // Common background areas for judges
   const backgroundOptions = [
     "Software Development",
@@ -109,7 +136,7 @@ const JudgeApplicationPage = () => {
 
     const fetchEventData = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         
         // Fetch event data from the actual API
         const response = await fetch(`${apiServerUrl}/api/messages/hackathon/${event_id}`);
@@ -152,67 +179,151 @@ const JudgeApplicationPage = () => {
           image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
         });
         
-        setLoading(false);
+        // Initialize form data with event_id
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          event_id: event_id
+        }));
+        
+        // Process user information if available
+        if (user) {
+          setFormData(prevFormData => ({
+            ...prevFormData,
+            email: user.email || prevFormData.email,
+            name: user.firstName && user.lastName 
+              ? `${user.firstName} ${user.lastName}` 
+              : user.username || prevFormData.name,
+          }));
+          
+          // Then try to load previous submission
+          try {
+            const prevData = await loadPreviousSubmission();
+            if (prevData) {
+              // If the user has submitted before, ask if they want to load it
+              if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
+                // Transform API data to match our form structure
+                const transformedData = {
+                  ...formData,
+                  email: prevData.email || formData.email,
+                  name: prevData.name || formData.name,
+                  pronouns: prevData.pronouns || '',
+                  title: prevData.title || '',
+                  biography: prevData.biography || prevData.shortBio || '',
+                  whyJudge: prevData.whyJudge || '',
+                  availability: prevData.availability || '',
+                  canAttendJudging: prevData.canAttendJudging || '',
+                  inPerson: prevData.inPerson || '',
+                  additionalInfo: prevData.additionalInfo || '',
+                  companyName: prevData.companyName || '',
+                  backgroundAreas: Array.isArray(prevData.backgroundAreas) 
+                    ? prevData.backgroundAreas 
+                    : (prevData.backgroundAreas || prevData.background || '').split(', ').filter(Boolean),
+                  otherBackground: prevData.otherBackground || '', 
+                  participationCount: prevData.participationCount || '',
+                  codeOfConduct: Boolean(prevData.agreedToCodeOfConduct),
+                  country: prevData.country || '',
+                  state: prevData.state || '',
+                  event_id: event_id,
+                  linkedinProfile: prevData.linkedinProfile || '',
+                  shortBio: prevData.shortBio || '',
+                  photoUrl: prevData.photoUrl || ''
+                };
+                
+                setFormData(transformedData);
+                
+                // If there's a photo URL, set the preview
+                if (prevData.photoUrl) {
+                  setPhotoPreview(prevData.photoUrl);
+                }
+              } else {
+                // If user declined to load previous submission, load from localStorage instead
+                loadFromLocalStorage();
+              }
+            } else {
+              // If no previous submission, load from localStorage
+              loadFromLocalStorage();
+            }
+          } catch (err) {
+            console.error('Error loading previous submission:', err);
+            // Fallback to localStorage if API call fails
+            loadFromLocalStorage();
+          }
+        } else {
+          // For non-logged in users, try localStorage
+          loadFromLocalStorage();
+        }
+        
+        setIsLoading(false);
       } catch (err) {
         console.error('Error fetching event data:', err);
         setError('Failed to load event data. Please try again later.');
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchEventData();
-    
-    // If user is logged in, pre-fill email and name
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        email: user.email || '',
-        name: user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}` 
-          : user.username || '',
-        event_id: event_id // Set event_id from router parameter
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        event_id: event_id // Set event_id from router parameter
-      }));
-    }
-  }, [event_id, user, apiServerUrl]);
+  }, [event_id, apiServerUrl, user, setFormData, loadPreviousSubmission, loadFromLocalStorage]);
 
+  // Extend handleFormChange to handle otherBackground field
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    
+    if (type === 'checkbox') {
+      handleFormChange(e);
+    } else {
+      handleFormChange(e);
+      
+      // Additional logic for backgroundAreas
+      if (name === 'backgroundAreas' && !value.includes('Other')) {
+        setFormData(prev => ({
+          ...prev,
+          otherBackground: ''
+        }));
+      }
+    }
   };
-
-  // Handle changes for multi-select fields
-  const handleMultiSelectChange = (event, fieldName) => {
-    const {
-      target: { value },
-    } = event;
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: typeof value === 'string' ? value.split(',') : value,
-      // Clear otherBackground when Other is removed from backgroundAreas
-      ...(fieldName === 'backgroundAreas' && !value.includes('Other') ? { otherBackground: '' } : {})
-    }));
+  
+  // Extend handleMultiSelectChange to handle otherBackground field
+  const customHandleMultiSelectChange = (event, fieldName) => {
+    handleMultiSelectChange(event, fieldName);
+    
+    // Clear otherBackground when Other is removed from backgroundAreas
+    if (fieldName === 'backgroundAreas' && !event.target.value.includes('Other')) {
+      setFormData(prev => ({
+        ...prev,
+        otherBackground: ''
+      }));
+    }
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setPhotoFile(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image file is too large. Please choose an image under 5MB.');
+      return;
     }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Selected file is not an image. Please select an image file.');
+      return;
+    }
+    
+    setPhotoFile(file);
+    setError(''); // Clear any previous errors
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result);
+    };
+    reader.onerror = () => {
+      setError('Failed to read the selected file. Please try again.');
+    };
+    reader.readAsDataURL(file);
   };
 
   // Define steps for stepper
@@ -320,37 +431,61 @@ const JudgeApplicationPage = () => {
     setError('');
     
     try {
-      // Process background areas for submission
-      const backgroundAreasFormatted = formData.backgroundAreas.includes('Other')
-        ? [...formData.backgroundAreas.filter(area => area !== 'Other'), formData.otherBackground].join(', ')
-        : formData.backgroundAreas.join(', ');
+      // Process background areas for submission - ensure consistent formatting
+      const backgroundAreasFormatted = formData.backgroundAreas && Array.isArray(formData.backgroundAreas)
+        ? (formData.backgroundAreas.includes('Other')
+          ? [...formData.backgroundAreas.filter(area => area !== 'Other'), formData.otherBackground].join(', ')
+          : formData.backgroundAreas.join(', '))
+        : '';
 
-      // In a real implementation, you would send the data to your API
-      // Update the timestamp before submitting
+      // Create a complete submission object with all required fields
       const submissionData = {
         ...formData,
         timestamp: new Date().toISOString(),
-        photoFile: photoFile ? photoFile.name : null,
+        photoUrl: photoPreview || formData.photoUrl || '', // Use preview if available
         background: backgroundAreasFormatted, // Replace the original background field with formatted list
+        backgroundAreas: backgroundAreasFormatted, // Include both formats for compatibility
         volunteer_type: 'judge',
         isInPerson: formData.inPerson === 'Yes',
         isSelected: false, // Default to false, admin will select later
-        agreedToCodeOfConduct: formData.codeOfConduct,
+        agreedToCodeOfConduct: Boolean(formData.codeOfConduct),
         type: 'judges',
-        shortBio: formData.biography, // Map to appropriate field
-        shortBiography: formData.biography, // Ensure we have both formats
-        photoUrl: photoPreview || formData.photoUrl, // Use preview if available
+        shortBio: formData.biography || '', // Map to appropriate field
+        shortBiography: formData.biography || '' // Ensure we have both formats
       };
       
-      console.log('Submitting judge application:', submissionData);
+      if (apiServerUrl) {
+        // Submit to API - use the correct endpoint based on whether this is an update
+        const submitEndpoint = previouslySubmitted 
+          ? `${apiServerUrl}/api/judge/application/${event_id}/update` 
+          : `${apiServerUrl}/api/judge/application/${event_id}/submit`;
+        
+        const response = await fetch(submitEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(submissionData)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(`Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ''}`);
+        }
+      } else {
+        // In a test environment, log the data and simulate API delay
+        console.log('Submitting judge application:', submissionData);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Clear saved form data after successful submission
+      clearSavedData();
       
       setSuccess(true);
     } catch (err) {
       console.error('Error submitting application:', err);
-      setError('Failed to submit your application. Please try again.');
+      setError(`Failed to submit your application. ${err.message || 'Please try again.'}`);
     } finally {
       setSubmitting(false);
     }
@@ -452,7 +587,7 @@ const JudgeApplicationPage = () => {
             id="background-areas"
             multiple
             value={formData.backgroundAreas}
-            onChange={(e) => handleMultiSelectChange(e, 'backgroundAreas')}
+            onChange={(e) => customHandleMultiSelectChange(e, 'backgroundAreas')}
             input={<OutlinedInput label="Which areas best describe your background?" />}
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -786,8 +921,17 @@ const JudgeApplicationPage = () => {
         <meta name="twitter:description" content={pageDescription} />
         <meta name="twitter:image" content={imageUrl} />
       </Head>
+      
+      {/* Form persistence notification component */}
+      <FormPersistenceControls
+        onSave={saveToLocalStorage}
+        onRestore={loadFromLocalStorage}
+        onClear={clearSavedData}
+        notification={notification}
+        onCloseNotification={closeNotification}
+      />
 
-      <Box my={8}>
+      <Box my={8} ref={formRef}>
         <Typography
           variant="h1"
           component="h1"
@@ -796,7 +940,7 @@ const JudgeApplicationPage = () => {
           Judge Application
         </Typography>
 
-        {loading ? (
+        {isLoading ? (
           <Box display="flex" justifyContent="center" my={4}>
             <CircularProgress />
           </Box>

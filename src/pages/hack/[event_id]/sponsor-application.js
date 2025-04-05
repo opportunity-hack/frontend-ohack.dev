@@ -41,6 +41,8 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Head from 'next/head';
 import { useEnv } from '../../../context/env.context';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
+import FormPersistenceControls from '../../../components/FormPersistenceControls';
+import { useFormPersistence } from '../../../hooks/use-form-persistence';
 
 const SponsorApplicationPage = () => {
   const router = useRouter();
@@ -52,16 +54,14 @@ const SponsorApplicationPage = () => {
   
   // Form navigation state
   const [activeStep, setActiveStep] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [eventData, setEventData] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   
-  // Form state
-  const [formData, setFormData] = useState({
+  // Initial form state
+  const initialFormData = {
     timestamp: new Date().toISOString(),
     email: '',
     company: '',
@@ -78,7 +78,37 @@ const SponsorApplicationPage = () => {
     title: '',
     preferredContact: 'email',
     howHeard: '',
-    additionalNotes: ''
+    additionalNotes: '',
+    event_id: '',
+    isSelected: false
+  };
+  
+  // Use form persistence hook
+  const {
+    formData,
+    setFormData,
+    formRef,
+    handleFormChange,
+    handleMultiSelectChange,
+    loadFromLocalStorage,
+    saveToLocalStorage,
+    clearSavedData,
+    loadPreviousSubmission,
+    previouslySubmitted,
+    setPreviouslySubmitted,
+    notification,
+    closeNotification,
+    isLoading,
+    setIsLoading,
+    error,
+    setError
+  } = useFormPersistence({
+    formType: 'sponsor',
+    eventId: event_id,
+    userId: user?.userId,
+    initialFormData,
+    apiServerUrl,
+    accessToken
   });
   
   // Sponsorship tiers
@@ -167,51 +197,169 @@ const SponsorApplicationPage = () => {
 
   // fetch event data
   useEffect(() => {
-    if (!event_id) return;
+    if (!event_id || !apiServerUrl) return;
 
     const fetchEventData = async () => {
       try {
-        // In a real implementation, this would fetch from the backend
-        // For now we'll use mock data
-        setLoading(true);
+        setIsLoading(true);
         
-        // Simulating API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Fetch event data from the actual API
+        const response = await fetch(`${apiServerUrl}/api/messages/hackathon/${event_id}`);
         
-        // Mock event data
-        const mockEvent = {
-          name: "Opportunity Hack 2025",
-          description: "Annual hackathon for nonprofits",
-          startDate: "2025-10-15",
-          endDate: "2025-10-17",
-          location: "Tempe, Arizona",
-          formattedStartDate: "Friday, October 15, 2025",
-          formattedEndDate: "Sunday, October 17, 2025",
-          date: "October 15-17, 2025"
-        };
+        if (!response.ok) {
+          throw new Error(`Failed to fetch event data: ${response.status} ${response.statusText}`);
+        }
         
-        setEventData(mockEvent);
-        setLoading(false);
+        const eventData = await response.json();
+        
+        if (!eventData || !eventData.start_date || !eventData.end_date) {
+          throw new Error('Invalid event data received');
+        }
+        
+        // Format dates for display
+        const startDate = new Date(eventData.start_date);
+        const endDate = new Date(eventData.end_date);
+        const formattedStartDate = startDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const formattedEndDate = endDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        setEventData({
+          name: eventData.title || `Opportunity Hack - ${event_id}`,
+          description: eventData.description || "Annual hackathon for nonprofits",
+          date: new Date(eventData.start_date).getFullYear().toString(),
+          startDate: eventData.start_date,
+          endDate: eventData.end_date,
+          formattedStartDate,
+          formattedEndDate,
+          location: eventData.location || "Tempe, Arizona",
+          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+        });
+        
+        // Initialize formData with event ID
+        setFormData(prev => ({
+          ...prev,
+          event_id: event_id
+        }));
+        
+        setIsLoading(false);
       } catch (err) {
         console.error('Error fetching event data:', err);
         setError('Failed to load event data. Please try again later.');
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchEventData();
+  }, [event_id, apiServerUrl, setFormData, setIsLoading, setError]);
+
+  // Separate effect for handling form data initialization and previous submission loading
+  useEffect(() => {
+    if (!event_id || isLoading) return;
     
-    // If user is logged in, pre-fill email
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        email: user.email || '',
-        name: user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}` 
-          : user.username || ''
-      }));
+    const initFormData = async () => {
+      try {
+        // Pre-fill with user information if logged in
+        if (user) {
+          setFormData(prevFormData => ({
+            ...prevFormData,
+            email: user.email || prevFormData.email,
+            name: user.firstName && user.lastName 
+              ? `${user.firstName} ${user.lastName}` 
+              : user.username || prevFormData.name
+          }));
+          
+          // Check for previous submission if user is logged in with access token
+          if (accessToken) {
+            const prevData = await loadPreviousSubmission();
+            
+            if (prevData) {
+              // If the user has submitted before, ask if they want to load it
+              if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
+                // Transform API data to match our form structure
+                const volunteerRolesArray = prevData.volunteerType 
+                  ? prevData.volunteerType.split(', ').map(role => {
+                      // Check if this is a custom role or a predefined one
+                      const matchedPredefined = volunteerRoleOptions.find(opt => 
+                        opt.label.toLowerCase() === role.toLowerCase());
+                        
+                      if (matchedPredefined) return matchedPredefined.value;
+                      return 'other'; // If no match, assume it's a custom role
+                    })
+                  : [];
+                
+                // Extract "other" role if present
+                let otherRole = '';
+                if (prevData.volunteerType && !volunteerRoleOptions.some(opt => 
+                  prevData.volunteerType.includes(opt.label))) {
+                  otherRole = prevData.volunteerType;
+                }
+                
+                const transformedData = {
+                  ...formData,
+                  email: prevData.email || formData.email,
+                  name: prevData.name || formData.name,
+                  company: prevData.company || prevData.companyName || '',
+                  useLogo: prevData.useLogo || 'Yes',
+                  phoneNumber: prevData.phoneNumber || '',
+                  sponsorshipTier: getSponsorshipTierFromDetails(prevData.sponsorshipTypes || ''),
+                  customSponsorship: prevData.sponsorshipTier === 'Custom Sponsorship' ? prevData.sponsorshipDetails || '' : '',
+                  sponsorshipDetails: prevData.sponsorshipDetails || '',
+                  volunteerRoles: volunteerRolesArray,
+                  otherVolunteerRole: otherRole,
+                  volunteerCount: prevData.volunteerCount || '',
+                  volunteerHours: prevData.volunteerHours || '',
+                  title: prevData.title || '',
+                  preferredContact: prevData.preferredContact || 'email',
+                  howHeard: prevData.howHeard || '',
+                  additionalNotes: prevData.additionalNotes || prevData.otherInvolvement || '',
+                  event_id
+                };
+                
+                setFormData(transformedData);
+                
+                // If there's a logo URL, set the preview
+                if (prevData.photoUrl || prevData.logoUrl) {
+                  setLogoPreview(prevData.photoUrl || prevData.logoUrl);
+                }
+                
+                return;
+              }
+            }
+          }
+        }
+        
+        // If no previous submission or user declined to load it, try localStorage
+        loadFromLocalStorage();
+        
+      } catch (err) {
+        console.error('Error initializing form data:', err);
+      }
+    };
+
+    initFormData();
+  }, [user, accessToken, event_id, loadPreviousSubmission, loadFromLocalStorage, isLoading]);
+
+  // Helper function to extract sponsorship tier from details string
+  const getSponsorshipTierFromDetails = (details) => {
+    if (!details) return '';
+    
+    const tierNames = sponsorshipTiers.map(tier => tier.name);
+    
+    for (const tier of tierNames) {
+      if (details.includes(tier)) return tier;
     }
-  }, [event_id, user, apiServerUrl]);
+    
+    return 'Custom Sponsorship'; // Default to custom if no match
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -232,31 +380,47 @@ const SponsorApplicationPage = () => {
           };
         });
       } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: checked
-        }));
+        handleFormChange(e);
       }
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      handleFormChange(e);
     }
   };
   
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setLogoFile(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image file is too large. Please choose an image under 5MB.');
+      return;
     }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Selected file is not an image. Please select an image file.');
+      return;
+    }
+    
+    setLogoFile(file);
+    setError(''); // Clear any previous errors
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result);
+      
+      // Also update the form data with the logo URL
+      setFormData(prev => ({
+        ...prev,
+        photoUrl: reader.result
+      }));
+    };
+    reader.onerror = () => {
+      setError('Failed to read the selected file. Please try again.');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleNext = () => {
@@ -355,7 +519,9 @@ const SponsorApplicationPage = () => {
     );
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    
     if (!validateForm()) {
       return;
     }
@@ -402,16 +568,38 @@ const SponsorApplicationPage = () => {
         logoUrl: logoPreview,
       };
       
-      // In a real implementation, you would send the data to your API
-      console.log('Submitting sponsor application:', submissionData);
+      if (apiServerUrl && accessToken) {
+        // Submit to API
+        const submitEndpoint = previouslySubmitted 
+          ? `${apiServerUrl}/api/sponsor/application/${event_id}/update` 
+          : `${apiServerUrl}/api/sponsor/application/${event_id}/submit`;
+        
+        const response = await fetch(submitEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(submissionData)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(`Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ''}`);
+        }
+      } else {
+        // In a test environment or when API isn't available
+        console.log('Submitting sponsor application:', submissionData);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Clear saved form data after successful submission
+      clearSavedData();
       
       setSuccess(true);
     } catch (err) {
       console.error('Error submitting application:', err);
-      setError('Failed to submit your application. Please try again.');
+      setError(`Failed to submit your application. ${err.message || 'Please try again.'}`);
     } finally {
       setSubmitting(false);
     }
@@ -473,7 +661,7 @@ const SponsorApplicationPage = () => {
             fullWidth
             value={formData.email}
             onChange={handleChange}
-            error={error.includes('email')}
+            error={typeof error === 'string' && error.includes('email')}
           />
         </Grid>
         
@@ -484,7 +672,7 @@ const SponsorApplicationPage = () => {
             fullWidth
             value={formData.phoneNumber}
             onChange={handleChange}
-            error={error.includes('phone')}
+            error={typeof error === 'string' && error.includes('phone')}
             helperText="We'll only call if urgent"
             InputProps={{
               endAdornment: (
@@ -508,7 +696,7 @@ const SponsorApplicationPage = () => {
             fullWidth
             value={formData.company}
             onChange={handleChange}
-            error={error.includes('company')}
+            error={typeof error === 'string' && error.includes('company')}
           />
         </Grid>
         
@@ -520,7 +708,7 @@ const SponsorApplicationPage = () => {
             fullWidth
             value={formData.name}
             onChange={handleChange}
-            error={error.includes('name')}
+            error={typeof error === 'string' && error.includes('name')}
           />
         </Grid>
         
@@ -698,7 +886,7 @@ const SponsorApplicationPage = () => {
             fullWidth
             value={formData.customSponsorship}
             onChange={handleChange}
-            error={error.includes('custom')}
+            error={typeof error === 'string' && error.includes('custom')}
             helperText="Please describe your sponsorship proposal, budget, and what you'd like to offer"
           />
         </Box>
@@ -765,7 +953,7 @@ const SponsorApplicationPage = () => {
             fullWidth
             value={formData.otherVolunteerRole}
             onChange={handleChange}
-            error={error.includes('other volunteer')}
+            error={typeof error === 'string' && error.includes('other volunteer')}
             sx={{ mt: 2 }}
           />
         )}
@@ -780,7 +968,7 @@ const SponsorApplicationPage = () => {
             fullWidth
             value={formData.volunteerCount}
             onChange={handleChange}
-            error={error.includes('volunteers')}
+            error={typeof error === 'string' && error.includes('volunteers')}
             InputProps={{
               inputProps: { min: 0 },
               endAdornment: (
@@ -804,7 +992,7 @@ const SponsorApplicationPage = () => {
             fullWidth
             value={formData.volunteerHours}
             onChange={handleChange}
-            error={error.includes('hours')}
+            error={typeof error === 'string' && error.includes('hours')}
             InputProps={{
               inputProps: { min: 0 },
               endAdornment: (
@@ -930,17 +1118,17 @@ const SponsorApplicationPage = () => {
                   <Typography variant="body2" color="text.secondary">Volunteer Roles:</Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {formData.volunteerRoles.map(role => (
                       <Chip 
                         key={role} 
                         label={role === 'other' ? formData.otherVolunteerRole : 
                           volunteerRoleOptions.find(opt => opt.value === role)?.label} 
                         size="small" 
-                        sx={{ mb: 1 }}
+                        sx={{ mb: 1, mr: 1 }}
                       />
                     ))}
-                  </Stack>
+                  </Box>
                 </Grid>
               </>
             )}
@@ -1024,7 +1212,7 @@ const SponsorApplicationPage = () => {
         <meta property="og:url" content={canonicalUrl} />
         <meta
           property="og:image"
-          content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+          content={eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"}
         />
 
         {/* Twitter Card tags */}
@@ -1033,11 +1221,20 @@ const SponsorApplicationPage = () => {
         <meta name="twitter:description" content={pageDescription} />
         <meta
           name="twitter:image"
-          content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+          content={eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"}
         />
       </Head>
+      
+      {/* Form persistence notification component */}
+      <FormPersistenceControls
+        onSave={saveToLocalStorage}
+        onRestore={loadFromLocalStorage}
+        onClear={clearSavedData}
+        notification={notification}
+        onCloseNotification={closeNotification}
+      />
 
-      <Box my={8}>
+      <Box my={8} ref={formRef}>
         <Typography
           variant="h1"
           component="h1"
@@ -1046,7 +1243,7 @@ const SponsorApplicationPage = () => {
           Sponsor Application
         </Typography>
 
-        {loading ? (
+        {isLoading ? (
           <Box display="flex" justifyContent="center" my={4}>
             <CircularProgress />
           </Box>
@@ -1128,13 +1325,13 @@ const SponsorApplicationPage = () => {
               </Stepper>
               
               <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                {error && (
+                {error && typeof error === 'string' && (
                   <Alert severity="error" sx={{ mb: 4 }}>
                     {error}
                   </Alert>
                 )}
                 
-                <form>
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                   {getStepContent(activeStep)}
                   
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>

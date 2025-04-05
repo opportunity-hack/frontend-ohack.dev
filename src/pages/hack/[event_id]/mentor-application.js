@@ -33,6 +33,8 @@ import { useEnv } from '../../../context/env.context';
 import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
 import InfoIcon from '@mui/icons-material/Info';
+import FormPersistenceControls from '../../../components/FormPersistenceControls';
+import { useFormPersistence } from '../../../hooks/use-form-persistence';
 
 const MentorApplicationPage = () => {
   const router = useRouter();
@@ -44,14 +46,14 @@ const MentorApplicationPage = () => {
   
   // Form navigation state
   const [activeStep, setActiveStep] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [eventData, setEventData] = useState(null);
+  // Add missing submitting state
+  const [submitting, setSubmitting] = useState(false);
   
-  // Form state
-  const [formData, setFormData] = useState({
+  // Initial form state
+  const initialFormData = {
     timestamp: new Date().toISOString(),
     email: '',
     name: '',
@@ -77,6 +79,32 @@ const MentorApplicationPage = () => {
     photoUrl: '',
     event_id: '',
     isSelected: false
+  };
+  
+  // Use form persistence hook
+  const {
+    formData,
+    setFormData,
+    formRef,
+    handleFormChange,
+    handleMultiSelectChange,
+    loadFromLocalStorage,
+    saveToLocalStorage,
+    clearSavedData,
+    loadPreviousSubmission,
+    previouslySubmitted,
+    setPreviouslySubmitted,
+    notification,
+    closeNotification,
+    isLoading,
+    setIsLoading
+  } = useFormPersistence({
+    formType: 'mentor',
+    eventId: event_id,
+    userId: user?.userId,
+    initialFormData,
+    apiServerUrl,
+    accessToken
   });
   
   // Available engineering specifics options
@@ -112,7 +140,7 @@ const MentorApplicationPage = () => {
     "Other" // Option to specify custom expertise
   ];
   
-  // Function to generate time slots based on event dates
+  // Function to generate time slots based on event dates - moved outside useEffect to avoid recreating on each render
   const generateTimeSlots = (startDate, endDate) => {
     if (!startDate || !endDate) return [];
     
@@ -166,7 +194,7 @@ const MentorApplicationPage = () => {
 
     const fetchEventData = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         
         // Fetch event data from the actual API
         const response = await fetch(`${apiServerUrl}/api/messages/hackathon/${event_id}`);
@@ -213,42 +241,98 @@ const MentorApplicationPage = () => {
         const slots = generateTimeSlots(eventData.start_date, eventData.end_date);
         setAvailabilityOptions(slots);
         
-        setLoading(false);
+        // Initialize formData with user information and event ID
+        if (user) {
+          setFormData(prev => ({
+            ...prev,
+            email: user.email || '',
+            name: user.firstName && user.lastName 
+              ? `${user.firstName} ${user.lastName}` 
+              : user.username || '',
+            event_id: event_id
+          }));
+          
+          // Check for previous submission
+          const prevData = await loadPreviousSubmission();
+          if (prevData) {
+            // If the user has submitted before, ask if they want to load it
+            if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
+              // Transform API data to match our form structure
+              const availabilityText = prevData.availability || '';
+              
+              // Get the already generated slots, not regenerate them
+              const matchedSlotIds = slots.filter(slot => 
+                availabilityText.includes(slot.displayText)).map(slot => slot.id);
+              
+              const transformedData = {
+                ...formData,
+                email: prevData.email || formData.email,
+                name: prevData.name || formData.name,
+                pronouns: prevData.pronouns || '',
+                company: prevData.company || '',
+                bio: prevData.shortBio || prevData.bio || '',
+                picture: prevData.photoUrl || prevData.picture || '',
+                linkedin: prevData.linkedinProfile || prevData.linkedin || '',
+                inPerson: prevData.isInPerson ? 'Yes!' : 'No, I\'ll be virtual',
+                expertise: (prevData.expertise || '').split(', ').filter(Boolean),
+                participationCount: prevData.participationCount || '',
+                engineeringSpecifics: (prevData.softwareEngineeringSpecifics || '').split(', ').filter(Boolean),
+                availableDays: matchedSlotIds,
+                country: prevData.country || '',
+                state: prevData.state || '',
+                codeOfConduct: prevData.agreedToCodeOfConduct || false,
+                comments: prevData.additionalInfo || prevData.comments || '',
+                shirtSize: prevData.shirtSize || '',
+                event_id: event_id
+              };
+              
+              setFormData(transformedData);
+            }
+          } else {
+            // If no previous submission, try to load from localStorage
+            loadFromLocalStorage();
+          }
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            event_id: event_id
+          }));
+          
+          // Try loading from localStorage for non-logged-in users
+          loadFromLocalStorage();
+        }
+        
+        setIsLoading(false);
       } catch (err) {
         console.error('Error fetching event data:', err);
         setError('Failed to load event data. Please try again later.');
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchEventData();
+  }, [event_id, user, apiServerUrl, loadPreviousSubmission, loadFromLocalStorage, setFormData]);
+
+  
+  // Now define the custom implementation that uses handleMultiSelectChange
+  const customHandleMultiSelectChange = (event, fieldName) => {
+    handleMultiSelectChange(event, fieldName);
     
-    // If user is logged in, pre-fill email
-    if (user) {
+    // Clear otherExpertise when Other is removed from expertise
+    if (fieldName === 'expertise' && !event.target.value.includes('Other')) {
       setFormData(prev => ({
         ...prev,
-        email: user.email || '',
-        name: user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}` 
-          : user.username || '',
-        event_id: event_id
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        event_id: event_id
+        otherExpertise: ''
       }));
     }
-  }, [event_id, user, apiServerUrl]);
+  };
 
+  // Extend handleFormChange to handle otherExpertise field
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    handleFormChange(e);
     
     // Clear otherExpertise when expertise doesn't include "Other"
+    const { name, value } = e.target;
     if (name === 'expertise' && !value.includes('Other')) {
       setFormData(prev => ({
         ...prev,
@@ -257,19 +341,6 @@ const MentorApplicationPage = () => {
     }
   };
   
-  // Handle changes for multi-select fields
-  const handleMultiSelectChange = (event, fieldName) => {
-    const {
-      target: { value },
-    } = event;
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: typeof value === 'string' ? value.split(',') : value,
-      // Clear otherExpertise when Other is removed from expertise
-      ...(fieldName === 'expertise' && !value.includes('Other') ? { otherExpertise: '' } : {})
-    }));
-  };
-
   const validateBasicInfo = () => {
     const requiredFields = ['email', 'name', 'company'];
     
@@ -398,11 +469,32 @@ const MentorApplicationPage = () => {
         additionalInfo: formData.comments
       };
       
-      // In a real implementation, you would send the data to your API
-      console.log('Submitting mentor application:', submissionData);
+      if (apiServerUrl) {
+        // Submit to API
+        const submitEndpoint = previouslySubmitted 
+          ? `${apiServerUrl}/api/mentor/application/${event_id}/update` 
+          : `${apiServerUrl}/api/mentor/application/${event_id}/submit`;
+        
+        const response = await fetch(submitEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(submissionData)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to submit application: ${response.status}`);
+        }
+      } else {
+        // In a test environment, log the data and simulate API delay
+        console.log('Submitting mentor application:', submissionData);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Clear saved form data after successful submission
+      clearSavedData();
       
       setSuccess(true);
     } catch (err) {
@@ -558,7 +650,7 @@ const MentorApplicationPage = () => {
             id="expertise"
             multiple
             value={formData.expertise}
-            onChange={(e) => handleMultiSelectChange(e, 'expertise')}
+            onChange={(e) => customHandleMultiSelectChange(e, 'expertise')}
             input={<OutlinedInput label="What kind of brain power can you help supply us with?" />}
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -599,7 +691,7 @@ const MentorApplicationPage = () => {
             id="engineering-specifics"
             multiple
             value={formData.engineeringSpecifics}
-            onChange={(e) => handleMultiSelectChange(e, 'engineeringSpecifics')}
+            onChange={(e) => customHandleMultiSelectChange(e, 'engineeringSpecifics')}
             input={<OutlinedInput label="Software Engineering Specifics" />}
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -910,7 +1002,16 @@ const MentorApplicationPage = () => {
         />
       </Head>
 
-      <Box my={8}>
+      {/* Form persistence notification component */}
+      <FormPersistenceControls
+        onSave={saveToLocalStorage}
+        onRestore={loadFromLocalStorage}
+        onClear={clearSavedData}
+        notification={notification}
+        onCloseNotification={closeNotification}
+      />
+
+      <Box my={8} ref={formRef}>
         <Typography
           variant="h1"
           component="h1"
@@ -919,7 +1020,7 @@ const MentorApplicationPage = () => {
           Mentor Application
         </Typography>
 
-        {loading ? (
+        {isLoading ? (
           <Box display="flex" justifyContent="center" my={4}>
             <CircularProgress />
           </Box>
