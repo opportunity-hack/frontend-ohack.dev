@@ -71,8 +71,9 @@ const VolunteerTable = ({
   console.log("VolunteerTable", volunteers);
   const columns = useMemo(() => {
     const baseColumns = [
-      { id: "id", label: "ID", minWidth: 100 }, // New column for ID
+      { id: "id", label: "ID", minWidth: 100 }, 
       { id: "name", label: "Name", minWidth: 120 },
+      { id: "email", label: "Email", minWidth: 150 },
       { id: "pronouns", label: "Pronouns", minWidth: 100 },
       { id: "company", label: "Company", minWidth: 120 },
       { id: "isInPerson", label: "In Person", minWidth: 100 },
@@ -96,7 +97,23 @@ const VolunteerTable = ({
     } else if (type === "volunteers") {
       return [
         ...baseColumns,
+        { id: "volunteerType", label: "Volunteer Type", minWidth: 150 },
         { id: "artifacts", label: "Contributions", minWidth: 200 },
+      ];
+    } else if (type === "hackers") {
+      return [
+        ...baseColumns,
+        { id: "participantType", label: "Participant Type", minWidth: 120 },
+        { id: "experienceLevel", label: "Experience", minWidth: 120 },
+        { id: "teamStatus", label: "Team Status", minWidth: 120 },
+        { id: "primaryRoles", label: "Roles", minWidth: 150 },
+      ];
+    } else if (type === "sponsors") {
+      return [
+        ...baseColumns,
+        { id: "sponsorshipTier", label: "Tier", minWidth: 120 },
+        { id: "sponsorshipDetails", label: "Details", minWidth: 150 },
+        { id: "title", label: "Title", minWidth: 120 },
       ];
     }
 

@@ -931,11 +931,11 @@ const JudgeApplicationPage = () => {
         onCloseNotification={closeNotification}
       />
 
-      <Box my={8} ref={formRef}>
+      <Box ref={formRef}>
         <Typography
           variant="h1"
           component="h1"
-          sx={{ fontSize: "2.5rem", mb: 2, mt: 12 }}
+          sx={{ fontSize: "2.5rem", mb: 2, mt: 0 }}
         >
           Judge Application
         </Typography>
@@ -1009,12 +1009,41 @@ const JudgeApplicationPage = () => {
               <Stepper
                 activeStep={activeStep}
                 alternativeLabel={!isMobile}
-                orientation={isMobile ? "vertical" : "horizontal"}
-                sx={{ mb: 4 }}
+                orientation={isMobile ? "horizontal" : "horizontal"}
+                sx={{ 
+                  mb: 4,
+                  ...(isMobile && {
+                    '& .MuiStepLabel-root': {
+                      padding: '0 4px', // Reduce padding on mobile
+                    },
+                    '& .MuiStepLabel-labelContainer': {
+                      width: 'auto', // Let the label container be as small as possible
+                    },
+                    '& .MuiStepLabel-label': {
+                      fontSize: '0.7rem', // Smaller text on mobile
+                      whiteSpace: 'nowrap', // Prevent text wrapping
+                    },
+                    '& .MuiSvgIcon-root': {
+                      width: 20, // Smaller icons
+                      height: 20,
+                    },
+                    overflowX: 'auto', // Allow horizontal scrolling if needed
+                    '&::-webkit-scrollbar': {
+                      display: 'none' // Hide scrollbar on webkit browsers
+                    },
+                    scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                  })
+                }}
               >
                 {steps.map((label) => (
                   <Step key={label}>
-                    <StepLabel>{label}</StepLabel>
+                    <StepLabel>{isMobile ? (
+                      // On mobile, show abbreviated labels or just the step number
+                      activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
+                    ) : (
+                      // On desktop, show full labels
+                      label
+                    )}</StepLabel>
                   </Step>
                 ))}
               </Stepper>

@@ -114,7 +114,58 @@ const VolunteerEditDialog = ({
         return [
           { name: "company", label: "Company", type: "text" },
           { name: "shortBio", label: "Short Bio", type: "textarea" },
-          { name: "hasHelpedBefore", label: "Has Helped Before", type: "text" },
+          { name: "volunteerType", label: "Volunteer Type", type: "text" },
+          { name: "skills", label: "Skills", type: "text" },
+          { name: "country", label: "Country", type: "text" },
+          { name: "state", label: "State", type: "text" },
+          { name: "availability", label: "Availability", type: "text" },
+          { name: "motivation", label: "Motivation", type: "textarea" },
+          {
+            name: "socialCauses",
+            label: "Social Causes",
+            type: "text",
+          },
+          {
+            name: "agreedToCodeOfConduct",
+            label: "Agreed to Code of Conduct",
+            type: "switch",
+          },
+        ];
+      case "hackers":
+        return [
+          { name: "participantType", label: "Participant Type", type: "text" },
+          { name: "schoolOrganization", label: "School/Organization", type: "text" },
+          { name: "experienceLevel", label: "Experience Level", type: "text" },
+          { name: "primaryRoles", label: "Primary Roles", type: "text" },
+          { name: "skills", label: "Skills", type: "text" },
+          { name: "country", label: "Country", type: "text" },
+          { name: "state", label: "State", type: "text" },
+          { name: "teamStatus", label: "Team Status", type: "text" },
+          { name: "teamCode", label: "Team Code", type: "text" },
+          { name: "socialCauses", label: "Social Causes", type: "text" },
+          { name: "bio", label: "Bio", type: "textarea" },
+          {
+            name: "agreedToCodeOfConduct",
+            label: "Agreed to Code of Conduct",
+            type: "switch",
+          },
+        ];
+      case "sponsors":
+        return [
+          { name: "title", label: "Title", type: "text" },
+          { name: "companyName", label: "Company Name", type: "text" },
+          { name: "sponsorshipTier", label: "Sponsorship Tier", type: "text" },
+          { name: "sponsorshipDetails", label: "Sponsorship Details", type: "textarea" },
+          { name: "volunteerType", label: "Volunteer Roles", type: "text" },
+          { name: "volunteerCount", label: "Volunteer Count", type: "text" },
+          { name: "volunteerHours", label: "Volunteer Hours", type: "text" },
+          { name: "howHeard", label: "How Heard", type: "text" },
+          { name: "logoUrl", label: "Logo URL", type: "text" },
+          {
+            name: "additionalInfo",
+            label: "Additional Info",
+            type: "textarea",
+          },
         ];
       default:
         return [];

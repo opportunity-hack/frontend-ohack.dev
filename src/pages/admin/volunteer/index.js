@@ -12,6 +12,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Badge,
 } from "@mui/material";
 import AdminPage from "../../../components/admin/AdminPage";
 import VolunteerTable from "../../../components/admin/VolunteerTable";
@@ -24,12 +25,12 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
   const { hackathons } = useHackathonEvents(false); // Get all hackathon events, not just current
 
-  console.log("Hackathons: ", hackathons);
-
   const [volunteers, setVolunteers] = useState({
     mentors: [],
     judges: [],
     volunteers: [],
+    hackers: [],
+    sponsors: []
   });
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -69,7 +70,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     
     setLoading(true);
     try {
-      const [mentorsResponse, judgesResponse, volunteersResponse] =
+      const [mentorsResponse, judgesResponse, volunteersResponse, hackersResponse, sponsorsResponse] =
         await Promise.all([
           fetch(
             `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/mentor`,
@@ -101,21 +102,67 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               },
             }
           ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/hacker`,
+            {
+              headers: {
+                authorization: `Bearer ${accessToken}`,
+                "content-type": "application/json",
+                "X-Org-Id": orgId,
+              },
+            }
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/sponsor`,
+            {
+              headers: {
+                authorization: `Bearer ${accessToken}`,
+                "content-type": "application/json",
+                "X-Org-Id": orgId,
+              },
+            }
+          ),
+          
         ]);
 
-      if (mentorsResponse.ok && judgesResponse.ok && volunteersResponse.ok) {
-        const mentorsData = await mentorsResponse.json();
-        const judgesData = await judgesResponse.json();
-        const volunteersData = await volunteersResponse.json();
+      // Process responses even if some fail
+      const responseData = {
+        mentors: [],
+        judges: [],
+        volunteers: [],
+        hackers: [],
+        sponsors: []
+      };
+      
 
-        setVolunteers({
-          mentors: mentorsData.data || [],
-          judges: judgesData.data || [],
-          volunteers: volunteersData.data || [],
-        });
-      } else {
-        throw new Error("Failed to fetch volunteers");
+      if (mentorsResponse.ok) {
+        const mentorsData = await mentorsResponse.json();
+        responseData.mentors = mentorsData.data || [];
       }
+
+      if (judgesResponse.ok) {
+        const judgesData = await judgesResponse.json();
+        responseData.judges = judgesData.data || [];
+      }
+
+      console.log("Volunteers data:", volunteersResponse);
+      if (volunteersResponse.ok) {
+        const volunteersData = await volunteersResponse.json();
+        responseData.volunteers = volunteersData.data || [];
+      }
+
+      if (hackersResponse && hackersResponse.ok) {
+        const hackersData = await hackersResponse.json();
+        responseData.hackers = hackersData.data || [];
+      }
+
+      if (sponsorsResponse && sponsorsResponse.ok) {
+        const sponsorsData = await sponsorsResponse.json();
+        responseData.sponsors = sponsorsData.data || [];
+      }
+      
+      setVolunteers(responseData);
+      
     } catch (error) {
       console.error("Error fetching volunteers:", error);
       setSnackbar({
@@ -144,12 +191,45 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   );
 
   const handleTabChange = useCallback((event, newValue) => {
-    console.log("tab value", newValue);
     setTabValue(newValue);
   }, []);
 
   const handleEditChange = useCallback((field, value) => {
     setEditingVolunteer((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const getCurrentVolunteerType = useCallback((currentTabValue) => {
+    switch (currentTabValue) {
+      case 0:
+        return "mentors";
+      case 1:
+        return "judges";
+      case 2:
+        return "volunteers";
+      case 3:
+        return "hackers";
+      case 4:
+        return "sponsors";
+      default:
+        return "";
+    }
+  }, []);
+
+  const getCurrentVolunteerTypeSingular = useCallback((currentTabValue) => {
+    switch (currentTabValue) {
+      case 0:
+        return "mentor";
+      case 1:
+        return "judge";
+      case 2:
+        return "volunteer";
+      case 3:
+        return "hacker";
+      case 4:
+        return "sponsor";
+      default:
+        return "";
+    }
   }, []);
 
   const handleEditVolunteer = useCallback(
@@ -165,7 +245,6 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   );
 
   const handleAddSingleVolunteer = useCallback(() => {
-    console.log("Adding/Editing Type: ", getCurrentVolunteerType(tabValue));
     setEditingVolunteer({
       type: getCurrentVolunteerType(tabValue),
       name: "",
@@ -179,32 +258,6 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     setIsAdding(true);
     setEditDialogOpen(true);
   }, [tabValue, getCurrentVolunteerType]);
-
-  const getCurrentVolunteerType = useCallback((currentTabValue) => {
-    switch (currentTabValue) {
-      case 0:
-        return "mentors";
-      case 1:
-        return "judges";
-      case 2:
-        return "volunteers";
-      default:
-        return "";
-    }
-  }, []);
-
-  const getCurrentVolunteerTypeSingular = useCallback((currentTabValue) => {
-    switch (currentTabValue) {
-      case 0:
-        return "mentor";
-      case 1:
-        return "judge";
-      case 2:
-        return "volunteer";
-      default:
-        return "";
-    }
-  }, []);
 
   const handleSaveEdit = useCallback(async () => {
     if (!selectedEventId) return;
@@ -288,7 +341,10 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         return (
           volunteer.name?.toLowerCase().includes(searchValue) ||
           volunteer.expertise?.toLowerCase().includes(searchValue) ||
-          volunteer.company?.toLowerCase().includes(searchValue)
+          volunteer.company?.toLowerCase().includes(searchValue) ||
+          volunteer.email?.toLowerCase().includes(searchValue) ||
+          volunteer.title?.toLowerCase().includes(searchValue) ||
+          volunteer.companyName?.toLowerCase().includes(searchValue)
         );
       });
   }, [volunteers, getCurrentVolunteerType, orderBy, order, filter, tabValue]);
@@ -351,7 +407,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
           <Grid item xs>
             <TextField
               fullWidth
-              label="Filter by Name, Expertise, or Company"
+              label="Filter by Name, Email, Expertise, or Company"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
@@ -363,10 +419,44 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         value={tabValue}
         onChange={handleTabChange}
         aria-label="volunteer tabs"
+        variant="scrollable"
+        scrollButtons="auto"
       >
-        <Tab label="Mentors" />
-        <Tab label="Judges" />
-        <Tab label="Volunteers" />
+        <Tab 
+          label={
+            <Badge color="primary" badgeContent={volunteers.mentors.length} max={999}>
+              Mentors
+            </Badge>
+          } 
+        />
+        <Tab 
+          label={
+            <Badge color="primary" badgeContent={volunteers.judges.length} max={999}>
+              Judges
+            </Badge>
+          } 
+        />
+        <Tab 
+          label={
+            <Badge color="primary" badgeContent={volunteers.volunteers.length} max={999}>
+              Volunteers
+            </Badge>
+          } 
+        />
+        <Tab 
+          label={
+            <Badge color="primary" badgeContent={volunteers.hackers.length} max={999}>
+              Hackers
+            </Badge>
+          } 
+        />
+        <Tab 
+          label={
+            <Badge color="primary" badgeContent={volunteers.sponsors.length} max={999}>
+              Sponsors
+            </Badge>
+          } 
+        />
       </Tabs>
 
       {!selectedEventId ? (

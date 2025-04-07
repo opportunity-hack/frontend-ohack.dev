@@ -6,6 +6,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import SchoolIcon from '@mui/icons-material/School';
 import BusinessIcon from '@mui/icons-material/Business';
 import GavelIcon from '@mui/icons-material/Gavel';
+import CodeIcon from '@mui/icons-material/Code';
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 
 const ApplicationNav = ({ eventId, currentType }) => {
   const theme = useTheme();
@@ -17,6 +19,12 @@ const ApplicationNav = ({ eventId, currentType }) => {
       label: 'Event Page', 
       href: `/hack/${eventId}`, 
       icon: <HomeIcon fontSize="small" />
+    },
+    { 
+      id: 'hacker',
+      label: 'Hacker', 
+      href: `/hack/${eventId}/hacker-application`, 
+      icon: <CodeIcon fontSize="small" />
     },
     { 
       id: 'mentor',
@@ -35,6 +43,12 @@ const ApplicationNav = ({ eventId, currentType }) => {
       label: 'Sponsor', 
       href: `/hack/${eventId}/sponsor-application`, 
       icon: <BusinessIcon fontSize="small" />
+    },
+    { 
+      id: 'volunteer',
+      label: 'Volunteer', 
+      href: `/hack/${eventId}/volunteer-application`, 
+      icon: <VolunteerActivismIcon fontSize="small" />
     },
   ];
   
@@ -58,6 +72,7 @@ const ApplicationNav = ({ eventId, currentType }) => {
         sx={{ 
           display: 'flex', 
           flexDirection: isMobile ? 'column' : 'row',
+          flexWrap: !isMobile ? 'wrap' : 'nowrap',
           gap: 1.5,
           '& a': { textDecoration: 'none' }
         }}
@@ -73,6 +88,8 @@ const ApplicationNav = ({ eventId, currentType }) => {
               sx={{ 
                 borderRadius: 2,
                 fontWeight: currentType === item.id ? 'bold' : 'normal',
+                minWidth: isMobile ? 'auto' : '120px',
+                ...(isMobile ? {} : { flex: '1 0 auto', maxWidth: '180px' })
               }}
             >
               {item.label}

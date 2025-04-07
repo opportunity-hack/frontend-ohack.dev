@@ -26,12 +26,12 @@ export default function FormPersistenceControls({
   };
   
   return (
-    <>
+    <Box sx={{ mt: 10 }}>
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'flex-end', 
         gap: 1, 
-        mb: 2,
+        mb: 1.5,
         flexWrap: 'wrap'
       }}>
         <Tooltip title="Save form progress">
@@ -64,10 +64,10 @@ export default function FormPersistenceControls({
       </Box>
       
       {showAutoSaveMessage && (
-        <Alert severity="success" icon={<SaveIcon />} sx={{ mb: 4 }}>
+        <Alert severity="success" icon={<SaveIcon />} sx={{ mb: 2 }}>
           <Typography variant="body2">
             <strong>Your form progress is automatically saved</strong> as you type. You can come back and continue later.
-            Use the icons in the top right to manually save, restore, or clear your form data.
+            Use the icons above to manually save, restore, or clear your form data.
           </Typography>
         </Alert>
       )}
@@ -78,6 +78,6 @@ export default function FormPersistenceControls({
         onClose={onCloseNotification}
         message={notification.message}
       />
-    </>
+    </Box>
   );
 }

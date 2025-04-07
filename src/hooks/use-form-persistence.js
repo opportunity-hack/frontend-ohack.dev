@@ -108,7 +108,10 @@ export function useFormPersistence({
 
   // Load previously submitted application from backend
   const loadPreviousSubmission = useCallback(async () => {
-    if (!userId || !eventId || !apiServerUrl) return null;
+    if (!userId || !eventId || !apiServerUrl){
+      console.warn('Missing required parameters for loading previous submission');
+      return null;
+    }
     
     setIsLoading(true);
     try {
@@ -119,11 +122,15 @@ export function useFormPersistence({
         }
       });
       
+      console.log('Response from previous submission:', response);
+
       if (response.ok) {
-        const data = await response.json();
-        if (data && data.application) {
+        const responseJson = await response.json();
+        console.log("Data from previous submission:", responseJson);
+
+        if (responseJson && responseJson.data) {
           setPreviouslySubmitted(true);
-          return data.application;
+          return responseJson.data;
         }
       }
       return null;
