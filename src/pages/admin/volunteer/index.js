@@ -8,15 +8,23 @@ import {
   Button,
   Tabs,
   Tab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import AdminPage from "../../../components/admin/AdminPage";
 import VolunteerTable from "../../../components/admin/VolunteerTable";
 import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";  
+import useHackathonEvents from "../../../hooks/use-hackathon-events";
 
 import { Typography } from "@mui/material";
 
 const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
+  const { hackathons } = useHackathonEvents(false); // Get all hackathon events, not just current
+
+  console.log("Hackathons: ", hackathons);
 
   const [volunteers, setVolunteers] = useState({
     mentors: [],
@@ -36,19 +44,35 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingVolunteer, setEditingVolunteer] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState("");
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
   const orgId = org.orgId;
+  
+  // Find the most recent hackathon event to use as default
+  useEffect(() => {
+    if (hackathons && hackathons.length > 0 && !selectedEventId) {
+      // Sort hackathons by date (descending) and use the most recent one
+      const sortedHackathons = [...hackathons].sort((a, b) => {
+        const dateA = new Date(a.start_date);
+        const dateB = new Date(b.start_date);
+        return dateB - dateA; // Most recent first
+      });
+      
+      setSelectedEventId(sortedHackathons[0].event_id);
+    }
+  }, [hackathons, selectedEventId]);
 
   const fetchVolunteers = useCallback(async () => {
+    if (!selectedEventId) return;
+    
     setLoading(true);
     try {
-      const eventId = "2024_fall"; // You might want to make this dynamic
       const [mentorsResponse, judgesResponse, volunteersResponse] =
         await Promise.all([
           fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/mentor`,
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/mentor`,
             {
               headers: {
                 authorization: `Bearer ${accessToken}`,
@@ -58,7 +82,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
             }
           ),
           fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/judge`,
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/judge`,
             {
               headers: {
                 authorization: `Bearer ${accessToken}`,
@@ -68,7 +92,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
             }
           ),
           fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/volunteer`,
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/volunteer`,
             {
               headers: {
                 authorization: `Bearer ${accessToken}`,
@@ -102,13 +126,13 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, orgId]);
+  }, [accessToken, orgId, selectedEventId]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && selectedEventId) {
       fetchVolunteers();
     }
-  }, [isAdmin, fetchVolunteers]);
+  }, [isAdmin, fetchVolunteers, selectedEventId]);
 
   const handleRequestSort = useCallback(
     (property) => {
@@ -137,7 +161,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       setIsAdding(false);
       setEditDialogOpen(true);
     },
-    [tabValue]
+    [tabValue, getCurrentVolunteerType]
   );
 
   const handleAddSingleVolunteer = useCallback(() => {
@@ -154,7 +178,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     });
     setIsAdding(true);
     setEditDialogOpen(true);
-  }, [tabValue]);
+  }, [tabValue, getCurrentVolunteerType]);
 
   const getCurrentVolunteerType = useCallback((currentTabValue) => {
     switch (currentTabValue) {
@@ -183,10 +207,11 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   }, []);
 
   const handleSaveEdit = useCallback(async () => {
+    if (!selectedEventId) return;
+    
     setLoading(true);
     try {
-      const eventId = "2024_fall"; // You might want to make this dynamic
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/${getCurrentVolunteerTypeSingular(tabValue)}`;
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${getCurrentVolunteerTypeSingular(tabValue)}`;
       const method = isAdding ? "POST" : "PATCH";
 
       const volunteerData = {
@@ -238,6 +263,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     fetchVolunteers,
     getCurrentVolunteerTypeSingular,
     tabValue,
+    selectedEventId,
   ]);
 
   const sortedVolunteers = useMemo(() => {
@@ -289,7 +315,6 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               Refresh Data
             </Button>
           </Grid>
-       
           <Grid item>
             <Button
               onClick={handleAddSingleVolunteer}
@@ -298,6 +323,30 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
             >
               Add Single Volunteer
             </Button>
+          </Grid>
+          <Grid item xs={3}>
+            <FormControl fullWidth>
+              <InputLabel id="hackathon-select-label">
+                Hackathon Event
+              </InputLabel>
+              <Select
+                labelId="hackathon-select-label"
+                id="hackathon-select"
+                value={selectedEventId}
+                label="Hackathon Event"
+                onChange={(e) => setSelectedEventId(e.target.value)}
+              >
+                {hackathons &&
+                  hackathons.map((hackathon) => (
+                    <MenuItem
+                      key={hackathon.event_id}
+                      value={hackathon.event_id}
+                    >
+                      {hackathon.event_id} - {hackathon.start_date}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs>
             <TextField
@@ -310,8 +359,6 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         </Grid>
       </Box>
 
-  
-
       <Tabs
         value={tabValue}
         onChange={handleTabChange}
@@ -322,8 +369,14 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         <Tab label="Volunteers" />
       </Tabs>
 
-      {loading ? (
-        <CircularProgress />
+      {!selectedEventId ? (
+        <Box sx={{ mt: 4, textAlign: "center" }}>
+          <Typography variant="h6">Please select a hackathon event</Typography>
+        </Box>
+      ) : loading ? (
+        <Box sx={{ mt: 4, textAlign: "center" }}>
+          <CircularProgress />
+        </Box>
       ) : (
         <Box sx={{ mt: 2 }}>
           <VolunteerTable
@@ -334,6 +387,14 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
             onRequestSort={handleRequestSort}
             onEditVolunteer={handleEditVolunteer}
           />
+          {sortedVolunteers.length === 0 && (
+            <Box sx={{ mt: 2, textAlign: "center" }}>
+              <Typography>
+                No {getCurrentVolunteerType(tabValue)} found for this hackathon
+                event.
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
 
