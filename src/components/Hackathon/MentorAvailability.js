@@ -41,7 +41,10 @@ const MentorAvailability = ({ volunteers }) => {
       if (volunteer.isSelected && volunteer.volunteer_type === "mentor") {
         // Handle new format where availability is a comma-separated string of displayText values
         if (volunteer?.availability) {
-          const availabilityArray = volunteer.availability.split(", ");
+          // Use regex pattern to correctly split availability string
+          const availabilityPattern = /([A-Za-z]+,\s+[A-Za-z]+\s+\d+:\s+[^,]+)/g;
+          const availabilityArray = volunteer.availability.match(availabilityPattern) || 
+                                    volunteer.availability.split(", "); // Fallback to old method
           
           availabilityArray.forEach((slot) => {
             // Extract the display text from the slot
@@ -68,23 +71,57 @@ const MentorAvailability = ({ volunteers }) => {
       }
     });
 
+    // Define day of week order for sorting
+    const dayOrder = {
+      "Sunday": 0,
+      "Monday": 1,
+      "Tuesday": 2,
+      "Wednesday": 3,
+      "Thursday": 4,
+      "Friday": 5,
+      "Saturday": 6
+    };
+    
+    // Define time period order for sorting
+    const timeOfDayOrder = {
+      "Early Morning": 1,
+      "Morning": 2,
+      "Afternoon": 3,
+      "Evening": 4,
+      "Night": 5,
+      "Late Night": 6
+    };
+
     // Sort the slots by date and time for better display
     const sortedSlots = Object.keys(totalCounts).sort((a, b) => {
-      // First try to sort by date
-      const dateA = a.split(":")[0]; // "Saturday, May 4"
-      const dateB = b.split(":")[0];
+      // First extract day and time period
+      const dayA = a.split(",")[0]?.trim();
+      const dayB = b.split(",")[0]?.trim();
       
-      if (dateA !== dateB) {
-        // If dates are different, compare them
-        return dateA.localeCompare(dateB);
+      // Compare days of the week
+      const dayOrderA = dayOrder[dayA] || 99;
+      const dayOrderB = dayOrder[dayB] || 99;
+      
+      if (dayOrderA !== dayOrderB) {
+        return dayOrderA - dayOrderB;
       }
       
-      // If dates are the same, sort by time period
-      const timePeriods = ["Early Morning", "Morning", "Afternoon", "Evening", "Night", "Late Night"];
-      const timeA = a.match(/🌅|☀️|🏙️|🌆|🌃|🌙/) ? timePeriods[a.match(/🌅|☀️|🏙️|🌆|🌃|🌙/).index] : "";
-      const timeB = b.match(/🌅|☀️|🏙️|🌆|🌃|🌙/) ? timePeriods[b.match(/🌅|☀️|🏙️|🌆|🌃|🌙/).index] : "";
+      // If days are the same, parse time period
+      const timePeriodRegexA = a.match(/🌅\s+(Early Morning)|☀️\s+(Morning)|🏙️\s+(Afternoon)|🌆\s+(Evening)|🌃\s+(Night)|🌙\s+(Late Night)/);
+      const timePeriodRegexB = b.match(/🌅\s+(Early Morning)|☀️\s+(Morning)|🏙️\s+(Afternoon)|🌆\s+(Evening)|🌃\s+(Night)|🌙\s+(Late Night)/);
       
-      return timePeriods.indexOf(timeA) - timePeriods.indexOf(timeB);
+      const timePeriodA = timePeriodRegexA ? 
+        (timePeriodRegexA[1] || timePeriodRegexA[2] || timePeriodRegexA[3] || 
+         timePeriodRegexA[4] || timePeriodRegexA[5] || timePeriodRegexA[6]) : "";
+      
+      const timePeriodB = timePeriodRegexB ? 
+        (timePeriodRegexB[1] || timePeriodRegexB[2] || timePeriodRegexB[3] || 
+         timePeriodRegexB[4] || timePeriodRegexB[5] || timePeriodRegexB[6]) : "";
+      
+      const timeOrderA = timeOfDayOrder[timePeriodA] || 99;
+      const timeOrderB = timeOfDayOrder[timePeriodB] || 99;
+      
+      return timeOrderA - timeOrderB;
     });
 
     // Return totalCounts, remoteCounts, inPersonCounts, and sortedSlots

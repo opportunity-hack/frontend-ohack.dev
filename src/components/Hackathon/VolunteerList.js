@@ -159,31 +159,7 @@ const VolunteerList = ({ event_id, type }) => {
   const [availableMentors, setAvailableMentors] = React.useState([]);
   
   
-const getAvailabilityCounts = (volunteers) => {
-  const counts = {
-    Saturday: {},
-    Sunday: {}
-  };
-  
-  if (!Array.isArray(volunteers)) return counts;
-  
-  volunteers.forEach(volunteer => {
-    if (volunteer?.availability) {
-      volunteer.availability.split(", ").forEach(slot => {
-        if (slot.includes("Saturday") || slot.includes("Sunday")) {
-          const parts = slot.split(" (");
-          if (parts.length >= 2) {
-            const day = parts[0];
-            const cleanTime = parts[1].replace(")", "") || "";
-            if (!counts[day]) counts[day] = {};
-            counts[day][cleanTime] = (counts[day][cleanTime] || 0) + 1;
-          }
-        }
-      });
-    }
-  });
-  return counts;
-};
+
 
   useEffect(() => {
     // Call API to get data based on type
@@ -213,9 +189,8 @@ const getAvailabilityCounts = (volunteers) => {
     if (type === "mentor" && Array.isArray(volunteers) && volunteers.length > 0) {
       // Determine if currently available for each volunteer.availability that is a list of available times
       const currentlyAvailable = volunteers.filter((volunteer) => {
-        if (volunteer?.availability && volunteer?.isSelected) {
-          const availabilityArray = volunteer.availability.split(", ");
-          return availabilityArray.some(isCurrentlyAvailable);
+        if (volunteer?.availability && volunteer?.isSelected) {          
+          return volunteer.availability.split(", ").some(isCurrentlyAvailable);
         }
         return false;
       }
@@ -235,6 +210,7 @@ const getAvailabilityCounts = (volunteers) => {
     // New format example: "Friday, Oct 10: 🌅 Early Morning (7am - 9am PST)"
     // Extract the day name from the date part
     const datePart = timeSpan.split(":")[0]; // "Friday, Oct 10" or similar
+    
     if (!datePart) return false;
     
     const dayParts = datePart.split(",");
@@ -331,7 +307,11 @@ const getAvailabilityCounts = (volunteers) => {
     
     try {
       // Looking at the example: "Friday, Oct 10: 🌅 Early Morning (7am - 9am PST), Friday, Oct 10: ☀️ Morning..."
-      const availabilityArray = availability.split(", ").filter(Boolean);
+      // More precise regex splitting by looking for pattern of day, date, colon rather than simple comma split
+      const availabilityPattern = /([A-Za-z]+,\s+[A-Za-z]+\s+\d+:\s+[^,]+)/g;
+      const availabilityArray = availability.match(availabilityPattern) || [];
+      
+      console.log("Availability array:", availabilityArray);
       if (availabilityArray.length === 0) return null;
       
       // Extract date part (assuming all entries have the same date)
@@ -370,10 +350,43 @@ const getAvailabilityCounts = (volunteers) => {
         "Late Night": "#674EA7"     // Dark purple
       };
       
+      // Define day of week order for sorting
+      const dayOrder = {
+        "Sunday": 0,
+        "Monday": 1,
+        "Tuesday": 2,
+        "Wednesday": 3,
+        "Thursday": 4,
+        "Friday": 5,
+        "Saturday": 6
+      };
+      
+      // Define time period order for sorting
+      const timeOfDayOrder = {
+        "Early Morning": 1,
+        "Morning": 2,
+        "Afternoon": 3,
+        "Evening": 4,
+        "Night": 5,
+        "Late Night": 6
+      };
+      
       // Process the time slots
       const processedSlots = availabilityArray.map(slot => {
+        console.log("Processing slot:", slot);
         const slotColonIndex = slot.indexOf(":");
-        if (slotColonIndex === -1) return { display: slot, timeOfDay: null, originalSlot: slot };
+        if (slotColonIndex === -1) return { 
+          display: slot, 
+          timeOfDay: null, 
+          originalSlot: slot,
+          dayName: null,
+          dayOrder: 99,
+          sortOrder: 99
+        };
+        
+        // Extract day name from the date part
+        const slotDatePart = slot.substring(0, slotColonIndex).trim();
+        const dayName = slotDatePart.split(",")[0].trim(); // "Friday", "Saturday", etc.
         
         // Get everything after the colon, which should be like " 🌅 Early Morning (7am - 9am PST)"
         let timeInfo = slot.substring(slotColonIndex + 1).trim();
@@ -394,9 +407,9 @@ const getAvailabilityCounts = (volunteers) => {
           timeRange = emojiTimeMatch[3]; // (7am - 9am)
           
           // Create integrated display with date, emoji and time
-          // e.g., "Oct 10: 🌅 Early Morning"
-          const dateParts = datePart.split(","); // ["Friday", " Oct 10"]
-          const dateOnly = dateParts.length > 1 ? dateParts[1].trim() : datePart;
+          // e.g., "Oct 10 · (7am - 9am)"
+          const dateParts = slotDatePart.split(","); // ["Friday", " Oct 10"]
+          const dateOnly = dateParts.length > 1 ? dateParts[1].trim() : slotDatePart;
           
           display = `${dateOnly} · ${timeRange}`;
         }
@@ -407,14 +420,27 @@ const getAvailabilityCounts = (volunteers) => {
           timeOfDay, 
           timeRange,
           originalSlot: slot, 
-          color: timeOfDayColors[timeOfDay] || null
+          color: timeOfDayColors[timeOfDay] || null,
+          dayName,
+          dayOrder: dayOrder[dayName] || 99,
+          sortOrder: timeOfDay ? timeOfDayOrder[timeOfDay] || 99 : 99
         };
+      });
+      
+      // Sort the slots first by day of week, then by time of day
+      const sortedSlots = [...processedSlots].sort((a, b) => {
+        // First sort by day
+        if (a.dayOrder !== b.dayOrder) {
+          return a.dayOrder - b.dayOrder;
+        }
+        // Then sort by time period
+        return a.sortOrder - b.sortOrder;
       });
       
       return (
         <Box mt={2}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8, justifyContent: 'flex-start' }}>
-            {processedSlots.map((slot, index) => (
+            {sortedSlots.map((slot, index) => (
               <Tooltip
                 key={index}
                 title={isCurrentlyAvailable(slot.originalSlot) ? 
@@ -423,9 +449,9 @@ const getAvailabilityCounts = (volunteers) => {
               >
                 <AvailabilityChip
                   icon={slot.emoji ? 
-                    <span style={{ fontSize: '1.2rem', marginRight: '-4px' }}>{slot.emoji}</span> : 
+                    <span style={{ fontSize: '1.0rem', marginRight: '3px' }}>{slot.emoji}</span> : 
                     <AccessTimeIcon />}
-                  label={slot.display}
+                  label={slot.originalSlot}
                   size="medium"
                   isavailablenow={isCurrentlyAvailable(slot.originalSlot) ? 1 : 0}
                   timeofdaycolor={slot.color}
