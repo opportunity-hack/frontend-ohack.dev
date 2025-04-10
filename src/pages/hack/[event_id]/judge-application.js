@@ -38,6 +38,7 @@ import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
 import InfoIcon from '@mui/icons-material/Info';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
+import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
 const JudgeApplicationPage = () => {
   const router = useRouter();
@@ -53,6 +54,15 @@ const JudgeApplicationPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [eventData, setEventData] = useState(null);
+  
+  // reCAPTCHA integration
+  const { 
+    initializeRecaptcha, 
+    getRecaptchaToken, 
+    isLoading: recaptchaLoading, 
+    error: recaptchaError,
+    setError: setRecaptchaError 
+  } = useRecaptcha();
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   
@@ -132,6 +142,9 @@ const JudgeApplicationPage = () => {
 
   // fetch event data from the backend API
   useEffect(() => {
+    // Initialize reCAPTCHA when component mounts
+    initializeRecaptcha();
+    
     if (!event_id || !apiServerUrl) return;
 
     const fetchEventData = async () => {
@@ -167,6 +180,11 @@ const JudgeApplicationPage = () => {
           day: 'numeric'
         });
         
+        // Check if event is in the past (with 1-day buffer)
+        const now = new Date();
+        const oneDayBuffer = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+        const isEventPast = new Date(endDate.getTime() + oneDayBuffer) < now;
+        
         setEventData({
           name: eventData.title || `Opportunity Hack - ${event_id}`,
           description: eventData.description || "Annual hackathon for nonprofits",
@@ -176,7 +194,8 @@ const JudgeApplicationPage = () => {
           formattedStartDate,
           formattedEndDate,
           location: eventData.location || "Tempe, Arizona",
-          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
+          isEventPast
         });
         
         // Initialize form data with event_id
@@ -262,7 +281,7 @@ const JudgeApplicationPage = () => {
     };
 
     fetchEventData();
-  }, [event_id, apiServerUrl, user, setFormData, loadPreviousSubmission, loadFromLocalStorage]);
+  }, [event_id, apiServerUrl, user, setFormData, loadPreviousSubmission, loadFromLocalStorage, initializeRecaptcha]);
 
   // Extend handleFormChange to handle otherBackground field
   const handleChange = (e) => {
@@ -431,6 +450,15 @@ const JudgeApplicationPage = () => {
     setError('');
     
     try {
+      // Get reCAPTCHA token
+      const recaptchaToken = await getRecaptchaToken();
+      
+      // If we couldn't get a token and we're in production, show error
+      if (!recaptchaToken && process.env.NODE_ENV === 'production') {
+        setError('Failed to verify you are human. Please refresh the page and try again.');
+        return;
+      }
+      
       // Process background areas for submission - ensure consistent formatting
       const backgroundAreasFormatted = formData.backgroundAreas && Array.isArray(formData.backgroundAreas)
         ? (formData.backgroundAreas.includes('Other')
@@ -451,7 +479,8 @@ const JudgeApplicationPage = () => {
         agreedToCodeOfConduct: Boolean(formData.codeOfConduct),
         type: 'judges',
         shortBio: formData.biography || '', // Map to appropriate field
-        shortBiography: formData.biography || '' // Ensure we have both formats
+        shortBiography: formData.biography || '', // Ensure we have both formats
+        recaptchaToken // Add reCAPTCHA token
       };
       
       if (apiServerUrl) {
@@ -471,6 +500,9 @@ const JudgeApplicationPage = () => {
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
+          if (errorData?.error?.includes('recaptcha')) {
+            throw new Error('reCAPTCHA verification failed. Please refresh the page and try again.');
+          }
           throw new Error(`Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ''}`);
         }
       } else {
@@ -1006,136 +1038,162 @@ const JudgeApplicationPage = () => {
             <ApplicationNav eventId={event_id} currentType="judge" />
 
             <Box sx={{ mb: 4 }}>
-              <Stepper
-                activeStep={activeStep}
-                alternativeLabel={!isMobile}
-                orientation={isMobile ? "horizontal" : "horizontal"}
-                sx={{ 
-                  mb: 4,
-                  ...(isMobile && {
-                    '& .MuiStepLabel-root': {
-                      padding: '0 4px', // Reduce padding on mobile
-                    },
-                    '& .MuiStepLabel-labelContainer': {
-                      width: 'auto', // Let the label container be as small as possible
-                    },
-                    '& .MuiStepLabel-label': {
-                      fontSize: '0.7rem', // Smaller text on mobile
-                      whiteSpace: 'nowrap', // Prevent text wrapping
-                    },
-                    '& .MuiSvgIcon-root': {
-                      width: 20, // Smaller icons
-                      height: 20,
-                    },
-                    overflowX: 'auto', // Allow horizontal scrolling if needed
-                    '&::-webkit-scrollbar': {
-                      display: 'none' // Hide scrollbar on webkit browsers
-                    },
-                    scrollbarWidth: 'none', // Hide scrollbar on Firefox
-                  })
-                }}
-              >
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{isMobile ? (
-                      // On mobile, show abbreviated labels or just the step number
-                      activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
-                    ) : (
-                      // On desktop, show full labels
-                      label
-                    )}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-
-              <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                <Typography variant="body1" paragraph>
-                  Thank you for your interest in judging at Opportunity Hack!
-                  Judges play a crucial role in evaluating the projects created
-                  by our participants and providing valuable feedback.
-                </Typography>
-
-                {eventData && eventData.description && (
-                  <Typography variant="body1" sx={{ mb: 3 }}>
-                    <strong>About this event:</strong> {eventData.description}
-                  </Typography>
-                )}
-
-                
-                  <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                    <Typography variant="body1" paragraph>
-                      <strong>
-                        Want to learn more about judging at Opportunity Hack?
-                      </strong>{" "}
-                      Visit our{" "}
-                      <Link
-                        href="/about/judges"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        Judges Information Page
-                      </Link>{" "}
-                      for details about the evaluation criteria, judging
-                      process, and commitment.
+              {eventData && eventData.isEventPast ? (
+                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                  <Alert severity="warning" sx={{ mb: 3 }}>
+                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                      This event has already ended
+                    </Typography>
+                    <Typography variant="body1">
+                      Applications are no longer being accepted for judges as this hackathon has already concluded.
+                      Please check our upcoming events for future judging opportunities.
                     </Typography>
                   </Alert>
-                
-
-                <Typography variant="body1" paragraph>
-                  As a judge, you'll review innovative solutions developed for
-                  nonprofits and help recognize outstanding contributions. Your
-                  expertise will help ensure the success of our hackathon.
-                </Typography>
-
-                {error && (
-                  <Alert severity="error" sx={{ mb: 4 }}>
-                    {error}
-                  </Alert>
-                )}
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                  }}
-                >
-                  {getStepContent(activeStep)}
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      mt: 4,
-                    }}
-                  >
-                    <Button
-                      disabled={activeStep === 0 || submitting}
-                      onClick={handleBack}
-                      variant="outlined"
-                    >
-                      Back
-                    </Button>
-
+                  <Box textAlign="center">
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={handleNext}
-                      disabled={submitting}
+                      onClick={() => router.push('/hack')}
+                      sx={{ mt: 2 }}
                     >
-                      {activeStep === steps.length - 1 ? (
-                        submitting ? (
-                          <CircularProgress size={24} />
-                        ) : (
-                          "Submit Application"
-                        )
-                      ) : (
-                        "Next"
-                      )}
+                      View Upcoming Events
                     </Button>
                   </Box>
-                </form>
-              </Paper>
+                </Paper>
+              ) : (
+                <>
+                  <Stepper
+                    activeStep={activeStep}
+                    alternativeLabel={!isMobile}
+                    orientation={isMobile ? "horizontal" : "horizontal"}
+                    sx={{ 
+                      mb: 4,
+                      ...(isMobile && {
+                        '& .MuiStepLabel-root': {
+                          padding: '0 4px', // Reduce padding on mobile
+                        },
+                        '& .MuiStepLabel-labelContainer': {
+                          width: 'auto', // Let the label container be as small as possible
+                        },
+                        '& .MuiStepLabel-label': {
+                          fontSize: '0.7rem', // Smaller text on mobile
+                          whiteSpace: 'nowrap', // Prevent text wrapping
+                        },
+                        '& .MuiSvgIcon-root': {
+                          width: 20, // Smaller icons
+                          height: 20,
+                        },
+                        overflowX: 'auto', // Allow horizontal scrolling if needed
+                        '&::-webkit-scrollbar': {
+                          display: 'none' // Hide scrollbar on webkit browsers
+                        },
+                        scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                      })
+                    }}
+                  >
+                    {steps.map((label) => (
+                      <Step key={label}>
+                        <StepLabel>{isMobile ? (
+                          // On mobile, show abbreviated labels or just the step number
+                          activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
+                        ) : (
+                          // On desktop, show full labels
+                          label
+                        )}</StepLabel>
+                      </Step>
+                    ))}
+                  </Stepper>
+
+                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                    <Typography variant="body1" paragraph>
+                      Thank you for your interest in judging at Opportunity Hack!
+                      Judges play a crucial role in evaluating the projects created
+                      by our participants and providing valuable feedback.
+                    </Typography>
+
+                    {eventData && eventData.description && (
+                      <Typography variant="body1" sx={{ mb: 3 }}>
+                        <strong>About this event:</strong> {eventData.description}
+                      </Typography>
+                    )}
+
+                    
+                      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
+                        <Typography variant="body1" paragraph>
+                          <strong>
+                            Want to learn more about judging at Opportunity Hack?
+                          </strong>{" "}
+                          Visit our{" "}
+                          <Link
+                            href="/about/judges"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ fontWeight: "bold" }}
+                          >
+                            Judges Information Page
+                          </Link>{" "}
+                          for details about the evaluation criteria, judging
+                          process, and commitment.
+                        </Typography>
+                      </Alert>
+                    
+
+                    <Typography variant="body1" paragraph>
+                      As a judge, you'll review innovative solutions developed for
+                      nonprofits and help recognize outstanding contributions. Your
+                      expertise will help ensure the success of our hackathon.
+                    </Typography>
+
+                    {(error || recaptchaError) && (
+                      <Alert severity="error" sx={{ mb: 4 }}>
+                        {error || recaptchaError}
+                      </Alert>
+                    )}
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSubmit();
+                      }}
+                    >
+                      {getStepContent(activeStep)}
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mt: 4,
+                        }}
+                      >
+                        <Button
+                          disabled={activeStep === 0 || submitting}
+                          onClick={handleBack}
+                          variant="outlined"
+                        >
+                          Back
+                        </Button>
+
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleNext}
+                          disabled={submitting || recaptchaLoading}
+                        >
+                          {activeStep === steps.length - 1 ? (
+                            submitting || recaptchaLoading ? (
+                              <CircularProgress size={24} />
+                            ) : (
+                              "Submit Application"
+                            )
+                          ) : (
+                            "Next"
+                          )}
+                        </Button>
+                      </Box>
+                    </form>
+                  </Paper>
+                </>
+              )}
             </Box>
           </Box>
         )}

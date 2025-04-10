@@ -370,14 +370,14 @@ export default function HackathonEvent({ eventData }) {
         <TableOfContents />
 
         <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <EventLinks links={event.links} />
+          </Grid>
           <Grid item xs={12} md={6}>
             <DonationProgress
               donationGoals={event.donation_goals}
               donationCurrent={event.donation_current}
             />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <EventLinks links={event.links} />
           </Grid>
           <Grid item xs={12}>
             <EventConstraints constraints={event.constraints} />

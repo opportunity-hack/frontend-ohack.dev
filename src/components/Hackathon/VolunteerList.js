@@ -16,7 +16,7 @@ import {
   ListItemText,
   Skeleton,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { styled, alpha } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import WorkIcon from "@mui/icons-material/Work";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -115,18 +115,24 @@ const ChipContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(1),
 }));
 
-const AvailabilityChip = styled(Chip)(({ theme, isavailablenow }) => ({
+const AvailabilityChip = styled(Chip)(({ theme, isavailablenow, timeofdaycolor }) => ({
   margin: theme.spacing(0.5),
   backgroundColor: isavailablenow
     ? theme.palette.info.main
-    : theme.palette.success.light,
-  color: isavailablenow
-    ? theme.palette.success.contrastText
-    : theme.palette.text.primary,
+    : timeofdaycolor || theme.palette.success.light,
+  color: theme.palette.getContrastText(
+    isavailablenow 
+      ? theme.palette.info.main 
+      : timeofdaycolor || theme.palette.success.light
+  ),
+  boxShadow: isavailablenow ? theme.shadows[2] : 'none',
+  transition: 'all 0.2s ease-in-out',
   "&:hover": {
     backgroundColor: isavailablenow
-      ? theme.palette.success.dark
-      : theme.palette.success.main,
+      ? theme.palette.info.dark
+      : timeofdaycolor ? alpha(timeofdaycolor, 0.8) : theme.palette.success.main,
+    transform: 'translateY(-2px)',
+    boxShadow: theme.shadows[3],
   },
 }));
 
@@ -226,36 +232,52 @@ const getAvailabilityCounts = (volunteers) => {
     const now = Moment(new Date(), "America/Los_Angeles"); // Everything is going to be in PST - we don't want to get the user's local time
     const nowDay = now.format("dddd");
 
-    // Get the day which is either Saturday or Sunday within the string
-    const dayMatch = timeSpan.match(/(Saturday|Sunday)/g);
-    const isDayMatch = dayMatch && dayMatch.length > 0 && dayMatch[0] === nowDay;
+    // New format example: "Friday, Oct 10: 🌅 Early Morning (7am - 9am PST)"
+    // Extract the day name from the date part
+    const datePart = timeSpan.split(":")[0]; // "Friday, Oct 10" or similar
+    if (!datePart) return false;
+    
+    const dayParts = datePart.split(",");
+    if (dayParts.length === 0) return false;
+    
+    const dayName = dayParts[0].trim(); // "Friday"
+    const isDayMatch = dayName === nowDay;
     
     if (!isDayMatch) return false;
 
     // Safe string manipulation with proper error checking
-    let timeRange = timeSpan;
     try {
-      // Extract the time portion from the string
+      // Extract the time portion from the string - anything in parentheses
       const timeMatch = timeSpan.match(/\((.*?)\)/);
       if (!timeMatch || !timeMatch[1]) return false;
       
-      timeRange = timeMatch[1];
-      timeRange = timeRange.replace(/PST/g, "").trim();
-      timeRange = timeRange.replace(/p\s/g, "pm");
-      timeRange = timeRange.replace(/a\s/g, "am");
-
+      let timeRange = timeMatch[1]; // "7am - 9am PST"
+      timeRange = timeRange.replace(/PST/g, "").trim(); // "7am - 9am"
+      
       const timeParts = timeRange.split("-");
       if (timeParts.length !== 2) return false;
 
-      let [startTime, endTime] = timeParts;
+      let [startTime, endTime] = timeParts.map(t => t.trim());
+      
+      // Standardize format: ensure times have minutes
+      if (!startTime.includes(":")) {
+        startTime = startTime.replace(/(\d+)([ap]m)/, "$1:00$2");
+      }
+      
       // Add :59 to the end time to make it inclusive of the entire hour
-      endTime = endTime.trim().replace(/(\d+)([ap]m)$/, "$1:59$2");
-      startTime = startTime.trim();
+      if (!endTime.includes(":")) {
+        endTime = endTime.replace(/(\d+)([ap]m)/, "$1:59$2");
+      } else {
+        // Already has minutes, just replace with :59
+        endTime = endTime.replace(/(\d+):(\d+)([ap]m)/, "$1:59$3");
+      }
 
       const startMoment = Moment(startTime, "h:mma", "America/Los_Angeles");
       const endMoment = Moment(endTime, "h:mma", "America/Los_Angeles");
 
-      if (!startMoment.isValid() || !endMoment.isValid()) return false;
+      if (!startMoment.isValid() || !endMoment.isValid()) {
+        return false;
+      }
 
       return now.isBetween(startMoment, endMoment);
     } catch (error) {
@@ -308,38 +330,115 @@ const getAvailabilityCounts = (volunteers) => {
     if (!availability || typeof availability !== 'string') return null;
     
     try {
+      // Looking at the example: "Friday, Oct 10: 🌅 Early Morning (7am - 9am PST), Friday, Oct 10: ☀️ Morning..."
       const availabilityArray = availability.split(", ").filter(Boolean);
       if (availabilityArray.length === 0) return null;
       
-      return (
-        <Box mt={2}>
-          <Typography variant="subtitle2" gutterBottom>
-            Available Times:
-          </Typography>
-          {availabilityArray.map((time, index) => {
-            const isAvailableNow = isCurrentlyAvailable(time);
-            return (
-              <Tooltip
-                title={
-                  isAvailableNow ? (
-                    <span style={{ fontSize: "14px" }}>
-                      Available now (during the hackathon)!
-                    </span>
-                  ) : (
-                    time
-                  )
-                }
-                key={index}
-              >
+      // Extract date part (assuming all entries have the same date)
+      const firstSlot = availabilityArray[0];
+      const colonIndex = firstSlot.indexOf(":");
+      
+      if (colonIndex === -1) {
+        // Legacy format fallback
+        return (
+          <Box mt={2}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {availabilityArray.map((time, index) => (
                 <AvailabilityChip
+                  key={index}
                   icon={<AccessTimeIcon />}
                   label={time}
                   size="small"
-                  isavailablenow={isAvailableNow ? 1 : 0}
+                  isavailablenow={isCurrentlyAvailable(time) ? 1 : 0}
+                />
+              ))}
+            </Box>
+          </Box>
+        );
+      }
+      
+      // Get the date part, like "Friday, Oct 10"
+      const datePart = firstSlot.substring(0, colonIndex).trim();
+      
+      // Define colors for different time periods
+      const timeOfDayColors = {
+        "Early Morning": "#9FC5E8", // Light blue
+        "Morning": "#FFD966",       // Light yellow
+        "Afternoon": "#93C47D",     // Light green
+        "Evening": "#B4A7D6",       // Light purple
+        "Night": "#8E7CC3",         // Medium purple
+        "Late Night": "#674EA7"     // Dark purple
+      };
+      
+      // Process the time slots
+      const processedSlots = availabilityArray.map(slot => {
+        const slotColonIndex = slot.indexOf(":");
+        if (slotColonIndex === -1) return { display: slot, timeOfDay: null, originalSlot: slot };
+        
+        // Get everything after the colon, which should be like " 🌅 Early Morning (7am - 9am PST)"
+        let timeInfo = slot.substring(slotColonIndex + 1).trim();
+        
+        // Remove PST to save space
+        if (timeInfo.includes(" PST)")) {
+          timeInfo = timeInfo.replace(" PST)", ")");
+        }
+        
+        let emoji = "", timeOfDay = "", timeRange = "", display = timeInfo;
+        
+        // Extract emoji, time label, and time range
+        const emojiTimeMatch = /([^\s]+)\s+([^(]+)\s*(\([^)]+\))/u.exec(timeInfo);
+        
+        if (emojiTimeMatch) {
+          emoji = emojiTimeMatch[1]; // 🌅
+          timeOfDay = emojiTimeMatch[2].trim(); // Early Morning
+          timeRange = emojiTimeMatch[3]; // (7am - 9am)
+          
+          // Create integrated display with date, emoji and time
+          // e.g., "Oct 10: 🌅 Early Morning"
+          const dateParts = datePart.split(","); // ["Friday", " Oct 10"]
+          const dateOnly = dateParts.length > 1 ? dateParts[1].trim() : datePart;
+          
+          display = `${dateOnly} · ${timeRange}`;
+        }
+        
+        return { 
+          display, 
+          emoji,
+          timeOfDay, 
+          timeRange,
+          originalSlot: slot, 
+          color: timeOfDayColors[timeOfDay] || null
+        };
+      });
+      
+      return (
+        <Box mt={2}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8, justifyContent: 'flex-start' }}>
+            {processedSlots.map((slot, index) => (
+              <Tooltip
+                key={index}
+                title={isCurrentlyAvailable(slot.originalSlot) ? 
+                  "Available now (during the hackathon)!" : 
+                  slot.originalSlot}
+              >
+                <AvailabilityChip
+                  icon={slot.emoji ? 
+                    <span style={{ fontSize: '1.2rem', marginRight: '-4px' }}>{slot.emoji}</span> : 
+                    <AccessTimeIcon />}
+                  label={slot.display}
+                  size="medium"
+                  isavailablenow={isCurrentlyAvailable(slot.originalSlot) ? 1 : 0}
+                  timeofdaycolor={slot.color}
+                  sx={{ 
+                    fontWeight: 500,
+                    '& .MuiChip-label': { 
+                      paddingLeft: slot.emoji ? 0 : undefined 
+                    }
+                  }}
                 />
               </Tooltip>
-            );
-          })}
+            ))}
+          </Box>
         </Box>
       );
     } catch (error) {

@@ -43,6 +43,7 @@ import { useEnv } from '../../../context/env.context';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
+import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
 // Sponsorship tiers
 const sponsorshipTiers = [
@@ -181,6 +182,15 @@ const SponsorApplicationPage = () => {
   const [logoPreview, setLogoPreview] = useState(null);
   const [error, setError] = useState('');
   
+  // reCAPTCHA integration
+  const { 
+    initializeRecaptcha, 
+    getRecaptchaToken, 
+    isLoading: recaptchaLoading, 
+    error: recaptchaError,
+    setError: setRecaptchaError 
+  } = useRecaptcha();
+  
   // Steps for stepper
   const steps = ['Company Info', 'Sponsorship', 'Volunteering', 'Finish'];
   
@@ -214,6 +224,9 @@ const SponsorApplicationPage = () => {
 
   // Fetch event data once when event_id is available
   useEffect(() => {
+    // Initialize reCAPTCHA when component mounts
+    initializeRecaptcha();
+    
     if (!event_id || !apiServerUrl) return;
     
     const fetchEventData = async () => {
@@ -248,6 +261,11 @@ const SponsorApplicationPage = () => {
           day: 'numeric'
         });
         
+        // Check if event is in the past (with 1-day buffer)
+        const now = new Date();
+        const oneDayBuffer = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+        const isEventPast = new Date(endDate.getTime() + oneDayBuffer) < now;
+        
         setEventData({
           name: data.title || `Opportunity Hack - ${event_id}`,
           description: data.description || "Annual hackathon for nonprofits",
@@ -257,7 +275,8 @@ const SponsorApplicationPage = () => {
           formattedStartDate,
           formattedEndDate,
           location: data.location || "Tempe, Arizona",
-          image: data.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+          image: data.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
+          isEventPast
         });
       } catch (err) {
         console.error('Error fetching event data:', err);
@@ -268,7 +287,7 @@ const SponsorApplicationPage = () => {
     };
 
     fetchEventData();
-  }, [event_id, apiServerUrl]);
+  }, [event_id, apiServerUrl, initializeRecaptcha]);
 
   // Update form data with event_id once it's available
   useEffect(() => {
@@ -533,7 +552,7 @@ const SponsorApplicationPage = () => {
     } else {
       setActiveStep(prev => prev + 1);
     }
-  }, [activeStep, steps.length, validateCompanyInfo, validateSponsorshipInfo, validateVolunteerInfo]);
+  }, [activeStep, steps.length, validateCompanyInfo, validateSponsorshipInfo, validateVolunteerInfo, handleSubmit]);
 
   const handleBack = useCallback(() => {
     setActiveStep(prev => Math.max(0, prev - 1));
@@ -551,6 +570,15 @@ const SponsorApplicationPage = () => {
     setError('');
     
     try {
+      // Get reCAPTCHA token
+      const recaptchaToken = await getRecaptchaToken();
+      
+      // Handling token retrieval failure
+      if (!recaptchaToken && process.env.NODE_ENV === 'production') {
+        setError('Failed to verify you are human. Please refresh the page and try again.');
+        return;
+      }
+      
       // Prepare submission data
       const sponsorshipDetails = formData.sponsorshipTier === 'Custom Sponsorship'
         ? formData.customSponsorship
@@ -587,6 +615,7 @@ const SponsorApplicationPage = () => {
         volunteer_type: 'sponsor',
         isSelected: false,
         logoUrl: logoPreview,
+        recaptchaToken
       };
       
       if (apiServerUrl && accessToken) {
@@ -606,6 +635,9 @@ const SponsorApplicationPage = () => {
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
+          if (errorData?.error?.includes('recaptcha')) {
+            throw new Error('reCAPTCHA verification failed. Please refresh the page and try again.');
+          }
           throw new Error(`Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ''}`);
         }
       } else {
@@ -624,7 +656,7 @@ const SponsorApplicationPage = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [formData, validateForm, apiServerUrl, accessToken, event_id, previouslySubmitted, logoFile, logoPreview, clearSavedData]);
+  }, [formData, validateForm, apiServerUrl, accessToken, event_id, previouslySubmitted, logoFile, logoPreview, clearSavedData, getRecaptchaToken]);
 
   // Company Information Form
   const renderCompanyInfoForm = useCallback(() => (
@@ -1321,98 +1353,124 @@ const SponsorApplicationPage = () => {
             {event_id && <ApplicationNav eventId={event_id} currentType="sponsor" />}
 
             <Box sx={{ mb: 4 }}>
-              <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                <Typography variant="body1">
-                  By sponsoring Opportunity Hack, you help develop real-world tech solutions for nonprofits while connecting with top talent. Your support directly impacts communities in need.
-                </Typography>
-                <Box sx={{ mt: 1 }}>
-                  <Link 
-                    href="/sponsor" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    sx={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-                  >
-                    Learn more about sponsor benefits and impact <InfoIcon fontSize="small" />
-                  </Link>
-                </Box>
-              </Alert>
-              
-              <Stepper
-                activeStep={activeStep}
-                alternativeLabel={!isMobile}
-                orientation={isMobile ? "horizontal" : "horizontal"}
-                sx={{ 
-                  mb: 4,
-                  ...(isMobile && {
-                    '& .MuiStepLabel-root': {
-                      padding: '0 4px', // Reduce padding on mobile
-                    },
-                    '& .MuiStepLabel-labelContainer': {
-                      width: 'auto', // Let the label container be as small as possible
-                    },
-                    '& .MuiStepLabel-label': {
-                      fontSize: '0.7rem', // Smaller text on mobile
-                      whiteSpace: 'nowrap', // Prevent text wrapping
-                    },
-                    '& .MuiSvgIcon-root': {
-                      width: 20, // Smaller icons
-                      height: 20,
-                    },
-                    overflowX: 'auto', // Allow horizontal scrolling if needed
-                    '&::-webkit-scrollbar': {
-                      display: 'none' // Hide scrollbar on webkit browsers
-                    },
-                    scrollbarWidth: 'none', // Hide scrollbar on Firefox
-                  })
-                }}
-              >
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{isMobile ? (
-                      // On mobile, show abbreviated labels or just the step number
-                      activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
-                    ) : (
-                      // On desktop, show full labels
-                      label
-                    )}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-              
-              <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                {error && typeof error === 'string' && (
-                  <Alert severity="error" sx={{ mb: 4 }}>
-                    {error}
+              {eventData && eventData.isEventPast ? (
+                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                  <Alert severity="warning" sx={{ mb: 3 }}>
+                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                      This event has already ended
+                    </Typography>
+                    <Typography variant="body1">
+                      Applications are no longer being accepted for sponsors as this hackathon has already concluded.
+                      Please check our upcoming events for future sponsorship opportunities.
+                    </Typography>
                   </Alert>
-                )}
-                
-                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-                  {getStepContent(activeStep)}
-                  
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-                    <Button
-                      disabled={activeStep === 0 || submitting}
-                      onClick={handleBack}
-                      variant="outlined"
-                    >
-                      Back
-                    </Button>
-                    
+                  <Box textAlign="center">
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={handleNext}
-                      disabled={submitting}
+                      onClick={() => router.push('/hack')}
+                      sx={{ mt: 2 }}
                     >
-                      {activeStep === steps.length - 1 ? (
-                        submitting ? <CircularProgress size={24} /> : 'Submit'
-                      ) : (
-                        'Next'
-                      )}
+                      View Upcoming Events
                     </Button>
                   </Box>
-                </form>
-              </Paper>
+                </Paper>
+              ) : (
+                <>
+                  <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
+                    <Typography variant="body1">
+                      By sponsoring Opportunity Hack, you help develop real-world tech solutions for nonprofits while connecting with top talent. Your support directly impacts communities in need.
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Link 
+                        href="/sponsor" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        sx={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                      >
+                        Learn more about sponsor benefits and impact <InfoIcon fontSize="small" />
+                      </Link>
+                    </Box>
+                  </Alert>
+                  
+                  <Stepper
+                    activeStep={activeStep}
+                    alternativeLabel={!isMobile}
+                    orientation={isMobile ? "horizontal" : "horizontal"}
+                    sx={{ 
+                      mb: 4,
+                      ...(isMobile && {
+                        '& .MuiStepLabel-root': {
+                          padding: '0 4px', // Reduce padding on mobile
+                        },
+                        '& .MuiStepLabel-labelContainer': {
+                          width: 'auto', // Let the label container be as small as possible
+                        },
+                        '& .MuiStepLabel-label': {
+                          fontSize: '0.7rem', // Smaller text on mobile
+                          whiteSpace: 'nowrap', // Prevent text wrapping
+                        },
+                        '& .MuiSvgIcon-root': {
+                          width: 20, // Smaller icons
+                          height: 20,
+                        },
+                        overflowX: 'auto', // Allow horizontal scrolling if needed
+                        '&::-webkit-scrollbar': {
+                          display: 'none' // Hide scrollbar on webkit browsers
+                        },
+                        scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                      })
+                    }}
+                  >
+                    {steps.map((label) => (
+                      <Step key={label}>
+                        <StepLabel>{isMobile ? (
+                          // On mobile, show abbreviated labels or just the step number
+                          activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
+                        ) : (
+                          // On desktop, show full labels
+                          label
+                        )}</StepLabel>
+                      </Step>
+                    ))}
+                  </Stepper>
+                  
+                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                    {(error || recaptchaError) && (
+                      <Alert severity="error" sx={{ mb: 4 }}>
+                        {error || recaptchaError}
+                      </Alert>
+                    )}
+                    
+                    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                      {getStepContent(activeStep)}
+                      
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+                        <Button
+                          disabled={activeStep === 0 || submitting}
+                          onClick={handleBack}
+                          variant="outlined"
+                        >
+                          Back
+                        </Button>
+                        
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleNext}
+                          disabled={submitting || recaptchaLoading}
+                        >
+                          {activeStep === steps.length - 1 ? (
+                            submitting || recaptchaLoading ? <CircularProgress size={24} /> : 'Submit'
+                          ) : (
+                            'Next'
+                          )}
+                        </Button>
+                      </Box>
+                    </form>
+                  </Paper>
+                </>
+              )}
             </Box>
           </Box>
         )}

@@ -29,43 +29,71 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 const MentorAvailability = ({ volunteers }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-console.log("volunteers", volunteers);
+  
   const availabilityCount = useMemo(() => {
-    const totalCounts = {
-      "Oct 12th: Saturday Morning (9am - 12pm PST)": 0,
-      "Saturday Afternoon (1p - 3p PST)": 0,
-      "Saturday Evening (4p - 7p PST)": 0,
-      "Saturday Night (8p - 11p PST)": 0,
-      "Saturday Late Night (11p - 2am)": 0,
-      "Oct 13th: Sunday Early Morning (7am - 9am)": 0,
-      "Sunday Morning (9am - 12pm PST)": 0,
-      "Sunday Afternoon (1p - 3p PST)": 0,
-    };
-    const inPersonCounts = { ...totalCounts };
+    // Initialize with empty counts
+    const totalCounts = {};
+    const inPersonCounts = {};
+    const remoteCounts = {};
 
-    const remoteCounts = { ...totalCounts };
-
+    // Process each volunteer
     volunteers.forEach((volunteer) => {
       if (volunteer.isSelected && volunteer.volunteer_type === "mentor") {
-        volunteer.availability.split(", ").forEach((slot) => {
-          if (totalCounts.hasOwnProperty(slot)) {
-            totalCounts[slot]++;
-          }
-          if (volunteer.isInPerson) {
-            inPersonCounts[slot]++;
-          } else {
-            remoteCounts[slot]++;
-          }
-        });
+        // Handle new format where availability is a comma-separated string of displayText values
+        if (volunteer?.availability) {
+          const availabilityArray = volunteer.availability.split(", ");
+          
+          availabilityArray.forEach((slot) => {
+            // Extract the display text from the slot
+            // Expected format: "Saturday, May 4: 🌅 Early Morning (7am - 9am PST)"
+            if (slot) {
+              // If this is the first time we've seen this slot, initialize counters
+              if (!totalCounts[slot]) {
+                totalCounts[slot] = 0;
+                inPersonCounts[slot] = 0;
+                remoteCounts[slot] = 0;
+              }
+              
+              // Increment counters
+              totalCounts[slot]++;
+              
+              if (volunteer.isInPerson) {
+                inPersonCounts[slot]++;
+              } else {
+                remoteCounts[slot]++;
+              }
+            }
+          });
+        }
       }
     });
 
-    // Return totalCounts, remoteCounts, inPersonCounts
+    // Sort the slots by date and time for better display
+    const sortedSlots = Object.keys(totalCounts).sort((a, b) => {
+      // First try to sort by date
+      const dateA = a.split(":")[0]; // "Saturday, May 4"
+      const dateB = b.split(":")[0];
+      
+      if (dateA !== dateB) {
+        // If dates are different, compare them
+        return dateA.localeCompare(dateB);
+      }
+      
+      // If dates are the same, sort by time period
+      const timePeriods = ["Early Morning", "Morning", "Afternoon", "Evening", "Night", "Late Night"];
+      const timeA = a.match(/🌅|☀️|🏙️|🌆|🌃|🌙/) ? timePeriods[a.match(/🌅|☀️|🏙️|🌆|🌃|🌙/).index] : "";
+      const timeB = b.match(/🌅|☀️|🏙️|🌆|🌃|🌙/) ? timePeriods[b.match(/🌅|☀️|🏙️|🌆|🌃|🌙/).index] : "";
+      
+      return timePeriods.indexOf(timeA) - timePeriods.indexOf(timeB);
+    });
+
+    // Return totalCounts, remoteCounts, inPersonCounts, and sortedSlots
     return {
-      totalCounts: totalCounts,
-      remoteCounts: remoteCounts,
-      inPersonCounts: inPersonCounts
-    }
+      totalCounts,
+      remoteCounts,
+      inPersonCounts,
+      sortedSlots
+    };
   }, [volunteers]);
 
   return (
@@ -96,17 +124,22 @@ console.log("volunteers", volunteers);
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.entries(availabilityCount.totalCounts).map(
-              ([slot, totalCount]) => (
-                <TableRow key={slot}>
-                  <TableCell component="th" scope="row">
-                    {slot}
-                  </TableCell>
-                  <TableCell align="right">{totalCount}</TableCell>
-                  <TableCell align="right">{availabilityCount.inPersonCounts[slot]}</TableCell>
-                  <TableCell align="right">{availabilityCount.remoteCounts[slot]}</TableCell>
-                </TableRow>
-              )
+            {availabilityCount.sortedSlots && availabilityCount.sortedSlots.map((slot) => (
+              <TableRow key={slot}>
+                <TableCell component="th" scope="row">
+                  {slot}
+                </TableCell>
+                <TableCell align="right">{availabilityCount.totalCounts[slot]}</TableCell>
+                <TableCell align="right">{availabilityCount.inPersonCounts[slot]}</TableCell>
+                <TableCell align="right">{availabilityCount.remoteCounts[slot]}</TableCell>
+              </TableRow>
+            ))}
+            {(!availabilityCount.sortedSlots || availabilityCount.sortedSlots.length === 0) && (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  No mentor availability data yet
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>

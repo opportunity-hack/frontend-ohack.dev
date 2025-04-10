@@ -3,6 +3,7 @@ import { Grid, Button, Box, Typography, Paper } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
 const sections = [
+  { id: "applications", name: "Apply Now", highlight: true },
   { id: "countdown", name: "Event Countdown" },
   { id: "nonprofit", name: "Nonprofit List" },
   { id: "volunteer", name: "Volunteers" },
@@ -43,8 +44,8 @@ const TableOfContents = () => {
         {sections.map((section) => (
           <Grid item key={section.id}>
             <Button
-              variant="contained"
-              color="primary"
+              variant={section.highlight ? "contained" : "outlined"}
+              color={section.highlight ? "secondary" : "primary"}
               size="large"
               href={`#${section.id}`}
               onClick={(event) => handleClick(event, section.id, section.name)}
@@ -52,8 +53,24 @@ const TableOfContents = () => {
                 borderRadius: 4,
                 textTransform: "none",
                 fontWeight: "bold",
+                ...(section.highlight && {
+                  px: 3,
+                  py: 1.5,
+                  animation: "pulse 2s infinite",
+                  "@keyframes pulse": {
+                    "0%": {
+                      boxShadow: "0 0 0 0 rgba(156, 39, 176, 0.7)"
+                    },
+                    "70%": {
+                      boxShadow: "0 0 0 10px rgba(156, 39, 176, 0)"
+                    },
+                    "100%": {
+                      boxShadow: "0 0 0 0 rgba(156, 39, 176, 0)"
+                    }
+                  }
+                }),
                 "&:hover": {
-                  backgroundColor: "secondary.main",
+                  backgroundColor: section.highlight ? "secondary.dark" : "primary.main",
                 },
               }}
             >

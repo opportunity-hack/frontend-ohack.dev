@@ -36,6 +36,7 @@ import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
 import InfoIcon from '@mui/icons-material/Info';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
+import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
 const VolunteerApplicationPage = () => {
   const router = useRouter();
@@ -51,6 +52,15 @@ const VolunteerApplicationPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [eventData, setEventData] = useState(null);
+  
+  // reCAPTCHA integration
+  const { 
+    initializeRecaptcha, 
+    getRecaptchaToken, 
+    isLoading: recaptchaLoading, 
+    error: recaptchaError,
+    setError: setRecaptchaError 
+  } = useRecaptcha();
   
   // Store refs for data loading
   const initialLoadRef = useRef(false);
@@ -136,35 +146,37 @@ const VolunteerApplicationPage = () => {
   
   // Technical skills options
   const technicalSkillsOptions = [
-    'JavaScript/TypeScript',
-    'React',
-    'Angular',
-    'Vue.js',
-    'Node.js',
-    'Python',
-    'Java',
-    'Ruby',
-    'PHP',
-    'C#/.NET',
-    'SQL Databases',
-    'NoSQL Databases',
-    'API Development',
-    'Cloud Computing (AWS, Azure, GCP)',
-    'DevOps',
-    'Mobile Development',
-    'UI/UX Design',
-    'Product Management',
-    'Project Management',
-    'Technical Writing',
-    'Content Creation',
-    'Marketing',
-    'Social Media',
-    'Data Analysis',
-    'Public Speaking',
-    'Community Building',
-    'Event Planning',
-    'Education/Training',
-    'Other'
+    "UI/UX Design",
+    "Product Management",
+    "Project Management",
+    "Technical Writing",
+    "Content Creation",
+    "Marketing",
+    "Social Media",
+    "Data Analysis",
+    "Public Speaking",
+    "Community Building",
+    "Event Planning",
+    "Education/Training",
+
+    "JavaScript/TypeScript",
+    "React",
+    "Angular",
+    "Vue.js",
+    "Node.js",
+    "Python",
+    "Java",
+    "Ruby",
+    "PHP",
+    "C#/.NET",
+    "SQL Databases",
+    "NoSQL Databases",
+    "API Development",
+    "Cloud Computing (AWS, Azure, GCP)",
+    "DevOps",
+    "Mobile Development",
+
+    "Other",
   ];
   
   // Social causes options
@@ -234,6 +246,9 @@ const VolunteerApplicationPage = () => {
   
   // Fetch event data and initialize form
   useEffect(() => {
+    // Initialize reCAPTCHA when component mounts
+    initializeRecaptcha();
+    
     if (!event_id || !apiServerUrl || initialLoadRef.current) return;
     initialLoadRef.current = true;
     
@@ -270,6 +285,11 @@ const VolunteerApplicationPage = () => {
           day: 'numeric'
         });
         
+        // Check if event is in the past (with 1-day buffer)
+        const now = new Date();
+        const oneDayBuffer = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+        const isEventPast = new Date(endDate.getTime() + oneDayBuffer) < now;
+        
         setEventData({
           name: eventData.title || `Opportunity Hack - ${event_id}`,
           description: eventData.description || "Annual hackathon for nonprofits",
@@ -279,7 +299,8 @@ const VolunteerApplicationPage = () => {
           formattedStartDate,
           formattedEndDate,
           location: eventData.location || "Tempe, Arizona",
-          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
+          isEventPast
         });
         
         setIsLoading(false);
@@ -291,7 +312,7 @@ const VolunteerApplicationPage = () => {
     };
 
     fetchEventData();
-  }, [event_id, apiServerUrl, setIsLoading]);
+  }, [event_id, apiServerUrl, setIsLoading, initializeRecaptcha]);
 
   // Handle user data and application loading - separate from event loading
   useEffect(() => {
@@ -526,6 +547,15 @@ const VolunteerApplicationPage = () => {
     setError('');
     
     try {
+      // Get reCAPTCHA token
+      const recaptchaToken = await getRecaptchaToken();
+      
+      // If we couldn't get a token and we're in production, show error
+      if (!recaptchaToken && process.env.NODE_ENV === 'production') {
+        setError('Failed to verify you are human. Please refresh the page and try again.');
+        return;
+      }
+      
       // Update timestamp before submission
       const submissionData = {
         ...formData,
@@ -549,7 +579,9 @@ const VolunteerApplicationPage = () => {
         volunteer_type: 'volunteer',
         agreedToCodeOfConduct: formData.codeOfConduct,
         linkedinProfile: formData.linkedin,
-        shortBio: formData.bio
+        shortBio: formData.bio,
+        // Add reCAPTCHA token
+        recaptchaToken
       };
       
       if (apiServerUrl) {
@@ -568,6 +600,10 @@ const VolunteerApplicationPage = () => {
         });
         
         if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          if (errorData?.error?.includes('recaptcha')) {
+            throw new Error('reCAPTCHA verification failed. Please refresh the page and try again.');
+          }
           throw new Error(`Failed to submit application: ${response.status}`);
         }
       } else {
@@ -1157,106 +1193,132 @@ const VolunteerApplicationPage = () => {
             {event_id && <ApplicationNav eventId={event_id} currentType="volunteer" />}
 
             <Box sx={{ mb: 4 }}>
-              <Stepper
-                activeStep={activeStep}
-                alternativeLabel={!isMobile}
-                orientation={isMobile ? "horizontal" : "horizontal"}
-                sx={{ 
-                  mb: 4,
-                  ...(isMobile && {
-                    '& .MuiStepLabel-root': {
-                      padding: '0 4px', // Reduce padding on mobile
-                    },
-                    '& .MuiStepLabel-labelContainer': {
-                      width: 'auto', // Let the label container be as small as possible
-                    },
-                    '& .MuiStepLabel-label': {
-                      fontSize: '0.7rem', // Smaller text on mobile
-                      whiteSpace: 'nowrap', // Prevent text wrapping
-                    },
-                    '& .MuiSvgIcon-root': {
-                      width: 20, // Smaller icons
-                      height: 20,
-                    },
-                    overflowX: 'auto', // Allow horizontal scrolling if needed
-                    '&::-webkit-scrollbar': {
-                      display: 'none' // Hide scrollbar on webkit browsers
-                    },
-                    scrollbarWidth: 'none', // Hide scrollbar on Firefox
-                  })
-                }}
-              >
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{isMobile ? (
-                      // On mobile, show abbreviated labels or just the step number
-                      activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
-                    ) : (
-                      // On desktop, show full labels
-                      label
-                    )}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-
-              <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                <Typography variant="body1" paragraph>
-                  Thank you for your interest in volunteering with Opportunity Hack! Volunteers play a crucial role
-                  in the success of our events and help create a supportive environment for participants.
-                </Typography>
-                
-                {eventData && eventData.description && (
-                  <Typography variant="body1" sx={{ mb: 3 }}>
-                    <strong>About this event:</strong> {eventData.description}
-                  </Typography>
-                )}
-                
-                <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
-                    <strong>What to expect as a volunteer:</strong>
-                  </Typography>
-                  <ul style={{ marginBottom: 0, paddingLeft: '1.5rem' }}>
-                    <li>Support the organization and logistics of the hackathon</li>
-                    <li>Help participants navigate the event and find resources</li>
-                    <li>Contribute your skills to make the event a success</li>
-                    <li>Connect with a community passionate about social impact</li>
-                    <li>Gain experience and build your network</li>
-                  </ul>
-                </Alert>
-                
-                {error && (
-                  <Alert severity="error" sx={{ mb: 4 }}>
-                    {error}
+              {eventData && eventData.isEventPast ? (
+                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                  <Alert severity="warning" sx={{ mb: 3 }}>
+                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                      This event has already ended
+                    </Typography>
+                    <Typography variant="body1">
+                      Applications are no longer being accepted for volunteers as this hackathon has already concluded.
+                      Please check our upcoming events for future volunteering opportunities.
+                    </Typography>
                   </Alert>
-                )}
-
-                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-                  {getStepContent(activeStep)}
-                  
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-                    <Button
-                      disabled={activeStep === 0 || submitting}
-                      onClick={handleBack}
-                      variant="outlined"
-                    >
-                      Back
-                    </Button>
-                    
+                  <Box textAlign="center">
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={handleNext}
-                      disabled={submitting}
+                      onClick={() => router.push('/hack')}
+                      sx={{ mt: 2 }}
                     >
-                      {activeStep === steps.length - 1 ? (
-                        submitting ? <CircularProgress size={24} /> : 'Submit Application'
-                      ) : (
-                        'Next'
-                      )}
+                      View Upcoming Events
                     </Button>
                   </Box>
-                </form>
-              </Paper>
+                </Paper>
+              ) : (
+                <>
+                  <Stepper
+                    activeStep={activeStep}
+                    alternativeLabel={!isMobile}
+                    orientation={isMobile ? "horizontal" : "horizontal"}
+                    sx={{ 
+                      mb: 4,
+                      ...(isMobile && {
+                        '& .MuiStepLabel-root': {
+                          padding: '0 4px', // Reduce padding on mobile
+                        },
+                        '& .MuiStepLabel-labelContainer': {
+                          width: 'auto', // Let the label container be as small as possible
+                        },
+                        '& .MuiStepLabel-label': {
+                          fontSize: '0.7rem', // Smaller text on mobile
+                          whiteSpace: 'nowrap', // Prevent text wrapping
+                        },
+                        '& .MuiSvgIcon-root': {
+                          width: 20, // Smaller icons
+                          height: 20,
+                        },
+                        overflowX: 'auto', // Allow horizontal scrolling if needed
+                        '&::-webkit-scrollbar': {
+                          display: 'none' // Hide scrollbar on webkit browsers
+                        },
+                        scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                      })
+                    }}
+                  >
+                    {steps.map((label) => (
+                      <Step key={label}>
+                        <StepLabel>{isMobile ? (
+                          // On mobile, show abbreviated labels or just the step number
+                          activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
+                        ) : (
+                          // On desktop, show full labels
+                          label
+                        )}</StepLabel>
+                      </Step>
+                    ))}
+                  </Stepper>
+
+                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                    <Typography variant="body1" paragraph>
+                      Thank you for your interest in volunteering with Opportunity Hack! Volunteers play a crucial role
+                      in the success of our events and help create a supportive environment for participants.
+                    </Typography>
+                    
+                    {eventData && eventData.description && (
+                      <Typography variant="body1" sx={{ mb: 3 }}>
+                        <strong>About this event:</strong> {eventData.description}
+                      </Typography>
+                    )}
+                    
+                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        <strong>What to expect as a volunteer:</strong>
+                      </Typography>
+                      <ul style={{ marginBottom: 0, paddingLeft: '1.5rem' }}>
+                        <li>Support the organization and logistics of the hackathon</li>
+                        <li>Help participants navigate the event and find resources</li>
+                        <li>Contribute your skills to make the event a success</li>
+                        <li>Connect with a community passionate about social impact</li>
+                        <li>Gain experience and build your network</li>
+                      </ul>
+                    </Alert>
+                    
+                    {(error || recaptchaError) && (
+                      <Alert severity="error" sx={{ mb: 4 }}>
+                        {error || recaptchaError}
+                      </Alert>
+                    )}
+
+                    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                      {getStepContent(activeStep)}
+                      
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+                        <Button
+                          disabled={activeStep === 0 || submitting}
+                          onClick={handleBack}
+                          variant="outlined"
+                        >
+                          Back
+                        </Button>
+                        
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleNext}
+                          disabled={submitting || recaptchaLoading}
+                        >
+                          {activeStep === steps.length - 1 ? (
+                            submitting || recaptchaLoading ? <CircularProgress size={24} /> : 'Submit Application'
+                          ) : (
+                            'Next'
+                          )}
+                        </Button>
+                      </Box>
+                    </form>
+                  </Paper>
+                </>
+              )}
             </Box>
           </Box>
         )}
