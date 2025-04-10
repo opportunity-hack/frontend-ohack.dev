@@ -779,13 +779,15 @@ const HackerApplicationPage = () => {
     try {
       // Get reCAPTCHA token
       const recaptchaToken = await getRecaptchaToken();
-      
+
       // If we couldn't get a token and we're in production, show error
-      if (!recaptchaToken && process.env.NODE_ENV === 'production') {
-        setError('Failed to verify you are human. Please refresh the page and try again.');
+      if (!recaptchaToken && process.env.NODE_ENV === "production") {
+        setError(
+          "Failed to verify you are human. Please refresh the page and try again."
+        );
         return;
       }
-      
+
       // Update timestamp before submission
       const submissionData = {
         ...formData,
@@ -793,64 +795,81 @@ const HackerApplicationPage = () => {
         // Process data for API submission
         isInPerson: formData.inPerson === "Yes",
         // Process primaryRoles with otherRole if needed
-        primaryRoles: formData.primaryRoles.includes('Other') 
-          ? [...formData.primaryRoles.filter(r => r !== 'Other'), formData.otherRole].join(', ')
-          : formData.primaryRoles.join(', '),
-        // Process skills with otherSkills if needed  
-        skills: formData.skills.includes('Other')
-          ? [...formData.skills.filter(s => s !== 'Other'), formData.otherSkills].join(', ')
-          : formData.skills.join(', '),
+        primaryRoles: formData.primaryRoles.includes("Other")
+          ? [
+              ...formData.primaryRoles.filter((r) => r !== "Other"),
+              formData.otherRole,
+            ].join(", ")
+          : formData.primaryRoles.join(", "),
+        // Process skills with otherSkills if needed
+        skills: formData.skills.includes("Other")
+          ? [
+              ...formData.skills.filter((s) => s !== "Other"),
+              formData.otherSkills,
+            ].join(", ")
+          : formData.skills.join(", "),
         // Process socialCauses with otherSocialCause if needed
-        socialCauses: formData.socialCauses.includes('Other')
-          ? [...formData.socialCauses.filter(c => c !== 'Other'), formData.otherSocialCause].join(', ')
-          : formData.socialCauses.join(', '),
+        socialCauses: formData.socialCauses.includes("Other")
+          ? [
+              ...formData.socialCauses.filter((c) => c !== "Other"),
+              formData.otherSocialCause,
+            ].join(", ")
+          : formData.socialCauses.join(", "),
         // Process workshopInterests
-        workshopInterests: formData.workshopInterests.join(', '),
+        workshopInterests: formData.workshopInterests.join(", "),
         // Convert team matching preferences to strings for API
-        teamMatchingPreferredSkills: formData.teamMatchingPreferences.preferredSkills.join(', '),
-        teamMatchingPreferredCauses: formData.teamMatchingPreferences.preferredCauses.join(', '),
-        teamMatchingPreferredSize: formData.teamMatchingPreferences.preferredSize,
+        teamMatchingPreferredSkills:
+          formData.teamMatchingPreferences.preferredSkills.join(", "),
+        teamMatchingPreferredCauses:
+          formData.teamMatchingPreferences.preferredCauses.join(", "),
+        teamMatchingPreferredSize:
+          formData.teamMatchingPreferences.preferredSize,
         // Add reCAPTCHA token
         recaptchaToken,
         // Add type information
-        type: 'hackers',
-        volunteer_type: 'hacker',
+        type: "hackers",
+        volunteer_type: "hacker",
         agreedToCodeOfConduct: formData.codeOfConduct,
         linkedinProfile: formData.linkedin,
-        shortBio: formData.bio
+        shortBio: formData.bio,
       };
-      
+
       if (apiServerUrl) {
         // Submit to API
-        const submitEndpoint = previouslySubmitted 
-          ? `${apiServerUrl}/api/hacker/application/${event_id}/update` 
+        const submitEndpoint = previouslySubmitted
+          ? `${apiServerUrl}/api/hacker/application/${event_id}/update`
           : `${apiServerUrl}/api/hacker/application/${event_id}/submit`;
-        
+
         const response = await fetch(submitEndpoint, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(submissionData)
+          body: JSON.stringify(submissionData),
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
-          if (errorData?.error?.includes('recaptcha')) {
-            throw new Error('reCAPTCHA verification failed. Please refresh the page and try again.');
+          if (errorData?.error?.includes("recaptcha")) {
+            throw new Error(
+              "reCAPTCHA verification failed. Please refresh the page and try again."
+            );
           }
           throw new Error(`Failed to submit application: ${response.status}`);
         }
       } else {
         // In a test environment, log the data and simulate API delay
-        console.log('Submitting hacker application:', submissionData);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log("Submitting hacker application:", submissionData);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       }
-      
-      // Clear saved form data after successful submission
-      clearSavedData();
-      
+
+      // Clear saved form data after successful submission only if they are logged in
+      // This is to prevent data loss for users who are not logged in where we don't have their login id
+      if (isLoggedIn) {
+        clearSavedData();
+      }
+
       setSuccess(true);
     } catch (err) {
       console.error('Error submitting application:', err);

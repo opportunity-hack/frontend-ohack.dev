@@ -555,25 +555,34 @@ const SponsorApplicationPage = () => {
     try {
       // Get reCAPTCHA token
       const recaptchaToken = await getRecaptchaToken();
-      
+
       // Handling token retrieval failure
-      if (!recaptchaToken && process.env.NODE_ENV === 'production') {
-        setError('Failed to verify you are human. Please refresh the page and try again.');
+      if (!recaptchaToken && process.env.NODE_ENV === "production") {
+        setError(
+          "Failed to verify you are human. Please refresh the page and try again."
+        );
         return;
       }
-      
+
       // Prepare submission data
-      const sponsorshipDetails = formData.sponsorshipTier === 'Custom Sponsorship'
-        ? formData.customSponsorship
-        : formData.sponsorshipDetails;
-      
-      const volunteerType = formData.volunteerRoles.length > 0
-        ? formData.volunteerRoles.map(role => {
-            if (role === 'other') return formData.otherVolunteerRole;
-            return volunteerRoleOptions.find(option => option.value === role)?.label || role;
-          }).join(', ')
-        : '';
-      
+      const sponsorshipDetails =
+        formData.sponsorshipTier === "Custom Sponsorship"
+          ? formData.customSponsorship
+          : formData.sponsorshipDetails;
+
+      const volunteerType =
+        formData.volunteerRoles.length > 0
+          ? formData.volunteerRoles
+              .map((role) => {
+                if (role === "other") return formData.otherVolunteerRole;
+                return (
+                  volunteerRoleOptions.find((option) => option.value === role)
+                    ?.label || role
+                );
+              })
+              .join(", ")
+          : "";
+
       // Combine data for API submission
       const submissionData = {
         timestamp: new Date().toISOString(),
@@ -594,44 +603,51 @@ const SponsorApplicationPage = () => {
         howHeard: formData.howHeard,
         logoFile: logoFile ? logoFile.name : null,
         photoUrl: logoPreview, // Map logo to photoUrl for consistency
-        type: 'sponsors',
-        volunteer_type: 'sponsor',
+        type: "sponsors",
+        volunteer_type: "sponsor",
         isSelected: false,
         logoUrl: logoPreview,
-        recaptchaToken
+        recaptchaToken,
       };
-      
+
       if (apiServerUrl && accessToken) {
         // Submit to API
-        const submitEndpoint = previouslySubmitted 
-          ? `${apiServerUrl}/api/sponsor/application/${event_id}/update` 
+        const submitEndpoint = previouslySubmitted
+          ? `${apiServerUrl}/api/sponsor/application/${event_id}/update`
           : `${apiServerUrl}/api/sponsor/application/${event_id}/submit`;
-        
+
         const response = await fetch(submitEndpoint, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(submissionData)
+          body: JSON.stringify(submissionData),
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
-          if (errorData?.error?.includes('recaptcha')) {
-            throw new Error('reCAPTCHA verification failed. Please refresh the page and try again.');
+          if (errorData?.error?.includes("recaptcha")) {
+            throw new Error(
+              "reCAPTCHA verification failed. Please refresh the page and try again."
+            );
           }
-          throw new Error(`Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ''}`);
+          throw new Error(
+            `Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ""}`
+          );
         }
       } else {
         // In a test environment or when API isn't available
-        console.log('Submitting sponsor application:', submissionData);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log("Submitting sponsor application:", submissionData);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       }
-      
-      // Clear saved form data after successful submission
-      clearSavedData();
-      
+
+      // Clear saved form data after successful submission only if they are logged in
+      // This is to prevent data loss for users who are not logged in where we don't have their login id
+      if (isLoggedIn) {
+        clearSavedData();
+      }
+
       setSuccess(true);
     } catch (err) {
       console.error('Error submitting application:', err);

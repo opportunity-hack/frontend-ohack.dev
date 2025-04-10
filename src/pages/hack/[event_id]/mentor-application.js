@@ -466,70 +466,84 @@ const MentorApplicationPage = () => {
     try {
       // Get reCAPTCHA token
       const recaptchaToken = await getRecaptchaToken();
-      
+
       // If we couldn't get a token and we're in production, show error
-      if (!recaptchaToken && process.env.NODE_ENV === 'production') {
-        setError('Failed to verify you are human. Please refresh the page and try again.');
+      if (!recaptchaToken && process.env.NODE_ENV === "production") {
+        setError(
+          "Failed to verify you are human. Please refresh the page and try again."
+        );
         return;
       }
-      
+
       // Update timestamp before submission
       const submissionData = {
         ...formData,
         timestamp: new Date().toISOString(),
         // Process expertise - combine selected expertise with otherExpertise if present
-        expertise: formData.expertise.includes('Other') 
-          ? [...formData.expertise.filter(e => e !== 'Other'), formData.otherExpertise].join(', ')
-          : formData.expertise.join(', '),
+        expertise: formData.expertise.includes("Other")
+          ? [
+              ...formData.expertise.filter((e) => e !== "Other"),
+              formData.otherExpertise,
+            ].join(", ")
+          : formData.expertise.join(", "),
         // Convert array values to strings for API submission
-        softwareEngineeringSpecifics: formData.engineeringSpecifics.join(', '),
+        softwareEngineeringSpecifics: formData.engineeringSpecifics.join(", "),
         // Map available days to their display text
         availability: formData.availableDays
-          .map(dayId => availabilityOptions.find(option => option.id === dayId)?.displayText || dayId)
-          .join(', '),
+          .map(
+            (dayId) =>
+              availabilityOptions.find((option) => option.id === dayId)
+                ?.displayText || dayId
+          )
+          .join(", "),
         isInPerson: formData.inPerson === "Yes!",
-        volunteer_type: 'mentor',
+        volunteer_type: "mentor",
         agreedToCodeOfConduct: formData.codeOfConduct,
         linkedinProfile: formData.linkedin,
         shortBio: formData.bio,
         photoUrl: formData.picture,
-        type: 'mentors',
+        type: "mentors",
         additionalInfo: formData.comments,
         // Add reCAPTCHA token
-        recaptchaToken
+        recaptchaToken,
       };
-      
+
       if (apiServerUrl) {
         // Submit to API
-        const submitEndpoint = previouslySubmitted 
-          ? `${apiServerUrl}/api/mentor/application/${event_id}/update` 
+        const submitEndpoint = previouslySubmitted
+          ? `${apiServerUrl}/api/mentor/application/${event_id}/update`
           : `${apiServerUrl}/api/mentor/application/${event_id}/submit`;
-                
+
         const response = await fetch(submitEndpoint, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(submissionData)
+          body: JSON.stringify(submissionData),
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
-          if (errorData?.error?.includes('recaptcha')) {
-            throw new Error('reCAPTCHA verification failed. Please refresh the page and try again.');
+          if (errorData?.error?.includes("recaptcha")) {
+            throw new Error(
+              "reCAPTCHA verification failed. Please refresh the page and try again."
+            );
           }
           throw new Error(`Failed to submit application: ${response.status}`);
         }
       } else {
         // In a test environment, log the data and simulate API delay
-        console.log('Submitting mentor application:', submissionData);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log("Submitting mentor application:", submissionData);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       }
-      
-      // Clear saved form data after successful submission
-      clearSavedData();
-      
+
+      // Clear saved form data after successful submission only if they are logged in
+      // This is to prevent data loss for users who are not logged in where we don't have their login id
+      if (isLoggedIn) {
+        clearSavedData();
+      }
+
       setSuccess(true);
     } catch (err) {
       console.error('Error submitting application:', err);

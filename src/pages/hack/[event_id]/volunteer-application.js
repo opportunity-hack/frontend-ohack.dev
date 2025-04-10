@@ -612,8 +612,11 @@ const VolunteerApplicationPage = () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
       }
       
-      // Clear saved form data after successful submission
-      clearSavedData();
+      // Clear saved form data after successful submission only if they are logged in
+      // This is to prevent data loss for users who are not logged in where we don't have their login id
+      if (isLoggedIn) {
+        clearSavedData();
+      }
       
       setSuccess(true);
     } catch (err) {

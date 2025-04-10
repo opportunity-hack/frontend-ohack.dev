@@ -269,6 +269,7 @@ const JudgeApplicationPage = () => {
           }
         } else {
           // For non-logged in users, try localStorage
+          console.log('User not logged in, loading from localStorage');
           loadFromLocalStorage();
         }
         
@@ -452,68 +453,81 @@ const JudgeApplicationPage = () => {
     try {
       // Get reCAPTCHA token
       const recaptchaToken = await getRecaptchaToken();
-      
+
       // If we couldn't get a token and we're in production, show error
-      if (!recaptchaToken && process.env.NODE_ENV === 'production') {
-        setError('Failed to verify you are human. Please refresh the page and try again.');
+      if (!recaptchaToken && process.env.NODE_ENV === "production") {
+        setError(
+          "Failed to verify you are human. Please refresh the page and try again."
+        );
         return;
       }
-      
+
       // Process background areas for submission - ensure consistent formatting
-      const backgroundAreasFormatted = formData.backgroundAreas && Array.isArray(formData.backgroundAreas)
-        ? (formData.backgroundAreas.includes('Other')
-          ? [...formData.backgroundAreas.filter(area => area !== 'Other'), formData.otherBackground].join(', ')
-          : formData.backgroundAreas.join(', '))
-        : '';
+      const backgroundAreasFormatted =
+        formData.backgroundAreas && Array.isArray(formData.backgroundAreas)
+          ? formData.backgroundAreas.includes("Other")
+            ? [
+                ...formData.backgroundAreas.filter((area) => area !== "Other"),
+                formData.otherBackground,
+              ].join(", ")
+            : formData.backgroundAreas.join(", ")
+          : "";
 
       // Create a complete submission object with all required fields
       const submissionData = {
         ...formData,
         timestamp: new Date().toISOString(),
-        photoUrl: photoPreview || formData.photoUrl || '', // Use preview if available
+        photoUrl: photoPreview || formData.photoUrl || "", // Use preview if available
         background: backgroundAreasFormatted, // Replace the original background field with formatted list
         backgroundAreas: backgroundAreasFormatted, // Include both formats for compatibility
-        volunteer_type: 'judge',
-        isInPerson: formData.inPerson === 'Yes',
+        volunteer_type: "judge",
+        isInPerson: formData.inPerson === "Yes",
         isSelected: false, // Default to false, admin will select later
         agreedToCodeOfConduct: Boolean(formData.codeOfConduct),
-        type: 'judges',
-        shortBio: formData.biography || '', // Map to appropriate field
-        shortBiography: formData.biography || '', // Ensure we have both formats
-        recaptchaToken // Add reCAPTCHA token
+        type: "judges",
+        shortBio: formData.biography || "", // Map to appropriate field
+        shortBiography: formData.biography || "", // Ensure we have both formats
+        recaptchaToken, // Add reCAPTCHA token
       };
-      
+
       if (apiServerUrl) {
         // Submit to API - use the correct endpoint based on whether this is an update
-        const submitEndpoint = previouslySubmitted 
-          ? `${apiServerUrl}/api/judge/application/${event_id}/update` 
+        const submitEndpoint = previouslySubmitted
+          ? `${apiServerUrl}/api/judge/application/${event_id}/update`
           : `${apiServerUrl}/api/judge/application/${event_id}/submit`;
-        
+
         const response = await fetch(submitEndpoint, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(submissionData)
+          body: JSON.stringify(submissionData),
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
-          if (errorData?.error?.includes('recaptcha')) {
-            throw new Error('reCAPTCHA verification failed. Please refresh the page and try again.');
+          if (errorData?.error?.includes("recaptcha")) {
+            throw new Error(
+              "reCAPTCHA verification failed. Please refresh the page and try again."
+            );
           }
-          throw new Error(`Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ''}`);
+          throw new Error(
+            `Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ""}`
+          );
         }
       } else {
         // In a test environment, log the data and simulate API delay
-        console.log('Submitting judge application:', submissionData);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log("Submitting judge application:", submissionData);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       }
-      
-      // Clear saved form data after successful submission
-      clearSavedData();
-      
+
+      // Clear saved form data after successful submission only if they are logged in
+      // This is to prevent data loss for users who are not logged in where we don't have their login id
+      if (isLoggedIn) {
+        clearSavedData();
+      }
+
       setSuccess(true);
     } catch (err) {
       console.error('Error submitting application:', err);
