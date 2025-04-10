@@ -541,24 +541,7 @@ const SponsorApplicationPage = () => {
     );
   }, [validateCompanyInfo, validateSponsorshipInfo, validateVolunteerInfo]);
 
-  // Navigation handlers
-  const handleNext = useCallback(() => {
-    if (activeStep === 0 && !validateCompanyInfo()) return;
-    if (activeStep === 1 && !validateSponsorshipInfo()) return;
-    if (activeStep === 2 && !validateVolunteerInfo()) return;
-    
-    if (activeStep === steps.length - 1) {
-      handleSubmit();
-    } else {
-      setActiveStep(prev => prev + 1);
-    }
-  }, [activeStep, steps.length, validateCompanyInfo, validateSponsorshipInfo, validateVolunteerInfo, handleSubmit]);
-
-  const handleBack = useCallback(() => {
-    setActiveStep(prev => Math.max(0, prev - 1));
-  }, []);
-
-  // Form submission
+  // Form submission - Define this BEFORE handleNext
   const handleSubmit = useCallback(async (e) => {
     if (e) e.preventDefault();
     
@@ -657,6 +640,23 @@ const SponsorApplicationPage = () => {
       setSubmitting(false);
     }
   }, [formData, validateForm, apiServerUrl, accessToken, event_id, previouslySubmitted, logoFile, logoPreview, clearSavedData, getRecaptchaToken]);
+
+  // Navigation handlers - Now define these AFTER handleSubmit
+  const handleNext = useCallback(() => {
+    if (activeStep === 0 && !validateCompanyInfo()) return;
+    if (activeStep === 1 && !validateSponsorshipInfo()) return;
+    if (activeStep === 2 && !validateVolunteerInfo()) return;
+    
+    if (activeStep === steps.length - 1) {
+      handleSubmit();
+    } else {
+      setActiveStep(prev => prev + 1);
+    }
+  }, [activeStep, steps.length, validateCompanyInfo, validateSponsorshipInfo, validateVolunteerInfo, handleSubmit]);
+
+  const handleBack = useCallback(() => {
+    setActiveStep(prev => Math.max(0, prev - 1));
+  }, []);
 
   // Company Information Form
   const renderCompanyInfoForm = useCallback(() => (
