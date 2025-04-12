@@ -1074,52 +1074,90 @@ const MentorApplicationPage = () => {
           </Box>
         ) : (
           <Box>
-            {eventData && (
-              <>
-                <Typography
-                  variant="h2"
-                  component="h2"
-                  sx={{ fontSize: "1.75rem", mb: 1 }}
-                >
-                  {eventData.name}
-                </Typography>
-                
-                <Typography 
-                  variant="h3" 
-                  component="h3" 
-                  sx={{ 
-                    fontSize: "1.25rem", 
-                    mb: 1,
-                    color: "text.secondary" 
-                  }}
-                >
-                  {eventData.location}
-                </Typography>
-                
-                <Typography 
-                  variant="subtitle1" 
-                  sx={{ 
-                    mb: 3,
-                    color: "text.secondary",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1
-                  }}
-                >
-                  <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-                    📆 {eventData.formattedStartDate}
-                  </Box>
-                  {eventData.formattedStartDate !== eventData.formattedEndDate && (
-                    <>
-                      <Box component="span" sx={{ mx: 0.5 }}>to</Box>
+            {/* Header section with responsive layout */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: { xs: 'flex-start', md: 'flex-start' },
+              gap: 2,
+              mb: 3
+            }}>
+              {/* Event info */}
+              <Box sx={{ flex: 1 }}>
+                {eventData && (
+                  <>
+                    <Typography
+                      variant="h2"
+                      component="h2"
+                      sx={{ fontSize: "1.75rem", mb: 1 }}
+                    >
+                      {eventData.name}
+                    </Typography>
+                    
+                    <Typography 
+                      variant="h3" 
+                      component="h3" 
+                      sx={{ 
+                        fontSize: "1.25rem", 
+                        mb: 1,
+                        color: "text.secondary" 
+                      }}
+                    >
+                      {eventData.location}
+                    </Typography>
+                    
+                    <Typography 
+                      variant="subtitle1" 
+                      sx={{ 
+                        mb: 1,
+                        color: "text.secondary",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1
+                      }}
+                    >
                       <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-                        {eventData.formattedEndDate}
+                        📆 {eventData.formattedStartDate}
                       </Box>
-                    </>
-                  )}
-                </Typography>
-              </>
-            )}
+                      {eventData.formattedStartDate !== eventData.formattedEndDate && (
+                        <>
+                          <Box component="span" sx={{ mx: 0.5 }}>to</Box>
+                          <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+                            {eventData.formattedEndDate}
+                          </Box>
+                        </>
+                      )}
+                    </Typography>
+                  </>
+                )}
+              </Box>
+
+              {/* Social proof image */}
+              <Box 
+                sx={{ 
+                  width: { xs: '100%', sm: '180px', md: '220px' },
+                  height: { xs: '140px', sm: '120px', md: '150px' },
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  boxShadow: 2,
+                  flexShrink: 0,
+                  alignSelf: { xs: 'center', md: 'flex-start' },
+                  maxWidth: '100%',
+                  mt: { xs: 0, md: 1 }
+                }}
+              >
+                <img 
+                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp" 
+                  alt="Mentors guiding teams at Opportunity Hack" 
+                  style={{ 
+                    width: '100%',
+                    height: '100%',
+                    display: 'block',
+                    objectFit: 'cover'
+                  }}
+                />
+              </Box>
+            </Box>
 
             {/* Add ApplicationNav component */}
             <ApplicationNav eventId={event_id} currentType="mentor" />
