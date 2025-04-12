@@ -18,6 +18,7 @@ const adminPages = [
   { path: "/admin/nonprofit/application", label: "Nonprofit Application" },
   { path: "/admin/profile", label: "Profile" },
   { path: "/admin/volunteer", label: "Volunteer" },
+  { path: "/admin/teams", label: "Teams" },
   { path: "/admin/time-tracking", label: "Time Tracking" },
   { path: "/admin/hackathons", label: "Hackathons" },
   { path: "/admin/giveaways", label: "Giveaways" },

@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Typography,
-  TextField,
-  Button,
   Box,
   Alert,
   LinearProgress,
-  Autocomplete,
   Step,
   Stepper,
   StepLabel,
@@ -15,25 +12,27 @@ import {
   CircularProgress,
   Zoom,
   Container,
-  InputAdornment,
+  Button
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { FaRocket, FaSlack, FaGithub, FaCheck, FaTimes } from "react-icons/fa";
-import { MdGroup } from "react-icons/md";
+import { FaRocket } from "react-icons/fa";
 import axios from "axios";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+
+// Import components
+import TeamDetailsForm from "../../../components/TeamCreation/TeamDetailsForm";
+import GitHubInfoForm from "../../../components/TeamCreation/GitHubInfoForm";
+import NonprofitSelectionStep from "../../../components/TeamCreation/NonprofitSelectionStep";
+import ConfirmationSummary from "../../../components/TeamCreation/ConfirmationSummary";
+import FormStepper from "../../../components/TeamCreation/FormStepper";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   marginTop: theme.spacing(4),
   borderRadius: theme.spacing(2),
   boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-}));
-
-const StyledTextField = styled(TextField)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
 }));
 
 const AnimatedButton = styled(Button)(({ theme }) => ({
@@ -46,7 +45,7 @@ const AnimatedButton = styled(Button)(({ theme }) => ({
 const steps = [
   "Team Details",
   "GitHub Information",
-  "Cheering for Nonprofit",
+  "Nonprofit Rankings & Team",
   "Confirming & Creating",
 ];
 
@@ -55,8 +54,10 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   const [teamName, setTeamName] = useState("");
   const [slackChannel, setSlackChannel] = useState("");
   const [githubUsername, setGithubUsername] = useState("");
-  const [selectedNonprofit, setSelectedNonprofit] = useState(null);
   const [nonprofits, setNonprofits] = useState([]);
+  const [filteredNonprofits, setFilteredNonprofits] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedNonprofits, setSelectedNonprofits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -64,6 +65,11 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   const [progress, setProgress] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [event, setEvent] = useState(null);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [memberInput, setMemberInput] = useState('');
+  const [teamLeadConfirmed, setTeamLeadConfirmed] = useState(false);
+  const [comments, setComments] = useState('');
+  const [rankingMode, setRankingMode] = useState('select'); // 'select' or 'rank'
 
   // New state variables for validation
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
@@ -83,6 +89,7 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
       fetchHackathonEvent();
     }
   }, [event_id]);
+
 
   const fetchHackathonEvent = async () => {
     try {
@@ -121,12 +128,170 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
         (response) => response.data.nonprofits
       );
 
-      setNonprofits(detailedNonprofits);
+      // Enhanced nonprofits with problem statement details
+      const nonprofitsWithProblems = await Promise.all(
+        detailedNonprofits.map(async (nonprofit) => {
+          if (nonprofit.problem_statements && nonprofit.problem_statements.length > 0) {
+            // Fetch details for each problem statement ID
+            const problemStatementDetails = await Promise.all(
+              nonprofit.problem_statements.map(async (problemId) => {
+                try {
+                  const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements/${problemId}`
+                  );
+                  const problemData = response.data;
+                  
+                  // Create a display title from the fetched data
+                  const displayTitle = problemData.title || 
+                    (problemData.description && problemData.description.length > 30 ? 
+                      `${problemData.description.substring(0, 30)}...` : 
+                      problemData.description) || 
+                    `Need ${problemId.substring(0, 6)}`;
+                  
+                  return {
+                    id: problemId,
+                    ...problemData,
+                    displayTitle
+                  };
+                } catch (err) {
+                  console.error(`Error fetching problem statement ${problemId}:`, err);
+                  return {
+                    id: problemId,
+                    displayTitle: `Problem ${problemId.substring(0, 6)}...`,
+                    description: "Details could not be loaded",
+                    error: true
+                  };
+                }
+              })
+            );
+            
+            // Replace the problem statement IDs with the detailed objects
+            nonprofit.problem_statements = problemStatementDetails;
+          } else {
+            nonprofit.problem_statements = [];
+          }
+          return nonprofit;
+        })
+      );
+
+      setNonprofits(nonprofitsWithProblems);
+      setFilteredNonprofits(nonprofitsWithProblems);
     } catch (err) {
       console.error("Error fetching nonprofit details:", err);
       setError("Failed to fetch nonprofit information. Please try again later.");
     }
   };
+  
+  // Filter nonprofits based on search term
+  const filterNonprofits = useCallback((term) => {
+    if (!term.trim()) {
+      setFilteredNonprofits(nonprofits);
+      return;
+    }
+    
+    const lowerTerm = term.toLowerCase();
+    const filtered = nonprofits.filter(nonprofit => 
+      nonprofit.name.toLowerCase().includes(lowerTerm) || 
+      (nonprofit.description && nonprofit.description.toLowerCase().includes(lowerTerm)) ||
+      (nonprofit.problem_statements && nonprofit.problem_statements.some(p => 
+        p.displayTitle.toLowerCase().includes(lowerTerm) || 
+        (p.description && p.description.toLowerCase().includes(lowerTerm))
+      ))
+    );
+    
+    setFilteredNonprofits(filtered);
+  }, [nonprofits]);
+  
+  // Handle search input change
+  const handleSearchChange = useCallback((e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    filterNonprofits(term);
+  }, [filterNonprofits]);
+
+  // Clear search
+  const clearSearch = useCallback(() => {
+    setSearchTerm('');
+    setFilteredNonprofits(nonprofits);
+  }, [nonprofits]);
+  
+  // Toggle nonprofit selection
+  const toggleNonprofitSelection = useCallback((nonprofit) => {
+    setSelectedNonprofits(prev => {
+      // Check if already selected
+      const isSelected = prev.some(np => np.id === nonprofit.id);
+      
+      if (isSelected) {
+        // Remove from selection
+        return prev.filter(np => np.id !== nonprofit.id);
+      } else {
+        // Add to selection
+        return [...prev, nonprofit];
+      }
+    });
+  }, []);
+  
+  // Handle dragging and dropping nonprofits to rank them
+  const handleDragEnd = useCallback((result) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(selectedNonprofits);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    setSelectedNonprofits(items);
+  }, [selectedNonprofits]);
+  
+  // Move from selection mode to ranking mode
+  const proceedToRanking = useCallback(() => {
+    if (selectedNonprofits.length === 0) {
+      setError("Please select at least one nonprofit before proceeding to ranking.");
+      return;
+    }
+    
+    setRankingMode('rank');
+  }, [selectedNonprofits.length]);
+  
+  // Go back to selection mode
+  const backToSelection = useCallback(() => {
+    setRankingMode('select');
+  }, []);
+  
+  // Team member management
+  const handleAddTeamMember = useCallback(() => {
+    if (memberInput.trim() === '') return;
+    
+    // Check for duplicates
+    if (teamMembers.includes(memberInput.trim())) {
+      setError('This team member has already been added');
+      return;
+    }
+    
+    setTeamMembers(prev => [...prev, memberInput.trim()]);
+    setMemberInput('');
+    setError('');
+  }, [memberInput, teamMembers]);
+
+  const handleRemoveTeamMember = useCallback((index) => {
+    setTeamMembers(prev => {
+      const newMembers = [...prev];
+      newMembers.splice(index, 1);
+      return newMembers;
+    });
+  }, []);
+
+  // Helper function for debounce
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
 
   // Debounced GitHub username validation
   const validateGithubUsername = useCallback(
@@ -204,19 +369,6 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
     []
   );
 
-  // Helper function for debounce
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-
   // Effect to trigger validation when inputs change
   useEffect(() => {
     if (githubUsername) validateGithubUsername(githubUsername);
@@ -257,8 +409,8 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
       setError(slackError || "Invalid Slack channel name.");
       return false;
     }
-    if (!selectedNonprofit) {
-      setError("Please select a nonprofit.");
+    if (selectedNonprofits.length === 0) {
+      setError("Please select and rank at least one nonprofit.");
       return false;
     }
     return true;
@@ -307,8 +459,8 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
         return true;
 
       case 2:
-        if (!selectedNonprofit) {
-          setError("Please select a nonprofit.");
+        if (selectedNonprofits.length === 0) {
+          setError("Please select and rank at least one nonprofit.");
           return false;
         }
         return true;
@@ -334,7 +486,7 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!validateForm()) return;
 
     setLoading(true);
@@ -343,15 +495,23 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
 
     const progressInterval = simulateProgress();
 
-    try {
+    try {      
+      // Prepare rankings data
+      const rankings = selectedNonprofits.map((nonprofit, index) => ({
+        nonprofit_id: nonprofit.id,
+        rank: index + 1
+      }));
+      
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/queue`,
         {
           name: teamName,
           slackChannel,
           eventId: event_id,
-          nonprofitId: selectedNonprofit.id,
+          nonprofitRankings: rankings,
+          teamMembers: teamMembers,
           githubUsername,
+          comments: comments,
         },
         {
           headers: {
@@ -414,112 +574,70 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
           isGithubValid === false
         );
       case 2:
-        return !selectedNonprofit;
+        return selectedNonprofits.length === 0;
       default:
         return false;
     }
   };
 
+  // Render the current step content
   const getStepContent = (step) => {
     switch (step) {
-      case 0:
+      case 0: // Team Details
         return (
-          <>
-            <StyledTextField
-              fullWidth
-              label="Team Name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              required
-              inputProps={{ maxLength: 50 }}
-              helperText={`${teamName.length}/50 characters`}
-              InputProps={{
-                startAdornment: <MdGroup style={{ marginRight: 8 }} />,
-              }}
-            />
-            <StyledTextField
-              fullWidth
-              label="Slack Channel (without #) - we will create it if it doesn't exist"
-              value={slackChannel}
-              onChange={(e) => setSlackChannel(e.target.value.toLowerCase())}
-              required
-              error={isSlackValid === false}
-              helperText={
-                slackError ||
-                "Use lowercase letters, numbers, hyphens, and underscores only"
-              }
-              InputProps={{
-                startAdornment: <FaSlack style={{ marginRight: 8 }} />,
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {isValidatingSlack && <CircularProgress size={20} />}
-                    {!isValidatingSlack && isSlackValid === true && (
-                      <FaCheck color="green" />
-                    )}
-                    {!isValidatingSlack && isSlackValid === false && (
-                      <FaTimes color="red" />
-                    )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </>
-        );
-      case 1:
-        return (
-          <StyledTextField
-            fullWidth
-            label="Your GitHub Username - we will create a repo and make you the owner"
-            value={githubUsername}
-            onChange={(e) => setGithubUsername(e.target.value)}
-            required
-            error={isGithubValid === false}
-            helperText={githubError}
-            InputProps={{
-              startAdornment: <FaGithub style={{ marginRight: 8 }} />,
-              endAdornment: (
-                <InputAdornment position="end">
-                  {isValidatingGithub && <CircularProgress size={20} />}
-                  {!isValidatingGithub && isGithubValid === true && (
-                    <FaCheck color="green" />
-                  )}
-                  {!isValidatingGithub && isGithubValid === false && (
-                    <FaTimes color="red" />
-                  )}
-                </InputAdornment>
-              ),
-            }}
+          <TeamDetailsForm
+            teamName={teamName}
+            setTeamName={setTeamName}
+            slackChannel={slackChannel}
+            setSlackChannel={setSlackChannel}
+            isValidatingSlack={isValidatingSlack}
+            isSlackValid={isSlackValid}
+            slackError={slackError}
           />
         );
-      case 2:
+      case 1: // GitHub Information
         return (
-          <Autocomplete
-            fullWidth
-            options={nonprofits}
-            getOptionLabel={(option) => option.name}
-            renderInput={(params) => (
-              <StyledTextField {...params} label="Select Nonprofit" required />
-            )}
-            value={selectedNonprofit}
-            onChange={(event, newValue) => {
-              setSelectedNonprofit(newValue);
-            }}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+          <GitHubInfoForm
+            githubUsername={githubUsername}
+            setGithubUsername={setGithubUsername}
+            isValidatingGithub={isValidatingGithub}
+            isGithubValid={isGithubValid}
+            githubError={githubError}
           />
         );
-      case 3:
+      case 2: // Nonprofit Selection & Team
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Please confirm your team details:
-            </Typography>
-            <Typography>Team Name: {teamName}</Typography>
-            <Typography>Slack Channel: #{slackChannel}</Typography>
-            <Typography>GitHub Username: {githubUsername}</Typography>
-            <Typography>
-              Selected Nonprofit: {selectedNonprofit?.name}
-            </Typography>
-          </Box>
+          <NonprofitSelectionStep
+            rankingMode={rankingMode}
+            searchTerm={searchTerm}
+            filteredNonprofits={filteredNonprofits}
+            selectedNonprofits={selectedNonprofits}
+            handleSearchChange={handleSearchChange}
+            toggleNonprofitSelection={toggleNonprofitSelection}
+            clearSearch={clearSearch}
+            proceedToRanking={proceedToRanking}
+            backToSelection={backToSelection}
+            handleDragEnd={handleDragEnd}
+            teamMembers={teamMembers}
+            memberInput={memberInput}
+            setMemberInput={setMemberInput}
+            handleAddTeamMember={handleAddTeamMember}
+            handleRemoveTeamMember={handleRemoveTeamMember}
+            comments={comments}
+            setComments={setComments}
+            error={error}
+          />
+        );
+      case 3: // Confirmation
+        return (
+          <ConfirmationSummary
+            teamName={teamName}
+            slackChannel={slackChannel}
+            githubUsername={githubUsername}
+            selectedNonprofits={selectedNonprofits}
+            teamMembers={teamMembers}
+            comments={comments}
+          />
         );
       default:
         return "Unknown step";
@@ -555,6 +673,13 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
               <Typography variant="h6">{successMessage}</Typography>
               <Typography variant="body1">
                 Your team is ready to make a difference!
+                <br /><br />
+                <strong>Next Steps:</strong>
+                <ul>
+                  <li>We'll notify you in Slack when your team is assigned to a nonprofit.
+                  </li>
+                </ul>
+
               </Typography>
             </Alert>
           </Zoom>

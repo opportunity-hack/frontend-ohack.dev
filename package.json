@@ -28,6 +28,7 @@
     "moment": "^2.30.1",
     "next": "^14.2.6",
     "next-sitemap": "^4.2.3",
+    "notistack": "^3.0.2",
     "react": "^18.3.1",
     "react-beautiful-dnd": "^13.1.1",
     "react-circular-progressbar": "^2.1.0",
