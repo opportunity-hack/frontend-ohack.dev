@@ -4,6 +4,7 @@ import { styled } from "@mui/material/styles";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import Moment from "moment";
+import ReactMarkdown from "react-markdown";
 
 const HeaderContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -61,7 +62,7 @@ const HackathonHeader = ({
       </EventInfo>
 
       <Typography variant="body1" paragraph>
-        {description}
+        <ReactMarkdown>{description}</ReactMarkdown>
       </Typography>
     </HeaderContainer>
   );
