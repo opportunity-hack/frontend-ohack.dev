@@ -209,7 +209,7 @@ const TeamList = ({ teams, eventId }) => {
       </Typography>
 
       <Box mb={2}>
-        <Button variant="contained" color="primary" href={`/hack/newteam`}>
+        <Button variant="contained" color="primary" href={`/hack/${eventId}/newteam`}>
           Create a Team
         </Button>
       </Box>

@@ -9,7 +9,7 @@ import VolunteerList from '../../components/Hackathon/VolunteerList';
 import TableOfContents from '../../components/Hackathon/TableOfContents';
 import Script from 'next/script';
 import TeamList from '../../components/Hackathon/TeamList';
-
+import Box from '@mui/material/Box';
 
 // Dynamically import components for better code splitting
 const DonationProgress = dynamic(
@@ -18,6 +18,10 @@ const DonationProgress = dynamic(
 );
 const EventLinks = dynamic(
   () => import("../../components/Hackathon/EventLinks"),
+  { ssr: false }
+);
+const HackathonLeaderboard = dynamic(
+  () => import("../../components/Hackathon/HackathonLeaderboard"),
   { ssr: false }
 );
 const NonprofitList = dynamic(
@@ -36,8 +40,6 @@ const InteractiveFAQ = dynamic(
   () => import("../../components/Hackathon/InteractiveFAQ"),
   { ssr: false }
 );
-
-
 
 const faqData = [
     {
@@ -257,8 +259,6 @@ export default function HackathonEvent({ eventData }) {
   const { event_id } = router.query;
   const [event, setEvent] = useState(eventData);
   const [loading, setLoading] = useState(!eventData);
-  
-
 
   useEffect(() => {
     // Handle scrolling to the correct section when the page loads
@@ -370,28 +370,64 @@ export default function HackathonEvent({ eventData }) {
         <TableOfContents />
 
         <Grid container spacing={3}>
+          {/* Applications section */}
           <Grid item xs={12}>
-            <EventLinks links={event.links} />
+            <EventLinks links={event.links} variant="applications" />
           </Grid>
-          <Grid item xs={12} md={6}>
-            <DonationProgress
-              donationGoals={event.donation_goals}
-              donationCurrent={event.donation_current}
-            />
+          
+          {/* Donation Progress and Event Links side by side on larger screens */}
+          <Grid container item spacing={3}>
+            <Grid item xs={12} md={6}>
+              <DonationProgress
+                donationGoals={event.donation_goals}
+                donationCurrent={event.donation_current}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <EventLinks links={event.links} variant="event-links" />
+            </Grid>
           </Grid>
+          
+          {/* Hackathon Stats and Countdown side by side */}
+          <Grid container item spacing={3}>
+            {/* Order matters on mobile: Countdown first, then Stats */}
+            <Grid item xs={12} md={6} id="countdown" order={{ xs: 1, md: 2 }}>
+              <EventCountdown countdowns={event.countdowns} />
+            </Grid>
+            <Grid item xs={12} md={6} id="stats" order={{ xs: 2, md: 1 }}>
+              {/* Set display to flex and min-height to ensure the component has proper space */}
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                height: '100%',
+                minHeight: { md: '400px' }
+              }}>
+                <HackathonLeaderboard 
+                  eventId={event_id}
+                  githubOrg={event.github_org}
+                  eventName={event.title}
+                  startDate={event.start_date}
+                  endDate={event.end_date}
+                />
+              </Box>
+            </Grid>
+          </Grid>
+          
+          {/* Event Constraints */}
           <Grid item xs={12}>
             <EventConstraints constraints={event.constraints} />
           </Grid>
-          <Grid item xs={12} md={6} id="countdown">
-            <EventCountdown countdowns={event.countdowns} />
-          </Grid>
-          <Grid item xs={12} md={6} id="nonprofit">
+          
+          {/* Nonprofit List */}
+          <Grid item xs={12} id="nonprofit">
             <NonprofitList
               nonprofits={event.nonprofits}
               teams={event.teams}
               eventId={event_id}
             />
           </Grid>
+          
+          {/* Volunteer Lists */}
           <Grid item xs={12} id="volunteer">
             <VolunteerList event_id={event_id} type="volunteer" />
           </Grid>
@@ -401,9 +437,13 @@ export default function HackathonEvent({ eventData }) {
           <Grid item xs={12} id="judge">
             <VolunteerList event_id={event_id} type="judge" />
           </Grid>
+          
+          {/* Team List */}
           <Grid item xs={12} id="teams">
             <TeamList teams={event.teams} eventId={event_id} />
           </Grid>
+          
+          {/* FAQ */}
           <Grid item xs={12} id="faq">
             <InteractiveFAQ faqData={faqData} title={`${event.title} FAQ`} />
           </Grid>

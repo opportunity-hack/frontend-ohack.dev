@@ -279,10 +279,12 @@ const HackerApplicationPage = () => {
   
   // Team size preferences
   const teamSizeOptions = [
-    '2-3 people',
-    '4-5 people',
-    '6+ people',
-    'No preference'
+    "No preference",
+    "2 people",
+    "3 people",
+    "4 people",
+    "5 people",
+    "I prefer to work alone even if that disqualifies me from winning a prize"
   ];
   
   // Set up form with event_id
@@ -454,15 +456,18 @@ const HackerApplicationPage = () => {
         
         setEventData({
           name: eventData.title || `Opportunity Hack - ${event_id}`,
-          description: eventData.description || "Annual hackathon for nonprofits",
+          description:
+            eventData.description || "Annual hackathon for nonprofits",
           date: new Date(eventData.start_date).getFullYear().toString(),
           startDate: eventData.start_date,
           endDate: eventData.end_date,
           formattedStartDate,
           formattedEndDate,
           location: eventData.location || "Tempe, Arizona",
-          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
-          isEventPast
+          image:
+            eventData.image_url ||
+            "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
+          isEventPast,
         });
         
         setIsLoading(false);
@@ -717,12 +722,7 @@ const HackerApplicationPage = () => {
         setError('Please select at least one preferred skill set to work with');
         return false;
       }
-      
-      if (!formData.teamMatchingPreferences.preferredCauses || 
-          formData.teamMatchingPreferences.preferredCauses.length === 0) {
-        setError('Please select at least one preferred social cause');
-        return false;
-      }
+            
     }
     
     setError('');
@@ -1444,7 +1444,7 @@ const HackerApplicationPage = () => {
             </FormControl>
             
             <FormControl fullWidth required sx={{ mb: 3 }}>
-              <InputLabel id="preferred-skills-label">Preferred Skills to Work With</InputLabel>
+              <InputLabel id="preferred-skills-label">Preferred Skills for a teammate</InputLabel>
               <Select
                 labelId="preferred-skills-label"
                 id="preferred-skills"
@@ -1470,32 +1470,7 @@ const HackerApplicationPage = () => {
               <FormHelperText>Select skills you'd like in your teammates</FormHelperText>
             </FormControl>
             
-            <FormControl fullWidth required sx={{ mb: 3 }}>
-              <InputLabel id="preferred-causes-label">Preferred Social Causes</InputLabel>
-              <Select
-                labelId="preferred-causes-label"
-                id="preferred-causes"
-                multiple
-                value={formData.teamMatchingPreferences?.preferredCauses || []}
-                onChange={(e) => handleTeamMatchingChange('preferredCauses', e.target.value)}
-                input={<OutlinedInput label="Preferred Social Causes" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} />
-                    ))}
-                  </Box>
-                )}
-              >
-                {socialCausesOptions.filter(option => option !== 'Other').map((option) => (
-                  <MenuItem key={option} value={option}>
-                    <Checkbox checked={(formData.teamMatchingPreferences?.preferredCauses || []).indexOf(option) > -1} />
-                    <ListItemText primary={option} />
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>Select causes you'd like to work on</FormHelperText>
-            </FormControl>
+            
           </Box>
         )}
         
@@ -1621,7 +1596,8 @@ const HackerApplicationPage = () => {
     : "Apply to be a hacker for our social good hackathon. Join a team to create tech solutions for nonprofits and make a real impact.";
   const canonicalUrl = `https://ohack.dev/hack/${event_id}/hacker-application`;
   
-  const imageUrl = eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
+  const imageUrl =
+    eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
 
   // If form submitted successfully, show success message
   if (success) {
@@ -1783,7 +1759,7 @@ const HackerApplicationPage = () => {
                 }}
               >
                 <img 
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp" 
+                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp" 
                   alt="Hackers collaborating at Opportunity Hack" 
                   style={{ 
                     width: '100%',

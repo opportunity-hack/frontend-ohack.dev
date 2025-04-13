@@ -41,29 +41,65 @@ const MentorAvailability = ({ volunteers }) => {
       if (volunteer.isSelected && volunteer.volunteer_type === "mentor") {
         // Handle new format where availability is a comma-separated string of displayText values
         if (volunteer?.availability) {
-          // Use regex pattern to correctly split availability string
-          const availabilityPattern = /([A-Za-z]+,\s+[A-Za-z]+\s+\d+:\s+[^,]+)/g;
-          const availabilityArray = volunteer.availability.match(availabilityPattern) || 
-                                    volunteer.availability.split(", "); // Fallback to old method
+          // Use regex pattern to correctly split availability string with new format
+          // New format: "Friday Oct 10: 🌅 Early Morning (7am - 9am PST)"
+          const availabilityPattern = /([A-Za-z]+\s+[A-Za-z]+\s+\d+:\s+[^,]+)/g;
           
-          availabilityArray.forEach((slot) => {
-            // Extract the display text from the slot
-            // Expected format: "Saturday, May 4: 🌅 Early Morning (7am - 9am PST)"
+          // Try to match with regex first
+          const matches = volunteer.availability.match(availabilityPattern);
+          
+          // If regex doesn't work, fall back to comma split
+          const availabilityArray = matches || volunteer.availability.split(", ");
+          
+          // If availableArray exists in the new format directly
+          const useAvailableDays = Array.isArray(volunteer.availableDays) && volunteer.availableDays.length > 0;
+          
+          // Use the appropriate array
+          const slotsToProcess = useAvailableDays ? volunteer.availableDays : availabilityArray;
+          
+          console.log("Mentor Availability array:", slotsToProcess);
+          
+          slotsToProcess.forEach((slot) => {
             if (slot) {
+              // For availableDays format, convert to display format
+              let displaySlot = slot;
+              
+              if (useAvailableDays) {
+                // Convert "Friday Oct 10-Early Morning" to display format
+                const parts = slot.split('-');
+                if (parts.length > 1) {
+                  const day = parts[0]; // "Friday Oct 10"
+                  const timeOfDay = parts[1]; // "Early Morning"
+                  
+                  // Map time of day to emoji
+                  const emojiMap = {
+                    "Early Morning": "🌅",
+                    "Morning": "☀️",
+                    "Afternoon": "🏙️",
+                    "Evening": "🌆",
+                    "Night": "🌃",
+                    "Late Night": "🌙"
+                  };
+                  
+                  const emoji = emojiMap[timeOfDay] || "";
+                  displaySlot = `${day}: ${emoji} ${timeOfDay}`;
+                }
+              }
+              
               // If this is the first time we've seen this slot, initialize counters
-              if (!totalCounts[slot]) {
-                totalCounts[slot] = 0;
-                inPersonCounts[slot] = 0;
-                remoteCounts[slot] = 0;
+              if (!totalCounts[displaySlot]) {
+                totalCounts[displaySlot] = 0;
+                inPersonCounts[displaySlot] = 0;
+                remoteCounts[displaySlot] = 0;
               }
               
               // Increment counters
-              totalCounts[slot]++;
+              totalCounts[displaySlot]++;
               
               if (volunteer.isInPerson) {
-                inPersonCounts[slot]++;
+                inPersonCounts[displaySlot]++;
               } else {
-                remoteCounts[slot]++;
+                remoteCounts[displaySlot]++;
               }
             }
           });
@@ -95,8 +131,12 @@ const MentorAvailability = ({ volunteers }) => {
     // Sort the slots by date and time for better display
     const sortedSlots = Object.keys(totalCounts).sort((a, b) => {
       // First extract day and time period
-      const dayA = a.split(",")[0]?.trim();
-      const dayB = b.split(",")[0]?.trim();
+      // New format: "Friday Oct 10: 🌅 Early Morning" (no comma after day)
+      // Old format: "Saturday, May 4: 🌅 Early Morning"
+      
+      // Extract the day name (before the first space)
+      const dayA = a.split(" ")[0]?.trim(); // "Friday" or "Saturday"
+      const dayB = b.split(" ")[0]?.trim(); // "Friday" or "Saturday"
       
       // Compare days of the week
       const dayOrderA = dayOrder[dayA] || 99;
@@ -104,6 +144,44 @@ const MentorAvailability = ({ volunteers }) => {
       
       if (dayOrderA !== dayOrderB) {
         return dayOrderA - dayOrderB;
+      }
+      
+      // For different days with same weekday but different dates
+      // If they have the same day of week, compare the date values
+      const fullDayA = a.split(":")[0]?.trim(); // "Friday Oct 10" or "Saturday, May 4"
+      const fullDayB = b.split(":")[0]?.trim(); // "Friday Oct 10" or "Saturday, May 4"
+      
+      if (fullDayA !== fullDayB) {
+        // Try to extract the date part, assuming format is "Day Month Number"
+        const dayMatchA = fullDayA.match(/(\w+)\s+(\w+)\s+(\d+)/);
+        const dayMatchB = fullDayB.match(/(\w+)\s+(\w+)\s+(\d+)/);
+        
+        if (dayMatchA && dayMatchB) {
+          // Compare month names if available
+          const monthA = dayMatchA[2];
+          const monthB = dayMatchB[2];
+          
+          // Define month order
+          const monthOrder = {
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+          };
+          
+          const monthOrderA = monthOrder[monthA] || 0;
+          const monthOrderB = monthOrder[monthB] || 0;
+          
+          if (monthOrderA !== monthOrderB) {
+            return monthOrderA - monthOrderB;
+          }
+          
+          // Compare day numbers if available
+          const dateA = parseInt(dayMatchA[3], 10);
+          const dateB = parseInt(dayMatchB[3], 10);
+          
+          if (!isNaN(dateA) && !isNaN(dateB)) {
+            return dateA - dateB;
+          }
+        }
       }
       
       // If days are the same, parse time period

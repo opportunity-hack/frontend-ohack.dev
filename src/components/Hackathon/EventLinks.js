@@ -55,7 +55,7 @@ const ApplicationButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const EventLinks = ({ links }) => {
+const EventLinks = ({ links, variant = "full" }) => {
   const router = useRouter();
   const { event_id } = router.query;
   
@@ -146,6 +146,71 @@ const EventLinks = ({ links }) => {
     );
   };
 
+  // For applications-only variant
+  if (variant === "applications") {
+    return (
+      <LinksContainer elevation={2} id="applications">
+        <Box>
+          <Typography variant="h5" gutterBottom fontWeight="bold">
+            Apply to Participate
+          </Typography>
+          <Typography variant="body2" color="textSecondary" paragraph>
+            Select the role that best matches how you'd like to contribute to this hackathon
+          </Typography>
+          
+          <Grid container spacing={2}>
+            {applicationTypes.map((app) => (
+              <Grid item xs={12} sm={6} key={app.type}>
+                <ApplicationButton
+                  variant="contained"
+                  color={app.color}
+                  fullWidth
+                  startIcon={app.icon}
+                  href={app.link}
+                  sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'flex-start',
+                    height: '100%',
+                    minHeight: '80px'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                    <Typography variant="subtitle1" component="span" fontWeight="bold">
+                      {app.title}
+                    </Typography>
+                    <Typography variant="caption" component="span" align="left">
+                      {app.description}
+                    </Typography>
+                  </Box>
+                </ApplicationButton>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </LinksContainer>
+    );
+  }
+  
+  // For event-links-only variant
+  if (variant === "event-links" && links && links.length > 0) {
+    return (
+      <LinksContainer elevation={2} id="event-links">
+        <Typography variant="h5" gutterBottom fontWeight="bold">
+          Important Event Links
+        </Typography>
+        <Grid container spacing={2}>
+          {links.map((link, index) => (
+            <Grid item xs={12} key={index}>
+              {renderButton(link)}
+            </Grid>
+          ))}
+        </Grid>
+      </LinksContainer>
+    );
+  }
+  
+  // For full variant (original behavior - both sections)
   return (
     <LinksContainer elevation={2} id="applications">
       <Box mb={3}>
