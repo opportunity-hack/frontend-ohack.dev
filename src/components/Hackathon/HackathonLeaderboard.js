@@ -757,8 +757,12 @@ const ErrorBoundary = ({ children }) => {
   return children;
 };
 
-export default (props) => (
+const HackathonLeaderboardWithErrorBoundary = (props) => (
   <ErrorBoundary>
     <HackathonLeaderboard {...props} />
   </ErrorBoundary>
 );
+
+HackathonLeaderboardWithErrorBoundary.displayName = 'HackathonLeaderboardWithErrorBoundary';
+
+export default HackathonLeaderboardWithErrorBoundary;
