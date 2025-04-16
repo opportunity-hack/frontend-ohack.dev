@@ -131,9 +131,11 @@ const VolunteerApplicationPage = () => {
   ];
 
   // Volunteer type options
-  const volunteerTypeOptions = [
-    'Product Management',
-    'Project Coordination',
+  const volunteerTypeOptions = [    
+    'Check-in/Registration',
+    'Food Service',            
+    'Cleanup Crew',
+    'Presentation Pitch Support',
     'Event Organization',
     'Technical Support',
     'Mentoring',
