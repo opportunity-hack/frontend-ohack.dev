@@ -16,6 +16,12 @@ import HistoryIcon from '@mui/icons-material/History';
 import UpdateIcon from '@mui/icons-material/Update';
 import UpcomingIcon from '@mui/icons-material/Upcoming';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import PullRequestIcon from '@mui/icons-material/CallMerge';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import WeekendIcon from '@mui/icons-material/Weekend';
+import ExploreIcon from '@mui/icons-material/Explore';
+import StarIcon from '@mui/icons-material/Star';
+import CommitIcon from '@mui/icons-material/CommitRounded';
 
 const LeaderboardContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -43,7 +49,7 @@ const StatBox = styled(Box)(({ theme }) => ({
 
 const StatValue = styled(Typography)(({ theme }) => ({
   fontWeight: 'bold',
-  fontSize: '1.5rem',  // Reduced from 1.75rem
+  fontSize: '1.5rem',
   color: theme.palette.primary.main,
   textAlign: 'center',
   width: '100%',
@@ -53,7 +59,7 @@ const StatValue = styled(Typography)(({ theme }) => ({
 }));
 
 const StatLabel = styled(Typography)(({ theme }) => ({
-  fontSize: '0.8rem',  // Reduced from 0.875rem
+  fontSize: '0.8rem',
   color: theme.palette.text.secondary,
   textAlign: 'center',
   width: '100%',
@@ -148,6 +154,57 @@ const AnimatedPulse = styled(Box)(({ theme }) => ({
   },
 }));
 
+const getIconComponent = (iconName, props = {}) => {
+  const defaultProps = { fontSize: "small", color: "primary", ...props };
+
+  const iconMap = {
+    code: <CodeIcon {...defaultProps} />,
+    commit: <CommitIcon {...defaultProps} />,
+    merge: <MergeIcon {...defaultProps} />,
+    pull_request: <PullRequestIcon {...defaultProps} />,
+    github: <GitHubIcon {...defaultProps} />,
+    accessTime: <AccessTimeIcon {...defaultProps} />,
+    history: <HistoryIcon {...defaultProps} />,
+    weekend: <WeekendIcon {...defaultProps} />,
+    task_alt: <TaskAltIcon {...defaultProps} />,
+    rate_review: <RateReviewIcon {...defaultProps} />,
+    integration_instructions: <IntegrationInstructionsIcon {...defaultProps} />,
+    trophy: <EmojiEventsIcon {...defaultProps} />,
+    explore: <ExploreIcon {...defaultProps} />,
+    launch: <LaunchIcon {...defaultProps} />,
+    link: <LinkIcon {...defaultProps} />
+  };
+
+  if (iconMap[iconName]) {
+    return iconMap[iconName];
+  }
+
+  if (iconName.includes('commit') || iconName.includes('code')) {
+    return <CodeIcon {...defaultProps} />;
+  } else if (iconName.includes('merge') || iconName.includes('pr') || iconName.includes('pull')) {
+    return <MergeIcon {...defaultProps} />;
+  } else if (iconName.includes('time') || iconName.includes('hour') || iconName.includes('day')) {
+    return <AccessTimeIcon {...defaultProps} />;
+  } else if (iconName.includes('task') || iconName.includes('issue')) {
+    return <TaskAltIcon {...defaultProps} />;
+  } else if (iconName.includes('review') || iconName.includes('comment')) {
+    return <RateReviewIcon {...defaultProps} />;
+  }
+
+  console.warn(`No icon found for name: ${iconName}, using default.`);
+  return <StarIcon {...defaultProps} />;
+};
+
+const renderIcon = (icon, props = {}) => {
+  if (!icon) return null;
+
+  if (React.isValidElement(icon)) {
+    return React.cloneElement(icon, props);
+  }
+
+  return getIconComponent(icon, props);
+};
+
 const HackathonLeaderboard = ({ 
   initialGeneralStats,
   initialIndividualAchievements,
@@ -158,23 +215,19 @@ const HackathonLeaderboard = ({
   startDate,
   endDate
 }) => {
-  // State for data
   const [generalStats, setGeneralStats] = useState(initialGeneralStats || []);
   const [individualAchievements, setIndividualAchievements] = useState(initialIndividualAchievements || []);
   const [teamAchievements, setTeamAchievements] = useState(initialTeamAchievements || []);
   const [orgName, setOrgName] = useState(githubOrg || '');
   const [hackathonName, setHackathonName] = useState(eventName || '');
-  
-  // State for API interaction
   const [loading, setLoading] = useState(!initialGeneralStats);
   const [error, setError] = useState(null);
   const [loadingAttempted, setLoadingAttempted] = useState(false);
-  
-  // Event status determination
+
   const now = new Date();
   const eventStartDate = startDate ? new Date(startDate) : null;
   const eventEndDate = endDate ? new Date(endDate) : null;
-  
+
   const eventStatus = React.useMemo(() => {
     if (!eventStartDate || !eventEndDate) return 'unknown';
     if (now < eventStartDate) return 'upcoming';
@@ -184,9 +237,8 @@ const HackathonLeaderboard = ({
 
   const daysSinceEnd = eventEndDate ? Math.floor((now - eventEndDate) / (1000 * 60 * 60 * 24)) : null;
   const daysUntilStart = eventStartDate ? Math.floor((eventStartDate - now) / (1000 * 60 * 60 * 24)) : null;
-  
+
   useEffect(() => {
-    // Only fetch if we don't have initial data and we have an event ID
     if ((!initialGeneralStats || !initialIndividualAchievements || !initialTeamAchievements) && eventId) {
       fetchLeaderboardData();
     }
@@ -196,24 +248,23 @@ const HackathonLeaderboard = ({
     try {
       setLoading(true);
       setError(null);
-      
-      // Simplify URL - remove timeFilter query parameter
+
       const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/leaderboard/${eventId}`;
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch leaderboard data: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
-      // Update state with fetched data
+      console.log('Fetched leaderboard data:', data);
+
       setGeneralStats(data.generalStats || []);
       setIndividualAchievements(data.individualAchievements || []);
       setTeamAchievements(data.teamAchievements || []);
       setOrgName(data.githubOrg || '');
       setHackathonName(data.eventName || '');
-      
+
     } catch (err) {
       console.error('Error fetching leaderboard data:', err);
       setError(err.message);
@@ -224,13 +275,43 @@ const HackathonLeaderboard = ({
   };
 
   const getGitHubOrgUrl = () => `https://github.com/${orgName}`;
-  const getGitHubRepoUrl = (repo) => `https://github.com/${orgName}/${repo}`;
-  const getGitHubUserUrl = (username) => `https://github.com/${username}`;
-  const getGitHubPrUrl = (repo, prNumber) => `https://github.com/${orgName}/${repo}/pull/${prNumber}`;
-  const getGitHubCommitUrl = (repo, commitId) => `https://github.com/${orgName}/${repo}/commit/${commitId}`;
-  const getGitHubTeamUrl = (team) => `https://github.com/orgs/${orgName}/teams/${team}`;
+  
+  const getGitHubRepoUrl = (repo) => {
+    if (!repo || !orgName) return null;
+    if (repo.includes(orgName)) {
+      return `https://github.com/${repo}`;
+    }
+    return `https://github.com/${orgName}/${repo}`;
+  };
+  
+  const getGitHubUserUrl = (username) => {
+    if (!username) return null;
+    return `https://github.com/${username}`;
+  };
+  
+  const getGitHubPrUrl = (repo, prNumber) => {
+    if (!prNumber || !repo) return null;
+    const repoUrl = getGitHubRepoUrl(repo);
+    if (repoUrl) {
+      return `${repoUrl}/pull/${prNumber}`;
+    }
+    return null;
+  };
+  
+  const getGitHubCommitUrl = (repo, commitId) => {
+    if (!commitId || !repo) return null;
+    const repoUrl = getGitHubRepoUrl(repo);
+    if (repoUrl) {
+      return `${repoUrl}/commit/${commitId}`;
+    }
+    return null;
+  };
+  
+  const getGitHubTeamUrl = (team) => {
+    if (!team || !orgName) return null;
+    return `https://github.com/orgs/${orgName}/teams/${team}`;
+  };
 
-  // Render contextual placeholder based on event status
   const renderContextualPlaceholder = () => {
     if (loading) {
       return (
@@ -263,8 +344,6 @@ const HackathonLeaderboard = ({
             <Typography variant="body2" align="center" color="textSecondary" sx={{ mt: 1, mb: 3, maxWidth: 450 }}>
               Once the hackathon begins, this leaderboard will display real-time statistics and achievements from GitHub.
             </Typography>
-            
-            {/* Placeholder preview */}
             <Box width="100%" mt={2}>
               <Typography variant="subtitle2" color="textSecondary" gutterBottom sx={{ pl: 1 }}>
                 Preview of stats to come:
@@ -302,8 +381,6 @@ const HackathonLeaderboard = ({
                 : "The hackathon leaderboard data is currently unavailable."
               }
             </Typography>
-            
-            {/* Achievement summary for past events */}
             <Box sx={{ mt: 3, width: '100%', px: 2 }}>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                 <EmojiEventsIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: 'text-bottom' }}/>
@@ -345,7 +422,6 @@ const HackathonLeaderboard = ({
         );
       }
       
-      // For ongoing events with errors or no data yet
       return (
         <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={4}>
           <UpdateIcon sx={{ fontSize: 60, color: 'info.main', mb: 2 }} />
@@ -358,8 +434,6 @@ const HackathonLeaderboard = ({
           <Typography variant="body2" align="center" color="textSecondary" sx={{ mt: 1, mb: 3, maxWidth: 450 }}>
             GitHub statistics will appear here as teams begin coding. Check back soon for live updates!
           </Typography>
-          
-          {/* Animated placeholder */}
           <AnimatedPulse sx={{ width: '100%' }}>
             <Grid container spacing={2} sx={{ px: 2 }}>
               {['GitHub Commits', 'Pull Requests', 'Lines of Code'].map((stat, idx) => (
@@ -382,7 +456,6 @@ const HackathonLeaderboard = ({
               ))}
             </Grid>
           </AnimatedPulse>
-          
           <Box sx={{ mt: 3 }}>
             <Button 
               variant="text"
@@ -399,7 +472,6 @@ const HackathonLeaderboard = ({
     return null;
   };
 
-  // If we have placeholder content to show
   const contextualPlaceholder = renderContextualPlaceholder();
   if (contextualPlaceholder) {
     return (
@@ -414,13 +486,11 @@ const HackathonLeaderboard = ({
             </Typography>
           </Box>
         </Box>
-        
         {contextualPlaceholder}
       </LeaderboardContainer>
     );
   }
 
-  // If we have actual data to display, render the normal view
   return (
     <LeaderboardContainer elevation={2} id="leaderboard">
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -433,8 +503,6 @@ const HackathonLeaderboard = ({
           </Typography>
         </Box>
       </Box>
-      
-      {/* GitHub Organization Banner */}
       <OrgBanner sx={{ flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
         <GitHubIcon fontSize="large" sx={{ mr: 2, flexShrink: 0 }} />
         <FlexContent flexGrow={1} sx={{ mb: { xs: 2, md: 0 } }}>
@@ -463,8 +531,6 @@ const HackathonLeaderboard = ({
           </LinkButton>
         </Box>
       </OrgBanner>
-      
-      {/* General Stats Section */}
       <SectionHeader variant="h6">General Statistics</SectionHeader>
       <Grid container spacing={2}>
         {generalStats && generalStats.map((stat, index) => (
@@ -508,7 +574,7 @@ const HackathonLeaderboard = ({
                   mr: { md: 2 },
                   mb: { xs: 1, md: 0 }
                 }}>
-                  {stat.icon}
+                  {renderIcon(stat.icon, { fontSize: "large" })}
                 </Box>
                 <Box sx={{ 
                   display: 'flex', 
@@ -546,74 +612,155 @@ const HackathonLeaderboard = ({
           </Grid>
         ))}
       </Grid>
-      
-      {/* Individual Achievements Section */}
       <Box sx={{ display: { xs: 'block', sm: 'none', md: 'block' } }}>
         <SectionHeader variant="h6">Individual Achievements</SectionHeader>
         <Grid container spacing={2}>
-          {individualAchievements && individualAchievements.map((achievement, index) => (
-            <Grid item xs={12} md={12} key={index}>
-              <AchievementCard sx={{ flexDirection: { xs: 'row', md: 'row' } }}>
-                <Tooltip title={`View GitHub profile: ${achievement.person.githubUsername}`}>
-                  <Avatar 
-                    src={achievement.person.avatar} 
-                    alt={achievement.person.name} 
-                    sx={{ 
-                      width: { xs: 40, md: 48 }, 
-                      height: { xs: 40, md: 48 }, 
-                      mr: { xs: 1.5, md: 2 },
-                      cursor: 'pointer',
-                      flexShrink: 0
-                    }}
-                    component={Link}
-                    href={getGitHubUserUrl(achievement.person.githubUsername)}
-                    target="_blank"
-                  />
-                </Tooltip>
-                <FlexContent flexGrow={1}>
-                  <Box display="flex" alignItems="center">
-                    <TruncatedText 
-                      variant="subtitle1" 
+          {individualAchievements && individualAchievements.map((achievement, index) => {
+            const hasUserProfile = achievement.person?.githubUsername;
+            const hasRepo = achievement.repo;
+            const hasPrLink = hasRepo && achievement.prNumber;
+            const hasCommitLink = hasRepo && achievement.commitId;
+            
+            return (
+              <Grid item xs={12} md={12} key={index}>
+                <AchievementCard 
+                  sx={{ 
+                    flexDirection: { xs: 'row', md: 'row' }, 
+                    cursor: hasRepo ? 'pointer' : 'default',
+                    position: 'relative',
+                    '&:hover': {
+                      transform: hasRepo ? 'scale(1.02)' : 'none',
+                      boxShadow: hasRepo ? 3 : 1,
+                    },
+                  }}
+                  component={hasRepo ? Link : Box}
+                  href={hasRepo ? getGitHubRepoUrl(achievement.repo) : undefined}
+                  target={hasRepo ? "_blank" : undefined}
+                  rel={hasRepo ? "noopener" : undefined}
+                  underline="none"
+                  onClick={(e) => {
+                    if (hasPrLink) {
+                      e.preventDefault();
+                      window.open(getGitHubPrUrl(achievement.repo, achievement.prNumber), '_blank');
+                    } else if (hasCommitLink) {
+                      e.preventDefault();
+                      window.open(getGitHubCommitUrl(achievement.repo, achievement.commitId), '_blank');
+                    }
+                  }}
+                >
+                  <Tooltip title={`View ${achievement.person.name}'s GitHub profile`}>
+                    <Avatar 
+                      src={achievement.person.avatar} 
+                      alt={achievement.person.name} 
+                      sx={{ 
+                        width: { xs: 40, md: 48 }, 
+                        height: { xs: 40, md: 48 }, 
+                        mr: { xs: 1.5, md: 2 },
+                        cursor: hasUserProfile ? 'pointer' : 'default',
+                        flexShrink: 0,
+                        zIndex: 2
+                      }}
+                      component={hasUserProfile ? Link : 'div'}
+                      href={hasUserProfile ? getGitHubUserUrl(achievement.person.githubUsername) : undefined}
+                      target="_blank"
+                      rel="noopener"
+                      onClick={(e) => {
+                        if (hasUserProfile) {
+                          e.stopPropagation();
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                  
+                  <FlexContent flexGrow={1}>
+                    <Box display="flex" alignItems="center">
+                      <TruncatedText 
+                        variant="subtitle1" 
+                        fontWeight="bold" 
+                        title={achievement.title}
+                        sx={{ fontSize: { xs: '0.95rem', md: '1rem' } }}
+                      >
+                        {achievement.title}
+                      </TruncatedText>
+                      
+                      {achievement.icon && (
+                        <Box component="span" ml={1} display="inline-flex" flexShrink={0}>
+                          {renderIcon(achievement.icon, { color: "primary" })}
+                        </Box>
+                      )}
+                      
+                      {(hasPrLink || hasCommitLink) && (
+                        <Tooltip 
+                          title={hasPrLink 
+                            ? `View pull request #${achievement.prNumber}` 
+                            : `View commit ${achievement.commitId?.substring(0, 7)}`}
+                        >
+                          <LinkIcon 
+                            fontSize="small" 
+                            color="action" 
+                            sx={{ ml: 1, opacity: 0.7 }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
+                    
+                    <Box display="flex" alignItems="center">
+                      <TruncatedText 
+                        variant="body2" 
+                        color="textSecondary" 
+                        title={`${achievement.person.name} • ${achievement.person.team}`}
+                        sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, mr: 1 }}
+                      >
+                        {achievement.person.name} • {achievement.person.team}
+                      </TruncatedText>
+                      
+                      {hasRepo && (
+                        <Tooltip title={`View repository: ${achievement.repo}`}>
+                          <Chip
+                            icon={<GitHubIcon fontSize="small" />}
+                            label={(() => {
+                              const repoName = achievement.repo.split('/').pop() || achievement.repo.split('-').pop();
+                              return repoName.length > 30 ? repoName.substring(0, 30) + '...' : repoName;
+                            })()}
+                            size="small"
+                            variant="outlined"
+                            sx={{ 
+                              height: 20, 
+                              '& .MuiChip-label': { px: 1, fontSize: '0.7rem', maxWidth: '50px', overflow: 'hidden', textOverflow: 'ellipsis' },
+                              '& .MuiChip-icon': { fontSize: '0.85rem', ml: 0.5 },
+                              zIndex: 2
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(getGitHubRepoUrl(achievement.repo), '_blank');
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </FlexContent>
+                  
+                  <Box sx={{ 
+                    ml: { xs: 0.5, md: 1 }, 
+                    flexShrink: 0, 
+                    minWidth: { xs: '70px', md: '90px' }, 
+                    textAlign: 'right'
+                  }}>
+                    <Typography 
+                      variant="h6" 
                       fontWeight="bold" 
-                      title={achievement.title}
-                      sx={{ fontSize: { xs: '0.95rem', md: '1rem' } }}
+                      color="primary" 
+                      noWrap
+                      sx={{ fontSize: { xs: '1rem', md: '1.15rem' } }}
                     >
-                      {achievement.title}
-                    </TruncatedText>
-                    {achievement.icon && (
-                      <Box component="span" ml={1} display="inline-flex" flexShrink={0}>
-                        {achievement.icon}
-                      </Box>
-                    )}
+                      {achievement.value}
+                    </Typography>
                   </Box>
-                  <TruncatedText 
-                    variant="body2" 
-                    color="textSecondary" 
-                    title={`${achievement.person.name} • ${achievement.person.team}`}
-                    sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }}
-                  >
-                    {achievement.person.name} • {achievement.person.team}
-                  </TruncatedText>
-                </FlexContent>
-                <Box sx={{ 
-                  ml: { xs: 0.5, md: 1 }, 
-                  flexShrink: 0, 
-                  minWidth: { xs: '70px', md: '90px' }, 
-                  textAlign: 'right'
-                }}>
-                  <Typography 
-                    variant="h6" 
-                    fontWeight="bold" 
-                    color="primary" 
-                    noWrap
-                    sx={{ fontSize: { xs: '1rem', md: '1.15rem' } }}
-                  >
-                    {achievement.value}
-                  </Typography>
-                </Box>
-              </AchievementCard>
-            </Grid>
-          ))}
+                </AchievementCard>
+              </Grid>
+            );
+          })}
+          
           {(!individualAchievements || individualAchievements.length === 0) && (
             <Grid item xs={12}>
               <Box p={3} textAlign="center" bgcolor="background.paper" borderRadius={1}>
@@ -623,79 +770,117 @@ const HackathonLeaderboard = ({
           )}
         </Grid>
       </Box>
-      
-      {/* Team Achievements Section */}
       <Box sx={{ display: { xs: 'block', sm: 'none', md: 'block' } }}>
         <SectionHeader variant="h6">Team Achievements</SectionHeader>
         <Grid container spacing={2}>
-          {teamAchievements && teamAchievements.map((achievement, index) => (
-            <Grid item xs={12} md={12} key={index}>
-              <AchievementCard sx={{ 
-                flexDirection: 'row', 
-                p: { xs: 1.5, md: 2 }, 
-                alignItems: 'center' 
-              }}>
-                <StyledBadge 
-                  badgeContent={achievement.members} 
-                  color="primary" 
-                  overlap="circular"
-                  sx={{ '& .MuiBadge-badge': { fontSize: '0.7rem', height: '18px', minWidth: '18px' } }}
+          {teamAchievements && teamAchievements.map((achievement, index) => {
+            const hasTeamPage = achievement.teamPage;
+            const hasRepo = achievement.repo;
+            
+            return (
+              <Grid item xs={12} md={12} key={index}>
+                <AchievementCard 
+                  sx={{ 
+                    flexDirection: 'row', 
+                    p: { xs: 1.5, md: 2 }, 
+                    alignItems: 'center',
+                    cursor: hasRepo || hasTeamPage ? 'pointer' : 'default',
+                    '&:hover': {
+                      transform: hasRepo || hasTeamPage ? 'scale(1.02)' : 'none',
+                      boxShadow: hasRepo || hasTeamPage ? 3 : 1,
+                    },
+                  }}
+                  component={hasRepo || hasTeamPage ? Link : Box}
+                  href={hasRepo ? getGitHubRepoUrl(achievement.repo) : 
+                        hasTeamPage ? getGitHubTeamUrl(achievement.teamPage) : undefined}
+                  target={hasRepo || hasTeamPage ? "_blank" : undefined}
+                  rel="noopener"
+                  underline="none"
                 >
-                  <Avatar 
-                    sx={{ 
-                      width: { xs: 40, md: 48 }, 
-                      height: { xs: 40, md: 48 }, 
-                      mr: { xs: 1.5, md: 2 }, 
-                      bgcolor: index % 2 === 0 ? 'primary.main' : 'secondary.main',
-                      cursor: achievement.teamPage ? 'pointer' : 'default',
-                      flexShrink: 0
-                    }}
-                    component={achievement.teamPage ? Link : 'div'}
-                    href={achievement.teamPage ? getGitHubTeamUrl(achievement.teamPage) : undefined}
-                    target="_blank"
-                  >
-                    {achievement.icon}
-                  </Avatar>
-                </StyledBadge>
-                <FlexContent flexGrow={1}>
-                  <Box display="flex" alignItems="center" flexWrap="wrap">
-                    <TruncatedText 
-                      variant="subtitle1" 
-                      fontWeight="bold" 
-                      title={achievement.title}
-                      sx={{ mr: 1, fontSize: { xs: '0.95rem', md: '1rem' } }}
-                    >
-                      {achievement.title}
-                    </TruncatedText>
-                  </Box>
-                  <TruncatedText 
-                    variant="body2" 
-                    color="textSecondary"
-                    title={`${achievement.team} • ${achievement.members} members`}
-                    sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }}
-                  >
-                    {achievement.team} • {achievement.members} members
-                  </TruncatedText>
-                </FlexContent>
-                <Box sx={{ 
-                  ml: { xs: 0.5, md: 1 }, 
-                  flexShrink: 0, 
-                  minWidth: { xs: '70px', md: '90px' }, 
-                  textAlign: 'right' 
-                }}>
-                  <Typography 
-                    variant="h6" 
-                    fontWeight="bold" 
+                  <StyledBadge 
+                    badgeContent={achievement.members} 
                     color="primary" 
-                    noWrap
-                    sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}
+                    overlap="circular"
+                    sx={{ '& .MuiBadge-badge': { fontSize: '0.7rem', height: '18px', minWidth: '18px' } }}
                   >
-                    {achievement.value}
-                  </Typography>
-                </Box>
-              </AchievementCard>
-            </Grid>
-          ))}
+                    <Avatar 
+                      sx={{ 
+                        width: { xs: 40, md: 48 }, 
+                        height: { xs: 40, md: 48 }, 
+                        mr: { xs: 1.5, md: 2 }, 
+                        bgcolor: index % 2 === 0 ? 'primary.main' : 'secondary.main',
+                        flexShrink: 0
+                      }}
+                    >
+                      {renderIcon(achievement.icon, { color: "inherit" })}
+                    </Avatar>
+                  </StyledBadge>
+                  
+                  <FlexContent flexGrow={1}>
+                    <Box display="flex" alignItems="center" flexWrap="wrap">
+                      <TruncatedText 
+                        variant="subtitle1" 
+                        fontWeight="bold" 
+                        title={achievement.title}
+                        sx={{ mr: 1, fontSize: { xs: '0.95rem', md: '1rem' } }}
+                      >
+                        {achievement.title}
+                      </TruncatedText>
+                    </Box>
+                    
+                    <Box display="flex" alignItems="center">
+                      <TruncatedText 
+                        variant="body2" 
+                        color="textSecondary"
+                        title={`${achievement.team} • ${achievement.members} members`}
+                        sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, mr: 1 }}
+                      >
+                        {achievement.team} • {achievement.members} members
+                      </TruncatedText>
+                      
+                      {hasRepo && (
+                        <Tooltip title={`View repository: ${achievement.repo}`}>
+                          <Chip
+                            icon={<GitHubIcon fontSize="small" />}
+                            label={achievement.repo.split('/').pop() || achievement.repo.split('-').pop()}
+                            size="small"
+                            variant="outlined"
+                            sx={{ 
+                              height: 20, 
+                              '& .MuiChip-label': { px: 1, fontSize: '0.7rem' },
+                              '& .MuiChip-icon': { fontSize: '0.85rem', ml: 0.5 },
+                              zIndex: 2
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(getGitHubRepoUrl(achievement.repo), '_blank');
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </FlexContent>
+                  
+                  <Box sx={{ 
+                    ml: { xs: 0.5, md: 1 }, 
+                    flexShrink: 0, 
+                    minWidth: { xs: '70px', md: '90px' }, 
+                    textAlign: 'right' 
+                  }}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="bold" 
+                      color="primary" 
+                      noWrap
+                      sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}
+                    >
+                      {achievement.value}
+                    </Typography>
+                  </Box>
+                </AchievementCard>
+              </Grid>
+            );
+          })}
           {(!teamAchievements || teamAchievements.length === 0) && (
             <Grid item xs={12}>
               <Box p={3} textAlign="center" bgcolor="background.paper" borderRadius={1}>
@@ -705,8 +890,6 @@ const HackathonLeaderboard = ({
           )}
         </Grid>
       </Box>
-
-      {/* GitHub Link Footer */}
       <Box textAlign="center" mt={4} pt={1} borderTop={1} borderColor="divider">
         <Button
           variant="outlined"
@@ -727,7 +910,6 @@ const HackathonLeaderboard = ({
   );
 };
 
-// Add a fallback in case of errors
 const ErrorBoundary = ({ children }) => {
   const [hasError, setHasError] = useState(false);
 
