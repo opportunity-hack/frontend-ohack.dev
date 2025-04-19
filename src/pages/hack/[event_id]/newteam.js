@@ -70,6 +70,7 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   const [teamLeadConfirmed, setTeamLeadConfirmed] = useState(false);
   const [comments, setComments] = useState('');
   const [rankingMode, setRankingMode] = useState('select'); // 'select' or 'rank'
+  const [slackUsers, setSlackUsers] = useState([]);
 
   // New state variables for validation
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
@@ -89,6 +90,43 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
       fetchHackathonEvent();
     }
   }, [event_id]);
+
+
+  // Call the backend API /api/slack/users with active_days=30
+  const fetchActiveSlackUsers = async () => {
+    console.log("Fetching active Slack users...");
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/slack/users/active?active_days=30`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.data && response.data.users) {
+        const activeUsers = response.data.users.map((user) => ({
+          id: user.id,
+          name: user.name,
+          real_name: user.real_name,
+          tz: user.tz,          
+        }        
+        ));
+        console.log("Active Slack users:", activeUsers);
+        setSlackUsers(activeUsers);
+      } else {
+        setError("Failed to fetch active Slack users. Please try again later.");
+      }
+    } catch (err) {
+      console.error("Error fetching active Slack users:", err);
+      setError("Failed to fetch active Slack users. Please try again later.");
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveSlackUsers();
+  }, [event_id, accessToken]);
 
 
   const fetchHackathonEvent = async () => {
@@ -259,15 +297,32 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   
   // Team member management
   const handleAddTeamMember = useCallback(() => {
-    if (memberInput.trim() === '') return;
+    if (!memberInput) return;
     
-    // Check for duplicates
-    if (teamMembers.includes(memberInput.trim())) {
+    const memberName = typeof memberInput === 'string' ? memberInput.trim() : (memberInput.real_name || memberInput.name || '').trim();
+    
+    if (memberName === '') return;
+    
+    // Check for duplicates - check either the string value or the real_name value
+    const isDuplicate = teamMembers.some(member => {
+      if (typeof member === 'string' && typeof memberInput === 'string') {
+        return member === memberName;
+      } else if (typeof member === 'object' && typeof memberInput === 'object') {
+        return member.id === memberInput.id;
+      } else if (typeof member === 'string' && typeof memberInput === 'object') {
+        return member === memberInput.real_name || member === memberInput.name;
+      } else if (typeof member === 'object' && typeof memberInput === 'string') {
+        return member.real_name === memberInput || member.name === memberInput;
+      }
+      return false;
+    });
+    
+    if (isDuplicate) {
       setError('This team member has already been added');
       return;
     }
     
-    setTeamMembers(prev => [...prev, memberInput.trim()]);
+    setTeamMembers(prev => [...prev, memberInput]);
     setMemberInput('');
     setError('');
   }, [memberInput, teamMembers]);
@@ -625,6 +680,7 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
             handleRemoveTeamMember={handleRemoveTeamMember}
             comments={comments}
             setComments={setComments}
+            slackUsers={slackUsers}
             error={error}
           />
         );

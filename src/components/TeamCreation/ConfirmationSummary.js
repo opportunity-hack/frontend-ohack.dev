@@ -64,7 +64,7 @@ const ConfirmationSummary = memo(({
                 {teamMembers.map((member, index) => (
                   <Chip 
                     key={index} 
-                    label={member} 
+                    label={typeof member === 'string' ? member : (member.real_name || member.name || '')} 
                     icon={<FaUserAlt />} 
                     variant="outlined" 
                   />

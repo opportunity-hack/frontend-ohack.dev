@@ -67,7 +67,7 @@ const EventLinks = ({ links, variant = "full" }) => {
     {
       type: "hacker",
       title: "Hacker Application",
-      description: "Participate as a developer, designer, or project manager",
+      description: "Participate as a developer, designer, product or project manager",
       icon: <PersonIcon />,
       color: "primary",
       link: `/hack/${event_id}/hacker-application`,

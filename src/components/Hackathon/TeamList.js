@@ -203,11 +203,7 @@ const TeamList = ({ teams, eventId }) => {
   console.log("Team data:", teamData);
 
   return (
-    <div>
-      <Typography variant="h4" gutterBottom>
-        Teams
-      </Typography>
-
+    <div>      
       <Box mb={2}>
         <Button variant="contained" color="primary" href={`/hack/${eventId}/newteam`}>
           Create a Team

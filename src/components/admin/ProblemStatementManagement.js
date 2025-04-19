@@ -116,7 +116,7 @@ const ProblemStatementManagement = ({
       const updatedProblemStatements = [...nonprofitProblemStatements, selectedProblemStatementId];
       
       const response = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/edit`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo`,
         {
           id: nonprofit.id,
           problem_statements: updatedProblemStatements
@@ -153,7 +153,7 @@ const ProblemStatementManagement = ({
       );
       
       const response = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/edit`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo`,
         {
           id: nonprofit.id,
           problem_statements: updatedProblemStatements

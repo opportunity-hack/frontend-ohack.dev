@@ -440,6 +440,9 @@ export default function HackathonEvent({ eventData }) {
           
           {/* Team List */}
           <Grid item xs={12} id="teams">
+            <Typography variant="h4" gutterBottom>
+            Teams
+            </Typography>
             <TeamList teams={event.teams} eventId={event_id} />
           </Grid>
           

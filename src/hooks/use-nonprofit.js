@@ -183,11 +183,13 @@ export default function useNonprofit( nonprofit_id ){
             return null;
         
         const config = {
-            url: `${apiServerUrl}/api/messages/npo/edit`,
+            url: `${apiServerUrl}/api/messages/npo`,
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "Bearer": accessToken
+
             },
             data: {
                 id: id,               

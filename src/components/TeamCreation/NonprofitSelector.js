@@ -133,7 +133,9 @@ const NonprofitSelector = memo(({
                           Problem Statements:
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {nonprofit.problem_statements.map((problem, idx) => (
+                          {nonprofit.problem_statements
+                          .filter(problem => problem.status !== "production")
+                          .map((problem, idx) => (
                             <Chip 
                               key={idx} 
                               label={problem.displayTitle} 
