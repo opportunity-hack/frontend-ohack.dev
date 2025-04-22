@@ -75,19 +75,27 @@ const TeamAdminPage = withRequiredAuthInfo(({ userClass }) => {
 
     return (
       <>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={activeTab} onChange={handleTabChange} aria-label="Team management tabs">
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            aria-label="Team management tabs"
+          >
             <Tab label="Team Management" />
             <Tab label="Team Statistics" />
             <Tab label="Team Assignments" disabled />
           </Tabs>
         </Box>
 
-        {activeTab === 0 && <TeamManagement hackathons={hackathons} />}
+        {activeTab === 0 && (
+          <TeamManagement orgId={orgId} hackathons={hackathons} />
+        )}
         {activeTab === 1 && (
           <Box sx={{ my: 4 }}>
             <Alert severity="info">
-              Team statistics dashboard is coming soon. This will include insights on team performance, engagement metrics, and project progress tracking.
+              Team statistics dashboard is coming soon. This will include
+              insights on team performance, engagement metrics, and project
+              progress tracking.
             </Alert>
           </Box>
         )}

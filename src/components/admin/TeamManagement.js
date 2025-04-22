@@ -75,78 +75,88 @@ const TEAM_STATUS_OPTIONS = [
 ];
 
 // Component for managing teams in the admin panel
-const TeamManagement = ({ hackathons }) => {
+const TeamManagement = ({ orgId, hackathons }) => {
   const theme = useTheme();
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   // State for teams data and UI
   const [loading, setLoading] = useState(false);
   const [teams, setTeams] = useState([]);
   const [filteredTeams, setFilteredTeams] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedHackathon, setSelectedHackathon] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedHackathon, setSelectedHackathon] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortConfig, setSortConfig] = useState({ key: 'created', direction: 'desc' });
-  
+  const [sortConfig, setSortConfig] = useState({
+    key: "created",
+    direction: "desc",
+  });
+
   // State for team detail editing
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [teamData, setTeamData] = useState(null);
   const [nonprofitOptions, setNonprofitOptions] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
-  
+
   // Dialog states
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
-  const [messageText, setMessageText] = useState('');
+  const [messageText, setMessageText] = useState("");
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
-  const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberEmail, setNewMemberEmail] = useState("");
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogAction, setConfirmDialogAction] = useState(null);
   const [confirmDialogData, setConfirmDialogData] = useState(null);
-  const [confirmDialogMessage, setConfirmDialogMessage] = useState('');
-  
+  const [confirmDialogMessage, setConfirmDialogMessage] = useState("");
+
   // Fetch teams for the selected hackathon
   useEffect(() => {
     if (selectedHackathon) {
       fetchTeams(selectedHackathon);
     }
   }, [selectedHackathon]);
-  
+
+  console.log("Team Data:", teamData);
   // Filter teams based on search term
   useEffect(() => {
     if (!teams) return;
-    
-    const filtered = teams.filter(team => 
-      team.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (team.slack_channel && team.slack_channel.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (team.team_members && team.team_members.some(member => 
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchTerm.toLowerCase())
-      ))
+
+    const filtered = teams.filter(
+      (team) =>
+        team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (team.slack_channel &&
+          team.slack_channel
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        (team.team_members &&
+          team.team_members.some(
+            (member) =>
+              member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              member.email.toLowerCase().includes(searchTerm.toLowerCase())
+          ))
     );
-    
+
     setFilteredTeams(filtered);
   }, [searchTerm, teams]);
-  
+
   // Sort teams when sortConfig changes
   useEffect(() => {
     if (!filteredTeams) return;
-    
+
     const sortedTeams = [...filteredTeams].sort((a, b) => {
       if (a[sortConfig.key] < b[sortConfig.key]) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
+        return sortConfig.direction === "asc" ? -1 : 1;
       }
       if (a[sortConfig.key] > b[sortConfig.key]) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
+        return sortConfig.direction === "asc" ? 1 : -1;
       }
       return 0;
     });
-    
+
     setFilteredTeams(sortedTeams);
   }, [sortConfig]);
-  
+
   // Fetch teams for a hackathon
   const fetchTeams = async (hackathonId) => {
     setLoading(true);
@@ -156,22 +166,23 @@ const TeamManagement = ({ hackathons }) => {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
           },
         }
       );
-      
+
       if (response.data && response.data.teams) {
         setTeams(response.data.teams);
         setFilteredTeams(response.data.teams);
       }
     } catch (error) {
-      console.error('Error fetching teams:', error);
-      enqueueSnackbar('Failed to fetch teams', { variant: 'error' });
+      console.error("Error fetching teams:", error);
+      enqueueSnackbar("Failed to fetch teams", { variant: "error" });
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Fetch nonprofits for the selected hackathon
   const fetchNonprofits = async (hackathonId) => {
     try {
@@ -180,103 +191,106 @@ const TeamManagement = ({ hackathons }) => {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
           },
         }
       );
-      
+
       if (response.data && response.data.nonprofits) {
         setNonprofitOptions(response.data.nonprofits);
       }
     } catch (error) {
-      console.error('Error fetching nonprofits:', error);
-      enqueueSnackbar('Failed to fetch nonprofits', { variant: 'error' });
+      console.error("Error fetching nonprofits:", error);
+      enqueueSnackbar("Failed to fetch nonprofits", { variant: "error" });
     }
   };
-  
+
   // Load team details for editing
   const loadTeamDetails = async (teamId) => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamId}`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${teamId}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
           },
         }
       );
-      
+      console.log("Team Details Response:", response.data);
       if (response.data && response.data.team) {
         setSelectedTeam(response.data.team);
         setTeamData({
           ...response.data.team,
-          active: response.data.team.active === 'True'
+          active: response.data.team.active === "True",
         });
       }
     } catch (error) {
-      console.error('Error fetching team details:', error);
-      enqueueSnackbar('Failed to fetch team details', { variant: 'error' });
+      console.error("Error fetching team details:", error);
+      enqueueSnackbar("Failed to fetch team details", { variant: "error" });
     }
   };
-  
+
   // Change sort order
   const requestSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
     }
     setSortConfig({ key, direction });
   };
-  
+
   // Open the edit dialog and load team details
   const handleEditTeam = (team) => {
     setSelectedTeam(team);
     setTeamData({
       ...team,
-      active: team.active === 'True'
+      active: team.active === "True",
     });
     fetchNonprofits(selectedHackathon);
     setEditDialogOpen(true);
   };
-  
+
   // Update team data when inputs change
   const handleTeamDataChange = (field, value) => {
-    setTeamData(prev => ({
+    setTeamData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
-  
+
   // Save team updates
   const handleSaveTeam = async () => {
     setLoading(true);
     try {
-      const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}`,
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,
         {
           ...teamData,
-          active: teamData.active ? 'True' : 'False'
+          active: teamData.active ? "True" : "False",
         },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
         }
       );
-      
+
       if (response.data && response.data.success) {
-        enqueueSnackbar('Team updated successfully', { variant: 'success' });
+        enqueueSnackbar("Team updated successfully", { variant: "success" });
         setEditDialogOpen(false);
         fetchTeams(selectedHackathon);
       }
     } catch (error) {
-      console.error('Error updating team:', error);
-      enqueueSnackbar('Failed to update team', { variant: 'error' });
+      console.error("Error updating team:", error);
+      enqueueSnackbar("Failed to update team", { variant: "error" });
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Send message to team's slack channel
   const handleSendMessage = async () => {
     setLoading(true);
@@ -285,29 +299,30 @@ const TeamManagement = ({ hackathons }) => {
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/message`,
         {
           message: messageText,
-          channel: teamData.slack_channel
+          channel: teamData.slack_channel,
         },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
         }
       );
-      
+
       if (response.data && response.data.success) {
-        enqueueSnackbar('Message sent successfully', { variant: 'success' });
+        enqueueSnackbar("Message sent successfully", { variant: "success" });
         setMessageDialogOpen(false);
-        setMessageText('');
+        setMessageText("");
       }
     } catch (error) {
-      console.error('Error sending message:', error);
-      enqueueSnackbar('Failed to send message', { variant: 'error' });
+      console.error("Error sending message:", error);
+      enqueueSnackbar("Failed to send message", { variant: "error" });
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Add a member to the team
   const handleAddMember = async () => {
     setLoading(true);
@@ -315,30 +330,33 @@ const TeamManagement = ({ hackathons }) => {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/member`,
         {
-          email: newMemberEmail
+          email: newMemberEmail,
         },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
         }
       );
-      
+
       if (response.data && response.data.success) {
-        enqueueSnackbar('Team member added successfully', { variant: 'success' });
+        enqueueSnackbar("Team member added successfully", {
+          variant: "success",
+        });
         setAddMemberDialogOpen(false);
-        setNewMemberEmail('');
+        setNewMemberEmail("");
         loadTeamDetails(teamData.id);
       }
     } catch (error) {
-      console.error('Error adding team member:', error);
-      enqueueSnackbar('Failed to add team member', { variant: 'error' });
+      console.error("Error adding team member:", error);
+      enqueueSnackbar("Failed to add team member", { variant: "error" });
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Remove a member from the team
   const handleRemoveMember = async (memberId) => {
     setLoading(true);
@@ -347,23 +365,26 @@ const TeamManagement = ({ hackathons }) => {
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/member/${memberId}`,
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
+            Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
+          },
         }
       );
-      
+
       if (response.data && response.data.success) {
-        enqueueSnackbar('Team member removed successfully', { variant: 'success' });
+        enqueueSnackbar("Team member removed successfully", {
+          variant: "success",
+        });
         loadTeamDetails(teamData.id);
       }
     } catch (error) {
-      console.error('Error removing team member:', error);
-      enqueueSnackbar('Failed to remove team member', { variant: 'error' });
+      console.error("Error removing team member:", error);
+      enqueueSnackbar("Failed to remove team member", { variant: "error" });
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Set a member as team lead
   const handleSetTeamLead = async (memberId) => {
     setLoading(true);
@@ -374,23 +395,26 @@ const TeamManagement = ({ hackathons }) => {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
         }
       );
-      
+
       if (response.data && response.data.success) {
-        enqueueSnackbar('Team lead updated successfully', { variant: 'success' });
+        enqueueSnackbar("Team lead updated successfully", {
+          variant: "success",
+        });
         loadTeamDetails(teamData.id);
       }
     } catch (error) {
-      console.error('Error updating team lead:', error);
-      enqueueSnackbar('Failed to update team lead', { variant: 'error' });
+      console.error("Error updating team lead:", error);
+      enqueueSnackbar("Failed to update team lead", { variant: "error" });
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Update a member's GitHub username
   const handleUpdateGithub = async (memberId, githubUsername) => {
     setLoading(true);
@@ -398,51 +422,54 @@ const TeamManagement = ({ hackathons }) => {
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/member/${memberId}/github`,
         {
-          github_username: githubUsername
+          github_username: githubUsername,
         },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
         }
       );
-      
+
       if (response.data && response.data.success) {
-        enqueueSnackbar('GitHub username updated successfully', { variant: 'success' });
+        enqueueSnackbar("GitHub username updated successfully", {
+          variant: "success",
+        });
         loadTeamDetails(teamData.id);
       }
     } catch (error) {
-      console.error('Error updating GitHub username:', error);
-      enqueueSnackbar('Failed to update GitHub username', { variant: 'error' });
+      console.error("Error updating GitHub username:", error);
+      enqueueSnackbar("Failed to update GitHub username", { variant: "error" });
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Handle confirmation dialog actions
   const handleConfirmAction = async () => {
     if (!confirmDialogAction || !confirmDialogData) return;
-    
+
     switch (confirmDialogAction) {
-      case 'removeMember':
+      case "removeMember":
         await handleRemoveMember(confirmDialogData);
         break;
-      case 'setLead':
+      case "setLead":
         await handleSetTeamLead(confirmDialogData);
         break;
-      case 'deleteTeam':
+      case "deleteTeam":
         // Implement team deletion
         break;
       default:
         break;
     }
-    
+
     setConfirmDialogOpen(false);
     setConfirmDialogAction(null);
     setConfirmDialogData(null);
   };
-  
+
   // Open confirmation dialog with specific action and data
   const confirmAction = (action, data, message) => {
     setConfirmDialogAction(action);
@@ -450,40 +477,48 @@ const TeamManagement = ({ hackathons }) => {
     setConfirmDialogMessage(message);
     setConfirmDialogOpen(true);
   };
-  
+
   // Render team status chip
   const renderStatusChip = (status) => {
-    const statusOption = TEAM_STATUS_OPTIONS.find(opt => opt.value === status) || TEAM_STATUS_OPTIONS[0];
+    const statusOption =
+      TEAM_STATUS_OPTIONS.find((opt) => opt.value === status) ||
+      TEAM_STATUS_OPTIONS[0];
     return (
-      <Chip 
-        label={statusOption.label} 
-        color={statusOption.color} 
-        size="small" 
-        variant={statusOption.color === 'default' ? 'outlined' : 'filled'}
+      <Chip
+        label={statusOption.label}
+        color={statusOption.color}
+        size="small"
+        variant={statusOption.color === "default" ? "outlined" : "filled"}
       />
     );
   };
-  
+
   // Render selected nonprofit with history
   const renderNonprofitSelection = () => {
     if (!teamData || !teamData.nonprofit_rankings) return null;
-    
+
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
-        <CardHeader 
-          title="Nonprofit Assignment" 
+        <CardHeader
+          title="Nonprofit Assignment"
           subheader="Current selection and ranking history"
         />
         <Divider />
         <CardContent>
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" gutterBottom>Current Assignment</Typography>
+            <Typography variant="subtitle2" gutterBottom>
+              Current Assignment
+            </Typography>
             <FormControl fullWidth>
-              <InputLabel id="nonprofit-select-label">Assigned Nonprofit</InputLabel>
+              <InputLabel id="nonprofit-select-label">
+                Assigned Nonprofit
+              </InputLabel>
               <Select
                 labelId="nonprofit-select-label"
-                value={teamData.selected_nonprofit_id || ''}
-                onChange={(e) => handleTeamDataChange('selected_nonprofit_id', e.target.value)}
+                value={teamData.selected_nonprofit_id || ""}
+                onChange={(e) =>
+                  handleTeamDataChange("selected_nonprofit_id", e.target.value)
+                }
                 label="Assigned Nonprofit"
               >
                 <MenuItem value="">
@@ -497,8 +532,10 @@ const TeamManagement = ({ hackathons }) => {
               </Select>
             </FormControl>
           </Box>
-          
-          <Typography variant="subtitle2" gutterBottom>Team's Nonprofit Rankings</Typography>
+
+          <Typography variant="subtitle2" gutterBottom>
+            Team's Nonprofit Rankings
+          </Typography>
           <TableContainer component={Paper} variant="outlined">
             <Table size="small">
               <TableHead>
@@ -510,26 +547,31 @@ const TeamManagement = ({ hackathons }) => {
               </TableHead>
               <TableBody>
                 {teamData.nonprofit_rankings.map((ranking, index) => {
-                  const nonprofit = nonprofitOptions.find(n => n.id === ranking.nonprofit_id);
-                  const isSelected = teamData.selected_nonprofit_id === ranking.nonprofit_id;
-                  
+                  const nonprofit = nonprofitOptions.find(
+                    (n) => n.id === ranking.nonprofit_id
+                  );
+                  const isSelected =
+                    teamData.selected_nonprofit_id === ranking.nonprofit_id;
+
                   return (
                     <TableRow key={index} selected={isSelected}>
                       <TableCell>{ranking.rank}</TableCell>
-                      <TableCell>{nonprofit ? nonprofit.name : 'Unknown Nonprofit'}</TableCell>
+                      <TableCell>
+                        {nonprofit ? nonprofit.name : "Unknown Nonprofit"}
+                      </TableCell>
                       <TableCell>
                         {isSelected ? (
-                          <Chip 
-                            size="small" 
-                            color="primary" 
-                            label="Selected" 
-                            icon={<FaCheck />} 
+                          <Chip
+                            size="small"
+                            color="primary"
+                            label="Selected"
+                            icon={<FaCheck />}
                           />
                         ) : (
-                          <Chip 
-                            size="small" 
-                            variant="outlined" 
-                            label="Not Selected" 
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label="Not Selected"
                           />
                         )}
                       </TableCell>
@@ -543,15 +585,15 @@ const TeamManagement = ({ hackathons }) => {
       </Card>
     );
   };
-  
+
   // Render team member management
   const renderTeamMembers = () => {
     if (!teamData || !teamData.team_members) return null;
-    
+
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
-        <CardHeader 
-          title="Team Members" 
+        <CardHeader
+          title="Team Members"
           subheader="Manage team composition"
           action={
             <Button
@@ -572,7 +614,7 @@ const TeamManagement = ({ hackathons }) => {
               <TableHead>
                 <TableRow>
                   <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
+                  <TableCell>Slack ID</TableCell>
                   <TableCell>GitHub</TableCell>
                   <TableCell>Role</TableCell>
                   <TableCell align="right">Actions</TableCell>
@@ -582,19 +624,27 @@ const TeamManagement = ({ hackathons }) => {
                 {teamData.team_members.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell>{member.name}</TableCell>
-                    <TableCell>{member.email}</TableCell>
+                    <TableCell>{member.user_id}</TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <TextField
                           size="small"
                           variant="outlined"
-                          value={member.github_username || ''}
+                          value={member.github || ""}
                           placeholder="GitHub username"
                           onChange={(e) => {
-                            const updatedMembers = teamData.team_members.map(m => 
-                              m.id === member.id ? {...m, github_username: e.target.value} : m
+                            const updatedMembers = teamData.team_members.map(
+                              (m) =>
+                                m.id === member.id
+                                  ? { ...m, github_username: e.target.value }
+                                  : m
                             );
-                            handleTeamDataChange('team_members', updatedMembers);
+                            handleTeamDataChange(
+                              "team_members",
+                              updatedMembers
+                            );
                           }}
                           InputProps={{
                             startAdornment: (
@@ -606,35 +656,39 @@ const TeamManagement = ({ hackathons }) => {
                               <InputAdornment position="end">
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleUpdateGithub(member.id, member.github_username)}
-                                  disabled={!member.github_username}
+                                  onClick={() =>
+                                    handleUpdateGithub(member.id, member.github)
+                                  }
+                                  disabled={!member.github}
                                 >
                                   <FaCheck />
                                 </IconButton>
                               </InputAdornment>
-                            )
+                            ),
                           }}
                         />
                       </Box>
                     </TableCell>
                     <TableCell>
                       {member.is_lead ? (
-                        <Chip 
-                          size="small" 
-                          color="secondary" 
-                          label="Team Lead" 
-                          icon={<FaStar />} 
+                        <Chip
+                          size="small"
+                          color="secondary"
+                          label="Team Lead"
+                          icon={<FaStar />}
                         />
                       ) : (
-                        <Chip 
-                          size="small" 
-                          variant="outlined" 
-                          label="Member" 
-                          onClick={() => confirmAction(
-                            'setLead', 
-                            member.id,
-                            `Make ${member.name} the team lead?`
-                          )}
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label="Member"
+                          onClick={() =>
+                            confirmAction(
+                              "setLead",
+                              member.id,
+                              `Make ${member.name} the team lead?`
+                            )
+                          }
                         />
                       )}
                     </TableCell>
@@ -643,11 +697,13 @@ const TeamManagement = ({ hackathons }) => {
                         <IconButton
                           size="small"
                           color="error"
-                          onClick={() => confirmAction(
-                            'removeMember', 
-                            member.id,
-                            `Remove ${member.name} from the team?`
-                          )}
+                          onClick={() =>
+                            confirmAction(
+                              "removeMember",
+                              member.id,
+                              `Remove ${member.name} from the team?`
+                            )
+                          }
                         >
                           <FaTrash />
                         </IconButton>
@@ -662,15 +718,15 @@ const TeamManagement = ({ hackathons }) => {
       </Card>
     );
   };
-  
+
   // Render team details and metadata
   const renderTeamDetails = () => {
     if (!teamData) return null;
-    
+
     return (
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Card elevation={1} sx={{ mb: 3, height: '100%' }}>
+          <Card elevation={1} sx={{ mb: 3, height: "100%" }}>
             <CardHeader title="Team Information" />
             <Divider />
             <CardContent>
@@ -678,45 +734,51 @@ const TeamManagement = ({ hackathons }) => {
                 <TextField
                   fullWidth
                   label="Team Name"
-                  value={teamData.name || ''}
-                  onChange={(e) => handleTeamDataChange('name', e.target.value)}
+                  value={teamData.name || ""}
+                  onChange={(e) => handleTeamDataChange("name", e.target.value)}
                 />
-                
+
                 <TextField
                   fullWidth
                   label="Slack Channel"
-                  value={teamData.slack_channel || ''}
-                  onChange={(e) => handleTeamDataChange('slack_channel', e.target.value)}
+                  value={teamData.slack_channel || ""}
+                  onChange={(e) =>
+                    handleTeamDataChange("slack_channel", e.target.value)
+                  }
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
                         <FaSlack />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                 />
-                
+
                 <FormControl fullWidth>
                   <InputLabel id="status-select-label">Team Status</InputLabel>
                   <Select
                     labelId="status-select-label"
-                    value={teamData.status || 'IN_REVIEW'}
-                    onChange={(e) => handleTeamDataChange('status', e.target.value)}
+                    value={teamData.status || "IN_REVIEW"}
+                    onChange={(e) =>
+                      handleTeamDataChange("status", e.target.value)
+                    }
                     label="Team Status"
                   >
-                    {TEAM_STATUS_OPTIONS.map(option => (
+                    {TEAM_STATUS_OPTIONS.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
                         {option.label}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
-                
+
                 <FormControlLabel
                   control={
                     <Switch
                       checked={teamData.active}
-                      onChange={(e) => handleTeamDataChange('active', e.target.checked)}
+                      onChange={(e) =>
+                        handleTeamDataChange("active", e.target.checked)
+                      }
                       color="primary"
                     />
                   }
@@ -726,9 +788,9 @@ const TeamManagement = ({ hackathons }) => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
-          <Card elevation={1} sx={{ mb: 3, height: '100%' }}>
+          <Card elevation={1} sx={{ mb: 3, height: "100%" }}>
             <CardHeader title="Additional Information" />
             <Divider />
             <CardContent>
@@ -736,28 +798,32 @@ const TeamManagement = ({ hackathons }) => {
                 <TextField
                   fullWidth
                   label="Location at Hackathon"
-                  value={teamData.location || ''}
-                  onChange={(e) => handleTeamDataChange('location', e.target.value)}
+                  value={teamData.location || ""}
+                  onChange={(e) =>
+                    handleTeamDataChange("location", e.target.value)
+                  }
                   placeholder="e.g., Table 5, Room 101"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
                         <FaMapMarkerAlt />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                 />
-                
+
                 <TextField
                   fullWidth
                   label="Admin Notes (Private)"
-                  value={teamData.admin_notes || ''}
-                  onChange={(e) => handleTeamDataChange('admin_notes', e.target.value)}
+                  value={teamData.admin_notes || ""}
+                  onChange={(e) =>
+                    handleTeamDataChange("admin_notes", e.target.value)
+                  }
                   multiline
                   rows={4}
                   placeholder="Add private notes about this team (not visible to team members)"
                 />
-                
+
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     Created: {new Date(teamData.created).toLocaleString()}
@@ -770,20 +836,22 @@ const TeamManagement = ({ hackathons }) => {
       </Grid>
     );
   };
-  
+
   // Render GitHub links
   const renderGitHubLinks = () => {
     if (!teamData) return null;
-    
+
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
-        <CardHeader 
-          title="GitHub Repositories" 
+        <CardHeader
+          title="GitHub Repositories"
           subheader="Manage team repositories"
           action={
             <Button
               startIcon={<FaGithub />}
-              onClick={() => {/* Open GitHub link dialog */}}
+              onClick={() => {
+                /* Open GitHub link dialog */
+              }}
               color="primary"
               variant="contained"
               size="small"
@@ -810,7 +878,7 @@ const TeamManagement = ({ hackathons }) => {
                     <TableRow key={index}>
                       <TableCell>{repo.name}</TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
                           <Typography variant="body2" sx={{ mr: 1 }}>
                             {repo.link}
                           </Typography>
@@ -828,10 +896,7 @@ const TeamManagement = ({ hackathons }) => {
                       </TableCell>
                       <TableCell align="right">
                         <Tooltip title="Remove repository">
-                          <IconButton
-                            size="small"
-                            color="error"
-                          >
+                          <IconButton size="small" color="error">
                             <FaTrash />
                           </IconButton>
                         </Tooltip>
@@ -850,15 +915,15 @@ const TeamManagement = ({ hackathons }) => {
       </Card>
     );
   };
-  
+
   // Render communication section
   const renderCommunication = () => {
     if (!teamData) return null;
-    
+
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
-        <CardHeader 
-          title="Team Communication" 
+        <CardHeader
+          title="Team Communication"
           subheader="Send messages to the team's Slack channel"
         />
         <Divider />
@@ -877,11 +942,12 @@ const TeamManagement = ({ hackathons }) => {
               Send Message
             </Button>
           </Box>
-          
+
           <Typography variant="subtitle2" gutterBottom>
             Recent Communications
           </Typography>
-          {teamData.communication_history && teamData.communication_history.length > 0 ? (
+          {teamData.communication_history &&
+          teamData.communication_history.length > 0 ? (
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
                 <TableHead>
@@ -894,7 +960,9 @@ const TeamManagement = ({ hackathons }) => {
                 <TableBody>
                   {teamData.communication_history.map((message, index) => (
                     <TableRow key={index}>
-                      <TableCell>{new Date(message.timestamp).toLocaleString()}</TableCell>
+                      <TableCell>
+                        {new Date(message.timestamp).toLocaleString()}
+                      </TableCell>
                       <TableCell>{message.sender}</TableCell>
                       <TableCell>{message.text}</TableCell>
                     </TableRow>
@@ -911,7 +979,7 @@ const TeamManagement = ({ hackathons }) => {
       </Card>
     );
   };
-  
+
   return (
     <div>
       <Box sx={{ mb: 4 }}>
@@ -919,15 +987,18 @@ const TeamManagement = ({ hackathons }) => {
           Team Management
         </Typography>
         <Typography variant="body1" paragraph>
-          Manage teams, assign nonprofits, and monitor team progress across all hackathons.
+          Manage teams, assign nonprofits, and monitor team progress across all
+          hackathons.
         </Typography>
       </Box>
-      
+
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
             <FormControl fullWidth>
-              <InputLabel id="hackathon-select-label">Select Hackathon</InputLabel>
+              <InputLabel id="hackathon-select-label">
+                Select Hackathon
+              </InputLabel>
               <Select
                 labelId="hackathon-select-label"
                 value={selectedHackathon}
@@ -959,19 +1030,19 @@ const TeamManagement = ({ hackathons }) => {
                 ),
                 endAdornment: searchTerm && (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setSearchTerm('')} size="small">
+                    <IconButton onClick={() => setSearchTerm("")} size="small">
                       <FaTimes />
                     </IconButton>
                   </InputAdornment>
-                )
+                ),
               }}
             />
           </Grid>
         </Grid>
       </Paper>
-      
+
       {loading && !editDialogOpen ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
           <CircularProgress />
         </Box>
       ) : (
@@ -990,35 +1061,75 @@ const TeamManagement = ({ hackathons }) => {
                 <TableHead>
                   <TableRow>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => requestSort('name')}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => requestSort("name")}
+                      >
                         Team Name
-                        {sortConfig.key === 'name' && (
-                          sortConfig.direction === 'asc' ? <FaChevronUp size={14} /> : <FaChevronDown size={14} />
-                        )}
+                        {sortConfig.key === "name" &&
+                          (sortConfig.direction === "asc" ? (
+                            <FaChevronUp size={14} />
+                          ) : (
+                            <FaChevronDown size={14} />
+                          ))}
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => requestSort('slack_channel')}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => requestSort("slack_channel")}
+                      >
                         Slack Channel
-                        {sortConfig.key === 'slack_channel' && (
-                          sortConfig.direction === 'asc' ? <FaChevronUp size={14} /> : <FaChevronDown size={14} />
-                        )}
+                        {sortConfig.key === "slack_channel" &&
+                          (sortConfig.direction === "asc" ? (
+                            <FaChevronUp size={14} />
+                          ) : (
+                            <FaChevronDown size={14} />
+                          ))}
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => requestSort('status')}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => requestSort("status")}
+                      >
                         Status
-                        {sortConfig.key === 'status' && (
-                          sortConfig.direction === 'asc' ? <FaChevronUp size={14} /> : <FaChevronDown size={14} />
-                        )}
+                        {sortConfig.key === "status" &&
+                          (sortConfig.direction === "asc" ? (
+                            <FaChevronUp size={14} />
+                          ) : (
+                            <FaChevronDown size={14} />
+                          ))}
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => requestSort('created')}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => requestSort("created")}
+                      >
                         Created
-                        {sortConfig.key === 'created' && (
-                          sortConfig.direction === 'asc' ? <FaChevronUp size={14} /> : <FaChevronDown size={14} />
-                        )}
+                        {sortConfig.key === "created" &&
+                          (sortConfig.direction === "asc" ? (
+                            <FaChevronUp size={14} />
+                          ) : (
+                            <FaChevronDown size={14} />
+                          ))}
                       </Box>
                     </TableCell>
                     <TableCell>Members</TableCell>
@@ -1033,51 +1144,55 @@ const TeamManagement = ({ hackathons }) => {
                       <TableRow key={team.id} hover>
                         <TableCell>
                           {team.name}
-                          {team.active === 'True' ? (
-                            <Chip 
-                              size="small" 
-                              color="success" 
-                              label="Active" 
+                          {team.active === "True" ? (
+                            <Chip
+                              size="small"
+                              color="success"
+                              label="Active"
                               sx={{ ml: 1 }}
                             />
                           ) : (
-                            <Chip 
-                              size="small" 
-                              color="default" 
-                              label="Inactive" 
+                            <Chip
+                              size="small"
+                              color="default"
+                              label="Inactive"
                               variant="outlined"
                               sx={{ ml: 1 }}
                             />
                           )}
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
                             <FaSlack style={{ marginRight: 8 }} />
-                            {team.slack_channel || 'N/A'}
+                            {team.slack_channel || "N/A"}
                           </Box>
                         </TableCell>
                         <TableCell>
-                          {renderStatusChip(team.status || 'IN_REVIEW')}
+                          {renderStatusChip(team.status || "IN_REVIEW")}
                         </TableCell>
                         <TableCell>
                           {new Date(team.created).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
                           {team.team_members ? (
-                            <Chip 
+                            <Chip
                               label={`${team.team_members.length} members`}
                               icon={<FaUsers />}
                               size="small"
                             />
                           ) : (
-                            <Chip label="0 members" size="small" variant="outlined" />
+                            <Chip
+                              label="0 members"
+                              size="small"
+                              variant="outlined"
+                            />
                           )}
                         </TableCell>
                         <TableCell>
-                          {team.selected_nonprofit_name || 'Not assigned'}
+                          {team.selected_nonprofit_name || "Not assigned"}
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Box sx={{ display: "flex", gap: 1 }}>
                             <Tooltip title="Edit Team">
                               <IconButton
                                 size="small"
@@ -1091,11 +1206,13 @@ const TeamManagement = ({ hackathons }) => {
                               <IconButton
                                 size="small"
                                 color="error"
-                                onClick={() => confirmAction(
-                                  'deleteTeam',
-                                  team.id,
-                                  `Delete team ${team.name}? This cannot be undone.`
-                                )}
+                                onClick={() =>
+                                  confirmAction(
+                                    "deleteTeam",
+                                    team.id,
+                                    `Delete team ${team.name}? This cannot be undone.`
+                                  )
+                                }
                               >
                                 <FaTrash />
                               </IconButton>
@@ -1121,7 +1238,7 @@ const TeamManagement = ({ hackathons }) => {
           )}
         </>
       )}
-      
+
       {/* Edit Team Dialog */}
       <Dialog
         open={editDialogOpen}
@@ -1129,9 +1246,7 @@ const TeamManagement = ({ hackathons }) => {
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>
-          Edit Team: {teamData?.name}
-        </DialogTitle>
+        <DialogTitle>Edit Team: {teamData?.name}</DialogTitle>
         <DialogContent>
           <Tabs
             value={activeTab}
@@ -1144,7 +1259,7 @@ const TeamManagement = ({ hackathons }) => {
             <Tab label="GitHub Links" />
             <Tab label="Communication" />
           </Tabs>
-          
+
           <Box sx={{ mt: 2 }}>
             {activeTab === 0 && renderTeamDetails()}
             {activeTab === 1 && renderNonprofitSelection()}
@@ -1155,17 +1270,17 @@ const TeamManagement = ({ hackathons }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleSaveTeam} 
-            variant="contained" 
+          <Button
+            onClick={handleSaveTeam}
+            variant="contained"
             color="primary"
             disabled={loading}
           >
-            {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+            {loading ? <CircularProgress size={24} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Send Message Dialog */}
       <Dialog
         open={messageDialogOpen}
@@ -1173,9 +1288,7 @@ const TeamManagement = ({ hackathons }) => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          Send Message to #{teamData?.slack_channel}
-        </DialogTitle>
+        <DialogTitle>Send Message to #{teamData?.slack_channel}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -1190,9 +1303,9 @@ const TeamManagement = ({ hackathons }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setMessageDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleSendMessage} 
-            variant="contained" 
+          <Button
+            onClick={handleSendMessage}
+            variant="contained"
             color="primary"
             disabled={loading || !messageText.trim()}
             startIcon={<FaPaperPlane />}
@@ -1201,7 +1314,7 @@ const TeamManagement = ({ hackathons }) => {
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Add Team Member Dialog */}
       <Dialog
         open={addMemberDialogOpen}
@@ -1209,9 +1322,7 @@ const TeamManagement = ({ hackathons }) => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          Add Team Member
-        </DialogTitle>
+        <DialogTitle>Add Team Member</DialogTitle>
         <DialogContent>
           <Typography variant="body2" paragraph sx={{ mt: 1 }}>
             Enter the email address of the person you want to add to this team.
@@ -1226,9 +1337,9 @@ const TeamManagement = ({ hackathons }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddMemberDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleAddMember} 
-            variant="contained" 
+          <Button
+            onClick={handleAddMember}
+            variant="contained"
             color="primary"
             disabled={loading || !newMemberEmail.trim()}
             startIcon={<FaUserPlus />}
@@ -1237,7 +1348,7 @@ const TeamManagement = ({ hackathons }) => {
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Confirmation Dialog */}
       <Dialog
         open={confirmDialogOpen}
@@ -1245,19 +1356,15 @@ const TeamManagement = ({ hackathons }) => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>
-          Confirm Action
-        </DialogTitle>
+        <DialogTitle>Confirm Action</DialogTitle>
         <DialogContent>
-          <Typography variant="body1">
-            {confirmDialogMessage}
-          </Typography>
+          <Typography variant="body1">{confirmDialogMessage}</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleConfirmAction} 
-            variant="contained" 
+          <Button
+            onClick={handleConfirmAction}
+            variant="contained"
             color="error"
           >
             Confirm
