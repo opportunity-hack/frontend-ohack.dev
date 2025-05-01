@@ -1,17 +1,17 @@
 import React, { useEffect } from "react";
-import { Grid, Button, Box, Typography, Paper } from "@mui/material";
+import { Grid, Button, Box, Typography, Paper, List, ListItem } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
 const sections = [
-  { id: "applications", name: "Apply Now", highlight: true },
-  { id: "stats", name: "Hackathon Stats" },
-  { id: "countdown", name: "Event Countdown" },
-  { id: "nonprofit", name: "Nonprofit List" },
-  { id: "volunteer", name: "Volunteers" },
-  { id: "mentor", name: "Mentors" },
-  { id: "judge", name: "Judges" },
-  { id: "teams", name: "Teams" },
-  { id: "faq", name: "FAQ" },
+  { id: "applications", name: "Apply Now", highlight: true, ariaLabel: "Apply for the hackathon" },
+  { id: "stats", name: "Hackathon Stats", ariaLabel: "View hackathon statistics" },
+  { id: "countdown", name: "Event Countdown", ariaLabel: "See event timeline and countdown" },
+  { id: "nonprofit", name: "Nonprofit List", ariaLabel: "Browse participating nonprofits" },
+  { id: "volunteer", name: "Volunteers", ariaLabel: "See event volunteers" },
+  { id: "mentor", name: "Mentors", ariaLabel: "View hackathon mentors" },
+  { id: "judge", name: "Judges", ariaLabel: "See event judges" },
+  { id: "teams", name: "Teams", ariaLabel: "Browse hackathon teams" },
+  { id: "faq", name: "FAQ", ariaLabel: "Read frequently asked questions" },
 ];
 
 const trackNavigation = (sectionName) => {
@@ -37,23 +37,61 @@ const TableOfContents = () => {
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, my: 4, borderRadius: 2 }}>
-      <Typography variant="h5" gutterBottom align="center" fontWeight="bold">
+    <Paper 
+      elevation={3} 
+      sx={{ p: 3, my: 4, borderRadius: 2 }}
+      component="nav" 
+      aria-labelledby="table-of-contents-heading"
+    >
+      <Typography 
+        variant="h2" 
+        component="h2" 
+        id="table-of-contents-heading"
+        gutterBottom 
+        align="center" 
+        sx={{ 
+          fontSize: { xs: "1.35rem", sm: "1.5rem" },
+          fontWeight: 600,
+          letterSpacing: '-0.01em',
+          marginBottom: 2
+        }}
+      >
         Table of Contents
       </Typography>
-      <Grid container spacing={2} justifyContent="center" alignItems="center">
+      
+      <List 
+        component="ul" 
+        aria-label="Event sections navigation"
+        sx={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          justifyContent: 'center',
+          p: 0,
+          gap: 1
+        }}
+      >
         {sections.map((section) => (
-          <Grid item key={section.id}>
+          <ListItem
+            key={section.id}
+            sx={{ 
+              width: 'auto', 
+              p: 0.5,
+              display: 'inline-flex'
+            }}
+            dense
+          >
             <Button
               variant={section.highlight ? "contained" : "outlined"}
               color={section.highlight ? "secondary" : "primary"}
               size="large"
               href={`#${section.id}`}
               onClick={(event) => handleClick(event, section.id, section.name)}
+              aria-label={section.ariaLabel}
               sx={{
                 borderRadius: 4,
                 textTransform: "none",
                 fontWeight: "bold",
+                minWidth: { xs: '120px', sm: '140px' },
                 ...(section.highlight && {
                   px: 3,
                   py: 1.5,
@@ -73,13 +111,17 @@ const TableOfContents = () => {
                 "&:hover": {
                   backgroundColor: section.highlight ? "secondary.dark" : "primary.main",
                 },
+                "&:focus": {
+                  outline: '2px solid currentColor',
+                  outlineOffset: '2px'
+                }
               }}
             >
               {section.name}
             </Button>
-          </Grid>
+          </ListItem>
         ))}
-      </Grid>
+      </List>
     </Paper>
   );
 };

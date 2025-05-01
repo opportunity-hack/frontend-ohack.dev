@@ -33,6 +33,7 @@
 - Material UI for components
 
 ## Testing
+- Don't worry about writing or running tests
 - Jest for unit tests
 - Playwright for end-to-end tests
 - Test files located in `__tests__` folders for components

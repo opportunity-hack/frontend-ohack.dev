@@ -4,41 +4,149 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { CircularProgress, Container, Grid } from "@mui/material";
 import HackathonHeader from "../../components/Hackathon/HackathonHeader";
-import { Typography, Button } from "@mui/material";
-import VolunteerList from '../../components/Hackathon/VolunteerList';
+import { Typography, Button, styled } from "@mui/material";
 import TableOfContents from '../../components/Hackathon/TableOfContents';
 import Script from 'next/script';
-import TeamList from '../../components/Hackathon/TeamList';
 import Box from '@mui/material/Box';
 
-// Dynamically import components for better code splitting
-const DonationProgress = dynamic(
-  () => import("../../components/Hackathon/DonationProgress"),
-  { ssr: false }
+// Create a visually-hidden style for accessibility
+const VisuallyHidden = styled('span')({
+  position: 'absolute',
+  width: '1px',
+  height: '1px',
+  padding: '0',
+  margin: '-1px',
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  borderWidth: '0',
+});
+
+// Add the style to the Typography component
+Typography.defaultProps = {
+  ...Typography.defaultProps,
+  classes: {
+    ...Typography?.defaultProps?.classes,
+    root: {
+      ...Typography?.defaultProps?.classes?.root,
+      '&.visually-hidden': {
+        position: 'absolute',
+        width: '1px',
+        height: '1px',
+        padding: '0',
+        margin: '-1px',
+        overflow: 'hidden',
+        clip: 'rect(0, 0, 0, 0)',
+        whiteSpace: 'nowrap',
+        borderWidth: '0',
+      },
+    },
+  },
+};
+
+// Loading placeholder component to reduce layout shift
+const LoadingPlaceholder = ({height = '300px', label = 'Loading content'}) => (
+  <Box 
+    sx={{ 
+      height: height, 
+      display: 'flex', 
+      flexDirection: 'column',
+      alignItems: 'center', 
+      justifyContent: 'center',
+      border: '1px solid #eee',
+      borderRadius: '4px',
+      mb: 3
+    }}
+    role="status"
+    aria-live="polite"
+  >
+    <CircularProgress 
+      size={40} 
+      aria-label={label}
+    />
+    <Typography 
+      variant="caption" 
+      sx={{ mt: 1, color: 'text.secondary' }}
+      className="visually-hidden"
+    >
+      {label}
+    </Typography>
+  </Box>
 );
+
+// Critical above-the-fold components (higher priority)
 const EventLinks = dynamic(
   () => import("../../components/Hackathon/EventLinks"),
-  { ssr: false }
+  { 
+    ssr: true,
+    loading: () => <LoadingPlaceholder height="150px" label="Loading application links" />
+  }
 );
-const HackathonLeaderboard = dynamic(
-  () => import("../../components/Hackathon/HackathonLeaderboard"),
-  { ssr: false }
-);
-const NonprofitList = dynamic(
-  () => import("../../components/Hackathon/NonprofitList"),
-  { ssr: false }
-);
+
 const EventCountdown = dynamic(
   () => import("../../components/Hackathon/EventCountdown"),
-  { ssr: true }
+  { 
+    ssr: true,
+    loading: () => <LoadingPlaceholder height="350px" label="Loading event timeline and countdown" />
+  }
 );
+
+// Secondary components that can load after initial render
+const NonprofitList = dynamic(
+  () => import("../../components/Hackathon/NonprofitList"),
+  { 
+    ssr: false,
+    loading: () => <LoadingPlaceholder height="400px" label="Loading nonprofit organizations" />
+  }
+);
+
+const DonationProgress = dynamic(
+  () => import("../../components/Hackathon/DonationProgress"),
+  { 
+    ssr: false,
+    loading: () => <LoadingPlaceholder height="200px" label="Loading donation progress" />
+  }
+);
+
+const HackathonLeaderboard = dynamic(
+  () => import("../../components/Hackathon/HackathonLeaderboard"),
+  { 
+    ssr: false,
+    loading: () => <LoadingPlaceholder height="350px" label="Loading hackathon statistics" />
+  }
+);
+
+// Below-the-fold components (lowest priority)
+const VolunteerList = dynamic(
+  () => import('../../components/Hackathon/VolunteerList'),
+  { 
+    ssr: false,
+    loading: () => <LoadingPlaceholder height="300px" label="Loading volunteer list" />
+  }
+);
+
+const TeamList = dynamic(
+  () => import('../../components/Hackathon/TeamList'),
+  { 
+    ssr: false,
+    loading: () => <LoadingPlaceholder height="300px" label="Loading team information" />
+  }
+);
+
 const EventConstraints = dynamic(
   () => import("../../components/Hackathon/EventConstraints"),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => <LoadingPlaceholder height="200px" label="Loading event guidelines" />
+  }
 );
+
 const InteractiveFAQ = dynamic(
   () => import("../../components/Hackathon/InteractiveFAQ"),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => <LoadingPlaceholder height="400px" label="Loading frequently asked questions" />
+  }
 );
 
 const faqData = [
@@ -284,11 +392,15 @@ export default function HackathonEvent({ eventData }) {
     return <div>Event not found</div>;
   }
 
+  // Create a more concise but informative description
   const metaDescription = event
-    ? `${event.location} | ${event.start_date} to ${event.end_date} | ${event.description}`
-    : "Join us for an exciting Opportunity Hack event!";
+    ? `Join ${event.title} in ${event.location} from ${event.start_date} to ${event.end_date}. Build technology solutions for nonprofits, meet fellow developers, and make a positive impact through coding. ${event.description?.substring(0, 100)}...`
+    : "Join us for an exciting Opportunity Hack event! Build technology solutions for nonprofits, meet fellow developers, and make a positive impact through coding.";
+  
   const metaImage = event?.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp";
-  const metaTitle = event ? `Hackathon: ${event.title}` : "Opportunity Hack Event";
+  const metaTitle = event ? `${event.title} - Opportunity Hack Hackathon Event` : "Opportunity Hack Hackathon Event";
+  
+  // Create a fully detailed structured data object for rich results
   const structuredData = event ? {
     "@context": "http://schema.org",
     "@type": "Event",
@@ -296,6 +408,8 @@ export default function HackathonEvent({ eventData }) {
     "description": event.description,
     "startDate": event.start_date,
     "endDate": event.end_date,
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "location": {
       "@type": "Place",
       "name": event.location,
@@ -304,13 +418,29 @@ export default function HackathonEvent({ eventData }) {
         "addressLocality": event.location
       }
     },
-    "image": metaImage,
+    "image": [
+      metaImage
+    ],
     "url": `https://ohack.dev/hack/${event_id}`,
     "organizer": {
       "@type": "Organization",
       "name": "Opportunity Hack",
-      "url": "https://ohack.dev"
-    }
+      "url": "https://ohack.dev",
+      "logo": "https://ohack.dev/ohack.png"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `https://ohack.dev/hack/${event_id}`,
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock",
+      "validFrom": event.start_date
+    },
+    "performer": {
+      "@type": "Organization",
+      "name": "Opportunity Hack Volunteers"
+    },
+    "keywords": ["hackathon", "nonprofit", "coding", "volunteers", "tech for good", event.location, "opportunity hack"]
   } : null;
 
   return (
@@ -318,34 +448,49 @@ export default function HackathonEvent({ eventData }) {
       <Head>
         <title>{metaTitle}</title>
         <meta name="description" content={metaDescription} />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta charSet="UTF-8" />
 
         {/* Open Graph tags for social media sharing */}
         <meta property="og:title" content={metaTitle} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="website" />
-        <meta
-          property="og:url"
-          content={`https://ohack.dev/hack/${event_id}`}
-        />
+        <meta property="og:url" content={`https://ohack.dev/hack/${event_id}`} />
         <meta property="og:image" content={metaImage} />
+        <meta property="og:image:alt" content={`${event?.title || 'Opportunity Hack'} event banner`} />
         <meta property="og:site_name" content="Opportunity Hack" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:updated_time" content={new Date().toISOString()} />
 
         {/* Twitter Card tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@OpportunityHack" />
+        <meta name="twitter:creator" content="@OpportunityHack" />
         <meta name="twitter:title" content={metaTitle} />
         <meta name="twitter:description" content={metaDescription} />
         <meta name="twitter:image" content={metaImage} />
+        <meta name="twitter:image:alt" content={`${event?.title || 'Opportunity Hack'} event banner`} />
 
         {/* Additional SEO-friendly meta tags */}
-        <meta
-          name="keywords"
-          content={`hackathon, ${event?.title || "opportunity hack"}, nonprofit, tech for good, ${event?.location || "various locations"}`}
-        />
+        <meta name="keywords" content={`hackathon, ${event?.title || "opportunity hack"}, nonprofit, technology, volunteering, coding, programming, tech for good, ${event?.location || "various locations"}, social impact, software development, community service`} />
         <meta name="author" content="Opportunity Hack" />
-        <meta name="robots" content="index, follow" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
         <meta name="language" content="English" />
+        <meta name="application-name" content="Opportunity Hack" />
+        <meta name="theme-color" content="#3f51b5" />
 
+        {/* Performance-related meta tags */}
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="format-detection" content="telephone=no" />
+        
+        {/* Preconnect to essential domains */}
+        <link rel="preconnect" href="https://cdn.ohack.dev" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+
+        {/* DNS Prefetch */}
+        <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
+        
         {/* Canonical URL */}
         <link rel="canonical" href={`https://ohack.dev/hack/${event_id}`} />
       </Head>
@@ -358,7 +503,7 @@ export default function HackathonEvent({ eventData }) {
         />
       )}
 
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" component="main">
         <HackathonHeader
           title={event.title}
           startDate={event.start_date}
@@ -367,16 +512,20 @@ export default function HackathonEvent({ eventData }) {
           description={event.description}
         />
 
-        <TableOfContents />
+        <nav aria-label="Event navigation">
+          <TableOfContents />
+        </nav>
 
         <Grid container spacing={3}>
           {/* Applications section */}
-          <Grid item xs={12}>
+          <Grid item xs={12} component="section" aria-labelledby="applications-heading" id="applications">
+            <Typography variant="h2" component="h2" id="applications-heading" className="visually-hidden">Applications</Typography>
             <EventLinks links={event.links} variant="applications" />
           </Grid>
           
           {/* Donation Progress and Event Links side by side on larger screens */}
-          <Grid container item spacing={3}>
+          <Grid container item spacing={3} component="section" aria-labelledby="event-info-heading">
+            <Typography variant="h2" component="h2" id="event-info-heading" className="visually-hidden">Event Information</Typography>
             <Grid item xs={12} md={6}>
               <DonationProgress
                 donationGoals={event.donation_goals}
@@ -389,7 +538,8 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
           
           {/* Hackathon Stats and Countdown side by side */}
-          <Grid container item spacing={3}>
+          <Grid container item spacing={3} component="section" aria-labelledby="event-stats-heading">
+            <Typography variant="h2" component="h2" id="event-stats-heading" className="visually-hidden">Event Timeline and Stats</Typography>
             {/* Order matters on mobile: Countdown first, then Stats */}
             <Grid item xs={12} md={6} id="countdown" order={{ xs: 1, md: 2 }}>
               <EventCountdown countdowns={event.countdowns} />
@@ -414,12 +564,13 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
           
           {/* Event Constraints */}
-          <Grid item xs={12}>
+          <Grid item xs={12} component="section" aria-labelledby="constraints-heading">
+            <Typography variant="h2" component="h2" id="constraints-heading" className="visually-hidden">Event Constraints</Typography>
             <EventConstraints constraints={event.constraints} />
           </Grid>
           
           {/* Nonprofit List */}
-          <Grid item xs={12} id="nonprofit">
+          <Grid item xs={12} id="nonprofit" component="section" aria-labelledby="nonprofit-section-heading">
             <NonprofitList
               nonprofits={event.nonprofits}
               teams={event.teams}
@@ -428,26 +579,41 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
           
           {/* Volunteer Lists */}
-          <Grid item xs={12} id="volunteer">
+          <Grid item xs={12} id="volunteer" component="section" aria-labelledby="volunteer-heading">
+            <Typography variant="h2" component="h2" id="volunteer-heading" className="visually-hidden">Volunteers</Typography>
             <VolunteerList event_id={event_id} type="volunteer" />
           </Grid>
-          <Grid item xs={12} id="mentor">
+          <Grid item xs={12} id="mentor" component="section" aria-labelledby="mentor-heading">
+            <Typography variant="h2" component="h2" id="mentor-heading" className="visually-hidden">Mentors</Typography>
             <VolunteerList event_id={event_id} type="mentor" />
           </Grid>
-          <Grid item xs={12} id="judge">
+          <Grid item xs={12} id="judge" component="section" aria-labelledby="judge-heading">
+            <Typography variant="h2" component="h2" id="judge-heading" className="visually-hidden">Judges</Typography>
             <VolunteerList event_id={event_id} type="judge" />
           </Grid>
           
           {/* Team List */}
-          <Grid item xs={12} id="teams">
-            <Typography variant="h4" gutterBottom>
-            Teams
+          <Grid item xs={12} id="teams" component="section" aria-labelledby="teams-heading">
+            <Typography 
+              variant="h2" 
+              component="h2" 
+              id="teams-heading" 
+              gutterBottom
+              sx={{ 
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                fontWeight: 600,
+                letterSpacing: '-0.015em',
+                marginBottom: 2
+              }}
+            >
+              Teams
             </Typography>
             <TeamList teams={event.teams} eventId={event_id} />
           </Grid>
           
           {/* FAQ */}
-          <Grid item xs={12} id="faq">
+          <Grid item xs={12} id="faq" component="section" aria-labelledby="faq-heading">
+            <Typography variant="h2" component="h2" id="faq-heading" className="visually-hidden">Frequently Asked Questions</Typography>
             <InteractiveFAQ faqData={faqData} title={`${event.title} FAQ`} />
           </Grid>
         </Grid>
