@@ -1,0 +1,617 @@
+import React from 'react';
+import {
+  Box,
+  Typography,
+  Paper,
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  CircularProgress,
+  Alert,
+  AlertTitle,
+  Button,
+  Card,
+  CardContent,
+  Stack,
+  Grid,
+  Link as MuiLink,
+  Avatar,
+  Skeleton
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PendingIcon from '@mui/icons-material/Pending';
+import ErrorIcon from '@mui/icons-material/Error';
+import LaptopIcon from '@mui/icons-material/Laptop';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import BusinessIcon from '@mui/icons-material/Business';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import GroupIcon from '@mui/icons-material/Group';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import HelpIcon from '@mui/icons-material/Help';
+import ChatIcon from '@mui/icons-material/Chat';
+import LinkIcon from '@mui/icons-material/Link';
+import EventIcon from '@mui/icons-material/Event';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import Link from 'next/link';
+
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(4),
+  borderRadius: theme.spacing(1),
+  boxShadow: '0 3px 10px rgba(0, 0, 0, 0.08)',
+}));
+
+const StatusChip = styled(Chip)(({ theme, status }) => {
+  const getStatusColor = () => {
+    switch (status) {
+      case 'IN_REVIEW':
+        return { bg: theme.palette.warning.light, color: theme.palette.warning.dark };
+      case 'APPROVED':
+        return { bg: theme.palette.success.light, color: theme.palette.success.dark };
+      case 'PROJECT_COMPLETE':
+        return { bg: theme.palette.info.light, color: theme.palette.info.dark };
+      case 'REJECTED':
+        return { bg: theme.palette.error.light, color: theme.palette.error.dark };
+      default:
+        return { bg: theme.palette.grey[200], color: theme.palette.grey[700] };
+    }
+  };
+
+  const colors = getStatusColor();
+  
+  return {
+    backgroundColor: colors.bg,
+    color: colors.color,
+    fontWeight: 'bold',
+    '& .MuiChip-icon': {
+      color: colors.color
+    }
+  };
+});
+
+const InfoChip = styled(Chip)(({ theme }) => ({
+  margin: theme.spacing(0.5),
+  backgroundColor: theme.palette.background.paper,
+  border: `1px solid ${theme.palette.divider}`,
+  '& .MuiChip-icon': {
+    color: theme.palette.text.secondary
+  }
+}));
+
+const ResourceCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)'
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  fontWeight: 600,
+  borderRadius: theme.shape.borderRadius,
+  textTransform: 'none',
+  margin: theme.spacing(0.5),
+  whiteSpace: 'nowrap',
+}));
+
+const getStatusIcon = (status) => {
+  switch (status) {
+    case 'IN_REVIEW':
+      return <PendingIcon />;
+    case 'APPROVED':
+      return <CheckCircleIcon />;
+    case 'PROJECT_COMPLETE':
+      return <LaptopIcon />;
+    case 'REJECTED':
+      return <ErrorIcon />;
+    default:
+      return <PendingIcon />;
+  }
+};
+
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'IN_REVIEW':
+      return 'In Review';
+    case 'APPROVED':
+      return 'Approved';
+    case 'PROJECT_COMPLETE':
+      return 'Project Complete';
+    case 'REJECTED':
+      return 'Not Approved';
+    default:
+      return 'Pending';
+  }
+};
+
+// Function to get the color for header background based on team status
+const getHeaderColor = (status, theme) => {
+  switch (status) {
+    case 'APPROVED':
+      return theme.palette.success.light;
+    case 'IN_REVIEW':
+      return theme.palette.warning.light;
+    case 'PROJECT_COMPLETE':
+      return theme.palette.info.light;
+    case 'REJECTED':
+      return theme.palette.error.light;
+    default:
+      return theme.palette.grey[100];
+  }
+};
+
+const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) => {
+  // Handle loading state with better UX
+  if (loading) {
+    return (
+      <StyledPaper>
+        <Typography variant="h5" gutterBottom>
+          Your Hackathon Team
+        </Typography>
+        <Box sx={{ mt: 3, mb: 2 }}>
+          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: 1, mb: 2 }} />
+          <Skeleton variant="text" width="60%" height={30} sx={{ mb: 1 }} />
+          <Skeleton variant="text" width="80%" height={25} />
+          <Skeleton variant="text" width="40%" height={30} sx={{ mt: 2 }} />
+          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+            <Skeleton variant="rectangular" width={120} height={36} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" width={150} height={36} sx={{ borderRadius: 1 }} />
+          </Box>
+        </Box>
+        <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+          Loading your team information...
+        </Typography>
+      </StyledPaper>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <StyledPaper>
+        <Alert severity="error">
+          <AlertTitle>Error Loading Team Information</AlertTitle>
+          {error}
+        </Alert>
+      </StyledPaper>
+    );
+  }
+
+  // Helper function to get nonprofit details
+  const getNonprofitName = (id) => {
+    if(nonprofits && nonprofits.length > 0) {
+      const nonprofit = nonprofits.find((n) => n.id === id);
+      return nonprofit ? nonprofit.name : "Assigned Nonprofit";
+    }
+    return "Assigned Nonprofit";
+  };
+
+  const getNonprofit = (id) => {
+    if(nonprofits && nonprofits.length > 0) {
+      return nonprofits.find((n) => n.id === id);
+    }
+    return null;
+  };
+
+  // If no teams yet, show a helpful message
+  if (!teams || teams.length === 0) {
+    return (
+      <StyledPaper>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <AlertTitle>No Teams Yet</AlertTitle>
+          You don't have any teams for this hackathon yet. Complete the form below to create your team.
+        </Alert>
+        
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" gutterBottom>Hackathon Resources</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <ResourceCard>
+                <CardContent>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    <HelpIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />
+                    Need Help?
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    Join the #ask-a-mentor Slack channel for support from our mentors during the hackathon.
+                  </Typography>
+                  <ActionButton 
+                    variant="outlined" 
+                    size="small"
+                    component="a"
+                    href="https://opportunity-hack.slack.com/app_redirect?channel=ask-a-mentor"
+                    target="_blank"
+                    startIcon={<ChatIcon />}
+                  >
+                    Join #ask-a-mentor
+                  </ActionButton>
+                </CardContent>
+              </ResourceCard>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <ResourceCard>
+                <CardContent>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    <VolunteerActivismIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />
+                    Track Your Hours
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    Don't forget to track your volunteer hours to earn recognition and rewards.
+                  </Typography>
+                  <ActionButton 
+                    variant="outlined" 
+                    size="small"
+                    component={Link}
+                    href="/volunteer/track"
+                    startIcon={<AccessTimeIcon />}
+                  >
+                    Track Hours
+                  </ActionButton>
+                </CardContent>
+              </ResourceCard>
+            </Grid>
+          </Grid>
+        </Box>
+      </StyledPaper>
+    );
+  }
+
+  // Sort teams so approved teams show first
+  const sortedTeams = [...teams].sort((a, b) => {
+    // Priority order: APPROVED, IN_REVIEW, PROJECT_COMPLETE, others
+    const statusOrder = { 
+      'APPROVED': 0, 
+      'IN_REVIEW': 1, 
+      'PROJECT_COMPLETE': 2,
+      'REJECTED': 3
+    };
+    
+    return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+  });
+
+  // Show team hub view
+  return (
+    <StyledPaper>
+      <Typography variant="h5" gutterBottom>
+        Your Hackathon Team Hub
+      </Typography>
+      
+      {sortedTeams.length > 1 && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <AlertTitle>Multiple Teams</AlertTitle>
+          You are part of multiple teams for this hackathon. Your active team will be listed first.
+        </Alert>
+      )}
+      
+      {sortedTeams.map((team, index) => (
+        <Box key={team.id} sx={{ mb: index < sortedTeams.length - 1 ? 4 : 0 }}>
+          {/* Team Header */}
+          <Card
+            elevation={3}
+            sx={{
+              mb: 3,
+              borderRadius: '8px 8px 0 0',
+              backgroundColor: theme => getHeaderColor(team.status, theme),
+              position: 'relative',
+              overflow: 'visible'
+            }}
+          >
+            <CardContent sx={{ pb: 2 }}>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Avatar 
+                    sx={{ 
+                      width: 56, 
+                      height: 56, 
+                      bgcolor: 'primary.main',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)' 
+                    }}
+                  >
+                    <GroupIcon fontSize="large" />
+                  </Avatar>
+                </Grid>
+                <Grid item xs>
+                  <Box display="flex" alignItems="center" flexWrap="wrap">
+                    <Typography variant="h5" component="h2" sx={{ fontWeight: 600, mr: 2 }}>
+                      {team.name}
+                    </Typography>
+                    <StatusChip
+                      icon={getStatusIcon(team.status)}
+                      label={getStatusLabel(team.status)}
+                      status={team.status}
+                      size="medium"
+                    />
+                  </Box>
+                  {team.location && (
+                    <Typography variant="body2" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
+                      <LocationOnIcon fontSize="small" sx={{ mr: 0.5 }} /> {team.location}
+                    </Typography>
+                  )}
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Main content card */}
+          <Card elevation={1} sx={{ mb: 3, borderRadius: 2 }}>
+            <CardContent>
+              {/* Warning message if team is not yet approved */}
+              {team.status === 'IN_REVIEW' && (
+                <Alert severity="warning" sx={{ mb: 3 }}>
+                  <AlertTitle>Team Under Review</AlertTitle>
+                  Your team is currently being reviewed by the hackathon organizers. You'll be notified in Slack when your team is approved.
+                </Alert>
+              )}
+
+              {/* Team is approved - primary info */}
+              {team.status === 'APPROVED' && (
+                <Alert severity="success" sx={{ mb: 3 }}>
+                  <AlertTitle>Team Approved</AlertTitle>
+                  Your team has been approved! Be sure to join your team's Slack channel and check frequently for updates.
+                </Alert>
+              )}
+
+              {/* Slack Communication - Critical information */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ChatIcon fontSize="small" sx={{ mr: 1 }} /> Team Communication
+                </Typography>
+                <Card variant="outlined" sx={{ borderLeft: '4px solid #4A154B', borderRadius: 1 }}>
+                  <CardContent>
+                    <Typography variant="body1" paragraph>
+                      <strong>Team Slack Channel:</strong>{' '}
+                      <MuiLink 
+                        href={`https://opportunity-hack.slack.com/app_redirect?channel=${team.slack_channel}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ fontWeight: 'bold' }}
+                      >
+                        #{team.slack_channel}
+                      </MuiLink>
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      💬 <strong>Important:</strong> All team members must join this Slack channel for the entire event.
+                      This is where organizers will share important announcements and you'll coordinate with your team.
+                    </Typography>
+                    <Box mt={1.5}>
+                      <ActionButton
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        href={`https://opportunity-hack.slack.com/app_redirect?channel=${team.slack_channel}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Join #{team.slack_channel}
+                      </ActionButton>
+                      <ActionButton
+                        variant="outlined"
+                        size="small"
+                        href="https://opportunity-hack.slack.com/app_redirect?channel=ask-a-mentor"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ ml: 1 }}
+                      >
+                        Join #ask-a-mentor for help
+                      </ActionButton>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+
+              {/* Selected Nonprofit */}
+              {team.selected_nonprofit_id && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                    <BusinessIcon fontSize="small" sx={{ mr: 1 }} /> Assigned Nonprofit
+                  </Typography>
+                  <Card variant="outlined" sx={{ borderLeft: '4px solid #2E7D32', borderRadius: 1 }}>
+                    <CardContent>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                        <Link 
+                          href={`/nonprofit/${team.selected_nonprofit_id}`} 
+                          passHref
+                        >
+                          <MuiLink underline="hover" color="inherit">
+                            {getNonprofitName(team.selected_nonprofit_id)}
+                          </MuiLink>
+                        </Link>
+                      </Typography>
+                      {(() => {
+                        const nonprofit = getNonprofit(team.selected_nonprofit_id);
+                        return nonprofit && nonprofit.mission ? (
+                          <Typography variant="body2" color="text.secondary">
+                            {nonprofit.mission?.substring(0, 150)}
+                            {nonprofit.mission?.length > 150 ? '...' : ''}
+                          </Typography>
+                        ) : null;
+                      })()}
+                      <Box mt={1.5}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          component={Link}
+                          href={`/nonprofit/${team.selected_nonprofit_id}`}
+                        >
+                          View Nonprofit Details
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Box>
+              )}
+
+              {/* GitHub Information - Critical for team lead */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <GitHubIcon fontSize="small" sx={{ mr: 1 }} /> GitHub Repository
+                </Typography>
+                <Card variant="outlined" sx={{ borderLeft: '4px solid #171515', borderRadius: 1 }}>
+                  <CardContent>
+                    <Typography variant="body1" paragraph>
+                      <strong>Team Lead GitHub:</strong>{' '}
+                      <MuiLink 
+                        href={`https://github.com/${team.github_username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        @{team.github_username}
+                      </MuiLink>
+                    </Typography>
+                    
+                    {event && event.git_org && (
+                      <>
+                        <Typography variant="body2" paragraph sx={{ color: 'text.secondary' }}>
+                          ⚠️ <strong>Important:</strong> Your team should only use the official hackathon GitHub organization for the entire event.
+                          Do not create separate repositories outside this organization.
+                        </Typography>
+                        
+                        {team.github_username && (
+                          <Typography variant="body2" paragraph sx={{ color: 'text.secondary' }}>
+                            👉 <strong>Team Lead Action Required:</strong> {team.github_username} must create a repository for the team in the
+                            {' '}<MuiLink href={`https://github.com/${event.git_org}`} target="_blank">@{event.git_org}</MuiLink> organization
+                            and add all team members as collaborators.
+                          </Typography>
+                        )}
+                        
+                        <Box mt={1.5}>
+                          <ActionButton 
+                            variant="contained" 
+                            color="inherit"
+                            size="small"
+                            href={`https://github.com/${event.git_org}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            startIcon={<GitHubIcon />}
+                            sx={{ bgcolor: '#171515', color: 'white', '&:hover': { bgcolor: '#2b2b2b' } }}
+                          >
+                            GitHub Organization
+                          </ActionButton>
+                          <ActionButton 
+                            variant="outlined" 
+                            size="small"
+                            href="https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/creating-a-new-repository-for-your-organization"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ ml: 1 }}
+                          >
+                            Create Repo Documentation
+                          </ActionButton>
+                        </Box>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </Box>
+            </CardContent>
+          </Card>
+
+          {/* Quick Action Buttons */}
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    <EventIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} /> Hackathon Event
+                  </Typography>
+                  <ActionButton
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    component={Link}
+                    href={`/hack/${eventId}`}
+                    sx={{ mt: 1 }}
+                  >
+                    View Event Details
+                  </ActionButton>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    <AccountCircleIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} /> Your Profile
+                  </Typography>
+                  <ActionButton
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    component={Link}
+                    href="/profile"
+                    sx={{ mt: 1 }}
+                  >
+                    Update Profile
+                  </ActionButton>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    <AccessTimeIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} /> Track Hours
+                  </Typography>
+                  <ActionButton
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    component={Link}
+                    href="/volunteer/track"
+                    sx={{ mt: 1 }}
+                  >
+                    Log Volunteer Time
+                  </ActionButton>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    <HelpIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} /> Support
+                  </Typography>
+                  <ActionButton
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    href="https://opportunity-hack.slack.com/app_redirect?channel=ask-a-mentor"
+                    target="_blank"
+                    sx={{ mt: 1 }}
+                  >
+                    Ask a Mentor
+                  </ActionButton>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {/* Divider between multiple teams */}
+          {index < sortedTeams.length - 1 && <Divider sx={{ my: 3 }} />}
+        </Box>
+      ))}
+      
+      {/* Helpful Information Box */}
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6" gutterBottom>Helpful Resources</Typography>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <AlertTitle>Win Prizes & Get Recognition</AlertTitle>
+          Don't forget to <Link href="/profile" passHref><MuiLink>update your profile</MuiLink></Link> and <Link href="/volunteer/track" passHref><MuiLink>track your volunteer hours</MuiLink></Link> to be eligible for prizes and recognition!
+        </Alert>
+        
+        <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+          If you need to refresh this page to see updated team status, use the browser's refresh button.
+        </Typography>
+      </Box>
+    </StyledPaper>
+  );
+};
+
+export default TeamStatusPanel;

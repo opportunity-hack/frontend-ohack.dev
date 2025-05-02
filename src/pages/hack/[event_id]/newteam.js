@@ -26,7 +26,7 @@ import TeamDetailsForm from "../../../components/TeamCreation/TeamDetailsForm";
 import GitHubInfoForm from "../../../components/TeamCreation/GitHubInfoForm";
 import NonprofitSelectionStep from "../../../components/TeamCreation/NonprofitSelectionStep";
 import ConfirmationSummary from "../../../components/TeamCreation/ConfirmationSummary";
-import FormStepper from "../../../components/TeamCreation/FormStepper";
+import TeamStatusPanel from "../../../components/TeamCreation/TeamStatusPanel";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -71,6 +71,7 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   const [comments, setComments] = useState('');
   const [rankingMode, setRankingMode] = useState('select'); // 'select' or 'rank'
   const [slackUsers, setSlackUsers] = useState([]);
+  const [myTeams, setMyTeams] = useState([]);
 
   // New state variables for validation
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
@@ -85,9 +86,15 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   const router = useRouter();
   const { event_id } = router.query;
 
+  const org = userClass.getOrgByName("Opportunity Hack Org");
+  const isAdmin = org.hasPermission("volunteer.admin");
+  const orgId = org.orgId;
+
+
   useEffect(() => {
     if (event_id) {
       fetchHackathonEvent();
+      fetchMyTeams();
     }
   }, [event_id]);
 
@@ -125,9 +132,35 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   };
 
   useEffect(() => {
-    fetchActiveSlackUsers();
+    fetchActiveSlackUsers();    
   }, [event_id, accessToken]);
 
+
+
+  const fetchMyTeams = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${event_id}/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+      if (response && response.data) {
+        console.log("Team details:", response.data.teams);        
+        setMyTeams(response.data.teams);
+        
+      } else {
+        setError("Failed to fetch team details. Please try again later.");
+      }
+    } catch (err) {
+      console.error("Error fetching team details:", err);
+      setError("Failed to fetch team details. Please try again later.");
+    }
+  };
 
   const fetchHackathonEvent = async () => {
     try {
@@ -700,46 +733,110 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
     }
   };
 
-  return (
-    <Container maxWidth="md">
-      <Head>
-        <title>Create a New Team - Opportunity Hack</title>
-        <meta
-          name="description"
-          content="Create a new team for Opportunity Hack and start working on nonprofit projects."
-        />
-      </Head>
-      <Box my={4}>
-        <Typography variant="h2" mt={10} align="center" gutterBottom>
-          Create a New Team <FaRocket style={{ verticalAlign: "middle" }} />
-        </Typography>
-        <Typography variant="body1" align="center" paragraph>
-          Join forces and make a difference! Set up your team, connect on Slack,
-          and start working on impactful nonprofit projects.
-        </Typography>
-      </Box>
-      <StyledPaper>
-        {success ? (
-          <Zoom in={success}>
-            <Alert
-              severity="success"
-              sx={{ mb: 2, fontSize: "16px", alignItems: "center" }}
-              icon={<FaRocket size={24} />}
-            >
-              <Typography variant="h6">{successMessage}</Typography>
-              <Typography variant="body1">
-                Your team is ready to make a difference!
-                <br /><br />
-                <strong>Next Steps:</strong>
-                <ul>
-                  <li>We'll notify you in Slack when your team is assigned to a nonprofit.
-                  </li>
-                </ul>
+  // Check if user already has an approved team
+  const hasApprovedTeam = myTeams && myTeams.some(team => 
+    team.status === 'APPROVED' || team.status === 'PROJECT_COMPLETE'
+  );
+  
+  // Page title dynamically changes based on team status
+  const pageTitle = hasApprovedTeam 
+    ? "Your Hackathon Team - Opportunity Hack" 
+    : "Create a New Team - Opportunity Hack";
+  
+  // Appropriate meta description based on context
+  const metaDescription = hasApprovedTeam
+    ? "Manage your hackathon team, access resources, and coordinate with your teammates during the Opportunity Hack event."
+    : "Create a new team for Opportunity Hack and start working on nonprofit projects.";
 
+  return (
+    <Container maxWidth="lg">
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {/* Preload critical resources */}
+        <link rel="preconnect" href="https://opportunity-hack.slack.com" />
+        <link rel="preconnect" href="https://github.com" />
+      </Head>
+      
+      {/* Add spacing to avoid overlapping with fixed top navigation */}
+      <Box sx={{ pt: { xs: '80px', sm: '100px' }, pb: 4 }}>
+        {/* Team Status Panel - Optimized for immediate loading */}
+        <TeamStatusPanel
+          eventId={event_id}
+          teams={myTeams}
+          loading={!myTeams && loading}
+          error={error}
+          nonprofits={nonprofits}
+          event={event}
+        />
+
+        {/* Team Creation Form - Less prominent when team exists */}
+        {hasApprovedTeam ? (
+          <Box sx={{ mt: 6, mb: 4 }}>
+            <Alert 
+              severity="info" 
+              variant="outlined"
+              sx={{ mb: 3 }}
+            >
+              <Typography variant="subtitle1" fontWeight="bold">
+                Already Part of a Team
+              </Typography>
+              <Typography variant="body2">
+                You already have an approved team for this hackathon. Creating another team is not recommended 
+                unless you've been instructed to do so by hackathon organizers.
               </Typography>
             </Alert>
-          </Zoom>
+            
+            <Box textAlign="center">
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => document.getElementById('create-team-section').scrollIntoView({ behavior: 'smooth' })}
+                sx={{ mb: 2 }}
+              >
+                Show Team Creation Form
+              </Button>
+            </Box>
+          </Box>
         ) : (
+          <Box my={4} id="create-team-section">
+            <Typography variant="h3" align="center" gutterBottom>
+              Create a New Team <FaRocket style={{ verticalAlign: "middle" }} />
+            </Typography>
+            <Typography variant="body1" align="center" paragraph>
+              Join forces and make a difference! Set up your team, connect on Slack,
+              and start working on impactful nonprofit projects.
+            </Typography>
+          </Box>
+        )}
+        
+        {/* Team Creation Form */}
+        <Box id="create-team-section" sx={{ 
+          display: hasApprovedTeam ? 'none' : 'block',
+          opacity: hasApprovedTeam ? 0.9 : 1
+        }}>
+          <StyledPaper>
+            {success ? (
+              <Zoom in={success}>
+                <Alert
+                  severity="success"
+                  sx={{ mb: 2, fontSize: "16px", alignItems: "center" }}
+                  icon={<FaRocket size={24} />}
+                >
+                  <Typography variant="h6">{successMessage}</Typography>
+                  <Typography variant="body1">
+                    Your team application has been submitted successfully!
+                    <br /><br />
+                    <strong>Next Steps:</strong>
+                    <ul>
+                      <li>We'll notify you in Slack when your team is approved.</li>
+                      <li>Refresh this page to see your team's status update.</li>
+                    </ul>
+                  </Typography>
+                </Alert>
+              </Zoom>
+            ) : (
           <Box>
             <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
               {steps.map((label) => (
@@ -767,9 +864,9 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
                   }
                   sx={{
                     opacity: isNextDisabled() ? 0.7 : 1,
-                    '&:disabled': {
-                      backgroundColor: 'rgba(25, 118, 210, 0.5)',
-                      color: 'white',
+                    "&:disabled": {
+                      backgroundColor: "rgba(25, 118, 210, 0.5)",
+                      color: "white",
                     },
                   }}
                 >
@@ -787,10 +884,10 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
                 {activeStep === 0
                   ? "Please complete your team details to continue"
                   : activeStep === 1
-                  ? "Please provide a valid GitHub username"
-                  : activeStep === 2
-                  ? "Please select a nonprofit organization"
-                  : ""}
+                    ? "Please provide a valid GitHub username"
+                    : activeStep === 2
+                      ? "Please select a nonprofit organization"
+                      : ""}
               </Typography>
             )}
             {loading && (
@@ -810,7 +907,9 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
             )}
           </Box>
         )}
-      </StyledPaper>
+          </StyledPaper>
+        </Box>
+      </Box>
     </Container>
   );
 });
