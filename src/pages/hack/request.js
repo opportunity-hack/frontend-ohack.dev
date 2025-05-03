@@ -195,6 +195,17 @@ export default function CreateHackathon() {
     return isAfter(date, fiveMonthsFromNow);
   };
 
+  // Validate email format
+  const validateEmail = (email) => {
+    // Pattern for standard email format
+    const standardEmailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
+    // Pattern for "Name <email@example.com>" format
+    const nameEmailPattern = /^[^<>]+<[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}>$/;
+    
+    return standardEmailPattern.test(email) || nameEmailPattern.test(email);
+  };
+
   // Handle form field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -289,6 +300,8 @@ export default function CreateHackathon() {
       if (!formData.organizationType) newErrors.organizationType = "Required";
       if (!formData.contactName) newErrors.contactName = "Required";
       if (!formData.contactEmail) newErrors.contactEmail = "Required";
+      else if (!validateEmail(formData.contactEmail)) 
+        newErrors.contactEmail = "Please enter a valid email address (e.g., email@example.com or Name <email@example.com>)";
       if (!formData.contactPhone) newErrors.contactPhone = "Required";
     }
     
