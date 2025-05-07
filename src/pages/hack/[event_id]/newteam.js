@@ -252,6 +252,38 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
       setError("Failed to fetch nonprofit information. Please try again later.");
     }
   };
+
+  // Get my proifile information and if user.github is set, set it to githubUsername
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile`,
+          {
+            headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
+          }
+        );
+        if (response && response.data) {
+          console.log("User profile:", response.data);
+          const userProfile = response.data;
+          if (userProfile.github) {
+            setGithubUsername(userProfile.github);
+          }
+          
+        }
+      } catch (err) {
+        console.error("Error fetching user profile:", err);
+        setError("Failed to fetch user profile. Please try again later.");
+      }
+    };
+    fetchUserProfile();
+  }, [accessToken, orgId]);
+  
+
   
   // Filter nonprofits based on search term
   const filterNonprofits = useCallback((term) => {

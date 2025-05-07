@@ -105,11 +105,15 @@ const getStatusIcon = (status) => {
   switch (status) {
     case 'IN_REVIEW':
       return <PendingIcon />;
-    case 'APPROVED':
+    case 'NONPROFIT_SELECTED':
+      return <BusinessIcon />;
+    case 'ONBOARDED':
       return <CheckCircleIcon />;
+    case 'SWAG_RECEIVED':
+      return <VolunteerActivismIcon />;
     case 'PROJECT_COMPLETE':
       return <LaptopIcon />;
-    case 'REJECTED':
+    case 'INACTIVE':
       return <ErrorIcon />;
     default:
       return <PendingIcon />;
@@ -120,12 +124,16 @@ const getStatusLabel = (status) => {
   switch (status) {
     case 'IN_REVIEW':
       return 'In Review';
-    case 'APPROVED':
-      return 'Approved';
+    case 'NONPROFIT_SELECTED':
+      return 'Nonprofit Selected';
+    case 'ONBOARDED':
+      return 'Onboarded';
+    case 'SWAG_RECEIVED':
+      return 'Swag Received';
     case 'PROJECT_COMPLETE':
       return 'Project Complete';
-    case 'REJECTED':
-      return 'Not Approved';
+    case 'INACTIVE':
+      return 'Inactive';
     default:
       return 'Pending';
   }
@@ -466,7 +474,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
                       </MuiLink>
                     </Typography>
                     
-                    {event && event.git_org && (
+                    {event && event.github_org && (
                       <>
                         <Typography variant="body2" paragraph sx={{ color: 'text.secondary' }}>
                           ⚠️ <strong>Important:</strong> Your team should only use the official hackathon GitHub organization for the entire event.
@@ -476,7 +484,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
                         {team.github_username && (
                           <Typography variant="body2" paragraph sx={{ color: 'text.secondary' }}>
                             👉 <strong>Team Lead Action Required:</strong> {team.github_username} must create a repository for the team in the
-                            {' '}<MuiLink href={`https://github.com/${event.git_org}`} target="_blank">@{event.git_org}</MuiLink> organization
+                            {' '}<MuiLink href={`https://github.com/${event.github_org}`} target="_blank">@{event.github_org}</MuiLink> organization
                             and add all team members as collaborators.
                           </Typography>
                         )}
@@ -486,7 +494,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
                             variant="contained" 
                             color="inherit"
                             size="small"
-                            href={`https://github.com/${event.git_org}`}
+                            href={`https://github.com/${event.github_org}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             startIcon={<GitHubIcon />}

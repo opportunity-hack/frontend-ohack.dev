@@ -37,7 +37,8 @@ import {
   TableCell,
   TableBody,
   TablePagination,
-  useTheme
+  useTheme,
+  Link
 } from '@mui/material';
 import { 
   FaEdit, 
@@ -63,6 +64,7 @@ import {
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
+import UserSearchDialog from './UserSearchDialog';
 
 // Status options and their colors for visual representation
 const TEAM_STATUS_OPTIONS = [
@@ -75,7 +77,7 @@ const TEAM_STATUS_OPTIONS = [
 ];
 
 // Component for managing teams in the admin panel
-const TeamManagement = ({ orgId, hackathons }) => {
+const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon }) => {
   const theme = useTheme();
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
@@ -85,26 +87,25 @@ const TeamManagement = ({ orgId, hackathons }) => {
   const [teams, setTeams] = useState([]);
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedHackathon, setSelectedHackathon] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({
     key: "created",
     direction: "desc",
   });
-
-  // State for team detail editing
+  // Add nonprofitMap state to store nonprofit id to name mapping
+  const [nonprofitMap, setNonprofitMap] = useState({});
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [teamData, setTeamData] = useState(null);
   const [nonprofitOptions, setNonprofitOptions] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
+  const [tableLoading, setTableLoading] = useState(false); // Add a separate loading state for table operations
 
   // Dialog states
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
-  const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
-  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [userSearchDialogOpen, setUserSearchDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogAction, setConfirmDialogAction] = useState(null);
   const [confirmDialogData, setConfirmDialogData] = useState(null);
@@ -174,6 +175,9 @@ const TeamManagement = ({ orgId, hackathons }) => {
       if (response.data && response.data.teams) {
         setTeams(response.data.teams);
         setFilteredTeams(response.data.teams);
+        
+        // Fetch nonprofits to build the map for displaying nonprofit names
+        fetchNonprofits(hackathonId);
       }
     } catch (error) {
       console.error("Error fetching teams:", error);
@@ -198,6 +202,13 @@ const TeamManagement = ({ orgId, hackathons }) => {
 
       if (response.data && response.data.nonprofits) {
         setNonprofitOptions(response.data.nonprofits);
+        
+        // Build the nonprofit map for quick lookups
+        const npMap = {};
+        response.data.nonprofits.forEach(nonprofit => {
+          npMap[nonprofit.id] = nonprofit.name;
+        });
+        setNonprofitMap(npMap);
       }
     } catch (error) {
       console.error("Error fetching nonprofits:", error);
@@ -205,8 +216,9 @@ const TeamManagement = ({ orgId, hackathons }) => {
     }
   };
 
-  // Load team details for editing
+  // Load team details for editing - improve data handling
   const loadTeamDetails = async (teamId) => {
+    setTableLoading(true); // Use the table-specific loading state
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${teamId}`,
@@ -219,15 +231,20 @@ const TeamManagement = ({ orgId, hackathons }) => {
       );
       console.log("Team Details Response:", response.data);
       if (response.data && response.data.team) {
-        setSelectedTeam(response.data.team);
-        setTeamData({
+        // Ensure team_members is always an array to prevent rendering issues
+        const team = {
           ...response.data.team,
+          team_members: response.data.team.team_members || [],
           active: response.data.team.active === "True",
-        });
+        };
+        setSelectedTeam(team);
+        setTeamData(team);
       }
     } catch (error) {
       console.error("Error fetching team details:", error);
       enqueueSnackbar("Failed to fetch team details", { variant: "error" });
+    } finally {
+      setTableLoading(false); // End loading state
     }
   };
 
@@ -264,19 +281,18 @@ const TeamManagement = ({ orgId, hackathons }) => {
     setLoading(true);
     try {
       const response = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,        
         {
-          ...teamData,
-          active: teamData.active ? "True" : "False",
+            ...teamData,
+            active: teamData.active ? "True" : "False",          
         },
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
+            authorization: `Bearer ${accessToken}`,
+            "content-type": "application/json",
             "X-Org-Id": orgId,
-          },
-        }
-      );
+          },                
+        });
 
       if (response.data && response.data.success) {
         enqueueSnackbar("Team updated successfully", { variant: "success" });
@@ -323,47 +339,27 @@ const TeamManagement = ({ orgId, hackathons }) => {
     }
   };
 
-  // Add a member to the team
-  const handleAddMember = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/member`,
-        {
-          email: newMemberEmail,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "X-Org-Id": orgId,
-          },
-        }
-      );
-
-      if (response.data && response.data.success) {
-        enqueueSnackbar("Team member added successfully", {
-          variant: "success",
-        });
-        setAddMemberDialogOpen(false);
-        setNewMemberEmail("");
-        loadTeamDetails(teamData.id);
-      }
-    } catch (error) {
-      console.error("Error adding team member:", error);
-      enqueueSnackbar("Failed to add team member", { variant: "error" });
-    } finally {
-      setLoading(false);
+  // Handle user selection from user search dialog
+  const handleUserSelect = (user) => {
+    if (user && user.id) {
+      console.log("User added to team:", user);
+      // Reload team details to reflect the new member
+      loadTeamDetails(teamData.id);
+      // Show success message
+      enqueueSnackbar(`${user.name || 'User'} added to team successfully`, { 
+        variant: "success" 
+      });
     }
   };
 
   // Remove a member from the team
   const handleRemoveMember = async (memberId) => {
-    setLoading(true);
+    setTableLoading(true); // Use table-specific loading
     try {
       const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/member/${memberId}`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${teamData.id}/member`,
         {
+          data: { id: memberId },
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
@@ -372,22 +368,51 @@ const TeamManagement = ({ orgId, hackathons }) => {
       );
 
       if (response.data && response.data.success) {
-        enqueueSnackbar("Team member removed successfully", {
+        enqueueSnackbar(response.data.message || "Team member removed successfully", {
           variant: "success",
         });
-        loadTeamDetails(teamData.id);
+        
+        // Reload team details immediately after successful removal
+        await loadTeamDetails(teamData.id);
       }
     } catch (error) {
       console.error("Error removing team member:", error);
-      enqueueSnackbar("Failed to remove team member", { variant: "error" });
+      enqueueSnackbar(error.response?.data?.message || "Failed to remove team member", { variant: "error" });
     } finally {
-      setLoading(false);
+      setTableLoading(false); // End loading
     }
   };
 
+  // Delete the team
+  const handleDeleteTeam = async (teamId) => {
+    setTableLoading(true); // Use table-specific loading
+    try {
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${teamId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+      if (response.data && response.data.success) {
+        enqueueSnackbar("Team deleted successfully", { variant: "success" });
+        setEditDialogOpen(false);
+        fetchTeams(selectedHackathon);
+      }
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      enqueueSnackbar("Failed to delete team", { variant: "error" });
+    } finally {
+      setTableLoading(false); // End loading
+    }
+  };
+  
+
   // Set a member as team lead
   const handleSetTeamLead = async (memberId) => {
-    setLoading(true);
+    setTableLoading(true); // Use table-specific loading
     try {
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/lead/${memberId}`,
@@ -402,28 +427,28 @@ const TeamManagement = ({ orgId, hackathons }) => {
       );
 
       if (response.data && response.data.success) {
-        enqueueSnackbar("Team lead updated successfully", {
+        enqueueSnackbar(response.data.message || "Team lead updated successfully", {
           variant: "success",
         });
-        loadTeamDetails(teamData.id);
+        
+        // Reload team details immediately after successful update
+        await loadTeamDetails(teamData.id);
       }
     } catch (error) {
       console.error("Error updating team lead:", error);
-      enqueueSnackbar("Failed to update team lead", { variant: "error" });
+      enqueueSnackbar(error.response?.data?.message || "Failed to update team lead", { variant: "error" });
     } finally {
-      setLoading(false);
+      setTableLoading(false); // End loading
     }
   };
 
   // Update a member's GitHub username
   const handleUpdateGithub = async (memberId, githubUsername) => {
-    setLoading(true);
+    setTableLoading(true); // Use table-specific loading
     try {
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/member/${memberId}/github`,
-        {
-          github_username: githubUsername,
-        },
+        { github_username: githubUsername },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -434,16 +459,18 @@ const TeamManagement = ({ orgId, hackathons }) => {
       );
 
       if (response.data && response.data.success) {
-        enqueueSnackbar("GitHub username updated successfully", {
+        enqueueSnackbar(response.data.message || "GitHub username updated successfully", {
           variant: "success",
         });
-        loadTeamDetails(teamData.id);
+        
+        // Reload team details immediately after successful update
+        await loadTeamDetails(teamData.id);
       }
     } catch (error) {
       console.error("Error updating GitHub username:", error);
-      enqueueSnackbar("Failed to update GitHub username", { variant: "error" });
+      enqueueSnackbar(error.response?.data?.message || "Failed to update GitHub username", { variant: "error" });
     } finally {
-      setLoading(false);
+      setTableLoading(false); // End loading
     }
   };
 
@@ -451,6 +478,9 @@ const TeamManagement = ({ orgId, hackathons }) => {
   const handleConfirmAction = async () => {
     if (!confirmDialogAction || !confirmDialogData) return;
 
+    // Close the confirmation dialog first for better UX
+    setConfirmDialogOpen(false);
+    
     switch (confirmDialogAction) {
       case "removeMember":
         await handleRemoveMember(confirmDialogData);
@@ -459,13 +489,12 @@ const TeamManagement = ({ orgId, hackathons }) => {
         await handleSetTeamLead(confirmDialogData);
         break;
       case "deleteTeam":
-        // Implement team deletion
+        await handleDeleteTeam(confirmDialogData);
         break;
       default:
         break;
     }
 
-    setConfirmDialogOpen(false);
     setConfirmDialogAction(null);
     setConfirmDialogData(null);
   };
@@ -588,132 +617,157 @@ const TeamManagement = ({ orgId, hackathons }) => {
 
   // Render team member management
   const renderTeamMembers = () => {
-    if (!teamData || !teamData.team_members) return null;
+    if (!teamData) return null;
 
+    // Always ensure team_members is an array, even if it's null or undefined
+    const teamMembers = Array.isArray(teamData.team_members) ? teamData.team_members : [];
+    
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
         <CardHeader
           title="Team Members"
           subheader="Manage team composition"
           action={
-            <Button
-              startIcon={<FaUserPlus />}
-              onClick={() => setAddMemberDialogOpen(true)}
-              color="primary"
-              variant="contained"
-              size="small"
-            >
-              Add Member
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                startIcon={tableLoading ? <CircularProgress size={16} /> : <FaUserPlus />}
+                onClick={() => setUserSearchDialogOpen(true)}
+                color="primary"
+                variant="contained"
+                size="small"
+                disabled={tableLoading}
+              >
+                Find User
+              </Button>              
+            </Box>
           }
         />
         <Divider />
         <CardContent>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Slack ID</TableCell>
-                  <TableCell>GitHub</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {teamData.team_members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>{member.name}</TableCell>
-                    <TableCell>{member.user_id}</TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={member.github || ""}
-                          placeholder="GitHub username"
-                          onChange={(e) => {
-                            const updatedMembers = teamData.team_members.map(
-                              (m) =>
-                                m.id === member.id
-                                  ? { ...m, github_username: e.target.value }
-                                  : m
-                            );
-                            handleTeamDataChange(
-                              "team_members",
-                              updatedMembers
-                            );
-                          }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <FaGithub />
-                              </InputAdornment>
-                            ),
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <IconButton
-                                  size="small"
-                                  onClick={() =>
-                                    handleUpdateGithub(member.id, member.github)
-                                  }
-                                  disabled={!member.github}
-                                >
-                                  <FaCheck />
-                                </IconButton>
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      {member.is_lead ? (
-                        <Chip
-                          size="small"
-                          color="secondary"
-                          label="Team Lead"
-                          icon={<FaStar />}
-                        />
-                      ) : (
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label="Member"
-                          onClick={() =>
-                            confirmAction(
-                              "setLead",
-                              member.id,
-                              `Make ${member.name} the team lead?`
-                            )
-                          }
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Remove from team">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() =>
-                            confirmAction(
-                              "removeMember",
-                              member.id,
-                              `Remove ${member.name} from the team?`
-                            )
-                          }
-                        >
-                          <FaTrash />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+          {tableLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress size={40} />
+            </Box>
+          ) : teamMembers.length === 0 ? (
+            // Only show the "No team members" message when we're certain the array is empty
+            <Box sx={{ py: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                No team members yet. Add members to build your team.
+              </Typography>
+              <Button
+                startIcon={<FaUserPlus />}
+                onClick={() => setUserSearchDialogOpen(true)}
+                color="primary"
+                variant="contained"
+                size="small"
+                sx={{ mt: 1 }}
+              >
+                Find and Add Team Members
+              </Button>
+            </Box>
+          ) : (
+            // This section renders the table with team members
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Slack ID</TableCell>
+                    <TableCell>GitHub</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {teamMembers.map((member) => (
+                    <TableRow key={member.id || `member-${Math.random()}`}>
+                      <TableCell>{member.name || "Unnamed Member"}</TableCell>
+                      <TableCell>{member.user_id || "N/A"}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <TextField
+                            size="small"
+                            variant="outlined"
+                            value={member.github || ""}
+                            placeholder="GitHub username"
+                            onChange={(e) => {
+                              const updatedMembers = teamMembers.map(
+                                (m) =>
+                                  m.id === member.id
+                                    ? { ...m, github: e.target.value }
+                                    : m
+                              );
+                              handleTeamDataChange("team_members", updatedMembers);
+                            }}
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <FaGithub />
+                                </InputAdornment>
+                              ),
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      handleUpdateGithub(member.id, member.github)
+                                    }
+                                    disabled={!member.github}
+                                  >
+                                    <FaCheck />
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        {member.is_lead ? (
+                          <Chip
+                            size="small"
+                            color="secondary"
+                            label="Team Lead"
+                            icon={<FaStar />}
+                          />
+                        ) : (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label="Member"
+                            onClick={() =>
+                              confirmAction(
+                                "setLead",
+                                member.id,
+                                `Make ${member.name || "this member"} the team lead?`
+                              )
+                            }
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Remove from team">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() =>
+                              confirmAction(
+                                "removeMember",
+                                member.id,
+                                `Remove ${member.name || "this member"} from the team?`
+                              )
+                            }
+                          >
+                            <FaTrash />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </CardContent>
       </Card>
     );
@@ -749,6 +803,20 @@ const TeamManagement = ({ orgId, hackathons }) => {
                     startAdornment: (
                       <InputAdornment position="start">
                         <FaSlack />
+                      </InputAdornment>
+                    ),
+                    endAdornment: teamData.slack_channel && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          component="a"
+                          href={`https://opportunity-hack.slack.com/app_redirect?channel=${teamData.slack_channel}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          color="primary"
+                        >
+                          <FaExternalLinkAlt size={14} />
+                        </IconButton>
                       </InputAdornment>
                     ),
                   }}
@@ -980,6 +1048,13 @@ const TeamManagement = ({ orgId, hackathons }) => {
     );
   };
 
+  // Helper function to get nonprofit name from id
+  const getNonprofitName = (nonprofitId) => {
+    return nonprofitId && nonprofitMap[nonprofitId] 
+      ? nonprofitMap[nonprofitId] 
+      : "Not assigned";
+  };
+
   return (
     <div>
       <Box sx={{ mb: 4 }}>
@@ -1164,7 +1239,24 @@ const TeamManagement = ({ orgId, hackathons }) => {
                         <TableCell>
                           <Box sx={{ display: "flex", alignItems: "center" }}>
                             <FaSlack style={{ marginRight: 8 }} />
-                            {team.slack_channel || "N/A"}
+                            {team.slack_channel ? (
+                              <Link
+                                href={`https://opportunity-hack.slack.com/app_redirect?channel=${team.slack_channel}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                sx={{ 
+                                  textDecoration: 'none',
+                                  color: theme.palette.primary.main,
+                                  '&:hover': {
+                                    textDecoration: 'underline'
+                                  }
+                                }}
+                              >
+                                {team.slack_channel}
+                              </Link>
+                            ) : (
+                              "N/A"
+                            )}
                           </Box>
                         </TableCell>
                         <TableCell>
@@ -1189,7 +1281,7 @@ const TeamManagement = ({ orgId, hackathons }) => {
                           )}
                         </TableCell>
                         <TableCell>
-                          {team.selected_nonprofit_name || "Not assigned"}
+                          {getNonprofitName(team.selected_nonprofit_id)}
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: "flex", gap: 1 }}>
@@ -1315,40 +1407,6 @@ const TeamManagement = ({ orgId, hackathons }) => {
         </DialogActions>
       </Dialog>
 
-      {/* Add Team Member Dialog */}
-      <Dialog
-        open={addMemberDialogOpen}
-        onClose={() => setAddMemberDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Add Team Member</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" paragraph sx={{ mt: 1 }}>
-            Enter the email address of the person you want to add to this team.
-          </Typography>
-          <TextField
-            fullWidth
-            label="Email Address"
-            value={newMemberEmail}
-            onChange={(e) => setNewMemberEmail(e.target.value)}
-            placeholder="Email address"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddMemberDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleAddMember}
-            variant="contained"
-            color="primary"
-            disabled={loading || !newMemberEmail.trim()}
-            startIcon={<FaUserPlus />}
-          >
-            Add Member
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Confirmation Dialog */}
       <Dialog
         open={confirmDialogOpen}
@@ -1371,6 +1429,22 @@ const TeamManagement = ({ orgId, hackathons }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* User Search Dialog */}
+      {teamData && (
+        <UserSearchDialog
+          open={userSearchDialogOpen}
+          onClose={() => setUserSearchDialogOpen(false)}
+          onUserSelect={handleUserSelect}
+          teamId={teamData.id}
+          hackathonId={selectedHackathon}
+          orgId={orgId}
+          onAddSuccess={(user) => {
+            // This callback provides an immediate UI update after adding a member
+            loadTeamDetails(teamData.id);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -4,20 +4,34 @@ import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
 import axios from 'axios';
 import Head from 'next/head';
 import { useSnackbar } from 'notistack';
+import { useRouter } from 'next/router';
 
 import TeamManagement from '../../../components/admin/TeamManagement';
+import TeamAssignments from '../../../components/admin/TeamAssignments';
 import AdminNavigation from '../../../components/admin/AdminNavigation';
 
 const TeamAdminPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [hackathons, setHackathons] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
+  const [selectedHackathon, setSelectedHackathon] = useState(""); // Add this state
   
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const orgId = org.orgId;
   const isAdmin = org.hasPermission("volunteer.admin");
+
+  // Set active tab from URL query params
+  useEffect(() => {
+    if (router.query.tab) {
+      const tabIndex = parseInt(router.query.tab);
+      if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex <= 2) {
+        setActiveTab(tabIndex);
+      }
+    }
+  }, [router.query]);
 
   // Fetch hackathons for the dropdown selector
   useEffect(() => {
@@ -45,14 +59,18 @@ const TeamAdminPage = withRequiredAuthInfo(({ userClass }) => {
 
     if (isAdmin) {
       fetchHackathons();
-    } else if (isAdmin) {
+    } else {
       setLoading(false);
     }
   }, [accessToken, isAdmin, enqueueSnackbar]);
 
-  // Handle tab change
+  // Handle tab change and update URL
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, tab: newValue },
+    }, undefined, { shallow: true });
   };
 
   // Render appropriate content based on admin status and loading state
@@ -82,15 +100,28 @@ const TeamAdminPage = withRequiredAuthInfo(({ userClass }) => {
             aria-label="Team management tabs"
           >
             <Tab label="Team Management" />
+            <Tab label="Team Assignments" />
             <Tab label="Team Statistics" />
-            <Tab label="Team Assignments" disabled />
           </Tabs>
         </Box>
 
         {activeTab === 0 && (
-          <TeamManagement orgId={orgId} hackathons={hackathons} />
+          <TeamManagement 
+            orgId={orgId} 
+            hackathons={hackathons} 
+            selectedHackathon={selectedHackathon}
+            setSelectedHackathon={setSelectedHackathon}
+          />
         )}
         {activeTab === 1 && (
+          <TeamAssignments 
+            orgId={orgId} 
+            hackathons={hackathons}
+            selectedHackathon={selectedHackathon}
+            setSelectedHackathon={setSelectedHackathon} 
+          />
+        )}
+        {activeTab === 2 && (
           <Box sx={{ my: 4 }}>
             <Alert severity="info">
               Team statistics dashboard is coming soon. This will include
