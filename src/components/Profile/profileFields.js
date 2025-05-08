@@ -9,4 +9,5 @@ export const profileFields = [
   { name: "shirt_size", label: "Shirt Size", type: "select" },
   { name: "instagram_url", label: "Instagram Profile", type: "text" },
   { name: "linkedin_url", label: "LinkedIn Profile", type: "text" },
+  { name: "propel_id", label: "Propel ID", type: "text" },
 ];
