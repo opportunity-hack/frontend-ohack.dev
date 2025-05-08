@@ -51,7 +51,6 @@ import {
 import Events from "../Events/Events";
 import ReferenceItem from "../ReferenceItem/ReferenceItem";
 import ProblemStatementContent from "../ProblemStatementContent/ProblemStatementContent";
-import TeamCreationDialog from "../TeamCreation/TeamCreationDialog";
 import { HelpDialog, UnhelpDialog } from "../HelpDialog/HelpDialog";
 
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
@@ -60,13 +59,10 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const { redirectToLoginPage } = useRedirectFunctions();
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
-  const { handle_new_team_submission, handle_join_team, handle_unjoin_a_team } = useTeams();
+  const { handle_join_team, handle_unjoin_a_team } = useTeams();
   
   // States
-  const [hackathonEvents, setHackathonEvents] = useState([]);
-  const [teamCreationError, setTeamCreationError] = useState(false);
-  const [teamCreationErrorDetails, setTeamCreationErrorDetails] = useState("");
-  const [sendingTeamDetails, setSendingTeamDetails] = useState(false);
+  const [hackathonEvents, setHackathonEvents] = useState([]);  
   const [teamSuggestions, setTeamSuggestions] = useState(null);
   const [hackathonEventsLoaded, setHackathonEventsLoaded] = useState(false);
   const [hackathonEventsError, setHackathonEventsError] = useState(false);
@@ -77,35 +73,12 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const [open, setOpen] = useState(false);
   const [openUnhelp, setOpenUnhelp] = useState(false);
   const [help_checked, setHelpedChecked] = useState("");
-  const [helpingType, setHelpingType] = useState("");
-  const [createTeamOpen, setCreateTeamOpen] = useState(false);
-  const [newTeamSlackChannel, setNewTeamSlackChannel] = useState("");
-  const [newTeamName, setNewTeamName] = useState("");
-  const [newTeamEventId, setNewTeamEventId] = useState("");
-  const [newTeamProblemStatementId, setNewTeamProblemStatementId] = useState("");
-  const [newGithubUsername, setNewGithubUsername] = useState("");
+  const [helpingType, setHelpingType] = useState("");  
   const [expanded, setExpanded] = useState("Events");
   const [tabValue, setTabValue] = useState('Events');
-
-  // Data for random team name generation
-  const songs = [
-    "Lover", "Willow", "Blank Space", "Shake It Off", "Code Style",
-    "Good Blood", "You Belong With Me", "Fearless", "Red", "Sparks Fly",
-    "Enchanted", "Mine", "Back To December", "The Story Of Us", "Speak Now",
-    "Fifteen", "Hey Stephen", "White Horse",
-  ];
-
-  const codeAdjectives = [
-    "Compiler", "Cryptic", "Systematic", "Coding", "Serverless", 
-    "Codable", "Codified", "Exception", "Exceptional"
-  ];
-
-  const volunteerWords = [
-    "Leaders", "Heroes", "Visionaries", "Helpers", "Humans",
-    "Advocates", "Volunteers", "Champions", "Ambassadors"  
-  ];
-
   const { get_user_by_id, profile, handle_help_toggle } = useProfileApi();
+  const [helperProfiles, setHelperProfiles] = useState({});
+  const [isCheckingHelperStatus, setIsCheckingHelperStatus] = useState(false);
 
   // Custom styled switch for the help toggle
   const MaterialUISwitch = styled(Switch)(({ theme }) => ({
@@ -161,13 +134,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   }, []);
 
   // Generate team name suggestions and fetch hackathon events
-  useEffect(() => {
-    // Generate team name suggestion
-    const randomSong = songs[Math.floor(Math.random() * songs.length)];
-    const randomCodeAdjective = codeAdjectives[Math.floor(Math.random() * codeAdjectives.length)];
-    const randomVolunteerWord = volunteerWords[Math.floor(Math.random() * volunteerWords.length)];
-    setTeamSuggestions([`${randomSong} ${randomCodeAdjective} ${randomVolunteerWord}`]);
-  
+  useEffect(() => {  
     // Fetch hackathon events
     if (problem_statement?.events?.length > 0) {
       const eventsData = [];
@@ -225,16 +192,74 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     }
   }, [teams, get_user_by_id]);
 
-  // Check if the user is already helping with this project
+  // Fetch and store profiles for all helpers
   useEffect(() => {
-    if (problem_statement?.helping?.length > 0 && user && profile?.user_id) {
-      const isHelping = problem_statement.helping.find(help => help.slack_user === profile.user_id);
-      if (isHelping) {
+    if (problem_statement?.helping?.length > 0) {
+      setIsCheckingHelperStatus(true);
+      const helperProfileMap = {};
+      const fetchPromises = [];
+      
+      problem_statement.helping.forEach(helper => {
+        if (helper.user) {
+          const fetchPromise = fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${helper.user}/profile`)
+            .then(response => {
+              if (!response.ok) throw new Error('Failed to fetch helper profile');
+              return response.json();
+            })
+            .then(data => {
+              helperProfileMap[helper.user] = data;
+              return data;
+            })
+            .catch(error => {
+              console.error(`Error fetching helper profile for user ${helper.user}:`, error);
+              return null;
+            });
+          
+          fetchPromises.push(fetchPromise);
+        }
+      });
+      
+      Promise.all(fetchPromises)
+        .then(() => {
+          setHelperProfiles(helperProfileMap);
+          setIsCheckingHelperStatus(false);
+        })
+        .catch(error => {
+          console.error('Error fetching helper profiles:', error);
+          setIsCheckingHelperStatus(false);
+        });
+    }
+  }, [problem_statement?.helping]);
+
+  // Check if current user is helping with this project
+  useEffect(() => {
+    if (
+      !isCheckingHelperStatus && 
+      problem_statement?.helping?.length > 0 && 
+      user && 
+      Object.keys(helperProfiles).length > 0
+    ) {
+      // Find if current user is in the helpers list
+      const currentUserHelper = problem_statement.helping.find(helper => {
+        // If we have the helper's profile and it has a propel_id
+        if (helper.user && helperProfiles[helper.user] && helperProfiles[helper.user].propel_id) {
+          // Check if the propel_id matches the current user's ID
+          return helperProfiles[helper.user].propel_id === user.userId;
+        }
+        // Fallback to the old method for backward compatibility
+        return helper.slack_user === profile?.user_id;
+      });
+      
+      if (currentUserHelper) {
         setHelpedChecked("checked");
-        setHelpingType(isHelping.type);
+        setHelpingType(currentUserHelper.type);
+        console.log(`User is helping as ${currentUserHelper.type}`);
+      } else {
+        setHelpedChecked("");
+        setHelpingType("");
       }
     }
-  }, [problem_statement, user, profile]);
+  }, [problem_statement, user, profile, helperProfiles, isCheckingHelperStatus]);
 
   // Event handlers
   const handleChange = (panel) => (event, isExpanded) => {
@@ -299,75 +324,6 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     });
   };
 
-  const handleTeamCreate = (problemStatementId, eventId) => {    
-    setNewTeamProblemStatementId(problemStatementId);
-    setNewTeamEventId(eventId);
-    setCreateTeamOpen(true);
-
-    trackEvent({
-      action: "team_create_dialog_opened",
-      params: {
-        problem_statement_id: problemStatementId,
-        event_id: eventId
-      }
-    });
-  };
-
-  const handleUpdateTeamName = (event) => {
-    const value = event.target.value;   
-    setNewTeamName(value);
-
-    trackEvent({
-      action: "team_name_updated",
-      params: { team_name: value }
-    });
-  };
-
-  const handleUpdateSlackChannel = (event) => {
-    const value = event.target.value;
-    setNewTeamSlackChannel(value);
-
-    trackEvent({
-      action: "slack_channel_entered",
-      params: { slack_channel: value }
-    });
-  };
-
-  const handleUpdateGithubUsername = (event) => {
-    const value = event.target.value;
-    setNewGithubUsername(value);
-
-    trackEvent({
-      action: "github_username_event",
-      params: { github_username: value }
-    });
-  };
-
-  const handleConfirmTeamCreate = () => {
-    setSendingTeamDetails(true);
-
-    const params = {
-      team_name: newTeamName,
-      slack_channel: newTeamSlackChannel,
-      problem_statement_id: newTeamProblemStatementId,
-      event_id: newTeamEventId      
-    };
-    
-    trackEvent({
-      action: "team_create",
-      params: params
-    });
-
-    handle_new_team_submission(
-      newTeamName,
-      newTeamSlackChannel,
-      newTeamProblemStatementId,
-      newTeamEventId,
-      newGithubUsername,      
-      handleTeamCreationResponse
-    );
-  };
-
   const handleTeamLeavingResponse = () => {
     trackEvent({
       action: "Team Left",
@@ -377,48 +333,8 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       }
     });
   };
-
-  const handleTeamCreationResponse = (data) => {
-    setSendingTeamDetails(false);
-    setTeamCreationErrorDetails("");
-    setTeamCreationError(false);
-
-    if (data.success) {    
-      // Add new team to local state
-      setTeams(teams => [...teams, data.team]);  
-
-      // Update hackathon events with the new team
-      setHackathonEvents(prevEvents => 
-        prevEvents.map(event => 
-          event.id === newTeamEventId 
-            ? {...event, teams: [...event.teams, data.team.id]} 
-            : event
-        )
-      );
-
-      setTeamCreationErrorDetails(data.message);
-      setCreateTeamOpen(false);
-    } else {
-      setCreateTeamOpen(true);
-      setTeamCreationError(true);
-      setTeamCreationErrorDetails(data.message);
-    }      
-  };
-
-  const handleCloseTeamCreate = () => {
-    setCreateTeamOpen(false);
-    trackEvent({
-      action: "Team Creation Dialog Closed",
-      params: {
-        category: "Team Creation",
-        label: "Team Creation",
-        user_id: user?.userId
-      }
-    });
-  };
-
-  const handleClose = (helperType) => {
-    console.log("handleClose", helperType);
+  
+  const handleClose = (helperType) => {    
     trackEvent({
       action: "Helping: User Finalized Start Helping",
       params: {
@@ -704,8 +620,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           key={problem_statement.id}
           teams={teams}
           userDetails={userDetails}
-          events={hackathonEvents}
-          onTeamCreate={handleTeamCreate}
+          events={hackathonEvents}          
           onTeamLeave={handleLeavingTeam}          
           onTeamJoin={handleJoiningTeam}
           user={profile}
@@ -820,17 +735,21 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           }
           style={{ marginLeft: "2rem" }}
         >
-          <Badge
-            showZero
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            badgeContent={countOfHackers}
-            color="secondary"
-          >
-            <DeveloperModeIcon fontSize="large" />
-          </Badge>
+          {isCheckingHelperStatus ? (
+            <CircularProgress size={20} />
+          ) : (
+            <Badge
+              showZero
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              badgeContent={countOfHackers}
+              color="secondary"
+            >
+              <DeveloperModeIcon fontSize="large" />
+            </Badge>
+          )}
         </Tooltip>
 
         <Tooltip
@@ -842,17 +761,21 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           }
           style={{ marginLeft: "2rem" }}
         >
-          <Badge
-            showZero
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            badgeContent={countOfMentors}
-            color="secondary"
-          >
-            <SupportIcon fontSize="large" />
-          </Badge>
+          {isCheckingHelperStatus ? (
+            <CircularProgress size={20} />
+          ) : (
+            <Badge
+              showZero
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              badgeContent={countOfMentors}
+              color="secondary"
+            >
+              <SupportIcon fontSize="large" />
+            </Badge>
+          )}
         </Tooltip>       
       </Grid>
       
@@ -898,21 +821,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         onCancel={handleCloseUnhelpCancel}
       />
 
-
-      <TeamCreationDialog 
-        open={createTeamOpen}
-        onClose={handleCloseTeamCreate}
-        onConfirm={handleConfirmTeamCreate}
-        onUpdateTeamName={handleUpdateTeamName}
-        onUpdateSlackChannel={handleUpdateSlackChannel}
-        onUpdateGithubUsername={handleUpdateGithubUsername}
-        sendingTeamDetails={sendingTeamDetails}
-        teamCreationError={teamCreationError}
-        teamCreationErrorDetails={teamCreationErrorDetails}
-        teamSuggestions={teamSuggestions}
-        newTeamName={newTeamName}
-        newTeamSlackChannel={newTeamSlackChannel}
-      />
+      
 
       <Stack spacing={2} direction="row">      
         {helpingSwitch}
