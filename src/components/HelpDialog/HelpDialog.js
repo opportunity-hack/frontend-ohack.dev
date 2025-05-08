@@ -8,6 +8,8 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
 
 export const HelpDialog = ({ open, onClose, onCancel, onHelp }) => {
   return (
@@ -17,89 +19,111 @@ export const HelpDialog = ({ open, onClose, onCancel, onHelp }) => {
       onCancel={onCancel}
       aria-labelledby="help-dialog-title"
       aria-describedby="help-dialog-description"
+      maxWidth="md"
     >
-      <DialogTitle id="help-dialog-title" style={{fontSize: '15px'}}>
+      <DialogTitle id="help-dialog-title" sx={{ fontSize: '1.2rem', fontWeight: 'bold', pb: 1 }}>
         Thank you for helping a nonprofit with your talent!
       </DialogTitle>
       <DialogContent>
-        <DialogContentText component={"span"} style={{fontSize: '15px'}} id="help-dialog-description">
-          There are several ways to contibute, if you want, when you want.
-          <Typography variant="h4">Hacker</Typography>
-          You'll be <b>creating</b> something that benefits nonprofits. Most of what
-          you do will take place on:
-          <ul>
-            <li>
-              <b>Slack</b> - communication with your team, nonprofits, mentors
-            </li>
-            <li>
-              <b>DevPost</b> - for hackathons this is where you formally submit your projects
-            </li>
-            <li>
-              <b>GitHub</b> - your code must be publically available and well
-              documented so that others can use it, all code is open source for the public good
-            </li>
-            <li>
-              <b><Link href="https://heroku.com" target="_blank">Heroku<OpenInNewIcon/></Link> | <Link href="https://fly.io" target="_blank">Fly<OpenInNewIcon/></Link> | <Link href="https://aws.amazon.com/" target="_blank">AWS<OpenInNewIcon/></Link></b> - 
-              when you productionalize your code, use something like this to make it available to the masses
-            </li>
-          </ul>
-          <Typography variant="h4">
-            Mentor &nbsp;
-            <Link
-            href="https://www.ohack.org/about/mentors"
-            rel="noreferrer"
-            target="_blank"
-          >
-            <Button variant="outlined">More details on mentoring</Button>
-          </Link>
-          
+        <DialogContentText component={"div"} sx={{ fontSize: '15px' }} id="help-dialog-description">
+          <Typography paragraph>
+            There are several ways to contribute to nonprofit projects. Choose the role that best fits your skills:
           </Typography>
           
+          <Box sx={{ mb: 3, mt: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>Hacker Role</Typography>
+            <Typography paragraph>
+              You'll be <b>creating</b> solutions that directly benefit nonprofits using these platforms:
+            </Typography>
+            <ul>
+              <li>
+                <b>Slack</b> - Team communication with nonprofits and mentors
+              </li>
+              <li>
+                <b>DevPost</b> - Submit your projects for hackathons
+              </li>
+              <li>
+                <b>GitHub</b> - All code must be public, well-documented, and open source
+              </li>
+              <li>
+                <b>Hosting Services: </b>
+                <Link href="https://heroku.com" target="_blank" style={{ marginRight: 8 }}>
+                  Heroku <OpenInNewIcon fontSize="small" />
+                </Link>
+                |
+                <Link href="https://fly.io" target="_blank" style={{ margin: '0 8px' }}>
+                  Fly <OpenInNewIcon fontSize="small" />
+                </Link>
+                |
+                <Link href="https://aws.amazon.com/" target="_blank" style={{ marginLeft: 8 }}>
+                  AWS <OpenInNewIcon fontSize="small" />
+                </Link>
+              </li>
+            </ul>
+          </Box>
           
+          <Divider sx={{ my: 2 }} />
           
-          You'll be <b>assisting</b> hackers with their project. Most of what you do
-          will take place on:
-          <ul>
-            <li>
-              Slack/In-person - checking in on teams, troubleshooting, giving them guidance, and jumping into a screenshare here
-              and there
-            </li>            
-          </ul>
-          As a mentor, your goals are:
-          <ul>
-            <li>Make sure the team knows the problem they are solving</li>
-            <li>...are solving that problem 👆</li>
-            <li>
-              Are using libraries and are not trying to reinvent the wheel
-            </li>
-            <li>Are looking at the judging criteria (on DevPost)</li>
-            <li>
-              Ensure teams have a demo video that describes the problem
-              and solution using tools like <Link href="https://www.loom.com/">Loom<OpenInNewIcon/></Link> or <Link href="https://support.apple.com/guide/quicktime-player/record-your-screen-qtp97b08e666/">Quicktime Screen recording<OpenInNewIcon/></Link>.
-            </li>
-          </ul>          
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1, display: 'flex', alignItems: 'center' }}>
+              Mentor Role
+              <Link
+                href="https://www.ohack.org/about/mentors"
+                rel="noreferrer"
+                target="_blank"
+                style={{ marginLeft: 16 }}
+              >
+                <Button variant="outlined" size="small">More details</Button>
+              </Link>
+            </Typography>
+            
+            <Typography paragraph>
+              You'll be <b>guiding</b> hackers to successful project completion by:
+            </Typography>
+            <ul>
+              <li>Ensuring teams understand and focus on the problem statement</li>
+              <li>Helping teams leverage existing libraries rather than reinventing solutions</li>
+              <li>Guiding teams to meet judging criteria on DevPost</li>
+              <li>
+                Supporting teams with demo creation using tools like{' '}
+                <Link href="https://www.loom.com/" target="_blank">
+                  Loom <OpenInNewIcon fontSize="small" />
+                </Link>
+                {' '}or{' '}
+                <Link href="https://support.apple.com/guide/quicktime-player/record-your-screen-qtp97b08e666/" target="_blank">
+                  Quicktime <OpenInNewIcon fontSize="small" />
+                </Link>
+              </li>
+            </ul>
+          </Box>
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
         <Button
-          className="button button--compact button--third"
-          onClick={() => onHelp('hacker')}
-          autoFocus
-        >
-          Help as Hacker
-        </Button>
-        <Button
-          className="button button--compact button--third"
-          onClick={() => onHelp('mentor')}
-        >
-          Help as Mentor
-        </Button>
-        <Button          
-          className="error"
+          variant="outlined"
+          color="error"
           onClick={onCancel}
+          sx={{ mr: 'auto' }}
         >
           Cancel
         </Button>
+        <Box>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => onHelp('hacker')}
+            sx={{ mr: 1 }}
+          >
+            Join as Hacker
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => onHelp('mentor')}
+          >
+            Join as Mentor
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
@@ -112,30 +136,40 @@ export const UnhelpDialog = ({ open, onClose, onCancel }) => {
       onClose={onCancel}
       aria-labelledby="unhelp-dialog-title"
       aria-describedby="unhelp-dialog-description"
+      maxWidth="sm"
     >
-      <DialogTitle id="unhelp-dialog-title">
-        Helping has completed!
+      <DialogTitle id="unhelp-dialog-title" sx={{ fontWeight: 'bold' }}>
+        Ready to step away?
       </DialogTitle>
       <DialogContent>
-        <DialogContentText component={"span"} id="unhelp-dialog-description">
-          <h4>What this means</h4>
-          You are recording the fact that you're no longer helping this
-          nonprofit
+        <DialogContentText component={"div"} id="unhelp-dialog-description">
+          <Typography paragraph>
+            We understand that circumstances change. By withdrawing your help:
+          </Typography>
+          <ul>
+            <li>Your commitment to this nonprofit project will be marked as completed</li>
+            <li>The nonprofit will be notified</li>
+            <li>You can always return to help with future projects</li>
+          </ul>
+          <Typography paragraph sx={{ mt: 2, fontStyle: 'italic' }}>
+            Thank you for your contributions so far!
+          </Typography>
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ p: 2 }}>
         <Button
-          className="button button--compact button--secondary"
+          variant="outlined"
           onClick={onCancel}
+          sx={{ mr: 1 }}
         >
-          Cancel
+          Continue Helping
         </Button>
         <Button
-          className="button button--compact button--red"
+          variant="contained"
+          color="error"
           onClick={onClose}
-          autoFocus
         >
-          Withdraw Help
+          Confirm Withdrawal
         </Button>
       </DialogActions>
     </Dialog>
