@@ -75,8 +75,7 @@ export default function EventTeams(
         problemStatementId,
         eventId,
         eventStringId,
-        constraints,
-        onTeamCreate,
+        constraints,        
         onTeamLeave,        
         onTeamJoin,
         isHelping }) {     
@@ -132,8 +131,7 @@ export default function EventTeams(
         console.log("Delete Button Clicked");    
         onTeamLeave(team.id)
     };
-
-    const showCreateTeamButton = !isLoggedInUserAlreadyOnTeam && !isEventStartDateOlderThanToday && isHelping && constraints?.max_teams_per_problem > teamCounter;
+    
 
     // Declare const that will return Alert dialog if constraints.max_teams_per_problem is reached
     const AlertMaxTeamsPerProblem = () => {
@@ -205,23 +203,7 @@ export default function EventTeams(
           {constraints?.max_teams_per_problem <= teamCounter && (
             <AlertMaxTeamsPerProblem />
           )}
-
-          {showCreateTeamButton &&
-            false && ( // FIXME: Never show the create button just to be sure people use the other way to create a team http://localhost:3000/hack/newteam
-              <Button
-                style={{
-                  marginTop: 5,
-                  marginBottom: 5,
-                  padding: 10,
-                  fontSize: 15,
-                }}
-                color="success"
-                onClick={() => onTeamCreate(problemStatementId, eventId)}
-                variant="contained"
-              >
-                Create Team (and GitHub repo)
-              </Button>
-            )}
+          
         </div>
 
         { // FIXME: Hard disable the create team button so that people have to use http://localhost:3000/hack/newteam
