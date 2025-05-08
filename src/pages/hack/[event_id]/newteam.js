@@ -20,6 +20,7 @@ import axios from "axios";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { Puff } from "react-loading-icons";
 
 // Import components
 import TeamDetailsForm from "../../../components/TeamCreation/TeamDetailsForm";
@@ -71,7 +72,8 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   const [comments, setComments] = useState('');
   const [rankingMode, setRankingMode] = useState('select'); // 'select' or 'rank'
   const [slackUsers, setSlackUsers] = useState([]);
-  const [myTeams, setMyTeams] = useState([]);
+  const [myTeams, setMyTeams] = useState(null); // Initially null to indicate loading state
+  const [isLoadingTeams, setIsLoadingTeams] = useState(true);
 
   // New state variables for validation
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
@@ -138,6 +140,7 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
 
 
   const fetchMyTeams = async () => {
+    setIsLoadingTeams(true);
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${event_id}/me`,
@@ -152,13 +155,16 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
       if (response && response.data) {
         console.log("Team details:", response.data.teams);        
         setMyTeams(response.data.teams);
-        
       } else {
         setError("Failed to fetch team details. Please try again later.");
+        setMyTeams([]); // Set to empty array in case of partial success response
       }
     } catch (err) {
       console.error("Error fetching team details:", err);
       setError("Failed to fetch team details. Please try again later.");
+      setMyTeams([]); // Set to empty array on error
+    } finally {
+      setIsLoadingTeams(false);
     }
   };
 
@@ -363,6 +369,8 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   // Team member management
   const handleAddTeamMember = useCallback(() => {
     if (!memberInput) return;
+    
+    console.log("Adding team member:", memberInput);
     
     const memberName = typeof memberInput === 'string' ? memberInput.trim() : (memberInput.real_name || memberInput.name || '').trim();
     
@@ -793,11 +801,11 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
       
       {/* Add spacing to avoid overlapping with fixed top navigation */}
       <Box sx={{ pt: { xs: '80px', sm: '100px' }, pb: 4 }}>
-        {/* Team Status Panel - Optimized for immediate loading */}
+        {/* Team Status Panel - Properly handles different loading states */}
         <TeamStatusPanel
           eventId={event_id}
           teams={myTeams}
-          loading={!myTeams && loading}
+          loading={isLoadingTeams}
           error={error}
           nonprofits={nonprofits}
           event={event}
@@ -903,7 +911,7 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
                   }}
                 >
                   {activeStep === steps.length - 1 ? "Create Team" : "Next"}
-                  {loading && <CircularProgress size={24} sx={{ ml: 1 }} />}
+                  {loading && <Puff stroke="#fff" width={24} height={24} style={{ marginLeft: '8px' }} />}
                 </AnimatedButton>
               </Box>
             </form>
@@ -925,6 +933,9 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
             {loading && (
               <Fade in={loading}>
                 <Box sx={{ width: "100%", mt: 4 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                    <Puff stroke="#1976d2" width={60} height={60} />
+                  </Box>
                   <LinearProgress variant="determinate" value={progress} />
                   <Typography variant="body2" align="center" sx={{ mt: 1 }}>
                     {steps[Math.floor(progress / (100 / steps.length))]}

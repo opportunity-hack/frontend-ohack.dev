@@ -22,12 +22,12 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 });
 
 // TeamMember component - extracted for better organization
-const TeamMember = ({ user }) => {
+const TeamMember = ({ user, isCurrentUser }) => {
   if (!user) return null;
   
   // Handle both profile objects and user ID strings
   const userId = typeof user === 'string' ? user : user.user_id || user.id;
-  const displayName = user.name || user.nickname || 'User';
+  const displayName = user.name || user.nickname || '';
   const profileUrl = `/profile/${userId}`;
   const firstLetter = displayName && displayName.length > 0 ? displayName[0] : '?';
   
@@ -36,7 +36,7 @@ const TeamMember = ({ user }) => {
       <Tooltip
         title={
           <span style={{ fontSize: "12px" }}>
-            {`View ${displayName}'s profile`}
+            {isCurrentUser ? "This is you" : `View ${displayName}'s profile`}
           </span>
         }
       >
@@ -54,6 +54,12 @@ const TeamMember = ({ user }) => {
           <Avatar
             src={user.profile_image}
             alt={displayName}
+            sx={{
+              ...(isCurrentUser && {
+                border: '4px solid #3f51b5',
+                boxShadow: '0 0 4px rgba(63, 81, 181, 0.5)',
+              }),
+            }}
           >
             {firstLetter}
           </Avatar>
@@ -69,9 +75,12 @@ const TeamMember = ({ user }) => {
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
+          fontWeight: isCurrentUser ? 'bold' : 'normal',
+          color: isCurrentUser ? 'primary.main' : 'inherit',
         }}
       >
         {displayName}
+        
       </Typography>
     </Grid>
   );
@@ -88,9 +97,11 @@ const LoadingIndicator = ({ message }) => (
 );
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId }) => {
   const hasGithubLinks = team.github_links && team.github_links.length > 0;
   
+  // Check if this team's button is currently loading
+  const isLoading = loadingTeamId === team.id;
   
   // Check if current user is in the team
   const isUserInTeam = isLoggedIn && userProfile && Array.isArray(team.users) && 
@@ -132,12 +143,20 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave }) => {
         </Typography>
         <Grid container spacing={1}>
           {Array.isArray(team.users) && 
-            team.users.map((user, index) => (
-              <TeamMember 
-                key={typeof user === 'string' ? user : user?.id || `user-${index}`} 
-                user={user} 
-              />
-            ))
+            team.users.map((user, index) => {
+              // Determine if this is the current logged-in user
+              const userId = typeof user === 'string' ? user : user?.id || user?.user_id;
+              const isCurrentUser = userProfile && 
+                (userId === userProfile.id || userId === userProfile.user_id);
+                
+              return (
+                <TeamMember 
+                  key={typeof user === 'string' ? user : user?.id || `user-${index}`} 
+                  user={user}
+                  isCurrentUser={isCurrentUser}
+                />
+              );
+            })
           }
         </Grid>
         
@@ -149,8 +168,10 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave }) => {
                 variant="outlined"
                 color="secondary"
                 onClick={() => onLeave(team.id)}
+                disabled={isLoading}
+                startIcon={isLoading && <CircularProgress size={16} />}
               >
-                Leave Team
+                {isLoading ? "Leaving..." : "Leave Team"}
               </Button>
             ) : (
               <Button
@@ -158,8 +179,10 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave }) => {
                 variant="outlined"
                 color="primary"
                 onClick={() => onJoin(team.id)}
+                disabled={isLoading}
+                startIcon={isLoading && <CircularProgress size={16} />}
               >
-                Join Team
+                {isLoading ? "Joining..." : "Join Team"}
               </Button>
             )}
           </div>
@@ -173,6 +196,8 @@ const TeamList = ({ teams, eventId }) => {
   const [teamData, setTeamData] = useState(teams);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
+  // Add state to track which team's button is being processed
+  const [loadingTeamId, setLoadingTeamId] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -288,6 +313,9 @@ const TeamList = ({ teams, eventId }) => {
 
   const handleJoinTeam = async (teamId) => {
     try {
+      // Set loading state for this specific team
+      setLoadingTeamId(teamId);
+      
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team`,
         {
@@ -328,11 +356,17 @@ const TeamList = ({ teams, eventId }) => {
         message: "Error joining team",
         severity: "error",
       });
+    } finally {
+      // Clear loading state regardless of success/failure
+      setLoadingTeamId(null);
     }
   };
 
   const handleUnjoinTeam = async (teamId) => {
     try {
+      // Set loading state for this specific team
+      setLoadingTeamId(teamId);
+      
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team`,
         {
@@ -354,9 +388,9 @@ const TeamList = ({ teams, eventId }) => {
                 ...team,
                 users: team.users.filter(user => {
                   if (typeof user === 'string') {
-                    return user !== userProfile.user_id;
+                    return user !== userProfile.user_id && user !== userProfile.id;
                   }
-                  return user.user_id !== userProfile.user_id;
+                  return user.id !== userProfile.id && user.user_id !== userProfile.user_id;
                 })
               };
             }
@@ -379,6 +413,9 @@ const TeamList = ({ teams, eventId }) => {
         message: "Error leaving team",
         severity: "error",
       });
+    } finally {
+      // Clear loading state regardless of success/failure
+      setLoadingTeamId(null);
     }
   };
 
@@ -428,6 +465,7 @@ const TeamList = ({ teams, eventId }) => {
               isLoggedIn={isLoggedIn}
               onJoin={handleJoinTeam}
               onLeave={handleUnjoinTeam}
+              loadingTeamId={loadingTeamId}
             />
           </Grid>
         ))}

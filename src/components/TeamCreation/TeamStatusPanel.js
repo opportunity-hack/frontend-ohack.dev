@@ -20,6 +20,7 @@ import {
   Avatar,
   Skeleton
 } from '@mui/material';
+import { Puff } from 'react-loading-icons';
 import { styled } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
@@ -163,6 +164,12 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
         <Typography variant="h5" gutterBottom>
           Your Hackathon Team
         </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', my: 4 }}>
+          <Puff stroke="#1976d2" width={80} height={80} />
+          <Typography variant="body1" sx={{ mt: 2, fontWeight: 'medium' }}>
+            Loading your team information...
+          </Typography>
+        </Box>
         <Box sx={{ mt: 3, mb: 2 }}>
           <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: 1, mb: 2 }} />
           <Skeleton variant="text" width="60%" height={30} sx={{ mb: 1 }} />
@@ -173,9 +180,6 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
             <Skeleton variant="rectangular" width={150} height={36} sx={{ borderRadius: 1 }} />
           </Box>
         </Box>
-        <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
-          Loading your team information...
-        </Typography>
       </StyledPaper>
     );
   }
@@ -208,8 +212,23 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
     return null;
   };
 
-  // If no teams yet, show a helpful message
-  if (!teams || teams.length === 0) {
+  // If no teams yet, show loading animation if teams array is null (still loading)
+  // Otherwise show the "no teams yet" message if teams array is empty
+  if (!teams) {
+    return (
+      <StyledPaper>
+        <Typography variant="h5" gutterBottom>
+          Your Hackathon Team
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', my: 4 }}>
+          <Puff stroke="#1976d2" width={80} height={80} />
+          <Typography variant="body1" sx={{ mt: 2, fontWeight: 'medium' }}>
+            Loading your team information...
+          </Typography>
+        </Box>
+      </StyledPaper>
+    );
+  } else if (teams.length === 0) {
     return (
       <StyledPaper>
         <Alert severity="info" sx={{ mb: 2 }}>

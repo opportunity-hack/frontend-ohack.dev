@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEnv } from "../context/env.context";
 import { useAuthInfo } from '@propelauth/react';
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 export default function useProfileApi(){
     
@@ -96,6 +96,26 @@ export default function useProfileApi(){
         onComplete(data);
         return data;
     };
+
+    const get_user_profile_by_id = useCallback(async (userId) => {
+        if (!userId) return null;
+        
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userId}/profile`
+            );
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch user profile: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+            return null;
+        }
+    }, []);
     
     /*
     User is already signed in via Auth0 SDK
@@ -142,7 +162,8 @@ export default function useProfileApi(){
                     history: data.text.history,
                     profile_url: window.location.href + "/" + data.text.id,  // /profile/<db id>
                     linkedin_url: data.text.linkedin_url,
-                    instagram_url: data.text.instagram_url,                    
+                    instagram_url: data.text.instagram_url,  
+                    propel_id: data.text.propel_id,                  
                 };
 
                 setProfile(profileData);
@@ -169,6 +190,7 @@ export default function useProfileApi(){
         get_user_by_id,
         feedback_url,
         handle_help_toggle,
-        update_profile_metadata
+        update_profile_metadata,
+        get_user_profile_by_id
     };
 };
