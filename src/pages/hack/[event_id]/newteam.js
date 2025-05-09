@@ -17,7 +17,11 @@ import {
 import { styled } from "@mui/material/styles";
 import { FaRocket } from "react-icons/fa";
 import axios from "axios";
-import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
+import {
+  useAuthInfo,  
+  RequiredAuthProvider,
+  RedirectToLogin
+} from "@propelauth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { Puff } from "react-loading-icons";
@@ -50,7 +54,12 @@ const steps = [
   "Confirming & Creating",
 ];
 
-const NewTeam = withRequiredAuthInfo(({ userClass }) => {
+// Creating a wrapper with RequiredAuthProvider
+
+
+// Apply our custom HOC to the component
+const NewTeamComponent = () => {
+  const authInfo = useAuthInfo();
   const { accessToken } = useAuthInfo();
   const [teamName, setTeamName] = useState("");
   const [slackChannel, setSlackChannel] = useState("");
@@ -88,7 +97,7 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
   const router = useRouter();
   const { event_id } = router.query;
 
-  const org = userClass.getOrgByName("Opportunity Hack Org");
+  const org = authInfo.userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
   const orgId = org.orgId;
 
@@ -944,9 +953,11 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
               </Fade>
             )}
             {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
+              <Fade in={!!error}>
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {error}
+                </Alert>
+              </Fade>
             )}
           </Box>
         )}
@@ -955,6 +966,36 @@ const NewTeam = withRequiredAuthInfo(({ userClass }) => {
       </Box>
     </Container>
   );
-});
+};
+
+// Authenticated component that receives auth context
+const AuthenticatedTeam = () => {
+  const { user } = useAuthInfo();
+  return <NewTeamComponent userClass={user} />;
+};
+
+// Export the component with RequiredAuthProvider
+const NewTeam = () => {
+  const router = useRouter();
+  const { event_id } = router.query;
+
+  // Create the current URL for redirection
+  const currentUrl = typeof window !== 'undefined' && event_id
+    ? `${window.location.origin}/hack/${event_id}/newteam`
+    : null;
+
+  return (
+    <RequiredAuthProvider
+      authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
+      displayIfLoggedOut={
+        <RedirectToLogin
+          postLoginRedirectUrl={currentUrl || window.location.href}
+        />
+      }
+    >
+      <AuthenticatedTeam />
+    </RequiredAuthProvider>
+  );
+};
 
 export default NewTeam;
