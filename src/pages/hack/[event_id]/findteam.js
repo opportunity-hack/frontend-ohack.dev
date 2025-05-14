@@ -282,17 +282,56 @@ const FindTeamPage = () => {
             }
           }
 
+          // Parse preferred team size
+          let preferredSize = '';
+          if (appData.teamMatchingPreferences?.preferredSize) {
+            preferredSize = appData.teamMatchingPreferences.preferredSize;
+          } else if (appData.teamMatchingPreferredSize) {
+            preferredSize = appData.teamMatchingPreferredSize;
+          }
+
+          // Parse preferred skills for teammates
+          const preferredTeammateSkills = [];
+          if (appData.teamMatchingPreferences?.preferredSkills) {
+            preferredTeammateSkills.push(...appData.teamMatchingPreferences.preferredSkills);
+          } else if (appData.teamMatchingPreferredSkills) {
+            preferredTeammateSkills.push(...appData.teamMatchingPreferredSkills.split(/,\s*/));
+          }
+
+          // Parse preferred causes for the team
+          const preferredCauses = [];
+          if (appData.teamMatchingPreferences?.preferredCauses) {
+            preferredCauses.push(...appData.teamMatchingPreferences.preferredCauses);
+          } else if (appData.teamMatchingPreferredCauses) {
+            preferredCauses.push(...appData.teamMatchingPreferredCauses.split(/,\s*/));
+          }
+
           return {
             user_id: appData.user_id,
             name: appData.name,
             github: appData.github,
             slack_user_id: appData.slack_user_id,
+            pronouns: appData.pronouns,
+            experienceLevel: appData.experienceLevel,
+            participationCount: appData.participationCount,
+            participantType: appData.participantType,
+            schoolOrganization: appData.schoolOrganization,
+            linkedin: appData.linkedin || appData.linkedinProfile,
+            portfolio: appData.portfolio,
+            willContinue: appData.willContinue,
+            inPerson: appData.inPerson === 'Yes' || appData.isInPerson,
             application: {
               ...appData,
               interests: [...new Set(interests)], // Remove duplicates
               skills: [...new Set(skills)], // Remove duplicates
               background: appData.shortBio || appData.bio,
-              team_formation: teamFormation
+              team_formation: teamFormation,
+              teamMatchingDetails: {
+                preferredSize,
+                teamNeededSkills: appData.teamNeededSkills || '',
+                preferredTeammateSkills: [...new Set(preferredTeammateSkills)],
+                preferredCauses: [...new Set(preferredCauses)]
+              }
             }
           };
         });
@@ -377,15 +416,33 @@ const FindTeamPage = () => {
     
     // Match interests (higher weight)
     const commonInterests = myInterests.filter(i => otherInterests.includes(i));
-    score += (commonInterests.length / Math.max(myInterests.length, 1)) * 60;
+    score += (commonInterests.length / Math.max(myInterests.length, 1)) * 40;
     
     // Match complementary skills
     const myUniqueSkills = mySkills.filter(s => !otherSkills.includes(s));
     const otherUniqueSkills = otherSkills.filter(s => !mySkills.includes(s));
     
-    // Skill complementarity (lower weight)
+    // Skill complementarity (medium weight)
     score += (myUniqueSkills.length + otherUniqueSkills.length) / 
-             Math.max(mySkills.length + otherSkills.length, 1) * 40;
+             Math.max(mySkills.length + otherSkills.length, 1) * 30;
+    
+    // Check if other user has skills I'm looking for in teammates
+    const preferredTeammateSkills = myProfile.application.teamMatchingDetails?.preferredTeammateSkills || [];
+    if (preferredTeammateSkills.length > 0) {
+      const matchingPreferredSkills = preferredTeammateSkills.filter(
+        s => otherSkills.includes(s)
+      );
+      score += (matchingPreferredSkills.length / preferredTeammateSkills.length) * 20;
+    }
+    
+    // Check if I have skills they're looking for in teammates
+    const theirPreferredSkills = otherUser.application.teamMatchingDetails?.preferredTeammateSkills || [];
+    if (theirPreferredSkills.length > 0) {
+      const matchingTheirPreferences = theirPreferredSkills.filter(
+        s => mySkills.includes(s)
+      );
+      score += (matchingTheirPreferences.length / theirPreferredSkills.length) * 10;
+    }
     
     // Cap at 100
     return Math.min(Math.round(score), 100);
@@ -541,6 +598,18 @@ const FindTeamPage = () => {
           <StyledPaper>
             <Typography variant="h5" gutterBottom>
               Your Profile
+              <Tooltip title="Edit your profile details in the hacker application">
+                <IconButton
+                  component={Link}
+                  href={`/hack/${event_id}/hacker-application`}
+                  size="small"
+                  color="primary"
+                  sx={{ ml: 1, transform: 'translateY(-2px)' }}
+                  aria-label="Edit profile"
+                >
+                  <Box component="span" sx={{ fontSize: '1.2rem', display: 'flex' }}>✏️</Box>
+                </IconButton>
+              </Tooltip>
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
@@ -588,6 +657,37 @@ const FindTeamPage = () => {
                       variant="outlined"
                       sx={{ mb: 2 }}
                     />
+
+                    {/* Display team matching preferences if applicable */}
+                    {(myProfile.application.team_formation === 'looking_for_members' || 
+                      myProfile.application.team_formation === 'want_to_be_matched') && 
+                     myProfile.application.teamMatchingPreferences?.preferredSkills?.length > 0 && (
+                      <Box sx={{ mt: 2, mb: 3 }}>
+                        <Typography variant="subtitle1" gutterBottom>
+                          Teammate Preferences:
+                        </Typography>
+                        <Box>
+                          <Typography variant="body2" sx={{ mb: 1 }}>
+                            <strong>Preferred Team Size:</strong> {myProfile.application.teamMatchingPreferences.preferredSize || 'Not specified'}
+                          </Typography>
+                          
+                          <Typography variant="body2" sx={{ mb: 0.5 }}>
+                            <strong>Looking for teammates with these skills:</strong>
+                          </Typography>
+                          <Box>
+                            {myProfile.application.teamMatchingPreferences.preferredSkills.map(skill => (
+                              <Chip key={skill} label={skill} size="small" sx={{ m: 0.5 }} />
+                            ))}
+                          </Box>
+                          
+                          {myProfile.application.teamNeededSkills && (
+                            <Typography variant="body2" sx={{ mt: 1.5 }}>
+                              <strong>Additional skills needed:</strong> {myProfile.application.teamNeededSkills}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    )}
 
                     {myProfile.application.background && (
                       <Box sx={{ mt: 2 }}>
@@ -640,7 +740,8 @@ const FindTeamPage = () => {
                     <Button 
                       component={Link}
                       href={`/hack/${event_id}/hacker-application`}
-                      variant="outlined" 
+                      variant="contained" 
+                      color="primary"
                       size="small" 
                       sx={{ mt: 1, display: 'block' }}
                     >
@@ -648,6 +749,20 @@ const FindTeamPage = () => {
                     </Button>
                   </Alert>
                 )}
+
+                <Box sx={{ mt: 3, mb: 2 }}>
+                  <Button
+                    component={Link}
+                    href={`/hack/${event_id}/hacker-application`}
+                    startIcon={<Box component="span" sx={{ fontSize: '1rem' }}>✏️</Box>}
+                    variant="outlined"
+                    color="primary"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  >
+                    Edit Profile Details
+                  </Button>
+                </Box>
 
                 <Box sx={{ mt: 3 }}>
                   <Button
@@ -780,19 +895,26 @@ const FindTeamPage = () => {
                             <Box>
                               <Typography variant="h6" component="div">
                                 {teammate.name || 'Anonymous User'}
+                                {teammate.pronouns && (
+                                  <Typography variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
+                                    ({teammate.pronouns})
+                                  </Typography>
+                                )}
                               </Typography>
-                              {teammate.github && (
-                                <Typography variant="body2" color="text.secondary">
-                                  GitHub: {teammate.github}
-                                </Typography>
-                              )}
+                              <Typography variant="body2" color="text.secondary">
+                                {teammate.participantType === 'Student' 
+                                  ? `Student at ${teammate.schoolOrganization || 'school/university'}`
+                                  : teammate.participantType === 'Professional'
+                                    ? `Professional at ${teammate.schoolOrganization || 'company/organization'}`
+                                    : teammate.schoolOrganization || ''}
+                              </Typography>
                             </Box>
                           </Box>
                           
                           <Divider sx={{ mb: 1.5 }} />
                           
-                          {teammate.application?.team_formation && (
-                            <Box sx={{ mb: 1.5 }}>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
+                            {teammate.application?.team_formation && (
                               <Chip
                                 size="small"
                                 label={
@@ -803,15 +925,119 @@ const FindTeamPage = () => {
                                 color="primary"
                                 variant="outlined"
                               />
-                            </Box>
-                          )}
+                            )}
+                            
+                            {teammate.experienceLevel && (
+                              <Chip
+                                size="small"
+                                label={teammate.experienceLevel}
+                                color="default"
+                                variant="outlined"
+                              />
+                            )}
+                            
+                            {teammate.inPerson ? (
+                              <Chip size="small" label="In-person" color="success" variant="outlined" />
+                            ) : (
+                              <Chip size="small" label="Virtual" color="info" variant="outlined" />
+                            )}
+                            
+                            {teammate.willContinue && (
+                              <Tooltip title="Interested in continuing after the hackathon">
+                                <Chip size="small" label="Long-term" color="secondary" variant="outlined" />
+                              </Tooltip>
+                            )}
+                          </Box>
                           
                           {teammate.application?.background && (
-                            <Typography variant="body2" color="text.secondary" paragraph sx={{ mb: 1.5 }}>
+                            <Typography variant="body2" paragraph sx={{ mb: 1.5 }}>
                               {teammate.application.background.length > 100
                                 ? `${teammate.application.background.substring(0, 100)}...`
                                 : teammate.application.background}
                             </Typography>
+                          )}
+                          
+                          {/* Team matching preferences section */}
+                          {(teammate.application?.teamMatchingDetails?.preferredSize || 
+                            teammate.application?.teamMatchingDetails?.teamNeededSkills ||
+                            teammate.application?.teamMatchingDetails?.preferredTeammateSkills?.length > 0) && (
+                            <Box sx={{ mb: 1.5, mt: 1.5 }}>
+                              <Typography variant="subtitle2" gutterBottom>
+                                Team Preferences:
+                              </Typography>
+                              
+                              {teammate.application.teamMatchingDetails.preferredSize && (
+                                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                  <BsPeople style={{ marginRight: 4 }} />
+                                  Prefers {teammate.application.teamMatchingDetails.preferredSize}
+                                </Typography>
+                              )}
+                              
+                              {teammate.application.teamMatchingDetails.teamNeededSkills && (
+                                <Tooltip title={teammate.application.teamMatchingDetails.teamNeededSkills}>
+                                  <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                      display: 'flex', 
+                                      alignItems: 'center', 
+                                      mb: 0.5,
+                                      textOverflow: 'ellipsis',
+                                      overflow: 'hidden',
+                                      whiteSpace: 'nowrap',
+                                      maxWidth: '100%'
+                                    }}
+                                  >
+                                    <FaSearch style={{ marginRight: 4, flexShrink: 0 }} />
+                                    Seeking: {teammate.application.teamMatchingDetails.teamNeededSkills}
+                                  </Typography>
+                                </Tooltip>
+                              )}
+                              
+                              {teammate.application.teamMatchingDetails.preferredTeammateSkills?.length > 0 && (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 0.5 }}>
+                                  {teammate.application.teamMatchingDetails.preferredTeammateSkills.slice(0, 2).map(skill => (
+                                    <Chip
+                                      key={skill}
+                                      label={skill}
+                                      size="small"
+                                      variant={myProfile?.application?.skills?.includes(skill) ? "filled" : "outlined"}
+                                      color={myProfile?.application?.skills?.includes(skill) ? "success" : "default"}
+                                      sx={{ fontSize: '0.7rem' }}
+                                    />
+                                  ))}
+                                  {teammate.application.teamMatchingDetails.preferredTeammateSkills.length > 2 && (
+                                    <Tooltip
+                                      title={
+                                        <Box sx={{ p: 1 }}>
+                                          <Typography variant="subtitle2" gutterBottom>
+                                            Looking for teammates with:
+                                          </Typography>
+                                          {teammate.application.teamMatchingDetails.preferredTeammateSkills.map(skill => (
+                                            <Chip
+                                              key={skill}
+                                              label={skill}
+                                              size="small"
+                                              sx={{ m: 0.3 }}
+                                              variant={myProfile?.application?.skills?.includes(skill) ? "filled" : "outlined"}
+                                              color={myProfile?.application?.skills?.includes(skill) ? "success" : "default"}
+                                            />
+                                          ))}
+                                        </Box>
+                                      }
+                                      arrow
+                                      placement="top"
+                                    >
+                                      <Chip
+                                        label={`+${teammate.application.teamMatchingDetails.preferredTeammateSkills.length - 2} more`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ cursor: 'help' }}
+                                      />
+                                    </Tooltip>
+                                  )}
+                                </Box>
+                              )}
+                            </Box>
                           )}
                           
                           {teammate.application?.interests?.length > 0 && (
@@ -830,11 +1056,35 @@ const FindTeamPage = () => {
                                   />
                                 ))}
                                 {teammate.application.interests.length > 3 && (
-                                  <Chip
-                                    label={`+${teammate.application.interests.length - 3} more`}
-                                    size="small"
-                                    variant="outlined"
-                                  />
+                                  <Tooltip
+                                    title={
+                                      <Box sx={{ p: 1 }}>
+                                        <Typography variant="subtitle2" gutterBottom>
+                                          All Interests:
+                                        </Typography>
+                                        {teammate.application.interests.map((interest) => (
+                                          <Chip
+                                            key={interest}
+                                            label={interest}
+                                            size="small"
+                                            sx={{ m: 0.3 }}
+                                            variant={myProfile?.application?.interests?.includes(interest) ? "filled" : "outlined"}
+                                            color={myProfile?.application?.interests?.includes(interest) ? "primary" : "default"}
+                                          />
+                                        ))}
+                                      </Box>
+                                    }
+                                    arrow
+                                    placement="top"
+                                    sx={{ cursor: 'help' }}
+                                  >
+                                    <Chip
+                                      label={`+${teammate.application.interests.length - 3} more`}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{ cursor: 'help' }}
+                                    />
+                                  </Tooltip>
                                 )}
                               </Box>
                             </Box>
@@ -855,11 +1105,35 @@ const FindTeamPage = () => {
                                   />
                                 ))}
                                 {teammate.application.skills.length > 3 && (
-                                  <Chip
-                                    label={`+${teammate.application.skills.length - 3} more`}
-                                    size="small"
-                                    variant="outlined"
-                                  />
+                                  <Tooltip
+                                    title={
+                                      <Box sx={{ p: 1 }}>
+                                        <Typography variant="subtitle2" gutterBottom>
+                                          All Skills:
+                                        </Typography>
+                                        {teammate.application.skills.map((skill) => (
+                                          <Chip
+                                            key={skill}
+                                            label={skill}
+                                            size="small"
+                                            sx={{ m: 0.3 }}
+                                            variant={myProfile?.application?.skills?.includes(skill) ? "filled" : "outlined"}
+                                            color={myProfile?.application?.skills?.includes(skill) ? "primary" : "default"}
+                                          />
+                                        ))}
+                                      </Box>
+                                    }
+                                    arrow
+                                    placement="top"
+                                    sx={{ cursor: 'help' }}
+                                  >
+                                    <Chip
+                                      label={`+${teammate.application.skills.length - 3} more`}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{ cursor: 'help' }}
+                                    />
+                                  </Tooltip>
                                 )}
                               </Box>
                             </Box>
@@ -914,16 +1188,183 @@ const FindTeamPage = () => {
                 />
                 <Box>
                   <Typography variant="h6">{selectedUser.name}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedUser.participantType === 'Student'
+                      ? `Student at ${selectedUser.schoolOrganization || 'school/university'}`
+                      : selectedUser.participantType}
+                    {selectedUser.experienceLevel && ` • ${selectedUser.experienceLevel}`}
+                  </Typography>
                   {selectedUser.github && (
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                    >
                       GitHub: {selectedUser.github}
                     </Typography>
                   )}
                 </Box>
               </Box>
 
+              <Paper sx={{ p: 2, mb: 3 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Match Details
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 
+                        calculateMatchScore(selectedUser) >= 80 ? 'success.main' :
+                        calculateMatchScore(selectedUser) >= 60 ? 'success.light' :
+                        calculateMatchScore(selectedUser) >= 40 ? 'warning.light' :
+                        'grey.400',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '1.4rem',
+                      mr: 2
+                    }}
+                  >
+                    {calculateMatchScore(selectedUser)}%
+                  </Box>
+                  <Box>
+                    <Typography variant="body1" fontWeight="medium">
+                      Match Score
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Based on your interests and skills compatibility
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                <Divider sx={{ my: 2 }} />
+                
+                {/* Team Matching Preferences */}
+                {selectedUser.application?.teamMatchingDetails && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Their Team Preferences:
+                    </Typography>
+                    
+                    {selectedUser.application.teamMatchingDetails.preferredSize && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Preferred team size:</strong> {selectedUser.application.teamMatchingDetails.preferredSize}
+                      </Typography>
+                    )}
+                    
+                    {selectedUser.application.teamMatchingDetails.teamNeededSkills && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Looking for:</strong> {selectedUser.application.teamMatchingDetails.teamNeededSkills}
+                      </Typography>
+                    )}
+                    
+                    {selectedUser.application.teamMatchingDetails.preferredTeammateSkills?.length > 0 && (
+                      <Box sx={{ mb: 1 }}>
+                        <Typography variant="body2" sx={{ mb: 0.5 }}>
+                          <strong>Preferred teammate skills:</strong>
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selectedUser.application.teamMatchingDetails.preferredTeammateSkills.map(skill => (
+                            <Chip 
+                              key={skill} 
+                              label={skill} 
+                              size="small"
+                              variant={myProfile?.application?.skills?.includes(skill) ? "filled" : "outlined"}
+                              color={myProfile?.application?.skills?.includes(skill) ? "success" : "default"}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                    
+                    {selectedUser.application.teamMatchingDetails.preferredCauses?.length > 0 && (
+                      <Box>
+                        <Typography variant="body2" sx={{ mb: 0.5 }}>
+                          <strong>Preferred causes:</strong>
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selectedUser.application.teamMatchingDetails.preferredCauses.map(cause => (
+                            <Chip 
+                              key={cause} 
+                              label={cause} 
+                              size="small"
+                              variant={myProfile?.application?.interests?.includes(cause) ? "filled" : "outlined"}
+                              color={myProfile?.application?.interests?.includes(cause) ? "primary" : "default"}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+                
+                <Typography variant="subtitle2" gutterBottom>
+                  Why you match:
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                  {/* Match details */}
+                  {myProfile?.application?.interests?.some(interest => 
+                    selectedUser.application?.interests?.includes(interest)
+                  ) && (
+                    <Chip 
+                      label={`${myProfile?.application?.interests?.filter(i => 
+                        selectedUser.application?.interests?.includes(i)
+                      ).length} Shared Interests`}
+                      color="primary" 
+                      size="small" 
+                      icon={<FaHeart />} 
+                    />
+                  )}
+                  
+                  {selectedUser.application?.teamMatchingDetails?.preferredTeammateSkills?.some(skill => 
+                    myProfile?.application?.skills?.includes(skill)
+                  ) && (
+                    <Chip 
+                      label="You have skills they want" 
+                      color="success" 
+                      size="small" 
+                      icon={<FaLink />} 
+                    />
+                  )}
+                  
+                  {myProfile?.application?.teamMatchingDetails?.preferredTeammateSkills?.some(skill => 
+                    selectedUser.application?.skills?.includes(skill)
+                  ) && (
+                    <Chip 
+                      label="They have skills you want" 
+                      color="secondary" 
+                      size="small" 
+                      icon={<FaLink />} 
+                    />
+                  )}
+                  
+                  {(selectedUser.inPerson === myProfile?.application?.inPerson) && (
+                    <Chip 
+                      label={selectedUser.inPerson ? "Both in-person" : "Both remote"} 
+                      color="info" 
+                      size="small" 
+                    />
+                  )}
+                  
+                  {(selectedUser.willContinue && myProfile?.application?.willContinue) && (
+                    <Chip 
+                      label="Both want to continue after hackathon" 
+                      color="warning" 
+                      size="small" 
+                    />
+                  )}
+                </Box>
+              </Paper>
+
               <Alert severity="info" sx={{ mb: 3 }}>
-                To connect with this hacker, you can reach out via Slack. All Opportunity Hack participants are part of our Slack workspace.
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                  To connect with this hacker, you can reach out via Slack. All Opportunity Hack participants are part of our Slack workspace.
+                </Typography>
               </Alert>
 
               <Box sx={{ mb: 3 }}>
@@ -948,57 +1389,20 @@ const FindTeamPage = () => {
                 </Typography>
                 <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
                   <Typography variant="body2">
-                    Hi {selectedUser.name?.split(' ')[0] || 'there'}! I found your profile on the Opportunity Hack team finder. I'm interested in collaborating for the {eventDetails?.title || 'hackathon'}. Would you be open to chatting about potentially forming a team?
+                    Hi {selectedUser.name?.split(' ')[0] || 'there'}! I found your profile on the Opportunity Hack team finder and we seem to have a great match (compatibility score: {calculateMatchScore(selectedUser)}%). I'm interested in collaborating for the {eventDetails?.title || 'hackathon'}. Would you be open to chatting about potentially forming a team?
                   </Typography>
                 </Paper>
                 <Button
                   size="small"
                   onClick={() => {
                     navigator.clipboard.writeText(
-                      `Hi ${selectedUser.name?.split(' ')[0] || 'there'}! I found your profile on the Opportunity Hack team finder. I'm interested in collaborating for the ${eventDetails?.title || 'hackathon'}. Would you be open to chatting about potentially forming a team?`
+                      `Hi ${selectedUser.name?.split(' ')[0] || 'there'}! I found your profile on the Opportunity Hack team finder and we seem to have a great match (compatibility score: ${calculateMatchScore(selectedUser)}%). I'm interested in collaborating for the ${eventDetails?.title || 'hackathon'}. Would you be open to chatting about potentially forming a team?`
                     );
                   }}
                   sx={{ mt: 1 }}
                 >
                   Copy to clipboard
                 </Button>
-              </Box>
-
-              <Typography variant="subtitle1" gutterBottom>
-                Why you should connect:
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                {/* Match details */}
-                {myProfile?.application?.interests?.some(interest => 
-                  selectedUser.application?.interests?.includes(interest)
-                ) && (
-                  <Chip 
-                    label="Shared Interests" 
-                    color="primary" 
-                    size="small" 
-                    icon={<FaHeart />} 
-                  />
-                )}
-                
-                {myProfile?.application?.skills?.some(skill => 
-                  !selectedUser.application?.skills?.includes(skill)
-                ) && (
-                  <Chip 
-                    label="Complementary Skills" 
-                    color="secondary" 
-                    size="small" 
-                    icon={<FaLink />} 
-                  />
-                )}
-                
-                {calculateMatchScore(selectedUser) >= 70 && (
-                  <Chip 
-                    label="High Match Score" 
-                    color="success" 
-                    size="small" 
-                    icon={<BsStarFill />} 
-                  />
-                )}
               </Box>
             </>
           )}

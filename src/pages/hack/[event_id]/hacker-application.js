@@ -364,16 +364,10 @@ const HackerApplicationPage = () => {
         }));
       }
       
-      if (value !== "I'm looking for team members") {
+      if (value !== "I'm looking for team members" && value !== "I'd like to be matched with a team") {
         setFormData(prev => ({
           ...prev,
-          teamNeededSkills: ''
-        }));
-      }
-      
-      if (value !== "I'd like to be matched with a team") {
-        setFormData(prev => ({
-          ...prev,
+          teamNeededSkills: '',
           teamMatchingPreferences: {
             preferredSize: '',
             preferredSkills: [],
@@ -710,7 +704,7 @@ const HackerApplicationPage = () => {
       return false;
     }
     
-    if (formData.teamStatus === "I'd like to be matched with a team") {
+    if (formData.teamStatus === "I'm looking for team members" || formData.teamStatus === "I'd like to be matched with a team") {
       // Check team matching preferences
       if (!formData.teamMatchingPreferences.preferredSize) {
         setError('Please select your preferred team size');
@@ -1306,216 +1300,501 @@ const HackerApplicationPage = () => {
   );
   
   // Render interests and team formation form
-  const renderInterestsTeamsForm = () => (
-    <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Interests & Team Formation
-      </Typography>
+  const renderInterestsTeamsForm = () => {
+    // Add handlers for the ranked causes
+    const handleAddCause = (cause) => {
+      if (!formData.socialCauses.includes(cause)) {
+        // If adding "Other" option, show a prompt for the custom cause
+        if (cause === 'Other') {
+          const customCause = window.prompt('Please specify your other social cause interest:');
+          if (customCause && customCause.trim()) {
+            setFormData(prev => ({
+              ...prev,
+              socialCauses: [...prev.socialCauses, cause],
+              otherSocialCause: customCause.trim()
+            }));
+          } else {
+            // If they cancel the prompt or enter nothing, don't add "Other"
+            return;
+          }
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            socialCauses: [...prev.socialCauses, cause]
+          }));
+        }
+        
+        // Auto-save to localStorage after changes
+        setTimeout(() => {
+          saveToLocalStorage();
+        }, 500);
+      }
+    };
+    
+    const handleRemoveCause = (index) => {
+      setFormData(prev => {
+        const newCauses = [...prev.socialCauses];
+        const removedCause = newCauses[index];
+        newCauses.splice(index, 1);
+        
+        // If we removed "Other", also clear the otherSocialCause field
+        if (removedCause === 'Other') {
+          return {
+            ...prev,
+            socialCauses: newCauses,
+            otherSocialCause: ''
+          };
+        }
+        
+        return {
+          ...prev,
+          socialCauses: newCauses
+        };
+      });        
+
       
-      <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth required sx={{ mb: formData.socialCauses?.includes('Other') ? 1 : 3 }}>
-          <InputLabel id="social-causes-label">Social Causes You're Interested In</InputLabel>
-          <Select
-            labelId="social-causes-label"
-            id="social-causes"
-            multiple
-            value={formData.socialCauses || []}
-            onChange={(e) => customHandleMultiSelectChange(e, 'socialCauses')}
-            input={<OutlinedInput label="Social Causes You're Interested In" />}
-            renderValue={(selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {selected.map((value) => (
-                  <Chip key={value} label={value} />
-                ))}
-              </Box>
-            )}
-          >
-            {socialCausesOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                <Checkbox checked={(formData.socialCauses || []).indexOf(option) > -1} />
-                <ListItemText primary={option} />
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>Select causes you're passionate about (select at least one)</FormHelperText>
-        </FormControl>
+      // Auto-save to localStorage after changes
+      setTimeout(() => {
+        saveToLocalStorage();
+      }, 500);
+    };
+    
+    // Function to edit the "Other" social cause
+    const handleEditOtherCause = () => {
+      const currentValue = formData.otherSocialCause || '';
+      const newValue = window.prompt('Edit your other social cause:', currentValue);
+      
+      if (newValue !== null) { // Only update if they didn't press Cancel
+        setFormData(prev => ({
+          ...prev,
+          otherSocialCause: newValue.trim()
+        }));
         
-        {formData.socialCauses?.includes('Other') && (
-          <TextField
-            label="Please specify your other social cause interest"
-            name="otherSocialCause"
-            required
-            fullWidth
-            value={formData.otherSocialCause || ''}
-            onChange={handleChange}
-            helperText="Tell us about your specific interest"
-            sx={{ mb: 3 }}
-          />
-        )}
+        // Auto-save to localStorage after changes
+        setTimeout(() => {
+          saveToLocalStorage();
+        }, 500);
+      }
+    };
+
+    const handleMoveCause = (index, direction) => {
+      if (
+        (direction === 'up' && index === 0) || 
+        (direction === 'down' && index === formData.socialCauses.length - 1)
+      ) {
+        return; // Can't move outside boundaries
+      }
+      
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      
+      setFormData(prev => {
+        const newCauses = [...prev.socialCauses];
+        const temp = newCauses[index];
+        newCauses[index] = newCauses[newIndex];
+        newCauses[newIndex] = temp;
         
-        <TextField
-          label="Previous Social Impact Experience (Optional)"
-          name="socialImpactExperience"
-          multiline
-          rows={3}
-          fullWidth
-          value={formData.socialImpactExperience || ''}
-          onChange={handleChange}
-          helperText="Share any previous experience with social impact projects or nonprofits"
-          sx={{ mb: 3 }}
-        />
+        return {
+          ...prev,
+          socialCauses: newCauses
+        };
+      });
+      
+      // Auto-save to localStorage after changes
+      setTimeout(() => {
+        saveToLocalStorage();
+      }, 500);
+    };
+    
+    return (
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
+          Interests & Team Formation
+        </Typography>
         
-        <TextField
-          label="What motivates you to participate in Opportunity Hack?"
-          name="motivation"
-          multiline
-          rows={3}
-          fullWidth
-          value={formData.motivation || ''}
-          onChange={handleChange}
-          helperText="What impact do you hope to create?"
-          sx={{ mb: 3 }}
-        />
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="body2">
+            At Opportunity Hack, we believe in the power of diverse, well-matched teams. The information you provide below 
+            helps us connect hackers with complementary skills and shared interests in social causes. 
+            Our team-matching algorithm uses this data to create balanced teams that can effectively address nonprofit challenges.
+          </Typography>
+        </Alert>
         
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="team-status-label">Team Status</InputLabel>
-          <Select
-            labelId="team-status-label"
-            id="team-status"
-            name="teamStatus"
-            value={formData.teamStatus || ''}
-            onChange={handleChange}
-            label="Team Status"
-          >
-            <MenuItem value="I have a team">I have a team</MenuItem>
-            <MenuItem value="I'm looking for team members">I'm looking for team members</MenuItem>
-            <MenuItem value="I'd like to be matched with a team">I'd like to be matched with a team</MenuItem>
-          </Select>
-          <FormHelperText>Let us know your team situation</FormHelperText>
-        </FormControl>
-        
-        {formData.teamStatus === 'I have a team' && (
-          <TextField
-            label="Team Code"
-            name="teamCode"
-            required
-            fullWidth
-            value={formData.teamCode || ''}
-            onChange={handleChange}
-            helperText="Enter your team's code to be added to their roster"
-            sx={{ mb: 3 }}
-          />
-        )}
-        
-        {formData.teamStatus === "I'm looking for team members" && (
-          <TextField
-            label="What skills are you looking for in teammates?"
-            name="teamNeededSkills"
-            required
-            multiline
-            rows={2}
-            fullWidth
-            value={formData.teamNeededSkills || ''}
-            onChange={handleChange}
-            helperText="Describe what skills would complement your team"
-            sx={{ mb: 3 }}
-          />
-        )}
-        
-        {formData.teamStatus === "I'd like to be matched with a team" && (
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Team Matching Preferences
-            </Typography>
-            
-            <FormControl fullWidth required sx={{ mb: 3 }}>
-              <InputLabel id="preferred-size-label">Preferred Team Size</InputLabel>
-              <Select
-                labelId="preferred-size-label"
-                id="preferred-size"
-                value={formData.teamMatchingPreferences?.preferredSize || ''}
-                onChange={(e) => handleTeamMatchingChange('preferredSize', e.target.value)}
-                label="Preferred Team Size"
-              >
-                {teamSizeOptions.map(option => (
+        <Box sx={{ mb: 3 }}>
+          {/* Replace the multi-select with ranked selection */}
+          <Typography variant="subtitle1" gutterBottom>
+            Social Causes You're Interested In <Box component="span" color="error.main">*</Box>
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select and rank social causes by priority. Your top choices will be given more weight in team matching.
+          </Typography>
+          
+          {/* Add causes section */}
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel id="social-causes-label">Add Social Causes</InputLabel>
+            <Select
+              labelId="social-causes-label"
+              id="social-causes"
+              value=""
+              onChange={(e) => {
+                if (e.target.value) handleAddCause(e.target.value);
+              }}
+              input={<OutlinedInput label="Add Social Causes" />}
+            >
+              {socialCausesOptions
+                .filter(option => !formData.socialCauses.includes(option))
+                .map((option) => (
                   <MenuItem key={option} value={option}>{option}</MenuItem>
+                ))
+              }
+            </Select>
+            <FormHelperText>
+              {formData.socialCauses.length === 0 
+                ? "Please select at least one social cause you're interested in" 
+                : "Add more causes to your ranking below"}
+            </FormHelperText>
+          </FormControl>
+          
+          {/* Selected causes with improved ranking UI */}
+          {formData.socialCauses.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ mb: 1 }}>
+                Your ranked causes (most important first):
+              </Typography>
+              
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                {formData.socialCauses.map((cause, index) => (
+                  <Box 
+                    key={index} 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      mb: index === formData.socialCauses.length - 1 ? 0 : 2,
+                      bgcolor: 'background.paper',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      transition: 'all 0.2s ease-in-out',
+                      "&:hover": {
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        borderColor: 'primary.main',
+                      }
+                    }}
+                  >
+                    {/* Priority indicator */}
+                    <Box 
+                      sx={{ 
+                        bgcolor: index === 0 ? 'primary.main' : index === 1 ? 'primary.light' : index === 2 ? 'info.light' : 'grey.200',
+                        color: index < 3 ? 'white' : 'text.primary',
+                        p: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        width: 50,
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      #{index + 1}
+                    </Box>
+                    
+                    {/* Cause name */}
+                    <Box sx={{ flex: 1, px: 2, py: 1.5, fontSize: '1rem' }}>
+                      {cause === 'Other' ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography sx={{ mr: 1 }}>Other:</Typography>
+                          <Typography fontWeight="medium" color="primary.main">
+                            {formData.otherSocialCause || '(not specified)'}
+                          </Typography>
+                          <Button 
+                            size="small" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditOtherCause();
+                            }}
+                            sx={{ ml: 1, minWidth: 0, p: 0.5 }}
+                          >
+                            Edit
+                          </Button>
+                        </Box>
+                      ) : cause}
+                    </Box>
+                    
+                    {/* Control buttons with improved touchability */}
+                    <Box 
+                      sx={{ 
+                        display: 'flex', 
+                        mr: 0.5, 
+                        flexDirection: { xs: 'column', sm: 'row' }
+                      }}
+                    >
+                      <Button
+                        variant={index === 0 ? "text" : "contained"}
+                        color="primary"
+                        disabled={index === 0}
+                        onClick={() => handleMoveCause(index, 'up')}
+                        sx={{ 
+                          minWidth: { xs: 40, sm: 48 }, 
+                          height: { xs: 28, sm: 40 },
+                          p: 0.5,
+                          m: 0.5,
+                          fontSize: '1.2rem'
+                        }}
+                        aria-label="Move up"
+                      >
+                        ↑
+                      </Button>
+                      <Button
+                        variant={index === formData.socialCauses.length - 1 ? "text" : "contained"}
+                        color="primary"
+                        disabled={index === formData.socialCauses.length - 1}
+                        onClick={() => handleMoveCause(index, 'down')}
+                        sx={{ 
+                          minWidth: { xs: 40, sm: 48 }, 
+                          height: { xs: 28, sm: 40 },
+                          p: 0.5,
+                          m: 0.5,
+                          fontSize: '1.2rem'
+                        }}
+                        aria-label="Move down"
+                      >
+                        ↓
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleRemoveCause(index)}
+                        sx={{ 
+                          minWidth: { xs: 40, sm: 48 }, 
+                          height: { xs: 28, sm: 40 },
+                          p: 0.5,
+                          m: 0.5,
+                        }}
+                        aria-label="Remove"
+                      >
+                        ✕
+                      </Button>
+                    </Box>
+                  </Box>
                 ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth required sx={{ mb: 3 }}>
-              <InputLabel id="preferred-skills-label">Preferred Skills for a teammate</InputLabel>
-              <Select
-                labelId="preferred-skills-label"
-                id="preferred-skills"
-                multiple
-                value={formData.teamMatchingPreferences?.preferredSkills || []}
-                onChange={(e) => handleTeamMatchingChange('preferredSkills', e.target.value)}
-                input={<OutlinedInput label="Preferred Skills to Work With" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} />
-                    ))}
+                
+                {/* Empty state message when no causes selected */}
+                {formData.socialCauses.length === 0 && (
+                  <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+                    No causes selected yet. Please add at least one cause from the dropdown above.
                   </Box>
                 )}
-              >
-                {primaryRoleOptions.filter(option => option !== 'Other').map((option) => (
-                  <MenuItem key={option} value={option}>
-                    <Checkbox checked={(formData.teamMatchingPreferences?.preferredSkills || []).indexOf(option) > -1} />
-                    <ListItemText primary={option} />
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>Select skills you'd like in your teammates</FormHelperText>
-            </FormControl>
-            
-            
-          </Box>
-        )}
-        
-        <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel id="workshop-interests-label">Workshop Interests (Optional)</InputLabel>
-          <Select
-            labelId="workshop-interests-label"
-            id="workshop-interests"
-            multiple
-            value={formData.workshopInterests || []}
-            onChange={(e) => customHandleMultiSelectChange(e, 'workshopInterests')}
-            input={<OutlinedInput label="Workshop Interests (Optional)" />}
-            renderValue={(selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {selected.map((value) => (
-                  <Chip key={value} label={value} />
-                ))}
-              </Box>
-            )}
-          >
-            {workshopOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                <Checkbox checked={(formData.workshopInterests || []).indexOf(option) > -1} />
-                <ListItemText primary={option} />
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>Select workshops you're interested in attending</FormHelperText>
-        </FormControl>
-        
-        <FormControlLabel
-          control={
-            <Checkbox
-              name="willContinue"
-              checked={formData.willContinue || false}
+              </Paper>
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontStyle: 'italic' }}>
+                The order matters! Your top priority should be #1.
+              </Typography>
+            </Box>
+          )}
+          
+          {/* Rest of the form remains unchanged */}
+          <TextField
+            label="Previous Social Impact Experience (Optional)"
+            name="socialImpactExperience"
+            multiline
+            rows={3}
+            fullWidth
+            value={formData.socialImpactExperience || ''}
+            onChange={handleChange}
+            helperText="Share any previous experience with social impact projects or nonprofits"
+            sx={{ mb: 3 }}
+          />
+          
+          <TextField
+            label="What motivates you to participate in Opportunity Hack?"
+            name="motivation"
+            multiline
+            rows={3}
+            fullWidth
+            value={formData.motivation || ''}
+            onChange={handleChange}
+            helperText="What impact do you hope to create?"
+            sx={{ mb: 3 }}
+          />
+          
+          <FormControl fullWidth required sx={{ mb: 3 }}>
+            <InputLabel id="team-status-label">Team Status</InputLabel>
+            <Select
+              labelId="team-status-label"
+              id="team-status"
+              name="teamStatus"
+              value={formData.teamStatus || ''}
               onChange={handleChange}
-              color="primary"
+              label="Team Status"
+            >
+              <MenuItem value="I have a team">I have a complete team</MenuItem>
+              <MenuItem value="I'm looking for team members">I have a team and we'd like to add more people</MenuItem>
+              <MenuItem value="I'd like to be matched with a team">I don't have a team and I'd like to be matched with people to form a team</MenuItem>
+            </Select>
+            <FormHelperText>Let us know your team situation - we'll help connect you with teammates before or during the event</FormHelperText>
+          </FormControl>
+          
+          {formData.teamStatus === 'I have a team' && (
+            <TextField
+              label="Team Code"
+              name="teamCode"
+              required
+              fullWidth
+              value={formData.teamCode || ''}
+              onChange={handleChange}
+              helperText="Enter your team's code to be added to their roster"
+              sx={{ mb: 3 }}
             />
-          }
-          label="I'm interested in continuing project development after the hackathon"
-          sx={{ mb: 2, display: 'block' }}
-        />
+          )}
+          
+          {(formData.teamStatus === "I'm looking for team members" || formData.teamStatus === "I'd like to be matched with a team") && (
+            <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 3 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Team Matching Preferences
+              </Typography>
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Our team-matching process has successfully connected hundreds of hackers into effective teams over the years. 
+                Your preferences below will help us create balanced teams where members complement each other's skills and share 
+                common interests in social causes.
+              </Typography>
+              
+              {formData.teamStatus === "I'm looking for team members" && (
+                <TextField
+                  label="What skills are you looking for in teammates?"
+                  name="teamNeededSkills"
+                  required
+                  multiline
+                  rows={2}
+                  fullWidth
+                  value={formData.teamNeededSkills || ''}
+                  onChange={handleChange}
+                  helperText="Describe what skills would complement your team"
+                  sx={{ mb: 3 }}
+                />
+              )}
+              
+              <FormControl fullWidth required sx={{ mb: 3 }}>
+                <InputLabel id="preferred-size-label">Preferred Team Size</InputLabel>
+                <Select
+                  labelId="preferred-size-label"
+                  id="preferred-size"
+                  value={formData.teamMatchingPreferences?.preferredSize || ''}
+                  onChange={(e) => handleTeamMatchingChange('preferredSize', e.target.value)}
+                  label="Preferred Team Size"
+                >
+                  {teamSizeOptions.map(option => (
+                    <MenuItem key={option} value={option}>{option}</MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>This helps us match you with the right sized team</FormHelperText>
+              </FormControl>
+              
+              <FormControl fullWidth required sx={{ mb: 3 }}>
+                <InputLabel id="preferred-skills-label">Skills You'd Like in Teammates</InputLabel>
+                <Select
+                  labelId="preferred-skills-label"
+                  id="preferred-skills"
+                  multiple
+                  value={formData.teamMatchingPreferences?.preferredSkills || []}
+                  onChange={(e) => handleTeamMatchingChange('preferredSkills', e.target.value)}
+                  input={<OutlinedInput label="Skills You'd Like in Teammates" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip key={value} label={value} />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {primaryRoleOptions.filter(option => option !== 'Other').map((option) => (
+                    <MenuItem key={option} value={option}>
+                      <Checkbox checked={(formData.teamMatchingPreferences?.preferredSkills || []).indexOf(option) > -1} />
+                      <ListItemText primary={option} />
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>Select skills that would complement your own. These are especially helpful for team matching.</FormHelperText>
+              </FormControl>
+              
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="preferred-causes-label">Preferred Social Causes to Work On</InputLabel>
+                <Select
+                  labelId="preferred-causes-label"
+                  id="preferred-causes"
+                  multiple
+                  value={formData.teamMatchingPreferences?.preferredCauses || []}
+                  onChange={(e) => handleTeamMatchingChange('preferredCauses', e.target.value)}
+                  input={<OutlinedInput label="Preferred Social Causes to Work On" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip key={value} label={value} />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {socialCausesOptions.filter(option => option !== 'Other').map((option) => (
+                    <MenuItem key={option} value={option}>
+                      <Checkbox checked={(formData.teamMatchingPreferences?.preferredCauses || []).indexOf(option) > -1} />
+                      <ListItemText primary={option} />
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>Select social causes you'd especially like to work on with your team. This helps with project matching.</FormHelperText>
+              </FormControl>
+              
+              <Alert severity="info" sx={{ mb: 1 }}>
+                <Typography variant="body2">
+                  <strong>Tip:</strong> Being specific about your team preferences increases your chances of finding compatible teammates!
+                </Typography>
+              </Alert>
+            </Box>
+          )}
+          
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel id="workshop-interests-label">Workshop Interests (Optional)</InputLabel>
+            <Select
+              labelId="workshop-interests-label"
+              id="workshop-interests"
+              multiple
+              value={formData.workshopInterests || []}
+              onChange={(e) => customHandleMultiSelectChange(e, 'workshopInterests')}
+              input={<OutlinedInput label="Workshop Interests (Optional)" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+            >
+              {workshopOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  <Checkbox checked={(formData.workshopInterests || []).indexOf(option) > -1} />
+                  <ListItemText primary={option} />
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>Select workshops you're interested in attending</FormHelperText>
+          </FormControl>
+          
+          <FormControlLabel
+            control={
+              <Checkbox
+                name="willContinue"
+                checked={formData.willContinue || false}
+                onChange={handleChange}
+                color="primary"
+              />
+            }
+            label="I'm interested in continuing project development after the hackathon"
+            sx={{ mb: 2, display: 'block' }}
+          />
+        </Box>
       </Box>
-    </Box>
-  );
+    );
+  };
   
   // Render review form
   const renderReviewForm = () => (
@@ -1846,12 +2125,7 @@ const HackerApplicationPage = () => {
                       Thank you for your interest in participating as a hacker at Opportunity Hack! Hackers like you build
                       innovative solutions for nonprofits that make a real difference in their communities.
                     </Typography>
-                    
-                    {eventData && eventData.description && (
-                      <Typography variant="body1" sx={{ mb: 3 }}>
-                        <strong>About this event:</strong> {eventData.description}
-                      </Typography>
-                    )}
+                                        
                     
                     <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
                       <Typography variant="body1" sx={{ mb: 1 }}>
