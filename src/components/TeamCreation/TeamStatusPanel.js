@@ -233,7 +233,9 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
       <StyledPaper>
         <Alert severity="info" sx={{ mb: 2 }}>
           <AlertTitle>No Teams Yet</AlertTitle>
-          You don't have any teams for this hackathon yet. Complete the form below to create your team.
+          <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
+            You don't have any teams for this hackathon yet. Complete the form below to create your team.
+          </Typography>
         </Alert>
         
         <Box sx={{ mt: 3 }}>
@@ -313,7 +315,9 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
       {sortedTeams.length > 1 && (
         <Alert severity="info" sx={{ mb: 3 }}>
           <AlertTitle>Multiple Teams</AlertTitle>
-          You are part of multiple teams for this hackathon. Your active team will be listed first.
+          <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
+            You are part of multiple teams for this hackathon. Your active team will be listed first.
+          </Typography>
         </Alert>
       )}
       
@@ -373,7 +377,9 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
               {team.status === 'IN_REVIEW' && (
                 <Alert severity="warning" sx={{ mb: 3 }}>
                   <AlertTitle>Team Under Review</AlertTitle>
-                  Your team is currently being reviewed by the hackathon organizers. You'll be notified in Slack when your team is approved.
+                  <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
+                    Your team is currently being reviewed by the hackathon organizers. You'll be notified in Slack when your team is approved.
+                  </Typography>
                 </Alert>
               )}
 
@@ -381,7 +387,9 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
               {team.status === 'APPROVED' && (
                 <Alert severity="success" sx={{ mb: 3 }}>
                   <AlertTitle>Team Approved</AlertTitle>
-                  Your team has been approved! Be sure to join your team's Slack channel and check frequently for updates.
+                  <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
+                    Your team has been approved! Be sure to join your team's Slack channel and check frequently for updates.
+                  </Typography>
                 </Alert>
               )}
 
@@ -403,7 +411,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
                         #{team.slack_channel}
                       </MuiLink>
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.05rem' }}>
                       💬 <strong>Important:</strong> All team members must join this Slack channel for the entire event.
                       This is where organizers will share important announcements and you'll coordinate with your team.
                     </Typography>
@@ -495,13 +503,19 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
                     
                     {event && event.github_org && (
                       <>
-                        <Typography variant="body2" paragraph sx={{ color: 'text.secondary' }}>
+                        <Typography variant="body1" paragraph sx={{ color: 'text.secondary', fontSize: '1.05rem' }}>
                           ⚠️ <strong>Important:</strong> Your team should only use the official hackathon GitHub organization for the entire event.
                           Do not create separate repositories outside this organization.
                         </Typography>
                         
                         {team.github_username && (
-                          <Typography variant="body2" paragraph sx={{ color: 'text.secondary' }}>
+                          <Typography variant="body1" paragraph sx={{ 
+                            color: 'text.primary', 
+                            fontSize: '1.05rem',
+                            bgcolor: 'action.hover',
+                            p: 1,
+                            borderRadius: 1
+                          }}>
                             👉 <strong>Team Lead Action Required:</strong> {team.github_username} must create a repository for the team in the
                             {' '}<MuiLink href={`https://github.com/${event.github_org}`} target="_blank">@{event.github_org}</MuiLink> organization
                             and add all team members as collaborators.
@@ -630,7 +644,9 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
         <Typography variant="h6" gutterBottom>Helpful Resources</Typography>
         <Alert severity="info" sx={{ mb: 2 }}>
           <AlertTitle>Win Prizes & Get Recognition</AlertTitle>
-          Don't forget to <Link href="/profile" passHref><MuiLink>update your profile</MuiLink></Link> and <Link href="/volunteer/track" passHref><MuiLink>track your volunteer hours</MuiLink></Link> to be eligible for prizes and recognition!
+          <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
+            Don't forget to <Link href="/profile" passHref><MuiLink>update your profile</MuiLink></Link> and <Link href="/volunteer/track" passHref><MuiLink>track your volunteer hours</MuiLink></Link> to be eligible for prizes and recognition!
+          </Typography>
         </Alert>
         
         <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>

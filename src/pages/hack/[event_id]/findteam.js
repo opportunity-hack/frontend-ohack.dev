@@ -767,9 +767,8 @@ const FindTeamPage = () => {
                 <Box sx={{ mt: 3 }}>
                   <Button
                     component="a"
-                    href="https://opportunity-hack.slack.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/signup"                    
+                    
                     startIcon={<FaSlack />}
                     variant="outlined"
                     fullWidth
