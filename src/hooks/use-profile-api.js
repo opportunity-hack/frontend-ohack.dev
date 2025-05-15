@@ -163,7 +163,16 @@ export default function useProfileApi(){
                     profile_url: window.location.href + "/" + data.text.id,  // /profile/<db id>
                     linkedin_url: data.text.linkedin_url,
                     instagram_url: data.text.instagram_url,  
-                    propel_id: data.text.propel_id,                  
+                    propel_id: data.text.propel_id,
+                    // Added address fields
+                    street_address: data.text.street_address,
+                    street_address_2: data.text.street_address_2,
+                    city: data.text.city,
+                    state: data.text.state,
+                    postal_code: data.text.postal_code,
+                    country: data.text.country,
+                    // Added sticker preference
+                    want_stickers: data.text.want_stickers,
                 };
 
                 setProfile(profileData);

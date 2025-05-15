@@ -8,12 +8,19 @@ import {
   MenuItem, 
   Select,
   Checkbox,
+  FormControlLabel,
   ListItemText,
   Button,
   Stack,
   Link,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Paper,
+  Grid,
+  Divider,
+  Box,
+  CircularProgress,
+  Skeleton
 } from "@mui/material";
 import useProfileApi from "../../hooks/use-profile-api.js";
 import BadgeList from "../../components/badge-list";
@@ -44,15 +51,14 @@ import {
   ProfileHeadline,
 } from "../../styles/profile/styles";
 
-
-
 export default function Profile(props) {
   const { isLoggedIn, user } = useAuthInfo();
-  const { badges, hackathons, profile, feedback_url, update_profile_metadata } =
+  const { badges, hackathons, profile, feedback_url, update_profile_metadata, isLoading } =
     useProfileApi({});
   const theme = useTheme();
   const [githubHistory, setGithubHistory] = useState([]);
-
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState({});
 
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -69,31 +75,49 @@ export default function Profile(props) {
   const [lastCompanyUpdate, setLastCompanyUpdate] = React.useState(0);
   const [lastWhyUpdate, setLastWhyUpdate] = React.useState(0);
   const [company, setCompany] = React.useState("");
+  
+  // Address fields
+  const [streetAddress, setStreetAddress] = React.useState("");
+  const [streetAddress2, setStreetAddress2] = React.useState("");
+  const [city, setCity] = React.useState("");
+  const [state, setState] = React.useState("");
+  const [postalCode, setPostalCode] = React.useState("");
+  const [country, setCountry] = React.useState("United States");
+  const [lastAddressUpdate, setLastAddressUpdate] = React.useState(0);
+  
+  // Sticker preference
+  const [wantStickers, setWantStickers] = React.useState(false);
 
-  // Update expertise, education, and shirt size from the profile
+  // Update profile data from the backend
   React.useEffect(() => {
-    if (
-      !profile ||
-      !profile?.role ||
-      !profile?.education ||
-      !profile?.shirt_size
-    ) {
+    if (!profile) {
       return;
     }
 
+    console.log("Profile data", profile);
     setInstagramUrl(profile?.instagram_url);
     setLinkedInUrl(profile?.linkedin_url);
     setRole(profile?.role);
     setEducation(profile?.education);
-    setShirtSize(profile?.shirt_size);
+    setShirtSize(profile?.shirt_size || "");
     setWhy(profile?.why);
     setGithub(profile?.github);
+    setCompany(profile?.company);
+
+    // Set address fields
+    setStreetAddress(profile?.street_address || "");
+    setStreetAddress2(profile?.street_address_2 || "");
+    setCity(profile?.city || "");
+    setState(profile?.state || "");
+    setPostalCode(profile?.postal_code || "");
+    setCountry(profile?.country || "United States");
+    
+    // Set sticker preference
+    setWantStickers(profile?.want_stickers || false);
 
     if (profile?.expertise) {
       setExpertise(profile?.expertise);
     }
-
-    setCompany(profile?.company);
 
     initFacebookPixel();
 
@@ -106,6 +130,7 @@ export default function Profile(props) {
     if (github) {
       const github_history_url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/github/${github}`;
       
+      setIsGithubLoading(true);
       fetch(github_history_url)
         .then((response) => response.json())
         .then((data) => {          
@@ -113,6 +138,9 @@ export default function Profile(props) {
         })
         .catch((error) => {
           console.error("Error fetching GitHub history", error);
+        })
+        .finally(() => {
+          setIsGithubLoading(false);
         });
     }
   }, [github]);
@@ -140,8 +168,10 @@ export default function Profile(props) {
     // Call the API to save the user's profile
     console.log("Save to backend", event.target.value);
 
+    setIsSaving({...isSaving, role: true});
     const onComplete = () => {
       console.log("Profile role updated");
+      setIsSaving({...isSaving, role: false});
     };
 
     update_profile_metadata({ role: event.target.value }, onComplete);
@@ -175,8 +205,10 @@ export default function Profile(props) {
     // Call the API to save the user's profile
     console.log("Save to backend", event.target.value);
 
+    setIsSaving({...isSaving, education: true});
     const onComplete = () => {
       console.log("Profile education updated");
+      setIsSaving({...isSaving, education: false});
     };
 
     update_profile_metadata({ education: event.target.value }, onComplete);
@@ -186,10 +218,12 @@ export default function Profile(props) {
 
   const handleShirtSizeChange = (event) => {
     // Call the API to save the user's profile
-    console.log("Save to backend", event.target.value);
+    console.log("Save to backend shirt size:", event.target.value);
 
+    setIsSaving({...isSaving, shirtSize: true});
     const onComplete = () => {
       console.log("Profile shirt size updated");
+      setIsSaving({...isSaving, shirtSize: false});
     };
 
     update_profile_metadata({ shirt_size: event.target.value }, onComplete);
@@ -297,6 +331,46 @@ export default function Profile(props) {
 
     update_profile_metadata({ instagram_url: event.target.value }, onComplete);
   }
+  
+  // Address field handlers with debouncing
+  const handleAddressChange = (field, setter) => (event) => {
+    setter(event.target.value);
+    
+    // Clear the last timeout
+    clearTimeout(lastAddressUpdate);
+    
+    // Set a new timeout to update all address fields at once
+    setLastAddressUpdate(
+      setTimeout(() => {
+        const addressData = {
+          street_address: field === "street_address" ? event.target.value : streetAddress,
+          street_address_2: field === "street_address_2" ? event.target.value : streetAddress2,
+          city: field === "city" ? event.target.value : city,
+          state: field === "state" ? event.target.value : state,
+          postal_code: field === "postal_code" ? event.target.value : postalCode,
+          country: field === "country" ? event.target.value : country,
+        };
+        
+        const onComplete = () => {
+          console.log("Address updated");
+        };
+        
+        update_profile_metadata(addressData, onComplete);
+      }, 2000)
+    );
+  };
+  
+  // Sticker preference handler
+  const handleStickersChange = (event) => {
+    const checked = event.target.checked;
+    setWantStickers(checked);
+    
+    const onComplete = () => {
+      console.log("Sticker preference updated");
+    };
+    
+    update_profile_metadata({ want_stickers: checked }, onComplete);
+  };
 
   const roleOptions = [
     { value: "", label: "Select a role" },
@@ -333,9 +407,41 @@ export default function Profile(props) {
     { value: "xx-large", label: "XX-Large" },
     { value: "xxx-large", label: "XXX-Large" }
   ];
+  
+  const countryOptions = [
+    { value: "United States", label: "United States" },
+    { value: "Canada", label: "Canada" },
+    { value: "Mexico", label: "Mexico" },
+    { value: "United Kingdom", label: "United Kingdom" },
+    { value: "Australia", label: "Australia" },
+    { value: "India", label: "India" },
+    { value: "Other", label: "Other" }
+  ];
 
   const style = {
     fontSize: 14,
+  };
+
+  // Loading component for form fields
+  const LoadingOverlay = ({ isLoading, field, children }) => {
+    if (isSaving[field]) {
+      return (
+        <Box sx={{ position: 'relative' }}>
+          {children}
+          <Box sx={{ 
+            position: 'absolute', 
+            top: 0, 
+            right: 10, 
+            height: '100%', 
+            display: 'flex', 
+            alignItems: 'center' 
+          }}>
+            <CircularProgress size={20} />
+          </Box>
+        </Box>
+      );
+    }
+    return children;
   };
 
   if (!isLoggedIn) {
@@ -349,206 +455,416 @@ export default function Profile(props) {
 
   return (
     <LayoutContainer container>
-  <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
-    <Head>
-      <title>Profile - Opportunity Hack Developer Portal</title>
-    </Head>
-    
-    {isLoggedIn ? (
-      <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: isMobile ? 2 : 4 }}>
-        <ProfileHeader container>
-          <ProfileAvatar
-            src={user?.pictureUrl}
-            alt="Profile"
-            width={60}
-            height={60}
-          />
-          <ProfileHeadline>
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 600,
-                fontSize: isMobile ? "2rem" : "3rem",
-                marginBottom: "0.5rem",
-              }}
-            >
-              {user?.firstName} {user?.lastName}{" "}
-              <VerifiedUserIcon color="success" fontSize="large" />
-            </Typography>
-            <ProfileDetailText>{user?.email}</ProfileDetailText>
-            <ProfileDetailText>
-              Created: <Moment fromNow>{user?.createdAt * 1000}</Moment>
-            </ProfileDetailText>
-          </ProfileHeadline>
-        </ProfileHeader>
+      <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
+        <Head>
+          <title>Profile - Opportunity Hack Developer Portal</title>
+        </Head>
         
-        <HeartGauge history={profile.history} />
-
-        <RaffleEntries profile={profile} githubHistory={githubHistory} />
-
-        <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
-
-        <Link href={profile.profile_url}>
-          <ProfileButton className="button button--compact button--primary">
-            See Your Public Profile
-          </ProfileButton>
-        </Link>
-
-        <Typography variant="h2" mt={2} sx={{ fontWeight: 600, fontSize: isMobile ? "1.5rem" : "2rem" }}>
-          Tell us more about yourself and why you're here
-        </Typography>
-        <Typography variant="body1" mt={2}>
-          We ask because we want to make sure we're providing the right resources and opportunities for you.
-        </Typography>
-
-        <Stack direction="column" spacing={2} mt={2} sx={{ width: '100%' }}>
-          <CustomSelect
-            label="What hat are you currently wearing?"
-            value={role}
-            onChange={onRoleChange}
-            options={roleOptions}
-            id="role-select"
-          />        
-
-          <FormControl>            
-            <TextField
-              id="github"
-              onChange={handleGithubChange}
-              aria-describedby="github-helper-text"
-              label="What's your GitHub username? (not email)"
-              value={github}              
-              style={{
-                width: "300px",                                    
-              }}                        
-            />
-          </FormControl>
-
-          <CustomSelect
-            label="Areas of Expertise"
-            value={expertise}
-            onChange={handleExpertiseChange}
-            options={expertiseOptions}
-            id="expertise-select"
-            multiple
-          />      
-
-          <CustomSelect
-            label="Level of Education"
-            value={education}
-            onChange={handleEducationChange}
-            options={educationOptions}
-            id="education-select"
-          />
-          
-          <FormControl>            
-            <TextField
-              id="why"
-              onChange={handleWhyChange}
-              aria-describedby="learning-helper-text"
-              label="Why are you here with us at OHack?"
-              value={why}
-              style={{
-                width: "400px",                                    
-              }}     
-            />
-          </FormControl>
-
-          <FormControl>            
-            <TextField
-              id="company"
-              onChange={handleCompanyChange}
-              aria-describedby="company-helper-text"
-              label="If you're working, what company do you work for?"
-              value={company}
-              style={{
-                width: "300px",                                    
-              }}     
-            />
-          </FormControl>
-
-          <CustomSelect
-            label="Shirt Size"
-            value={shirtSize}
-            onChange={handleShirtSizeChange}
-            options={shirtSizeOptions}
-            id="shirt-size-select"
-          />
-
-          <FormControl>            
-            <TextField
-              id="linkedin"
-              onChange={handleLinkedInChange}
-              aria-describedby="linkedin-helper-text"
-              label="LinkedIn Profile URL"
-              value={linkedInUrl}
-              style={{
-                width: "300px",                                    
-              }}
-            />            
-          </FormControl>
-
-          <FormControl>
-            <TextField
-              id="instagram"
-              onChange={handleInstagramChange}
-              aria-describedby="instagram-helper-text"
-              label="Instagram Profile URL"
-              value={instagramUrl}
-              style={{
-                width: "300px",                                    
-              }}
-            />
-          </FormControl>
-        </Stack>
-
-        <GitHubContributions githubHistory={githubHistory} />               
-
-        <div className="profile__details">
-          <h2 className="profile__title">Badges</h2>
-          <BadgeList badges={badges} />
-
-          <h1 className="profile__title">Volunteer History</h1>
-          <br />
-
-          <h2 className="profile__title">Feedback</h2>
-          Feedback you give and receive
-          <FeedbackLite feedback_url={feedback_url} history={profile.history} />
-
-          <h2 className="profile__title">Hackathons</h2>
-          <p>
-            We've tried our best to keep track of each time you've volunteered,
-            mentored, judged a hackathon. If not, please send us a Slack!
-          </p>
-          <ProfileHackathonList hackathons={hackathons} />
-
-          <br />
-
-          <h2 className="profile__title">Summer Internships</h2>
-          <p>
-            These are distinctly different than hackathons as they span over a
-            couple months.
-          </p>
-
-          <h2 className="profile__title">Feedback</h2>
-          <p>
-            Feedback gathered from your mentors, peers, team members, nonprofits
-          </p>
-          <HelpUsBuildOHack
-            github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8"
-            github_name="Issue #8"
-          />
-        </div>
-      </ProfileContainer>
-    ) : (
-      <div>
-        <h1>Not logged in</h1>
-        <p>
-          You must be logged in to view this page.{" "}
-          <LoginOrRegister introText="Ready to join us?" previousPage={"/profile"} />
-        </p>
-      </div>
-    )}
-  </InnerContainer>
-</LayoutContainer>
+        {isLoggedIn ? (
+          <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: isMobile ? 2 : 4 }}>
+            {/* Header Section */}
+            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+              {isLoading ? (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Skeleton variant="circular" width={80} height={80} sx={{ mr: 2 }} />
+                    <Box>
+                      <Skeleton variant="text" width={250} height={60} />
+                      <Skeleton variant="text" width={180} height={20} />
+                      <Skeleton variant="text" width={150} height={20} />
+                    </Box>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <ProfileHeader container>
+                    <ProfileAvatar
+                      src={user?.pictureUrl}
+                      alt="Profile"
+                      width={80}
+                      height={80}
+                    />
+                    <ProfileHeadline>
+                      <Typography
+                        variant="h2"
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: isMobile ? "2rem" : "3rem",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        {user?.firstName} {user?.lastName}{" "}
+                        <VerifiedUserIcon color="success" fontSize="large" />
+                      </Typography>
+                      <ProfileDetailText>{user?.email}</ProfileDetailText>
+                      <ProfileDetailText>
+                        Member since: <Moment fromNow>{user?.createdAt * 1000}</Moment>
+                      </ProfileDetailText>
+                    </ProfileHeadline>
+                  </ProfileHeader>
+                  
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                    <Link href={profile.profile_url} style={{ textDecoration: 'none' }}>
+                      <Button variant="contained" color="primary">
+                        See Your Public Profile
+                      </Button>
+                    </Link>
+                    
+                    <HeartGauge history={profile.history} />
+                  </Box>
+                </>
+              )}
+            </Paper>
+            
+            {/* Metrics and Achievements */}
+            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+              <Typography variant="h4" sx={{ mb: 2, fontWeight: 500 }}>
+                Your Impact & Achievements
+              </Typography>
+              
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={6}>
+                  {isLoading ? (
+                    <Skeleton variant="rectangular" height={180} />
+                  ) : (
+                    <RaffleEntries profile={profile} githubHistory={githubHistory} />
+                  )}
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  {isLoading || isGithubLoading ? (
+                    <Skeleton variant="rectangular" height={180} />
+                  ) : (
+                    <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
+                  )}
+                </Grid>
+              </Grid>
+              
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="h5" sx={{ mb: 1 }}>GitHub Contributions</Typography>
+                {isLoading || isGithubLoading ? (
+                  <Skeleton variant="rectangular" height={150} />
+                ) : (
+                  <GitHubContributions githubHistory={githubHistory} />
+                )}
+              </Box>
+            </Paper>
+            
+            {/* Basic Information */}
+            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+              <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                Basic Information
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3 }}>
+                Tell us more about yourself and why you're here with Opportunity Hack.
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6} md={4}>
+                  {isLoading ? (
+                    <Skeleton variant="rectangular" height={56} />
+                  ) : (
+                    <LoadingOverlay isLoading={isLoading} field="role">
+                      <CustomSelect
+                        label="What hat are you currently wearing?"
+                        value={role}
+                        onChange={onRoleChange}
+                        options={roleOptions}
+                        id="role-select"
+                      />
+                    </LoadingOverlay>
+                  )}
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>            
+                    <TextField
+                      id="github"
+                      onChange={handleGithubChange}
+                      label="GitHub username (not email)"
+                      value={github || ""}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(github) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  {isLoading ? (
+                    <Skeleton variant="rectangular" height={56} />
+                  ) : (
+                    <LoadingOverlay isLoading={isLoading} field="education">
+                      <CustomSelect
+                        label="Level of Education"
+                        value={education}
+                        onChange={handleEducationChange}
+                        options={educationOptions}
+                        id="education-select"
+                      />
+                    </LoadingOverlay>
+                  )}
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>            
+                    <TextField
+                      id="company"
+                      onChange={handleCompanyChange}
+                      label="Company (if working)"
+                      value={company || ""}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(company) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>            
+                    <TextField
+                      id="linkedin"
+                      onChange={handleLinkedInChange}
+                      label="LinkedIn Profile URL"
+                      value={linkedInUrl || ""}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(linkedInUrl) }}
+                    />            
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>            
+                    <TextField
+                      id="instagram"
+                      onChange={handleInstagramChange}
+                      label="Instagram Profile URL"
+                      value={instagramUrl || ""}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(instagramUrl) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <FormControl fullWidth>            
+                    <TextField
+                      id="why"
+                      onChange={handleWhyChange}
+                      label="Why are you here with us at OHack?"
+                      value={why || ""}
+                      multiline
+                      rows={2}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(why) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  {isLoading ? (
+                    <Skeleton variant="rectangular" height={80} />
+                  ) : (
+                    <LoadingOverlay isLoading={isLoading} field="expertise">
+                      <CustomSelect
+                        label="Areas of Expertise"
+                        value={expertise}
+                        onChange={handleExpertiseChange}
+                        options={expertiseOptions}
+                        id="expertise-select"
+                        multiple
+                      />
+                    </LoadingOverlay>
+                  )}
+                </Grid>
+              </Grid>
+            </Paper>
+            
+            {/* Swag Information */}
+            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+              <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                Swag & Shipping Information
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3 }}>
+                We occasionally send swag to our active members. Please provide your shipping details if you'd like to receive some OHack goodies!
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6} md={4}>
+                  {isLoading ? (
+                    <Skeleton variant="rectangular" height={56} />
+                  ) : (
+                    <LoadingOverlay isLoading={isLoading} field="shirtSize">
+                      <CustomSelect
+                        label="T-Shirt Size"
+                        value={shirtSize}
+                        onChange={handleShirtSizeChange}
+                        options={shirtSizeOptions}
+                        id="shirt-size-select"
+                      />
+                    </LoadingOverlay>
+                  )}
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={wantStickers} 
+                        onChange={handleStickersChange}
+                        color="primary"
+                      />
+                    }
+                    label="I'd like to receive OHack stickers too!"
+                  />
+                </Grid>
+              </Grid>
+              
+              <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                Shipping Address
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <TextField
+                      id="street_address"
+                      label="Street Address"
+                      value={streetAddress || ""}
+                      onChange={handleAddressChange("street_address", setStreetAddress)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(streetAddress) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <TextField
+                      id="street_address_2"
+                      label="Apartment, suite, etc. (optional)"
+                      value={streetAddress2 || ""}
+                      onChange={handleAddressChange("street_address_2", setStreetAddress2)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(streetAddress2) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>
+                    <TextField
+                      id="city"
+                      label="City"
+                      value={city || ""}
+                      onChange={handleAddressChange("city", setCity)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(city) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>
+                    <TextField
+                      id="state"
+                      label="State/Province"
+                      value={state || ""}
+                      onChange={handleAddressChange("state", setState)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(state) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl fullWidth>
+                    <TextField
+                      id="postal_code"
+                      label="Postal/ZIP Code"
+                      value={postalCode || ""}
+                      onChange={handleAddressChange("postal_code", setPostalCode)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: Boolean(postalCode) }}
+                    />
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={4}>
+                  <CustomSelect
+                    label="Country"
+                    value={country}
+                    onChange={handleAddressChange("country", setCountry)}
+                    options={countryOptions}
+                    id="country-select"
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+            
+            {/* Volunteer History */}
+            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+              <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                Your Volunteer History
+              </Typography>
+              
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h5" sx={{ mb: 2 }}>Badges</Typography>
+                {isLoading ? (
+                  <Skeleton variant="rectangular" height={100} />
+                ) : (
+                  <BadgeList badges={badges} />
+                )}
+              </Box>
+              
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h5" sx={{ mb: 2 }}>Hackathons</Typography>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  We've tried our best to keep track of each time you've volunteered,
+                  mentored, or judged a hackathon. If anything is missing, please let us know on Slack!
+                </Typography>
+                {isLoading ? (
+                  <Skeleton variant="rectangular" height={150} />
+                ) : (
+                  <ProfileHackathonList hackathons={hackathons} />
+                )}
+              </Box>
+              
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h5" sx={{ mb: 2 }}>Feedback Exchange</Typography>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  Feedback you've given and received from the community.
+                </Typography>
+                <FeedbackLite feedback_url={feedback_url} history={profile?.history} />
+              </Box>
+              
+              <Box>
+                <Typography variant="h5" sx={{ mb: 2 }}>Summer Internships</Typography>
+                <Typography variant="body2">
+                  These are distinctly different than hackathons as they span over a
+                  couple months.
+                </Typography>
+                <HelpUsBuildOHack
+                  github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8"
+                  github_name="Issue #8"
+                />
+              </Box>
+            </Paper>
+          </ProfileContainer>
+        ) : (
+          <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h4" sx={{ mb: 3 }}>You must be logged in to view this page</Typography>
+            <LoginOrRegister introText="Ready to join us?" previousPage={"/profile"} />
+          </Paper>
+        )}
+      </InnerContainer>
+    </LayoutContainer>
   );
 }
