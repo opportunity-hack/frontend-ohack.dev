@@ -13,7 +13,7 @@ const LoadingContainer = styled(Box)(({ theme }) => ({
 }));
 
 // Component for animated Puff loader with message
-export const PuffLoader = ({ message = 'Loading...', size = 60, color = '#1976d2' }) => (
+const PuffLoader = ({ message = 'Loading...', size = 60, color = '#1976d2' }) => (
   <LoadingContainer>
     <Puff stroke={color} width={size} height={size} />
     <Typography variant="body1" sx={{ mt: 2, fontWeight: 'medium' }}>
@@ -23,7 +23,7 @@ export const PuffLoader = ({ message = 'Loading...', size = 60, color = '#1976d2
 );
 
 // Component for skeleton text loading
-export const SkeletonText = ({ 
+const SkeletonText = ({ 
   lines = 3, 
   widths = ['80%', '70%', '90%'], 
   height = 24,
@@ -46,17 +46,17 @@ export const SkeletonText = ({
 );
 
 // Component for rectangular content loading
-export const SkeletonContent = ({ height = 200, width = '100%' }) => (
+const SkeletonContent = ({ height = 200, width = '100%' }) => (
   <Skeleton variant="rectangular" width={width} height={height} sx={{ borderRadius: 1 }} />
 );
 
 // Component for avatar/profile picture loading
-export const SkeletonAvatar = ({ size = 150 }) => (
+const SkeletonAvatar = ({ size = 150 }) => (
   <Skeleton variant="circular" width={size} height={size} />
 );
 
 // Component that combines multiple skeleton elements for a card
-export const SkeletonCard = ({ 
+const SkeletonCard = ({ 
   headerHeight = 60, 
   contentHeight = 120,
   showAvatar = false,
