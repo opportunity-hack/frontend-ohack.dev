@@ -297,13 +297,18 @@ const NonprofitManagement = memo(({
   // Get problem statements for a specific nonprofit
   const getNonprofitProblemStatements = (nonprofitId) => {
     if (!nonprofitId) return [];
-    const nonprofit = [...nonprofits, ...hackathonNonprofits].find(np => np.id === nonprofitId);
+    // Handle both cases: when nonprofitId is an ID or when it's a nonprofit object
+    const id = typeof nonprofitId === 'object' ? nonprofitId.id : nonprofitId;
+    const nonprofit = [...nonprofits, ...hackathonNonprofits].find(np => np.id === id);
     return nonprofit?.problem_statements || [];
   };
 
-  const getNonprofit = (nonprofitId) => {
-    if (!nonprofitId) return null;
-    const nonprofit = [...nonprofits, ...hackathonNonprofits].find(np => np.id === nonprofitId);
+  const getNonprofit = (nonprofitOrId) => {
+    if (!nonprofitOrId) return null;
+    // If it's already a nonprofit object, return it
+    if (typeof nonprofitOrId === 'object' && nonprofitOrId.id) return nonprofitOrId;
+    // Otherwise, find the nonprofit by ID
+    const nonprofit = [...nonprofits, ...hackathonNonprofits].find(np => np.id === nonprofitOrId);
     return nonprofit || null;
   };
 
@@ -386,18 +391,22 @@ const NonprofitManagement = memo(({
           </Alert>
         ) : (
           <List>
-            {hackathonNonprofits.map((nonprofitId) => {
-              const nonprofitProblemStatements = getNonprofitProblemStatements(nonprofitId);
-              const nonprofit = getNonprofit(nonprofitId);
-              console.log("Nonprofit ID:", nonprofit);
-              console.log("Nonprofit Problem Statements:", nonprofitProblemStatements);
+            {hackathonNonprofits.map((nonprofitOrId) => {
+              const nonprofit = getNonprofit(nonprofitOrId);
               
-
+              // Skip rendering if nonprofit is null
+              if (!nonprofit) {
+                console.warn("Null or undefined nonprofit found:", nonprofitOrId);
+                return null;
+              }
+              
+              const nonprofitProblemStatements = getNonprofitProblemStatements(nonprofit.id);
+              
               return (
                 <Accordion key={nonprofit.id}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography sx={{ fontWeight: "bold" }}>
-                      {nonprofit.name}
+                      {nonprofit.name || "Unnamed Nonprofit"}
                     </Typography>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -407,7 +416,7 @@ const NonprofitManagement = memo(({
                         color="text.secondary"
                         paragraph
                       >
-                        {nonprofit.name || "No description available"}
+                        {nonprofit.description || "No description available"}
                       </Typography>
 
                       {/* Problem Statements section */}
