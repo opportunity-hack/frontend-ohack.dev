@@ -20,7 +20,9 @@ import {
   Divider,
   Box,
   CircularProgress,
-  Skeleton
+  Skeleton,
+  Tabs,
+  Tab
 } from "@mui/material";
 import useProfileApi from "../../hooks/use-profile-api.js";
 import BadgeList from "../../components/badge-list";
@@ -29,17 +31,22 @@ import FeedbackLite from "../../components/feedback-lite";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 import HeartGauge from '../HeartGauge/HeartGauge';
+import PersonIcon from '@mui/icons-material/Person';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
 import GitHubContributions from './GitHubContribution';
-
 import ShareableGitHubContributions from './ShareableGitHubContributions';
-
 import RaffleEntries from './RaffleEntries';
 import CustomSelect from './CustomSelect';
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 import { initFacebookPixel, trackEvent, set } from '../../lib/ga';
 import Head from "next/head";
 import Moment from "react-moment";
+import { useRouter } from 'next/router';
 import {
   InnerContainer,
   LayoutContainer,
@@ -51,6 +58,35 @@ import {
   ProfileHeadline,
 } from "../../styles/profile/styles";
 
+// Tab panel component for displaying tab content
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`profile-tabpanel-${index}`}
+      aria-labelledby={`profile-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ py: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+// A11y props for tabs
+function a11yProps(index) {
+  return {
+    id: `profile-tab-${index}`,
+    'aria-controls': `profile-tabpanel-${index}`,
+  };
+}
+
 export default function Profile(props) {
   const { isLoggedIn, user } = useAuthInfo();
   const { badges, hackathons, profile, feedback_url, update_profile_metadata, isLoading } =
@@ -59,8 +95,12 @@ export default function Profile(props) {
   const [githubHistory, setGithubHistory] = useState([]);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [isSaving, setIsSaving] = useState({});
+  const router = useRouter();
 
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState(0);
 
   const [role, setRole] = React.useState("");
   const [expertise, setExpertise] = React.useState([]);
@@ -125,6 +165,48 @@ export default function Profile(props) {
       set(user.email);
     }
   }, [profile]);
+
+  // Load tab from URL hash if present
+  useEffect(() => {
+    // Map hash to tab index
+    const hashTabMap = {
+      '#basic': 0,
+      '#impact': 1,
+      '#github': 2,
+      '#swag': 3,
+      '#volunteer': 4,
+      '#giveaways': 5
+    };
+    
+    if (router.asPath.includes('#')) {
+      const hash = router.asPath.split('#')[1];
+      const formattedHash = `#${hash}`;
+      
+      if (hashTabMap[formattedHash] !== undefined) {
+        setActiveTab(hashTabMap[formattedHash]);
+      }
+    }
+  }, [router.asPath]);
+
+  // Handle tab change
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    
+    // Update URL hash based on tab
+    const tabHashMap = {
+      0: 'basic',
+      1: 'impact',
+      2: 'github',
+      3: 'swag',
+      4: 'volunteer',
+      5: 'giveaways'
+    };
+    
+    const hash = tabHashMap[newValue];
+    
+    // Update URL without full page reload
+    router.push(`/profile#${hash}`, undefined, { shallow: true });
+  };
 
   useEffect(() => {
     if (github) {
@@ -516,345 +598,507 @@ export default function Profile(props) {
               )}
             </Paper>
             
-            {/* Metrics and Achievements */}
-            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-              <Typography variant="h4" sx={{ mb: 2, fontWeight: 500 }}>
-                Your Impact & Achievements
-              </Typography>
-              
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={6}>
-                  {isLoading ? (
-                    <Skeleton variant="rectangular" height={180} />
-                  ) : (
-                    <RaffleEntries profile={profile} githubHistory={githubHistory} />
-                  )}
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  {isLoading || isGithubLoading ? (
-                    <Skeleton variant="rectangular" height={180} />
-                  ) : (
-                    <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
-                  )}
-                </Grid>
-              </Grid>
-              
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="h5" sx={{ mb: 1 }}>GitHub Contributions</Typography>
-                {isLoading || isGithubLoading ? (
-                  <Skeleton variant="rectangular" height={150} />
-                ) : (
-                  <GitHubContributions githubHistory={githubHistory} />
-                )}
-              </Box>
-            </Paper>
-            
-            {/* Basic Information */}
-            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-              <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
-                Basic Information
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 3 }}>
-                Tell us more about yourself and why you're here with Opportunity Hack.
-              </Typography>
-              
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={4}>
-                  {isLoading ? (
-                    <Skeleton variant="rectangular" height={56} />
-                  ) : (
-                    <LoadingOverlay isLoading={isLoading} field="role">
-                      <CustomSelect
-                        label="What hat are you currently wearing?"
-                        value={role}
-                        onChange={onRoleChange}
-                        options={roleOptions}
-                        id="role-select"
-                      />
-                    </LoadingOverlay>
-                  )}
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl fullWidth>            
-                    <TextField
-                      id="github"
-                      onChange={handleGithubChange}
-                      label="GitHub username (not email)"
-                      value={github || ""}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(github) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  {isLoading ? (
-                    <Skeleton variant="rectangular" height={56} />
-                  ) : (
-                    <LoadingOverlay isLoading={isLoading} field="education">
-                      <CustomSelect
-                        label="Level of Education"
-                        value={education}
-                        onChange={handleEducationChange}
-                        options={educationOptions}
-                        id="education-select"
-                      />
-                    </LoadingOverlay>
-                  )}
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl fullWidth>            
-                    <TextField
-                      id="company"
-                      onChange={handleCompanyChange}
-                      label="Company (if working)"
-                      value={company || ""}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(company) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl fullWidth>            
-                    <TextField
-                      id="linkedin"
-                      onChange={handleLinkedInChange}
-                      label="LinkedIn Profile URL"
-                      value={linkedInUrl || ""}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(linkedInUrl) }}
-                    />            
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl fullWidth>            
-                    <TextField
-                      id="instagram"
-                      onChange={handleInstagramChange}
-                      label="Instagram Profile URL"
-                      value={instagramUrl || ""}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(instagramUrl) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <FormControl fullWidth>            
-                    <TextField
-                      id="why"
-                      onChange={handleWhyChange}
-                      label="Why are you here with us at OHack?"
-                      value={why || ""}
-                      multiline
-                      rows={2}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(why) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12}>
-                  {isLoading ? (
-                    <Skeleton variant="rectangular" height={80} />
-                  ) : (
-                    <LoadingOverlay isLoading={isLoading} field="expertise">
-                      <CustomSelect
-                        label="Areas of Expertise"
-                        value={expertise}
-                        onChange={handleExpertiseChange}
-                        options={expertiseOptions}
-                        id="expertise-select"
-                        multiple
-                      />
-                    </LoadingOverlay>
-                  )}
-                </Grid>
-              </Grid>
-            </Paper>
-            
-            {/* Swag Information */}
-            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-              <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
-                Swag & Shipping Information
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 3 }}>
-                We occasionally send swag to our active members. Please provide your shipping details if you'd like to receive some OHack goodies!
-              </Typography>
-              
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={4}>
-                  {isLoading ? (
-                    <Skeleton variant="rectangular" height={56} />
-                  ) : (
-                    <LoadingOverlay isLoading={isLoading} field="shirtSize">
-                      <CustomSelect
-                        label="T-Shirt Size"
-                        value={shirtSize}
-                        onChange={handleShirtSizeChange}
-                        options={shirtSizeOptions}
-                        id="shirt-size-select"
-                      />
-                    </LoadingOverlay>
-                  )}
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox 
-                        checked={wantStickers} 
-                        onChange={handleStickersChange}
-                        color="primary"
-                      />
+            {/* Tab Navigation */}
+            <Paper elevation={3} sx={{ p: 0, mb: 4, borderRadius: 2 }}>
+              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs 
+                  value={activeTab} 
+                  onChange={handleTabChange} 
+                  variant={isMobile ? "scrollable" : "fullWidth"}
+                  scrollButtons={isMobile ? "auto" : false}
+                  allowScrollButtonsMobile
+                  aria-label="profile tabs"
+                  sx={{ 
+                    backgroundColor: theme.palette.primary.light,
+                    borderRadius: '8px 8px 0 0',
+                    '& .MuiTab-root': {
+                      color: theme.palette.common.white,
+                      opacity: 0.7,
+                      '&.Mui-selected': {
+                        color: theme.palette.common.white,
+                        opacity: 1,
+                        fontWeight: 'bold'
+                      }
                     }
-                    label="I'd like to receive OHack stickers too!"
+                  }}
+                >
+                  <Tab 
+                    icon={<PersonIcon />} 
+                    label="Basic Info" 
+                    {...a11yProps(0)} 
+                    sx={{ 
+                      display: 'flex', 
+                      flexDirection: isMobile ? 'row' : 'column',
+                      alignItems: 'center', 
+                      gap: 1 
+                    }} 
                   />
-                </Grid>
-              </Grid>
-              
-              <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-                Shipping Address
-              </Typography>
-              
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <TextField
-                      id="street_address"
-                      label="Street Address"
-                      value={streetAddress || ""}
-                      onChange={handleAddressChange("street_address", setStreetAddress)}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(streetAddress) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <TextField
-                      id="street_address_2"
-                      label="Apartment, suite, etc. (optional)"
-                      value={streetAddress2 || ""}
-                      onChange={handleAddressChange("street_address_2", setStreetAddress2)}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(streetAddress2) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl fullWidth>
-                    <TextField
-                      id="city"
-                      label="City"
-                      value={city || ""}
-                      onChange={handleAddressChange("city", setCity)}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(city) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl fullWidth>
-                    <TextField
-                      id="state"
-                      label="State/Province"
-                      value={state || ""}
-                      onChange={handleAddressChange("state", setState)}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(state) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl fullWidth>
-                    <TextField
-                      id="postal_code"
-                      label="Postal/ZIP Code"
-                      value={postalCode || ""}
-                      onChange={handleAddressChange("postal_code", setPostalCode)}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: Boolean(postalCode) }}
-                    />
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={4}>
-                  <CustomSelect
-                    label="Country"
-                    value={country}
-                    onChange={handleAddressChange("country", setCountry)}
-                    options={countryOptions}
-                    id="country-select"
+                  <Tab 
+                    icon={<EmojiEventsIcon />} 
+                    label="Impact" 
+                    {...a11yProps(1)} 
+                    sx={{ 
+                      display: 'flex', 
+                      flexDirection: isMobile ? 'row' : 'column',
+                      alignItems: 'center', 
+                      gap: 1 
+                    }} 
                   />
-                </Grid>
-              </Grid>
-            </Paper>
-            
-            {/* Volunteer History */}
-            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-              <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
-                Your Volunteer History
-              </Typography>
-              
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" sx={{ mb: 2 }}>Badges</Typography>
-                {isLoading ? (
-                  <Skeleton variant="rectangular" height={100} />
-                ) : (
-                  <BadgeList badges={badges} />
-                )}
+                  <Tab 
+                    icon={<GitHubIcon />} 
+                    label="GitHub" 
+                    {...a11yProps(2)} 
+                    sx={{ 
+                      display: 'flex', 
+                      flexDirection: isMobile ? 'row' : 'column',
+                      alignItems: 'center', 
+                      gap: 1 
+                    }} 
+                  />
+                  <Tab 
+                    icon={<LocalShippingIcon />} 
+                    label="Swag & Shipping" 
+                    {...a11yProps(3)} 
+                    sx={{ 
+                      display: 'flex', 
+                      flexDirection: isMobile ? 'row' : 'column',
+                      alignItems: 'center', 
+                      gap: 1 
+                    }} 
+                  />
+                  <Tab 
+                    icon={<VolunteerActivismIcon />} 
+                    label="Volunteer History" 
+                    {...a11yProps(4)} 
+                    sx={{ 
+                      display: 'flex', 
+                      flexDirection: isMobile ? 'row' : 'column',
+                      alignItems: 'center', 
+                      gap: 1 
+                    }} 
+                  />
+                  <Tab 
+                    icon={<CardGiftcardIcon />} 
+                    label="Giveaway Entries" 
+                    {...a11yProps(5)} 
+                    sx={{ 
+                      display: 'flex', 
+                      flexDirection: isMobile ? 'row' : 'column',
+                      alignItems: 'center', 
+                      gap: 1 
+                    }} 
+                  />
+                </Tabs>
               </Box>
               
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" sx={{ mb: 2 }}>Hackathons</Typography>
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                  We've tried our best to keep track of each time you've volunteered,
-                  mentored, or judged a hackathon. If anything is missing, please let us know on Slack!
-                </Typography>
-                {isLoading ? (
-                  <Skeleton variant="rectangular" height={150} />
-                ) : (
-                  <ProfileHackathonList hackathons={hackathons} />
-                )}
-              </Box>
-              
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" sx={{ mb: 2 }}>Feedback Exchange</Typography>
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                  Feedback you've given and received from the community.
-                </Typography>
-                <FeedbackLite feedback_url={feedback_url} history={profile?.history} />
-              </Box>
-              
-              <Box>
-                <Typography variant="h5" sx={{ mb: 2 }}>Summer Internships</Typography>
-                <Typography variant="body2">
-                  These are distinctly different than hackathons as they span over a
-                  couple months.
-                </Typography>
-                <HelpUsBuildOHack
-                  github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8"
-                  github_name="Issue #8"
-                />
+              <Box sx={{ p: 3 }}>
+                {/* Basic Information Tab */}
+                <TabPanel value={activeTab} index={0}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                    Basic Information
+                  </Typography>
+                  <Typography variant="body1" sx={{ mb: 3 }}>
+                    Tell us more about yourself and why you're here with Opportunity Hack.
+                  </Typography>
+                  
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={4}>
+                      {isLoading ? (
+                        <Skeleton variant="rectangular" height={56} />
+                      ) : (
+                        <LoadingOverlay isLoading={isLoading} field="role">
+                          <CustomSelect
+                            label="What hat are you currently wearing?"
+                            value={role}
+                            onChange={onRoleChange}
+                            options={roleOptions}
+                            id="role-select"
+                          />
+                        </LoadingOverlay>
+                      )}
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth>            
+                        <TextField
+                          id="github"
+                          onChange={handleGithubChange}
+                          label="GitHub username (not email)"
+                          value={github || ""}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(github) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      {isLoading ? (
+                        <Skeleton variant="rectangular" height={56} />
+                      ) : (
+                        <LoadingOverlay isLoading={isLoading} field="education">
+                          <CustomSelect
+                            label="Level of Education"
+                            value={education}
+                            onChange={handleEducationChange}
+                            options={educationOptions}
+                            id="education-select"
+                          />
+                        </LoadingOverlay>
+                      )}
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth>            
+                        <TextField
+                          id="company"
+                          onChange={handleCompanyChange}
+                          label="Company (if working)"
+                          value={company || ""}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(company) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth>            
+                        <TextField
+                          id="linkedin"
+                          onChange={handleLinkedInChange}
+                          label="LinkedIn Profile URL"
+                          value={linkedInUrl || ""}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(linkedInUrl) }}
+                        />            
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth>            
+                        <TextField
+                          id="instagram"
+                          onChange={handleInstagramChange}
+                          label="Instagram Profile URL"
+                          value={instagramUrl || ""}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(instagramUrl) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>            
+                        <TextField
+                          id="why"
+                          onChange={handleWhyChange}
+                          label="Why are you here with us at OHack?"
+                          value={why || ""}
+                          multiline
+                          rows={2}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(why) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                      {isLoading ? (
+                        <Skeleton variant="rectangular" height={80} />
+                      ) : (
+                        <LoadingOverlay isLoading={isLoading} field="expertise">
+                          <CustomSelect
+                            label="Areas of Expertise"
+                            value={expertise}
+                            onChange={handleExpertiseChange}
+                            options={expertiseOptions}
+                            id="expertise-select"
+                            multiple
+                          />
+                        </LoadingOverlay>
+                      )}
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+
+                {/* Impact Tab */}
+                <TabPanel value={activeTab} index={1}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                    Your Impact & Achievements
+                  </Typography>
+                  
+                  <Grid container spacing={4}>
+                    <Grid item xs={12} md={6}>
+                      {isLoading ? (
+                        <Skeleton variant="rectangular" height={180} />
+                      ) : (
+                        <RaffleEntries profile={profile} githubHistory={githubHistory} />
+                      )}
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      {isLoading || isGithubLoading ? (
+                        <Skeleton variant="rectangular" height={180} />
+                      ) : (
+                        <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
+                      )}
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+
+                {/* GitHub Contributions Tab */}
+                <TabPanel value={activeTab} index={2}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                    GitHub Contributions
+                  </Typography>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <FormControl fullWidth sx={{ mb: 3 }}>            
+                      <TextField
+                        id="github-username"
+                        onChange={handleGithubChange}
+                        label="GitHub username"
+                        value={github || ""}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: Boolean(github) }}
+                      />
+                    </FormControl>
+                  </Box>
+                  
+                  {isLoading || isGithubLoading ? (
+                    <Skeleton variant="rectangular" height={300} />
+                  ) : (
+                    <>
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="h5" sx={{ mb: 2 }}>Your Contribution Graph</Typography>
+                        <GitHubContributions githubHistory={githubHistory} />
+                      </Box>
+                      
+                      <Box>
+                        <Typography variant="h5" sx={{ mb: 2 }}>Shareable Card</Typography>
+                        <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
+                      </Box>
+                    </>
+                  )}
+                </TabPanel>
+
+                {/* Swag & Shipping Tab */}
+                <TabPanel value={activeTab} index={3}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                    Swag & Shipping Information
+                  </Typography>
+                  <Typography variant="body1" sx={{ mb: 3 }}>
+                    We occasionally send swag to our active members. Please provide your shipping details if you'd like to receive some OHack goodies!
+                  </Typography>
+                  
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={4}>
+                      {isLoading ? (
+                        <Skeleton variant="rectangular" height={56} />
+                      ) : (
+                        <LoadingOverlay isLoading={isLoading} field="shirtSize">
+                          <CustomSelect
+                            label="T-Shirt Size"
+                            value={shirtSize}
+                            onChange={handleShirtSizeChange}
+                            options={shirtSizeOptions}
+                            id="shirt-size-select"
+                          />
+                        </LoadingOverlay>
+                      )}
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox 
+                            checked={wantStickers} 
+                            onChange={handleStickersChange}
+                            color="primary"
+                          />
+                        }
+                        label="I'd like to receive OHack stickers too!"
+                      />
+                    </Grid>
+                  </Grid>
+                  
+                  <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+                    Shipping Address
+                  </Typography>
+                  
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>
+                        <TextField
+                          id="street_address"
+                          label="Street Address"
+                          value={streetAddress || ""}
+                          onChange={handleAddressChange("street_address", setStreetAddress)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(streetAddress) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>
+                        <TextField
+                          id="street_address_2"
+                          label="Apartment, suite, etc. (optional)"
+                          value={streetAddress2 || ""}
+                          onChange={handleAddressChange("street_address_2", setStreetAddress2)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(streetAddress2) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth>
+                        <TextField
+                          id="city"
+                          label="City"
+                          value={city || ""}
+                          onChange={handleAddressChange("city", setCity)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(city) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth>
+                        <TextField
+                          id="state"
+                          label="State/Province"
+                          value={state || ""}
+                          onChange={handleAddressChange("state", setState)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(state) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth>
+                        <TextField
+                          id="postal_code"
+                          label="Postal/ZIP Code"
+                          value={postalCode || ""}
+                          onChange={handleAddressChange("postal_code", setPostalCode)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(postalCode) }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={4}>
+                      <CustomSelect
+                        label="Country"
+                        value={country}
+                        onChange={handleAddressChange("country", setCountry)}
+                        options={countryOptions}
+                        id="country-select"
+                      />
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+
+                {/* Volunteer History Tab */}
+                <TabPanel value={activeTab} index={4}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                    Your Volunteer History
+                  </Typography>
+                  
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="h5" sx={{ mb: 2 }}>Badges</Typography>
+                    {isLoading ? (
+                      <Skeleton variant="rectangular" height={100} />
+                    ) : (
+                      <BadgeList badges={badges} />
+                    )}
+                  </Box>
+                  
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="h5" sx={{ mb: 2 }}>Hackathons</Typography>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                      We've tried our best to keep track of each time you've volunteered,
+                      mentored, or judged a hackathon. If anything is missing, please let us know on Slack!
+                    </Typography>
+                    {isLoading ? (
+                      <Skeleton variant="rectangular" height={150} />
+                    ) : (
+                      <ProfileHackathonList hackathons={hackathons} />
+                    )}
+                  </Box>
+                  
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="h5" sx={{ mb: 2 }}>Feedback Exchange</Typography>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                      Feedback you've given and received from the community.
+                    </Typography>
+                    <FeedbackLite feedback_url={feedback_url} history={profile?.history} />
+                  </Box>
+                  
+                  <Box>
+                    <Typography variant="h5" sx={{ mb: 2 }}>Summer Internships</Typography>
+                    <Typography variant="body2">
+                      These are distinctly different than hackathons as they span over a
+                      couple months.
+                    </Typography>
+                    <HelpUsBuildOHack
+                      github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8"
+                      github_name="Issue #8"
+                    />
+                  </Box>
+                </TabPanel>
+
+                {/* Giveaway Entries Tab */}
+                <TabPanel value={activeTab} index={5}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                    Giveaway Entries
+                  </Typography>
+                  
+                  <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2, bgcolor: theme.palette.primary.light + '10' }}>
+                    <Typography variant="h5" sx={{ mb: 2, color: theme.palette.primary.main }}>
+                      Your Entries
+                    </Typography>
+                    
+                    {isLoading ? (
+                      <Skeleton variant="rectangular" height={180} />
+                    ) : (
+                      <RaffleEntries profile={profile} githubHistory={githubHistory} />
+                    )}
+                  </Paper>
+                  
+                  <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+                    How to Earn More Entries
+                  </Typography>
+                  
+                  <Box component="ul" sx={{ pl: 2 }}>
+                    <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+                      Contribute to Opportunity Hack projects on GitHub
+                    </Typography>
+                    <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+                      Participate in hackathons as a hacker, mentor, or judge
+                    </Typography>
+                    <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+                      Complete your profile information
+                    </Typography>
+                    <Typography component="li" variant="body1">
+                      Refer other volunteers to join Opportunity Hack
+                    </Typography>
+                  </Box>
+                </TabPanel>
               </Box>
             </Paper>
           </ProfileContainer>
