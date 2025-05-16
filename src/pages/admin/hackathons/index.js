@@ -261,6 +261,8 @@ const AdminHackathonPage = () => {
       message: "Nonprofit settings updated successfully",
       severity: "success",
     });
+
+    fetchHackathons(); // Refresh the hackathon list after updating nonprofit settings    
   }, []);
 
   const handleNonprofitError = useCallback((errorMsg) => {
