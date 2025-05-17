@@ -431,7 +431,17 @@ const TeamList = ({ teams, eventId }) => {
   }
 
   if (teamData.length === 0) {
-    return <Typography>No teams found for this event.</Typography>;
+    return(
+    <Box mb={2}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          href={`/hack/${eventId}/manageteam`}
+        >
+          Create a Team
+        </Button>
+      </Box>
+    )
   }
 
   return (
@@ -440,7 +450,7 @@ const TeamList = ({ teams, eventId }) => {
         <Button 
           variant="contained" 
           color="primary" 
-          href={`/hack/${eventId}/newteam`}
+          href={`/hack/${eventId}/manageteam`}
         >
           Create a Team
         </Button>

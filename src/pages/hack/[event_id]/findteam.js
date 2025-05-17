@@ -531,7 +531,7 @@ const FindTeamPage = () => {
     const favoriteUsers = potentialTeammates.filter(mate => favorites.includes(mate.user_id));
     // Store in session storage to pre-fill the team creation form
     sessionStorage.setItem('team_members', JSON.stringify(favoriteUsers));
-    router.push(`/hack/${event_id}/newteam`);
+    router.push(`/hack/${event_id}/manageteam`);
   };
 
   if (!user) {
@@ -549,8 +549,50 @@ const FindTeamPage = () => {
         <link rel="preconnect" href="https://opportunity-hack.slack.com" />
       </Head>
 
+      {/* Navigation back to hackathon */}
+      <Box 
+        sx={{ 
+          pt: { xs: '80px', sm: '100px' }, 
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        <Button
+          variant="outlined"
+          color="primary"
+          href={`/hack/${event_id}`}
+          startIcon={<Box component="span" sx={{ fontSize: '1.2rem' }}>←</Box>}
+          sx={{ 
+            mb: 2,
+            borderRadius: '8px',
+            pl: 2,
+            '&:hover': {
+              backgroundColor: 'rgba(25, 118, 210, 0.04)',
+              transform: 'translateX(-2px)'
+            },
+            transition: 'transform 0.2s'
+          }}
+        >
+          Back to Hackathon
+        </Button>
+        
+        {eventDetails?.title && (
+          <Typography 
+            variant="body2" 
+            color="textSecondary" 
+            sx={{ 
+              display: { xs: 'none', md: 'block' },
+              fontStyle: 'italic'
+            }}
+          >
+            {eventDetails.title}
+          </Typography>
+        )}
+      </Box>
+      
       {/* Page Header */}
-      <Box sx={{ pt: { xs: '80px', sm: '100px' }, pb: 4 }}>
+      <Box sx={{ pb: 4 }}>
         <Typography variant="h3" component="h1" align="center" gutterBottom>
           Find Your Dream Team <FaUsers style={{ verticalAlign: 'middle', marginLeft: '8px' }} />
         </Typography>

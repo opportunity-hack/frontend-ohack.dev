@@ -206,7 +206,7 @@ export default function EventTeams(
           
         </div>
 
-        { // FIXME: Hard disable the create team button so that people have to use http://localhost:3000/hack/newteam
+        { // FIXME: Hard disable the create team button so that people have to use http://localhost:3000/hack/manageteam
         false && !isHelping &&
           !isLoggedInUserAlreadyOnTeam &&
           !isEventStartDateOlderThanToday && (
