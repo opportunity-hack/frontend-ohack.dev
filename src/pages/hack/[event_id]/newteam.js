@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Typography,
   Box,
@@ -12,8 +12,15 @@ import {
   CircularProgress,
   Zoom,
   Container,
-  Button
+  Button,
+  Collapse,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import WarningIcon from "@mui/icons-material/Warning";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { styled } from "@mui/material/styles";
 import { FaRocket } from "react-icons/fa";
 import axios from "axios";
@@ -58,7 +65,68 @@ const steps = [
 
 
 // Apply our custom HOC to the component
+// Define keyframes for animations
+const keyframes = `
+  @keyframes pulse {
+    0% { background-position: 0% 50% }
+    50% { background-position: 100% 50% }
+    100% { background-position: 0% 50% }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg) }
+    100% { transform: rotate(360deg) }
+  }
+
+  @keyframes fadeInOut {
+    0% { opacity: 0.7 }
+    50% { opacity: 1 }
+    100% { opacity: 0.7 }
+  }
+`;
+
+// Define video files array for waiting animations
+const waitingVideos = [
+  'a_cat_that_is_waiting_to_pounce.mp4',
+  'a_cat_that_is_waiting_to_pounce_1.mp4',
+  'a_cat_that_is_waiting_to_pounce_2.mp4',
+  'a_cat_that_is_waiting_to_pounce_3.mp4',
+  'a_dog_that_is_waiting_by_the.mp4',
+  'a_dog_that_is_waiting_by_the_1.mp4',
+  'a_dog_that_is_waiting_by_the_2.mp4',
+  'a_dog_that_is_waiting_by_the_3.mp4'
+];
+
 const NewTeamComponent = () => {
+  // State for selected waiting video
+  const [selectedVideo, setSelectedVideo] = useState('');
+  
+  // Inject the keyframes animation styles
+  const animationStyleRef = useRef(null);
+  
+  // Select a random waiting video on component mount
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * waitingVideos.length);
+    setSelectedVideo(waitingVideos[randomIndex]);
+  }, []);
+  
+  useEffect(() => {
+    // Create style element if it doesn't exist
+    if (!animationStyleRef.current) {
+      const styleElement = document.createElement('style');
+      styleElement.innerHTML = keyframes;
+      document.head.appendChild(styleElement);
+      animationStyleRef.current = styleElement;
+    }
+    
+    return () => {
+      // Clean up on unmount
+      if (animationStyleRef.current) {
+        document.head.removeChild(animationStyleRef.current);
+        animationStyleRef.current = null;
+      }
+    };
+  }, []);
   const authInfo = useAuthInfo();
   const { accessToken } = useAuthInfo();
   const [teamName, setTeamName] = useState("");
@@ -83,6 +151,7 @@ const NewTeamComponent = () => {
   const [slackUsers, setSlackUsers] = useState([]);
   const [myTeams, setMyTeams] = useState(null); // Initially null to indicate loading state
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
+  const [showNewTeamForm, setShowNewTeamForm] = useState(false);
 
   // New state variables for validation
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
@@ -782,6 +851,9 @@ const NewTeamComponent = () => {
     }
   };
 
+  // Check if user already has any team (any status)
+  const hasExistingTeam = myTeams && myTeams.length > 0;
+  
   // Check if user already has an approved team
   const hasApprovedTeam = myTeams && myTeams.some(team => 
     team.status === 'APPROVED' || team.status === 'PROJECT_COMPLETE'
@@ -820,33 +892,71 @@ const NewTeamComponent = () => {
           event={event}
         />
 
-        {/* Team Creation Form - Less prominent when team exists */}
-        {hasApprovedTeam ? (
+        {/* Team Creation Form - Collapsed by default when team exists */}
+        {hasExistingTeam ? (
           <Box sx={{ mt: 6, mb: 4 }}>
             <Alert 
-              severity="info" 
-              variant="outlined"
-              sx={{ mb: 3 }}
+              severity="warning" 
+              variant="filled"
+              icon={<WarningIcon />}
+              sx={{ mb: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
             >
-              <Typography variant="subtitle1" fontWeight="bold">
-                Already Part of a Team
+              <Typography variant="h6" fontWeight="bold">
+                You Already Have a Team
               </Typography>
-              <Typography variant="body2">
-                You already have an approved team for this hackathon. Creating another team is not recommended 
-                unless you've been instructed to do so by hackathon organizers.
+              <Typography variant="body1" sx={{ mt: 1, fontSize: '1.05rem' }}>
+                {hasApprovedTeam 
+                  ? "You already have an approved team for this hackathon. Creating another team is not recommended unless explicitly instructed by the Opportunity Hack staff." 
+                  : "You already have a team application in review for this hackathon. Please wait for your application to be processed before creating another team."}
               </Typography>
             </Alert>
             
-            <Box textAlign="center">
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => document.getElementById('create-team-section').scrollIntoView({ behavior: 'smooth' })}
-                sx={{ mb: 2 }}
+            <Accordion 
+              expanded={showNewTeamForm} 
+              onChange={() => setShowNewTeamForm(!showNewTeamForm)}
+              sx={{ 
+                border: '1px solid #e0e0e0', 
+                borderRadius: '8px !important', 
+                overflow: 'hidden',
+                boxShadow: '0 3px 10px rgba(0,0,0,0.08)'
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{ 
+                  bgcolor: '#f5f5f5', 
+                  borderBottom: showNewTeamForm ? '1px solid #e0e0e0' : 'none',
+                }}
               >
-                Show Team Creation Form
-              </Button>
-            </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <FaRocket style={{ marginRight: '12px', color: '#f57c00' }} />
+                  <Typography variant="h6" fontWeight="medium">
+                    {showNewTeamForm ? "Hide Team Creation Form" : "Show Team Creation Form"}
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails sx={{ p: 3 }}>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <Typography variant="body1">
+                    Only proceed with creating a new team if you:
+                    <ul style={{ marginTop: '8px', marginBottom: '4px' }}>
+                      <li>Don't have any existing approved teams</li>
+                      <li>Have been explicitly instructed by Opportunity Hack staff to create an additional team</li>
+                    </ul>
+                  </Typography>
+                </Alert>
+                
+                <Box id="create-team-section" my={3}>
+                  <Typography variant="h3" align="center" gutterBottom>
+                    Create a New Team <FaRocket style={{ verticalAlign: "middle" }} />
+                  </Typography>
+                  <Typography variant="body1" align="center" paragraph>
+                    Join forces and make a difference! Set up your team, connect on Slack,
+                    and start working on impactful nonprofit projects.
+                  </Typography>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
           </Box>
         ) : (
           <Box my={4} id="create-team-section">
@@ -861,29 +971,228 @@ const NewTeamComponent = () => {
         )}
         
         {/* Team Creation Form */}
-        <Box id="create-team-section" sx={{ 
-          display: hasApprovedTeam ? 'none' : 'block',
-          opacity: hasApprovedTeam ? 0.9 : 1
+        <Box id="create-team-section-form" sx={{ 
+          display: (hasExistingTeam && !showNewTeamForm) ? 'none' : 'block'
         }}>
           <StyledPaper>
             {success ? (
               <Zoom in={success}>
-                <Alert
-                  severity="success"
-                  sx={{ mb: 2, fontSize: "16px", alignItems: "center" }}
-                  icon={<FaRocket size={24} />}
-                >
-                  <Typography variant="h6">{successMessage}</Typography>
-                  <Typography variant="body1">
-                    Your team application has been submitted successfully!
-                    <br /><br />
-                    <strong>Next Steps:</strong>
-                    <ul>
-                      <li>We'll notify you in Slack when your team is approved.</li>
-                      <li>Refresh this page to see your team's status update.</li>
-                    </ul>
-                  </Typography>
-                </Alert>
+                <Box>
+                  {/* Animated waiting indicator */}
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    p: 3,
+                    mb: 3,
+                    borderRadius: 2,
+                    background: 'linear-gradient(145deg, #e8f5e9 0%, #f1f8e9 100%)',
+                    border: '1px solid #c5e1a5',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Progress bar animation at top */}
+                    <Box sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '4px',
+                      background: 'linear-gradient(90deg, #c5e1a5, #aed581, #c5e1a5)',
+                      backgroundSize: '200% 100%',
+                      animation: 'pulse 2s infinite linear'
+                    }} />
+                    
+                    {/* Success icon */}
+                    <Box sx={{ position: 'relative', mb: 2 }}>
+                      <FaRocket 
+                        size={64} 
+                        color="#66bb6a"
+                        style={{ 
+                          filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.2))',
+                        }} 
+                      />
+                      {/* Orbit animation around the rocket */}
+                      <Box sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        border: '2px dashed #81c784',
+                        animation: 'spin 10s infinite linear'
+                      }} />
+                    </Box>
+                    
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2, textAlign: 'center' }}>
+                      Application Submitted!
+                    </Typography>
+                    
+                    <Typography variant="h6" sx={{ textAlign: 'center', mb: 2 }}>
+                      {successMessage}
+                    </Typography>
+                    
+                    {/* Fun waiting video */}
+                    {selectedVideo && (
+                      <Box sx={{ 
+                        width: '100%', 
+                        mb: 3, 
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        border: '1px solid #a5d6a7'
+                      }}>
+                        <Box sx={{ 
+                          bgcolor: '#81c784', 
+                          p: 2, 
+                          display: 'flex', 
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderBottom: '1px solid #a5d6a7'
+                        }}>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white', textShadow: '0 1px 1px rgba(0,0,0,0.2)' }}>
+                            <AccessTimeIcon sx={{ 
+                              verticalAlign: 'middle', 
+                              mr: 1.5,
+                              animation: 'fadeInOut 2s infinite ease-in-out'
+                            }} />
+                            Waiting for Team Approval
+                          </Typography>
+                        </Box>
+                        <Box sx={{ position: 'relative', paddingTop: '100%' /* 1:1 Square Aspect Ratio */ }}>
+                          <video 
+                            autoPlay 
+                            loop 
+                            muted 
+                            playsInline
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain',
+                              backgroundColor: '#f9fbf9'
+                            }}
+                          >
+                            <source 
+                              src={`https://cdn.ohack.dev/ohack.dev/videos/fun/${selectedVideo}`} 
+                              type="video/mp4" 
+                            />
+                            Your browser does not support the video tag.
+                          </video>
+                        </Box>
+                        <Box sx={{ 
+                          p: 2, 
+                          textAlign: 'center', 
+                          bgcolor: '#f1f8e9', 
+                          borderTop: '1px solid #a5d6a7' 
+                        }}>
+                          <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                            Refresh the page to see a different waiting animation!
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+                    
+                    {/* Animated waiting status */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      p: 2,
+                      mb: 3,
+                      bgcolor: 'rgba(129, 199, 132, 0.2)',
+                      borderRadius: 2,
+                      animation: 'fadeInOut 2s infinite ease-in-out'
+                    }}>
+                      <AccessTimeIcon sx={{ mr: 1.5, color: 'success.main', fontSize: '1.6rem' }} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'medium', fontSize: '1.1rem' }}>
+                        Waiting for review from Opportunity Hack staff...
+                      </Typography>
+                    </Box>
+                    
+                    {/* YouTube-inspired waiting message */}
+                    <Box sx={{ 
+                      width: '100%', 
+                      p: 2, 
+                      bgcolor: '#f5f5f5', 
+                      borderRadius: 1,
+                      border: '1px solid #e0e0e0'
+                    }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+                        Next Steps:
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                        <Box sx={{ 
+                          minWidth: '30px', 
+                          height: '30px', 
+                          borderRadius: '50%', 
+                          bgcolor: 'success.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          mr: 2,
+                          fontSize: '1rem'
+                        }}>1</Box>
+                        <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
+                          The Opportunity Hack team will review your application and match you with one of your preferred nonprofits.
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                        <Box sx={{ 
+                          minWidth: '30px', 
+                          height: '30px', 
+                          borderRadius: '50%', 
+                          bgcolor: 'success.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          mr: 2,
+                          fontSize: '1rem'
+                        }}>2</Box>
+                        <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
+                          You'll be notified in <strong>Slack</strong> when your team is approved with your nonprofit assignment.
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                        <Box sx={{ 
+                          minWidth: '30px', 
+                          height: '30px', 
+                          borderRadius: '50%', 
+                          bgcolor: 'success.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          mr: 2,
+                          fontSize: '1rem'
+                        }}>3</Box>
+                        <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
+                          <strong>Refresh this page</strong> after you receive notification to see your team's status update and nonprofit assignment.
+                        </Typography>
+                      </Box>
+                    </Box>
+                    
+                    <Button 
+                      variant="contained" 
+                      color="primary"
+                      onClick={() => window.location.reload()}
+                      sx={{ mt: 4, py: 1.5, px: 3, fontSize: '1rem' }}
+                      size="large"
+                    >
+                      Refresh Status
+                    </Button>
+                  </Box>
+                </Box>
               </Zoom>
             ) : (
           <Box>

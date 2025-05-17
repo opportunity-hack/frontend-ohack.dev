@@ -483,8 +483,48 @@ const MentorCheckinPage = () => {
       groups[date].push(slot);
     });
 
-    console.log('Grouped availability slots:', groups);
-    return groups;
+    // Create a properly sorted version of the groups
+    const sortedGroups = {};
+    
+    // Sort the date keys
+    const sortedDateKeys = Object.keys(groups).sort((a, b) => {
+      // Extract month and day from dates like "Oct 11"
+      const datePatternA = a.match(/([A-Za-z]+)\s+(\d+)/);
+      const datePatternB = b.match(/([A-Za-z]+)\s+(\d+)/);
+      
+      if (datePatternA && datePatternB) {
+        // Get month number
+        const monthOrder = {
+          "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+          "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        };
+
+        const monthA = datePatternA[1];
+        const monthB = datePatternB[1];
+        const monthOrderA = monthOrder[monthA] || 0;
+        const monthOrderB = monthOrder[monthB] || 0;
+
+        if (monthOrderA !== monthOrderB) {
+          return monthOrderA - monthOrderB;
+        }
+
+        // Compare day numbers
+        const dayA = parseInt(datePatternA[2], 10);
+        const dayB = parseInt(datePatternB[2], 10);
+        return dayA - dayB;
+      }
+      
+      // Fallback to alphabetical sorting for dates that don't match the pattern
+      return a.localeCompare(b);
+    });
+    
+    // Reconstruct the object with sorted keys
+    sortedDateKeys.forEach(key => {
+      sortedGroups[key] = groups[key];
+    });
+
+    console.log('Grouped availability slots:', sortedGroups);
+    return sortedGroups;
   }, [availabilitySlots]);
 
   // Handle check-in

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -50,7 +50,10 @@ const StatusChip = styled(Chip)(({ theme, status }) => {
   const getStatusColor = () => {
     switch (status) {
       case 'IN_REVIEW':
-        return { bg: theme.palette.warning.light, color: theme.palette.warning.dark };
+        return {
+          bg: theme.palette.grey[200],
+          color: theme.palette.secondary.dark,
+        };
       case 'APPROVED':
         return { bg: theme.palette.success.light, color: theme.palette.success.dark };
       case 'PROJECT_COMPLETE':
@@ -70,7 +73,11 @@ const StatusChip = styled(Chip)(({ theme, status }) => {
     fontWeight: 'bold',
     '& .MuiChip-icon': {
       color: colors.color
-    }
+    },
+    ...(status === 'IN_REVIEW' && {
+      animation: 'pulse 2s infinite ease-in-out',
+      boxShadow: '0 0 5px rgba(255, 167, 38, 0.5)'
+    })
   };
 });
 
@@ -105,7 +112,7 @@ const ActionButton = styled(Button)(({ theme }) => ({
 const getStatusIcon = (status) => {
   switch (status) {
     case 'IN_REVIEW':
-      return <PendingIcon />;
+      return <PendingIcon sx={{ animation: 'spin 3s infinite linear' }} />;
     case 'NONPROFIT_SELECTED':
       return <BusinessIcon />;
     case 'ONBOARDED':
@@ -156,7 +163,58 @@ const getHeaderColor = (status, theme) => {
   }
 };
 
+// Define keyframes for animations
+const keyframes = `
+  @keyframes pulse {
+    0% { background-position: 0% 50% }
+    50% { background-position: 100% 50% }
+    100% { background-position: 0% 50% }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg) }
+    100% { transform: rotate(360deg) }
+  }
+
+  @keyframes fadeInOut {
+    0% { opacity: 0.7 }
+    50% { opacity: 1 }
+    100% { opacity: 0.7 }
+  }
+`;
+
+// Define video files array for waiting animations
+const waitingVideos = [
+  'a_cat_that_is_waiting_to_pounce.mp4',
+  'a_cat_that_is_waiting_to_pounce_1.mp4',
+  'a_cat_that_is_waiting_to_pounce_2.mp4',
+  'a_cat_that_is_waiting_to_pounce_3.mp4',
+  'a_dog_that_is_waiting_by_the.mp4',
+  'a_dog_that_is_waiting_by_the_1.mp4',
+  'a_dog_that_is_waiting_by_the_2.mp4',
+  'a_dog_that_is_waiting_by_the_3.mp4'
+];
+
 const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) => {
+  // State for selected waiting video
+  const [selectedVideo, setSelectedVideo] = useState('');
+  
+  // Select a random waiting video on component mount
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * waitingVideos.length);
+    setSelectedVideo(waitingVideos[randomIndex]);
+  }, []);
+  
+  // Inject the keyframes animation styles
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = keyframes;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
   // Handle loading state with better UX
   if (loading) {
     return (
@@ -373,14 +431,188 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId }) 
           {/* Main content card */}
           <Card elevation={1} sx={{ mb: 3, borderRadius: 2 }}>
             <CardContent>
-              {/* Warning message if team is not yet approved */}
+              {/* Enhanced waiting state for teams under review */}
               {team.status === 'IN_REVIEW' && (
-                <Alert severity="warning" sx={{ mb: 3 }}>
-                  <AlertTitle>Team Under Review</AlertTitle>
-                  <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
-                    Your team is currently being reviewed by the hackathon organizers. You'll be notified in Slack when your team is approved.
-                  </Typography>
-                </Alert>
+                <Box sx={{ 
+                  mb: 3, 
+                  p: 3, 
+                  borderRadius: 2,
+                  background: 'linear-gradient(145deg, #fff8e1 0%, #fffde7 100%)',
+                  border: '1px solid #ffe082',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <Box sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '4px',
+                    background: 'linear-gradient(90deg, #ffe082, #ffb74d, #ffe082)',
+                    backgroundSize: '200% 100%',
+                    animation: 'pulse 2s infinite linear'
+                  }} />
+                  
+                  {/* Fun waiting video */}
+                  {selectedVideo && (
+                    <Box sx={{ 
+                      width: '50%', 
+                      mb: 3, 
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      border: '1px solid #ffe082',                      
+                    }}>
+                      <Box sx={{ 
+                        bgcolor: '#f57c00', 
+                        p: 2, 
+                        display: 'flex', 
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        borderBottom: '1px solid #ffe082',
+                        
+                      }}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+                          <PendingIcon sx={{ 
+                            verticalAlign: 'middle', 
+                            mr: 1, 
+                            animation: 'spin 3s infinite linear' 
+                          }} />
+                          While You Wait...
+                        </Typography>
+                      </Box>
+                      <Box sx={{ position: 'relative', paddingTop: '100%' /* 1:1 Square Aspect Ratio */ }}>
+                        <video 
+                          autoPlay 
+                          loop 
+                          muted 
+                          playsInline
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            backgroundColor: '#fefaf5'
+                          }}
+                        >
+                          <source 
+                            src={`https://cdn.ohack.dev/ohack.dev/videos/fun/${selectedVideo}`} 
+                            type="video/mp4" 
+                          />
+                          Your browser does not support the video tag.
+                        </video>
+                      </Box>
+                      <Box sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        bgcolor: '#fff8e9', 
+                        borderTop: '1px solid #ffe082' 
+                      }}>
+                        <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                          Refresh the page to see a different waiting animation!
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                    <PendingIcon sx={{ 
+                      color: 'warning.main', 
+                      mr: 2, 
+                      fontSize: '2rem',
+                      animation: 'spin 3s infinite linear'
+                    }} />
+                    <Box>
+                      <Typography variant="h5" sx={{ color: '#5d4037', fontWeight: 'bold', mb: 1 }}>
+                        Team Application Under Review
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontSize: '1.1rem', mb: 1.5 }}>
+                        The Opportunity Hack team is currently reviewing your application and will match you with one of your preferred nonprofits.
+                      </Typography>
+                      <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1rem' }}>
+                        You'll be notified in Slack when your team is approved. The review process typically takes 10-20 minutes while we evaluate nonprofit fit and team assignments.
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Box sx={{ 
+                    bgcolor: 'rgba(255, 224, 130, 0.3)', 
+                    p: 2, 
+                    borderRadius: 1 
+                  }}>
+                    <Box sx={{ 
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      mb: 2
+                    }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        mr: 2, 
+                        minWidth: 40, 
+                        height: 40, 
+                        borderRadius: '50%', 
+                        bgcolor: 'white',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}>
+                        <AccessTimeIcon sx={{ color: 'warning.main' }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                          While You Wait
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontSize: '1rem' }}>
+                          Here are some steps to prepare your team for a smooth start once approved:
+                        </Typography>
+                      </Box>
+                    </Box>
+                    
+                    <Box sx={{ ml: 7, mb: 1 }}>
+                      <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', mb: 1.5, fontSize: '1rem' }}>
+                        <Box component="span" sx={{ 
+                          display: 'inline-block', 
+                          width: 8, 
+                          height: 8, 
+                          borderRadius: '50%', 
+                          bgcolor: 'warning.main', 
+                          mr: 1.5 
+                        }} />
+                        Make sure everyone on your team has joined the Opportunity Hack Slack workspace
+                      </Typography>
+                      
+                      <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', mb: 1.5, fontSize: '1rem' }}>
+                        <Box component="span" sx={{ 
+                          display: 'inline-block', 
+                          width: 8, 
+                          height: 8, 
+                          borderRadius: '50%', 
+                          bgcolor: 'warning.main', 
+                          mr: 1.5 
+                        }} />
+                        Have team members complete their profile information including GitHub username
+                      </Typography>
+                      
+                      <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '1rem' }}>
+                        <Box component="span" sx={{ 
+                          display: 'inline-block', 
+                          width: 8, 
+                          height: 8, 
+                          borderRadius: '50%', 
+                          bgcolor: 'warning.main', 
+                          mr: 1.5 
+                        }} />
+                        Research the nonprofits you selected to better understand their missions and needs & setup your development environment so you're ready to start coding
+                      </Typography>
+
+                      
+
+                      
+                    </Box>
+                  </Box>
+                </Box>
               )}
 
               {/* Team is approved - primary info */}

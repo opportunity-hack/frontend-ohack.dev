@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo } from '@propelauth/react';
+import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import {
   Typography,
   Container,
@@ -40,7 +40,7 @@ import FormPersistenceControls from '../../../components/FormPersistenceControls
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
-const JudgeApplicationPage = () => {
+const JudgeApplicationPage = withRequiredAuthInfo(() => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -1252,6 +1252,6 @@ const JudgeApplicationPage = () => {
       </Box>
     </Container>
   );
-};
+});
 
 export default JudgeApplicationPage;

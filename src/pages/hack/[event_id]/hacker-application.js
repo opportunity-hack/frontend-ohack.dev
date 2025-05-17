@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo } from '@propelauth/react';
+import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
 import {
   Typography,
   Container,
@@ -28,7 +28,8 @@ import {
   Radio,
   RadioGroup,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Autocomplete
 } from '@mui/material';
 import Head from 'next/head';
 import { useEnv } from '../../../context/env.context';
@@ -38,7 +39,7 @@ import FormPersistenceControls from '../../../components/FormPersistenceControls
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
-const HackerApplicationPage = () => {
+const HackerApplicationPage = withRequiredAuthInfo(() => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -142,6 +143,27 @@ const HackerApplicationPage = () => {
     accessToken: accessToken || ''
   });
   
+  // Add handler for skills autocomplete
+  const handleSkillsChange = useCallback((event, newValue) => {
+    setFormData(prev => ({
+      ...prev,
+      skills: newValue
+    }));
+    
+    // Clear otherSkills when "Other" is removed
+    if (!newValue.includes('Other')) {
+      setFormData(prev => ({
+        ...prev,
+        otherSkills: ''
+      }));
+    }
+    
+    // Auto-save to localStorage after changes
+    setTimeout(() => {
+      saveToLocalStorage();
+    }, 500);
+  }, [setFormData, saveToLocalStorage]);
+
   // Participant type options
   const participantTypeOptions = [
     'Student',
@@ -173,39 +195,125 @@ const HackerApplicationPage = () => {
     'Other'
   ];
   
-  // Technical skills options
-  const technicalSkillsOptions = [
-    'JavaScript/TypeScript',
-    'React',
-    'Angular',
-    'Vue.js',
-    'Node.js',
-    'Python',
-    'Java',
-    'Ruby',
-    'PHP',
-    'C#/.NET',
-    'Go',
-    'Swift/iOS',
-    'Kotlin/Android',
-    'React Native',
-    'Flutter',
-    'AWS',
-    'Azure',
-    'Google Cloud',
-    'Docker/Kubernetes',
-    'CI/CD Pipelines',
-    'SQL Databases',
-    'NoSQL Databases',
-    'Machine Learning',
-    'AI/NLP',
-    'Data Visualization',
-    'Blockchain',
-    'UX Research',
-    'UI Design',
-    'Graphic Design',
-    'Other'
-  ];
+  // Technical skills options categorized
+  const technicalSkillsOptions = {
+    "Programming Languages": [
+      'JavaScript/TypeScript',
+      'Python',
+      'Java',
+      'C#/.NET',
+      'Ruby',
+      'PHP',
+      'Go',
+      'Swift',
+      'Kotlin',
+      'C/C++',
+      'Rust',
+      'Scala',
+      'R',
+      'Perl',
+    ],
+    "Frontend Development": [
+      'React',
+      'Angular',
+      'Vue.js',
+      'Next.js',
+      'HTML/CSS',
+      'Redux',
+      'Tailwind CSS',
+      'Bootstrap',
+      'Material UI',
+      'Web Components',
+      'Svelte',
+      'jQuery',
+    ],
+    "Backend Development": [
+      'Node.js',
+      'Express',
+      'Django',
+      'Flask',
+      'Spring Boot',
+      'Laravel',
+      'ASP.NET',
+      'Ruby on Rails',
+      'FastAPI',
+      'GraphQL',
+      'RESTful APIs',
+      'Serverless Architecture',
+    ],
+    "Mobile Development": [
+      'React Native',
+      'Flutter',
+      'iOS Development',
+      'Android Development',
+      'Xamarin',
+      'Ionic',
+    ],
+    "Database & Storage": [
+      'SQL Databases',
+      'PostgreSQL',
+      'MySQL/MariaDB',
+      'MongoDB',
+      'NoSQL Databases',
+      'Redis',
+      'Elasticsearch',
+      'DynamoDB',
+      'Firebase',
+      'ORM Tools',
+    ],
+    "DevOps & Cloud": [
+      'AWS',
+      'Azure',
+      'Google Cloud',
+      'Docker',
+      'Kubernetes',
+      'CI/CD Pipelines',
+      'GitHub Actions',
+      'Jenkins',
+      'Terraform',
+      'Ansible',
+    ],
+    "Data Science & AI": [
+      'Machine Learning',
+      'AI/NLP',
+      'Data Visualization',
+      'TensorFlow',
+      'PyTorch',
+      'Computer Vision',
+      'Pandas',
+      'NumPy',
+      'Big Data',
+      'Statistical Analysis',
+    ],
+    "Design & UX": [
+      'UI Design',
+      'UX Research',
+      'Graphic Design',
+      'Figma',
+      'Adobe XD',
+      'Sketch',
+      'Wireframing',
+      'Prototyping',
+    ],
+    "Other Skills": [
+      'Blockchain',
+      'AR/VR',
+      'IoT',
+      'Game Development',
+      'Cybersecurity',
+      'Project Management',
+      'Agile/Scrum',
+      'Technical Writing',
+      'Accessibility',
+      'Other'
+    ]
+  };
+  
+  // Create a flat list of all skills for the autocomplete component
+  const allTechnicalSkills = Object.values(technicalSkillsOptions).flat();
+  
+  // Original technical skills list for backward compatibility
+  const technicalSkillsOptionsFlat = allTechnicalSkills;
   
   // Social causes options
   const socialCausesOptions = [
@@ -683,7 +791,7 @@ const HackerApplicationPage = () => {
     
     // Check for "Other" social cause
     if (formData.socialCauses.includes('Other') && !formData.otherSocialCause) {
-      setError('Please specify your other social cause interest');
+      setError('Please specify your other social cause');
       return false;
     }
     
@@ -755,6 +863,7 @@ const HackerApplicationPage = () => {
     handleManualSave();
   };
 
+  // handleSubmit function - Ensure backward compatibility
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     
@@ -1023,30 +1132,64 @@ const HackerApplicationPage = () => {
       
       <Box sx={{ mb: 3 }}>
         <FormControl fullWidth required sx={{ mb: formData.skills?.includes('Other') ? 1 : 3 }}>
-          <InputLabel id="skills-label">Technical Skills</InputLabel>
-          <Select
-            labelId="skills-label"
-            id="skills"
+          <Typography variant="subtitle2" gutterBottom>
+            Technical Skills <Box component="span" color="error.main">*</Box>
+          </Typography>
+          
+          <Autocomplete
             multiple
+            id="skills-autocomplete"
+            options={allTechnicalSkills}
             value={formData.skills || []}
-            onChange={(e) => customHandleMultiSelectChange(e, 'skills')}
-            input={<OutlinedInput label="Technical Skills" />}
-            renderValue={(selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {selected.map((value) => (
-                  <Chip key={value} label={value} />
-                ))}
-              </Box>
+            onChange={handleSkillsChange}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                placeholder="Search or select technical skills"
+                helperText="Select your technical skills (select at least one)"
+              />
             )}
-          >
-            {technicalSkillsOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                <Checkbox checked={(formData.skills || []).indexOf(option) > -1} />
-                <ListItemText primary={option} />
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>Select your technical skills (select at least one)</FormHelperText>
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip
+                  key={option}
+                  label={option}
+                  {...getTagProps({ index })}
+                />
+              ))
+            }
+            groupBy={(option) => {
+              // Find the category for this skill
+              for (const [category, skills] of Object.entries(technicalSkillsOptions)) {
+                if (skills.includes(option)) {
+                  return category;
+                }
+              }
+              return "Other Skills";
+            }}
+            renderGroup={(params) => (
+              <li key={params.key}>
+                <Box sx={{ position: 'sticky', top: -8, pt: 1, pb: 1, bgcolor: 'background.paper', zIndex: 1 }}>
+                  <Typography
+                    variant="subtitle2"
+                    component="div"
+                    sx={{ fontWeight: 'bold', pl: 2 }}
+                  >
+                    {params.group}
+                  </Typography>
+                </Box>
+                <ul style={{ padding: 0 }}>{params.children}</ul>
+              </li>
+            )}
+            freeSolo
+            filterSelectedOptions
+            sx={{ 
+              '& .MuiAutocomplete-tag': {
+                margin: '2px',
+              }
+            }}
+          />
         </FormControl>
         
         {formData.skills?.includes('Other') && (
@@ -1450,7 +1593,7 @@ const HackerApplicationPage = () => {
             <FormHelperText>
               {formData.socialCauses.length === 0 
                 ? "Please select at least one social cause you're interested in" 
-                : "Add more causes to your ranking below"}
+                : "Add as many causes as you like. You can rank them below after adding."}
             </FormHelperText>
           </FormControl>
           
@@ -1626,23 +1769,24 @@ const HackerApplicationPage = () => {
               value={formData.teamStatus || ''}
               onChange={handleChange}
               label="Team Status"
-            >
-              <MenuItem value="I have a team">I have a complete team</MenuItem>
+            >              
+              <MenuItem value="I have a team">I have a complete team of 2-5 people</MenuItem>
               <MenuItem value="I'm looking for team members">I have a team and we'd like to add more people</MenuItem>
               <MenuItem value="I'd like to be matched with a team">I don't have a team and I'd like to be matched with people to form a team</MenuItem>
+              <MenuItem value="I would like to work alone">I would like to work alone and I'm okay with not obtaining experience with working with others</MenuItem>
             </Select>
             <FormHelperText>Let us know your team situation - we'll help connect you with teammates before or during the event</FormHelperText>
           </FormControl>
           
           {formData.teamStatus === 'I have a team' && (
             <TextField
-              label="Team Code"
+              label="Team Name"
               name="teamCode"
               required
               fullWidth
               value={formData.teamCode || ''}
               onChange={handleChange}
-              helperText="Enter your team's code to be added to their roster"
+              helperText="Talk with other team members to decide on unique name and you all should write that here"
               sx={{ mb: 3 }}
             />
           )}
@@ -1659,20 +1803,7 @@ const HackerApplicationPage = () => {
                 common interests in social causes.
               </Typography>
               
-              {formData.teamStatus === "I'm looking for team members" && (
-                <TextField
-                  label="What skills are you looking for in teammates?"
-                  name="teamNeededSkills"
-                  required
-                  multiline
-                  rows={2}
-                  fullWidth
-                  value={formData.teamNeededSkills || ''}
-                  onChange={handleChange}
-                  helperText="Describe what skills would complement your team"
-                  sx={{ mb: 3 }}
-                />
-              )}
+              
               
               <FormControl fullWidth required sx={{ mb: 3 }}>
                 <InputLabel id="preferred-size-label">Preferred Team Size</InputLabel>
@@ -1716,33 +1847,7 @@ const HackerApplicationPage = () => {
                 </Select>
                 <FormHelperText>Select skills that would complement your own. These are especially helpful for team matching.</FormHelperText>
               </FormControl>
-              
-              <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel id="preferred-causes-label">Preferred Social Causes to Work On</InputLabel>
-                <Select
-                  labelId="preferred-causes-label"
-                  id="preferred-causes"
-                  multiple
-                  value={formData.teamMatchingPreferences?.preferredCauses || []}
-                  onChange={(e) => handleTeamMatchingChange('preferredCauses', e.target.value)}
-                  input={<OutlinedInput label="Preferred Social Causes to Work On" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip key={value} label={value} />
-                      ))}
-                    </Box>
-                  )}
-                >
-                  {socialCausesOptions.filter(option => option !== 'Other').map((option) => (
-                    <MenuItem key={option} value={option}>
-                      <Checkbox checked={(formData.teamMatchingPreferences?.preferredCauses || []).indexOf(option) > -1} />
-                      <ListItemText primary={option} />
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>Select social causes you'd especially like to work on with your team. This helps with project matching.</FormHelperText>
-              </FormControl>
+                            
               
               <Alert severity="info" sx={{ mb: 1 }}>
                 <Typography variant="body2">
@@ -1897,14 +2002,27 @@ const HackerApplicationPage = () => {
             Thank you for applying to participate in Opportunity Hack. We'll review your application and contact you with next steps soon.
           </Alert>
           
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push(`/hack/${event_id}`)}
-            sx={{ mt: 2 }}
-          >
-            Return to Hackathon Page
-          </Button>
+          <Box sx={{ mt: 2, display: 'flex', flexDirection: {xs: 'column', sm: 'row'}, gap: 2, justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => router.push(`/hack/${event_id}`)}
+            >
+              Return to Hackathon Page
+            </Button>
+
+            {/* Added button for team finding if the user indicated they're looking for a team */}
+            {(formData.teamStatus === "I'd like to be matched with a team" || formData.teamStatus === "I'm looking for team members") && (
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => router.push(`/hack/${event_id}/findteam`)}
+                startIcon={<SearchIcon />}
+              >
+                Find a Team
+              </Button>
+            )}
+          </Box>
         </Box>
       </Container>
     );
@@ -2181,6 +2299,6 @@ const HackerApplicationPage = () => {
       </Box>
     </Container>
   );
-};
+});
 
 export default HackerApplicationPage;

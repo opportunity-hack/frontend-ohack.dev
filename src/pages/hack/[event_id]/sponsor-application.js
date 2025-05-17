@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo } from '@propelauth/react';
+import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import {
   Typography,
   Container,
@@ -139,7 +139,7 @@ const getSponsorshipTierFromDetails = (details) => {
   return 'Custom Sponsorship'; // Default to custom if no match
 };
 
-const SponsorApplicationPage = () => {
+const SponsorApplicationPage = withRequiredAuthInfo(() => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -1531,6 +1531,6 @@ const SponsorApplicationPage = () => {
       </Box>
     </Container>
   );
-};
+});
 
 export default SponsorApplicationPage;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo } from '@propelauth/react';
+import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
 import {
   Typography,
   Container,
@@ -28,6 +28,7 @@ import {
   useTheme,
   useMediaQuery
 } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Head from 'next/head';
 import { useEnv } from '../../../context/env.context';
 import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister';
@@ -37,7 +38,7 @@ import FormPersistenceControls from '../../../components/FormPersistenceControls
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
-const MentorApplicationPage = () => {
+const MentorApplicationPage = withRequiredAuthInfo(() => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -53,6 +54,10 @@ const MentorApplicationPage = () => {
     error: recaptchaError,
     setError: setRecaptchaError 
   } = useRecaptcha();
+  
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   
   // Form navigation state
   const [activeStep, setActiveStep] = useState(0);
@@ -197,6 +202,15 @@ const MentorApplicationPage = () => {
   
   // Available time slots (will be populated from event data)
   const [availabilityOptions, setAvailabilityOptions] = useState([]);
+  // State for organizing time slots by date and month
+  const [availabilityByDate, setAvailabilityByDate] = useState({});
+  const [availabilityByMonth, setAvailabilityByMonth] = useState({});
+  // State for selected dates and months
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [selectedMonths, setSelectedMonths] = useState([]);
+  // Search/filter for dates
+  const [dateFilter, setDateFilter] = useState("");
+  const [viewMode, setViewMode] = useState("month"); // "month" or "date"
 
   // fetch event data from the backend API and initialize reCAPTCHA
   useEffect(() => {
@@ -260,6 +274,43 @@ const MentorApplicationPage = () => {
         const slots = generateTimeSlots(eventData.start_date, eventData.end_date);
         setAvailabilityOptions(slots);
         
+        // Organize time slots by date
+        const slotsByDate = slots.reduce((grouped, slot) => {
+          if (!grouped[slot.date]) {
+            grouped[slot.date] = [];
+          }
+          grouped[slot.date].push(slot);
+          return grouped;
+        }, {});
+        setAvailabilityByDate(slotsByDate);
+        
+        // Organize slots by month
+        const slotsByMonth = {};
+        Object.entries(slotsByDate).forEach(([date, slots]) => {
+          // Extract month from date string (e.g. "Monday, Jan 1" → "Jan")
+          const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
+          if (monthMatch) {
+            const monthPart = monthMatch[0].split(' ')[0]; // Get "Jan" from "Jan 1"
+            if (!slotsByMonth[monthPart]) {
+              slotsByMonth[monthPart] = {};
+            }
+            slotsByMonth[monthPart][date] = slots;
+          }
+        });
+        setAvailabilityByMonth(slotsByMonth);
+        
+        // Set initial view mode based on number of days
+        const dayCount = Object.keys(slotsByDate).length;
+        if (dayCount > 14) {
+          setViewMode("month");
+          // Initialize with all months selected
+          setSelectedMonths(Object.keys(slotsByMonth));
+        } else {
+          setViewMode("date");
+        }
+        
+        
+        
         // Initialize formData with user information and event ID
         if (user) {
           setFormData(prev => ({
@@ -275,38 +326,84 @@ const MentorApplicationPage = () => {
           const prevData = await loadPreviousSubmission();
           if (prevData) {
             // If the user has submitted before, ask if they want to load it
-            if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
+            if (
+              window.confirm(
+                "We found a previous application. Would you like to load it for editing?"
+              )
+            ) {
               // Transform API data to match our form structure
-              const availabilityText = prevData.availability || '';
-              
+              const availabilityText = prevData.availability || "";
+
               // Get the already generated slots, not regenerate them
-              const matchedSlotIds = slots.filter(slot => 
-                availabilityText.includes(slot.displayText)).map(slot => slot.id);
-              
+              const matchedSlotIds = slots
+                .filter((slot) => availabilityText.includes(slot.displayText))
+                .map((slot) => slot.id);
+
               const transformedData = {
                 ...formData,
                 email: prevData.email || formData.email,
                 name: prevData.name || formData.name,
-                pronouns: prevData.pronouns || '',
-                company: prevData.company || '',
-                bio: prevData.shortBio || prevData.bio || '',
-                picture: prevData.photoUrl || prevData.picture || '',
-                linkedin: prevData.linkedinProfile || prevData.linkedin || '',
-                inPerson: prevData.isInPerson ? 'Yes!' : 'No, I\'ll be virtual',
-                expertise: (prevData.expertise || '').split(', ').filter(Boolean),
-                participationCount: prevData.participationCount || '',
-                engineeringSpecifics: (prevData.softwareEngineeringSpecifics || '').split(', ').filter(Boolean),
+                pronouns: prevData.pronouns || "",
+                company: prevData.company || "",
+                bio: prevData.shortBio || prevData.bio || "",
+                picture: prevData.photoUrl || prevData.picture || "",
+                linkedin: prevData.linkedinProfile || prevData.linkedin || "",
+                inPerson: prevData.isInPerson ? "Yes!" : "No, I'll be virtual",
+                expertise: (prevData.expertise || "")
+                  .split(", ")
+                  .filter(Boolean),
+                participationCount: prevData.participationCount || "",
+                engineeringSpecifics: (
+                  prevData.softwareEngineeringSpecifics || ""
+                )
+                  .split(", ")
+                  .filter(Boolean),
                 availableDays: matchedSlotIds,
-                country: prevData.country || '',
-                state: prevData.state || '',
+                country: prevData.country || "",
+                state: prevData.state || "",
                 codeOfConduct: prevData.agreedToCodeOfConduct || false,
-                comments: prevData.additionalInfo || prevData.comments || '',
-                shirtSize: prevData.shirtSize || '',
-                event_id: event_id
+                comments: prevData.additionalInfo || prevData.comments || "",
+                shirtSize: prevData.shirtSize || "",
+                event_id: event_id,
               };
-              
+
               setFormData(transformedData);
             }
+
+            // Initialize selected dates based on previously selected slots            
+            const availabilityText = prevData.availability || "";
+            const matchedSlotIds = slots
+              .filter((slot) => availabilityText.includes(slot.displayText))
+              .map((slot) => slot.id);
+
+            // Extract unique dates from matched slots
+            const matchedDates = [
+              ...new Set(
+                matchedSlotIds
+                  .map((id) => {
+                    const slot = slots.find((s) => s.id === id);
+                    return slot ? slot.date : null;
+                  })
+                  .filter(Boolean)
+              ),
+            ];
+
+            setSelectedDates(matchedDates);
+
+            // Extract unique months from matched dates
+            const matchedMonths = [
+              ...new Set(
+                matchedDates
+                  .map((date) => {
+                    const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
+                    return monthMatch ? monthMatch[0].split(" ")[0] : null;
+                  })
+                  .filter(Boolean)
+              ),
+            ];
+
+            setSelectedMonths(matchedMonths);
+          
           } else {
             // If no previous submission, try to load from localStorage
             loadFromLocalStorage();
@@ -344,6 +441,42 @@ const MentorApplicationPage = () => {
         otherExpertise: ''
       }));
     }
+  };
+  
+  // Handle file selection for photo upload
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image file is too large. Please choose an image under 5MB.');
+      return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Selected file is not an image. Please select an image file.');
+      return;
+    }
+    
+    setPhotoFile(file);
+    setError(''); // Clear any previous errors
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result);
+      // Update the form data with the image data URL
+      setFormData(prev => ({
+        ...prev,
+        picture: reader.result
+      }));
+    };
+    reader.onerror = () => {
+      setError('Failed to read the selected file. Please try again.');
+    };
+    reader.readAsDataURL(file);
   };
 
   // Extend handleFormChange to handle otherExpertise field
@@ -446,6 +579,167 @@ const MentorApplicationPage = () => {
 
   const handleBack = () => {
     setActiveStep(prev => prev - 1);
+  };
+
+  // Toggle between month view and date view
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === "month" ? "date" : "month");
+  };
+  
+  // Handle month selection
+  const handleMonthToggle = (month) => {
+    if (selectedMonths.includes(month)) {
+      // If month is already selected, remove it
+      setSelectedMonths(prev => prev.filter(m => m !== month));
+      
+      // Remove all dates from this month from selected dates
+      const datesInMonth = Object.keys(availabilityByMonth[month] || {});
+      setSelectedDates(prev => prev.filter(date => !datesInMonth.includes(date)));
+      
+      // Remove all time slots for this month from form data
+      const slotIdsToRemove = [];
+      datesInMonth.forEach(date => {
+        const slotsForDate = availabilityByDate[date] || [];
+        slotIdsToRemove.push(...slotsForDate.map(slot => slot.id));
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        availableDays: prev.availableDays.filter(id => !slotIdsToRemove.includes(id))
+      }));
+    } else {
+      // Add the month to selected months
+      setSelectedMonths(prev => [...prev, month]);
+      
+      // Add all dates from this month to selected dates
+      const datesInMonth = Object.keys(availabilityByMonth[month] || {});
+      setSelectedDates(prev => [...new Set([...prev, ...datesInMonth])]);
+    }
+  };
+  
+  // Handle date filter change
+  const handleDateFilterChange = (e) => {
+    setDateFilter(e.target.value.toLowerCase());
+  };
+  
+  // Filter dates based on search term
+  const getFilteredDates = () => {
+    if (!dateFilter) {
+      return Object.keys(availabilityByDate);
+    }
+    return Object.keys(availabilityByDate).filter(
+      date => date.toLowerCase().includes(dateFilter)
+    );
+  };
+  
+  // Handle quick filters
+  const applyQuickFilter = (filterType) => {
+    const allDates = Object.keys(availabilityByDate);
+    let filteredDates = [];
+    
+    switch (filterType) {
+      case 'weekdays':
+        filteredDates = allDates.filter(date => 
+          !date.includes('Saturday') && !date.includes('Sunday')
+        );
+        break;
+      case 'weekends':
+        filteredDates = allDates.filter(date => 
+          date.includes('Saturday') || date.includes('Sunday')
+        );
+        break;
+      case 'all':
+        filteredDates = allDates;
+        break;
+      case 'none':
+        filteredDates = [];
+        break;
+      default:
+        return;
+    }
+    
+    setSelectedDates(filteredDates);
+  };
+  
+  // Handle date selection for time slots
+  const handleDateToggle = (date) => {
+    if (selectedDates.includes(date)) {
+      // If date is already selected, remove it and also remove all time slots for this date
+      const slotsForDate = availabilityByDate[date] || [];
+      const slotIdsToRemove = slotsForDate.map(slot => slot.id);
+      
+      setSelectedDates(prev => prev.filter(d => d !== date));
+      setFormData(prev => ({
+        ...prev,
+        availableDays: prev.availableDays.filter(id => !slotIdsToRemove.includes(id))
+      }));
+      
+      // Check if we need to update selectedMonths
+      const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
+      if (monthMatch) {
+        const month = monthMatch[0].split(' ')[0];
+        const datesInMonth = Object.keys(availabilityByMonth[month] || {});
+        const noMoreSelectedDatesInMonth = !datesInMonth.some(
+          d => d !== date && selectedDates.includes(d)
+        );
+        
+        if (noMoreSelectedDatesInMonth) {
+          setSelectedMonths(prev => prev.filter(m => m !== month));
+        }
+      }
+    } else {
+      // Add the date to selected dates
+      setSelectedDates(prev => [...prev, date]);
+      
+      // Make sure the month is selected as well
+      const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
+      if (monthMatch) {
+        const month = monthMatch[0].split(' ')[0];
+        if (!selectedMonths.includes(month)) {
+          setSelectedMonths(prev => [...prev, month]);
+        }
+      }
+    }
+  };
+  
+  // Handle selecting all time slots for a specific date
+  const handleSelectAllSlotsForDate = (date) => {
+    const slotsForDate = availabilityByDate[date] || [];
+    const slotIds = slotsForDate.map(slot => slot.id);
+    
+    // Add all slot IDs for this date to the availableDays array, avoiding duplicates
+    setFormData(prev => {
+      const existingIds = new Set(prev.availableDays);
+      const newIds = slotIds.filter(id => !existingIds.has(id));
+      return {
+        ...prev,
+        availableDays: [...prev.availableDays, ...newIds]
+      };
+    });
+  };
+  
+  // Handle selecting all time slots for a specific month
+  const handleSelectAllSlotsForMonth = (month) => {
+    const datesInMonth = Object.keys(availabilityByMonth[month] || {});
+    let allSlotIds = [];
+    
+    datesInMonth.forEach(date => {
+      const slotsForDate = availabilityByDate[date] || [];
+      allSlotIds.push(...slotsForDate.map(slot => slot.id));
+    });
+    
+    // Add all slot IDs for this month to the availableDays array, avoiding duplicates
+    setFormData(prev => {
+      const existingIds = new Set(prev.availableDays);
+      const newIds = allSlotIds.filter(id => !existingIds.has(id));
+      return {
+        ...prev,
+        availableDays: [...prev.availableDays, ...newIds]
+      };
+    });
+    
+    // Make sure all dates in this month are selected
+    setSelectedDates(prev => [...new Set([...prev, ...datesInMonth])]);
   };
 
   const handleSubmit = async (e) => {
@@ -670,16 +964,37 @@ const MentorApplicationPage = () => {
       </Typography>
       
       <Box sx={{ mb: 3 }}>
-        <TextField
-          label="Can you send us a picture of you? (Optional)"
-          name="picture"
-          type="url"
-          fullWidth
-          value={formData.picture}
-          onChange={handleChange}
-          helperText="Please provide a URL to your profile picture"
-          sx={{ mb: 3 }}
-        />
+        <Box sx={{ mb: 3 }}>
+          <InputLabel htmlFor="photo-upload" sx={{ mb: 1 }}>
+            A photo of you we can use on the website (Optional)
+          </InputLabel>
+          <Button
+            component="label"
+            variant="outlined"
+            startIcon={<CloudUploadIcon />}
+            sx={{ mb: 1 }}
+          >
+            Upload Photo
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleFileChange}
+            />
+          </Button>
+          <FormHelperText>Please upload a professional photo of yourself</FormHelperText>
+          
+          {photoPreview && (
+            <Box sx={{ mt: 2, maxWidth: 200 }}>
+              <img 
+                src={photoPreview} 
+                alt="Preview" 
+                style={{ width: '100%', borderRadius: '4px' }} 
+              />
+            </Box>
+          )}
+        </Box>
         
         <TextField
           label="LinkedIn Profile (Optional)"
@@ -812,62 +1127,463 @@ const MentorApplicationPage = () => {
           </FormHelperText>
           
           {availabilityOptions.length > 0 ? (
-            <Box sx={{ 
-              display: 'grid', 
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-              gap: 2 
-            }}>
-              {availabilityOptions.map((slot) => (
-                <Paper
-                  key={slot.id}
-                  elevation={formData.availableDays.includes(slot.id) ? 8 : 1}
-                  sx={{
+            <>
+              {/* Controls for large date ranges */}
+              {Object.keys(availabilityByDate).length > 10 && (
+                <Box sx={{ mb: 4 }}>
+                  {/* View mode toggle and quick filters */}
+                  <Box sx={{ 
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    mb: 2,
+                    gap: 2,
+                    backgroundColor: 'grey.100',
                     p: 2,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    bgcolor: formData.availableDays.includes(slot.id) ? 'primary.light' : 'background.paper',
-                    color: formData.availableDays.includes(slot.id) ? 'white' : 'text.primary',
-                    borderRadius: 2,
-                    '&:hover': {
-                      bgcolor: formData.availableDays.includes(slot.id) ? 'primary.main' : 'action.hover',
-                      transform: 'translateY(-4px)',
-                      boxShadow: 6
-                    }
-                  }}
-                  onClick={() => {
-                    const newAvailability = formData.availableDays.includes(slot.id)
-                      ? formData.availableDays.filter(id => id !== slot.id)
-                      : [...formData.availableDays, slot.id];
+                    borderRadius: 2
+                  }}>
+                    <Box>
+                      <Button 
+                        variant="contained" 
+                        color={viewMode === "month" ? "primary" : "inherit"}
+                        onClick={() => setViewMode("month")}
+                        size="small"
+                        sx={{ mr: 1 }}
+                      >
+                        Month View
+                      </Button>
+                      <Button 
+                        variant="contained"
+                        color={viewMode === "date" ? "primary" : "inherit"}
+                        onClick={() => setViewMode("date")}
+                        size="small"
+                      >
+                        Date View
+                      </Button>
+                    </Box>
                     
-                    setFormData(prev => ({
-                      ...prev,
-                      availableDays: newAvailability
-                    }));
-                  }}
-                >
-                  <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
-                      {slot.icon} {slot.date}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      {slot.label} ({slot.time})
-                    </Typography>
-                    <Typography variant="caption" sx={{ mt: 'auto', fontStyle: 'italic' }}>
-                      {slot.energy}
-                    </Typography>
-                    
-                    {formData.availableDays.includes(slot.id) && (
-                      <Chip 
-                        label="Selected!" 
-                        color="success" 
-                        size="small" 
-                        sx={{ alignSelf: 'flex-start', mt: 1 }}
-                      />
-                    )}
+                    <Box>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Quick Filters:
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          onClick={() => applyQuickFilter('weekdays')}
+                        >
+                          Weekdays
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          onClick={() => applyQuickFilter('weekends')}
+                        >
+                          Weekends
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          onClick={() => applyQuickFilter('all')}
+                        >
+                          All Dates
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          onClick={() => applyQuickFilter('none')}
+                        >
+                          Clear All
+                        </Button>
+                      </Box>
+                    </Box>
                   </Box>
-                </Paper>
-              ))}
-            </Box>
+                  
+                  {/* Search filter for dates */}
+                  {viewMode === "date" && (
+                    <TextField
+                      label="Filter dates"
+                      variant="outlined"
+                      fullWidth
+                      value={dateFilter}
+                      onChange={handleDateFilterChange}
+                      placeholder="Type to filter dates (e.g., 'Monday' or 'Jan')"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                  
+                  {/* Month selection view */}
+                  {viewMode === "month" && (
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="subtitle2" gutterBottom color="primary">
+                        Step 1: Select months
+                      </Typography>
+                      <Box sx={{ 
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        mb: 3
+                      }}>
+                        {Object.keys(availabilityByMonth).map(month => (
+                          <Paper
+                            key={month}
+                            elevation={selectedMonths.includes(month) ? 8 : 1}
+                            sx={{
+                              p: 2,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              bgcolor: selectedMonths.includes(month) ? 'primary.light' : 'background.paper',
+                              color: selectedMonths.includes(month) ? 'white' : 'text.primary',
+                              borderRadius: 2,
+                              minWidth: 120,
+                              '&:hover': {
+                                bgcolor: selectedMonths.includes(month) ? 'primary.main' : 'action.hover',
+                                transform: 'translateY(-4px)',
+                                boxShadow: 6
+                              }
+                            }}
+                            onClick={() => handleMonthToggle(month)}
+                          >
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <Typography variant="h6" sx={{ mb: 1 }}>
+                                {month}
+                              </Typography>
+                              <Typography variant="body2">
+                                {Object.keys(availabilityByMonth[month] || {}).length} days
+                              </Typography>
+                              
+                              {selectedMonths.includes(month) && (
+                                <Chip 
+                                  label="Selected" 
+                                  color="success" 
+                                  size="small" 
+                                  sx={{ mt: 1 }}
+                                />
+                              )}
+                            </Box>
+                          </Paper>
+                        ))}
+                      </Box>
+                      
+                      {selectedMonths.length > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="subtitle2" color="primary">
+                            Step 2: Select dates within these months
+                          </Typography>
+                          <Button 
+                            variant="outlined"
+                            onClick={() => setViewMode("date")}
+                          >
+                            Show Selected Dates
+                          </Button>
+                        </Box>
+                      )}
+                      
+                      {selectedMonths.length === 0 && (
+                        <Alert severity="info" sx={{ mt: 2 }}>
+                          Please select at least one month to continue.
+                        </Alert>
+                      )}
+                      
+                      {/* Month content section */}
+                      <Box>
+                        {selectedMonths.map(month => (
+                          <Box key={month} sx={{ mb: 4 }}>
+                            <Box sx={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              mb: 2,
+                              backgroundColor: 'primary.light',
+                              color: 'white',
+                              p: 2,
+                              borderRadius: 2
+                            }}>
+                              <Typography variant="h6">{month}</Typography>
+                              <Button 
+                                variant="contained" 
+                                size="small"
+                                onClick={() => handleSelectAllSlotsForMonth(month)}
+                              >
+                                Select All Days & Times
+                              </Button>
+                            </Box>
+                            
+                            <Box sx={{ 
+                              display: 'grid', 
+                              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+                              gap: 2 
+                            }}>
+                              {Object.keys(availabilityByMonth[month] || {}).map(date => (
+                                <Paper
+                                  key={date}
+                                  elevation={selectedDates.includes(date) ? 8 : 1}
+                                  sx={{
+                                    p: 2,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    bgcolor: selectedDates.includes(date) ? 'secondary.light' : 'background.paper',
+                                    color: selectedDates.includes(date) ? 'white' : 'text.primary',
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      bgcolor: selectedDates.includes(date) ? 'secondary.main' : 'action.hover',
+                                      transform: 'translateY(-4px)',
+                                      boxShadow: 6
+                                    }
+                                  }}
+                                  onClick={() => handleDateToggle(date)}
+                                >
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center' 
+                                  }}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                      {date}
+                                    </Typography>
+                                    
+                                    {selectedDates.includes(date) && (
+                                      <Chip 
+                                        label="Selected" 
+                                        color="success" 
+                                        size="small"
+                                      />
+                                    )}
+                                  </Box>
+                                </Paper>
+                              ))}
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                  
+                  {/* Date selection view */}
+                  {viewMode === "date" && (
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="subtitle2" gutterBottom color="primary">
+                        Select which dates you're available
+                      </Typography>
+                      <Box sx={{ 
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+                        gap: 1,
+                        mb: 2
+                      }}>
+                        {getFilteredDates().map(date => (
+                          <Chip
+                            key={date}
+                            label={date}
+                            clickable
+                            color={selectedDates.includes(date) ? "primary" : "default"}
+                            onClick={() => handleDateToggle(date)}
+                            sx={{ 
+                              fontWeight: selectedDates.includes(date) ? 'bold' : 'normal',
+                              py: 2,
+                              '&:hover': {
+                                backgroundColor: selectedDates.includes(date) ? 'primary.main' : 'action.hover'
+                              }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                      
+                      {selectedDates.length > 0 && (
+                        <Typography variant="subtitle2" gutterBottom color="primary">
+                          Select specific time slots for your chosen dates
+                        </Typography>
+                      )}
+                      
+                      {selectedDates.length === 0 && (
+                        <Alert severity="info" sx={{ mt: 2 }}>
+                          Please select at least one date to see available time slots.
+                        </Alert>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+              )}
+              
+              {/* Time slots section - If less than 10 days, show all. Otherwise, filter by selected dates */}
+              {Object.keys(availabilityByDate).length <= 10 || selectedDates.length > 0 ? (
+                <Box>
+                  {Object.keys(availabilityByDate).length <= 10 ? (
+                    // Simple view for small number of time slots
+                    <Box sx={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+                      gap: 2 
+                    }}>
+                      {availabilityOptions.map((slot) => (
+                        <Paper
+                          key={slot.id}
+                          elevation={formData.availableDays.includes(slot.id) ? 8 : 1}
+                          sx={{
+                            p: 2,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            bgcolor: formData.availableDays.includes(slot.id) ? 'primary.light' : 'background.paper',
+                            color: formData.availableDays.includes(slot.id) ? 'white' : 'text.primary',
+                            borderRadius: 2,
+                            '&:hover': {
+                              bgcolor: formData.availableDays.includes(slot.id) ? 'primary.main' : 'action.hover',
+                              transform: 'translateY(-4px)',
+                              boxShadow: 6
+                            }
+                          }}
+                          onClick={() => {
+                            const newAvailability = formData.availableDays.includes(slot.id)
+                              ? formData.availableDays.filter(id => id !== slot.id)
+                              : [...formData.availableDays, slot.id];
+                            
+                            setFormData(prev => ({
+                              ...prev,
+                              availableDays: newAvailability
+                            }));
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                              {slot.icon} {slot.date}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                              {slot.label} ({slot.time})
+                            </Typography>
+                            <Typography variant="caption" sx={{ mt: 'auto', fontStyle: 'italic' }}>
+                              {slot.energy}
+                            </Typography>
+                            
+                            {formData.availableDays.includes(slot.id) && (
+                              <Chip 
+                                label="Selected!" 
+                                color="success" 
+                                size="small" 
+                                sx={{ alignSelf: 'flex-start', mt: 1 }}
+                              />
+                            )}
+                          </Box>
+                        </Paper>
+                      ))}
+                    </Box>
+                  ) : (
+                    // Organized time slots by date when viewing dates
+                    <Box>
+                      {selectedDates.map(date => (
+                        <Box key={date} sx={{ mb: 4 }}>
+                          <Box sx={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            mb: 2,
+                            backgroundColor: 'grey.100',
+                            p: 2,
+                            borderRadius: 2
+                          }}>
+                            <Typography variant="h6">{date}</Typography>
+                            <Button 
+                              variant="outlined" 
+                              size="small"
+                              onClick={() => handleSelectAllSlotsForDate(date)}
+                            >
+                              Select All Slots
+                            </Button>
+                          </Box>
+                          
+                          <Box sx={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+                            gap: 2 
+                          }}>
+                            {availabilityByDate[date]?.map((slot) => (
+                              <Paper
+                                key={slot.id}
+                                elevation={formData.availableDays.includes(slot.id) ? 8 : 1}
+                                sx={{
+                                  p: 2,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  bgcolor: formData.availableDays.includes(slot.id) ? 'primary.light' : 'background.paper',
+                                  color: formData.availableDays.includes(slot.id) ? 'white' : 'text.primary',
+                                  borderRadius: 2,
+                                  '&:hover': {
+                                    bgcolor: formData.availableDays.includes(slot.id) ? 'primary.main' : 'action.hover',
+                                    transform: 'translateY(-4px)',
+                                    boxShadow: 6
+                                  }
+                                }}
+                                onClick={() => {
+                                  const newAvailability = formData.availableDays.includes(slot.id)
+                                    ? formData.availableDays.filter(id => id !== slot.id)
+                                    : [...formData.availableDays, slot.id];
+                                  
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    availableDays: newAvailability
+                                  }));
+                                }}
+                              >
+                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                                    {slot.icon} {slot.label}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ mb: 1 }}>
+                                    {slot.time}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ mt: 'auto', fontStyle: 'italic' }}>
+                                    {slot.energy}
+                                  </Typography>
+                                  
+                                  {formData.availableDays.includes(slot.id) && (
+                                    <Chip 
+                                      label="Selected!" 
+                                      color="success" 
+                                      size="small" 
+                                      sx={{ alignSelf: 'flex-start', mt: 1 }}
+                                    />
+                                  )}
+                                </Box>
+                              </Paper>
+                            ))}
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              ) : null}
+              
+              {/* Selected count summary */}
+              {formData.availableDays.length > 0 && (
+                <Box sx={{ 
+                  mt: 3, 
+                  p: 2, 
+                  bgcolor: 'success.light', 
+                  color: 'white',
+                  borderRadius: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <Typography variant="subtitle1">
+                    You've selected {formData.availableDays.length} time slot{formData.availableDays.length !== 1 ? 's' : ''} 
+                    across {selectedDates.length} day{selectedDates.length !== 1 ? 's' : ''}!
+                  </Typography>
+                  <Button 
+                    variant="contained"
+                    color="warning"
+                    size="small"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, availableDays: [] }));
+                      setSelectedDates([]);
+                    }}
+                  >
+                    Clear All
+                  </Button>
+                </Box>
+              )}
+            </>
           ) : (
             <Alert severity="info" sx={{ mb: 2 }}>
               Loading available time slots...
@@ -1297,6 +2013,7 @@ const MentorApplicationPage = () => {
       </Box>
     </Container>
   );
-};
+
+});
 
 export default MentorApplicationPage;

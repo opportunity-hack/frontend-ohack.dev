@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo } from '@propelauth/react';
+import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
 import {
   Typography,
   Container,
@@ -30,6 +30,7 @@ import {
   useTheme,
   useMediaQuery
 } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Head from 'next/head';
 import { useEnv } from '../../../context/env.context';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
@@ -38,7 +39,7 @@ import FormPersistenceControls from '../../../components/FormPersistenceControls
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
-const VolunteerApplicationPage = () => {
+const VolunteerApplicationPage = withRequiredAuthInfo(() => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -62,9 +63,49 @@ const VolunteerApplicationPage = () => {
     setError: setRecaptchaError 
   } = useRecaptcha();
   
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  
   // Store refs for data loading
   const initialLoadRef = useRef(false);
   const formInitializedRef = useRef(false);
+  
+  // Handle file selection for photo upload
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image file is too large. Please choose an image under 5MB.');
+      return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Selected file is not an image. Please select an image file.');
+      return;
+    }
+    
+    setPhotoFile(file);
+    setError(''); // Clear any previous errors
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result);
+      // Update the form data with the image data URL
+      setFormData(prev => ({
+        ...prev,
+        photoUrl: reader.result
+      }));
+    };
+    reader.onerror = () => {
+      setError('Failed to read the selected file. Please try again.');
+    };
+    reader.readAsDataURL(file);
+  };
   
   // Initial form state
   const initialFormData = {
@@ -94,7 +135,8 @@ const VolunteerApplicationPage = () => {
     codeOfConduct: false,
     additionalInfo: '',
     event_id: event_id || '',
-    isSelected: false
+    isSelected: false,
+    photoUrl: '' // Add field for photo URL
   };
   
   // Use form persistence hook
@@ -582,6 +624,7 @@ const VolunteerApplicationPage = () => {
         agreedToCodeOfConduct: formData.codeOfConduct,
         linkedinProfile: formData.linkedin,
         shortBio: formData.bio,
+        photoUrl: photoPreview || formData.photoUrl || '',
         // Add reCAPTCHA token
         recaptchaToken
       };
@@ -700,6 +743,38 @@ const VolunteerApplicationPage = () => {
           helperText="Tell us a bit about yourself (aim for 100-200 words)"
           sx={{ mb: 3 }}
         />
+        
+        <Box sx={{ mb: 3 }}>
+          <InputLabel htmlFor="photo-upload" sx={{ mb: 1 }}>
+            Your Profile Photo (Optional)
+          </InputLabel>
+          <Button
+            component="label"
+            variant="outlined"
+            startIcon={<CloudUploadIcon />}
+            sx={{ mb: 1 }}
+          >
+            Upload Photo
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleFileChange}
+            />
+          </Button>
+          <FormHelperText>Please upload a professional photo of yourself</FormHelperText>
+          
+          {photoPreview && (
+            <Box sx={{ mt: 2, maxWidth: 200 }}>
+              <img 
+                src={photoPreview} 
+                alt="Preview" 
+                style={{ width: '100%', borderRadius: '4px' }} 
+              />
+            </Box>
+          )}
+        </Box>
       </Box>
     </Box>
   );
@@ -1368,6 +1443,6 @@ const VolunteerApplicationPage = () => {
       </Box>
     </Container>
   );
-};
+});
 
 export default VolunteerApplicationPage;
