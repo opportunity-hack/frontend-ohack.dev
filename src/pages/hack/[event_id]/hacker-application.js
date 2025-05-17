@@ -35,6 +35,7 @@ import Head from 'next/head';
 import { useEnv } from '../../../context/env.context';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
 import InfoIcon from '@mui/icons-material/Info';
+import SearchIcon from '@mui/icons-material/Search';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
