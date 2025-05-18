@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from "@propelauth/react";
 import {
   Box,
@@ -20,10 +20,17 @@ import {
   Chip,
   CircularProgress,
   TableSortLabel,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
+  Divider,
 } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
+import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
 import LinkManagement from "../../../components/admin/LinkManagement";
+import useNonprofit from "../../../hooks/use-nonprofit";
 
 const AdminProblemsPage = () => {
   const { accessToken, userClass } = useAuthInfo();
@@ -34,9 +41,14 @@ const AdminProblemsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [orderBy, setOrderBy] = useState("title");
   const [order, setOrder] = useState("asc");
+  const [selectedNonprofitId, setSelectedNonprofitId] = useState("");
+  const [nonprofitSearchTerm, setNonprofitSearchTerm] = useState("");
 
   const org = userClass?.getOrgByName("Opportunity Hack Org");
   const isAdmin = org?.hasPermission("volunteer.admin");
+  
+  // Use the nonprofit hook to get the list of nonprofits
+  const { nonprofits } = useNonprofit();
 
   const fetchProblems = React.useCallback(async () => {
     setLoading(true);
@@ -62,6 +74,27 @@ const AdminProblemsPage = () => {
       setLoading(false);
     }
   }, [accessToken]);
+  
+  // Create a lookup map for which problem statements each nonprofit has
+  const nonprofitProblemStatementsMap = useMemo(() => {
+    const map = {};
+    
+    // For each nonprofit, create an entry in the map with its problem statements
+    nonprofits.forEach(nonprofit => {
+      if (nonprofit.problem_statements && Array.isArray(nonprofit.problem_statements)) {
+        nonprofit.problem_statements.forEach(psId => {
+          // If this problem statement ID isn't in the map yet, add it with this nonprofit
+          if (!map[psId]) {
+            map[psId] = [];
+          }
+          // Add this nonprofit to the list of nonprofits for this problem statement
+          map[psId].push(nonprofit);
+        });
+      }
+    });
+    
+    return map;
+  }, [nonprofits]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -114,7 +147,10 @@ const AdminProblemsPage = () => {
       slack_channel: "",
       helping: [],
       rank: "",
+      nonprofit_id: "",
     });
+    setSelectedNonprofitId("");
+    setNonprofitSearchTerm("");
     setDialogOpen(true);
   };
 
@@ -124,11 +160,20 @@ const AdminProblemsPage = () => {
       references: adaptReferencesToLinkFormat(problem.references)
     };
     setEditingProblem(adaptedProblem);
+    setSelectedNonprofitId(problem.nonprofit_id || "");
+    setNonprofitSearchTerm("");
     setDialogOpen(true);
   };
 
   const handleSaveProblem = async () => {
-    console.log(editingProblem);
+    // Include the selected nonprofit ID with the problem statement data
+    const problemToSave = {
+      ...editingProblem,
+      nonprofit_id: selectedNonprofitId || null
+    };
+    
+    console.log("Saving problem with data:", problemToSave);
+    
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements`,
@@ -139,10 +184,60 @@ const AdminProblemsPage = () => {
             "Content-Type": "application/json",
             "X-Org-Id": org.orgId,
           },
-          body: JSON.stringify(editingProblem),
+          body: JSON.stringify(problemToSave),
         }
       );
       if (response.ok) {
+        // If a nonprofit was selected, also update the nonprofit's problem statements
+        if (selectedNonprofitId) {
+          try {
+            // First get the current problem statements for this nonprofit
+            const nonprofitResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${selectedNonprofitId}`,
+              {
+                headers: {
+                  authorization: `Bearer ${accessToken}`,
+                },
+              }
+            );
+            
+            if (nonprofitResponse.ok) {
+              const nonprofitData = await nonprofitResponse.json();
+              const currentProblemStatements = nonprofitData.nonprofits?.problem_statements || [];
+              
+              // Only update if this is a new problem statement or if it's not already associated
+              if (!editingProblem.id || !currentProblemStatements.includes(editingProblem.id)) {
+                // The response from the first API call contains the ID of the newly created/updated problem statement
+                const problemData = await response.json();
+                const problemId = problemData.id || editingProblem.id;
+                
+                if (problemId) {
+                  // Add this problem statement ID to the nonprofit's problem statements
+                  const updatedProblemStatements = [...currentProblemStatements, problemId];
+                  
+                  await fetch(
+                    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo`,
+                    {
+                      method: "PATCH",
+                      headers: {
+                        authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                        "X-Org-Id": org.orgId,
+                      },
+                      body: JSON.stringify({
+                        id: selectedNonprofitId,
+                        problem_statements: updatedProblemStatements
+                      }),
+                    }
+                  );
+                }
+              }
+            }
+          } catch (nonprofitError) {
+            console.error("Error linking problem statement to nonprofit:", nonprofitError);
+          }
+        }
+        
         fetchProblems();
         setDialogOpen(false);
       } else {
@@ -194,19 +289,90 @@ const AdminProblemsPage = () => {
     >
       <AdminPage title="Problem Statement Management" isAdmin={isAdmin}>
         <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            label="Search Problems"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddProblem}
-          >
-            Add Problem Statement
-          </Button>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Search Problem Statements"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title, description, or status..."
+                variant="outlined"
+                size="medium"
+              />
+            </Grid>
+            <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddProblem}
+                size="large"
+              >
+                Add Problem Statement
+              </Button>
+            </Grid>
+          </Grid>
+          
+          {/* Stats summary */}
+          <Box sx={{ mt: 2, mb: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Paper 
+              sx={{ 
+                px: 2, 
+                py: 1, 
+                display: 'flex', 
+                alignItems: 'center',
+                bgcolor: '#f5f5f5' 
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                Total Problem Statements:
+              </Typography>
+              <Typography variant="body1" fontWeight="bold">
+                {problems?.length || 0}
+              </Typography>
+            </Paper>
+            
+            <Paper 
+              sx={{ 
+                px: 2, 
+                py: 1, 
+                display: 'flex', 
+                alignItems: 'center',
+                bgcolor: '#f5f5f5' 
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                Linked to Nonprofits:
+              </Typography>
+              <Typography variant="body1" fontWeight="bold" color="success.main">
+                {problems?.filter(p => 
+                  p.nonprofit_id || 
+                  (nonprofitProblemStatementsMap[p.id] && nonprofitProblemStatementsMap[p.id].length > 0)
+                ).length || 0}
+              </Typography>
+            </Paper>
+            
+            <Paper 
+              sx={{ 
+                px: 2, 
+                py: 1, 
+                display: 'flex', 
+                alignItems: 'center',
+                bgcolor: '#f5f5f5' 
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                Unlinked Problem Statements:
+              </Typography>
+              <Typography variant="body1" fontWeight="bold" color="error.main">
+                {problems?.filter(p => 
+                  !p.nonprofit_id && 
+                  (!nonprofitProblemStatementsMap[p.id] || nonprofitProblemStatementsMap[p.id].length === 0)
+                ).length || 0}
+              </Typography>
+            </Paper>
+          </Box>
         </Box>
 
         {loading ? (
@@ -251,7 +417,16 @@ const AdminProblemsPage = () => {
                     >
                       First Thought Of
                     </TableSortLabel>
-                  </TableCell>                                    
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={orderBy === "nonprofit_id"}
+                      direction={orderBy === "nonprofit_id" ? order : "asc"}
+                      onClick={() => handleSort("nonprofit_id")}
+                    >
+                      Nonprofit
+                    </TableSortLabel>
+                  </TableCell>                                 
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -274,6 +449,46 @@ const AdminProblemsPage = () => {
                     <TableCell>{problem.rank}</TableCell>
                     <TableCell>{problem.first_thought_of}</TableCell>
                     <TableCell>
+                      {problem.nonprofit_id ? (
+                        <Chip
+                          icon={<LinkIcon />}
+                          label={nonprofits.find(np => np.id === problem.nonprofit_id)?.name || problem.nonprofit_id}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          sx={{ mr: 0.5 }}
+                        />
+                      ) : (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {nonprofitProblemStatementsMap[problem.id]?.length > 0 ? (
+                            <>
+                              {nonprofitProblemStatementsMap[problem.id].map((nonprofit, i) => (
+                                <Chip
+                                  key={nonprofit.id}
+                                  icon={<LinkIcon />}
+                                  label={nonprofit.name}
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                  sx={{ 
+                                    fontSize: '0.7rem', 
+                                    height: '24px',
+                                    '& .MuiChip-icon': { fontSize: '0.7rem' },
+                                    mb: 0.5 
+                                  }}
+                                  title={`This problem statement is linked to ${nonprofit.name}`}
+                                />
+                              ))}
+                            </>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              Not linked
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <IconButton onClick={() => handleEditProblem(problem)}>
                         <EditIcon />
                       </IconButton>
@@ -291,8 +506,13 @@ const AdminProblemsPage = () => {
           maxWidth="md"
           fullWidth
         >
-          <DialogTitle>
+          <DialogTitle sx={{ pb: 1 }}>
             {editingProblem?.id ? "Edit Problem" : "Add Problem"}
+            {editingProblem?.id && (
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+                ID: {editingProblem.id}
+              </Typography>
+            )}
           </DialogTitle>
           <DialogContent>
             <TextField
@@ -358,6 +578,122 @@ const AdminProblemsPage = () => {
             margin="normal"
             />
 
+            {/* Nonprofit selection with enhanced information */}
+            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+              Associated Nonprofit
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel id="nonprofit-select-label">Link to Nonprofit</InputLabel>
+                  <Select
+                    labelId="nonprofit-select-label"
+                    value={selectedNonprofitId}
+                    onChange={(e) => setSelectedNonprofitId(e.target.value)}
+                    label="Link to Nonprofit"
+                  >
+                    <MenuItem value="">
+                      <em>None - No nonprofit associated</em>
+                    </MenuItem>
+                    {nonprofits
+                      .filter(np => 
+                        !nonprofitSearchTerm || 
+                        np.name.toLowerCase().includes(nonprofitSearchTerm.toLowerCase())
+                      )
+                      .map((nonprofit) => (
+                        <MenuItem key={nonprofit.id} value={nonprofit.id}>
+                          {nonprofit.name}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              {nonprofits.length > 10 && (
+                <Grid item xs={12}>
+                  <TextField
+                    label="Search Nonprofits"
+                    variant="outlined"
+                    size="small"
+                    value={nonprofitSearchTerm}
+                    onChange={(e) => setNonprofitSearchTerm(e.target.value)}
+                    fullWidth
+                  />
+                </Grid>
+              )}
+              
+              {/* Display selected nonprofit details */}
+              {selectedNonprofitId && (
+                <Grid item xs={12}>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 2, 
+                      mt: 1, 
+                      backgroundColor: "#f9f9f9",
+                      borderLeft: "4px solid #3f51b5" 
+                    }}
+                  >
+                    {(() => {
+                      const selectedNonprofit = nonprofits.find(np => np.id === selectedNonprofitId);
+                      return selectedNonprofit ? (
+                        <>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {selectedNonprofit.name}
+                          </Typography>
+                          
+                          {selectedNonprofit.description && (
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                              {selectedNonprofit.description.length > 200 
+                                ? `${selectedNonprofit.description.substring(0, 200)}...` 
+                                : selectedNonprofit.description}
+                            </Typography>
+                          )}
+                          
+                          <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {selectedNonprofit.website && (
+                              <Chip 
+                                size="small" 
+                                label="Website" 
+                                color="primary" 
+                                variant="outlined"
+                                sx={{ fontSize: '0.75rem' }}
+                                icon={<LinkIcon fontSize="small" />}
+                                onClick={() => window.open(selectedNonprofit.website, '_blank')}
+                              />
+                            )}
+                            {selectedNonprofit.slack_channel && (
+                              <Chip 
+                                size="small" 
+                                label={`#${selectedNonprofit.slack_channel}`} 
+                                color="secondary" 
+                                variant="outlined"
+                                sx={{ fontSize: '0.75rem' }}
+                              />
+                            )}
+                            {selectedNonprofit.problem_statements && (
+                              <Chip 
+                                size="small" 
+                                label={`${selectedNonprofit.problem_statements?.length || 0} Problem Statements`} 
+                                color="success" 
+                                variant="outlined"
+                                sx={{ fontSize: '0.75rem' }}
+                              />
+                            )}
+                          </Box>
+                        </>
+                      ) : (
+                        <Typography color="text.secondary">
+                          Selected nonprofit information not available
+                        </Typography>
+                      );
+                    })()} 
+                  </Paper>
+                </Grid>
+              )}
+            </Grid>
+
+            <Divider sx={{ my: 3 }} />
+            
             <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
               References
             </Typography>
@@ -366,10 +702,47 @@ const AdminProblemsPage = () => {
               onChange={handleReferencesChange}
             />
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
+            <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>
+              {editingProblem?.id && (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                    Nonprofit Status:
+                  </Typography>
+                  {selectedNonprofitId ? (
+                    <Chip 
+                      size="small" 
+                      color="success" 
+                      icon={<LinkIcon />}
+                      label={nonprofits.find(np => np.id === selectedNonprofitId)?.name || 'Linked'} 
+                      variant="outlined" 
+                    />
+                  ) : nonprofitProblemStatementsMap[editingProblem.id]?.length > 0 ? (
+                    <Chip 
+                      size="small" 
+                      color="info" 
+                      label={`Linked to ${nonprofitProblemStatementsMap[editingProblem.id].length} nonprofit(s)`} 
+                      variant="outlined" 
+                    />
+                  ) : (
+                    <Chip 
+                      size="small" 
+                      color="error" 
+                      label="Not Linked" 
+                      variant="outlined" 
+                    />
+                  )}
+                </Box>
+              )}
+            </Box>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveProblem} color="primary">
-              Save
+            <Button 
+              onClick={handleSaveProblem} 
+              variant="contained" 
+              color="primary"
+              startIcon={<SaveIcon />}
+            >
+              Save Problem Statement
             </Button>
           </DialogActions>
         </Dialog>
