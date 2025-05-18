@@ -74,7 +74,11 @@ const AdminHackathonPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setHackathons(data.hackathons || []);
+        // Sort hackathons by start_date in descending order (newest first)
+        const sortedHackathons = [...(data.hackathons || [])].sort((a, b) => {
+          return new Date(b.start_date) - new Date(a.start_date);
+        });
+        setHackathons(sortedHackathons);
       } else {
         throw new Error("Failed to fetch hackathons");
       }
@@ -328,7 +332,7 @@ const AdminHackathonPage = () => {
               <TableRow>
                 <TableCell>Title</TableCell>
                 <TableCell>Event ID</TableCell>
-                <TableCell>Start Date</TableCell>
+                <TableCell>Start Date (Newest First)</TableCell>
                 <TableCell>End Date</TableCell>
                 <TableCell>Location</TableCell>
                 <TableCell>Actions</TableCell>
