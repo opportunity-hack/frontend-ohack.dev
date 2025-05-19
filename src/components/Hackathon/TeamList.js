@@ -112,11 +112,42 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
       }
       return user.id === userProfile.id;
     });
+    
+  // Check if the team is active
+  const isActive = team.active === "True" || team.active === true;
 
   return (
-    <Card>
+    <Card sx={{
+      position: 'relative',
+      opacity: isActive ? 1 : 0.7,
+      border: isActive ? 'none' : '1px solid #e0e0e0'
+    }}>
+      {!isActive && (
+        <Box 
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            backgroundColor: 'warning.light',
+            color: 'warning.contrastText',
+            px: 1,
+            py: 0.5,
+            borderBottomLeftRadius: 4,
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            zIndex: 1
+          }}
+        >
+          Inactive Team
+        </Box>
+      )}
       <CardContent>
         <Typography variant="h6">{team.name}</Typography>
+        {!isActive && (
+          <Typography variant="body2" color="error" sx={{ mb: 1 }}>
+            This team is currently inactive
+          </Typography>
+        )}
         <Typography variant="body2" color="textSecondary">
           Slack Channel:{" "}
           <Link
@@ -168,7 +199,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 variant="outlined"
                 color="secondary"
                 onClick={() => onLeave(team.id)}
-                disabled={isLoading}
+                disabled={isLoading || !isActive}
                 startIcon={isLoading && <CircularProgress size={16} />}
               >
                 {isLoading ? "Leaving..." : "Leave Team"}
@@ -179,11 +210,16 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 variant="outlined"
                 color="primary"
                 onClick={() => onJoin(team.id)}
-                disabled={isLoading}
+                disabled={isLoading || !isActive}
                 startIcon={isLoading && <CircularProgress size={16} />}
               >
                 {isLoading ? "Joining..." : "Join Team"}
               </Button>
+            )}
+            {!isActive && (
+              <Typography variant="caption" color="error" display="block" sx={{ mt: 1 }}>
+                You cannot join/leave inactive teams
+              </Typography>
             )}
           </div>
         )}
@@ -192,7 +228,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   );
 };
 
-const TeamList = ({ teams, eventId }) => {  
+const TeamList = ({ teams, eventId }) => {
   const [teamData, setTeamData] = useState(teams);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
@@ -206,72 +242,82 @@ const TeamList = ({ teams, eventId }) => {
   const [userProfile, setUserProfile] = useState(null);
   const { isLoggedIn, accessToken } = useAuthInfo();
 
+
   // Fetch detailed profile information for all team members
-  const fetchTeamMemberProfiles = useCallback(async (teamsData) => {
-    if (!teamsData?.length || !accessToken) return;
-    
-    setProfilesLoading(true);
-    try {
-      // Extract unique user IDs from all teams (users are stored as string IDs)
-      const userIds = new Set();
-      teamsData.forEach(team => {
-        if (Array.isArray(team.users)) {
-          team.users.forEach(userId => {
-            if (userId) userIds.add(userId);
-          });
-        }
-      });
-      
-      // Fetch all user profiles in parallel
-      const profileMap = {};
-      await Promise.all(
-        Array.from(userIds).map(async (userId) => {
-          try {
-            const response = await fetch(
-              `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`, 
-              { headers: { Authorization: `Bearer ${accessToken}` }}
-            );
-            
-            if (!response.ok) throw new Error(`Failed to fetch profile for user ${userId}`);
-            
-            const data = await response.json();
-            const profile = data.text || data;
-            
-            // Add user ID to the profile object for reference
-            if (profile) {
-              profile.user_id = userId;
-            }
-            
-            // Add to lookup map
-            profileMap[userId] = profile;
-            return { userId, profile };
-          } catch (error) {
-            console.error(`Error fetching profile for user ${userId}:`, error);
-            return { userId, error };
+  const fetchTeamMemberProfiles = useCallback(
+    async (teamsData) => {
+      if (!teamsData?.length || !accessToken) return;
+
+      setProfilesLoading(true);
+      try {
+        // Extract unique user IDs from all teams (users are stored as string IDs)
+        const userIds = new Set();
+        teamsData.forEach((team) => {
+          if (Array.isArray(team.users)) {
+            team.users.forEach((userId) => {
+              if (userId) userIds.add(userId);
+            });
           }
-        })
-      );
-      
-      // Update teams with detailed user profiles, converting string IDs to profile objects
-      const updatedTeams = teamsData.map(team => ({
-        ...team,
-        users: Array.isArray(team.users) 
-          ? team.users.map(userId => profileMap[userId] || { user_id: userId })
-          : [],
-      }));
-      
-      setTeamData(updatedTeams);
-    } catch (error) {
-      console.error("Error fetching team member profiles:", error);
-      setSnackbar({
-        open: true,
-        message: "Error fetching some team member profiles",
-        severity: "warning",
-      });
-    } finally {
-      setProfilesLoading(false);
-    }
-  }, [accessToken]);
+        });
+
+        // Fetch all user profiles in parallel
+        const profileMap = {};
+        await Promise.all(
+          Array.from(userIds).map(async (userId) => {
+            try {
+              const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`,
+                { headers: { Authorization: `Bearer ${accessToken}` } }
+              );
+
+              if (!response.ok)
+                throw new Error(`Failed to fetch profile for user ${userId}`);
+
+              const data = await response.json();
+              const profile = data.text || data;
+
+              // Add user ID to the profile object for reference
+              if (profile) {
+                profile.user_id = userId;
+              }
+
+              // Add to lookup map
+              profileMap[userId] = profile;
+              return { userId, profile };
+            } catch (error) {
+              console.error(
+                `Error fetching profile for user ${userId}:`,
+                error
+              );
+              return { userId, error };
+            }
+          })
+        );
+
+        // Update teams with detailed user profiles, converting string IDs to profile objects
+        const updatedTeams = teamsData.map((team) => ({
+          ...team,
+          users: Array.isArray(team.users)
+            ? team.users.map(
+                (userId) => profileMap[userId] || { user_id: userId }
+              )
+            : [],
+        }));
+
+        setTeamData(updatedTeams);
+      } catch (error) {
+        console.error("Error fetching team member profiles:", error);
+        setSnackbar({
+          open: true,
+          message: "Error fetching some team member profiles",
+          severity: "warning",
+        });
+      } finally {
+        setProfilesLoading(false);
+      }
+    },
+    [accessToken]
+  );
 
   const fetchUserProfile = useCallback(async () => {
     if (isLoggedIn && accessToken) {
@@ -302,7 +348,6 @@ const TeamList = ({ teams, eventId }) => {
     }
   }, [isLoggedIn, accessToken]);
 
-  
   useEffect(() => {
     fetchUserProfile();
     // Fetch detailed profiles for team members
@@ -315,7 +360,7 @@ const TeamList = ({ teams, eventId }) => {
     try {
       // Set loading state for this specific team
       setLoadingTeamId(teamId);
-      
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team`,
         {
@@ -333,14 +378,14 @@ const TeamList = ({ teams, eventId }) => {
         setTeamData((prevTeams) =>
           prevTeams.map((team) =>
             team.id === teamId
-              ? { 
-                  ...team, 
-                  users: [...team.users, userProfile]
+              ? {
+                  ...team,
+                  users: [...team.users, userProfile],
                 }
               : team
           )
         );
-        
+
         setSnackbar({
           open: true,
           message: "Successfully joined the team",
@@ -366,7 +411,7 @@ const TeamList = ({ teams, eventId }) => {
     try {
       // Set loading state for this specific team
       setLoadingTeamId(teamId);
-      
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team`,
         {
@@ -386,18 +431,23 @@ const TeamList = ({ teams, eventId }) => {
             if (team.id === teamId) {
               return {
                 ...team,
-                users: team.users.filter(user => {
-                  if (typeof user === 'string') {
-                    return user !== userProfile.user_id && user !== userProfile.id;
+                users: team.users.filter((user) => {
+                  if (typeof user === "string") {
+                    return (
+                      user !== userProfile.user_id && user !== userProfile.id
+                    );
                   }
-                  return user.id !== userProfile.id && user.user_id !== userProfile.user_id;
-                })
+                  return (
+                    user.id !== userProfile.id &&
+                    user.user_id !== userProfile.user_id
+                  );
+                }),
               };
             }
             return team;
           })
         );
-        
+
         setSnackbar({
           open: true,
           message: "Successfully left the team",
@@ -431,25 +481,25 @@ const TeamList = ({ teams, eventId }) => {
   }
 
   if (teamData.length === 0) {
-    return(
-    <Box mb={2}>
-        <Button 
-          variant="contained" 
-          color="primary" 
+    return (
+      <Box mb={2}>
+        <Button
+          variant="contained"
+          color="primary"
           href={`/hack/${eventId}/manageteam`}
         >
           Create a Team
         </Button>
       </Box>
-    )
+    );
   }
 
   return (
-    <div>      
+    <div>
       <Box mb={2}>
-        <Button 
-          variant="contained" 
-          color="primary" 
+        <Button
+          variant="contained"
+          color="primary"
           href={`/hack/${eventId}/manageteam`}
         >
           Create a Team
@@ -458,7 +508,7 @@ const TeamList = ({ teams, eventId }) => {
 
       {/* Non-blocking loading indicator while profiles are loading */}
       {profilesLoading && (
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <CircularProgress size={16} sx={{ mr: 1 }} />
           <Typography variant="body2" color="textSecondary">
             Updating team member profiles...
@@ -469,7 +519,7 @@ const TeamList = ({ teams, eventId }) => {
       <Grid container spacing={2}>
         {teamData.map((team) => (
           <Grid item xs={12} sm={6} md={4} key={team.id}>
-            <TeamCard 
+            <TeamCard
               team={team}
               userProfile={userProfile}
               isLoggedIn={isLoggedIn}
