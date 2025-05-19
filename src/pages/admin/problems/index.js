@@ -26,6 +26,11 @@ import {
   MenuItem,
   Grid,
   Divider,
+  useMediaQuery,
+  Card,
+  CardContent,
+  CardActions,
+  useTheme,
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
@@ -43,6 +48,10 @@ const AdminProblemsPage = () => {
   const [order, setOrder] = useState("asc");
   const [selectedNonprofitId, setSelectedNonprofitId] = useState("");
   const [nonprofitSearchTerm, setNonprofitSearchTerm] = useState("");
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
 
   const org = userClass?.getOrgByName("Opportunity Hack Org");
   const isAdmin = org?.hasPermission("volunteer.admin");
@@ -376,8 +385,95 @@ const AdminProblemsPage = () => {
         </Box>
 
         {loading ? (
-          <CircularProgress />
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : isMobile ? (
+          // Mobile card view
+          <Box sx={{ mt: 2 }}>
+            {filteredAndSortedProblems.length === 0 ? (
+              <Typography variant="body1" sx={{ textAlign: 'center', py: 4 }} color="text.secondary">
+                No problem statements found.
+              </Typography>
+            ) : (
+              filteredAndSortedProblems.map((problem) => (
+                <Card key={problem.id} sx={{ mb: 2, overflow: 'visible' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                      <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold', flex: 1 }}>
+                        {problem.title}
+                      </Typography>
+                      <Chip
+                        label={problem.status}
+                        color={
+                          problem.status === "production"
+                            ? "success"
+                            : problem.status === "active"
+                            ? "primary"
+                            : "default"
+                        }
+                        size="small"
+                        sx={{ ml: 1 }}
+                      />
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      <Chip size="small" label={`Rank: ${problem.rank || 'N/A'}`} variant="outlined" />
+                      <Chip size="small" label={`Year: ${problem.first_thought_of || 'N/A'}`} variant="outlined" />
+                    </Box>
+                    
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                      Nonprofit:
+                    </Typography>
+                    
+                    {problem.nonprofit_id ? (
+                      <Chip
+                        icon={<LinkIcon />}
+                        label={nonprofits.find(np => np.id === problem.nonprofit_id)?.name || problem.nonprofit_id}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    ) : (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {nonprofitProblemStatementsMap[problem.id]?.length > 0 ? (
+                          <>
+                            {nonprofitProblemStatementsMap[problem.id].map((nonprofit) => (
+                              <Chip
+                                key={nonprofit.id}
+                                icon={<LinkIcon />}
+                                label={nonprofit.name}
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem', height: '24px' }}
+                              />
+                            ))}
+                          </>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            Not linked
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+                    <Button 
+                      size="small" 
+                      startIcon={<EditIcon />} 
+                      onClick={() => handleEditProblem(problem)}
+                      color="primary"
+                    >
+                      Edit
+                    </Button>
+                  </CardActions>
+                </Card>
+              ))
+            )}
+          </Box>
         ) : (
+          // Desktop table view
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -400,24 +496,28 @@ const AdminProblemsPage = () => {
                       Status
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === "rank"}
-                      direction={orderBy === "rank" ? order : "asc"}
-                      onClick={() => handleSort("rank")}
-                    >
-                      Rank
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === "first_thought_of"}
-                      direction={orderBy === "first_thought_of" ? order : "asc"}
-                      onClick={() => handleSort("first_thought_of")}
-                    >
-                      First Thought Of
-                    </TableSortLabel>
-                  </TableCell>
+                  {!isTablet && (
+                    <TableCell>
+                      <TableSortLabel
+                        active={orderBy === "rank"}
+                        direction={orderBy === "rank" ? order : "asc"}
+                        onClick={() => handleSort("rank")}
+                      >
+                        Rank
+                      </TableSortLabel>
+                    </TableCell>
+                  )}
+                  {!isTablet && (
+                    <TableCell>
+                      <TableSortLabel
+                        active={orderBy === "first_thought_of"}
+                        direction={orderBy === "first_thought_of" ? order : "asc"}
+                        onClick={() => handleSort("first_thought_of")}
+                      >
+                        First Thought Of
+                      </TableSortLabel>
+                    </TableCell>
+                  )}
                   <TableCell>
                     <TableSortLabel
                       active={orderBy === "nonprofit_id"}
@@ -431,70 +531,81 @@ const AdminProblemsPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredAndSortedProblems.map((problem) => (
-                  <TableRow key={problem.id}>
-                    <TableCell>{problem.title}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={problem.status}
-                        color={
-                          problem.status === "production"
-                            ? "success"
-                            : problem.status === "active"
-                            ? "primary"
-                            : "default"
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>{problem.rank}</TableCell>
-                    <TableCell>{problem.first_thought_of}</TableCell>
-                    <TableCell>
-                      {problem.nonprofit_id ? (
-                        <Chip
-                          icon={<LinkIcon />}
-                          label={nonprofits.find(np => np.id === problem.nonprofit_id)?.name || problem.nonprofit_id}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                          sx={{ mr: 0.5 }}
-                        />
-                      ) : (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {nonprofitProblemStatementsMap[problem.id]?.length > 0 ? (
-                            <>
-                              {nonprofitProblemStatementsMap[problem.id].map((nonprofit, i) => (
-                                <Chip
-                                  key={nonprofit.id}
-                                  icon={<LinkIcon />}
-                                  label={nonprofit.name}
-                                  size="small"
-                                  color="success"
-                                  variant="outlined"
-                                  sx={{ 
-                                    fontSize: '0.7rem', 
-                                    height: '24px',
-                                    '& .MuiChip-icon': { fontSize: '0.7rem' },
-                                    mb: 0.5 
-                                  }}
-                                  title={`This problem statement is linked to ${nonprofit.name}`}
-                                />
-                              ))}
-                            </>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              Not linked
-                            </Typography>
-                          )}
-                        </Box>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleEditProblem(problem)}>
-                        <EditIcon />
-                      </IconButton>
+                {filteredAndSortedProblems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={isTablet ? 4 : 6} align="center" sx={{ py: 3 }}>
+                      <Typography variant="body1" color="text.secondary">
+                        No problem statements found.
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredAndSortedProblems.map((problem) => (
+                    <TableRow key={problem.id}>
+                      <TableCell>{problem.title}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={problem.status}
+                          color={
+                            problem.status === "production"
+                              ? "success"
+                              : problem.status === "active"
+                              ? "primary"
+                              : "default"
+                          }
+                          size="small"
+                        />
+                      </TableCell>
+                      {!isTablet && (<TableCell>{problem.rank}</TableCell>)}
+                      {!isTablet && (<TableCell>{problem.first_thought_of}</TableCell>)}
+                      <TableCell>
+                        {problem.nonprofit_id ? (
+                          <Chip
+                            icon={<LinkIcon />}
+                            label={nonprofits.find(np => np.id === problem.nonprofit_id)?.name || problem.nonprofit_id}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            sx={{ mr: 0.5 }}
+                          />
+                        ) : (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {nonprofitProblemStatementsMap[problem.id]?.length > 0 ? (
+                              <>
+                                {nonprofitProblemStatementsMap[problem.id].map((nonprofit, i) => (
+                                  <Chip
+                                    key={nonprofit.id}
+                                    icon={<LinkIcon />}
+                                    label={nonprofit.name}
+                                    size="small"
+                                    color="success"
+                                    variant="outlined"
+                                    sx={{ 
+                                      fontSize: '0.7rem', 
+                                      height: '24px',
+                                      '& .MuiChip-icon': { fontSize: '0.7rem' },
+                                      mb: 0.5 
+                                    }}
+                                    title={`This problem statement is linked to ${nonprofit.name}`}
+                                  />
+                                ))}
+                              </>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                Not linked
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => handleEditProblem(problem)}>
+                          <EditIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
