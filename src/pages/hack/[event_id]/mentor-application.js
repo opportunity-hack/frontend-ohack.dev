@@ -37,6 +37,10 @@ import InfoIcon from '@mui/icons-material/Info';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
 
 const MentorApplicationPage = withRequiredAuthInfo(() => {
   const router = useRouter();
@@ -1094,576 +1098,188 @@ const MentorApplicationPage = withRequiredAuthInfo(() => {
     </Box>
   );
   
-  // Render availability form
+  // --- Availability Step: Date & Slot Selection Refactor ---
+  // New: State for expanded date in accordion
+  const [expandedDate, setExpandedDate] = useState(null);
+
+  const handleAccordionChange = (date) => (event, isExpanded) => {
+    setExpandedDate(isExpanded ? date : null);
+  };
+
+  // Render availability form (replace the old date/slot selection section)
   const renderAvailabilityForm = () => (
     <Box sx={{ mb: 4 }}>
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Availability & Location
+        When can you help mentor? (Select all that apply)
       </Typography>
-      
-      <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <Select
-            name="inPerson"
-            value={formData.inPerson}
-            onChange={handleChange}
-            displayEmpty
-          >
-            <MenuItem value="" disabled>
-              <em>Joining us in-person at ASU Tempe?</em>
-            </MenuItem>
-            <MenuItem value="Yes!">Yes!</MenuItem>
-            <MenuItem value="No, I'll be virtual">No, I'll be virtual</MenuItem>
-          </Select>
-          <FormHelperText>Let us know if you'll be joining in person or virtually</FormHelperText>
-        </FormControl>
-                
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            When can you help mentor? (Select all that apply)
-          </Typography>
-          <FormHelperText sx={{ mb: 2 }}>
-            Mentors typically help in 3-hour blocks. Select the times that work for you!
-          </FormHelperText>
-          
-          {availabilityOptions.length > 0 ? (
-            <>
-              {/* Controls for large date ranges */}
-              {Object.keys(availabilityByDate).length > 10 && (
-                <Box sx={{ mb: 4 }}>
-                  {/* View mode toggle and quick filters */}
-                  <Box sx={{ 
-                    display: 'flex',
-                    flexDirection: { xs: 'column', sm: 'row' },
-                    justifyContent: 'space-between',
-                    alignItems: { xs: 'flex-start', sm: 'center' },
-                    mb: 2,
-                    gap: 2,
-                    backgroundColor: 'grey.100',
-                    p: 2,
-                    borderRadius: 2
-                  }}>
-                    <Box>
-                      <Button 
-                        variant="contained" 
-                        color={viewMode === "month" ? "primary" : "inherit"}
-                        onClick={() => setViewMode("month")}
-                        size="small"
-                        sx={{ mr: 1 }}
-                      >
-                        Month View
-                      </Button>
-                      <Button 
-                        variant="contained"
-                        color={viewMode === "date" ? "primary" : "inherit"}
-                        onClick={() => setViewMode("date")}
-                        size="small"
-                      >
-                        Date View
-                      </Button>
-                    </Box>
-                    
-                    <Box>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Quick Filters:
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        <Button 
-                          variant="outlined" 
-                          size="small" 
-                          onClick={() => applyQuickFilter('weekdays')}
-                        >
-                          Weekdays
-                        </Button>
-                        <Button 
-                          variant="outlined" 
-                          size="small" 
-                          onClick={() => applyQuickFilter('weekends')}
-                        >
-                          Weekends
-                        </Button>
-                        <Button 
-                          variant="outlined" 
-                          size="small" 
-                          onClick={() => applyQuickFilter('all')}
-                        >
-                          All Dates
-                        </Button>
-                        <Button 
-                          variant="outlined" 
-                          size="small" 
-                          onClick={() => applyQuickFilter('none')}
-                        >
-                          Clear All
-                        </Button>
-                      </Box>
-                    </Box>
-                  </Box>
-                  
-                  {/* Search filter for dates */}
-                  {viewMode === "date" && (
-                    <TextField
-                      label="Filter dates"
-                      variant="outlined"
-                      fullWidth
-                      value={dateFilter}
-                      onChange={handleDateFilterChange}
-                      placeholder="Type to filter dates (e.g., 'Monday' or 'Jan')"
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                  
-                  {/* Month selection view */}
-                  {viewMode === "month" && (
-                    <Box sx={{ mb: 4 }}>
-                      <Typography variant="subtitle2" gutterBottom color="primary">
-                        Step 1: Select months
-                      </Typography>
-                      <Box sx={{ 
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 1,
-                        mb: 3
-                      }}>
-                        {Object.keys(availabilityByMonth).map(month => (
-                          <Paper
-                            key={month}
-                            elevation={selectedMonths.includes(month) ? 8 : 1}
-                            sx={{
-                              p: 2,
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              bgcolor: selectedMonths.includes(month) ? 'primary.light' : 'background.paper',
-                              color: selectedMonths.includes(month) ? 'white' : 'text.primary',
-                              borderRadius: 2,
-                              minWidth: 120,
-                              '&:hover': {
-                                bgcolor: selectedMonths.includes(month) ? 'primary.main' : 'action.hover',
-                                transform: 'translateY(-4px)',
-                                boxShadow: 6
-                              }
-                            }}
-                            onClick={() => handleMonthToggle(month)}
-                          >
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              <Typography variant="h6" sx={{ mb: 1 }}>
-                                {month}
-                              </Typography>
-                              <Typography variant="body2">
-                                {Object.keys(availabilityByMonth[month] || {}).length} days
-                              </Typography>
-                              
-                              {selectedMonths.includes(month) && (
-                                <Chip 
-                                  label="Selected" 
-                                  color="success" 
-                                  size="small" 
-                                  sx={{ mt: 1 }}
-                                />
-                              )}
-                            </Box>
-                          </Paper>
-                        ))}
-                      </Box>
-                      
-                      {selectedMonths.length > 0 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                          <Typography variant="subtitle2" color="primary">
-                            Step 2: Select dates within these months
-                          </Typography>
-                          <Button 
-                            variant="outlined"
-                            onClick={() => setViewMode("date")}
-                          >
-                            Show Selected Dates
-                          </Button>
-                        </Box>
-                      )}
-                      
-                      {selectedMonths.length === 0 && (
-                        <Alert severity="info" sx={{ mt: 2 }}>
-                          Please select at least one month to continue.
-                        </Alert>
-                      )}
-                      
-                      {/* Month content section */}
-                      <Box>
-                        {selectedMonths.map(month => (
-                          <Box key={month} sx={{ mb: 4 }}>
-                            <Box sx={{ 
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              mb: 2,
-                              backgroundColor: 'primary.light',
-                              color: 'white',
-                              p: 2,
-                              borderRadius: 2
-                            }}>
-                              <Typography variant="h6">{month}</Typography>
-                              <Button 
-                                variant="contained" 
-                                size="small"
-                                onClick={() => handleSelectAllSlotsForMonth(month)}
-                              >
-                                Select All Days & Times
-                              </Button>
-                            </Box>
-                            
-                            <Box sx={{ 
-                              display: 'grid', 
-                              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-                              gap: 2 
-                            }}>
-                              {Object.keys(availabilityByMonth[month] || {}).map(date => (
-                                <Paper
-                                  key={date}
-                                  elevation={selectedDates.includes(date) ? 8 : 1}
-                                  sx={{
-                                    p: 2,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    bgcolor: selectedDates.includes(date) ? 'secondary.light' : 'background.paper',
-                                    color: selectedDates.includes(date) ? 'white' : 'text.primary',
-                                    borderRadius: 2,
-                                    '&:hover': {
-                                      bgcolor: selectedDates.includes(date) ? 'secondary.main' : 'action.hover',
-                                      transform: 'translateY(-4px)',
-                                      boxShadow: 6
-                                    }
-                                  }}
-                                  onClick={() => handleDateToggle(date)}
-                                >
-                                  <Box sx={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center' 
-                                  }}>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                                      {date}
-                                    </Typography>
-                                    
-                                    {selectedDates.includes(date) && (
-                                      <Chip 
-                                        label="Selected" 
-                                        color="success" 
-                                        size="small"
-                                      />
-                                    )}
-                                  </Box>
-                                </Paper>
-                              ))}
-                            </Box>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Box>
-                  )}
-                  
-                  {/* Date selection view */}
-                  {viewMode === "date" && (
-                    <Box sx={{ mb: 4 }}>
-                      <Typography variant="subtitle2" gutterBottom color="primary">
-                        Select which dates you're available
-                      </Typography>
-                      <Box sx={{ 
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-                        gap: 1,
-                        mb: 2
-                      }}>
-                        {getFilteredDates().map(date => (
-                          <Chip
-                            key={date}
-                            label={date}
-                            clickable
-                            color={selectedDates.includes(date) ? "primary" : "default"}
-                            onClick={() => handleDateToggle(date)}
-                            sx={{ 
-                              fontWeight: selectedDates.includes(date) ? 'bold' : 'normal',
-                              py: 2,
-                              '&:hover': {
-                                backgroundColor: selectedDates.includes(date) ? 'primary.main' : 'action.hover'
-                              }
-                            }}
-                          />
-                        ))}
-                      </Box>
-                      
-                      {selectedDates.length > 0 && (
-                        <Typography variant="subtitle2" gutterBottom color="primary">
-                          Select specific time slots for your chosen dates
-                        </Typography>
-                      )}
-                      
-                      {selectedDates.length === 0 && (
-                        <Alert severity="info" sx={{ mt: 2 }}>
-                          Please select at least one date to see available time slots.
-                        </Alert>
-                      )}
-                    </Box>
-                  )}
-                </Box>
-              )}
-              
-              {/* Time slots section - If less than 10 days, show all. Otherwise, filter by selected dates */}
-              {Object.keys(availabilityByDate).length <= 10 || selectedDates.length > 0 ? (
-                <Box>
-                  {Object.keys(availabilityByDate).length <= 10 ? (
-                    // Simple view for small number of time slots
-                    <Box sx={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-                      gap: 2 
-                    }}>
-                      {availabilityOptions.map((slot) => (
-                        <Paper
-                          key={slot.id}
-                          elevation={formData.availableDays.includes(slot.id) ? 8 : 1}
-                          sx={{
-                            p: 2,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            bgcolor: formData.availableDays.includes(slot.id) ? 'primary.light' : 'background.paper',
-                            color: formData.availableDays.includes(slot.id) ? 'white' : 'text.primary',
-                            borderRadius: 2,
-                            '&:hover': {
-                              bgcolor: formData.availableDays.includes(slot.id) ? 'primary.main' : 'action.hover',
-                              transform: 'translateY(-4px)',
-                              boxShadow: 6
-                            }
-                          }}
-                          onClick={() => {
-                            const newAvailability = formData.availableDays.includes(slot.id)
-                              ? formData.availableDays.filter(id => id !== slot.id)
-                              : [...formData.availableDays, slot.id];
-                            
-                            setFormData(prev => ({
-                              ...prev,
-                              availableDays: newAvailability
-                            }));
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                            <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
-                              {slot.icon} {slot.date}
-                            </Typography>
-                            <Typography variant="body2" sx={{ mb: 1 }}>
-                              {slot.label} ({slot.time})
-                            </Typography>
-                            <Typography variant="caption" sx={{ mt: 'auto', fontStyle: 'italic' }}>
-                              {slot.energy}
-                            </Typography>
-                            
-                            {formData.availableDays.includes(slot.id) && (
-                              <Chip 
-                                label="Selected!" 
-                                color="success" 
-                                size="small" 
-                                sx={{ alignSelf: 'flex-start', mt: 1 }}
-                              />
-                            )}
-                          </Box>
-                        </Paper>
-                      ))}
-                    </Box>
-                  ) : (
-                    // Organized time slots by date when viewing dates
-                    <Box>
-                      {selectedDates.map(date => (
-                        <Box key={date} sx={{ mb: 4 }}>
-                          <Box sx={{ 
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            mb: 2,
-                            backgroundColor: 'grey.100',
-                            p: 2,
-                            borderRadius: 2
-                          }}>
-                            <Typography variant="h6">{date}</Typography>
-                            <Button 
-                              variant="outlined" 
-                              size="small"
-                              onClick={() => handleSelectAllSlotsForDate(date)}
-                            >
-                              Select All Slots
-                            </Button>
-                          </Box>
-                          
-                          <Box sx={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-                            gap: 2 
-                          }}>
-                            {availabilityByDate[date]?.map((slot) => (
-                              <Paper
-                                key={slot.id}
-                                elevation={formData.availableDays.includes(slot.id) ? 8 : 1}
-                                sx={{
-                                  p: 2,
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  bgcolor: formData.availableDays.includes(slot.id) ? 'primary.light' : 'background.paper',
-                                  color: formData.availableDays.includes(slot.id) ? 'white' : 'text.primary',
-                                  borderRadius: 2,
-                                  '&:hover': {
-                                    bgcolor: formData.availableDays.includes(slot.id) ? 'primary.main' : 'action.hover',
-                                    transform: 'translateY(-4px)',
-                                    boxShadow: 6
-                                  }
-                                }}
-                                onClick={() => {
-                                  const newAvailability = formData.availableDays.includes(slot.id)
-                                    ? formData.availableDays.filter(id => id !== slot.id)
-                                    : [...formData.availableDays, slot.id];
-                                  
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    availableDays: newAvailability
-                                  }));
-                                }}
-                              >
-                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                                    {slot.icon} {slot.label}
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ mb: 1 }}>
-                                    {slot.time}
-                                  </Typography>
-                                  <Typography variant="caption" sx={{ mt: 'auto', fontStyle: 'italic' }}>
-                                    {slot.energy}
-                                  </Typography>
-                                  
-                                  {formData.availableDays.includes(slot.id) && (
-                                    <Chip 
-                                      label="Selected!" 
-                                      color="success" 
-                                      size="small" 
-                                      sx={{ alignSelf: 'flex-start', mt: 1 }}
-                                    />
-                                  )}
-                                </Box>
-                              </Paper>
-                            ))}
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
-                  )}
-                </Box>
-              ) : null}
-              
-              {/* Selected count summary */}
-              {formData.availableDays.length > 0 && (
-                <Box sx={{ 
-                  mt: 3, 
-                  p: 2, 
-                  bgcolor: 'success.light', 
-                  color: 'white',
-                  borderRadius: 2,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <Typography variant="subtitle1">
-                    You've selected {formData.availableDays.length} time slot{formData.availableDays.length !== 1 ? 's' : ''} 
-                    across {selectedDates.length} day{selectedDates.length !== 1 ? 's' : ''}!
-                  </Typography>
-                  <Button 
-                    variant="contained"
-                    color="warning"
-                    size="small"
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, availableDays: [] }));
-                      setSelectedDates([]);
+      <Typography variant="body2" sx={{ mb: 2 }}>
+        Select the dates you are available. For each date, pick the time slots you can mentor. For long hackathons, use the filter to quickly find your dates.
+      </Typography>
+
+      {/* Date filter/search */}
+      <TextField
+        label="Filter dates"
+        variant="outlined"
+        fullWidth
+        value={dateFilter}
+        onChange={handleDateFilterChange}
+        placeholder="Type to filter dates (e.g., 'Monday' or 'Jan')"
+        sx={{ mb: 2 }}
+      />
+
+      {/* Accordion for each date */}
+      {getFilteredDates().length === 0 ? (
+        <Alert severity="info">No dates match your filter.</Alert>
+      ) : (
+        <Box>
+          {getFilteredDates().map((date) => (
+            <Accordion
+              key={date}
+              expanded={expandedDate === date}
+              onChange={handleAccordionChange(date)}
+              sx={{ mb: 2 }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls={`panel-${date}-content`}
+                id={`panel-${date}-header`}
+                sx={{ bgcolor: selectedDates.includes(date) ? 'primary.light' : 'background.paper', color: selectedDates.includes(date) ? 'white' : 'text.primary' }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <Chip
+                    label={date}
+                    color={selectedDates.includes(date) ? 'primary' : 'default'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDateToggle(date);
                     }}
+                    sx={{ mr: 2 }}
+                  />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>{date}</Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectAllSlotsForDate(date);
+                    }}
+                    sx={{ ml: 2 }}
                   >
-                    Clear All
+                    Select All Slots
                   </Button>
                 </Box>
-              )}
-            </>
-          ) : (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Loading available time slots...
-            </Alert>
-          )}
-          
-          {formData.availableDays.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Your selected time slots:
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {formData.availableDays.map(slotId => {
-                  const slot = availabilityOptions.find(opt => opt.id === slotId);
-                  return (
-                    <Chip
-                      key={slotId}
-                      label={`${slot?.icon} ${slot?.date} ${slot?.label}`}
-                      onDelete={() => {
+              </AccordionSummary>
+              <AccordionDetails>
+                {/* Time slots for this date */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+                  {availabilityByDate[date]?.map((slot) => (
+                    <Paper
+                      key={slot.id}
+                      elevation={formData.availableDays.includes(slot.id) ? 8 : 1}
+                      sx={{
+                        p: 2,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        bgcolor: formData.availableDays.includes(slot.id) ? 'primary.light' : 'background.paper',
+                        color: formData.availableDays.includes(slot.id) ? 'white' : 'text.primary',
+                        borderRadius: 2,
+                        '&:hover': {
+                          bgcolor: formData.availableDays.includes(slot.id) ? 'primary.main' : 'action.hover',
+                          transform: 'translateY(-4px)',
+                          boxShadow: 6
+                        }
+                      }}
+                      onClick={() => {
+                        const newAvailability = formData.availableDays.includes(slot.id)
+                          ? formData.availableDays.filter(id => id !== slot.id)
+                          : [...formData.availableDays, slot.id];
                         setFormData(prev => ({
                           ...prev,
-                          availableDays: prev.availableDays.filter(id => id !== slotId)
+                          availableDays: newAvailability
                         }));
                       }}
-                      color="primary"
-                      sx={{ mb: 1 }}
-                    />
-                  );
-                })}
-              </Box>
-            </Box>
-          )}
-          
-          {formData.availableDays.length === 0 && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              Please select at least one time slot when you'll be available to mentor.
-            </Alert>
-          )}
+                    >
+                      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                          {slot.icon} {slot.label}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          {slot.time}
+                        </Typography>
+                        <Typography variant="caption" sx={{ mt: 'auto', fontStyle: 'italic' }}>
+                          {slot.energy}
+                        </Typography>
+                        {formData.availableDays.includes(slot.id) && (
+                          <Chip label="Selected!" color="success" size="small" sx={{ alignSelf: 'flex-start', mt: 1 }} />
+                        )}
+                      </Box>
+                    </Paper>
+                  ))}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          ))}
         </Box>
-        
-        <TextField
-          label="Which country are you in?"
-          name="country"
-          required
-          fullWidth
-          value={formData.country}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
-        
-        <TextField
-          label="Which state are you in?"
-          name="state"
-          required
-          fullWidth
-          value={formData.state}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
-        
-        <FormControl fullWidth sx={{ mb: 3 }}>
-          <Select
-            name="shirtSize"
-            value={formData.shirtSize}
-            onChange={handleChange}
-            displayEmpty
+      )}
+
+      {/* Selected slots summary (sticky on desktop, top on mobile) */}
+      <Box sx={{
+        position: isMobile ? 'static' : 'sticky',
+        top: isMobile ? undefined : 80,
+        zIndex: 10,
+        mt: 3,
+        p: 2,
+        bgcolor: 'success.light',
+        color: 'white',
+        borderRadius: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        minHeight: 56
+      }}>
+        <Typography variant="subtitle1">
+          You've selected {formData.availableDays.length} time slot{formData.availableDays.length !== 1 ? 's' : ''}
+          {selectedDates.length > 0 && ` across ${selectedDates.length} day${selectedDates.length !== 1 ? 's' : ''}`}!
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+          {formData.availableDays.map(slotId => {
+            const slot = availabilityOptions.find(opt => opt.id === slotId);
+            return (
+              <Chip
+                key={slotId}
+                label={`${slot?.icon} ${slot?.date} ${slot?.label}`}
+                onDelete={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    availableDays: prev.availableDays.filter(id => id !== slotId)
+                  }));
+                }}
+                color="primary"
+                sx={{ mb: 1 }}
+              />
+            );
+          })}
+        </Box>
+        {formData.availableDays.length > 0 && (
+          <Button
+            variant="contained"
+            color="warning"
+            size="small"
+            onClick={() => {
+              setFormData(prev => ({ ...prev, availableDays: [] }));
+              setSelectedDates([]);
+            }}
+            sx={{ mt: 2 }}
           >
-            <MenuItem value="" disabled>
-              <em>Shirt Size?</em>
-            </MenuItem>
-            <MenuItem value="S">S</MenuItem>
-            <MenuItem value="M">M</MenuItem>
-            <MenuItem value="L">L</MenuItem>
-            <MenuItem value="XL">XL</MenuItem>
-            <MenuItem value="XXL">XXL</MenuItem>
-            <MenuItem value="4XL">4XL</MenuItem>
-          </Select>
-          <FormHelperText>Optional - Select your t-shirt size if you'd like a hackathon shirt</FormHelperText>
-        </FormControl>
+            Clear All
+          </Button>
+        )}
       </Box>
+      {formData.availableDays.length === 0 && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Please select at least one time slot when you'll be available to mentor.
+        </Alert>
+      )}
     </Box>
   );
   
