@@ -59,7 +59,8 @@ import {
   FaUserShield,
   FaChevronDown,
   FaChevronUp,
-  FaExternalLinkAlt
+  FaExternalLinkAlt,
+  FaCheckCircle
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
@@ -105,6 +106,7 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
   // Dialog states
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
+  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false); // New state for approval dialog
   const [userSearchDialogOpen, setUserSearchDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogAction, setConfirmDialogAction] = useState(null);
@@ -312,10 +314,9 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
     setLoading(true);
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/team/${teamData.id}/message`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/admin/${teamData.id}/message`,
         {
-          message: messageText,
-          channel: teamData.slack_channel,
+          message: messageText,          
         },
         {
           headers: {
@@ -334,6 +335,53 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
     } catch (error) {
       console.error("Error sending message:", error);
       enqueueSnackbar("Failed to send message", { variant: "error" });
+    } finally {
+      setLoading(false);
+      loadTeamDetails(teamData.id); // Reload team details to reflect the message
+    }
+  };
+
+  // Handle team approval and nonprofit assignment
+  const handleApproveTeam = async () => {
+    if (!teamData || !teamData.id || !teamData.selected_nonprofit_id) {
+      enqueueSnackbar("Please select a nonprofit before approving the team", { variant: "error" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/approve`,
+        {
+          teamId: teamData.id,
+          nonprofitId: teamData.selected_nonprofit_id
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        enqueueSnackbar("Team approved successfully", { variant: "success" });
+        setApprovalDialogOpen(false);
+        
+        // Update team status to reflect approval
+        const updatedTeamData = {
+          ...teamData,
+          status: "NONPROFIT_SELECTED"
+        };
+        setTeamData(updatedTeamData);
+        
+        // Refresh the teams list
+        fetchTeams(selectedHackathon);
+      }
+    } catch (error) {
+      console.error("Error approving team:", error);
+      enqueueSnackbar(error.response?.data?.message || "Failed to approve team", { variant: "error" });
     } finally {
       setLoading(false);
     }
@@ -996,7 +1044,7 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
         />
         <Divider />
         <CardContent>
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
             <Typography variant="body2" gutterBottom>
               Send a message to #{teamData.slack_channel}
             </Typography>
@@ -1008,6 +1056,18 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
               disabled={!teamData.slack_channel}
             >
               Send Message
+            </Button>
+            
+            {/* Add Approve Team Button */}
+            <Button
+              startIcon={<FaCheckCircle />}
+              variant="contained"
+              color="success"
+              onClick={() => setApprovalDialogOpen(true)}
+              disabled={!teamData.selected_nonprofit_id}
+              sx={{ ml: 2 }}
+            >
+              Approve Team
             </Button>
           </Box>
 
@@ -1403,6 +1463,51 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
             startIcon={<FaPaperPlane />}
           >
             Send Message
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Approve Team Dialog */}
+      <Dialog
+        open={approvalDialogOpen}
+        onClose={() => setApprovalDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Approve Team Assignment</DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body1" gutterBottom>
+              You are about to approve team <strong>{teamData?.name}</strong> and assign them to:
+            </Typography>
+            
+            <Box sx={{ my: 2, p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+              <Typography variant="subtitle1" color="primary" fontWeight="bold">
+                {teamData?.selected_nonprofit_id ? getNonprofitName(teamData.selected_nonprofit_id) : "No nonprofit selected"}
+              </Typography>
+            </Box>
+            
+            <Typography variant="body2" color="text.secondary">
+              This will notify the team and update their status to "Nonprofit Selected".
+            </Typography>
+            
+            {!teamData?.selected_nonprofit_id && (
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                Please select a nonprofit before approving the team.
+              </Alert>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setApprovalDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleApproveTeam}
+            variant="contained"
+            color="success"
+            disabled={loading || !teamData?.selected_nonprofit_id}
+            startIcon={loading ? <CircularProgress size={16} /> : <FaCheckCircle />}
+          >
+            Confirm Approval
           </Button>
         </DialogActions>
       </Dialog>
