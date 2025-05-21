@@ -215,6 +215,8 @@ const MentorApplicationPage = withRequiredAuthInfo(() => {
   // Search/filter for dates
   const [dateFilter, setDateFilter] = useState("");
   const [viewMode, setViewMode] = useState("month"); // "month" or "date"
+  // New: State for expanded date in accordion (moved it up here to be with other hooks)
+  const [expandedDate, setExpandedDate] = useState(null);
 
   // fetch event data from the backend API and initialize reCAPTCHA
   useEffect(() => {
@@ -432,7 +434,6 @@ const MentorApplicationPage = withRequiredAuthInfo(() => {
 
     fetchEventData();
   }, [event_id, user, apiServerUrl, loadPreviousSubmission, loadFromLocalStorage, setFormData, initializeRecaptcha]);
-
   
   // Now define the custom implementation that uses handleMultiSelectChange
   const customHandleMultiSelectChange = (event, fieldName) => {
@@ -862,40 +863,13 @@ const MentorApplicationPage = withRequiredAuthInfo(() => {
   
   const imageUrl = eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
 
-  // If form submitted successfully, show success message
-  if (success) {
-    return (
-      <Container>
-        <Head>
-          <title>{pageTitle}</title>
-          <meta name="description" content={pageDescription} />
-          <link rel="canonical" href={canonicalUrl} />
-        </Head>
-        
-        <Box my={8} textAlign="center">
-          <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4, mt: 12 }}>
-            Application Submitted!
-          </Typography>
-          
-          <Alert severity="success" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
-            Thank you for applying to be a mentor at Opportunity Hack. We'll review your application and contact you soon.
-          </Alert>
-          
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push(`/hack/${event_id}`)}
-            sx={{ mt: 2 }}
-          >
-            Return to Hackathon Page
-          </Button>
-        </Box>
-      </Container>
-    );
-  }
-
-  // Define steps for stepper
+  // Define steps for stepper (moved up before the conditional content render)
   const steps = ['Basic Info', 'Skills & Experience', 'Availability', 'Finish'];
+  
+  // Accordion change handler (moved up from inside renderAvailabilityForm)
+  const handleAccordionChange = (date) => (event, isExpanded) => {
+    setExpandedDate(isExpanded ? date : null);
+  };
 
   // Render basic information form
   const renderBasicInfoForm = () => (
@@ -1099,13 +1073,6 @@ const MentorApplicationPage = withRequiredAuthInfo(() => {
   );
   
   // --- Availability Step: Date & Slot Selection Refactor ---
-  // New: State for expanded date in accordion
-  const [expandedDate, setExpandedDate] = useState(null);
-
-  const handleAccordionChange = (date) => (event, isExpanded) => {
-    setExpandedDate(isExpanded ? date : null);
-  };
-
   // Render availability form (replace the old date/slot selection section)
   const renderAvailabilityForm = () => (
     <Box sx={{ mb: 4 }}>
@@ -1351,285 +1318,321 @@ const MentorApplicationPage = withRequiredAuthInfo(() => {
     }
   };
 
-  return (
-    <Container>
-      <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="hackathon mentor, mentor application, tech for good, nonprofit hackathon, opportunity hack, mentorship, volunteer, tech mentoring"
+  // If form submitted successfully, show success message
+  const renderSuccessMessage = () => {
+    return (
+      <Container>
+        <Head>
+          <title>{pageTitle}</title>
+          <meta name="description" content={pageDescription} />
+          <link rel="canonical" href={canonicalUrl} />
+        </Head>
+        
+        <Box my={8} textAlign="center">
+          <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4, mt: 12 }}>
+            Application Submitted!
+          </Typography>
+          
+          <Alert severity="success" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
+            Thank you for applying to be a mentor at Opportunity Hack. We'll review your application and contact you soon.
+          </Alert>
+          
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => router.push(`/hack/${event_id}`)}
+            sx={{ mt: 2 }}
+          >
+            Return to Hackathon Page
+          </Button>
+        </Box>
+      </Container>
+    );
+  };
+
+  const renderApplicationForm = () => {
+    return (
+      <Container>
+        <Head>
+          <title>{pageTitle}</title>
+          <meta name="description" content={pageDescription} />
+          <meta
+            name="keywords"
+            content="hackathon mentor, mentor application, tech for good, nonprofit hackathon, opportunity hack, mentorship, volunteer, tech mentoring"
+          />
+          <link rel="canonical" href={canonicalUrl} />
+
+          {/* Open Graph tags */}
+          <meta property="og:title" content={pageTitle} />
+          <meta property="og:description" content={pageDescription} />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={canonicalUrl} />
+          <meta
+            property="og:image"
+            content={imageUrl}
+          />
+
+          {/* Twitter Card tags */}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={pageTitle} />
+          <meta name="twitter:description" content={pageDescription} />
+          <meta
+            name="twitter:image"
+            content={imageUrl}
+          />
+        </Head>
+
+        {/* Form persistence notification component */}
+        <FormPersistenceControls
+          onSave={saveToLocalStorage}
+          onRestore={loadFromLocalStorage}
+          onClear={clearSavedData}
+          notification={notification}
+          onCloseNotification={closeNotification}
         />
-        <link rel="canonical" href={canonicalUrl} />
 
-        {/* Open Graph tags */}
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta
-          property="og:image"
-          content={imageUrl}
-        />
+        <Box ref={formRef}>
+          <Typography
+            variant="h1"
+            component="h1"
+            sx={{ fontSize: "2.5rem", mb: 2, mt: 0 }}
+          >
+            Mentor Application
+          </Typography>
 
-        {/* Twitter Card tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta
-          name="twitter:image"
-          content={imageUrl}
-        />
-      </Head>
+          {isLoading ? (
+            <Box display="flex" justifyContent="center" my={4}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box>
+              {/* Header section with responsive layout */}
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: { xs: 'flex-start', md: 'flex-start' },
+                gap: 2,
+                mb: 3
+              }}>
+                {/* Event info */}
+                <Box sx={{ flex: 1 }}>
+                  {eventData && (
+                    <>
+                      <Typography
+                        variant="h2"
+                        component="h2"
+                        sx={{ fontSize: "1.75rem", mb: 1 }}
+                      >
+                        {eventData.name}
+                      </Typography>
+                      
+                      <Typography 
+                        variant="h3" 
+                        component="h3" 
+                        sx={{ 
+                          fontSize: "1.25rem", 
+                          mb: 1,
+                          color: "text.secondary" 
+                        }}
+                      >
+                        {eventData.location}
+                      </Typography>
+                      
+                      <Typography 
+                        variant="subtitle1" 
+                        sx={{ 
+                          mb: 1,
+                          color: "text.secondary",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1
+                        }}
+                      >
+                        <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+                          📆 {eventData.formattedStartDate}
+                        </Box>
+                        {eventData.formattedStartDate !== eventData.formattedEndDate && (
+                          <>
+                            <Box component="span" sx={{ mx: 0.5 }}>to</Box>
+                            <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+                              {eventData.formattedEndDate}
+                            </Box>
+                          </>
+                        )}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
 
-      {/* Form persistence notification component */}
-      <FormPersistenceControls
-        onSave={saveToLocalStorage}
-        onRestore={loadFromLocalStorage}
-        onClear={clearSavedData}
-        notification={notification}
-        onCloseNotification={closeNotification}
-      />
+                {/* Social proof image */}
+                <Box 
+                  sx={{ 
+                    width: { xs: '100%', sm: '180px', md: '220px' },
+                    height: { xs: '140px', sm: '120px', md: '150px' },
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    boxShadow: 2,
+                    flexShrink: 0,
+                    alignSelf: { xs: 'center', md: 'flex-start' },
+                    maxWidth: '100%',
+                    mt: { xs: 0, md: 1 }
+                  }}
+                >
+                  <img 
+                    src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp" 
+                    alt="Mentors guiding teams at Opportunity Hack" 
+                    style={{ 
+                      width: '100%',
+                      height: '100%',
+                      display: 'block',
+                      objectFit: 'cover'
+                    }}
+                  />
+                </Box>
+              </Box>
 
-      <Box ref={formRef}>
-        <Typography
-          variant="h1"
-          component="h1"
-          sx={{ fontSize: "2.5rem", mb: 2, mt: 0 }}
-        >
-          Mentor Application
-        </Typography>
+              {/* Add ApplicationNav component */}
+              <ApplicationNav eventId={event_id} currentType="mentor" />
 
-        {isLoading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box>
-            {/* Header section with responsive layout */}
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', md: 'row' },
-              alignItems: { xs: 'flex-start', md: 'flex-start' },
-              gap: 2,
-              mb: 3
-            }}>
-              {/* Event info */}
-              <Box sx={{ flex: 1 }}>
-                {eventData && (
+              <Box sx={{ mb: 4 }}>
+                {eventData && eventData.isEventPast ? (
+                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                    <Alert severity="warning" sx={{ mb: 3 }}>
+                      <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                        This event has already ended
+                      </Typography>
+                      <Typography variant="body1">
+                        Applications are no longer being accepted for mentors as this hackathon has already concluded.
+                        Please check our upcoming events for future mentoring opportunities.
+                      </Typography>
+                    </Alert>
+                    <Box textAlign="center">
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => router.push('/hack')}
+                        sx={{ mt: 2 }}
+                      >
+                        View Upcoming Events
+                      </Button>
+                    </Box>
+                  </Paper>
+                ) : (
                   <>
-                    <Typography
-                      variant="h2"
-                      component="h2"
-                      sx={{ fontSize: "1.75rem", mb: 1 }}
-                    >
-                      {eventData.name}
-                    </Typography>
-                    
-                    <Typography 
-                      variant="h3" 
-                      component="h3" 
+                    <Stepper
+                      activeStep={activeStep}
+                      alternativeLabel={!isMobile}
+                      orientation={isMobile ? "horizontal" : "horizontal"}
                       sx={{ 
-                        fontSize: "1.25rem", 
-                        mb: 1,
-                        color: "text.secondary" 
+                        mb: 4,
+                        ...(isMobile && {
+                          '& .MuiStepLabel-root': {
+                            padding: '0 4px', // Reduce padding on mobile
+                          },
+                          '& .MuiStepLabel-labelContainer': {
+                            width: 'auto', // Let the label container be as small as possible
+                          },
+                          '& .MuiStepLabel-label': {
+                            fontSize: '0.7rem', // Smaller text on mobile
+                            whiteSpace: 'nowrap', // Prevent text wrapping
+                          },
+                          '& .MuiSvgIcon-root': {
+                            width: 20, // Smaller icons
+                            height: 20,
+                          },
+                          overflowX: 'auto', // Allow horizontal scrolling if needed
+                          '&::-webkit-scrollbar': {
+                            display: 'none' // Hide scrollbar on webkit browsers
+                          },
+                          scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                        })
                       }}
                     >
-                      {eventData.location}
-                    </Typography>
-                    
-                    <Typography 
-                      variant="subtitle1" 
-                      sx={{ 
-                        mb: 1,
-                        color: "text.secondary",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1
-                      }}
-                    >
-                      <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-                        📆 {eventData.formattedStartDate}
-                      </Box>
-                      {eventData.formattedStartDate !== eventData.formattedEndDate && (
-                        <>
-                          <Box component="span" sx={{ mx: 0.5 }}>to</Box>
-                          <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-                            {eventData.formattedEndDate}
-                          </Box>
-                        </>
+                      {steps.map((label) => (
+                        <Step key={label}>
+                          <StepLabel>{isMobile ? (
+                            // On mobile, show abbreviated labels or just the step number
+                            activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
+                          ) : (
+                            // On desktop, show full labels
+                            label
+                          )}</StepLabel>
+                        </Step>
+                      ))}
+                    </Stepper>
+
+                    <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                      <Typography variant="body1" paragraph>
+                        Thank you for your interest in mentoring at Opportunity Hack! Mentors play a crucial role in guiding teams
+                        and helping them create impactful solutions for nonprofits.
+                      </Typography>
+                      
+                      {eventData && eventData.description && (
+                        <Typography variant="body1" sx={{ mb: 3 }}>
+                          <strong>About this event:</strong> {eventData.description}
+                        </Typography>
                       )}
-                    </Typography>
+                      
+                      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
+                        <Typography variant="body1" paragraph>
+                          <strong>Want to learn more about mentoring at Opportunity Hack?</strong> Check out our{' '}
+                          <Link 
+                            href="/about/mentors" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            sx={{ fontWeight: 'bold' }}
+                          >
+                            Mentors Guide
+                          </Link>{' '}
+                          to understand the role, expectations, and impact you'll make.
+                        </Typography>
+                      </Alert>
+                      
+                      {(error || recaptchaError) && (
+                        <Alert severity="error" sx={{ mb: 4 }}>
+                          {error || recaptchaError}
+                        </Alert>
+                      )}
+
+                      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                        {getStepContent(activeStep)}
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+                          <Button
+                            disabled={activeStep === 0 || submitting}
+                            onClick={handleBack}
+                            variant="outlined"
+                          >
+                            Back
+                          </Button>
+                          
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleNext}
+                            disabled={submitting || recaptchaLoading}
+                          >
+                            {activeStep === steps.length - 1 ? (
+                              submitting || recaptchaLoading ? <CircularProgress size={24} /> : 'Submit Application'
+                            ) : (
+                              'Next'
+                            )}
+                          </Button>
+                        </Box>
+                      </form>
+                    </Paper>
                   </>
                 )}
               </Box>
-
-              {/* Social proof image */}
-              <Box 
-                sx={{ 
-                  width: { xs: '100%', sm: '180px', md: '220px' },
-                  height: { xs: '140px', sm: '120px', md: '150px' },
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  boxShadow: 2,
-                  flexShrink: 0,
-                  alignSelf: { xs: 'center', md: 'flex-start' },
-                  maxWidth: '100%',
-                  mt: { xs: 0, md: 1 }
-                }}
-              >
-                <img 
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp" 
-                  alt="Mentors guiding teams at Opportunity Hack" 
-                  style={{ 
-                    width: '100%',
-                    height: '100%',
-                    display: 'block',
-                    objectFit: 'cover'
-                  }}
-                />
-              </Box>
             </Box>
+          )}
+        </Box>
+      </Container>
+    );
+  };
 
-            {/* Add ApplicationNav component */}
-            <ApplicationNav eventId={event_id} currentType="mentor" />
-
-            <Box sx={{ mb: 4 }}>
-              {eventData && eventData.isEventPast ? (
-                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                  <Alert severity="warning" sx={{ mb: 3 }}>
-                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
-                      This event has already ended
-                    </Typography>
-                    <Typography variant="body1">
-                      Applications are no longer being accepted for mentors as this hackathon has already concluded.
-                      Please check our upcoming events for future mentoring opportunities.
-                    </Typography>
-                  </Alert>
-                  <Box textAlign="center">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => router.push('/hack')}
-                      sx={{ mt: 2 }}
-                    >
-                      View Upcoming Events
-                    </Button>
-                  </Box>
-                </Paper>
-              ) : (
-                <>
-                  <Stepper
-                    activeStep={activeStep}
-                    alternativeLabel={!isMobile}
-                    orientation={isMobile ? "horizontal" : "horizontal"}
-                    sx={{ 
-                      mb: 4,
-                      ...(isMobile && {
-                        '& .MuiStepLabel-root': {
-                          padding: '0 4px', // Reduce padding on mobile
-                        },
-                        '& .MuiStepLabel-labelContainer': {
-                          width: 'auto', // Let the label container be as small as possible
-                        },
-                        '& .MuiStepLabel-label': {
-                          fontSize: '0.7rem', // Smaller text on mobile
-                          whiteSpace: 'nowrap', // Prevent text wrapping
-                        },
-                        '& .MuiSvgIcon-root': {
-                          width: 20, // Smaller icons
-                          height: 20,
-                        },
-                        overflowX: 'auto', // Allow horizontal scrolling if needed
-                        '&::-webkit-scrollbar': {
-                          display: 'none' // Hide scrollbar on webkit browsers
-                        },
-                        scrollbarWidth: 'none', // Hide scrollbar on Firefox
-                      })
-                    }}
-                  >
-                    {steps.map((label) => (
-                      <Step key={label}>
-                        <StepLabel>{isMobile ? (
-                          // On mobile, show abbreviated labels or just the step number
-                          activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
-                        ) : (
-                          // On desktop, show full labels
-                          label
-                        )}</StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-
-                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                    <Typography variant="body1" paragraph>
-                      Thank you for your interest in mentoring at Opportunity Hack! Mentors play a crucial role in guiding teams
-                      and helping them create impactful solutions for nonprofits.
-                    </Typography>
-                    
-                    {eventData && eventData.description && (
-                      <Typography variant="body1" sx={{ mb: 3 }}>
-                        <strong>About this event:</strong> {eventData.description}
-                      </Typography>
-                    )}
-                    
-                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                      <Typography variant="body1" paragraph>
-                        <strong>Want to learn more about mentoring at Opportunity Hack?</strong> Check out our{' '}
-                        <Link 
-                          href="/about/mentors" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          sx={{ fontWeight: 'bold' }}
-                        >
-                          Mentors Guide
-                        </Link>{' '}
-                        to understand the role, expectations, and impact you'll make.
-                      </Typography>
-                    </Alert>
-                    
-                    {(error || recaptchaError) && (
-                      <Alert severity="error" sx={{ mb: 4 }}>
-                        {error || recaptchaError}
-                      </Alert>
-                    )}
-
-                    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-                      {getStepContent(activeStep)}
-                      
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-                        <Button
-                          disabled={activeStep === 0 || submitting}
-                          onClick={handleBack}
-                          variant="outlined"
-                        >
-                          Back
-                        </Button>
-                        
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={handleNext}
-                          disabled={submitting || recaptchaLoading}
-                        >
-                          {activeStep === steps.length - 1 ? (
-                            submitting || recaptchaLoading ? <CircularProgress size={24} /> : 'Submit Application'
-                          ) : (
-                            'Next'
-                          )}
-                        </Button>
-                      </Box>
-                    </form>
-                  </Paper>
-                </>
-              )}
-            </Box>
-          </Box>
-        )}
-      </Box>
-    </Container>
-  );
-
+  // Main return - after all hooks have been called
+  return success ? renderSuccessMessage() : renderApplicationForm();
 });
 
 export default MentorApplicationPage;
