@@ -30,6 +30,10 @@ import {
   useTheme,
   useMediaQuery
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Head from 'next/head';
 import { useEnv } from '../../../context/env.context';
@@ -66,6 +70,20 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
   // Photo upload state
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  
+  // Available time slots (will be populated from event data)
+  const [availabilityOptions, setAvailabilityOptions] = useState([]);
+  // State for organizing time slots by date and month
+  const [availabilityByDate, setAvailabilityByDate] = useState({});
+  const [availabilityByMonth, setAvailabilityByMonth] = useState({});
+  // State for selected dates and months
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [selectedMonths, setSelectedMonths] = useState([]);
+  // Search/filter for dates
+  const [dateFilter, setDateFilter] = useState("");
+  const [viewMode, setViewMode] = useState("month"); // "month" or "date"
+  // State for expanded date in accordion
+  const [expandedDate, setExpandedDate] = useState(null);
   
   // Store refs for data loading
   const initialLoadRef = useRef(false);
@@ -122,7 +140,6 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
     country: '',
     state: '',
     inPerson: '',
-    availability: '',
     experienceLevel: '',
     volunteerType: [],
     otherVolunteerType: '',
@@ -136,7 +153,8 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
     additionalInfo: '',
     event_id: event_id || '',
     isSelected: false,
-    photoUrl: '' // Add field for photo URL
+    photoUrl: '', // Add field for photo URL
+    availableDays: [] // Add field for available days/time slots
   };
   
   // Use form persistence hook
@@ -173,56 +191,17 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
   ];
 
   // Volunteer type options
-  const volunteerTypeOptions = [    
-    'Check-in/Registration',
-    'Food Service',            
-    'Cleanup Crew',
-    'Presentation Pitch Support',
-    'Event Organization',
-    'Technical Support',
-    'Mentoring',
-    'Documentation',
-    'Content Creation',
-    'Marketing/Communications',
-    'Design',
-    'Other'
-  ];
-  
-  // Technical skills options
-  const technicalSkillsOptions = [
-    "UI/UX Design",
-    "Product Management",
-    "Project Management",
-    "Technical Writing",
-    "Content Creation",
-    "Marketing",
-    "Social Media",
-    "Data Analysis",
-    "Public Speaking",
-    "Community Building",
-    "Event Planning",
-    "Education/Training",
-
-    "JavaScript/TypeScript",
-    "React",
-    "Angular",
-    "Vue.js",
-    "Node.js",
-    "Python",
-    "Java",
-    "Ruby",
-    "PHP",
-    "C#/.NET",
-    "SQL Databases",
-    "NoSQL Databases",
-    "API Development",
-    "Cloud Computing (AWS, Azure, GCP)",
-    "DevOps",
-    "Mobile Development",
-
+  const volunteerTypeOptions = [
+    "Check-in/Registration",
+    "Cleanup Crew",
+    "Food Service",
+    "Presentation Pitch Support",    
+    "Marketing/Communications",
+    "Photography/Videography",
     "Other",
   ];
   
+ 
   // Social causes options
   const socialCausesOptions = [
     'Education',
@@ -282,6 +261,51 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
       }));
     }
   }, [handleMultiSelectChange, setFormData]);
+  
+  // Function to generate time slots based on event dates
+  const generateTimeSlots = (startDate, endDate) => {
+    if (!startDate || !endDate) return [];
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Time blocks with icons and descriptions
+    const timeBlocks = [
+      { time: '7am - 9am', label: 'Early Morning', icon: '🌅', energy: 'Fresh minds ready to help!' },
+      { time: '9am - 12pm', label: 'Morning', icon: '☀️', energy: 'Peak productivity time!' },
+      { time: '1pm - 3pm', label: 'Afternoon', icon: '🏙️', energy: 'Post-lunch activities' },
+      { time: '4pm - 7pm', label: 'Evening', icon: '🌆', energy: 'Steady focus time' },
+      { time: '8pm - 11pm', label: 'Night', icon: '🌃', energy: 'Winding down sessions' },
+      { time: '11pm - 2am', label: 'Late Night', icon: '🌙', energy: 'For the night owls!' }
+    ];
+    
+    const slots = [];
+    
+    // Loop through each day between start and end dates
+    for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+      const dayDate = new Date(day);
+      const dateString = dayDate.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        month: 'short', 
+        day: 'numeric'
+      });
+      
+      // Add each time block for this day
+      timeBlocks.forEach(block => {
+        slots.push({
+          id: `${dateString}-${block.label}`,
+          date: dateString,
+          time: block.time,
+          label: block.label,
+          icon: block.icon,
+          energy: block.energy,
+          displayText: `${dateString}: ${block.icon} ${block.label} (${block.time} PST)`
+        });
+      });
+    }
+    
+    return slots;
+  };
   
   // Handle manual form save
   const handleManualSave = useCallback(() => {
@@ -347,6 +371,45 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
           isEventPast
         });
         
+        // Generate time slots based on event dates
+        const slots = generateTimeSlots(eventData.start_date, eventData.end_date);
+        setAvailabilityOptions(slots);
+        
+        // Organize time slots by date
+        const slotsByDate = slots.reduce((grouped, slot) => {
+          if (!grouped[slot.date]) {
+            grouped[slot.date] = [];
+          }
+          grouped[slot.date].push(slot);
+          return grouped;
+        }, {});
+        setAvailabilityByDate(slotsByDate);
+        
+        // Organize slots by month
+        const slotsByMonth = {};
+        Object.entries(slotsByDate).forEach(([date, slots]) => {
+          // Extract month from date string (e.g. "Monday, Jan 1" → "Jan")
+          const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
+          if (monthMatch) {
+            const monthPart = monthMatch[0].split(' ')[0]; // Get "Jan" from "Jan 1"
+            if (!slotsByMonth[monthPart]) {
+              slotsByMonth[monthPart] = {};
+            }
+            slotsByMonth[monthPart][date] = slots;
+          }
+        });
+        setAvailabilityByMonth(slotsByMonth);
+        
+        // Set initial view mode based on number of days
+        const dayCount = Object.keys(slotsByDate).length;
+        if (dayCount > 14) {
+          setViewMode("month");
+          // Initialize with all months selected
+          setSelectedMonths(Object.keys(slotsByMonth));
+        } else {
+          setViewMode("date");
+        }
+        
         setIsLoading(false);
       } catch (err) {
         console.error('Error fetching event data:', err);
@@ -391,6 +454,36 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
                     return fallback;
                   };
                   
+                  // Match saved availability to slot IDs for time slot selection
+                  const availabilityText = prevData.availability || "";
+                  const matchedSlotIds = availabilityOptions
+                    .filter((slot) => availabilityText.includes(slot.displayText))
+                    .map((slot) => slot.id);
+                  
+                  // Extract unique dates from matched slots
+                  const matchedDates = [
+                    ...new Set(
+                      matchedSlotIds
+                        .map((id) => {
+                          const slot = availabilityOptions.find((s) => s.id === id);
+                          return slot ? slot.date : null;
+                        })
+                        .filter(Boolean)
+                    ),
+                  ];
+                  
+                  // Extract unique months from matched dates
+                  const matchedMonths = [
+                    ...new Set(
+                      matchedDates
+                        .map((date) => {
+                          const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
+                          return monthMatch ? monthMatch[0].split(" ")[0] : null;
+                        })
+                        .filter(Boolean)
+                    ),
+                  ];
+                  
                   const transformedData = {
                     ...initialFormData,
                     email: prevData.email || user.email || '',
@@ -406,7 +499,6 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
                     country: prevData.country || '',
                     state: prevData.state || '',
                     inPerson: prevData.inPerson || (prevData.isInPerson ? 'Yes' : 'No'),
-                    availability: prevData.availability || '',
                     experienceLevel: prevData.experienceLevel || '',
                     volunteerType: parsePreviousArrayField('volunteerType'),
                     otherVolunteerType: prevData.otherVolunteerType || '',
@@ -418,8 +510,13 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
                     previousExperience: prevData.previousExperience || '',
                     codeOfConduct: prevData.codeOfConduct || prevData.agreedToCodeOfConduct || false,
                     additionalInfo: prevData.additionalInfo || prevData.comments || '',
-                    event_id: event_id
+                    event_id: event_id,
+                    availableDays: matchedSlotIds
                   };
+                  
+                  // Update selected dates and months state
+                  setSelectedDates(matchedDates);
+                  setSelectedMonths(matchedMonths);
                   
                   setFormData(transformedData);
                   setPreviouslySubmitted(true);
@@ -485,17 +582,6 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
       return false;
     }
     
-    // Validate skills
-    if (!formData.skills || formData.skills.length === 0) {
-      setError('Please select at least one skill');
-      return false;
-    }
-    
-    // Check for "Other" skill
-    if (formData.skills.includes('Other') && !formData.otherSkills) {
-      setError('Please specify your other skills');
-      return false;
-    }
     
     setError('');
     return true;
@@ -511,8 +597,8 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
       }
     }
     
-    if (!formData.availability) {
-      setError('Please provide your availability');
+    if (!formData.availableDays || formData.availableDays.length === 0) {
+      setError('Please select at least one available time slot');
       return false;
     }
     
@@ -551,6 +637,138 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
       validateInterestsInfo() &&
       formData.codeOfConduct
     );
+  };
+
+  // Accordion change handler for date selection
+  const handleAccordionChange = (date) => (event, isExpanded) => {
+    setExpandedDate(isExpanded ? date : null);
+  };
+  
+  // Handle month selection
+  const handleMonthToggle = (month) => {
+    if (selectedMonths.includes(month)) {
+      // If month is already selected, remove it
+      setSelectedMonths(prev => prev.filter(m => m !== month));
+      
+      // Remove all dates from this month from selected dates
+      const datesInMonth = Object.keys(availabilityByMonth[month] || {});
+      setSelectedDates(prev => prev.filter(date => !datesInMonth.includes(date)));
+      
+      // Remove all time slots for this month from form data
+      const slotIdsToRemove = [];
+      datesInMonth.forEach(date => {
+        const slotsForDate = availabilityByDate[date] || [];
+        slotIdsToRemove.push(...slotsForDate.map(slot => slot.id));
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        availableDays: prev.availableDays.filter(id => !slotIdsToRemove.includes(id))
+      }));
+    } else {
+      // Add the month to selected months
+      setSelectedMonths(prev => [...prev, month]);
+      
+      // Add all dates from this month to selected dates
+      const datesInMonth = Object.keys(availabilityByMonth[month] || {});
+      setSelectedDates(prev => [...new Set([...prev, ...datesInMonth])]);
+    }
+  };
+  
+  // Handle date filter change
+  const handleDateFilterChange = (e) => {
+    setDateFilter(e.target.value.toLowerCase());
+  };
+  
+  // Filter dates based on search term
+  const getFilteredDates = () => {
+    if (!dateFilter) {
+      return Object.keys(availabilityByDate);
+    }
+    return Object.keys(availabilityByDate).filter(
+      date => date.toLowerCase().includes(dateFilter)
+    );
+  };
+  
+  // Handle date selection for time slots
+  const handleDateToggle = (date) => {
+    if (selectedDates.includes(date)) {
+      // If date is already selected, remove it and also remove all time slots for this date
+      const slotsForDate = availabilityByDate[date] || [];
+      const slotIdsToRemove = slotsForDate.map(slot => slot.id);
+      
+      setSelectedDates(prev => prev.filter(d => d !== date));
+      setFormData(prev => ({
+        ...prev,
+        availableDays: prev.availableDays.filter(id => !slotIdsToRemove.includes(id))
+      }));
+      
+      // Check if we need to update selectedMonths
+      const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
+      if (monthMatch) {
+        const month = monthMatch[0].split(' ')[0];
+        const datesInMonth = Object.keys(availabilityByMonth[month] || {});
+        const noMoreSelectedDatesInMonth = !datesInMonth.some(
+          d => d !== date && selectedDates.includes(d)
+        );
+        
+        if (noMoreSelectedDatesInMonth) {
+          setSelectedMonths(prev => prev.filter(m => m !== month));
+        }
+      }
+    } else {
+      // Add the date to selected dates
+      setSelectedDates(prev => [...prev, date]);
+      
+      // Make sure the month is selected as well
+      const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
+      if (monthMatch) {
+        const month = monthMatch[0].split(' ')[0];
+        if (!selectedMonths.includes(month)) {
+          setSelectedMonths(prev => [...prev, month]);
+        }
+      }
+    }
+  };
+  
+  // Handle selecting all time slots for a specific date
+  const handleSelectAllSlotsForDate = (date) => {
+    const slotsForDate = availabilityByDate[date] || [];
+    const slotIds = slotsForDate.map(slot => slot.id);
+    
+    // Add all slot IDs for this date to the availableDays array, avoiding duplicates
+    setFormData(prev => {
+      const existingIds = new Set(prev.availableDays);
+      const newIds = slotIds.filter(id => !existingIds.has(id));
+      return {
+        ...prev,
+        availableDays: [...prev.availableDays, ...newIds]
+      };
+    });
+  };
+  
+  // Handle selecting all time slots for a specific month
+  const handleSelectAllSlotsForMonth = (month) => {
+    const datesInMonth = Object.keys(availabilityByMonth[month] || {});
+    let allSlotIds = [];
+    
+    datesInMonth.forEach(date => {
+      const slotsForDate = availabilityByDate[date] || [];
+      allSlotIds.push(...slotsForDate.map(slot => slot.id));
+    });
+    
+    // Add all slot IDs for this month to the availableDays array, avoiding duplicates
+    setFormData(prev => {
+      const existingIds = new Set(prev.availableDays);
+      const newIds = allSlotIds.filter(id => !existingIds.has(id));
+      return {
+        ...prev,
+        availableDays: [...prev.availableDays, ...newIds]
+      };
+    });
+    
+    // Make sure all dates in this month are selected
+    setSelectedDates(prev => [...new Set([...prev, ...datesInMonth])]);
   };
 
   const handleNext = () => {
@@ -625,6 +843,14 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
         linkedinProfile: formData.linkedin,
         shortBio: formData.bio,
         photoUrl: photoPreview || formData.photoUrl || '',
+        // Map available days to their display text
+        availability: formData.availableDays
+          .map(
+            (dayId) =>
+              availabilityOptions.find((option) => option.id === dayId)
+                ?.displayText || dayId
+          )
+          .join(", "),
         // Add reCAPTCHA token
         recaptchaToken
       };
@@ -827,45 +1053,7 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
           />
         )}
         
-        <FormControl fullWidth required sx={{ mb: formData.skills?.includes('Other') ? 1 : 3 }}>
-          <InputLabel id="skills-label">What skills can you contribute?</InputLabel>
-          <Select
-            labelId="skills-label"
-            id="skills"
-            multiple
-            value={formData.skills || []}
-            onChange={(e) => customHandleMultiSelectChange(e, 'skills')}
-            input={<OutlinedInput label="What skills can you contribute?" />}
-            renderValue={(selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {selected.map((value) => (
-                  <Chip key={value} label={value} />
-                ))}
-              </Box>
-            )}
-          >
-            {technicalSkillsOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                <Checkbox checked={(formData.skills || []).indexOf(option) > -1} />
-                <ListItemText primary={option} />
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>Select all skills that you can contribute (select at least one)</FormHelperText>
-        </FormControl>
         
-        {formData.skills?.includes('Other') && (
-          <TextField
-            label="Please specify your other skills"
-            name="otherSkills"
-            required
-            fullWidth
-            value={formData.otherSkills || ''}
-            onChange={handleFormChange}
-            helperText="Tell us about your other skills"
-            sx={{ mb: 3 }}
-          />
-        )}
         
         <TextField
           label="Previous Experience (Optional)"
@@ -932,7 +1120,7 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
     </Box>
   );
   
-  // Render availability form
+  // Render availability form with time slots selection
   const renderAvailabilityForm = () => (
     <Box sx={{ mb: 4 }}>
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
@@ -973,19 +1161,178 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
           onChange={handleFormChange}
           sx={{ mb: 3 }}
         />
-        
+
+        <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
+          When can you volunteer? (Select all that apply)
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Select the dates you are available. For each date, pick the time slots you can volunteer. For long hackathons, use the filter to quickly find your dates.
+        </Typography>
+
+        {/* Date filter/search */}
         <TextField
-          label="Availability"
-          name="availability"
-          required
-          multiline
-          rows={3}
+          label="Filter dates"
+          variant="outlined"
           fullWidth
-          value={formData.availability || ''}
-          onChange={handleFormChange}
-          helperText="Please provide details about when you're available to volunteer during the event"
-          sx={{ mb: 3 }}
+          value={dateFilter}
+          onChange={handleDateFilterChange}
+          placeholder="Type to filter dates (e.g., 'Monday' or 'Jan')"
+          sx={{ mb: 2 }}
         />
+
+        {/* Accordion for each date */}
+        {getFilteredDates().length === 0 ? (
+          <Alert severity="info">No dates match your filter.</Alert>
+        ) : (
+          <Box>
+            {getFilteredDates().map((date) => (
+              <Accordion
+                key={date}
+                expanded={expandedDate === date}
+                onChange={handleAccordionChange(date)}
+                sx={{ mb: 2 }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls={`panel-${date}-content`}
+                  id={`panel-${date}-header`}
+                  sx={{ bgcolor: selectedDates.includes(date) ? 'primary.light' : 'background.paper', color: selectedDates.includes(date) ? 'white' : 'text.primary' }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <Chip
+                      label={date}
+                      color={selectedDates.includes(date) ? 'primary' : 'default'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDateToggle(date);
+                      }}
+                      sx={{ mr: 2 }}
+                    />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>{date}</Typography>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectAllSlotsForDate(date);
+                      }}
+                      sx={{ ml: 2 }}
+                    >
+                      Select All Slots
+                    </Button>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {/* Time slots for this date */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+                    {availabilityByDate[date]?.map((slot) => (
+                      <Paper
+                        key={slot.id}
+                        elevation={formData.availableDays.includes(slot.id) ? 8 : 1}
+                        sx={{
+                          p: 2,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          bgcolor: formData.availableDays.includes(slot.id) ? 'primary.light' : 'background.paper',
+                          color: formData.availableDays.includes(slot.id) ? 'white' : 'text.primary',
+                          borderRadius: 2,
+                          '&:hover': {
+                            bgcolor: formData.availableDays.includes(slot.id) ? 'primary.main' : 'action.hover',
+                            transform: 'translateY(-4px)',
+                            boxShadow: 6
+                          }
+                        }}
+                        onClick={() => {
+                          const newAvailability = formData.availableDays.includes(slot.id)
+                            ? formData.availableDays.filter(id => id !== slot.id)
+                            : [...formData.availableDays, slot.id];
+                          setFormData(prev => ({
+                            ...prev,
+                            availableDays: newAvailability
+                          }));
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                          <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                            {slot.icon} {slot.label}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 1 }}>
+                            {slot.time}
+                          </Typography>
+                          <Typography variant="caption" sx={{ mt: 'auto', fontStyle: 'italic' }}>
+                            {slot.energy}
+                          </Typography>
+                          {formData.availableDays.includes(slot.id) && (
+                            <Chip label="Selected!" color="success" size="small" sx={{ alignSelf: 'flex-start', mt: 1 }} />
+                          )}
+                        </Box>
+                      </Paper>
+                    ))}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </Box>
+        )}
+
+        {/* Selected slots summary (sticky on desktop, top on mobile) */}
+        <Box sx={{
+          position: isMobile ? 'static' : 'sticky',
+          top: isMobile ? undefined : 80,
+          zIndex: 10,
+          mt: 3,
+          p: 2,
+          bgcolor: 'success.light',
+          color: 'white',
+          borderRadius: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          minHeight: 56
+        }}>
+          <Typography variant="subtitle1">
+            You've selected {formData.availableDays.length} time slot{formData.availableDays.length !== 1 ? 's' : ''}
+            {selectedDates.length > 0 && ` across ${selectedDates.length} day${selectedDates.length !== 1 ? 's' : ''}`}!
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+            {formData.availableDays.map(slotId => {
+              const slot = availabilityOptions.find(opt => opt.id === slotId);
+              return (
+                <Chip
+                  key={slotId}
+                  label={`${slot?.icon} ${slot?.date} ${slot?.label}`}
+                  onDelete={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      availableDays: prev.availableDays.filter(id => id !== slotId)
+                    }));
+                  }}
+                  color="primary"
+                  sx={{ mb: 1 }}
+                />
+              );
+            })}
+          </Box>
+          {formData.availableDays.length > 0 && (
+            <Button
+              variant="contained"
+              color="warning"
+              size="small"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, availableDays: [] }));
+                setSelectedDates([]);
+              }}
+              sx={{ mt: 2 }}
+            >
+              Clear All
+            </Button>
+          )}
+        </Box>
+        {formData.availableDays.length === 0 && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Please select at least one time slot when you'll be available to volunteer.
+          </Alert>
+        )}
       </Box>
     </Box>
   );
