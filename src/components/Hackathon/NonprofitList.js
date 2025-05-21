@@ -86,19 +86,16 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
 
   return (
     <ListContainer elevation={2}>
-      <Typography 
-        variant="h2" 
-        component="h2" 
-        gutterBottom 
+      <Typography
+        variant="h5"
+        gutterBottom
         id="nonprofit-section-heading"
-        sx={{ 
-          fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-          fontWeight: 600,
-          letterSpacing: '-0.015em',
-          marginBottom: 2
-        }}
+        fontWeight="bold"
       >
-        Participating Nonprofits
+        Step 2. Find a project to work on
+      </Typography>
+      <Typography variant="body2" color="textSecondary" paragraph>
+        All of the nonprofits below are looking for volunteers to help them with their projects.
       </Typography>
       <Grid container spacing={3}>
         {nonprofits.map((nonprofit) => (
@@ -111,8 +108,8 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
                     alt={`${nonprofit.name} logo or image`}
                     fill
                     sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
-                    style={{ 
-                      objectFit: 'cover',
+                    style={{
+                      objectFit: "cover",
                     }}
                     priority={false}
                     loading="lazy"
@@ -123,8 +120,8 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
                     alt="Nonprofit placeholder image"
                     fill
                     sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
-                    style={{ 
-                      objectFit: 'cover',
+                    style={{
+                      objectFit: "cover",
                     }}
                     priority={false}
                     loading="lazy"
@@ -132,15 +129,15 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
                 )}
               </ImageContainer>
               <NonprofitContent>
-                <Typography 
-                  gutterBottom 
-                  variant="h3" 
+                <Typography
+                  gutterBottom
+                  variant="h3"
                   component="h3"
-                  sx={{ 
-                    fontSize: { xs: '1.25rem', sm: '1.35rem' },
+                  sx={{
+                    fontSize: { xs: "1.25rem", sm: "1.35rem" },
                     fontWeight: 600,
                     lineHeight: 1.3,
-                    marginBottom: 1
+                    marginBottom: 1,
                   }}
                 >
                   {nonprofit.name}

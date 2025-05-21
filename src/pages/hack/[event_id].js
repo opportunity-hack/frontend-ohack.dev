@@ -8,6 +8,7 @@ import { Typography, Button, styled } from "@mui/material";
 import TableOfContents from '../../components/Hackathon/TableOfContents';
 import Script from 'next/script';
 import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 
 // Create a visually-hidden style for accessibility
 const VisuallyHidden = styled('span')({
@@ -21,6 +22,19 @@ const VisuallyHidden = styled('span')({
   whiteSpace: 'nowrap',
   borderWidth: '0',
 });
+
+const LinksContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+  backgroundColor: theme.palette.background.default,
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+  minHeight: "400px",
+  overflowX: "hidden",
+  overflowY: "auto",
+}));
+
 
 // Add the style to the Typography component
 Typography.defaultProps = {
@@ -74,7 +88,7 @@ const LoadingPlaceholder = ({height = '300px', label = 'Loading content'}) => (
   </Box>
 );
 
-// Critical above-the-fold components (higher priority)
+// Critical above-the-fold components (higher priority) with priority loading
 const EventLinks = dynamic(
   () => import("../../components/Hackathon/EventLinks"),
   { 
@@ -90,6 +104,10 @@ const EventCountdown = dynamic(
     loading: () => <LoadingPlaceholder height="350px" label="Loading event timeline and countdown" />
   }
 );
+
+// Preload critical components
+import("../../components/Hackathon/EventLinks");
+import("../../components/Hackathon/EventCountdown");
 
 // Secondary components that can load after initial render
 const NonprofitList = dynamic(
@@ -364,9 +382,12 @@ const faqData = [
 
 export default function HackathonEvent({ eventData }) {
   const router = useRouter();
-  const { event_id } = router.query;
-  const [event, setEvent] = useState(eventData);
-  const [loading, setLoading] = useState(!eventData);
+  
+  // If fallback is true and the page is being generated,
+  // router.isFallback will be true
+  const isLoading = router.isFallback;
+  const { event_id } = router.query || {};
+  const event = eventData;
 
   useEffect(() => {
     // Handle scrolling to the correct section when the page loads
@@ -384,12 +405,12 @@ export default function HackathonEvent({ eventData }) {
     }
   }, []);
 
-  if (loading) {
-    return <CircularProgress />;
-  }
-
-  if (!event) {
-    return <div>Event not found</div>;
+  if (isLoading || !event) {
+    return (
+      <Container maxWidth="lg" component="main" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Container>
+    );
   }
 
   // Create a more concise but informative description
@@ -455,9 +476,15 @@ export default function HackathonEvent({ eventData }) {
         <meta property="og:title" content={metaTitle} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={`https://ohack.dev/hack/${event_id}`} />
+        <meta
+          property="og:url"
+          content={`https://ohack.dev/hack/${event_id}`}
+        />
         <meta property="og:image" content={metaImage} />
-        <meta property="og:image:alt" content={`${event?.title || 'Opportunity Hack'} event banner`} />
+        <meta
+          property="og:image:alt"
+          content={`${event?.title || "Opportunity Hack"} event banner`}
+        />
         <meta property="og:site_name" content="Opportunity Hack" />
         <meta property="og:locale" content="en_US" />
         <meta property="og:updated_time" content={new Date().toISOString()} />
@@ -469,12 +496,21 @@ export default function HackathonEvent({ eventData }) {
         <meta name="twitter:title" content={metaTitle} />
         <meta name="twitter:description" content={metaDescription} />
         <meta name="twitter:image" content={metaImage} />
-        <meta name="twitter:image:alt" content={`${event?.title || 'Opportunity Hack'} event banner`} />
+        <meta
+          name="twitter:image:alt"
+          content={`${event?.title || "Opportunity Hack"} event banner`}
+        />
 
         {/* Additional SEO-friendly meta tags */}
-        <meta name="keywords" content={`hackathon, ${event?.title || "opportunity hack"}, nonprofit, technology, volunteering, coding, programming, tech for good, ${event?.location || "various locations"}, social impact, software development, community service`} />
+        <meta
+          name="keywords"
+          content={`hackathon, ${event?.title || "opportunity hack"}, nonprofit, technology, volunteering, coding, programming, tech for good, ${event?.location || "various locations"}, social impact, software development, community service`}
+        />
         <meta name="author" content="Opportunity Hack" />
-        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta
+          name="robots"
+          content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+        />
         <meta name="language" content="English" />
         <meta name="application-name" content="Opportunity Hack" />
         <meta name="theme-color" content="#3f51b5" />
@@ -482,15 +518,27 @@ export default function HackathonEvent({ eventData }) {
         {/* Performance-related meta tags */}
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="format-detection" content="telephone=no" />
-        
+
         {/* Preconnect to essential domains */}
-        <link rel="preconnect" href="https://cdn.ohack.dev" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://cdn.ohack.dev"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
 
         {/* DNS Prefetch */}
         <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
-        
+
         {/* Canonical URL */}
         <link rel="canonical" href={`https://ohack.dev/hack/${event_id}`} />
       </Head>
@@ -518,14 +566,175 @@ export default function HackathonEvent({ eventData }) {
 
         <Grid container spacing={3}>
           {/* Applications section */}
-          <Grid item xs={12} component="section" aria-labelledby="applications-heading" id="applications">
-            <Typography variant="h2" component="h2" id="applications-heading" className="visually-hidden">Applications</Typography>
+          <Grid
+            item
+            xs={12}
+            component="section"
+            aria-labelledby="applications-heading"
+            id="applications"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="applications-heading"
+              className="visually-hidden"
+            >
+              Applications
+            </Typography>
             <EventLinks links={event.links} variant="applications" />
           </Grid>
-          
+
+          {/* Nonprofit List */}
+          <Grid
+            item
+            xs={12}
+            id="nonprofit"
+            component="section"
+            aria-labelledby="nonprofit-section-heading"
+          >
+            <NonprofitList
+              nonprofits={event.nonprofits}
+              teams={event.teams}
+              eventId={event_id}
+            />
+          </Grid>
+
+          {/* Team List - Proper implementation with Grid item */}
+          <Grid
+            item
+            xs={12}
+            component="section"
+            aria-labelledby="teams-heading"
+            id="teams"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="teams-heading"
+              className="visually-hidden"
+            >
+              Teams
+            </Typography>
+            <LinksContainer elevation={2} id="build-a-team">
+              <Box>
+                <Typography variant="h5" gutterBottom fontWeight="bold">
+                  Step 3. Build a team
+                </Typography>
+
+                {/* Team options - Find or Create */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="body2" color="textSecondary" paragraph>
+                    You can either join an existing team or create your own team
+                    to participate in this hackathon:
+                  </Typography>
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        href={`/hack/${event_id}/findteam`}
+                        sx={{
+                          py: 2,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          height: "100%",
+                          borderRadius: 2,
+                          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+                          transition:
+                            "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+                          "&:hover": {
+                            transform: "translateY(-3px)",
+                            boxShadow: "0 6px 12px rgba(0, 0, 0, 0.15)",
+                          },
+                        }}
+                      >
+                        <Box sx={{ fontSize: "2rem", mb: 1 }}>🔍</Box>
+                        <Typography
+                          variant="h6"
+                          component="span"
+                          fontWeight="bold"
+                        >
+                          Find a Team
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="inherit"
+                          sx={{ opacity: 0.85, mt: 0.5 }}
+                        >
+                          Browse and join existing teams
+                        </Typography>
+                      </Button>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        fullWidth
+                        href={`/hack/${event_id}/manageteam`}
+                        sx={{
+                          py: 2,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          height: "100%",
+                          borderRadius: 2,
+                          borderWidth: 2,
+                          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)",
+                          transition:
+                            "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+                          "&:hover": {
+                            transform: "translateY(-3px)",
+                            boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)",
+                          },
+                        }}
+                      >
+                        <Box sx={{ fontSize: "2rem", mb: 1 }}>🚀</Box>
+                        <Typography
+                          variant="h6"
+                          component="span"
+                          fontWeight="bold"
+                        >
+                          Create a Team
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="inherit"
+                          sx={{ opacity: 0.85, mt: 0.5 }}
+                        >
+                          Start your own team
+                        </Typography>
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                <TeamList teams={event.teams} eventId={event_id} />
+              </Box>
+            </LinksContainer>
+          </Grid>
+
           {/* Donation Progress and Event Links side by side on larger screens */}
-          <Grid container item spacing={3} component="section" aria-labelledby="event-info-heading">
-            <Typography variant="h2" component="h2" id="event-info-heading" className="visually-hidden">Event Information</Typography>
+          <Grid
+            container
+            item
+            spacing={3}
+            component="section"
+            aria-labelledby="event-info-heading"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="event-info-heading"
+              className="visually-hidden"
+            >
+              Event Information
+            </Typography>
             <Grid item xs={12} md={6}>
               <DonationProgress
                 donationGoals={event.donation_goals}
@@ -536,23 +745,37 @@ export default function HackathonEvent({ eventData }) {
               <EventLinks links={event.links} variant="event-links" />
             </Grid>
           </Grid>
-          
           {/* Hackathon Stats and Countdown side by side */}
-          <Grid container item spacing={3} component="section" aria-labelledby="event-stats-heading">
-            <Typography variant="h2" component="h2" id="event-stats-heading" className="visually-hidden">Event Timeline and Stats</Typography>
+          <Grid
+            container
+            item
+            spacing={3}
+            component="section"
+            aria-labelledby="event-stats-heading"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="event-stats-heading"
+              className="visually-hidden"
+            >
+              Event Timeline and Stats
+            </Typography>
             {/* Order matters on mobile: Countdown first, then Stats */}
             <Grid item xs={12} md={6} id="countdown" order={{ xs: 1, md: 2 }}>
               <EventCountdown countdowns={event.countdowns} />
             </Grid>
             <Grid item xs={12} md={6} id="stats" order={{ xs: 2, md: 1 }}>
               {/* Set display to flex and min-height to ensure the component has proper space */}
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                height: '100%',
-                minHeight: { md: '400px' }
-              }}>
-                <HackathonLeaderboard 
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  minHeight: { md: "400px" },
+                }}
+              >
+                <HackathonLeaderboard
                   eventId={event_id}
                   githubOrg={event.github_org}
                   eventName={event.title}
@@ -562,58 +785,92 @@ export default function HackathonEvent({ eventData }) {
               </Box>
             </Grid>
           </Grid>
-          
           {/* Event Constraints */}
-          <Grid item xs={12} component="section" aria-labelledby="constraints-heading">
-            <Typography variant="h2" component="h2" id="constraints-heading" className="visually-hidden">Event Constraints</Typography>
+          <Grid
+            item
+            xs={12}
+            component="section"
+            aria-labelledby="constraints-heading"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="constraints-heading"
+              className="visually-hidden"
+            >
+              Event Constraints
+            </Typography>
             <EventConstraints constraints={event.constraints} />
           </Grid>
-          
-          {/* Nonprofit List */}
-          <Grid item xs={12} id="nonprofit" component="section" aria-labelledby="nonprofit-section-heading">
-            <NonprofitList
-              nonprofits={event.nonprofits}
-              teams={event.teams}
-              eventId={event_id}
-            />
-          </Grid>
-          
+
           {/* Volunteer Lists */}
-          <Grid item xs={12} id="volunteer" component="section" aria-labelledby="volunteer-heading">
-            <Typography variant="h2" component="h2" id="volunteer-heading" className="visually-hidden">Volunteers</Typography>
+          <Grid
+            item
+            xs={12}
+            id="volunteer"
+            component="section"
+            aria-labelledby="volunteer-heading"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="volunteer-heading"
+              className="visually-hidden"
+            >
+              Volunteers
+            </Typography>
             <VolunteerList event_id={event_id} type="volunteer" />
           </Grid>
-          <Grid item xs={12} id="mentor" component="section" aria-labelledby="mentor-heading">
-            <Typography variant="h2" component="h2" id="mentor-heading" className="visually-hidden">Mentors</Typography>
+          <Grid
+            item
+            xs={12}
+            id="mentor"
+            component="section"
+            aria-labelledby="mentor-heading"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="mentor-heading"
+              className="visually-hidden"
+            >
+              Mentors
+            </Typography>
             <VolunteerList event_id={event_id} type="mentor" />
           </Grid>
-          <Grid item xs={12} id="judge" component="section" aria-labelledby="judge-heading">
-            <Typography variant="h2" component="h2" id="judge-heading" className="visually-hidden">Judges</Typography>
+          <Grid
+            item
+            xs={12}
+            id="judge"
+            component="section"
+            aria-labelledby="judge-heading"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="judge-heading"
+              className="visually-hidden"
+            >
+              Judges
+            </Typography>
             <VolunteerList event_id={event_id} type="judge" />
           </Grid>
-          
-          {/* Team List */}
-          <Grid item xs={12} id="teams" component="section" aria-labelledby="teams-heading">
-            <Typography 
-              variant="h2" 
-              component="h2" 
-              id="teams-heading" 
-              gutterBottom
-              sx={{ 
-                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-                fontWeight: 600,
-                letterSpacing: '-0.015em',
-                marginBottom: 2
-              }}
-            >
-              Teams
-            </Typography>
-            <TeamList teams={event.teams} eventId={event_id} />
-          </Grid>
-          
           {/* FAQ */}
-          <Grid item xs={12} id="faq" component="section" aria-labelledby="faq-heading">
-            <Typography variant="h2" component="h2" id="faq-heading" className="visually-hidden">Frequently Asked Questions</Typography>
+          <Grid
+            item
+            xs={12}
+            id="faq"
+            component="section"
+            aria-labelledby="faq-heading"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="faq-heading"
+              className="visually-hidden"
+            >
+              Frequently Asked Questions
+            </Typography>
             <InteractiveFAQ faqData={faqData} title={`${event.title} FAQ`} />
           </Grid>
         </Grid>
@@ -622,7 +879,7 @@ export default function HackathonEvent({ eventData }) {
   );
 }
 
-export async function getServerSideProps({ params }) {
+export async function getStaticProps({ params }) {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${params.event_id}`
@@ -633,6 +890,8 @@ export async function getServerSideProps({ params }) {
       props: {
         eventData: data,
       },
+      // Re-generate at most once per hour
+      revalidate: 3600
     };
   } catch (error) {
     console.error("Error fetching hackathon data:", error);
@@ -640,6 +899,33 @@ export async function getServerSideProps({ params }) {
       props: {
         eventData: null,
       },
+      // Re-generate at most once per hour
+      revalidate: 3600
+    };
+  }
+}
+
+export async function getStaticPaths() {
+  try {
+    // Fetch a list of all hackathon IDs
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathons`);
+    const data = await res.json();
+    
+    // Create paths for all known events
+    const paths = data.map(event => ({
+      params: { event_id: event.event_id }
+    }));
+
+    return {
+      paths,
+      // Generate pages for new events on demand
+      fallback: 'blocking'
+    };
+  } catch (error) {
+    console.error("Error fetching hackathon paths:", error);
+    return {
+      paths: [],
+      fallback: 'blocking'
     };
   }
 }

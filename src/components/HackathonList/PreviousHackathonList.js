@@ -83,40 +83,41 @@ function PreviousHackathonList() {
         {currentEvents.length > 0 ? (
           currentEvents.map((event) => (
             <PastEventCard key={event.event_id || event.title}>
-              <Link href={`/hack/${event.event_id}`} passHref>
-                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <PastEventYear>
-                    <CalendarTodayIcon fontSize="small" sx={{ mr: 1 }} />
-                    {Moment(event.start_date).format('YYYY')}
-                  </PastEventYear>
-                  
-                  <EventLink variant="h5">{event.title}</EventLink>
-                  
-                  <PastEventText>{event.description}</PastEventText>
-                  
-                  <Box sx={{ mt: 'auto', pt: 2 }}>
-                    <PastEventLocation>
-                      <LocationOnIcon fontSize="small" sx={{ mr: 1 }} />
-                      {event.location}
-                    </PastEventLocation>
+              <Link href={`/hack/${event.event_id}`} passHref legacyBehavior>
+                <a style={{ display: 'block', textDecoration: 'none', color: 'inherit', width: '100%', height: '100%' }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <PastEventYear>
+                      <CalendarTodayIcon fontSize="small" sx={{ mr: 1 }} />
+                      {Moment(event.start_date).format('YYYY')}
+                    </PastEventYear>
                     
-                    <Grid container spacing={1} sx={{ mt: 2 }}>
-                      {event.links && event.links.length > 0 && (
-                        <Grid item xs={12}>
-                          <ToggleButton 
-                            color="primary" 
-                            variant="outlined"
-                            component={Link}
-                            href={`/hack/${event.event_id}`}
-                            fullWidth
-                          >
-                            View Details
-                          </ToggleButton>
-                        </Grid>
-                      )}
-                    </Grid>
+                    <EventLink variant="h5">{event.title}</EventLink>
+                    
+                    <PastEventText>{event.description}</PastEventText>
+                    
+                    <Box sx={{ mt: 'auto', pt: 2 }}>
+                      <PastEventLocation>
+                        <LocationOnIcon fontSize="small" sx={{ mr: 1 }} />
+                        {event.location}
+                      </PastEventLocation>
+                      
+                      <Grid container spacing={1} sx={{ mt: 2 }}>
+                        {event.links && event.links.length > 0 && (
+                          <Grid item xs={12}>
+                            <ToggleButton 
+                              color="primary" 
+                              variant="outlined"
+                              component="button"
+                              fullWidth
+                            >
+                              View Details
+                            </ToggleButton>
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Box>
                   </Box>
-                </Box>
+                </a>
               </Link>
             </PastEventCard>
           ))

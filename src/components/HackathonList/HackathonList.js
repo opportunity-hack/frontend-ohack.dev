@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/router";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
 import { EmptyGrid, OuterGrid, MoreNewsStyle, HackathonGrid, NewsContainer, NewsSection, NewsSectionTitle } from "./styles";
 import EventFeature from "./EventFeature";
@@ -13,10 +14,21 @@ const News = dynamic(() => import("../../components/News/News"), {
 });
 
 function HackathonList() {
+  const router = useRouter();
   const { hackathons, loading: hackathonsLoading } =
     useHackathonEvents("current");
   const [newsData, setNewsData] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
+  
+  // Prefetch hackathon event pages when component mounts
+  useEffect(() => {
+    if (hackathons && hackathons.length > 0) {
+      // Prefetch all event pages to make navigation instant
+      hackathons.forEach(event => {
+        router.prefetch(`/hack/${event.event_id}`);
+      });
+    }
+  }, [hackathons, router]);
 
   useEffect(() => {
     setNewsLoading(true);

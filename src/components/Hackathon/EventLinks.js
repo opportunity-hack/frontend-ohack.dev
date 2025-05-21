@@ -152,7 +152,7 @@ const EventLinks = ({ links, variant = "full" }) => {
       <LinksContainer elevation={2} id="applications">
         <Box>
           <Typography variant="h5" gutterBottom fontWeight="bold">
-            Apply to Participate
+            Step 1. Apply to Participate
           </Typography>
           <Typography variant="body2" color="textSecondary" paragraph>
             Select the role that best matches how you'd like to contribute to this hackathon

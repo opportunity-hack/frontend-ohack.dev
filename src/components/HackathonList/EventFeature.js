@@ -48,174 +48,172 @@ function EventFeature(props) {
   
 
   return (
-    
     <EventCards container direction="column">      
-    <Link prefetch={true} href={`/hack/${event_id}`}>
-
-      <EventLink prefetch={true} variant="h3"><a href={`/hack/${event_id}`}>{title}</a></EventLink>
-      <EventText variant="h3">{description}</EventText>
-      
-      <br />
-      
-      {
-        Moment(new Date()).format("YYYY") === Moment(start_date).format('YYYY') && 
-        <EventText variant="h3">
-          {Moment(start_date).format('MMM Do')} to {Moment(end_date).format('MMM Do YYYY')}
-        </EventText>      
-      }
-
-      {
-        Moment(new Date()).format("YYYY") !== Moment(start_date).format('YYYY') &&
-        <EventText variant="h3">
-          {Moment(start_date).format('MMM Do YYYY')} to {Moment(end_date).format('MMM Do YYYY')}
-        </EventText>
-      }
-      
-      <br/>
-    
-      
-      <EventGreyText variant="button">{location}</EventGreyText>
-      
-      {/* Only render the donation progress if there is data */}
-      {(donationCurrent?.food > 0 || donationCurrent?.prize > 0 || donationCurrent?.swag > 0) && (
-        <ProgressContainer
-          container
-          justifyContent="space-around"
-          direction="column"
-          style={{ height: '160px' }} // Fixed height to prevent layout shifts
-        >
-          <BlankContainer container justifyContent="center" direction="row" gap="20px">
-            {donationCurrent?.food > 0 && (
-              <ProgressBarHolder container justifyContent="center">
-                <Typography variant="h5" marginBottom="12%" fontWeight="bold">
-                  Food
-                </Typography>
-                <CircularProgressbar
-                  styles={{
-                    path: {
-                      stroke: "#003486",
-                    },
-                    trail: {
-                      stroke: "#ffffff",
-                    },
-                    text: {
-                      fill: "#003486",
-                    },
-                  }}
-                  value={(donationCurrent.food / donationGoals.food) * 100}
-                  text={`${(
-                    (donationCurrent.food / donationGoals.food) *
-                    100
-                  ).toFixed(0)}%`}
-                />
-                <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-                  ${donationCurrent.food}/{donationGoals.food}
-                </TypographyStyled>
-              </ProgressBarHolder>
-            )}
-
-            {donationCurrent?.prize > 0 && (
-            <ProgressBarHolder container justifyContent="center">
-              <Typography variant="h5" marginBottom="12%" fontWeight="bold">
-                Prize
-              </Typography>
-              <CircularProgressbar
-                styles={{
-                  path: {
-                    stroke: "#003486",
-                  },
-                  trail: {
-                    stroke: "#ffffff",
-                  },
-                  text: {
-                    fill: "#003486",
-                  },
-                }}
-                value={(donationCurrent.prize / donationGoals.prize) * 100}
-                text={`${(
-                  (donationCurrent.prize / donationGoals.prize) *
-                  100
-                ).toFixed(0)}%`}
-              />
-              <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-                ${donationCurrent?.prize}/{donationGoals?.prize}
-              </TypographyStyled>
-            </ProgressBarHolder>
-            )}
-
-            {donationCurrent?.swag > 0 && (
-              <ProgressBarHolder container justifyContent="center">
-                <Typography variant="h5" marginBottom="12%" fontWeight="bold">
-                  Swag
-                </Typography>
-                <CircularProgressbar
-                  styles={{
-                    path: {
-                      stroke: "#003486",
-                    },
-                    trail: {
-                      stroke: "#ffffff",
-                    },
-                    text: {
-                      fill: "#003486",
-                    },
-                  }}
-                  value={(donationCurrent?.swag / donationGoals?.swag) * 100}
-                  text={`${(
-                    (donationCurrent?.swag / donationGoals?.swag) *
-                    100
-                  ).toFixed(0)}%`}
-                />
-                <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
-                  ${donationCurrent.swag}/{donationGoals.swag}
-                </TypographyStyled>
-              </ProgressBarHolder>
-            )}
-          </BlankContainer>
-
-          <ThankYouContainer>
-            <TypographyStyled variant="h6">
-              {donationCurrent?.thank_you?.length > 0
-                ? `Special thanks to: ${donationCurrent?.thank_you} for donating!`
-                : ""}
-            </TypographyStyled>
-          </ThankYouContainer>
-        </ProgressContainer>
-      )}
-      {/* Empty placeholder with fixed height when no donation data */}
-      {!donationCurrent?.food && !donationCurrent?.prize && !donationCurrent?.swag && (
-        <div style={{ height: '20px' }} /> // Small spacer when no donation data
-      )}
-
-      <ButtonContainer
-        container
-        direction="row"
-        justifyContent="space-around"
-        gap="5px"
-      >
-        {
+      <Link href={`/hack/${event_id}`} passHref>
+        <div style={{ cursor: 'pointer', width: '100%' }}>
+          <EventLink variant="h3">{title}</EventLink>
+          <EventText variant="h3">{description}</EventText>
           
-            eventLinks?.map((alink) => {
-              
-              const isExternal = alink?.link?.startsWith('http');
-              return (
-                <Link
-                key={alink?.name} 
-                prefetch={false} href={alink?.link} target={isExternal ? '_blank' : '_self'} onClick={(e) => {
-                  if (isExternal) {
-                    e.preventDefault();
-                    window.open(alink?.link, '_blank');
-                  }
-                }}>
-                  <EventButton color={alink.color} variant={alink.variant} >{alink?.name}</EventButton>
-                </Link>
-              );
-            })
-       }
-      </ButtonContainer>
+          <br />
+          
+          {
+            Moment(new Date()).format("YYYY") === Moment(start_date).format('YYYY') && 
+            <EventText variant="h3">
+              {Moment(start_date).format('MMM Do')} to {Moment(end_date).format('MMM Do YYYY')}
+            </EventText>      
+          }
+
+          {
+            Moment(new Date()).format("YYYY") !== Moment(start_date).format('YYYY') &&
+            <EventText variant="h3">
+              {Moment(start_date).format('MMM Do YYYY')} to {Moment(end_date).format('MMM Do YYYY')}
+            </EventText>
+          }
+          
+          <br/>
+        
+          <EventGreyText variant="button">{location}</EventGreyText>
+          
+          {/* Only render the donation progress if there is data */}
+          {(donationCurrent?.food > 0 || donationCurrent?.prize > 0 || donationCurrent?.swag > 0) && (
+            <ProgressContainer
+              container
+              justifyContent="space-around"
+              direction="column"
+              style={{ height: '160px' }} // Fixed height to prevent layout shifts
+            >
+              <BlankContainer container justifyContent="center" direction="row" gap="20px">
+                {donationCurrent?.food > 0 && (
+                  <ProgressBarHolder container justifyContent="center">
+                    <Typography variant="h5" marginBottom="12%" fontWeight="bold">
+                      Food
+                    </Typography>
+                    <CircularProgressbar
+                      styles={{
+                        path: {
+                          stroke: "#003486",
+                        },
+                        trail: {
+                          stroke: "#ffffff",
+                        },
+                        text: {
+                          fill: "#003486",
+                        },
+                      }}
+                      value={(donationCurrent.food / donationGoals.food) * 100}
+                      text={`${(
+                        (donationCurrent.food / donationGoals.food) *
+                        100
+                      ).toFixed(0)}%`}
+                    />
+                    <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
+                      ${donationCurrent.food}/{donationGoals.food}
+                    </TypographyStyled>
+                  </ProgressBarHolder>
+                )}
+
+                {donationCurrent?.prize > 0 && (
+                <ProgressBarHolder container justifyContent="center">
+                  <Typography variant="h5" marginBottom="12%" fontWeight="bold">
+                    Prize
+                  </Typography>
+                  <CircularProgressbar
+                    styles={{
+                      path: {
+                        stroke: "#003486",
+                      },
+                      trail: {
+                        stroke: "#ffffff",
+                      },
+                      text: {
+                        fill: "#003486",
+                      },
+                    }}
+                    value={(donationCurrent.prize / donationGoals.prize) * 100}
+                    text={`${(
+                      (donationCurrent.prize / donationGoals.prize) *
+                      100
+                    ).toFixed(0)}%`}
+                  />
+                  <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
+                    ${donationCurrent?.prize}/{donationGoals?.prize}
+                  </TypographyStyled>
+                </ProgressBarHolder>
+                )}
+
+                {donationCurrent?.swag > 0 && (
+                  <ProgressBarHolder container justifyContent="center">
+                    <Typography variant="h5" marginBottom="12%" fontWeight="bold">
+                      Swag
+                    </Typography>
+                    <CircularProgressbar
+                      styles={{
+                        path: {
+                          stroke: "#003486",
+                        },
+                        trail: {
+                          stroke: "#ffffff",
+                        },
+                        text: {
+                          fill: "#003486",
+                        },
+                      }}
+                      value={(donationCurrent?.swag / donationGoals?.swag) * 100}
+                      text={`${(
+                        (donationCurrent?.swag / donationGoals?.swag) *
+                        100
+                      ).toFixed(0)}%`}
+                    />
+                    <TypographyStyled variant="body1" sx={{ marginTop: "5%" }}>
+                      ${donationCurrent.swag}/{donationGoals.swag}
+                    </TypographyStyled>
+                  </ProgressBarHolder>
+                )}
+              </BlankContainer>
+
+              <ThankYouContainer>
+                <TypographyStyled variant="h6">
+                  {donationCurrent?.thank_you?.length > 0
+                    ? `Special thanks to: ${donationCurrent?.thank_you} for donating!`
+                    : ""}
+                </TypographyStyled>
+              </ThankYouContainer>
+            </ProgressContainer>
+          )}
+          {/* Empty placeholder with fixed height when no donation data */}
+          {!donationCurrent?.food && !donationCurrent?.prize && !donationCurrent?.swag && (
+            <div style={{ height: '20px' }} /> // Small spacer when no donation data
+          )}
+
+          <ButtonContainer
+            container
+            direction="row"
+            justifyContent="space-around"
+            gap="5px"
+          >
+            {
+              eventLinks?.map((alink) => {
+                const isExternal = alink?.link?.startsWith('http');
+                return (
+                  <Link
+                  key={alink?.name} 
+                  prefetch={false} href={alink?.link} target={isExternal ? '_blank' : '_self'} onClick={(e) => {
+                    if (isExternal) {
+                      e.preventDefault();
+                      window.open(alink?.link, '_blank');
+                    }
+                  }}>
+                    <EventButton color={alink.color} variant={alink.variant}>
+                      {alink?.name}
+                    </EventButton>
+                  </Link>
+                );
+              })
+            }
+          </ButtonContainer>
+        </div>
       </Link>
     </EventCards>
-    
   );
 }
 

@@ -480,31 +480,10 @@ const TeamList = ({ teams, eventId }) => {
     return <LoadingIndicator message="Loading teams..." />;
   }
 
-  if (teamData.length === 0) {
-    return (
-      <Box mb={2}>
-        <Button
-          variant="contained"
-          color="primary"
-          href={`/hack/${eventId}/manageteam`}
-        >
-          Create a Team
-        </Button>
-      </Box>
-    );
-  }
 
   return (
     <div>
-      <Box mb={2}>
-        <Button
-          variant="contained"
-          color="primary"
-          href={`/hack/${eventId}/manageteam`}
-        >
-          Create a Team
-        </Button>
-      </Box>
+      
 
       {/* Non-blocking loading indicator while profiles are loading */}
       {profilesLoading && (

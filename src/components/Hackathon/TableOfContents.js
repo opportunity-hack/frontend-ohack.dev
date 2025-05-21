@@ -3,14 +3,33 @@ import { Grid, Button, Box, Typography, Paper, List, ListItem } from "@mui/mater
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
 const sections = [
-  { id: "applications", name: "Apply Now", highlight: true, ariaLabel: "Apply for the hackathon" },
-  { id: "stats", name: "Hackathon Stats", ariaLabel: "View hackathon statistics" },
-  { id: "countdown", name: "Event Countdown", ariaLabel: "See event timeline and countdown" },
-  { id: "nonprofit", name: "Nonprofit List", ariaLabel: "Browse participating nonprofits" },
+  {
+    id: "applications",
+    name: "Apply Now",
+    highlight: true,
+    ariaLabel: "Apply for the hackathon",
+  },
+  {
+    id: "nonprofit",
+    name: "Review Projects",
+    ariaLabel: "Browse participating nonprofits",
+  },
+  { id: "teams", name: "Create a Team", ariaLabel: "Browse hackathon teams" },
+  {
+    id: "stats",
+    name: "Hackathon Stats",
+    ariaLabel: "View hackathon statistics",
+  },
+  {
+    id: "countdown",
+    name: "Event Countdown",
+    ariaLabel: "See event timeline and countdown",
+  },
+
   { id: "volunteer", name: "Volunteers", ariaLabel: "See event volunteers" },
   { id: "mentor", name: "Mentors", ariaLabel: "View hackathon mentors" },
   { id: "judge", name: "Judges", ariaLabel: "See event judges" },
-  { id: "teams", name: "Teams", ariaLabel: "Browse hackathon teams" },
+
   { id: "faq", name: "FAQ", ariaLabel: "Read frequently asked questions" },
 ];
 
