@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
+import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from "@propelauth/react";
 import {
   Typography,
   Container,
@@ -40,7 +40,7 @@ import FormPersistenceControls from '../../../components/FormPersistenceControls
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
-const JudgeApplicationPage = withRequiredAuthInfo(() => {
+const JudgeApplicationComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -1252,6 +1252,30 @@ const JudgeApplicationPage = withRequiredAuthInfo(() => {
       </Box>
     </Container>
   );
-});
+};
+
+// Create a new component that uses RequiredAuthProvider
+const JudgeApplicationPage = () => {
+  const router = useRouter();
+  const { event_id } = router.query;
+
+  // Create the current URL for redirection
+  const currentUrl = typeof window !== 'undefined' && event_id
+    ? `${window.location.origin}/hack/${event_id}/judge-application`
+    : null;
+
+  return (
+    <RequiredAuthProvider
+      authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
+      displayIfLoggedOut={
+        <RedirectToLogin
+          postLoginRedirectUrl={currentUrl || window.location.href}
+        />
+      }
+    >
+      <JudgeApplicationComponent />
+    </RequiredAuthProvider>
+  );
+};
 
 export default JudgeApplicationPage;

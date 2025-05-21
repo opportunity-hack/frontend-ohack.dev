@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
+import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from '@propelauth/react';
 import {
   Typography,
   Container,
@@ -42,7 +42,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 
-const MentorApplicationPage = withRequiredAuthInfo(() => {
+const MentorApplicationComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -1633,6 +1633,30 @@ const MentorApplicationPage = withRequiredAuthInfo(() => {
 
   // Main return - after all hooks have been called
   return success ? renderSuccessMessage() : renderApplicationForm();
-});
+};
+
+// Create a new component that uses RequiredAuthProvider
+const MentorApplicationPage = () => {
+  const router = useRouter();
+  const { event_id } = router.query;
+
+  // Create the current URL for redirection
+  const currentUrl = typeof window !== 'undefined' && event_id
+    ? `${window.location.origin}/hack/${event_id}/mentor-application`
+    : null;
+
+  return (
+    <RequiredAuthProvider
+      authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
+      displayIfLoggedOut={
+        <RedirectToLogin
+          postLoginRedirectUrl={currentUrl || window.location.href}
+        />
+      }
+    >
+      <MentorApplicationComponent />
+    </RequiredAuthProvider>
+  );
+};
 
 export default MentorApplicationPage;

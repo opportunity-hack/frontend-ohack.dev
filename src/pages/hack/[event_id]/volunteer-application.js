@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
+import { 
+  useAuthInfo, 
+  RequiredAuthProvider,
+  RedirectToLogin
+} from '@propelauth/react';
 import {
   Typography,
   Container,
@@ -43,7 +47,7 @@ import FormPersistenceControls from '../../../components/FormPersistenceControls
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
 
-const VolunteerApplicationPage = withRequiredAuthInfo(() => {
+const VolunteerApplicationComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -134,8 +138,7 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
     bio: '',
     company: '',
     title: '',
-    linkedin: '',
-    github: '',
+    linkedin: '',    
     portfolio: '',
     country: '',
     state: '',
@@ -493,8 +496,7 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
                     bio: prevData.bio || prevData.shortBio || '',
                     company: prevData.company || prevData.companyName || '',
                     title: prevData.title || '',
-                    linkedin: prevData.linkedin || prevData.linkedinProfile || '',
-                    github: prevData.github || '',
+                    linkedin: prevData.linkedin || prevData.linkedinProfile || '',                    
                     portfolio: prevData.portfolio || '',
                     country: prevData.country || '',
                     state: prevData.state || '',
@@ -1093,18 +1095,7 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
           onChange={handleFormChange}
           sx={{ mb: 3 }}
           placeholder="https://linkedin.com/in/yourprofile"
-        />
-        
-        <TextField
-          label="GitHub Profile (Optional)"
-          name="github"
-          type="url"
-          fullWidth
-          value={formData.github || ''}
-          onChange={handleFormChange}
-          sx={{ mb: 3 }}
-          placeholder="https://github.com/yourusername"
-        />
+        />              
         
         <TextField
           label="Portfolio/Personal Website (Optional)"
@@ -1790,6 +1781,30 @@ const VolunteerApplicationPage = withRequiredAuthInfo(() => {
       </Box>
     </Container>
   );
-});
+};
+
+// Export the component with RequiredAuthProvider
+const VolunteerApplicationPage = () => {
+  const router = useRouter();
+  const { event_id } = router.query;
+
+  // Create the current URL for redirection
+  const currentUrl = typeof window !== 'undefined' && event_id
+    ? `${window.location.origin}/hack/${event_id}/volunteer-application`
+    : null;
+
+  return (
+    <RequiredAuthProvider
+      authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
+      displayIfLoggedOut={
+        <RedirectToLogin
+          postLoginRedirectUrl={currentUrl || window.location.href}
+        />
+      }
+    >
+      <VolunteerApplicationComponent />
+    </RequiredAuthProvider>
+  );
+};
 
 export default VolunteerApplicationPage;

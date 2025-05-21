@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
+import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from "@propelauth/react";
 import {
   Typography,
   Container,
@@ -139,7 +139,7 @@ const getSponsorshipTierFromDetails = (details) => {
   return 'Custom Sponsorship'; // Default to custom if no match
 };
 
-const SponsorApplicationPage = withRequiredAuthInfo(() => {
+const SponsorApplicationComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
@@ -675,7 +675,7 @@ const SponsorApplicationPage = withRequiredAuthInfo(() => {
   }, []);
 
   // Company Information Form
-  const renderCompanyInfoForm = useCallback(() => (
+  const renderBasicInfoForm = useCallback(() => (
     <Box>
       <Typography variant="h6" component="h3" sx={{ mb: 3 }}>
         Tell us about your organization
@@ -1212,7 +1212,7 @@ const SponsorApplicationPage = withRequiredAuthInfo(() => {
   const getStepContent = useCallback((step) => {
     switch (step) {
       case 0:
-        return renderCompanyInfoForm();
+        return renderBasicInfoForm();
       case 1:
         return renderSponsorshipForm();
       case 2:
@@ -1222,7 +1222,7 @@ const SponsorApplicationPage = withRequiredAuthInfo(() => {
       default:
         return 'Unknown step';
     }
-  }, [renderCompanyInfoForm, renderSponsorshipForm, renderVolunteeringForm, renderReviewForm]);
+  }, [renderBasicInfoForm, renderSponsorshipForm, renderVolunteeringForm, renderReviewForm]);
 
   // SEO metadata and descriptions
   const pageTitle = eventData 
@@ -1403,7 +1403,7 @@ const SponsorApplicationPage = withRequiredAuthInfo(() => {
               </Box>
             </Box>
             
-            {/* Add ApplicationNav component */}
+            {/* Application Nav component */}
             {event_id && <ApplicationNav eventId={event_id} currentType="sponsor" />}
 
             <Box sx={{ mb: 4 }}>
@@ -1455,34 +1455,32 @@ const SponsorApplicationPage = withRequiredAuthInfo(() => {
                       mb: 4,
                       ...(isMobile && {
                         '& .MuiStepLabel-root': {
-                          padding: '0 4px', // Reduce padding on mobile
+                          padding: '0 4px',
                         },
                         '& .MuiStepLabel-labelContainer': {
-                          width: 'auto', // Let the label container be as small as possible
+                          width: 'auto',
                         },
                         '& .MuiStepLabel-label': {
-                          fontSize: '0.7rem', // Smaller text on mobile
-                          whiteSpace: 'nowrap', // Prevent text wrapping
+                          fontSize: '0.7rem',
+                          whiteSpace: 'nowrap',
                         },
                         '& .MuiSvgIcon-root': {
-                          width: 20, // Smaller icons
+                          width: 20,
                           height: 20,
                         },
-                        overflowX: 'auto', // Allow horizontal scrolling if needed
+                        overflowX: 'auto',
                         '&::-webkit-scrollbar': {
-                          display: 'none' // Hide scrollbar on webkit browsers
+                          display: 'none'
                         },
-                        scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                        scrollbarWidth: 'none',
                       })
                     }}
                   >
                     {steps.map((label) => (
                       <Step key={label}>
                         <StepLabel>{isMobile ? (
-                          // On mobile, show abbreviated labels or just the step number
                           activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
                         ) : (
-                          // On desktop, show full labels
                           label
                         )}</StepLabel>
                       </Step>
@@ -1496,7 +1494,10 @@ const SponsorApplicationPage = withRequiredAuthInfo(() => {
                       </Alert>
                     )}
                     
-                    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSubmit();
+                    }}>
                       {getStepContent(activeStep)}
                       
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
@@ -1531,6 +1532,30 @@ const SponsorApplicationPage = withRequiredAuthInfo(() => {
       </Box>
     </Container>
   );
-});
+};
+
+// Create a new component that uses RequiredAuthProvider
+const SponsorApplicationPage = () => {
+  const router = useRouter();
+  const { event_id } = router.query;
+
+  // Create the current URL for redirection
+  const currentUrl = typeof window !== 'undefined' && event_id
+    ? `${window.location.origin}/hack/${event_id}/sponsor-application`
+    : null;
+
+  return (
+    <RequiredAuthProvider
+      authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
+      displayIfLoggedOut={
+        <RedirectToLogin
+          postLoginRedirectUrl={currentUrl || window.location.href}
+        />
+      }
+    >
+      <SponsorApplicationComponent />
+    </RequiredAuthProvider>
+  );
+};
 
 export default SponsorApplicationPage;
