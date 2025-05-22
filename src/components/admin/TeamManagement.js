@@ -1044,7 +1044,7 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
         />
         <Divider />
         <CardContent>
-          <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Box sx={{ mb: 2, display: "flex", gap: 2, alignItems: "center" }}>
             <Typography variant="body2" gutterBottom>
               Send a message to #{teamData.slack_channel}
             </Typography>
@@ -1057,14 +1057,17 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
             >
               Send Message
             </Button>
-            
+
             {/* Add Approve Team Button */}
             <Button
               startIcon={<FaCheckCircle />}
               variant="contained"
               color="success"
               onClick={() => setApprovalDialogOpen(true)}
-              disabled={!teamData.selected_nonprofit_id}
+              disabled={
+                !teamData.selected_nonprofit_id ||
+                teamData.status !== "IN_REVIEW"
+              }
               sx={{ ml: 2 }}
             >
               Approve Team
