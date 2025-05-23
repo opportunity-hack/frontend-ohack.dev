@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from '@propelauth/react';
 import {
@@ -66,6 +66,9 @@ const MentorApplicationComponent = () => {
   // Photo upload state
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  
+  // Prevent duplicate confirmation dialogs
+  const confirmationShownRef = useRef(false);
   
   // Form navigation state
   const [activeStep, setActiveStep] = useState(0);
@@ -334,7 +337,8 @@ const MentorApplicationComponent = () => {
           
           // Check for previous submission
           const prevData = await loadPreviousSubmission();
-          if (prevData) {
+          if (prevData && !confirmationShownRef.current) {
+            confirmationShownRef.current = true;
             // If the user has submitted before, ask if they want to load it
             if (
               window.confirm(

@@ -94,6 +94,7 @@ const VolunteerApplicationComponent = () => {
   // Store refs for data loading
   const initialLoadRef = useRef(false);
   const formInitializedRef = useRef(false);
+  const confirmationShownRef = useRef(false);
   
   // Handle file selection for photo upload
   const handleFileChange = (e) => {
@@ -447,7 +448,8 @@ const VolunteerApplicationComponent = () => {
             try {
               const prevData = await loadPreviousSubmission();
               
-              if (prevData) {
+              if (prevData && !confirmationShownRef.current) {
+                confirmationShownRef.current = true;
                 // If the user has submitted before, ask if they want to load it
                 if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
                   // Transform API data to match our form structure

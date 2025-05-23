@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from "@propelauth/react";
 import {
@@ -67,6 +67,9 @@ const JudgeApplicationComponent = () => {
   } = useRecaptcha();
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  
+  // Prevent duplicate confirmation dialogs
+  const confirmationShownRef = useRef(false);
   
   // Initial form state
   const initialFormData = {
@@ -219,7 +222,8 @@ const JudgeApplicationComponent = () => {
           // Then try to load previous submission
           try {
             const prevData = await loadPreviousSubmission();
-            if (prevData) {
+            if (prevData && !confirmationShownRef.current) {
+              confirmationShownRef.current = true;
               // If the user has submitted before, ask if they want to load it
               if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
                 // Transform API data to match our form structure
@@ -911,7 +915,7 @@ const JudgeApplicationComponent = () => {
     : "Apply to judge our tech for good hackathon. Evaluate innovative solutions for nonprofits and help select winning projects that make real social impact.";
   const canonicalUrl = `https://ohack.dev/hack/${event_id}/judge-application`;
   
-  const imageUrl = eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_judges_1.webp";
+  const imageUrl = eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
 
   // Breadcrumb items for structured data
   const breadcrumbItems = [
@@ -1208,7 +1212,7 @@ const JudgeApplicationComponent = () => {
                 }}
               >
                 <img 
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_judges_1.webp" 
+                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp" 
                   alt="Professional judges evaluating innovative tech solutions at Opportunity Hack" 
                   style={{ 
                     width: '100%',

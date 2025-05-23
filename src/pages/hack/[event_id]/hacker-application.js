@@ -69,6 +69,7 @@ const HackerApplicationComponent = () => {
   // Store refs for data loading
   const initialLoadRef = useRef(false);
   const formInitializedRef = useRef(false);
+  const confirmationShownRef = useRef(false);
   
   // Initial form state
   const initialFormData = {
@@ -607,7 +608,8 @@ const HackerApplicationComponent = () => {
             try {
               const prevData = await loadPreviousSubmission();
               
-              if (prevData) {
+              if (prevData && !confirmationShownRef.current) {
+                confirmationShownRef.current = true;
                 // If the user has submitted before, ask if they want to load it
                 if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
                   // Transform API data to match our form structure
@@ -1984,7 +1986,7 @@ const HackerApplicationComponent = () => {
   const canonicalUrl = `https://ohack.dev/hack/${event_id}/hacker-application`;
   
   const imageUrl =
-    eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_coding_1.webp";
+    eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
 
   // Breadcrumb items for structured data
   const breadcrumbItems = [
@@ -2287,7 +2289,7 @@ const HackerApplicationComponent = () => {
                 }}
               >
                 <img 
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_coding_1.webp" 
+                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp" 
                   alt="Developers building innovative solutions for nonprofits at Opportunity Hack" 
                   style={{ 
                     width: '100%',

@@ -184,6 +184,9 @@ const SponsorApplicationComponent = () => {
   const [logoPreview, setLogoPreview] = useState(null);
   const [error, setError] = useState('');
   
+  // Prevent duplicate confirmation dialogs
+  const confirmationShownRef = useRef(false);
+  
   // reCAPTCHA integration
   const { 
     initializeRecaptcha, 
@@ -328,7 +331,8 @@ const SponsorApplicationComponent = () => {
           try {
             const prevData = await loadPreviousSubmission();
             
-            if (prevData) {
+            if (prevData && !confirmationShownRef.current) {
+              confirmationShownRef.current = true;
               // If the user has submitted before, ask if they want to load it
               if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
                 // Transform API data to match our form structure
