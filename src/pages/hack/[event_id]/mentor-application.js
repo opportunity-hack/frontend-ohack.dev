@@ -858,14 +858,14 @@ const MentorApplicationComponent = () => {
   
   // SEO metadata and descriptions
   const pageTitle = eventData 
-    ? `Mentor Application for ${eventData.name} - Opportunity Hack`
-    : "Mentor Application - Opportunity Hack";
+    ? `Mentor at ${eventData.name} | Guide Tech for Good Developers in ${eventData.location}`
+    : "Mentor at Opportunity Hack | Guide Tech for Good Developers";
   const pageDescription = eventData
-    ? `Apply to be a mentor for ${eventData.name} in ${eventData.location}. Help guide teams of technologists to create solutions for nonprofits and make a real impact.`
-    : "Apply to be a mentor for our social good hackathon. Help guide teams of technologists to create solutions for nonprofits and make a real impact.";
+    ? `Mentor developers at ${eventData.name} in ${eventData.location} from ${eventData.formattedStartDate} to ${eventData.formattedEndDate}. Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship.`
+    : "Mentor developers at Opportunity Hack hackathon! Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship and tech for good.";
   const canonicalUrl = `https://ohack.dev/hack/${event_id}/mentor-application`;
   
-  const imageUrl = eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
+  const seoImageUrl = "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp";
 
   // Define steps for stepper (moved up before the conditional content render)
   const steps = ['Basic Info', 'Skills & Experience', 'Availability', 'Finish'];
@@ -1523,17 +1523,6 @@ const MentorApplicationComponent = () => {
       </Container>
     );
   };
-
-  // Enhanced SEO metadata and descriptions
-  const pageTitle = eventData 
-    ? `Mentor at ${eventData.name} | Guide Tech for Good Developers in ${eventData.location}`
-    : "Mentor at Opportunity Hack | Guide Tech for Good Developers";
-  const pageDescription = eventData
-    ? `Mentor developers at ${eventData.name} in ${eventData.location} from ${eventData.formattedStartDate} to ${eventData.formattedEndDate}. Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship.`
-    : "Mentor developers at Opportunity Hack hackathon! Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship and tech for good.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/mentor-application`;
-  
-  const imageUrl = "https://cdn.ohack.dev/ohack.dev/2023_hackathon_mentors_1.webp";
   
   // Structured data for mentor application
   const structuredData = eventData ? {
@@ -1609,7 +1598,7 @@ const MentorApplicationComponent = () => {
           <meta property="og:description" content={pageDescription} />
           <meta property="og:type" content="website" />
           <meta property="og:url" content={canonicalUrl} />
-          <meta property="og:image" content={imageUrl} />
+          <meta property="og:image" content={seoImageUrl} />
           <meta property="og:image:alt" content="Mentors guiding developers at Opportunity Hack hackathon" />
           <meta property="og:site_name" content="Opportunity Hack" />
           <meta property="og:locale" content="en_US" />
@@ -1620,7 +1609,7 @@ const MentorApplicationComponent = () => {
           <meta name="twitter:creator" content="@OpportunityHack" />
           <meta name="twitter:title" content={pageTitle} />
           <meta name="twitter:description" content={pageDescription} />
-          <meta name="twitter:image" content={imageUrl} />
+          <meta name="twitter:image" content={seoImageUrl} />
           <meta name="twitter:image:alt" content="Mentors guiding developers at Opportunity Hack hackathon" />
 
           {/* Additional SEO tags */}
