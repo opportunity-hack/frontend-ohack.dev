@@ -28,53 +28,58 @@ import {
 import { LoginButton, NavbarLink, NavbarButton } from "./styles";
 
 const pages = [
-  ["📩 Submit Project", "/nonprofits/apply"],
-  ["📖 Projects", "/projects"],  
-  ["#️⃣ Join Slack", "/signup"],
-  ["📍 Request a Hack", "/hack/request"],
-  ["🏆 Judges", "/about/judges"],
-  ["🎉 Sponsors", "/sponsor"],
+  ["Hackathons", "/hack"],
+  ["Projects", "/projects"],
+  ["Nonprofits", "/nonprofits"],
+  ["Sponsors", "/sponsor"],
 ];
 
-// Reorganized about_settings with logical groupings
+// Hackathon-related dropdown menu
+const hackathonMenuItems = [
+  ["Upcoming Events", "/hack"],
+  ["What is a Hackathon?", "/about/process"],
+  ["Request a Hackathon", "/hack/request"],
+  ["Code of Conduct", "/hack/code-of-conduct"],
+];
+
+// Get Involved dropdown menu
+const getInvolvedMenuItems = [
+  ["Volunteer", "/volunteer"],
+  ["Become a Mentor", "/about/mentors"],
+  ["Become a Judge", "/about/judges"],
+  ["Track Your Time", "/volunteer/track"],
+  ["Join Our Slack", "/signup"],
+  ["Office Hours", "/office-hours"],
+];
+
+// Reorganized about_settings with cleaner groupings
 const aboutMenuGroups = [
   {
-    title: "About Us",
+    title: "About Opportunity Hack",
     items: [
-      ["ℹ️ About Us", "/about"],
-      ["❓ What's your why?", "/about/why"],
-      ["🙌 Success Stories", "/about/success-stories"],
+      ["Our Mission", "/about"],
+      ["Success Stories", "/about/success-stories"],
+      ["Find Your Why", "/about/why"],
+      ["Project Completion", "/about/completion"],
+      ["Reward System", "/about/hearts"],
     ],
   },
   {
-    title: "Get Involved",
+    title: "Resources",
     items: [
-      ["🏢 Nonprofits", "/nonprofits"],
-      ["🤚 Volunteering", "/volunteer"],
-      ["⌛️ Track Volunteer Time", "/volunteer/track"],
-      ["🙏 Mentors", "/about/mentors"],
-      ["🚪 Office Hours", "/office-hours"],
-    ],
-  },
-  {
-    title: "Hackathons & Projects",
-    items: [
-      ["🎉 What is a Hackathon?", "/hack"],
-      ["📝 Process", "/about/process"],
-      ["✅ Project Completion", "/about/completion"],
-      ["❤️ Rewards", "/about/hearts"],
-    ],
-  },
-  {
-    title: "Other Resources",
-    items: [
-      ["🛜 Get Feedback", "/feedback"],
-      ["🎨 Style Guide", "/about/style-guide"],
+      ["Blog", "/blog"],
+      ["Give Feedback", "/feedback"],
+      ["Nonprofit Grants", "/nonprofit-grants"],
+      ["Contact Us", "/contact"],
     ],
   },
 ];
 
-const auth_settings = [["Profile", "/profile"]];
+const auth_settings = [
+  ["My Profile", "/profile"],
+  ["My Feedback", "/myfeedback"],
+  ["Track Time", "/volunteer/track"],
+];
 
 export default function NavBar() {
   const { isLoggedIn, user } = useAuthInfo();
@@ -84,6 +89,8 @@ export default function NavBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [anchorElAbout, setAnchorElAbout] = React.useState(null);
+  const [anchorElGetInvolved, setAnchorElGetInvolved] = React.useState(null);
+  const [anchorElHackathons, setAnchorElHackathons] = React.useState(null);
 
   useEffect(() => {
     if (isLoggedIn && user?.email) {
@@ -104,9 +111,13 @@ export default function NavBar() {
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
   const handleOpenAboutMenu = (event) => setAnchorElAbout(event.currentTarget);
+  const handleOpenGetInvolvedMenu = (event) => setAnchorElGetInvolved(event.currentTarget);
+  const handleOpenHackathonsMenu = (event) => setAnchorElHackathons(event.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
   const handleCloseUserMenu = () => setAnchorElUser(null);
   const handleCloseAboutMenu = () => setAnchorElAbout(null);
+  const handleCloseGetInvolvedMenu = () => setAnchorElGetInvolved(null);
+  const handleCloseHackathonsMenu = () => setAnchorElHackathons(null);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -240,6 +251,30 @@ export default function NavBar() {
                 </Link>
               ))}
               <Divider />
+              <ListSubheader>Get Involved</ListSubheader>
+              {getInvolvedMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu} 
+                    sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
+              <Divider />
+              <ListSubheader>Hackathon Resources</ListSubheader>
+              {hackathonMenuItems.slice(1).map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu} 
+                    sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
+              <Divider />
               <ListSubheader>About Opportunity Hack</ListSubheader>
               {aboutMenuGroups.map((group, index) => (
                 <div key={group.title}>
@@ -291,6 +326,46 @@ export default function NavBar() {
               </NavbarLink>
             ))}
 
+            <Tooltip title="Get Involved">
+              <NavbarButton
+                onClick={handleOpenGetInvolvedMenu}
+                sx={{ my: 1, color: "white", display: "block" }}
+              >
+                Get Involved
+              </NavbarButton>
+            </Tooltip>
+            <Menu
+              sx={{ 
+                mt: "45px",
+                maxHeight: "75vh",
+                overflowY: "auto"
+              }}
+              id="get-involved-menu"
+              anchorEl={anchorElGetInvolved}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={Boolean(anchorElGetInvolved)}
+              onClose={handleCloseGetInvolvedMenu}
+            >
+              {getInvolvedMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseGetInvolvedMenu}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
+            </Menu>
+
             <Tooltip title="About Us">
               <NavbarButton
                 onClick={handleOpenAboutMenu}
@@ -305,7 +380,7 @@ export default function NavBar() {
                 maxHeight: "75vh",
                 overflowY: "auto"
               }}
-              id="menu-appbar"
+              id="about-menu"
               anchorEl={anchorElAbout}
               anchorOrigin={{
                 vertical: "top",
