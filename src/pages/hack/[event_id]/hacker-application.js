@@ -32,8 +32,10 @@ import {
   Autocomplete
 } from '@mui/material';
 import Head from 'next/head';
+import Script from 'next/script';
 import { useEnv } from '../../../context/env.context';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
+import Breadcrumbs from '../../../components/Breadcrumbs/Breadcrumbs';
 import InfoIcon from '@mui/icons-material/Info';
 import SearchIcon from '@mui/icons-material/Search';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
@@ -1974,15 +1976,86 @@ const HackerApplicationComponent = () => {
   
   // SEO metadata and descriptions
   const pageTitle = eventData 
-    ? `Hacker Application for ${eventData.name} - Opportunity Hack`
-    : "Hacker Application - Opportunity Hack";
+    ? `Join ${eventData.name} | Build Tech Solutions for Good`
+    : "Join Opportunity Hack | Build Tech Solutions for Good";
   const pageDescription = eventData
-    ? `Apply to be a hacker for ${eventData.name} in ${eventData.location}. Join a team to create tech solutions for nonprofits and make a real impact.`
-    : "Apply to be a hacker for our social good hackathon. Join a team to create tech solutions for nonprofits and make a real impact.";
+    ? `Apply to participate in ${eventData.name} in ${eventData.location}. Build innovative tech solutions for nonprofits, work with amazing teams, and create real social impact.`
+    : "Apply to participate in our tech for good hackathon. Build innovative solutions for nonprofits, work with amazing teams, and create real social impact.";
   const canonicalUrl = `https://ohack.dev/hack/${event_id}/hacker-application`;
   
   const imageUrl =
-    eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
+    eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_coding_1.webp";
+
+  // Breadcrumb items for structured data
+  const breadcrumbItems = [
+    { name: 'Home', url: 'https://ohack.dev' },
+    { name: 'Hackathons', url: 'https://ohack.dev/hack' },
+    { 
+      name: eventData?.name || 'Hackathon Event', 
+      url: `https://ohack.dev/hack/${event_id}` 
+    },
+    { 
+      name: 'Hacker Application', 
+      url: canonicalUrl 
+    }
+  ];
+
+  // Structured data for hacker application
+  const hackerApplicationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": pageTitle,
+    "description": pageDescription,
+    "url": canonicalUrl,
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Opportunity Hack",
+      "url": "https://ohack.dev"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": breadcrumbItems.map((item, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "name": item.name,
+        "item": item.url
+      }))
+    },
+    "mainEntity": {
+      "@type": "Event",
+      "name": eventData?.name || "Opportunity Hack",
+      "description": "Apply to participate in a tech for good hackathon where you'll build solutions for nonprofits",
+      "organizer": {
+        "@type": "Organization",
+        "name": "Opportunity Hack"
+      },
+      "location": {
+        "@type": "Place",
+        "name": eventData?.location || "Tempe, Arizona",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": eventData?.location || "Tempe",
+          "addressRegion": "Arizona",
+          "addressCountry": "US"
+        }
+      },
+      "eventAttendanceMode": "OfflineEventAttendanceMode",
+      "eventStatus": "EventScheduled",
+      "audience": {
+        "@type": "Audience",
+        "audienceType": ["Developers", "Designers", "Students", "Tech Professionals", "Social Impact Enthusiasts"]
+      },
+      "keywords": [
+        "hackathon",
+        "tech for good", 
+        "nonprofit",
+        "social impact",
+        "coding",
+        "volunteering",
+        "team building"
+      ]
+    }
+  };
 
   // If form submitted successfully, show success message
   if (success) {
@@ -1991,8 +2064,48 @@ const HackerApplicationComponent = () => {
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
+          <meta
+            name="keywords"
+            content="hackathon, hacker application, tech for good, nonprofit hackathon, opportunity hack, coding for social good, volunteer, tech projects"
+          />
           <link rel="canonical" href={canonicalUrl} />
+
+          {/* DNS prefetch and preconnect for performance */}
+          <link rel="dns-prefetch" href="//cdn.ohack.dev" />
+          <link rel="preconnect" href="https://cdn.ohack.dev" crossOrigin="anonymous" />
+
+          {/* Open Graph tags */}
+          <meta property="og:title" content={pageTitle} />
+          <meta property="og:description" content={pageDescription} />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={canonicalUrl} />
+          <meta property="og:image" content={imageUrl} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content="Developers coding solutions for nonprofits at Opportunity Hack" />
+          <meta property="og:site_name" content="Opportunity Hack" />
+
+          {/* Twitter Card tags */}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={pageTitle} />
+          <meta name="twitter:description" content={pageDescription} />
+          <meta name="twitter:image" content={imageUrl} />
+          <meta name="twitter:image:alt" content="Developers coding solutions for nonprofits at Opportunity Hack" />
+
+          {/* Additional SEO meta tags */}
+          <meta name="robots" content="index, follow" />
+          <meta name="author" content="Opportunity Hack" />
+          <meta name="theme-color" content="#1976d2" />
         </Head>
+
+        {/* Structured Data */}
+        <Script
+          id="hacker-application-structured-data"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(hackerApplicationStructuredData)
+          }}
+        />
         
         <Box my={8} textAlign="center">
           <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4, mt: 12 }}>
@@ -2040,25 +2153,42 @@ const HackerApplicationComponent = () => {
         />
         <link rel="canonical" href={canonicalUrl} />
 
+        {/* DNS prefetch and preconnect for performance */}
+        <link rel="dns-prefetch" href="//cdn.ohack.dev" />
+        <link rel="preconnect" href="https://cdn.ohack.dev" crossOrigin="anonymous" />
+
         {/* Open Graph tags */}
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalUrl} />
-        <meta
-          property="og:image"
-          content={imageUrl}
-        />
+        <meta property="og:image" content={imageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="Developers coding solutions for nonprofits at Opportunity Hack" />
+        <meta property="og:site_name" content="Opportunity Hack" />
 
         {/* Twitter Card tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <meta
-          name="twitter:image"
-          content={imageUrl}
-        />
+        <meta name="twitter:image" content={imageUrl} />
+        <meta name="twitter:image:alt" content="Developers coding solutions for nonprofits at Opportunity Hack" />
+
+        {/* Additional SEO meta tags */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="Opportunity Hack" />
+        <meta name="theme-color" content="#1976d2" />
       </Head>
+
+      {/* Structured Data */}
+      <Script
+        id="hacker-application-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(hackerApplicationStructuredData)
+        }}
+      />
 
       {/* Form persistence notification component */}
       <FormPersistenceControls
@@ -2157,8 +2287,8 @@ const HackerApplicationComponent = () => {
                 }}
               >
                 <img 
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp" 
-                  alt="Hackers collaborating at Opportunity Hack" 
+                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_coding_1.webp" 
+                  alt="Developers building innovative solutions for nonprofits at Opportunity Hack" 
                   style={{ 
                     width: '100%',
                     height: '100%',

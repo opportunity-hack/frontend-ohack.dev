@@ -32,9 +32,11 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Head from 'next/head';
+import Script from 'next/script';
 import { useEnv } from '../../../context/env.context';
 import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
+import Breadcrumbs from '../../../components/Breadcrumbs/Breadcrumbs';
 import InfoIcon from '@mui/icons-material/Info';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
@@ -902,14 +904,83 @@ const JudgeApplicationComponent = () => {
 
   // SEO metadata and descriptions
   const pageTitle = eventData 
-    ? `Judge Application for ${eventData.name} - Opportunity Hack`
-    : "Judge Application - Opportunity Hack";
+    ? `Judge ${eventData.name} | Evaluate Tech for Good Solutions`
+    : "Judge at Opportunity Hack | Evaluate Tech for Good Solutions";
   const pageDescription = eventData
-    ? `Apply to be a judge for ${eventData.name} in ${eventData.location}. Help evaluate innovative solutions for nonprofits and make a real impact.`
-    : "Apply to be a judge for our social good hackathon. Help evaluate innovative solutions for nonprofits and make a real impact.";
+    ? `Apply to judge ${eventData.name} in ${eventData.location}. Evaluate innovative tech solutions for nonprofits and help select winning projects that make real impact.`
+    : "Apply to judge our tech for good hackathon. Evaluate innovative solutions for nonprofits and help select winning projects that make real social impact.";
   const canonicalUrl = `https://ohack.dev/hack/${event_id}/judge-application`;
   
-  const imageUrl = eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
+  const imageUrl = eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_judges_1.webp";
+
+  // Breadcrumb items for structured data
+  const breadcrumbItems = [
+    { name: 'Home', url: 'https://ohack.dev' },
+    { name: 'Hackathons', url: 'https://ohack.dev/hack' },
+    { 
+      name: eventData?.name || 'Hackathon Event', 
+      url: `https://ohack.dev/hack/${event_id}` 
+    },
+    { 
+      name: 'Judge Application', 
+      url: canonicalUrl 
+    }
+  ];
+
+  // Structured data for judge application
+  const judgeApplicationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": pageTitle,
+    "description": pageDescription,
+    "url": canonicalUrl,
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Opportunity Hack",
+      "url": "https://ohack.dev"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": breadcrumbItems.map((item, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "name": item.name,
+        "item": item.url
+      }))
+    },
+    "mainEntity": {
+      "@type": "JobPosting",
+      "title": `Judge for ${eventData?.name || 'Opportunity Hack'}`,
+      "description": "Evaluate innovative tech solutions created for nonprofits during our hackathon event",
+      "hiringOrganization": {
+        "@type": "Organization",
+        "name": "Opportunity Hack"
+      },
+      "jobLocation": {
+        "@type": "Place",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": eventData?.location || "Tempe",
+          "addressRegion": "Arizona",
+          "addressCountry": "US"
+        }
+      },
+      "employmentType": "VOLUNTEER",
+      "industry": "Technology for Social Good",
+      "responsibilities": [
+        "Evaluate hackathon projects for technical innovation",
+        "Assess impact potential for nonprofit organizations", 
+        "Provide constructive feedback to development teams",
+        "Help select winning solutions"
+      ],
+      "qualifications": [
+        "Professional experience in technology, product management, or related fields",
+        "Understanding of nonprofit sector challenges", 
+        "Ability to evaluate technical solutions objectively",
+        "Commitment to social good initiatives"
+      ]
+    }
+  };
 
   // If form submitted successfully, show success message
   if (success) {
@@ -918,8 +989,48 @@ const JudgeApplicationComponent = () => {
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
+          <meta
+            name="keywords"
+            content="hackathon judge, judge application, tech for good, nonprofit hackathon, opportunity hack, judging, volunteer, tech judging"
+          />
           <link rel="canonical" href={canonicalUrl} />
+
+          {/* DNS prefetch and preconnect for performance */}
+          <link rel="dns-prefetch" href="//cdn.ohack.dev" />
+          <link rel="preconnect" href="https://cdn.ohack.dev" crossOrigin="anonymous" />
+
+          {/* Open Graph tags */}
+          <meta property="og:title" content={pageTitle} />
+          <meta property="og:description" content={pageDescription} />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={canonicalUrl} />
+          <meta property="og:image" content={imageUrl} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content="Judges evaluating tech solutions at Opportunity Hack" />
+          <meta property="og:site_name" content="Opportunity Hack" />
+
+          {/* Twitter Card tags */}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={pageTitle} />
+          <meta name="twitter:description" content={pageDescription} />
+          <meta name="twitter:image" content={imageUrl} />
+          <meta name="twitter:image:alt" content="Judges evaluating tech solutions at Opportunity Hack" />
+
+          {/* Additional SEO meta tags */}
+          <meta name="robots" content="index, follow" />
+          <meta name="author" content="Opportunity Hack" />
+          <meta name="theme-color" content="#1976d2" />
         </Head>
+
+        {/* Structured Data */}
+        <Script
+          id="judge-application-structured-data"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(judgeApplicationStructuredData)
+          }}
+        />
         
         <Box my={8} textAlign="center">
           <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4, mt: 12 }}>
@@ -954,19 +1065,42 @@ const JudgeApplicationComponent = () => {
         />
         <link rel="canonical" href={canonicalUrl} />
 
+        {/* DNS prefetch and preconnect for performance */}
+        <link rel="dns-prefetch" href="//cdn.ohack.dev" />
+        <link rel="preconnect" href="https://cdn.ohack.dev" crossOrigin="anonymous" />
+
         {/* Open Graph tags */}
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:image" content={imageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="Judges evaluating tech solutions at Opportunity Hack" />
+        <meta property="og:site_name" content="Opportunity Hack" />
 
         {/* Twitter Card tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         <meta name="twitter:image" content={imageUrl} />
+        <meta name="twitter:image:alt" content="Judges evaluating tech solutions at Opportunity Hack" />
+
+        {/* Additional SEO meta tags */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="Opportunity Hack" />
+        <meta name="theme-color" content="#1976d2" />
       </Head>
+
+      {/* Structured Data */}
+      <Script
+        id="judge-application-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(judgeApplicationStructuredData)
+        }}
+      />
       
       {/* Form persistence notification component */}
       <FormPersistenceControls
@@ -1074,8 +1208,8 @@ const JudgeApplicationComponent = () => {
                 }}
               >
                 <img 
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp" 
-                  alt="Judges evaluating projects at Opportunity Hack" 
+                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_judges_1.webp" 
+                  alt="Professional judges evaluating innovative tech solutions at Opportunity Hack" 
                   style={{ 
                     width: '100%',
                     height: '100%',

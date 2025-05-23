@@ -31,9 +31,11 @@ import {
 } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Head from 'next/head';
+import Script from 'next/script';
 import { useEnv } from '../../../context/env.context';
 import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
+import Breadcrumbs from '../../../components/Breadcrumbs/Breadcrumbs';
 import InfoIcon from '@mui/icons-material/Info';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
@@ -1522,16 +1524,84 @@ const MentorApplicationComponent = () => {
     );
   };
 
+  // Enhanced SEO metadata and descriptions
+  const pageTitle = eventData 
+    ? `Mentor at ${eventData.name} | Guide Tech for Good Developers in ${eventData.location}`
+    : "Mentor at Opportunity Hack | Guide Tech for Good Developers";
+  const pageDescription = eventData
+    ? `Mentor developers at ${eventData.name} in ${eventData.location} from ${eventData.formattedStartDate} to ${eventData.formattedEndDate}. Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship.`
+    : "Mentor developers at Opportunity Hack hackathon! Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship and tech for good.";
+  const canonicalUrl = `https://ohack.dev/hack/${event_id}/mentor-application`;
+  
+  const imageUrl = "https://cdn.ohack.dev/ohack.dev/2023_hackathon_mentors_1.webp";
+  
+  // Structured data for mentor application
+  const structuredData = eventData ? {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": pageTitle,
+    "description": pageDescription,
+    "url": canonicalUrl,
+    "mainEntity": {
+      "@type": "Event",
+      "name": eventData.name,
+      "startDate": eventData.startDate,
+      "endDate": eventData.endDate,
+      "location": {
+        "@type": "Place",
+        "name": eventData.location
+      },
+      "organizer": {
+        "@type": "Organization",
+        "name": "Opportunity Hack",
+        "url": "https://ohack.dev"
+      }
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://ohack.dev/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Hackathons",
+          "item": "https://ohack.dev/hack"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": eventData.name,
+          "item": `https://ohack.dev/hack/${event_id}`
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "Mentor Application",
+          "item": canonicalUrl
+        }
+      ]
+    }
+  } : null;
+
   const renderApplicationForm = () => {
     return (
       <Container>
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta charSet="UTF-8" />
           <meta
             name="keywords"
-            content="hackathon mentor, mentor application, tech for good, nonprofit hackathon, opportunity hack, mentorship, volunteer, tech mentoring"
+            content={`hackathon mentor, mentor application, tech for good, nonprofit hackathon, opportunity hack, mentorship, volunteer, tech mentoring, ${eventData?.name || 'hackathon'}, ${eventData?.location || 'tech event'}, industry expert, developer guidance`}
           />
+          <meta name="author" content="Opportunity Hack" />
+          <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
           <link rel="canonical" href={canonicalUrl} />
 
           {/* Open Graph tags */}
@@ -1539,20 +1609,37 @@ const MentorApplicationComponent = () => {
           <meta property="og:description" content={pageDescription} />
           <meta property="og:type" content="website" />
           <meta property="og:url" content={canonicalUrl} />
-          <meta
-            property="og:image"
-            content={imageUrl}
-          />
+          <meta property="og:image" content={imageUrl} />
+          <meta property="og:image:alt" content="Mentors guiding developers at Opportunity Hack hackathon" />
+          <meta property="og:site_name" content="Opportunity Hack" />
+          <meta property="og:locale" content="en_US" />
 
           {/* Twitter Card tags */}
           <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:site" content="@OpportunityHack" />
+          <meta name="twitter:creator" content="@OpportunityHack" />
           <meta name="twitter:title" content={pageTitle} />
           <meta name="twitter:description" content={pageDescription} />
-          <meta
-            name="twitter:image"
-            content={imageUrl}
-          />
+          <meta name="twitter:image" content={imageUrl} />
+          <meta name="twitter:image:alt" content="Mentors guiding developers at Opportunity Hack hackathon" />
+
+          {/* Additional SEO tags */}
+          <meta name="application-name" content="Opportunity Hack" />
+          <meta name="theme-color" content="#3f51b5" />
+          <meta name="format-detection" content="telephone=no" />
+          
+          {/* Preconnect to optimize loading */}
+          <link rel="preconnect" href="https://cdn.ohack.dev" crossOrigin="anonymous" />
+          <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
         </Head>
+
+        {structuredData && (
+          <Script
+            id="mentor-application-structured-data"
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          />
+        )}
 
         {/* Form persistence notification component */}
         <FormPersistenceControls
@@ -1563,7 +1650,7 @@ const MentorApplicationComponent = () => {
           onCloseNotification={closeNotification}
         />
 
-        <Box ref={formRef}>
+        <Box ref={formRef}>                    
           <Typography
             variant="h1"
             component="h1"
@@ -1651,7 +1738,7 @@ const MentorApplicationComponent = () => {
                   }}
                 >
                   <img 
-                    src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp" 
+                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_mentors_1.webp" 
                     alt="Mentors guiding teams at Opportunity Hack" 
                     style={{ 
                       width: '100%',

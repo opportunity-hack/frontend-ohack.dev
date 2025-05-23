@@ -6,6 +6,7 @@ import { CircularProgress, Container, Grid } from "@mui/material";
 import HackathonHeader from "../../components/Hackathon/HackathonHeader";
 import { Typography, Button, styled } from "@mui/material";
 import TableOfContents from '../../components/Hackathon/TableOfContents';
+import Breadcrumbs from '../../components/Breadcrumbs/Breadcrumbs';
 import Script from 'next/script';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -421,8 +422,8 @@ export default function HackathonEvent({ eventData }) {
   const metaImage = event?.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp";
   const metaTitle = event ? `${event.title} - Opportunity Hack Hackathon Event` : "Opportunity Hack Hackathon Event";
   
-  // Create a fully detailed structured data object for rich results
-  const structuredData = event ? {
+  // Create multiple structured data objects for rich results
+  const eventStructuredData = event ? {
     "@context": "http://schema.org",
     "@type": "Event",
     "name": event.title,
@@ -440,14 +441,21 @@ export default function HackathonEvent({ eventData }) {
       }
     },
     "image": [
-      metaImage
+      metaImage,
+      "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
+      "https://cdn.ohack.dev/ohack.dev/2023_hackathon_3.webp"
     ],
     "url": `https://ohack.dev/hack/${event_id}`,
     "organizer": {
       "@type": "Organization",
       "name": "Opportunity Hack",
       "url": "https://ohack.dev",
-      "logo": "https://ohack.dev/ohack.png"
+      "logo": "https://ohack.dev/ohack.png",
+      "sameAs": [
+        "https://www.linkedin.com/company/opportunity-hack",
+        "https://twitter.com/opportunityhack",
+        "https://github.com/opportunity-hack"
+      ]
     },
     "offers": {
       "@type": "Offer",
@@ -461,8 +469,30 @@ export default function HackathonEvent({ eventData }) {
       "@type": "Organization",
       "name": "Opportunity Hack Volunteers"
     },
-    "keywords": ["hackathon", "nonprofit", "coding", "volunteers", "tech for good", event.location, "opportunity hack"]
+    "audience": {
+      "@type": "Audience",
+      "audienceType": ["Developers", "Designers", "Students", "Professionals", "Nonprofits"]
+    },
+    "workFeatured": {
+      "@type": "CreativeWork",
+      "name": "Nonprofit Technology Solutions"
+    },
+    "keywords": ["hackathon", "nonprofit", "coding", "volunteers", "tech for good", event.location, "opportunity hack", "social impact", "technology", "programming"]
   } : null;
+
+  // FAQ structured data for better search results
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqData.slice(0, 10).map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": typeof faq.answer === 'string' ? faq.answer : 'Please visit our website for detailed information.'
+      }
+    }))
+  };
 
   return (
     <>
@@ -543,15 +573,21 @@ export default function HackathonEvent({ eventData }) {
         <link rel="canonical" href={`https://ohack.dev/hack/${event_id}`} />
       </Head>
 
-      {structuredData && (
+      {eventStructuredData && (
         <Script
-          id="structured-data-script"
+          id="event-structured-data"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventStructuredData) }}
         />
       )}
+      
+      <Script
+        id="faq-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
 
-      <Container maxWidth="lg" component="main">
+      <Container maxWidth="lg" component="main">                
         <HackathonHeader
           title={event.title}
           startDate={event.start_date}

@@ -129,38 +129,7 @@ export default function EditHackathonRequest() {
         />
       </Head>
       
-      <Container maxWidth="lg">
-        <Box mt={4} mb={2}>
-          <Breadcrumbs 
-            separator={<NavigateNextIcon fontSize="small" />}
-            aria-label="breadcrumb"
-          >
-            <Link href="/" passHref>
-              <Button 
-                color="inherit" 
-                size="small" 
-                startIcon={<HomeIcon />}
-                component="a"
-              >
-                Home
-              </Button>
-            </Link>
-            <Link href="/hack" passHref>
-              <Button 
-                color="inherit"
-                size="small"
-                component="a"
-              >
-                Hackathons
-              </Button>
-            </Link>
-            <Typography color="textPrimary" sx={{ display: 'flex', alignItems: 'center' }}>
-              <EditIcon fontSize="small" sx={{ mr: 0.5 }} />
-              Edit Request
-            </Typography>
-          </Breadcrumbs>
-        </Box>
-        
+      <Container maxWidth="lg">                
         <Box mt={4} mb={6}>
           <Typography 
             variant="h3" 
