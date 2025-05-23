@@ -26,8 +26,9 @@ import {
   Step,
   StepLabel,
   useTheme,
-  useMediaQuery
-} from '@mui/material';
+  useMediaQuery,
+  RadioGroup,  
+} from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Head from 'next/head';
 import { useEnv } from '../../../context/env.context';
@@ -41,6 +42,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
+import RadioIcon from '@mui/material/Radio';
 
 const MentorApplicationComponent = () => {
   const router = useRouter();
@@ -1080,8 +1082,117 @@ const MentorApplicationComponent = () => {
         When can you help mentor? (Select all that apply)
       </Typography>
       <Typography variant="body2" sx={{ mb: 2 }}>
-        Select the dates you are available. For each date, pick the time slots you can mentor. For long hackathons, use the filter to quickly find your dates.
+        Select the dates you are available. For each date, pick the time slots
+        you can mentor. For long hackathons, use the filter to quickly find your
+        dates.
       </Typography>
+
+      {/* Add in-person attendance field */}
+      <FormControl required component="fieldset" sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Will you be attending in person at ASU in Tempe, Arizona?
+        </Typography>
+        <RadioGroup
+          name="inPerson"
+          value={formData.inPerson}
+          onChange={handleChange}
+        >
+          <FormControlLabel
+            value="Yes!"
+            control={<RadioIcon />}
+            label="Yes! I'll be there in person"
+          />
+          <FormControlLabel
+            value="No, I'll be virtual"
+            control={<RadioIcon />}
+            label="No, I'll be joining virtually"
+          />
+        </RadioGroup>
+      </FormControl>
+
+      {/* Add location fields */}
+      <FormControl fullWidth required sx={{ mb: 3 }}>
+        <InputLabel id="country-label">Country</InputLabel>
+        <Select
+          labelId="country-label"
+          id="country"
+          name="country"
+          value={formData.country}
+          onChange={handleChange}
+          label="Country"
+        >
+          <MenuItem value="United States">United States</MenuItem>
+          <MenuItem value="Canada">Canada</MenuItem>
+          <MenuItem value="India">India</MenuItem>
+          <MenuItem value="United Kingdom">United Kingdom</MenuItem>
+          <MenuItem value="Australia">Australia</MenuItem>
+          <MenuItem value="Other">Other</MenuItem>
+        </Select>
+      </FormControl>
+
+      <FormControl fullWidth required sx={{ mb: 3 }}>
+        <InputLabel id="state-label">State/Province/Region</InputLabel>
+        <Select
+          labelId="state-label"
+          id="state"
+          name="state"
+          value={formData.state}
+          onChange={handleChange}
+          label="State/Province/Region"
+        >
+          <MenuItem value="Alabama">Alabama</MenuItem>
+          <MenuItem value="Alaska">Alaska</MenuItem>
+          <MenuItem value="Arizona">Arizona</MenuItem>
+          <MenuItem value="Arkansas">Arkansas</MenuItem>
+          <MenuItem value="California">California</MenuItem>
+          <MenuItem value="Colorado">Colorado</MenuItem>
+          <MenuItem value="Connecticut">Connecticut</MenuItem>
+          <MenuItem value="Delaware">Delaware</MenuItem>
+          <MenuItem value="Florida">Florida</MenuItem>
+          <MenuItem value="Georgia">Georgia</MenuItem>
+          <MenuItem value="Hawaii">Hawaii</MenuItem>
+          <MenuItem value="Idaho">Idaho</MenuItem>
+          <MenuItem value="Illinois">Illinois</MenuItem>
+          <MenuItem value="Indiana">Indiana</MenuItem>
+          <MenuItem value="Iowa">Iowa</MenuItem>
+          <MenuItem value="Kansas">Kansas</MenuItem>
+          <MenuItem value="Kentucky">Kentucky</MenuItem>
+          <MenuItem value="Louisiana">Louisiana</MenuItem>
+          <MenuItem value="Maine">Maine</MenuItem>
+          <MenuItem value="Maryland">Maryland</MenuItem>
+          <MenuItem value="Massachusetts">Massachusetts</MenuItem>
+          <MenuItem value="Michigan">Michigan</MenuItem>
+          <MenuItem value="Minnesota">Minnesota</MenuItem>
+          <MenuItem value="Mississippi">Mississippi</MenuItem>
+          <MenuItem value="Missouri">Missouri</MenuItem>
+          <MenuItem value="Montana">Montana</MenuItem>
+          <MenuItem value="Nebraska">Nebraska</MenuItem>
+          <MenuItem value="Nevada">Nevada</MenuItem>
+          <MenuItem value="New Hampshire">New Hampshire</MenuItem>
+          <MenuItem value="New Jersey">New Jersey</MenuItem>
+          <MenuItem value="New Mexico">New Mexico</MenuItem>
+          <MenuItem value="New York">New York</MenuItem>
+          <MenuItem value="North Carolina">North Carolina</MenuItem>
+          <MenuItem value="North Dakota">North Dakota</MenuItem>
+          <MenuItem value="Ohio">Ohio</MenuItem>
+          <MenuItem value="Oklahoma">Oklahoma</MenuItem>
+          <MenuItem value="Oregon">Oregon</MenuItem>
+          <MenuItem value="Pennsylvania">Pennsylvania</MenuItem>
+          <MenuItem value="Rhode Island">Rhode Island</MenuItem>
+          <MenuItem value="South Carolina">South Carolina</MenuItem>
+          <MenuItem value="South Dakota">South Dakota</MenuItem>
+          <MenuItem value="Tennessee">Tennessee</MenuItem>
+          <MenuItem value="Texas">Texas</MenuItem>
+          <MenuItem value="Utah">Utah</MenuItem>
+          <MenuItem value="Vermont">Vermont</MenuItem>
+          <MenuItem value="Virginia">Virginia</MenuItem>
+          <MenuItem value="Washington">Washington</MenuItem>
+          <MenuItem value="West Virginia">West Virginia</MenuItem>
+          <MenuItem value="Wisconsin">Wisconsin</MenuItem>
+          <MenuItem value="Wyoming">Wyoming</MenuItem>
+          <MenuItem value="Other">Other (Outside US)</MenuItem>
+        </Select>
+      </FormControl>
 
       {/* Date filter/search */}
       <TextField
@@ -1110,19 +1221,33 @@ const MentorApplicationComponent = () => {
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls={`panel-${date}-content`}
                 id={`panel-${date}-header`}
-                sx={{ bgcolor: selectedDates.includes(date) ? 'primary.light' : 'background.paper', color: selectedDates.includes(date) ? 'white' : 'text.primary' }}
+                sx={{
+                  bgcolor: selectedDates.includes(date)
+                    ? "primary.light"
+                    : "background.paper",
+                  color: selectedDates.includes(date)
+                    ? "white"
+                    : "text.primary",
+                }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", width: "100%" }}
+                >
                   <Chip
                     label={date}
-                    color={selectedDates.includes(date) ? 'primary' : 'default'}
+                    color={selectedDates.includes(date) ? "primary" : "default"}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDateToggle(date);
                     }}
                     sx={{ mr: 2 }}
                   />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>{date}</Typography>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: "bold", flexGrow: 1 }}
+                  >
+                    {date}
+                  </Typography>
                   <Button
                     variant="outlined"
                     size="small"
@@ -1138,46 +1263,85 @@ const MentorApplicationComponent = () => {
               </AccordionSummary>
               <AccordionDetails>
                 {/* Time slots for this date */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "1fr 1fr",
+                      md: "1fr 1fr 1fr",
+                    },
+                    gap: 2,
+                  }}
+                >
                   {availabilityByDate[date]?.map((slot) => (
                     <Paper
                       key={slot.id}
-                      elevation={formData.availableDays.includes(slot.id) ? 8 : 1}
+                      elevation={
+                        formData.availableDays.includes(slot.id) ? 8 : 1
+                      }
                       sx={{
                         p: 2,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        bgcolor: formData.availableDays.includes(slot.id) ? 'primary.light' : 'background.paper',
-                        color: formData.availableDays.includes(slot.id) ? 'white' : 'text.primary',
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        bgcolor: formData.availableDays.includes(slot.id)
+                          ? "primary.light"
+                          : "background.paper",
+                        color: formData.availableDays.includes(slot.id)
+                          ? "white"
+                          : "text.primary",
                         borderRadius: 2,
-                        '&:hover': {
-                          bgcolor: formData.availableDays.includes(slot.id) ? 'primary.main' : 'action.hover',
-                          transform: 'translateY(-4px)',
-                          boxShadow: 6
-                        }
+                        "&:hover": {
+                          bgcolor: formData.availableDays.includes(slot.id)
+                            ? "primary.main"
+                            : "action.hover",
+                          transform: "translateY(-4px)",
+                          boxShadow: 6,
+                        },
                       }}
                       onClick={() => {
-                        const newAvailability = formData.availableDays.includes(slot.id)
-                          ? formData.availableDays.filter(id => id !== slot.id)
+                        const newAvailability = formData.availableDays.includes(
+                          slot.id
+                        )
+                          ? formData.availableDays.filter(
+                              (id) => id !== slot.id
+                            )
                           : [...formData.availableDays, slot.id];
-                        setFormData(prev => ({
+                        setFormData((prev) => ({
                           ...prev,
-                          availableDays: newAvailability
+                          availableDays: newAvailability,
                         }));
                       }}
                     >
-                      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          height: "100%",
+                        }}
+                      >
+                        <Typography
+                          variant="body1"
+                          sx={{ mb: 1, fontWeight: "bold" }}
+                        >
                           {slot.icon} {slot.label}
                         </Typography>
                         <Typography variant="body2" sx={{ mb: 1 }}>
                           {slot.time}
                         </Typography>
-                        <Typography variant="caption" sx={{ mt: 'auto', fontStyle: 'italic' }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ mt: "auto", fontStyle: "italic" }}
+                        >
                           {slot.energy}
                         </Typography>
                         {formData.availableDays.includes(slot.id) && (
-                          <Chip label="Selected!" color="success" size="small" sx={{ alignSelf: 'flex-start', mt: 1 }} />
+                          <Chip
+                            label="Selected!"
+                            color="success"
+                            size="small"
+                            sx={{ alignSelf: "flex-start", mt: 1 }}
+                          />
                         )}
                       </Box>
                     </Paper>
@@ -1190,35 +1354,42 @@ const MentorApplicationComponent = () => {
       )}
 
       {/* Selected slots summary (sticky on desktop, top on mobile) */}
-      <Box sx={{
-        position: isMobile ? 'static' : 'sticky',
-        top: isMobile ? undefined : 80,
-        zIndex: 10,
-        mt: 3,
-        p: 2,
-        bgcolor: 'success.light',
-        color: 'white',
-        borderRadius: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        minHeight: 56
-      }}>
+      <Box
+        sx={{
+          position: isMobile ? "static" : "sticky",
+          top: isMobile ? undefined : 80,
+          zIndex: 10,
+          mt: 3,
+          p: 2,
+          bgcolor: "success.light",
+          color: "white",
+          borderRadius: 2,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          minHeight: 56,
+        }}
+      >
         <Typography variant="subtitle1">
-          You've selected {formData.availableDays.length} time slot{formData.availableDays.length !== 1 ? 's' : ''}
-          {selectedDates.length > 0 && ` across ${selectedDates.length} day${selectedDates.length !== 1 ? 's' : ''}`}!
+          You've selected {formData.availableDays.length} time slot
+          {formData.availableDays.length !== 1 ? "s" : ""}
+          {selectedDates.length > 0 &&
+            ` across ${selectedDates.length} day${selectedDates.length !== 1 ? "s" : ""}`}
+          !
         </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-          {formData.availableDays.map(slotId => {
-            const slot = availabilityOptions.find(opt => opt.id === slotId);
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+          {formData.availableDays.map((slotId) => {
+            const slot = availabilityOptions.find((opt) => opt.id === slotId);
             return (
               <Chip
                 key={slotId}
                 label={`${slot?.icon} ${slot?.date} ${slot?.label}`}
                 onDelete={() => {
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
-                    availableDays: prev.availableDays.filter(id => id !== slotId)
+                    availableDays: prev.availableDays.filter(
+                      (id) => id !== slotId
+                    ),
                   }));
                 }}
                 color="primary"
@@ -1233,7 +1404,7 @@ const MentorApplicationComponent = () => {
             color="warning"
             size="small"
             onClick={() => {
-              setFormData(prev => ({ ...prev, availableDays: [] }));
+              setFormData((prev) => ({ ...prev, availableDays: [] }));
               setSelectedDates([]);
             }}
             sx={{ mt: 2 }}
@@ -1244,7 +1415,8 @@ const MentorApplicationComponent = () => {
       </Box>
       {formData.availableDays.length === 0 && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          Please select at least one time slot when you'll be available to mentor.
+          Please select at least one time slot when you'll be available to
+          mentor.
         </Alert>
       )}
     </Box>
