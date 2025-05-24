@@ -54,7 +54,16 @@ export default function useProfileApi(){
     const handle_help_toggle = async (status, problem_statement_id, mentor_or_hacker, npo_id) => {
         if (!user)
             return null;
-                
+
+        if (!status || !problem_statement_id || !mentor_or_hacker || !npo_id){
+            console.error("handle_help_toggle: Missing required parameters");
+            console.error("status: ", status);
+            console.error("problem_statement_id: ", problem_statement_id);
+            console.error("mentor_or_hacker: ", mentor_or_hacker);
+            console.error("npo_id: ", npo_id);
+            return null;
+        }
+        
         const response = await axios({
             url: `${apiServerUrl}/api/messages/profile/helping`,
             method: "POST",

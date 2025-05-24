@@ -18,6 +18,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
+import ImageUpload from './ImageUpload';
 
 const NonprofitEditDialog = ({
   open,
@@ -25,6 +26,8 @@ const NonprofitEditDialog = ({
   nonprofit,
   onSave,
   problemStatements,
+  accessToken,
+  orgId,
 }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -297,13 +300,14 @@ const NonprofitEditDialog = ({
             error={!!errors.contact_email}
             helperText={errors.contact_email || "Valid email addresses only"}
           />
-          <TextField
-            fullWidth
-            label="Image URL"
-            name="image"
+          <ImageUpload
+            label="Nonprofit Image"
             value={formData.image}
-            onChange={handleChange}
-            helperText="Google Storage URLs will be automatically converted to CDN format"
+            onChange={(url) => handleChange({ target: { name: 'image', value: url } })}
+            helperText="Upload an image file or enter a URL. Google Storage URLs will be automatically converted to CDN format"
+            directory="nonprofits"
+            accessToken={accessToken}
+            orgId={orgId}
           />
           <TextField
             fullWidth

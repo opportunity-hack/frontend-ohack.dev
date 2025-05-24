@@ -154,9 +154,9 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
                 variant="contained"
                 color="primary"
                 fullWidth
-                aria-label={`Learn more about ${nonprofit.name}`}
+                aria-label={`View ${nonprofit.name} projects and ways to help`}
               >
-                Learn More
+                View Projects & Ways to Help
               </Button>
             </NonprofitCard>
           </Grid>

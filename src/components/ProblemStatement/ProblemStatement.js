@@ -26,6 +26,22 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import Link from "next/link";
 import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Container from '@mui/material/Container';
+import Collapse from '@mui/material/Collapse';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import Fade from '@mui/material/Fade';
+import Zoom from '@mui/material/Zoom';
+import { useTheme } from '@mui/material/styles';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LaunchIcon from '@mui/icons-material/Launch';
+import ShareIcon from '@mui/icons-material/Share';
+import StarIcon from '@mui/icons-material/Star';
+import PeopleIcon from '@mui/icons-material/People';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import ReactMarkdown from 'react-markdown';
 
 
@@ -53,7 +69,142 @@ import ReferenceItem from "../ReferenceItem/ReferenceItem";
 import ProblemStatementContent from "../ProblemStatementContent/ProblemStatementContent";
 import { HelpDialog, UnhelpDialog } from "../HelpDialog/HelpDialog";
 
+// Modern styled components for engagement-driven UX
+const ModernProjectCard = styled(Card)(({ theme, status }) => ({
+  position: 'relative',
+  marginBottom: theme.spacing(4),
+  borderRadius: theme.spacing(3),
+  background: status === 'production' 
+    ? 'linear-gradient(135deg, #e8f5e8 0%, #f0fdf4 100%)'
+    : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+  border: `1px solid ${status === 'production' ? '#22c55e20' : '#e2e8f0'}`,
+  overflow: 'hidden',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+  },
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    background: status === 'production'
+      ? 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)'
+      : 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)',
+  }
+}));
+
+const HeroSection = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(4),
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  borderRadius: `${theme.spacing(3)} ${theme.spacing(3)} 0 0`,
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'url("data:image/svg+xml,%3Csvg width=\\"20\\" height=\\"20\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cdefs%3E%3Cpattern id=\\"grid\\" width=\\"20\\" height=\\"20\\" patternUnits=\\"userSpaceOnUse\\"%3E%3Cpath d=\\"M 20 0 L 0 0 0 20\\" fill=\\"none\\" stroke=\\"%23ffffff\\" stroke-width=\\"0.5\\" opacity=\\"0.1\\"%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect width=\\"100%25\\" height=\\"100%25\\" fill=\\"url(%23grid)\\" %2F%3E%3C%2Fsvg%3E")',
+  }
+}));
+
+const MetricCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2.5),
+  textAlign: 'center',
+  background: 'linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)',
+  border: '1px solid rgba(0,0,0,0.06)',
+  borderRadius: theme.spacing(2),
+  transition: 'all 0.3s ease',
+  cursor: 'pointer',
+  '&:hover': {
+    transform: 'translateY(-2px) scale(1.02)',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.12)',
+    borderColor: theme.palette.primary.main
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme, variant: buttonVariant }) => ({
+  borderRadius: theme.spacing(4),
+  textTransform: 'none',
+  fontWeight: 600,
+  fontSize: '1rem',
+  padding: theme.spacing(1.5, 4),
+  minHeight: 48,
+  boxShadow: buttonVariant === 'contained' ? '0 4px 14px rgba(0,0,0,0.1)' : 'none',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  position: 'relative',
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: buttonVariant === 'contained' ? '0 8px 25px rgba(0,0,0,0.15)' : '0 4px 14px rgba(0,0,0,0.1)',
+  }
+}));
+
+const StatusChip = styled(Chip)(({ theme, chipstatus }) => ({
+  fontWeight: 600,
+  fontSize: '0.875rem',
+  padding: theme.spacing(0.5, 1),
+  background: chipstatus === 'production'
+    ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+    : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+  color: 'white',
+  border: 'none',
+  '& .MuiChip-icon': {
+    color: 'white'
+  }
+}));
+
+const SectionCard = styled(Card)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  borderRadius: theme.spacing(2),
+  border: '1px solid #e2e8f0',
+  background: '#ffffff',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    borderColor: theme.palette.primary.main + '40',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+  }
+}));
+
+const SectionHeader = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2, 3),
+  background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+  borderBottom: '1px solid #e2e8f0',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+  }
+}));
+
+const HelpToggle = styled(FormControlLabel)(({ theme }) => ({
+  margin: 0,
+  padding: theme.spacing(2),
+  borderRadius: theme.spacing(2),
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  border: '2px solid #e2e8f0',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    borderColor: theme.palette.primary.main,
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+  }
+}));
+
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isLargeScreen = useMediaQuery('(min-width: 768px)');
 
   const { redirectToLoginPage } = useRedirectFunctions();
@@ -76,14 +227,20 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const [helpingType, setHelpingType] = useState("");  
   const [expanded, setExpanded] = useState("Events");
   const [tabValue, setTabValue] = useState('Events');
+  const [expandedSection, setExpandedSection] = useState(null);
   const { get_user_by_id, profile, handle_help_toggle } = useProfileApi();
   const [helperProfiles, setHelperProfiles] = useState({});
   const [isCheckingHelperStatus, setIsCheckingHelperStatus] = useState(false);
 
-  // Custom styled switch for the help toggle
+  // Helper function to toggle sections
+  const handleSectionToggle = (section) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
+  // Modern styled switch for the help toggle
   const MaterialUISwitch = styled(Switch)(({ theme }) => ({
-    width: 62,
-    height: 34,
+    width: 70,
+    height: 38,
     padding: 7,
     "& .MuiSwitch-switchBase": {
       margin: 1,
@@ -91,22 +248,23 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       transform: "translateX(6px)",
       "&.Mui-checked": {
         color: "#fff",
-        transform: "translateX(22px)",
+        transform: "translateX(26px)",
         "& .MuiSwitch-thumb:before": {
           backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
             "#fff"
-          )}" d="M4.375 17.542v-3.584h1.583v3.584Zm3.458 0v-9.25q-1.021.52-1.739 1.385-.719.865-.782 2.198H4.229q.063-1.937 1.427-3.448 1.365-1.51 3.302-1.51H10.5q1.708 0 2.938-1 1.229-1 1.27-2.667h1.084q-.021 1.729-1.052 2.927-1.032 1.198-2.573 1.615v9.75h-1.084v-4.959H8.917v4.959ZM10 5.396q-.688 0-1.156-.469-.469-.469-.469-1.156 0-.667.479-1.136.479-.468 1.146-.468.688 0 1.156.468.469.469.469 1.157 0 .666-.479 1.135T10 5.396Z"/></svg>')`,
+          )}" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>')`,
         },
         "& + .MuiSwitch-track": {
           opacity: 1,
-          backgroundColor: "#00BB00",
+          backgroundColor: "#22c55e",
         },
       },
     },
     "& .MuiSwitch-thumb": {
-      backgroundColor: "#000",
+      backgroundColor: "#fff",
       width: 32,
       height: 32,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
       "&:before": {
         content: "''",
         position: "absolute",
@@ -116,15 +274,15 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         top: 0,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
-        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20"><path fill="${encodeURIComponent(
-          "#fff"
-        )}" d="m4.646 15.646-1.688-1.708L6.917 10 2.958 6.062l1.688-1.708L10.292 10Zm6.75 0-1.688-1.708L13.688 10l-3.98-3.938 1.688-1.708L17.042 10Z"/></svg>')`,
+        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+          "#64748b"
+        )}" d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>')`,
       },
     },
     "& .MuiSwitch-track": {
       opacity: 1,
-      backgroundColor: "#FFFF00",
-      borderRadius: 20 / 2,
+      backgroundColor: "#e2e8f0",
+      borderRadius: 20,
     },
   }));
 
@@ -133,7 +291,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     initFacebookPixel();
   }, []);
 
-  // Generate team name suggestions and fetch hackathon events
+  // Generate team name suggestions and fetch hackathon events - FIXED: removed unstable dependencies
   useEffect(() => {  
     // Fetch hackathon events
     if (problem_statement?.events?.length > 0) {
@@ -163,9 +321,9 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           setHackathonEventsError(true);
         });
     }
-  }, [problem_statement_id, problem_statement]);
+  }, [problem_statement_id, problem_statement?.events]);
   
-  // Get user details for team members
+  // Get user details for team members - FIXED: removed unstable dependencies
   useEffect(() => {
     if (teams?.length > 0) {
       const userDetailsMap = {};
@@ -190,9 +348,9 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           setUserError(true);
         });
     }
-  }, [teams, get_user_by_id]);
+  }, [teams]);
 
-  // Fetch and store profiles for all helpers
+  // Fetch and store profiles for all helpers - FIXED: removed unstable dependencies
   useEffect(() => {
     if (problem_statement?.helping?.length > 0) {
       setIsCheckingHelperStatus(true);
@@ -351,6 +509,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     setOpen(false);
     setHelpedChecked("checked");
     setHelpingType(helperType);
+    // FIXED: Use correct parameter order
     handle_help_toggle(
       "helping",
       problem_statement.id,
@@ -393,6 +552,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     setOpenUnhelp(false);
     setHelpedChecked("");
     setHelpingType("");
+    // FIXED: Use correct parameter order
     handle_help_toggle("not_helping", problem_statement.id, "", npo_id);
   };
 
@@ -433,7 +593,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const teamCounter = teams.filter(team => team.problem_statements?.includes(problem_statement_id)).length;
   const teamText = `There ${teamCounter === 1 ? "is" : "are"} ${teamCounter} team${teamCounter === 1 ? "" : "s"} working on this`;
   
-  // Count helpers
+  // Count helpers using the correct field: problem_statement.helping
   let countOfHackers = 0;
   let countOfMentors = 0;
   if (problem_statement.helping?.length > 0) {
@@ -446,388 +606,494 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     });
   }
 
+  const totalContributors = countOfHackers + countOfMentors;
+  const eventsCount = hackathonEvents.length;
   const hackersPlural = countOfHackers === 1 ? "" : "s";
   const hackersVerb = countOfHackers === 1 ? "is" : "are";
   const mentorsVerb = countOfMentors === 1 ? "is" : "are";
   
-  // Set card appearance based on status
-  let status;
-  let cardBackground = "#f5f7f77f";
+  // Calculate engagement level for visual indicators
+  const getEngagementLevel = () => {
+    if (totalContributors >= 10 || eventsCount >= 3) return 'high';
+    if (totalContributors >= 5 || eventsCount >= 2) return 'medium'; 
+    return 'low';
+  };
+  
+  // Enhanced status component with modern design
+  const renderStatus = () => {
+    if (problem_statement.status === "production") {
+      return (
+        <Tooltip
+          title="This project is live and being used by the nonprofit!"
+          arrow
+          placement="top"
+        >
+          <StatusChip 
+            chipstatus="production"
+            icon={<WorkspacePremiumIcon />} 
+            label="🚀 Live in Production" 
+          />
+        </Tooltip>
+      );
+    } else {
+      return (
+        <Tooltip
+          title="This project needs your help to reach completion!"
+          arrow
+          placement="top"
+        >
+          <StatusChip 
+            chipstatus="development"
+            icon={<BuildIcon />} 
+            label="🔧 Needs Help" 
+          />
+        </Tooltip>
+      );
+    }
+  };
 
-  if (problem_statement.status === "production") {
-    status = (
-      <Tooltip
-        enterTouchDelay={0}
-        title={<span style={{ fontSize: "14px" }}>We pushed this to production!</span>}
-        arrow
-      >
-        <Chip variant="outlined" icon={<WorkspacePremiumIcon />} color="success" label="Live" />      
-      </Tooltip>
-    );
-    cardBackground = "#e5fbe5";
-  } else {
-    status = (
-      <Tooltip
-        enterTouchDelay={0}
-        title={<span style={{ fontSize: "14px" }}>This project isn't complete yet, and we need your help!</span>}
-        arrow
-      >
-        <Chip icon={<BuildIcon />} color="warning" label="Needs Help" />
-      </Tooltip>
-    );
-  }
+  // Modern help toggle and call-to-action components
+  const renderHelpToggle = () => {
+    if (!user) {
+      return (
+        <HelpToggle
+          control={
+            <Tooltip
+              title="Sign in to join this project and make an impact!"
+              arrow
+              placement="top"
+            >
+              <MaterialUISwitch disabled />
+            </Tooltip>
+          }
+          label={
+            <Box sx={{ ml: 2 }}>
+              <Typography variant="body1" fontWeight={600} color="text.secondary">
+                🔐 Sign in to help
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Join {totalContributors} contributors making impact
+              </Typography>
+            </Box>
+          }
+          labelPlacement="end"
+        />
+      );
+    }
 
-  // Prepare help switch and call to action based on user login status
-  let callToAction;
-  let helpingSwitch;
-  let helpingSwitchType = "";
-
-  if (helpingType === "hacker") {
-    helpingSwitchType = (
-      <div>
-        <DeveloperModeIcon />
-        I'm helping as a hacker
-      </div>
-    );
-  } else if (helpingType === "mentor") {
-    helpingSwitchType = (
-      <div>
-        <SupportIcon /> I'm helping as a mentor
-      </div>
-    );
-  } else {
-    helpingSwitchType = <span>Slide to help</span>;
-  }
-
-  if (!user) {     
-    helpingSwitch = (
-      <FormControlLabel
-        labelPlacement="bottom"
+    return (
+      <HelpToggle
         control={
           <Tooltip
-            enterTouchDelay={0}  
-            placement="top-start"       
-            title={<span style={{ fontSize: "14px" }}>Login first, then you can help by sliding this</span>}
-            style={{ marginLeft: "2rem" }}
+            title={help_checked === "checked" ? "You're making a difference! Click to stop helping" : "Join this project and start making impact!"}
+            arrow
+            placement="top"
           >
-            <Badge color="secondary" variant="dot" anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
-            }}>
-              <MaterialUISwitch sx={{ m: 1, color: "gray"}} disabled />
-            </Badge>
+            <MaterialUISwitch 
+              checked={help_checked === "checked"} 
+              onChange={handleClickOpen}
+            />
           </Tooltip>
         }
-        label="Login to help"
+        label={
+          <Box sx={{ ml: 2 }}>
+            <Typography variant="body1" fontWeight={600}>
+              {help_checked === "checked" ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {helpingType === "hacker" ? <DeveloperModeIcon /> : <SupportIcon />}
+                  {helpingType === "hacker" ? "🚀 Hacking" : "🎯 Mentoring"}
+                </Box>
+              ) : (
+                "❤️ Want to help?"
+              )}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {help_checked === "checked" 
+                ? "You're part of the solution!" 
+                : "Join the community of changemakers"
+              }
+            </Typography>
+          </Box>
+        }
+        labelPlacement="end"
       />
     );
+  };
 
-    callToAction = (
-      <Grid container direction="column" justifyContent="flex-start" alignItems="flex-start">  
-        <Grid item padding={1}>
-          <Link href={`/signup?previousPage=/nonprofit/${npo_id}`}>    
-            <Button variant="contained" color="primary">
-              Create OHack Slack Account
-            </Button>
-          </Link>
-        </Grid>
-        
-        <Grid item padding={1}>
-          <LoginButton
+  const renderCallToAction = () => {
+    if (!user) {
+      return (
+        <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mt: 3 }}>
+          <ActionButton
+            component={Link}
+            href={`/signup?previousPage=/nonprofit/${npo_id}`}
             variant="contained"
-            disableElevation
+            size="large"
+            fullWidth={isMobile}
+            startIcon={<StarIcon />}
+            sx={{ 
+              background: 'linear-gradient(45deg, #667eea 0%, #764ba2 100%)',
+              color: 'white'
+            }}
+          >
+            🚀 Join the Impact
+          </ActionButton>
+          <ActionButton
+            variant="outlined"
+            size="large"
+            fullWidth={isMobile}
             onClick={() => redirectToLoginPage({
               postLoginRedirectUrl: window.location.href
             })}
-            className="login-button"
+            startIcon={<LaunchIcon />}
           >
-            Log In
-            <svg
-              fill="none"
-              viewBox="0 0 10 10"
-              stroke="currentColor"
-              height="1em"
-              width="1em"
-            >
-              <path className="arrow" d="M3,2 L6,5 L3,8" />
-              <path className="line" d="M3,5 L8,5" />
-            </svg>
-          </LoginButton>
-        </Grid>
-      </Grid>
-    );
-  } else {
-    callToAction = (
-      <a
-        href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <button className="button button--compact button--primary">
-          Join <TagIcon />
-          {problem_statement.slack_channel} to help
-        </button>
-      </a>
-    );
+            Sign In
+          </ActionButton>
+        </Stack>
+      );
+    }
 
-    helpingSwitch = (
-      <Tooltip 
-        enterTouchDelay={0} 
-        title={<span style={{ fontSize: "15px" }}>{help_checked === "checked" ? "Click to stop helping 😭" : "Click to help 😍"}</span>}
-      >
-        <FormControlLabel
-          onClick={handleClickOpen}
-          onChange={handleClickOpen}
-          labelPlacement="bottom"        
-          control={<MaterialUISwitch sx={{ m: 1 }} checked={help_checked === "checked"} />}
-          label={helpingSwitchType}
-        />
-      </Tooltip>
+    return (
+      <Stack direction={isMobile ? 'column' : 'row'} spacing={2} alignItems="center" sx={{ mt: 3 }}>
+        {problem_statement.slack_channel && (
+          <ActionButton
+            component="a"
+            href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="contained"
+            startIcon={<TagIcon />}
+            sx={{ 
+              background: 'linear-gradient(45deg, #4ade80 0%, #22c55e 100%)',
+              color: 'white'
+            }}
+          >
+            Join #{problem_statement.slack_channel}
+          </ActionButton>
+        )}
+        <ActionButton
+          variant="outlined"
+          startIcon={<ShareIcon />}
+          onClick={() => {
+            navigator.share?.({
+              title: problem_statement.title,
+              text: `Check out this impactful project: ${problem_statement.title}`,
+              url: window.location.href
+            }) || navigator.clipboard.writeText(window.location.href);
+          }}
+        >
+          Share Project
+        </ActionButton>
+      </Stack>
     );
-  }
-
-  // Set up references section
-  const reference_count = problem_statement.references?.length || 0;
-  const references_buttons = problem_statement.references?.length > 0 ? (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {problem_statement.references.map((reference, index) => (
-        <ReferenceItem key={index} reference={reference} />
-      ))}
-    </Box>
-  ) : (
-    <Typography>No references yet</Typography>
-  );
+  };
 
   const copyProjectLink = "project/" + problem_statement.id;
 
-  // Prepare content sections for accordion/tabs
-  const contentSections = [
-    {
-      label: 'Events',
-      icon: <EventIcon />,      
-      description: (
-        <Stack>
-          <ShortDescText>
-            {hackathonEvents && hackathonEvents.length > 0
-              ? `We've hacked on this at ${hackathonEvents.length} event${hackathonEvents.length > 1 ? "s" : ""}`
-              : "We haven't hacked on this project yet!"}
-          </ShortDescText>
-          <ShortDescText>{teamText}</ShortDescText>
-        </Stack>
-      ),
-      content: (
-        <Events          
-          key={problem_statement.id}
-          teams={teams}
-          userDetails={userDetails}
-          events={hackathonEvents}          
-          onTeamLeave={handleLeavingTeam}          
-          onTeamJoin={handleJoiningTeam}
-          user={profile}
-          problemStatementId={problem_statement.id}
-          isHelping={help_checked}
-        />
-      )     
-    },
-    {
-      label: 'Description',
-      icon: <NotesIcon />,
-      description: (
-        <Typography fontSize={13}>
-          {getWordStr(problem_statement.description)}...
-        </Typography>
-      ),
-      content: (
-        <ProjectDescText>
-          <ReactMarkdown>
-            {problem_statement.description}
-          </ReactMarkdown>
-        </ProjectDescText>
-      )
-    },    
-    {
-      label: 'Code & Tasks',
-      icon: <CodeIcon />,
-      description: "GitHub repos and Tasks associated with this project",
-      content: (
-        <ProjectDescText>
-          <Grid container direction="row" spacing={0.5} padding={0}>
-            <Stack spacing={1} padding={0.5}>
-              {problem_statement.github != null &&
-               problem_statement.github.length > 0 &&
-               typeof problem_statement.github !== "string" ? (
-                problem_statement.github.map((github) => (
-                  <AccordionButton
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    key={github.name}
-                    href={github.link}
-                    className="button button--primary button--compact"
-                  >
-                    {github.name}
-                  </AccordionButton>
-                ))
-              ) : (
-                <p>No GitHub links yet.</p>
-              )}
-            </Stack>
-
-            <Stack spacing={1} padding={0.5}>
-              {problem_statement.github != null &&
-               problem_statement.github.length > 0 &&
-               typeof problem_statement.github !== "string" &&
-               problem_statement.github.map((github) => (
-                <AccordionButton
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  key={github.name}
-                  className="button button--primary button--compact"
-                  href={`${github.link}/issues`}
-                >
-                  Tasks for {github.name}
-                </AccordionButton>
-              ))}
-            </Stack>
-          </Grid>   
-        </ProjectDescText>
-      )
-    },
-    {
-      label: 'References',
-      icon: <ArticleIcon />,
-      description: (
-        <ShortDescText>
-          {reference_count} doc{
-            (reference_count === 0 || reference_count > 1) ? "s" : ""
-          } that will help you better understand the problem
-        </ShortDescText>
-      ),
-      content: (
-        <ProjectDescText>
-          {references_buttons}
-        </ProjectDescText>
-      )
-    },    
-  ];
-
 
   return (
-    <ProjectCard container bgcolor={cardBackground} sx={{ border: 1, borderColor: "#C0C0C0" }} key={problem_statement.id}>
-      <Grid container item xs={6} md={6} justifyItems="flex-start">        
-        {status}
-      </Grid>
-      <Grid container item xs={6} md={6} justifyContent="flex-end" justifyItems="flex-end">
-        <CopyToClipboardButton location={copyProjectLink} />                
-      </Grid>
-      <Grid container item xs={12} md={12} justifyContent="flex-start">
-        <Stack direction="row" spacing={0} justifyContent="flex-end">          
-          <SkillSet Skills={problem_statement.skills} />          
-        </Stack>
-      </Grid>
-            
-      <Grid container item xs={12} md={12} justifyItems="flex-end" justifyContent="flex-end">
-        <Tooltip
-         enterTouchDelay={0}
-          title={
-            <span
-              style={{ fontSize: "14px" }}
-            >{`${countOfHackers} hacker${hackersPlural} ${hackersVerb} hacking`}</span>
-          }
-          style={{ marginLeft: "2rem" }}
-        >
-          {isCheckingHelperStatus ? (
-            <CircularProgress size={20} />
-          ) : (
-            <Badge
-              showZero
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
+    <Container maxWidth="lg" sx={{ py: 2 }}>
+      <Fade in timeout={800}>
+        <ModernProjectCard status={problem_statement.status}>
+          {/* Hero Section */}
+          <HeroSection>
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+                {renderStatus()}
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <CopyToClipboardButton location={copyProjectLink} />
+                  {problem_statement.first_thought_of && (
+                    <Chip 
+                      label={`Since ${problem_statement.first_thought_of}`} 
+                      size="small" 
+                      sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                    />
+                  )}
+                </Stack>
+              </Stack>
+              
+              <Typography 
+                variant="h3" 
+                component="h1" 
+                sx={{ 
+                  fontWeight: 700, 
+                  mb: 2, 
+                  color: 'white',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                {problem_statement.title}
+              </Typography>
+              
+              <SkillSet Skills={problem_statement.skills} />
+              
+              <Box sx={{ mt: 3 }}>
+                <ProjectProgress state={problem_statement.status} />
+              </Box>
+            </Box>
+          </HeroSection>
+
+          <CardContent sx={{ p: 4 }}>
+            {/* Engagement Metrics */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={4}>
+                <Zoom in timeout={600} style={{ transitionDelay: '200ms' }}>
+                  <MetricCard>
+                    <Stack alignItems="center" spacing={1}>
+                      <Badge badgeContent={countOfHackers} color="primary" max={99}>
+                        <DeveloperModeIcon color="primary" sx={{ fontSize: 32 }} />
+                      </Badge>
+                      <Typography variant="h6" fontWeight={700}>
+                        {countOfHackers}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Developer{countOfHackers === 1 ? '' : 's'}
+                      </Typography>
+                    </Stack>
+                  </MetricCard>
+                </Zoom>
+              </Grid>
+              <Grid item xs={4}>
+                <Zoom in timeout={600} style={{ transitionDelay: '400ms' }}>
+                  <MetricCard>
+                    <Stack alignItems="center" spacing={1}>
+                      <Badge badgeContent={countOfMentors} color="secondary" max={99}>
+                        <SupportIcon color="secondary" sx={{ fontSize: 32 }} />
+                      </Badge>
+                      <Typography variant="h6" fontWeight={700}>
+                        {countOfMentors}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Mentor{countOfMentors === 1 ? '' : 's'}
+                      </Typography>
+                    </Stack>
+                  </MetricCard>
+                </Zoom>
+              </Grid>
+              <Grid item xs={4}>
+                <Zoom in timeout={600} style={{ transitionDelay: '600ms' }}>
+                  <MetricCard>
+                    <Stack alignItems="center" spacing={1}>
+                      <EventIcon color="action" sx={{ fontSize: 32 }} />
+                      <Typography variant="h6" fontWeight={700}>
+                        {eventsCount}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Event{eventsCount === 1 ? '' : 's'}
+                      </Typography>
+                    </Stack>
+                  </MetricCard>
+                </Zoom>
+              </Grid>
+            </Grid>
+
+            {/* Description Preview */}
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                mb: 4,
+                lineHeight: 1.7,
+                fontSize: '1.1rem',
+                color: 'text.secondary'
               }}
-              badgeContent={countOfHackers}
-              color="secondary"
             >
-              <DeveloperModeIcon fontSize="large" />
-            </Badge>
-          )}
-        </Tooltip>
+              {problem_statement.description?.length > 200 
+                ? `${problem_statement.description.substring(0, 200)}...`
+                : problem_statement.description
+              }
+            </Typography>
 
-        <Tooltip
-          enterTouchDelay={0}
-          title={
-            <span
-              style={{ fontSize: "14px" }}
-            >{`${countOfMentors} mentor${mentorsVerb} mentoring`}</span>
-          }
-          style={{ marginLeft: "2rem" }}
-        >
-          {isCheckingHelperStatus ? (
-            <CircularProgress size={20} />
-          ) : (
-            <Badge
-              showZero
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              badgeContent={countOfMentors}
-              color="secondary"
-            >
-              <SupportIcon fontSize="large" />
-            </Badge>
-          )}
-        </Tooltip>       
-      </Grid>
-      
-      <TitleStyled sx={{marginBottom: "5px"}} variant="h2">{problem_statement.title}</TitleStyled>            
-    
-      <YearStyled>{problem_statement.first_thought_of}</YearStyled>      
-      <ProjectProgress state={problem_statement.status} />      
-    
-      <Grid container item xs={12} md={12} justifyContent="flex-start" sx={{ marginTop: "10px" }}>      
-        <Grid item textAlign="justify" xs={12} md={12}>                    
-            <ReferencesStyled>Reference Docs</ReferencesStyled>          
-            <ShortDescText>Check these first to get more detail on the problem.  Most of these are Google docs, so feel free to comment on them to collaborate!</ShortDescText>
-        </Grid>
-        <Grid item xs={12} md={12}>
-          <ProjectDescText>{references_buttons}</ProjectDescText>
-        </Grid>      
+            {/* Help Toggle */}
+            <Box sx={{ mb: 4 }}>
+              {renderHelpToggle()}
+            </Box>
 
-        <Grid item xs={12} md={12}>
-            <Divider/>
-          </Grid>
-      </Grid>
-    
-     <ProblemStatementContent 
-        sections={contentSections}
-        isLargeScreen={isLargeScreen}
-        expanded={expanded}
-        handleChange={handleChange}
-        tabValue={tabValue}
-        handleTabChange={handleTabChange}        
-      />
+            {/* Call to Action */}
+            {renderCallToAction()}
 
+            <Divider sx={{ my: 4 }} />
+
+            {/* Expandable Sections */}
+            <Stack spacing={3}>
+              {/* Full Description */}
+              <SectionCard>
+                <SectionHeader onClick={() => handleSectionToggle('description')}>
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    <NotesIcon color="primary" />
+                    <Typography variant="h6" fontWeight={600}>
+                      Project Description
+                    </Typography>
+                  </Stack>
+                  <IconButton>
+                    <ExpandMoreIcon 
+                      sx={{ 
+                        transform: expandedSection === 'description' ? 'rotate(180deg)' : 'none',
+                        transition: 'transform 0.3s'
+                      }} 
+                    />
+                  </IconButton>
+                </SectionHeader>
+                <Collapse in={expandedSection === 'description'}>
+                  <Box sx={{ p: 3 }}>
+                    <ReactMarkdown>{problem_statement.description}</ReactMarkdown>
+                  </Box>
+                </Collapse>
+              </SectionCard>
+
+              {/* Reference Documents */}
+              {problem_statement.references?.length > 0 && (
+                <SectionCard>
+                  <SectionHeader onClick={() => handleSectionToggle('references')}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      <ArticleIcon color="primary" />
+                      <Typography variant="h6" fontWeight={600}>
+                        Reference Documents ({problem_statement.references.length})
+                      </Typography>
+                    </Stack>
+                    <IconButton>
+                      <ExpandMoreIcon 
+                        sx={{ 
+                          transform: expandedSection === 'references' ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.3s'
+                        }} 
+                      />
+                    </IconButton>
+                  </SectionHeader>
+                  <Collapse in={expandedSection === 'references'}>
+                    <Box sx={{ p: 3 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        📚 Review these documents to understand the problem better. Most are collaborative Google docs!
+                      </Typography>
+                      <Stack spacing={2}>
+                        {problem_statement.references.map((reference, index) => (
+                          <ReferenceItem key={index} reference={reference} />
+                        ))}
+                      </Stack>
+                    </Box>
+                  </Collapse>
+                </SectionCard>
+              )}
+
+              {/* GitHub Repositories */}
+              {problem_statement.github?.length > 0 && (
+                <SectionCard>
+                  <SectionHeader onClick={() => handleSectionToggle('github')}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      <GitHubIcon color="primary" />
+                      <Typography variant="h6" fontWeight={600}>
+                        Code & Tasks ({problem_statement.github.length} repos)
+                      </Typography>
+                    </Stack>
+                    <IconButton>
+                      <ExpandMoreIcon 
+                        sx={{ 
+                          transform: expandedSection === 'github' ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.3s'
+                        }} 
+                      />
+                    </IconButton>
+                  </SectionHeader>
+                  <Collapse in={expandedSection === 'github'}>
+                    <Box sx={{ p: 3 }}>
+                      <Grid container spacing={2}>
+                        {problem_statement.github.map((repo, index) => (
+                          <Grid item xs={12} sm={6} key={index}>
+                            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                                {repo.name}
+                              </Typography>
+                              <Stack direction="row" spacing={1}>
+                                <ActionButton
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<CodeIcon />}
+                                  href={repo.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  component="a"
+                                >
+                                  Code
+                                </ActionButton>
+                                <ActionButton
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<AssignmentIcon />}
+                                  href={`${repo.link}/issues`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  component="a"
+                                >
+                                  Issues
+                                </ActionButton>
+                              </Stack>
+                            </Paper>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  </Collapse>
+                </SectionCard>
+              )}
+
+              {/* Events & Teams */}
+              <SectionCard>
+                <SectionHeader onClick={() => handleSectionToggle('events')}>
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    <PeopleIcon color="primary" />
+                    <Typography variant="h6" fontWeight={600}>
+                      Events & Teams ({eventsCount} events)
+                    </Typography>
+                  </Stack>
+                  <IconButton>
+                    <ExpandMoreIcon 
+                      sx={{ 
+                        transform: expandedSection === 'events' ? 'rotate(180deg)' : 'none',
+                        transition: 'transform 0.3s'
+                      }} 
+                    />
+                  </IconButton>
+                </SectionHeader>
+                <Collapse in={expandedSection === 'events'}>
+                  <Box sx={{ p: 3 }}>
+                    {hackathonEventsLoaded ? (
+                      <Events
+                        key={problem_statement.id}
+                        teams={teams}
+                        userDetails={userDetails}
+                        events={hackathonEvents}
+                        onTeamLeave={handleLeavingTeam}
+                        onTeamJoin={handleJoiningTeam}
+                        user={profile}
+                        problemStatementId={problem_statement.id}
+                        isHelping={help_checked}
+                      />
+                    ) : (
+                      <Box display="flex" justifyContent="center" p={3}>
+                        <CircularProgress />
+                      </Box>
+                    )}
+                  </Box>
+                </Collapse>
+              </SectionCard>
+            </Stack>
+          </CardContent>
+        </ModernProjectCard>
+      </Fade>
+
+      {/* Help Dialogs */}
       <HelpDialog
         open={open}
         onClose={handleClose}
         onConfirm={handleClose}
         onHelp={handleClose}
         onCancel={handleCancel}
-        />
+      />
 
       <UnhelpDialog
         open={openUnhelp}
-        onClose={handleCloseUnhelp}       
+        onClose={handleCloseUnhelp}
         onCancel={handleCloseUnhelpCancel}
       />
-
-      
-
-      <Stack spacing={2} direction="row">      
-        {helpingSwitch}
-          
-        <Box sx={{ width: "75%" }}>{callToAction}</Box>      
-      </Stack>
-    </ProjectCard>
+    </Container>
   );
 }

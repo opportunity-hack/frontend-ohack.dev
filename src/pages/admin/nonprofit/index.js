@@ -290,6 +290,8 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
         nonprofit={editingNonprofit}
         onSave={handleSaveNonprofit}
         problemStatements={problemStatements}
+        accessToken={accessToken}
+        orgId={orgId}
       />
     </AdminPage>
   );
