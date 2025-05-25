@@ -1731,7 +1731,7 @@ const MentorApplicationComponent = () => {
                   }}
                 >
                   <img 
-                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_mentors_1.webp" 
+                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp" 
                     alt="Mentors guiding teams at Opportunity Hack" 
                     style={{ 
                       width: '100%',

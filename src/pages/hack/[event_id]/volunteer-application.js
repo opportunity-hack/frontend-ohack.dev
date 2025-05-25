@@ -274,6 +274,9 @@ const VolunteerApplicationComponent = () => {
     
     const start = new Date(startDate);
     const end = new Date(endDate);
+
+    console.log('Availability Start Date:', start);
+    console.log('Availability End Date:', end);
     
     // Time blocks with icons and descriptions
     const timeBlocks = [
@@ -298,6 +301,7 @@ const VolunteerApplicationComponent = () => {
       
       // Add each time block for this day
       timeBlocks.forEach(block => {
+        console.log("Availability Adding time slot:", dateString, block);
         slots.push({
           id: `${dateString}-${block.label}`,
           date: dateString,
@@ -379,6 +383,7 @@ const VolunteerApplicationComponent = () => {
         
         // Generate time slots based on event dates
         const slots = generateTimeSlots(eventData.start_date, eventData.end_date);
+        console.log("Availability Generated time slots:", slots);
         setAvailabilityOptions(slots);
         
         // Organize time slots by date
@@ -430,115 +435,144 @@ const VolunteerApplicationComponent = () => {
   // Handle user data and application loading - separate from event loading
   useEffect(() => {
     const loadUserAndFormData = async () => {
-      // Skip if already initialized, event_id missing, or user not loaded yet
-      if (!event_id || !formInitializedRef.current) return;
-      
+      // Skip if already initialized, event_id missing, user not loaded yet, or availability options not loaded
+      if (!event_id || !formInitializedRef.current || !availabilityOptions.length) return;
+
       try {
         // Pre-fill with user information if available
         if (user) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             email: user.email || prev.email,
-            name: (user.firstName && user.lastName) ? 
-              `${user.firstName} ${user.lastName}` : (user.username || prev.name)
+            name:
+              user.firstName && user.lastName
+                ? `${user.firstName} ${user.lastName}`
+                : user.username || prev.name,
           }));
-          
+
           // Try to load previous submission if logged in and have access token
           if (accessToken) {
             try {
               const prevData = await loadPreviousSubmission();
-              
+
               if (prevData && !confirmationShownRef.current) {
                 confirmationShownRef.current = true;
                 // If the user has submitted before, ask if they want to load it
-                if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
+                if (
+                  window.confirm(
+                    "We found a previous application. Would you like to load it for editing?"
+                  )
+                ) {
                   // Transform API data to match our form structure
                   const parsePreviousArrayField = (field, fallback = []) => {
                     if (Array.isArray(prevData[field])) return prevData[field];
-                    if (typeof prevData[field] === 'string' && prevData[field]) {
-                      return prevData[field].split(',').map(item => item.trim());
+                    if (
+                      typeof prevData[field] === "string" &&
+                      prevData[field]
+                    ) {
+                      return prevData[field]
+                        .split(",")
+                        .map((item) => item.trim());
                     }
                     return fallback;
                   };
-                  
+
                   // Match saved availability to slot IDs for time slot selection
                   const availabilityText = prevData.availability || "";
+                  console.log("Availability text:", availabilityText);
                   const matchedSlotIds = availabilityOptions
-                    .filter((slot) => availabilityText.includes(slot.displayText))
+                    .filter((slot) =>
+                      availabilityText.includes(slot.displayText)
+                    )
                     .map((slot) => slot.id);
-                  
+
+                  console.log("Availability Options:", availabilityOptions);
+                  console.log("Availability Matched slot IDs:", matchedSlotIds);
                   // Extract unique dates from matched slots
                   const matchedDates = [
                     ...new Set(
                       matchedSlotIds
                         .map((id) => {
-                          const slot = availabilityOptions.find((s) => s.id === id);
+                          const slot = availabilityOptions.find(
+                            (s) => s.id === id
+                          );
                           return slot ? slot.date : null;
                         })
                         .filter(Boolean)
                     ),
                   ];
-                  
+
                   // Extract unique months from matched dates
                   const matchedMonths = [
                     ...new Set(
                       matchedDates
                         .map((date) => {
                           const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
-                          return monthMatch ? monthMatch[0].split(" ")[0] : null;
+                          return monthMatch
+                            ? monthMatch[0].split(" ")[0]
+                            : null;
                         })
                         .filter(Boolean)
                     ),
                   ];
-                  
+
                   const transformedData = {
                     ...initialFormData,
-                    email: prevData.email || user.email || '',
-                    name: prevData.name || ((user.firstName && user.lastName) ? 
-                      `${user.firstName} ${user.lastName}` : (user.username || '')),
-                    pronouns: prevData.pronouns || '',
-                    bio: prevData.bio || prevData.shortBio || '',
-                    company: prevData.company || prevData.companyName || '',
-                    title: prevData.title || '',
-                    linkedin: prevData.linkedin || prevData.linkedinProfile || '',                    
-                    portfolio: prevData.portfolio || '',
-                    country: prevData.country || '',
-                    state: prevData.state || '',
-                    inPerson: prevData.inPerson || (prevData.isInPerson ? 'Yes' : 'No'),
-                    experienceLevel: prevData.experienceLevel || '',
-                    volunteerType: parsePreviousArrayField('volunteerType'),
-                    otherVolunteerType: prevData.otherVolunteerType || '',
-                    skills: parsePreviousArrayField('skills'),
-                    otherSkills: prevData.otherSkills || '',
-                    socialCauses: parsePreviousArrayField('socialCauses'),
-                    otherSocialCause: prevData.otherSocialCause || '',
-                    motivation: prevData.motivation || '',
-                    previousExperience: prevData.previousExperience || '',
-                    codeOfConduct: prevData.codeOfConduct || prevData.agreedToCodeOfConduct || false,
-                    additionalInfo: prevData.additionalInfo || prevData.comments || '',
+                    email: prevData.email || user.email || "",
+                    name:
+                      prevData.name ||
+                      (user.firstName && user.lastName
+                        ? `${user.firstName} ${user.lastName}`
+                        : user.username || ""),
+                    pronouns: prevData.pronouns || "",
+                    bio: prevData.bio || prevData.shortBio || "",
+                    company: prevData.company || prevData.companyName || "",
+                    title: prevData.title || "",
+                    linkedin:
+                      prevData.linkedin || prevData.linkedinProfile || "",
+                    portfolio: prevData.portfolio || "",
+                    country: prevData.country || "",
+                    state: prevData.state || "",
+                    inPerson:
+                      prevData.inPerson || (prevData.isInPerson ? "Yes" : "No"),
+                    experienceLevel: prevData.experienceLevel || "",
+                    volunteerType: parsePreviousArrayField("volunteerType"),
+                    otherVolunteerType: prevData.otherVolunteerType || "",
+                    skills: parsePreviousArrayField("skills"),
+                    otherSkills: prevData.otherSkills || "",
+                    socialCauses: parsePreviousArrayField("socialCauses"),
+                    otherSocialCause: prevData.otherSocialCause || "",
+                    motivation: prevData.motivation || "",
+                    previousExperience: prevData.previousExperience || "",
+                    codeOfConduct:
+                      prevData.codeOfConduct ||
+                      prevData.agreedToCodeOfConduct ||
+                      false,
+                    additionalInfo:
+                      prevData.additionalInfo || prevData.comments || "",
                     event_id: event_id,
-                    availableDays: matchedSlotIds
+                    availableDays: matchedSlotIds,
                   };
-                  
+
                   // Update selected dates and months state
                   setSelectedDates(matchedDates);
                   setSelectedMonths(matchedMonths);
-                  
+
                   setFormData(transformedData);
                   setPreviouslySubmitted(true);
                   return;
                 }
               }
             } catch (err) {
-              console.error('Error loading previous submission:', err);
+              console.error("Error loading previous submission:", err);
               // Fail silently and continue to try localStorage
             }
           }
         }
-        
+
         // If no previous submission loaded, try to load from localStorage
         const loadedFromLocal = loadFromLocalStorage();
-        
+
         // Handle manual save after the component is loaded
         if (!loadedFromLocal) {
           setTimeout(() => {
@@ -546,12 +580,12 @@ const VolunteerApplicationComponent = () => {
           }, 1000);
         }
       } catch (err) {
-        console.error('Error initializing form:', err);
+        console.error("Error initializing form:", err);
       }
     };
-    
+
     loadUserAndFormData();
-  }, [user, accessToken, event_id]);
+  }, [user, accessToken, event_id, availabilityOptions.length]);
   
   // Validation functions
   const validateBasicInfo = () => {
@@ -1100,7 +1134,7 @@ const VolunteerApplicationComponent = () => {
           sx={{ mb: 3 }}
           placeholder="https://linkedin.com/in/yourprofile"
         />              
-        
+
         <TextField
           label="Portfolio/Personal Website (Optional)"
           name="portfolio"
