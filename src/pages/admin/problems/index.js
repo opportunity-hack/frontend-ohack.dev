@@ -31,11 +31,18 @@ import {
   CardContent,
   CardActions,
   useTheme,
+  Tabs,
+  Tab,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
 } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon, Delete as DeleteIcon, Event as EventIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
 import LinkManagement from "../../../components/admin/LinkManagement";
 import useNonprofit from "../../../hooks/use-nonprofit";
+import useHackathonEvents from "../../../hooks/use-hackathon-events";
 
 const AdminProblemsPage = () => {
   const { accessToken, userClass } = useAuthInfo();
@@ -43,11 +50,13 @@ const AdminProblemsPage = () => {
   const [loading, setLoading] = useState(false);
   const [editingProblem, setEditingProblem] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTabValue, setDialogTabValue] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [orderBy, setOrderBy] = useState("title");
   const [order, setOrder] = useState("asc");
   const [selectedNonprofitId, setSelectedNonprofitId] = useState("");
   const [nonprofitSearchTerm, setNonprofitSearchTerm] = useState("");
+  const [selectedHackathonId, setSelectedHackathonId] = useState("");
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -56,8 +65,9 @@ const AdminProblemsPage = () => {
   const org = userClass?.getOrgByName("Opportunity Hack Org");
   const isAdmin = org?.hasPermission("volunteer.admin");
   
-  // Use the nonprofit hook to get the list of nonprofits
+  // Use the nonprofit and hackathon hooks
   const { nonprofits } = useNonprofit();
+  const { hackathons, handle_problem_statement_to_event_link_update } = useHackathonEvents(false);
 
   const fetchProblems = React.useCallback(async () => {
     setLoading(true);
@@ -157,21 +167,74 @@ const AdminProblemsPage = () => {
       helping: [],
       rank: "",
       nonprofit_id: "",
+      events: [],
     });
     setSelectedNonprofitId("");
     setNonprofitSearchTerm("");
+    setSelectedHackathonId("");
+    setDialogTabValue(0);
     setDialogOpen(true);
   };
 
   const handleEditProblem = (problem) => {
     const adaptedProblem = {
       ...problem,
-      references: adaptReferencesToLinkFormat(problem.references)
+      references: adaptReferencesToLinkFormat(problem.references),
+      events: problem.events || [],
     };
     setEditingProblem(adaptedProblem);
     setSelectedNonprofitId(problem.nonprofit_id || "");
     setNonprofitSearchTerm("");
+    setSelectedHackathonId("");
+    setDialogTabValue(0);
     setDialogOpen(true);
+  };
+
+  const handleAddHackathonEvent = () => {
+    if (!selectedHackathonId || !editingProblem?.id) return;
+
+    const selectedHackathon = hackathons.find(h => h.id === selectedHackathonId);
+    if (!selectedHackathon) return;
+
+    // Check if this event is already linked
+    const isAlreadyLinked = editingProblem.events.some(event => event.id === selectedHackathon.id);
+    if (isAlreadyLinked) return;
+
+    // Update the problem statement events
+    const updatedEvents = [...editingProblem.events, selectedHackathon];
+    setEditingProblem(prev => ({
+      ...prev,
+      events: updatedEvents
+    }));
+
+    // Create mapping for API call
+    const mapping = {
+      problem_statement_id: editingProblem.id,
+      event_id: selectedHackathon.id
+    };
+
+    // Call the API to update the link
+    handle_problem_statement_to_event_link_update(mapping, (response) => {
+      console.log("Event linked:", response);
+      fetchProblems(); // Refresh the problems list
+    });
+
+    setSelectedHackathonId("");
+  };
+
+  const handleRemoveHackathonEvent = (eventToRemove) => {
+    if (!editingProblem?.id) return;
+
+    // Update the local state
+    const updatedEvents = editingProblem.events.filter(event => event.id !== eventToRemove.id);
+    setEditingProblem(prev => ({
+      ...prev,
+      events: updatedEvents
+    }));
+
+    // Note: We might need a separate API call to remove the link
+    // For now, we'll just update the local state
+    console.log("Event removed locally:", eventToRemove);
   };
 
   const handleSaveProblem = async () => {
@@ -381,6 +444,23 @@ const AdminProblemsPage = () => {
                 ).length || 0}
               </Typography>
             </Paper>
+
+            <Paper 
+              sx={{ 
+                px: 2, 
+                py: 1, 
+                display: 'flex', 
+                alignItems: 'center',
+                bgcolor: '#f5f5f5' 
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                With Events:
+              </Typography>
+              <Typography variant="body1" fontWeight="bold" color="info.main">
+                {problems?.filter(p => p.events && p.events.length > 0).length || 0}
+              </Typography>
+            </Paper>
           </Box>
         </Box>
 
@@ -457,6 +537,27 @@ const AdminProblemsPage = () => {
                         )}
                       </Box>
                     )}
+
+                    {/* Add event information */}
+                    {problem.events && problem.events.length > 0 && (
+                      <>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, mt: 2 }}>
+                          Events:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {problem.events.map((event, index) => (
+                            <Chip
+                              key={index}
+                              icon={<EventIcon />}
+                              label={event.title || event.event_id}
+                              size="small"
+                              color="info"
+                              variant="outlined"
+                            />
+                          ))}
+                        </Box>
+                      </>
+                    )}
                   </CardContent>
                   <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
                     <Button 
@@ -526,14 +627,15 @@ const AdminProblemsPage = () => {
                     >
                       Nonprofit
                     </TableSortLabel>
-                  </TableCell>                                 
+                  </TableCell>
+                  <TableCell>Events</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredAndSortedProblems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isTablet ? 4 : 6} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={isTablet ? 5 : 7} align="center" sx={{ py: 3 }}>
                       <Typography variant="body1" color="text.secondary">
                         No problem statements found.
                       </Typography>
@@ -599,6 +701,27 @@ const AdminProblemsPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
+                        {problem.events && problem.events.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {problem.events.map((event, index) => (
+                              <Chip
+                                key={index}
+                                icon={<EventIcon />}
+                                label={event.title || event.event_id}
+                                size="small"
+                                color="info"
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem', height: '24px' }}
+                              />
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No events
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <IconButton onClick={() => handleEditProblem(problem)}>
                           <EditIcon />
                         </IconButton>
@@ -626,192 +749,302 @@ const AdminProblemsPage = () => {
             )}
           </DialogTitle>
           <DialogContent>
-            <TextField
-              fullWidth
-              label="Title"
-              value={editingProblem?.title || ""}
-              onChange={(e) =>
-                setEditingProblem((prev) => ({
-                  ...prev,
-                  title: e.target.value,
-                }))
-              }
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Description"
-              value={editingProblem?.description || ""}
-              onChange={(e) =>
-                setEditingProblem((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-              margin="normal"
-              multiline
-              rows={4}
-            />
-            <TextField
-              fullWidth
-              label="Status"
-              value={editingProblem?.status || ""}
-              onChange={(e) =>
-                setEditingProblem((prev) => ({
-                  ...prev,
-                  status: e.target.value,
-                }))
-              }
-              margin="normal" 
-            />
-            <TextField
-              fullWidth
-              label="First Thought Of"
-              value={editingProblem?.first_thought_of || ""}
-              onChange={(e) =>
-                setEditingProblem((prev) => ({
-                  ...prev,
-                  first_thought_of: e.target.value,
-                }))
-              }
-              margin="normal" 
-            />
+            <Tabs
+              value={dialogTabValue}
+              onChange={(e, newValue) => setDialogTabValue(newValue)}
+              aria-label="problem edit tabs"
+              sx={{ mb: 3 }}
+            >
+              <Tab label="Basic Info" value={0} />
+              <Tab label="Events" value={1} disabled={!editingProblem?.id} />
+              <Tab label="Nonprofit & References" value={2} />
+            </Tabs>
 
-            <TextField
-            label="Rank"
-            value={editingProblem?.rank || ""}
-            onChange={(e) =>
-              setEditingProblem((prev) => ({
-                ...prev,
-                rank: e.target.value,
-              }))
-            }
-            margin="normal"
-            />
+            {dialogTabValue === 0 && (
+              <>
+                <TextField
+                  fullWidth
+                  label="Title"
+                  value={editingProblem?.title || ""}
+                  onChange={(e) =>
+                    setEditingProblem((prev) => ({
+                      ...prev,
+                      title: e.target.value,
+                    }))
+                  }
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Description"
+                  value={editingProblem?.description || ""}
+                  onChange={(e) =>
+                    setEditingProblem((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  margin="normal"
+                  multiline
+                  rows={4}
+                />
+                <TextField
+                  fullWidth
+                  label="Status"
+                  value={editingProblem?.status || ""}
+                  onChange={(e) =>
+                    setEditingProblem((prev) => ({
+                      ...prev,
+                      status: e.target.value,
+                    }))
+                  }
+                  margin="normal" 
+                />
+                <TextField
+                  fullWidth
+                  label="First Thought Of"
+                  value={editingProblem?.first_thought_of || ""}
+                  onChange={(e) =>
+                    setEditingProblem((prev) => ({
+                      ...prev,
+                      first_thought_of: e.target.value,
+                    }))
+                  }
+                  margin="normal" 
+                />
 
-            {/* Nonprofit selection with enhanced information */}
-            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-              Associated Nonprofit
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel id="nonprofit-select-label">Link to Nonprofit</InputLabel>
-                  <Select
-                    labelId="nonprofit-select-label"
-                    value={selectedNonprofitId}
-                    onChange={(e) => setSelectedNonprofitId(e.target.value)}
-                    label="Link to Nonprofit"
-                  >
-                    <MenuItem value="">
-                      <em>None - No nonprofit associated</em>
-                    </MenuItem>
-                    {nonprofits
-                      .filter(np => 
-                        !nonprofitSearchTerm || 
-                        np.name.toLowerCase().includes(nonprofitSearchTerm.toLowerCase())
-                      )
-                      .map((nonprofit) => (
-                        <MenuItem key={nonprofit.id} value={nonprofit.id}>
-                          {nonprofit.name}
+                <TextField
+                label="Rank"
+                value={editingProblem?.rank || ""}
+                onChange={(e) =>
+                  setEditingProblem((prev) => ({
+                    ...prev,
+                    rank: e.target.value,
+                  }))
+                }
+                margin="normal"
+                />
+              </>
+            )}
+
+            {dialogTabValue === 1 && editingProblem?.id && (
+              <>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Associated Events/Hackathons
+                </Typography>
+                
+                {/* Add new event section */}
+                <Box sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                    Link to New Event
+                  </Typography>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={8}>
+                      <FormControl fullWidth>
+                        <InputLabel>Select Hackathon Event</InputLabel>
+                        <Select
+                          value={selectedHackathonId}
+                          onChange={(e) => setSelectedHackathonId(e.target.value)}
+                          label="Select Hackathon Event"
+                        >
+                          <MenuItem value="">
+                            <em>Choose an event...</em>
+                          </MenuItem>
+                          {hackathons
+                            .filter(hackathon => 
+                              !editingProblem.events.some(event => event.id === hackathon.id)
+                            )
+                            .map((hackathon) => (
+                              <MenuItem key={hackathon.id} value={hackathon.id}>
+                                {hackathon.title} - {hackathon.event_id} ({hackathon.start_date})
+                              </MenuItem>
+                            ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Button
+                        onClick={handleAddHackathonEvent}
+                        disabled={!selectedHackathonId}
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        fullWidth
+                      >
+                        Link Event
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* Current linked events */}
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                  Currently Linked Events ({editingProblem.events?.length || 0})
+                </Typography>
+                
+                {editingProblem.events && editingProblem.events.length > 0 ? (
+                  <List>
+                    {editingProblem.events.map((event, index) => (
+                      <ListItem key={index} divider>
+                        <ListItemText
+                          primary={event.title || event.event_id}
+                          secondary={
+                            <Box>
+                              <Typography variant="body2" color="text.secondary">
+                                Event ID: {event.event_id}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Date: {event.start_date} - Location: {event.location}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton 
+                            edge="end" 
+                            onClick={() => handleRemoveHackathonEvent(event)}
+                            color="error"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', py: 2 }}>
+                    No events linked to this problem statement.
+                  </Typography>
+                )}
+              </>
+            )}
+
+            {dialogTabValue === 2 && (
+              <>
+                {/* Nonprofit selection with enhanced information */}
+                <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                  Associated Nonprofit
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel id="nonprofit-select-label">Link to Nonprofit</InputLabel>
+                      <Select
+                        labelId="nonprofit-select-label"
+                        value={selectedNonprofitId}
+                        onChange={(e) => setSelectedNonprofitId(e.target.value)}
+                        label="Link to Nonprofit"
+                      >
+                        <MenuItem value="">
+                          <em>None - No nonprofit associated</em>
                         </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              {nonprofits.length > 10 && (
-                <Grid item xs={12}>
-                  <TextField
-                    label="Search Nonprofits"
-                    variant="outlined"
-                    size="small"
-                    value={nonprofitSearchTerm}
-                    onChange={(e) => setNonprofitSearchTerm(e.target.value)}
-                    fullWidth
-                  />
-                </Grid>
-              )}
-              
-              {/* Display selected nonprofit details */}
-              {selectedNonprofitId && (
-                <Grid item xs={12}>
-                  <Paper 
-                    variant="outlined" 
-                    sx={{ 
-                      p: 2, 
-                      mt: 1, 
-                      backgroundColor: "#f9f9f9",
-                      borderLeft: "4px solid #3f51b5" 
-                    }}
-                  >
-                    {(() => {
-                      const selectedNonprofit = nonprofits.find(np => np.id === selectedNonprofitId);
-                      return selectedNonprofit ? (
-                        <>
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {selectedNonprofit.name}
-                          </Typography>
-                          
-                          {selectedNonprofit.description && (
-                            <Typography variant="body2" sx={{ mt: 1 }}>
-                              {selectedNonprofit.description.length > 200 
-                                ? `${selectedNonprofit.description.substring(0, 200)}...` 
-                                : selectedNonprofit.description}
+                        {nonprofits
+                          .filter(np => 
+                            !nonprofitSearchTerm || 
+                            np.name.toLowerCase().includes(nonprofitSearchTerm.toLowerCase())
+                          )
+                          .map((nonprofit) => (
+                            <MenuItem key={nonprofit.id} value={nonprofit.id}>
+                              {nonprofit.name}
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  {nonprofits.length > 10 && (
+                    <Grid item xs={12}>
+                      <TextField
+                        label="Search Nonprofits"
+                        variant="outlined"
+                        size="small"
+                        value={nonprofitSearchTerm}
+                        onChange={(e) => setNonprofitSearchTerm(e.target.value)}
+                        fullWidth
+                      />
+                    </Grid>
+                  )}
+                  
+                  {/* Display selected nonprofit details */}
+                  {selectedNonprofitId && (
+                    <Grid item xs={12}>
+                      <Paper 
+                        variant="outlined" 
+                        sx={{ 
+                          p: 2, 
+                          mt: 1, 
+                          backgroundColor: "#f9f9f9",
+                          borderLeft: "4px solid #3f51b5" 
+                        }}
+                      >
+                        {(() => {
+                          const selectedNonprofit = nonprofits.find(np => np.id === selectedNonprofitId);
+                          return selectedNonprofit ? (
+                            <>
+                              <Typography variant="subtitle1" fontWeight="bold">
+                                {selectedNonprofit.name}
+                              </Typography>
+                              
+                              {selectedNonprofit.description && (
+                                <Typography variant="body2" sx={{ mt: 1 }}>
+                                  {selectedNonprofit.description.length > 200 
+                                    ? `${selectedNonprofit.description.substring(0, 200)}...` 
+                                    : selectedNonprofit.description}
+                                </Typography>
+                              )}
+                              
+                              <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {selectedNonprofit.website && (
+                                  <Chip 
+                                    size="small" 
+                                    label="Website" 
+                                    color="primary" 
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.75rem' }}
+                                    icon={<LinkIcon fontSize="small" />}
+                                    onClick={() => window.open(selectedNonprofit.website, '_blank')}
+                                  />
+                                )}
+                                {selectedNonprofit.slack_channel && (
+                                  <Chip 
+                                    size="small" 
+                                    label={`#${selectedNonprofit.slack_channel}`} 
+                                    color="secondary" 
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.75rem' }}
+                                  />
+                                )}
+                                {selectedNonprofit.problem_statements && (
+                                  <Chip 
+                                    size="small" 
+                                    label={`${selectedNonprofit.problem_statements?.length || 0} Problem Statements`} 
+                                    color="success" 
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.75rem' }}
+                                  />
+                                )}
+                              </Box>
+                            </>
+                          ) : (
+                            <Typography color="text.secondary">
+                              Selected nonprofit information not available
                             </Typography>
-                          )}
-                          
-                          <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                            {selectedNonprofit.website && (
-                              <Chip 
-                                size="small" 
-                                label="Website" 
-                                color="primary" 
-                                variant="outlined"
-                                sx={{ fontSize: '0.75rem' }}
-                                icon={<LinkIcon fontSize="small" />}
-                                onClick={() => window.open(selectedNonprofit.website, '_blank')}
-                              />
-                            )}
-                            {selectedNonprofit.slack_channel && (
-                              <Chip 
-                                size="small" 
-                                label={`#${selectedNonprofit.slack_channel}`} 
-                                color="secondary" 
-                                variant="outlined"
-                                sx={{ fontSize: '0.75rem' }}
-                              />
-                            )}
-                            {selectedNonprofit.problem_statements && (
-                              <Chip 
-                                size="small" 
-                                label={`${selectedNonprofit.problem_statements?.length || 0} Problem Statements`} 
-                                color="success" 
-                                variant="outlined"
-                                sx={{ fontSize: '0.75rem' }}
-                              />
-                            )}
-                          </Box>
-                        </>
-                      ) : (
-                        <Typography color="text.secondary">
-                          Selected nonprofit information not available
-                        </Typography>
-                      );
-                    })()} 
-                  </Paper>
+                          );
+                        })()} 
+                      </Paper>
+                    </Grid>
+                  )}
                 </Grid>
-              )}
-            </Grid>
 
-            <Divider sx={{ my: 3 }} />
-            
-            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-              References
-            </Typography>
-            <LinkManagement
-              links={adaptReferencesToLinkFormat(editingProblem?.references)}
-              onChange={handleReferencesChange}
-            />
+                <Divider sx={{ my: 3 }} />
+                
+                <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                  References
+                </Typography>
+                <LinkManagement
+                  links={adaptReferencesToLinkFormat(editingProblem?.references)}
+                  onChange={handleReferencesChange}
+                />
+              </>
+            )}
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
             <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>

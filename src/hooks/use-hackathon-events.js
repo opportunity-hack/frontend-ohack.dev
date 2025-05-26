@@ -69,8 +69,9 @@ export default function useHackathonEvents( currentOnly ){
         if (!user)
             return null;
 
+        console.log("Updating problem statement to event mapping", mapping);
         const config = {
-            url: `${apiServerUrl}/api/messages/problem_statements/events`,
+            url: `${apiServerUrl}/api/problem-statements/events`,
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
