@@ -926,8 +926,8 @@ export async function getStaticProps({ params }) {
       props: {
         eventData: data,
       },
-      // Re-generate at most once per hour
-      revalidate: 3600
+      // Re-generate at most once per minute
+      revalidate: 60,
     };
   } catch (error) {
     console.error("Error fetching hackathon data:", error);
@@ -935,8 +935,8 @@ export async function getStaticProps({ params }) {
       props: {
         eventData: null,
       },
-      // Re-generate at most once per hour
-      revalidate: 3600
+      // Re-generate at most once per minute
+      revalidate: 60
     };
   }
 }
