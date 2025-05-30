@@ -21,7 +21,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import InfoIcon from "@mui/icons-material/Info";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import LoginOrRegister from "../components/LoginOrRegister/LoginOrRegister";
+import LoginOrRegister from "../components/LoginOrRegister/LoginOrRegister2";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import {
   roles,

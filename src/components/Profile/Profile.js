@@ -29,7 +29,7 @@ import BadgeList from "../../components/badge-list";
 import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
+import LoginOrRegister from '../LoginOrRegister/LoginOrRegister2';
 import HeartGauge from '../HeartGauge/HeartGauge';
 import PersonIcon from '@mui/icons-material/Person';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -57,6 +57,8 @@ import {
   ProfileHeader,
   ProfileHeadline,
 } from "../../styles/profile/styles";
+
+
 
 // Tab panel component for displaying tab content
 function TabPanel(props) {
@@ -528,7 +530,7 @@ export default function Profile(props) {
 
   if (!isLoggedIn) {
     return (
-      <LayoutContainer>
+      <LayoutContainer mt={5}>
         <Typography variant="h4">You must be logged in to view this page.</Typography>
         <LoginOrRegister introText="Ready to join us?" previousPage="/profile" />
       </LayoutContainer>
@@ -1103,10 +1105,7 @@ export default function Profile(props) {
             </Paper>
           </ProfileContainer>
         ) : (
-          <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h4" sx={{ mb: 3 }}>You must be logged in to view this page</Typography>
-            <LoginOrRegister introText="Ready to join us?" previousPage={"/profile"} />
-          </Paper>
+          <LoginOrRegister introText="Ready to join us?" previousPage="/profile" />
         )}
       </InnerContainer>
     </LayoutContainer>

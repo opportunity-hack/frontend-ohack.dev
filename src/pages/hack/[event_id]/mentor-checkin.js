@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import Head from 'next/head';
 import { useEnv } from '../../../context/env.context';
-import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister';
+import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister2';
 import axios from 'axios';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';

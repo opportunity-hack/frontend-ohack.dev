@@ -22,7 +22,7 @@ import {
   Send,
 } from "@mui/icons-material";
 import { useAuthInfo } from "@propelauth/react";
-import LoginOrRegister from "../../components/LoginOrRegister/LoginOrRegister";
+import LoginOrRegister from "../../components/LoginOrRegister/LoginOrRegister2";
 
 export default function FeedbackPage() {
   const { user } = useAuthInfo();

@@ -5,6 +5,7 @@ import { useAuthInfo } from '@propelauth/react'
 import { Alert, AlertTitle, Stack, Typography } from '@mui/material';
 import { SocialLoginProvider } from "@propelauth/frontend-apis";
 import { useAuthFrontendApis } from "@propelauth/frontend-apis-react";
+import { useEnv } from "../../context/env.context";
 
 
 // Import ga
@@ -19,6 +20,7 @@ export default function LoginOrRegister({ introText, previousPage }) {
     const { isLoggedIn, user } = useAuthInfo();
     const { redirectToLoginPage } = useRedirectFunctions();
     const { loginWithSocialProvider } = useAuthFrontendApis();
+    const { slackSignupUrl } = useEnv();
 
     const options = {
         autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
@@ -50,31 +52,31 @@ export default function LoginOrRegister({ introText, previousPage }) {
         );
     } else {    
     return (
-        <Stack alignItems="center" paddingTop={5}>
-            <Alert variant="outlined" severity="info">
-                <AlertTitle>
-                    {introText}
-                </AlertTitle>
-                <Stack alignItems="center" spacing={2}>
-                    <Stack direction="column" spacing={1}>
-                        <ButtonStyled onClick={handleLoginClick}>Log In</ButtonStyled>
-                        <Typography>
-                            We use Slack to collaborate, if you already have an account, login with Slack
-                        </Typography>
-                    </Stack>
-                    <Stack direction="column" spacing={1}>
-                        <ButtonStyled onClick={handleSignupClick}>
-                            <ButtonStyledWithLink href={`/signup?previousPage=${previousPage}`}>
-                                Create a Slack account
-                            </ButtonStyledWithLink>
-                        </ButtonStyled>
-                        <Typography>
-                            If you don't have an account, you will need to create an account
-                        </Typography>
-                    </Stack>
-                </Stack>
-            </Alert>
-        </Stack>
+      <Stack alignItems="center" paddingTop={5}>
+        <Alert variant="outlined" severity="info">
+          <AlertTitle>{introText}</AlertTitle>
+          <Stack alignItems="center" spacing={2}>
+            <Stack direction="column" spacing={1}>
+              <ButtonStyled onClick={handleLoginClick}>
+                Log In to opportunity-hack.slack.com
+              </ButtonStyled>
+              <Typography>
+                We use Slack to collaborate, login if you already have an account
+              </Typography>
+            </Stack>
+            <Stack direction="column" spacing={1}>
+              <ButtonStyled onClick={handleSignupClick}>
+                <ButtonStyledWithLink href={`${slackSignupUrl}`}>
+                  Create a Slack account
+                </ButtonStyledWithLink>
+              </ButtonStyled>
+              <Typography>
+                If you don't have an account, you will need to create an account
+              </Typography>
+            </Stack>
+          </Stack>
+        </Alert>
+      </Stack>
     );
     }
 };

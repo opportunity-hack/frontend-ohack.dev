@@ -29,7 +29,7 @@ import {
 import Head from "next/head";
 
 const LoginOrRegister = dynamic(
-  () => import("../../../components/LoginOrRegister/LoginOrRegister"),
+  () => import("../../../components/LoginOrRegister/LoginOrRegister2"),
   { ssr: false }
 );
 

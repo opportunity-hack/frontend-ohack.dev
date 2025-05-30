@@ -21,7 +21,7 @@ import {
 } from "../../../styles/nonprofit/styles";
 
 const LoginOrRegister = dynamic(
-  () => import("../../../components/LoginOrRegister/LoginOrRegister"),
+  () => import("../../../components/LoginOrRegister/LoginOrRegister2"),
   {
     ssr: false,
     loading: () => <Skeleton variant="rectangular" height={100} />,

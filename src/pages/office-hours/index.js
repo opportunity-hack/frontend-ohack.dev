@@ -13,7 +13,7 @@ export default function OfficeHoursPage({ title, openGraphData }) {
     const notificationEmail = 'officehours@ohack.org';
     const [isLoading, setIsLoading] = useState(true);
 
-    const LoginOrRegister = dynamic(() => import('../../components/LoginOrRegister/LoginOrRegister'), { ssr: false });
+    const LoginOrRegister = dynamic(() => import('../../components/LoginOrRegister/LoginOrRegister2'), { ssr: false });
     const InstagramEmbed = dynamic(() => import('react-social-media-embed').then(mod => mod.InstagramEmbed), { ssr: false });
 
     useEffect(() => {

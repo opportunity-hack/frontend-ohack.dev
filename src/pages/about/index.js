@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from 'react';
 import Head from 'next/head';
 import { TitleContainer, LayoutContainer, ProjectsContainer } from '../../styles/nonprofit/styles';
-import LoginOrRegister from '../../components/LoginOrRegister/LoginOrRegister';
+import LoginOrRegister from '../../components/LoginOrRegister/LoginOrRegister2';
 import { Typography } from '@mui/material';
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 import { cofounders, board_members, pledge } from '../../components/About/about-data';

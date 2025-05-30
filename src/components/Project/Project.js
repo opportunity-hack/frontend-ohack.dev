@@ -6,7 +6,7 @@ import { useAuthInfo } from "@propelauth/react";
 import { Puff } from "react-loading-icons";
 import useProblemstatements from "../../hooks/use-problem-statements";
 import Head from 'next/head';
-import LoginOrRegister from "../../components/LoginOrRegister/LoginOrRegister";
+import LoginOrRegister from "../../components/LoginOrRegister/LoginOrRegister2";
 
 
 import {

@@ -34,7 +34,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Head from 'next/head';
 import Script from 'next/script';
 import { useEnv } from '../../../context/env.context';
-import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister';
+import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister2';
 import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
 import Breadcrumbs from '../../../components/Breadcrumbs/Breadcrumbs';
 import InfoIcon from '@mui/icons-material/Info';
