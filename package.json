@@ -16,6 +16,7 @@
     "@mui/material": "^5.16.7",
     "@mui/x-data-grid": "^7.14.0",
     "@mui/x-date-pickers": "^6.18.2",
+    "@propelauth/frontend-apis-react": "^0.0.15",
     "@propelauth/react": "^2.0.22",
     "@uiw/react-md-editor": "^4.0.4",
     "axios": "^1.7.5",
