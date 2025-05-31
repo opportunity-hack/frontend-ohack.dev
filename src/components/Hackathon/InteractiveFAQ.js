@@ -37,7 +37,7 @@ const extractTextContent = (element) => {
   return '';
 };
 
-const FAQItem = ({ item, expanded, onChange, onExpand }) => (
+const FAQItem = ({ item, expanded, onChange, onExpand, questionFontSize, answerFontSize }) => (
   <Accordion 
     expanded={expanded} 
     onChange={(event, isExpanded) => {
@@ -52,22 +52,22 @@ const FAQItem = ({ item, expanded, onChange, onExpand }) => (
       aria-controls="panel-content"
       id="panel-header"
     >
-      <Typography sx={{ display: 'flex', alignItems: 'center' }}>
+      <Typography sx={{ display: 'flex', alignItems: 'center', fontSize: questionFontSize || '1.2rem', fontWeight: 600 }}>
         <span style={{ marginRight: '8px', fontSize: '1.5rem' }}>{item.icon}</span>
         {item.question}
       </Typography>
     </AccordionSummary>
     <AccordionDetails>
       {typeof item.answer === 'string' ? (
-        <Typography>{item.answer}</Typography>
+        <Typography sx={{ fontSize: answerFontSize || '1.1rem' }}>{item.answer}</Typography>
       ) : (
-        item.answer
+        <Box sx={{ fontSize: answerFontSize || '1.1rem' }}>{item.answer}</Box>
       )}
     </AccordionDetails>
   </Accordion>
 );
 
-export default function InteractiveFAQ({ faqData, title = "FAQ" }) {
+export default function InteractiveFAQ({ faqData, title = "FAQ", questionFontSize = '1.2rem', answerFontSize = '1.1rem', searchTerm: externalSearchTerm }) {
   const [expanded, setExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -114,7 +114,7 @@ export default function InteractiveFAQ({ faqData, title = "FAQ" }) {
 
   return (
     <Box sx={{ maxWidth: '800px', margin: '0 auto', p: 4, scrollMarginTop: '2rem' }}>
-      <Typography variant="h4" gutterBottom align="center">{title}</Typography>
+      <Typography variant="h4" gutterBottom align="center" sx={{ fontSize: questionFontSize, fontWeight: 700 }}>{title}</Typography>
       <TextField
         fullWidth
         variant="outlined"
@@ -125,10 +125,12 @@ export default function InteractiveFAQ({ faqData, title = "FAQ" }) {
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon />
+              <SearchIcon sx={{ fontSize: '2rem' }} />
             </InputAdornment>
           ),
+          style: { fontSize: questionFontSize }
         }}
+        InputLabelProps={{ style: { fontSize: questionFontSize } }}
       />
       <Box>
         {filteredFAQ.map((item, index) => (
@@ -138,11 +140,13 @@ export default function InteractiveFAQ({ faqData, title = "FAQ" }) {
             expanded={expanded === `panel${index}`}
             onChange={handleChange(`panel${index}`)}
             onExpand={handleExpand}
+            questionFontSize={questionFontSize}
+            answerFontSize={answerFontSize}
           />
         ))}
       </Box>
       {filteredFAQ.length === 0 && (
-        <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
+        <Typography align="center" color="text.secondary" sx={{ mt: 4, fontSize: answerFontSize }}>
           No matching questions found.
         </Typography>
       )}

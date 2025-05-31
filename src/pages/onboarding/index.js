@@ -239,11 +239,61 @@ export default function Onboarding() {
 
         <StyledPaper>
           {/* Stepper */}
-          <Stepper activeStep={activeStep} alternativeLabel>
+          <Stepper
+            activeStep={activeStep}
+            alternativeLabel
+            sx={{
+              '& .MuiStepLabel-label': {
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                mt: 1,
+              },
+              '& .MuiStepIcon-root': {
+                width: 30,
+                height: 30,
+                fontSize: '2rem',
+              },
+              '& .MuiSvgIcon-root': {
+                width: 30,
+                height: 30,
+                fontSize: '2rem',
+              },
+              '& .MuiStepConnector-line': {
+                minHeight: 4,
+              },
+              '& .MuiStepLabel-root.Mui-active .MuiStepLabel-label': {
+                color: 'primary.main',
+                fontWeight: 800,
+                fontSize: '1.35rem',
+                textShadow: '0 2px 8px rgba(25, 118, 210, 0.18)',
+                background: 'rgba(25, 118, 210, 0.10)',
+                borderRadius: 8,
+                px: 2,
+                py: 0.5,
+                boxShadow: '0 2px 12px 0 rgba(25, 118, 210, 0.10)',
+                transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
+                display: 'inline-block',
+                animation: 'blink 2s infinite',
+              },
+              '& .MuiStepIcon-root.Mui-active': {
+                color: 'primary.main',
+                boxShadow: '0 0 0 6px rgba(25, 118, 210, 0.18)',
+                borderRadius: '50%',
+                background: 'white',
+                transition: 'box-shadow 0.2s, background 0.2s',
+              },
+              mb: 4
+            }}
+          >
             {steps.map((label, index) => {
               const stepProps = {};
-              const labelProps = {};
-
+              const labelProps = {
+                sx: {
+                  '& .MuiStepLabel-label': {
+                    fontSize: '1.2rem'
+                  }
+                }
+              };
               return (
                 <Step key={label} {...stepProps} completed={completed[index]}>
                   <StepLabel {...labelProps}>{label}</StepLabel>
@@ -270,6 +320,8 @@ export default function Onboarding() {
               variant="outlined"
               disabled={activeStep === 0}
               onClick={handleBack}
+              size="large"
+              sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
             >
               Back
             </Button>
@@ -278,7 +330,8 @@ export default function Onboarding() {
                 <Button 
                   variant="text" 
                   onClick={handleSkip}
-                  sx={{ color: 'text.secondary' }}
+                  sx={{ color: 'text.secondary', fontSize: '1.1rem', px: 2, py: 1.5 }}
+                  size="large"
                 >
                   Skip
                 </Button>
@@ -290,6 +343,8 @@ export default function Onboarding() {
                   color="primary"
                   onClick={handleComplete}
                   disabled={loading}
+                  size="large"
+                  sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
                 >
                   Complete Onboarding
                   {loading && <CircularProgress size={24} sx={{ ml: 1 }} />}
@@ -299,6 +354,8 @@ export default function Onboarding() {
                   variant="contained"
                   color="primary"
                   onClick={handleNext}
+                  size="large"
+                  sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
                 >
                   Next
                 </AnimatedButton>

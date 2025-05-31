@@ -162,10 +162,10 @@ const IntroductionPrompt = () => {
     <Box>
       {/* Header */}
       <Box mb={3} textAlign="center">
-        <Typography variant="h3" component="h1" gutterBottom>
+        <Typography variant="h3" component="h1" gutterBottom sx={{ fontSize: '2.5rem' }}>
           Introduce Yourself
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
+        <Typography variant="subtitle1" color="textSecondary" sx={{ fontSize: '1.7rem' }}>
           Share your background and interests with the community
         </Typography>
         <Divider sx={{ mt: 2, mb: 3 }} />
@@ -173,10 +173,10 @@ const IntroductionPrompt = () => {
 
       {/* Introduction guidance */}
       <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h4" gutterBottom sx={{ fontSize: '2.3rem' }}>
           Why Introductions Matter
         </Typography>
-        <Typography variant="body1" paragraph>
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.3rem' }}>
           Sharing a bit about yourself helps community members get to know you, find common interests, 
           and creates opportunities for collaboration. A good introduction can help you:
         </Typography>
@@ -184,10 +184,10 @@ const IntroductionPrompt = () => {
           <Grid item xs={12} sm={6} md={3}>
             <IntroCard>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                   Find Collaborators
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="body1" sx={{ fontSize: '1.25rem' }}>
                   Connect with others who share your interests or complementary skills
                 </Typography>
               </CardContent>
@@ -196,10 +196,10 @@ const IntroductionPrompt = () => {
           <Grid item xs={12} sm={6} md={3}>
             <IntroCard>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                   Get Mentorship
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="body1" sx={{ fontSize: '1.25rem' }}>
                   Identify experienced members who can help guide your contributions
                 </Typography>
               </CardContent>
@@ -208,10 +208,10 @@ const IntroductionPrompt = () => {
           <Grid item xs={12} sm={6} md={3}>
             <IntroCard>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                   Showcase Expertise
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="body1" sx={{ fontSize: '1.25rem' }}>
                   Let others know what you're skilled at and how you can contribute
                 </Typography>
               </CardContent>
@@ -220,10 +220,10 @@ const IntroductionPrompt = () => {
           <Grid item xs={12} sm={6} md={3}>
             <IntroCard>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                   Feel Welcome
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="body1" sx={{ fontSize: '1.25rem' }}>
                   Breaking the ice makes it easier to participate in community discussions
                 </Typography>
               </CardContent>
@@ -233,11 +233,11 @@ const IntroductionPrompt = () => {
       </Paper>
 
       {/* Introduction builder form */}
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom sx={{ fontSize: '2.5rem' }}>
         Create Your Introduction
       </Typography>
-      <Typography variant="body1" paragraph>
-        Fill out the form below to generate an introduction that you can share in our #introductions Slack channel.
+      <Typography variant="body1" paragraph sx={{ fontSize: '1.3rem' }}>
+        Fill out the form below to generate an introduction that you can share in our <b>#introductions</b> Slack channel.
       </Typography>
 
       <Grid container spacing={3}>
@@ -250,44 +250,44 @@ const IntroductionPrompt = () => {
               value={formData.name}
               onChange={handleChange}
               fullWidth
-              required
+              InputLabelProps={{ style: { fontSize: '1.2rem' } }}
+              InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-            
             <TextField
-              label="Role/Title"
+              label="Your Role (e.g., Software Engineer, Student)"
               name="role"
               value={formData.role}
               onChange={handleChange}
-              placeholder="Software Engineer, Student, etc."
               fullWidth
+              InputLabelProps={{ style: { fontSize: '1.2rem' } }}
+              InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-            
             <TextField
-              label="Location"
+              label="Your Location (Optional)"
               name="location"
               value={formData.location}
               onChange={handleChange}
-              placeholder="City, Country"
               fullWidth
+              InputLabelProps={{ style: { fontSize: '1.2rem' } }}
+              InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-            
             <TextField
-              label="Professional Background"
+              label="Tell us about your background (Optional)"
               name="background"
               value={formData.background}
               onChange={handleChange}
-              placeholder="Brief description of your background"
-              multiline
-              rows={2}
               fullWidth
+              multiline
+              rows={3}
+              InputLabelProps={{ style: { fontSize: '1.2rem' } }}
+              InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-            
-            {/* Experience level selection */}
+
             <Box>
-              <Typography variant="subtitle1" gutterBottom>
-                Development Experience Level
+              <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.25rem' }}>
+                Experience Level
               </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
                 {experienceLevels.map((level) => (
                   <Chip
                     key={level}
@@ -295,180 +295,117 @@ const IntroductionPrompt = () => {
                     clickable
                     color={selectedExperience === level ? 'primary' : 'default'}
                     onClick={() => handleExperienceSelect(level)}
-                    sx={{ marginBottom: 1 }}
+                    sx={{ fontSize: '1.1rem' }}
                   />
                 ))}
               </Stack>
             </Box>
-            
-            {/* Skills selection */}
+
             <Box>
-              <Typography variant="subtitle1" gutterBottom>
-                Skills (select all that apply)
+              <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.25rem' }}>
+                Skills (Select relevant ones)
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxHeight: '150px', overflowY: 'auto' }}>
+              <Stack direction="row" spacing={1} flexWrap="wrap" rowGap={1}>
                 {skillsList.map((skill) => (
                   <Chip
                     key={skill}
                     label={skill}
                     clickable
-                    size="small"
                     color={formData.skills.includes(skill) ? 'primary' : 'default'}
                     onClick={() => handleSkillToggle(skill)}
-                    sx={{ marginBottom: 1 }}
+                    sx={{ fontSize: '1.1rem', m: 0.5 }}
                   />
                 ))}
-              </Box>
+              </Stack>
             </Box>
-            
+
             <TextField
-              label="Interests"
+              label="Your Interests (e.g., Social Causes, Technologies)"
               name="interests"
               value={formData.interests}
               onChange={handleChange}
-              placeholder="What tech or nonprofit causes interest you?"
+              fullWidth
               multiline
               rows={2}
-              fullWidth
+              InputLabelProps={{ style: { fontSize: '1.2rem' } }}
+              InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-            
             <TextField
-              label="Goals for Opportunity Hack"
+              label="Your Goals for Opportunity Hack"
               name="goals"
               value={formData.goals}
               onChange={handleChange}
-              placeholder="What do you hope to gain or contribute?"
+              fullWidth
               multiline
               rows={2}
-              fullWidth
+              InputLabelProps={{ style: { fontSize: '1.2rem' } }}
+              InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-            
             <TextField
-              label="Fun Fact (optional)"
+              label="Fun Fact about you (Optional)"
               name="funFact"
               value={formData.funFact}
               onChange={handleChange}
-              placeholder="Share something interesting about yourself"
               fullWidth
+              InputLabelProps={{ style: { fontSize: '1.2rem' } }}
+              InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-            
-            <TextField
-              label="Contact Info"
+             <TextField
+              label="Contact Info (e.g., email, LinkedIn) (Optional)"
               name="contactInfo"
               value={formData.contactInfo}
               onChange={handleChange}
-              placeholder="Email, GitHub, LinkedIn, etc."
               fullWidth
+              InputLabelProps={{ style: { fontSize: '1.2rem' } }}
+              InputProps={{ style: { fontSize: '1.2rem' } }}
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.shareOnSlack}
+                  onChange={handleShareChange}
+                  name="shareOnSlack"
+                />
+              }
+              label={<Typography variant="body1" sx={{ fontSize: '1.5rem' }}>Include this information in my generated introduction</Typography>}
             />
           </Stack>
         </Grid>
-        
-        {/* Right side - preview and share */}
+
+        {/* Right side - generated introduction preview */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h5" gutterBottom>
-              Preview
+          <Typography variant="h6" gutterBottom sx={{ fontSize: '1.3rem' }}>
+            Generated Introduction Preview:
+          </Typography>
+          <IntroTemplate elevation={0}>
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', fontSize: '1.2rem' }}>
+              {generateIntroduction()}
             </Typography>
-            
-            <IntroTemplate>
-              <Tooltip title="Copy to clipboard">
-                <IconButton 
-                  onClick={copyToClipboard} 
-                  sx={{ position: 'absolute', top: 8, right: 8 }}
-                  color={copied ? "success" : "default"}
-                >
-                  {copied ? <CheckCircleIcon /> : <ContentCopyIcon />}
+            <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+              <Tooltip title={copied ? 'Copied!' : 'Copy to Clipboard'} placement="top">
+                <IconButton onClick={copyToClipboard} size="small" color={copied ? 'success' : 'default'}>
+                  {copied ? <CheckCircleIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
                 </IconButton>
               </Tooltip>
-              
-              <Box sx={{ whiteSpace: 'pre-wrap', pr: 4 }}>
-                {generateIntroduction()}
-              </Box>
-            </IntroTemplate>
-            
-            <Box sx={{ mt: 'auto', pt: 2 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox 
-                    checked={formData.shareOnSlack} 
-                    onChange={handleShareChange}
-                    color="primary"
-                  />
-                }
-                label="I'm ready to share this in the #introductions channel"
+              <Snackbar
+                open={copied}
+                autoHideDuration={3000}
+                onClose={() => setCopied(false)}
+                message="Copied to Clipboard!"
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
               />
-              
-              <Box sx={{ mt: 2 }}>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  fullWidth
-                  size="large"
-                  onClick={copyToClipboard}
-                  startIcon={<ContentCopyIcon />}
-                >
-                  Copy Introduction
-                </Button>
-                
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  <Typography variant="body2">
-                    Paste your introduction in the{' '}
-                    <strong>#introductions</strong> channel on our{' '}
-                    <a href={slackSignupUrl} target="_blank" rel="noopener noreferrer">
-                      Slack workspace
-                    </a>.
-                  </Typography>
-                </Alert>
-              </Box>
             </Box>
-          </Paper>
+          </IntroTemplate>
+          <Alert severity="info" sx={{ mt: 2, fontSize: '1.1rem' }}>
+            Copy the generated introduction above and paste it into the #introductions channel in our Slack workspace. 
+            <Button href={slackSignupUrl} target="_blank" rel="noopener noreferrer" variant="text" sx={{ fontSize: '1rem' }}>
+              Join our Slack here
+            </Button>
+             if you haven't already.
+          </Alert>
         </Grid>
       </Grid>
-
-      {/* Tips section */}
-      <Box mt={4}>
-        <Typography variant="h5" gutterBottom>
-          Introduction Tips
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Paper sx={{ p: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
-                Do's
-              </Typography>
-              <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-                <li>Be authentic and approachable</li>
-                <li>Share your experience level honestly</li>
-                <li>Mention specific skills and interests</li>
-                <li>Include your learning goals</li>
-                <li>Add a personal touch with a fun fact</li>
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Paper sx={{ p: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
-                Don'ts
-              </Typography>
-              <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-                <li>Don't share sensitive personal information</li>
-                <li>Avoid being too formal or impersonal</li>
-                <li>Don't downplay your skills or experience</li>
-                <li>Keep it reasonably concise</li>
-                <li>Avoid technical jargon that might not be familiar to all</li>
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* Success Snackbar for copy action */}
-      <Snackbar
-        open={copied}
-        autoHideDuration={3000}
-        onClose={() => setCopied(false)}
-        message="Introduction copied to clipboard!"
-      />
     </Box>
   );
 };
