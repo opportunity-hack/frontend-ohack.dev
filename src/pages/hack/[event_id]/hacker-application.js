@@ -479,7 +479,6 @@ const HackerApplicationComponent = () => {
       if (value !== "I'm looking for team members" && value !== "I'd like to be matched with a team") {
         setFormData(prev => ({
           ...prev,
-          teamNeededSkills: '',
           teamMatchingPreferences: {
             preferredSize: '',
             preferredSkills: [],
@@ -826,12 +825,22 @@ const HackerApplicationComponent = () => {
       return false;
     }
     
-    if (formData.teamStatus === "I'm looking for team members" && !formData.teamNeededSkills) {
-      setError('Please specify what skills you are looking for in teammates');
-      return false;
+    // Updated validation for team members - check the correct fields
+    if (formData.teamStatus === "I'm looking for team members") {
+      // Check team matching preferences instead of teamNeededSkills
+      if (!formData.teamMatchingPreferences.preferredSize) {
+        setError('Please select your preferred team size');
+        return false;
+      }
+      
+      if (!formData.teamMatchingPreferences.preferredSkills || 
+          formData.teamMatchingPreferences.preferredSkills.length === 0) {
+        setError('Please select at least one preferred skill set to work with');
+        return false;
+      }
     }
     
-    if (formData.teamStatus === "I'm looking for team members" || formData.teamStatus === "I'd like to be matched with a team") {
+    if (formData.teamStatus === "I'd like to be matched with a team") {
       // Check team matching preferences
       if (!formData.teamMatchingPreferences.preferredSize) {
         setError('Please select your preferred team size');
@@ -843,7 +852,6 @@ const HackerApplicationComponent = () => {
         setError('Please select at least one preferred skill set to work with');
         return false;
       }
-            
     }
     
     setError('');
@@ -1826,7 +1834,8 @@ const HackerApplicationComponent = () => {
                 Our team-matching process has successfully connected hundreds of hackers into effective teams over the years. 
                 Your preferences below will help us create balanced teams where members complement each other's skills and share 
                 common interests in social causes.
-              </Typography>
+              </Typography
+              >
               
               
               
