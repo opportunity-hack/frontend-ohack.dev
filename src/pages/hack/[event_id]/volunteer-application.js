@@ -632,7 +632,7 @@ const VolunteerApplicationComponent = () => {
   };
   
   const validateAvailabilityInfo = () => {
-    const requiredFields = ['inPerson', 'country', 'state'];
+    const requiredFields = ['country', 'state'];
     
     for (const field of requiredFields) {
       if (!formData[field]) {
@@ -1153,6 +1153,16 @@ const VolunteerApplicationComponent = () => {
     </Box>
   );
   
+  // Helper function to determine if event is virtual/global
+  const isVirtualEvent = () => {
+    if (!eventData?.location) return false;
+    const location = eventData.location.toLowerCase();
+    return location.includes('global') || 
+           location.includes('virtual') || 
+           location.includes('online') ||
+           location.includes('remote');
+  };
+
   // Render availability form with time slots selection
   const renderAvailabilityForm = () => (
     <Box sx={{ mb: 4 }}>
@@ -1161,22 +1171,26 @@ const VolunteerApplicationComponent = () => {
       </Typography>
       
       <Box sx={{ mb: 3 }}>
-        <FormControl required component="fieldset" sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Are you joining us in-person or virtually?
-          </Typography>
-          <RadioGroup
-            name="inPerson"
-            value={formData.inPerson || ''}
-            onChange={handleFormChange}
-          >
-            <FormControlLabel value="Yes" control={<Radio />} label="Yes, I'll attend in person" />
-            <FormControlLabel value="No" control={<Radio />} label="No, I'll participate virtually" />
-          </RadioGroup>
-        </FormControl>
+        {/* Conditionally show in-person attendance field only for physical events */}
+        {!isVirtualEvent() && (
+          <FormControl required component="fieldset" sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Are you joining us in-person or virtually?
+            </Typography>
+            <RadioGroup
+              name="inPerson"
+              value={formData.inPerson || ''}
+              onChange={handleFormChange}
+            >
+              <FormControlLabel value="Yes" control={<Radio />} label="Yes, I'll attend in person" />
+              <FormControlLabel value="No" control={<Radio />} label="No, I'll participate virtually" />
+            </RadioGroup>
+          </FormControl>
+        )}
         
         <TextField
-          label="Country"
+          label={isVirtualEvent() ? "Which country will you be volunteering from?" : 
+                 (formData.inPerson === "Yes" ? "Which country are you traveling from?" : "Which country will you be volunteering from?")}
           name="country"
           required
           fullWidth
@@ -1186,7 +1200,8 @@ const VolunteerApplicationComponent = () => {
         />
         
         <TextField
-          label="State/Province"
+          label={isVirtualEvent() ? "State/Province (where you'll be volunteering from)" : 
+                 (formData.inPerson === "Yes" ? "State/Province (where you're traveling from)" : "State/Province (where you'll be volunteering from)")}
           name="state"
           required
           fullWidth
