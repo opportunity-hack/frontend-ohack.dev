@@ -88,28 +88,28 @@ const ChannelsExploration = () => {
   const coreChannels = [
     {
       id: 'general',
-      name: '#general',
+      name: 'general',
       description: 'Welcome and general community-wide announcements',
       icon: <InfoIcon />,
       tags: ['Required', 'Community']
     },
     {
       id: 'introductions',
-      name: '#introductions',
+      name: 'introductions',
       description: 'Introduce yourself to the community',
       icon: <GroupIcon />,
       tags: ['Required', 'Networking']
     },
     {
       id: 'help',
-      name: '#help',
+      name: 'help',
       description: 'Ask for help with any questions or issues',
       icon: <HelpIcon />,
       tags: ['Support', 'Community']
     },
     {
       id: 'events',
-      name: '#events',
+      name: 'events',
       description: 'Upcoming hackathons, workshops, and other events',
       icon: <EventIcon />,
       tags: ['Events', 'Announcements']
@@ -120,7 +120,7 @@ const ChannelsExploration = () => {
   const projectChannels = [
     {
       id: 'project-ideas',
-      name: '#project-ideas',
+      name: 'project-ideas',
       description: 'Share and discuss potential project ideas',
       icon: <ChatIcon />,
       tags: ['Projects', 'Ideation']
@@ -134,7 +134,7 @@ const ChannelsExploration = () => {
     },
     {
       id: 'technical-questions',
-      name: '#technical-questions',
+      name: 'technical-questions',
       description: 'Technical discussions and problem-solving',
       icon: <CodeIcon />,
       tags: ['Technical', 'Support']
@@ -145,35 +145,35 @@ const ChannelsExploration = () => {
   const interestChannels = [
     {
       id: 'frontend',
-      name: '#frontend',
+      name: 'frontend',
       description: 'Frontend development discussions and resources',
       icon: <CodeIcon />,
       tags: ['Technical', 'Frontend']
     },
     {
       id: 'backend',
-      name: '#backend',
+      name: 'backend',
       description: 'Backend development discussions and resources',
       icon: <CodeIcon />,
       tags: ['Technical', 'Backend']
     },
     {
       id: 'data-science',
-      name: '#data-science',
+      name: 'data-science',
       description: 'Data science and machine learning discussions',
       icon: <CodeIcon />,
       tags: ['Technical', 'Data']
     },
     {
       id: 'design',
-      name: '#design',
+      name: 'design',
       description: 'UX/UI design discussions and resources',
       icon: <CodeIcon />,
       tags: ['Technical', 'Design']
     },
     {
       id: 'random',
-      name: '#random',
+      name: 'random',
       description: 'Off-topic conversations and community building',
       icon: <ChatIcon />,
       tags: ['Social', 'Community']
@@ -199,7 +199,7 @@ const ChannelsExploration = () => {
       <Paper elevation={1} sx={{ p: 3, mt: 2, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <ChannelIcon>{channel.icon}</ChannelIcon>
-          <Typography variant="h5">{channel.name}</Typography>
+          <Typography variant="h5" sx={{ fontSize: '1.6rem' }}>{channel.name}</Typography>
         </Box>
         <Typography variant="body1" paragraph>
           {channel.description}
@@ -237,7 +237,7 @@ const ChannelsExploration = () => {
         <Typography variant="h3" component="h1" gutterBottom>
           Community Channels
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
+        <Typography variant="subtitle1" color="text.primary" sx={{ fontSize: '1.2rem' }}>
           Explore our Slack channels and community resources
         </Typography>
         <Divider sx={{ mt: 2, mb: 3 }} />
@@ -245,10 +245,10 @@ const ChannelsExploration = () => {
 
       {/* Join Slack CTA if not already a member */}
       <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body1">
+        <Typography variant="body1" color="text.primary" sx={{ fontSize: '1.2rem'}}>
           Not yet a member of our Slack workspace? 
           <Link href={slackSignupUrl} target="_blank" rel="noopener noreferrer" sx={{ ml: 1 }}>
-            Join us on Slack
+            <b>Join us on Slack</b>
           </Link> to access these channels and connect with the community.
         </Typography>
       </Alert>
@@ -261,25 +261,25 @@ const ChannelsExploration = () => {
           aria-label="channel categories"
           centered
         >
-          <Tab label="Getting Started" id="channel-tab-0" />
-          <Tab label="Project Collaboration" id="channel-tab-1" />
-          <Tab label="Special Interests" id="channel-tab-2" />
+          <Tab label="Getting Started" id="channel-tab-0" sx={{ fontSize: '1.3rem' }} />
+          <Tab label="Project Collaboration" id="channel-tab-1" sx={{ fontSize: '1.3rem' }} />
+          <Tab label="Special Interests" id="channel-tab-2" sx={{ fontSize: '1.3rem' }} />
         </Tabs>
       </Box>
 
       {/* Introduction to channel group */}
       <TabPanel value={activeTab} index={0}>
-        <Typography variant="body1" paragraph>
+        <Typography variant="body1" paragraph color="text.primary" sx={{ fontSize: '1.25rem' }}>
           These are the essential channels every member should join. They'll help you get oriented and stay connected with important community updates.
         </Typography>
       </TabPanel>
       <TabPanel value={activeTab} index={1}>
-        <Typography variant="body1" paragraph>
+        <Typography variant="body1" paragraph color="text.primary" sx={{ fontSize: '1.25rem' }}>
           These channels focus on project work - finding teams, sharing ideas, and getting technical help. Join based on your interests and participation.
         </Typography>
       </TabPanel>
       <TabPanel value={activeTab} index={2}>
-        <Typography variant="body1" paragraph>
+        <Typography variant="body1" paragraph color="text.primary" sx={{ fontSize: '1.25rem' }}>
           Special interest channels for specific technologies, skills, or social connections. Join any that align with your interests or expertise.
         </Typography>
       </TabPanel>
@@ -295,11 +295,11 @@ const ChannelsExploration = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <TagIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
-                  <Typography variant="h6">
+                  <Typography variant="h6" sx={{ fontSize: '1.35rem' }}>
                     {channel.name}
                   </Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem' }}>
                   {channel.description}
                 </Typography>
               </CardContent>
@@ -313,6 +313,7 @@ const ChannelsExploration = () => {
                       size="small" 
                       variant="outlined"
                       color={tag === 'Required' ? 'primary' : 'default'}
+                      sx={{ fontSize: '1.0rem', height: 30 }}
                     />
                   ))}
                 </Box>
@@ -327,16 +328,16 @@ const ChannelsExploration = () => {
 
       {/* Additional resources */}
       <Box mt={4}>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" gutterBottom sx={{ fontSize: '2rem' }}>
           Additional Resources
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <Paper sx={{ p: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Slack Etiquette
               </Typography>
-              <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+              <Typography variant="body1" component="ul" sx={{ pl: 2, fontSize: '1.3rem' }}>
                 <li>Use threads for detailed discussions</li>
                 <li>Keep messages in appropriate channels</li>
                 <li>Be respectful and inclusive in all communications</li>
@@ -347,10 +348,10 @@ const ChannelsExploration = () => {
           </Grid>
           <Grid item xs={12} sm={6}>
             <Paper sx={{ p: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Other Community Platforms
               </Typography>
-              <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+              <Typography variant="body1" component="ul" sx={{ pl: 2, fontSize: '1.3rem' }}>
                 <li>GitHub: Collaborate on projects and review code</li>
                 <li>Discord: Voice chat during hackathons and events</li>
                 <li>Monthly Webinars: Join our educational sessions</li>

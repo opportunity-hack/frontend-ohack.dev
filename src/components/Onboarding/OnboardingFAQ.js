@@ -23,6 +23,7 @@ import InteractiveFAQ from '../Hackathon/InteractiveFAQ';
  * Comprehensive FAQ section addressing common questions for new members
  */
 const OnboardingFAQ = () => {
+  const answerFontSize = '1.1rem';
   const { slackSignupUrl } = useEnv();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -38,12 +39,12 @@ const OnboardingFAQ = () => {
       question: "How do I get started with Opportunity Hack?",
       answer: (
         <>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             Welcome to Opportunity Hack! Here's a quick guide to get you started:
           </Typography>
           <ol>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Join our Slack community</strong> - This is where most of our communication happens.
                 <a href={slackSignupUrl} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 5 }}>
                   Join here!
@@ -51,22 +52,22 @@ const OnboardingFAQ = () => {
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Introduce yourself</strong> - Post an introduction in the #introductions channel to connect with other members.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Find a buddy</strong> - Request a buddy through this onboarding flow or in the #buddy-matching channel.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Explore projects</strong> - Browse current projects in the #project-matching channel or on our website.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Attend events</strong> - Join our next hackathon, workshop, or virtual meetup announced in #events.
               </Typography>
             </li>
@@ -78,7 +79,7 @@ const OnboardingFAQ = () => {
     {
       question: "Do I need to be an experienced developer to join?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Not at all! We welcome members of all skill levels, from beginners to seasoned professionals. 
           Many of our projects have tasks suitable for various experience levels, and it's a great place to learn. 
           We encourage a collaborative, mentorship-driven environment where everyone can contribute and grow.
@@ -90,7 +91,7 @@ const OnboardingFAQ = () => {
     {
       question: "How much time am I expected to commit?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Opportunity Hack is flexible and designed to accommodate various levels of availability. 
           You can contribute as much or as little time as you have available. Some members participate 
           only during hackathon events, while others contribute to ongoing projects a few hours per week. 
@@ -105,32 +106,32 @@ const OnboardingFAQ = () => {
       question: "How can I connect with other members?",
       answer: (
         <>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             There are several ways to connect with other Opportunity Hack members:
           </Typography>
           <ul>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Slack channels</strong> - Join discussions in our topic-based channels.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Virtual events</strong> - Attend our regular community calls, workshops, and social events.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Project teams</strong> - Join a project team to collaborate closely with other members.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Buddy system</strong> - Get paired with an experienced member who can introduce you around.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>In-person hackathons</strong> - When available, our in-person events are a great way to network.
               </Typography>
             </li>
@@ -142,7 +143,7 @@ const OnboardingFAQ = () => {
     {
       question: "Is there a code of conduct?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Yes, we have a comprehensive Code of Conduct that all members are required to follow. It emphasizes respect, 
           inclusivity, and professional behavior. We're committed to providing a harassment-free, welcoming environment 
           for everyone regardless of gender, sexual orientation, disability, physical appearance, body size, race, or religion. 
@@ -155,7 +156,7 @@ const OnboardingFAQ = () => {
     {
       question: "Who runs Opportunity Hack?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Opportunity Hack is managed by a dedicated team of volunteers with support from corporate sponsors. 
           Our core organizers include experienced developers, nonprofit professionals, and community builders 
           who coordinate events, maintain infrastructure, and ensure the community runs smoothly. We also have 
@@ -172,32 +173,32 @@ const OnboardingFAQ = () => {
       question: "How do I join an existing project?",
       answer: (
         <>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             To join an existing project:
           </Typography>
           <ol>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Browse current projects</strong> - Check the #project-matching channel on Slack or the Projects section on our website.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Express interest</strong> - Comment on the project post or message the project lead.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Attend an onboarding meeting</strong> - Most teams have a process to bring new members up to speed.
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Start small</strong> - Begin with smaller tasks or issues labeled "good for beginners."
               </Typography>
             </li>
           </ol>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             We encourage teams to be open to new members, but some projects may have specific skill requirements or be in a phase where onboarding is challenging. Don't be discouraged if one project isn't a good fit—there are always new opportunities emerging.
           </Typography>
         </>
@@ -207,7 +208,7 @@ const OnboardingFAQ = () => {
     {
       question: "Can I propose a new project idea?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Absolutely! We encourage members to propose new project ideas, especially those addressing nonprofit needs. 
           To propose a new project, share your idea in the #project-ideas channel on Slack with details about the problem 
           it addresses, potential solution, and technologies involved. Community members will provide feedback, and if there's 
@@ -221,47 +222,47 @@ const OnboardingFAQ = () => {
       question: "What technologies/skills are most needed?",
       answer: (
         <>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             We need a wide range of skills and technologies to support various nonprofit needs. Currently, some of the most requested skills include:
           </Typography>
           <ul>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Web development</strong> - Frontend (React, Vue) and backend (Node.js, Python/Django)
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Mobile development</strong> - React Native, Flutter, or native iOS/Android
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Data science and analytics</strong> - For helping nonprofits make sense of their data
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>UX/UI design</strong> - Creating accessible, user-friendly interfaces
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>DevOps</strong> - Setting up deployment pipelines and maintaining infrastructure
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Project management</strong> - Coordinating team efforts and communicating with nonprofits
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Technical writing</strong> - Creating documentation for users and future maintainers
               </Typography>
             </li>
           </ul>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             However, don't worry if your skills aren't on this list. We value diverse perspectives and there's almost always a way to contribute regardless of your background.
           </Typography>
         </>
@@ -273,7 +274,7 @@ const OnboardingFAQ = () => {
     {
       question: "When is your next hackathon?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           We typically organize multiple hackathons throughout the year, both virtual and in-person (when possible). 
           Our flagship events usually occur in the spring and fall. For the most up-to-date information on upcoming 
           hackathons, check the #events channel on Slack, subscribe to our newsletter, or visit the Events page on our website. 
@@ -287,42 +288,42 @@ const OnboardingFAQ = () => {
       question: "How do virtual hackathons work?",
       answer: (
         <>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             Our virtual hackathons follow this general structure:
           </Typography>
           <ol>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Kickoff</strong> - Nonprofit representatives present their challenges
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Team formation</strong> - Participants organize into teams based on interests and skills
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Hacking period</strong> - Teams work on solutions (typically 24-72 hours)
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Check-ins</strong> - Regular virtual sessions for teams to share progress and get help
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Presentations</strong> - Teams demonstrate their solutions
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Next steps</strong> - Planning for continued development after the event
               </Typography>
             </li>
           </ol>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             We use Slack, Zoom, and collaborative tools to facilitate communication and coordination during the event. Technical mentors are available to provide guidance throughout the hackathon.
           </Typography>
         </>
@@ -332,7 +333,7 @@ const OnboardingFAQ = () => {
     {
       question: "Are hackathons beginner-friendly?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Yes, our hackathons are designed to be inclusive for participants of all skill levels, including beginners. 
           We provide mentorship, technical support, and plenty of guidance throughout the event. Before each hackathon, 
           we host preparatory workshops to help newcomers get familiar with relevant technologies and concepts. 
@@ -348,7 +349,7 @@ const OnboardingFAQ = () => {
     {
       question: "How do you handle project hosting and deployment?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           We typically host projects on GitHub under the Opportunity Hack organization, which provides version control and collaboration tools. 
           For deployment, we use a variety of platforms depending on the project's needs. Many web applications are deployed on Heroku, Vercel, 
           or Netlify, which offer free tiers for nonprofit projects. For more complex applications requiring custom infrastructure, we work with 
@@ -362,7 +363,7 @@ const OnboardingFAQ = () => {
     {
       question: "Who owns the intellectual property of projects?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           All code created within Opportunity Hack is typically open source and licensed under permissive licenses like MIT or Apache 2.0. 
           This approach ensures that nonprofits have full access to their solutions while contributors can showcase their work. 
           The nonprofit partners receive the rights to use and modify the software for their needs, while the code remains publicly 
@@ -376,7 +377,7 @@ const OnboardingFAQ = () => {
     {
       question: "What happens to projects after hackathons end?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Unlike traditional hackathons, we emphasize long-term project development and sustainability. After a hackathon ends, 
           projects typically enter our "continued development" phase. Teams often continue working on their solutions, refining 
           features, addressing bugs, and ensuring the project meets the nonprofit's needs. We have a dedicated project maintenance 
@@ -392,7 +393,7 @@ const OnboardingFAQ = () => {
     {
       question: "Can I include my Opportunity Hack contributions on my resume?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Absolutely! We encourage members to showcase their Opportunity Hack contributions on resumes, portfolios, and LinkedIn profiles. 
           These projects demonstrate real-world experience, teamwork, and a commitment to social impact—qualities that many employers value. 
           When listing your contributions, include specific technical skills utilized, your role in the team, and the impact of the project on 
@@ -407,42 +408,42 @@ const OnboardingFAQ = () => {
       question: "How can I become more involved in the community?",
       answer: (
         <>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             There are many ways to deepen your involvement in Opportunity Hack:
           </Typography>
           <ul>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Become a project lead</strong> - Coordinate a team working on a nonprofit solution
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Volunteer as a mentor</strong> - Help guide newer members and share your expertise
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Join the organizing team</strong> - Help plan events and community initiatives
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Lead workshops</strong> - Share your knowledge through educational sessions
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Become a buddy</strong> - Help onboard and support new community members
               </Typography>
             </li>
             <li>
-              <Typography paragraph>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
                 <strong>Help with outreach</strong> - Connect with nonprofits and identify potential projects
               </Typography>
             </li>
           </ul>
-          <Typography paragraph>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
             Express your interest in taking on these roles in the #community-involvement channel on Slack, or reach out to one of our community managers.
           </Typography>
         </>
@@ -452,7 +453,7 @@ const OnboardingFAQ = () => {
     {
       question: "How is Opportunity Hack funded?",
       answer: (
-        <Typography paragraph>
+        <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Opportunity Hack operates through a combination of corporate sponsorships, individual donations, and in-kind support. 
           Our corporate partners provide financial resources, volunteer time from their employees, and often technical infrastructure. 
           We maintain a lean operation with minimal overhead costs, as most of our work is done by volunteers. Funds are primarily used 
@@ -480,47 +481,36 @@ const OnboardingFAQ = () => {
     <Box>
       {/* Header */}
       <Box mb={3} textAlign="center">
-        <Typography variant="h3" component="h1" gutterBottom>
+        <Typography variant="h3" component="h1" gutterBottom sx={{ fontSize: '2.5rem' }}>
           Frequently Asked Questions
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
-          Everything you need to know about Opportunity Hack
+        <Typography variant="subtitle1" color="textSecondary" sx={{ fontSize: '1.25rem', fontWeight: 500 }}>
+          Find answers to common questions about getting involved
         </Typography>
         <Divider sx={{ mt: 2, mb: 3 }} />
       </Box>
 
-      {/* Search bar */}
+      {/* Search Input */}
       <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
-          variant="outlined"
-          placeholder="Search the FAQ..."
+          label={<span style={{ fontSize: '1.4rem', fontWeight: 600 }}>Search FAQs</span>}
           value={searchTerm}
           onChange={handleSearchChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <SearchIcon sx={{ fontSize: '2rem' }} />
               </InputAdornment>
             ),
+            style: { fontSize: '1.3rem' }
           }}
+          InputLabelProps={{ style: { fontSize: '1.3rem', fontWeight: 600 } }}
         />
       </Box>
 
-      {/* Still have questions notice */}
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <FeedIcon color="primary" />
-        <Typography variant="body1">
-          Don't see your question? Ask in the <strong>#help</strong> channel on our Slack workspace!
-        </Typography>
-      </Box>
-
-      {/* Interactive FAQ component */}
-      <InteractiveFAQ 
-        faqData={faqData} 
-        title="Common Questions"
-        searchTerm={searchTerm}
-      />
+      {/* FAQ List */}
+      <InteractiveFAQ faqData={faqData} searchTerm={searchTerm} answerFontSize={answerFontSize} questionFontSize="1.4rem"/>
     </Box>
   );
 };

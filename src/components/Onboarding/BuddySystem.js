@@ -217,10 +217,10 @@ const BuddySystem = () => {
     <Box>
       {/* Header */}
       <Box mb={3} textAlign="center">
-        <Typography variant="h3" component="h1" gutterBottom>
+        <Typography variant="h3" component="h1" gutterBottom sx={{ fontSize: '2.5rem' }}>
           Find a Buddy
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
+        <Typography variant="subtitle1" color="textSecondary" sx={{ fontSize: '1.25rem' }}>
           Get paired with an experienced member who can guide you
         </Typography>
         <Divider sx={{ mt: 2, mb: 3 }} />
@@ -228,10 +228,10 @@ const BuddySystem = () => {
 
       {/* Buddy system explanation */}
       <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" gutterBottom sx={{ fontSize: '2rem' }}>
           About Our Buddy System
         </Typography>
-        <Typography variant="body1" paragraph>
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.25rem' }}>
           Our buddy system pairs new members with experienced volunteers who can answer questions,
           provide guidance, and help you navigate our community. Your buddy can:
         </Typography>
@@ -239,20 +239,20 @@ const BuddySystem = () => {
           <Grid item xs={12} sm={6}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip size="small" label="1" color="primary" />
-                <Typography variant="body1">
+                <Chip size="medium" label="1" color="primary" sx={{ width: 36, height: 36, fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '50%', p: 0 }} />
+                <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
                   Answer questions about our community and projects
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip size="small" label="2" color="primary" />
-                <Typography variant="body1">
+                <Chip size="medium" label="2" color="primary" sx={{ width: 36, height: 36, fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '50%', p: 0 }} />
+                <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
                   Help you find projects that match your skills and interests
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip size="small" label="3" color="primary" />
-                <Typography variant="body1">
+                <Chip size="medium" label="3" color="primary" sx={{ width: 36, height: 36, fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '50%', p: 0 }} />
+                <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
                   Introduce you to other community members
                 </Typography>
               </Box>
@@ -261,20 +261,20 @@ const BuddySystem = () => {
           <Grid item xs={12} sm={6}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip size="small" label="4" color="primary" />
-                <Typography variant="body1">
+                <Chip size="medium" label="4" color="primary" sx={{ width: 36, height: 36, fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '50%', p: 0 }} />
+                <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
                   Provide technical guidance on your first contributions
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip size="small" label="5" color="primary" />
-                <Typography variant="body1">
+                <Chip size="medium" label="5" color="primary" sx={{ width: 36, height: 36, fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '50%', p: 0 }} />
+                <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
                   Share resources to help you develop your skills
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip size="small" label="6" color="primary" />
-                <Typography variant="body1">
+                <Chip size="medium" label="6" color="primary" sx={{ width: 36, height: 36, fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '50%', p: 0 }} />
+                <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
                   Offer encouragement and support as you get started
                 </Typography>
               </Box>
@@ -301,10 +301,10 @@ const BuddySystem = () => {
                 <BuddyAvatar>
                   {selectedBuddy.name.charAt(0)}
                 </BuddyAvatar>
-                <Typography variant="h5" sx={{ mt: 2 }}>
+                <Typography variant="h6" sx={{ fontSize: '1.4rem', fontWeight: 'bold' }}>
                   {selectedBuddy.name}
                 </Typography>
-                <Typography variant="subtitle1" color="textSecondary">
+                <Typography variant="subtitle2" sx={{ fontSize: '1.2rem' }}>
                   {selectedBuddy.title}
                 </Typography>
                 
@@ -424,12 +424,18 @@ const BuddySystem = () => {
               <Grid item xs={12} sm={8}>
                 <TextField
                   fullWidth
-                  label="Search Buddies"
+                  label={<span style={{ fontSize: '1.4rem'}}>Search Buddies</span>}
                   placeholder="Search by name, skills, or interests..."
                   value={searchTerm}
                   onChange={handleSearchChange}
                   InputProps={{
-                    startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />
+                    startAdornment: <SearchIcon color="action" sx={{ mr: 1, fontSize: '2rem' }} />,
+                    sx: { fontSize: '1.25rem' }
+                  }}
+                  InputLabelProps={{ sx: { fontSize: '1.4rem', fontWeight: 'bold' } }}
+                  sx={{
+                    '& .MuiInputBase-input': { fontSize: '1.25rem' },
+                    '& .MuiInputLabel-root': { fontSize: '1.4rem', fontWeight: 'bold' }
                   }}
                 />
               </Grid>
@@ -437,8 +443,9 @@ const BuddySystem = () => {
                 <Button
                   fullWidth
                   variant="outlined"
-                  startIcon={<FilterListIcon />}
+                  startIcon={<FilterListIcon sx={{ fontSize: '2rem' }} />}
                   onClick={() => setShowFilters(!showFilters)}
+                  sx={{ fontSize: '1.2rem', py: 1.2 }}
                 >
                   {showFilters ? 'Hide Filters' : 'Show Filters'}
                 </Button>
@@ -452,54 +459,57 @@ const BuddySystem = () => {
               sx={{ mt: 2 }}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Filter Options</Typography>
+                <Typography sx={{ fontSize: '1.35rem'}}>Filter Options</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
                     <FormControl fullWidth>
-                      <InputLabel>Skills</InputLabel>
+                      <InputLabel sx={{ fontSize: '1.2rem' }}>Skills</InputLabel>
                       <Select
                         name="skills"
                         value={filters.skills}
                         onChange={handleFilterChange}
                         label="Skills"
+                        sx={{ fontSize: '1.2rem' }}
                       >
-                        <MenuItem value="">Any Skills</MenuItem>
+                        <MenuItem value="" sx={{ fontSize: '1.2rem' }}>Any Skills</MenuItem>
                         {allSkills.map((skill) => (
-                          <MenuItem key={skill} value={skill}>{skill}</MenuItem>
+                          <MenuItem key={skill} value={skill} sx={{ fontSize: '1.2rem' }}>{skill}</MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <FormControl fullWidth>
-                      <InputLabel>Interests</InputLabel>
+                      <InputLabel sx={{ fontSize: '1.2rem' }}>Interests</InputLabel>
                       <Select
                         name="interests"
                         value={filters.interests}
                         onChange={handleFilterChange}
                         label="Interests"
+                        sx={{ fontSize: '1.2rem' }}
                       >
-                        <MenuItem value="">Any Interests</MenuItem>
+                        <MenuItem value="" sx={{ fontSize: '1.2rem' }}>Any Interests</MenuItem>
                         {allInterests.map((interest) => (
-                          <MenuItem key={interest} value={interest}>{interest}</MenuItem>
+                          <MenuItem key={interest} value={interest} sx={{ fontSize: '1.2rem' }}>{interest}</MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <FormControl fullWidth>
-                      <InputLabel>Availability</InputLabel>
+                      <InputLabel sx={{ fontSize: '1.2rem' }}>Availability</InputLabel>
                       <Select
                         name="availability"
                         value={filters.availability}
                         onChange={handleFilterChange}
                         label="Availability"
+                        sx={{ fontSize: '1.2rem' }}
                       >
-                        <MenuItem value="">Any Availability</MenuItem>
+                        <MenuItem value="" sx={{ fontSize: '1.2rem' }}>Any Availability</MenuItem>
                         {allAvailability.map((availability) => (
-                          <MenuItem key={availability} value={availability}>{availability}</MenuItem>
+                          <MenuItem key={availability} value={availability} sx={{ fontSize: '1.2rem' }}>{availability}</MenuItem>
                         ))}
                       </Select>
                     </FormControl>
@@ -528,37 +538,44 @@ const BuddySystem = () => {
                         <Avatar sx={{ width: 64, height: 64, margin: '0 auto', mb: 1 }}>
                           {buddy.name.charAt(0)}
                         </Avatar>
-                        <Typography variant="h6">
+                        <Typography variant="h6" sx={{ fontSize: '1.4rem', fontWeight: 'bold' }}>
                           {buddy.name}
                         </Typography>
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="subtitle2" sx={{ fontSize: '1.2rem' }}>
                           {buddy.title}
                         </Typography>
                       </Box>
                       
                       <Divider sx={{ my: 1 }} />
                       
-                      <Typography variant="body2" noWrap color="textSecondary" sx={{ mb: 1 }}>
-                        <strong>Experience:</strong> {buddy.experience}
+                      <Typography sx={{ fontSize: '1.2rem', fontWeight: 'bold', mt: 1 }}>
+                        Experience:
+                      </Typography>
+                      <Typography sx={{ fontSize: '1.2rem', display: 'inline' }}>
+                        {buddy.experience}
                       </Typography>
                       
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Interests:</strong> {buddy.interests.join(', ')}
+                      <Typography sx={{ fontSize: '1.2rem', fontWeight: 'bold', mt: 1 }}>
+                        Interests:
+                      </Typography>
+                      <Typography sx={{ fontSize: '1.2rem', display: 'inline' }}>
+                        {buddy.interests.join(', ')}
                       </Typography>
                       
                       <Box sx={{ mt: 2 }}>
-                        <Typography variant="body2" sx={{ mb: 0.5 }}>
-                          <strong>Skills:</strong>
+                        <Typography variant="body2" sx={{ fontSize: '1.2rem', fontWeight: 'bold', mb: 0.5 }}>
+                          Skills:
                         </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
                           {buddy.skills.slice(0, 3).map((skill, index) => (
-                            <Chip key={index} label={skill} size="small" variant="outlined" />
+                            <Chip key={index} label={skill} size="medium" sx={{ fontSize: '1.1rem', height: 32 }} />
                           ))}
                           {buddy.skills.length > 3 && (
                             <Chip 
                               label={`+${buddy.skills.length - 3}`} 
-                              size="small" 
+                              size="medium" 
                               variant="outlined" 
+                              sx={{ fontSize: '1.1rem', height: 32 }}
                             />
                           )}
                         </Box>
@@ -569,11 +586,12 @@ const BuddySystem = () => {
                       <Button 
                         fullWidth
                         variant="outlined" 
-                        size="small"
+                        size="large"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSelectBuddy(buddy);
                         }}
+                        sx={{ fontSize: '1.1rem' }}
                       >
                         View Profile
                       </Button>
@@ -594,10 +612,10 @@ const BuddySystem = () => {
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6}>
             <Paper sx={{ p: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" sx={{ fontSize: '1.3rem', fontWeight: 'bold', mb: 1 }}>
                 For New Members
               </Typography>
-              <Typography variant="body2" component="ol" sx={{ pl: 2 }}>
+              <Typography component="ol" sx={{ fontSize: '1.15rem', pl: 2 }}>
                 <li>Browse and select a buddy based on your interests and needs</li>
                 <li>Send a request with information about what you're looking for</li>
                 <li>Your buddy will reach out to you via Slack to introduce themselves</li>
@@ -608,10 +626,10 @@ const BuddySystem = () => {
           </Grid>
           <Grid item xs={12} sm={6}>
             <Paper sx={{ p: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" sx={{ fontSize: '1.3rem', fontWeight: 'bold', mb: 1 }}>
                 Buddy Expectations
               </Typography>
-              <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+              <Typography component="ul" sx={{ fontSize: '1.15rem', pl: 2 }}>
                 <li>Buddies commit to at least one month of regular support</li>
                 <li>The relationship is meant to be casual and supportive</li>
                 <li>No specific time commitment, but responsiveness is expected</li>

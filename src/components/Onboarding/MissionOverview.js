@@ -78,8 +78,8 @@ const MissionOverview = () => {
         </Typography>
         <Divider sx={{ mt: 2, mb: 3, mx: 'auto', width: '70%' }} />
         <Typography variant="h5" paragraph sx={{ fontWeight: 400, maxWidth: '800px', mx: 'auto', fontStyle: 'italic' }}>
-          "To <HighlightText>empower</HighlightText> nonprofits through <HighlightText>sustainable technology</HighlightText> 
-          solutions by connecting them with passionate <HighlightText>volunteer developers</HighlightText>."
+            To <b>empower</b> nonprofits through <b>sustainable technology </b>
+            solutions by connecting them with passionate <b>volunteer developers</b>.
         </Typography>
       </Box>
 
@@ -88,12 +88,12 @@ const MissionOverview = () => {
         <Typography variant="h4" gutterBottom>
           How We Work
         </Typography>
-        <Typography variant="body1" paragraph>
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.25rem' }}>
           Opportunity Hack creates a collaborative ecosystem where technology professionals and nonprofits come together 
           to solve real-world challenges. We organize hackathons, ongoing project development, and educational resources 
           to help nonprofits leverage technology effectively.
         </Typography>
-        <Typography variant="body1">
+        <Typography variant="body1" sx={{ fontSize: '1.25rem' }}>
           Unlike traditional hackathons, our focus goes beyond the initial event. We build lasting solutions and maintain 
           ongoing relationships with nonprofits to ensure that projects continue to evolve and serve their needs over time.
         </Typography>
@@ -114,7 +114,7 @@ const MissionOverview = () => {
               <Typography variant="h3" color="primary" gutterBottom>
                 {item.value}
               </Typography>
-              <Typography variant="body1">
+              <Typography variant="body1" sx={{ fontSize: '1.3rem' }}>
                 {item.label}
               </Typography>
             </Paper>
@@ -132,10 +132,21 @@ const MissionOverview = () => {
             <ValueCard>
               <CardContent>
                 <StyledAvatar>{value.title.charAt(0)}</StyledAvatar>
-                <Typography variant="h6" component="h3" gutterBottom align="center">
+                <Typography
+                  variant="h6"
+                  component="h3"
+                  gutterBottom
+                  align="center"
+                  sx={{ fontSize: '1.5rem' }}
+                >
                   {value.title}
                 </Typography>
-                <Typography variant="body2" color="textSecondary" align="center">
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  align="center"
+                  sx={{ fontSize: '1.15rem' }}
+                >
                   {value.description}
                 </Typography>
               </CardContent>
@@ -148,7 +159,7 @@ const MissionOverview = () => {
       <Typography variant="h4" gutterBottom>
         Who We Serve
       </Typography>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
         {[
           'Homeless Services', 'Education', 'Food Security', 'Animal Welfare', 
           'Environmental Conservation', 'Mental Health', 'Youth Services', 
@@ -159,10 +170,17 @@ const MissionOverview = () => {
             label={cause} 
             color={index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'secondary' : 'default'}
             variant={index % 2 === 0 ? 'filled' : 'outlined'}
+            sx={{
+              fontSize: '1.2rem',
+              height: 37,
+              px: 2.5,
+              py: 1,
+              borderRadius: 5,
+            }}
           />
         ))}
       </Box>
-      <Typography variant="body1">
+      <Typography variant="body1" sx={{ fontSize: '1.3rem' }}>
         We work with nonprofits of all sizes and focus areas who could benefit from technology solutions 
         but may lack the resources or expertise to implement them on their own.
       </Typography>

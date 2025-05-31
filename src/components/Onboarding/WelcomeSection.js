@@ -76,11 +76,11 @@ const WelcomeSection = () => {
           Welcome to Opportunity Hack
           {!isLoading && user && user.firstName ? `, ${user.firstName}!` : '!'}
         </Typography>
-        <Typography variant="h5" color="textSecondary" gutterBottom>
+        <Typography variant="h5" color="textSecondary" gutterBottom sx={{ fontSize: '2rem' }}>
           Where technology meets social impact
         </Typography>
         <Divider sx={{ mt: 2, mb: 3, mx: 'auto', width: '70%' }} />
-        <Typography variant="body1" paragraph sx={{ maxWidth: '700px', mx: 'auto' }}>
+        <Typography variant="body1" paragraph sx={{ maxWidth: '700px', mx: 'auto', fontSize: '1.35rem' }}>
           Thank you for joining our community of technologists dedicated to creating sustainable solutions for nonprofits.
           This onboarding will help you understand our mission, get connected with the community, and start making an impact.
         </Typography>
@@ -98,10 +98,21 @@ const WelcomeSection = () => {
                 {item.icon}
               </CardIconContainer>
               <CardContent sx={{ flexGrow: 1 }}>
-                <Typography variant="h6" component="h3" gutterBottom align="center">
+                <Typography 
+                  variant="h6" 
+                  component="h3" 
+                  gutterBottom 
+                  align="center"
+                  sx={{ fontSize: '1.5rem' }}
+                >
                   {item.title}
                 </Typography>
-                <Typography variant="body2" color="textSecondary" align="center">
+                <Typography 
+                  variant="body2" 
+                  color="textSecondary" 
+                  align="center" 
+                  sx={{ fontSize: '1.15rem' }}
+                >
                   {item.description}
                 </Typography>
               </CardContent>
@@ -112,7 +123,7 @@ const WelcomeSection = () => {
 
       {/* What to expect in this onboarding */}
       <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" gutterBottom sx={{ fontSize: '2rem' }}>
           In This Onboarding, You'll:
         </Typography>
         <List>
@@ -128,12 +139,15 @@ const WelcomeSection = () => {
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <CheckCircleOutlineIcon color="success" />
               </ListItemIcon>
-              <ListItemText primary={item} />
+              <ListItemText 
+                primary={item} 
+                primaryTypographyProps={{ fontSize: '1.25rem' }}
+              />
             </ListItem>
           ))}
         </List>
         <Box mt={2}>
-          <Typography variant="body1">
+          <Typography variant="body1" sx={{ fontSize: '1.3rem' }}>
             Let's get started! Click the <strong>Next</strong> button below to begin your journey with Opportunity Hack.
           </Typography>
         </Box>
