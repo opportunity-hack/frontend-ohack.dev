@@ -560,6 +560,11 @@ const HackerApplicationComponent = () => {
         const oneDayBuffer = 24 * 60 * 60 * 1000; // 1 day in milliseconds
         const isEventPast = new Date(endDate.getTime() + oneDayBuffer) < now;
         
+        // Check if event is online/virtual
+        const isOnlineEvent = ['Virtual', 'Global', 'Online'].some(term => 
+          eventData.location?.toLowerCase().includes(term.toLowerCase())
+        );
+        
         setEventData({
           name: eventData.title || `Opportunity Hack - ${event_id}`,
           description:
@@ -574,7 +579,16 @@ const HackerApplicationComponent = () => {
             eventData.image_url ||
             "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
           isEventPast,
+          isOnlineEvent,
         });
+        
+        // If it's an online event, automatically set inPerson to "No"
+        if (isOnlineEvent) {
+          setFormData(prev => ({
+            ...prev,
+            inPerson: "Yes" // For online events, "Yes" means they'll participate online
+          }));
+        }
         
         setIsLoading(false);
       } catch (err) {
@@ -585,7 +599,7 @@ const HackerApplicationComponent = () => {
     };
 
     fetchEventData();
-  }, [event_id, apiServerUrl, setIsLoading, initializeRecaptcha]);
+  }, [event_id, apiServerUrl, setIsLoading, initializeRecaptcha, setFormData]);
 
   // Handle user data and application loading - separate from event loading
   useEffect(() => {
@@ -1283,19 +1297,22 @@ const HackerApplicationComponent = () => {
       </Typography>
       
       <Box sx={{ mb: 3 }}>
-        <FormControl required component="fieldset" sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Are you joining us in-person or virtually?
-          </Typography>
-          <RadioGroup
-            name="inPerson"
-            value={formData.inPerson || ''}
-            onChange={handleChange}
-          >
-            <FormControlLabel value="Yes" control={<Radio />} label="Yes, I'll attend in person" />
-            <FormControlLabel value="No" control={<Radio />} label="No, I'll participate virtually" />
-          </RadioGroup>
-        </FormControl>
+        {/* Only show in-person question if it's not an online event */}
+        {!eventData?.isOnlineEvent && (
+          <FormControl required component="fieldset" sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              {`Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : ''} or virtually?`}
+            </Typography>
+            <RadioGroup
+              name="inPerson"
+              value={formData.inPerson || ''}
+              onChange={handleChange}
+            >
+              <FormControlLabel value="Yes" control={<Radio />} label="Yes, I'll attend in person" />
+              <FormControlLabel value="No" control={<Radio />} label="No, I'll participate virtually" />
+            </RadioGroup>
+          </FormControl>
+        )}
         
         <FormControl fullWidth required sx={{ mb: 3 }}>
           <InputLabel id="arizona-resident-label">Arizona Residency</InputLabel>
@@ -1416,18 +1433,21 @@ const HackerApplicationComponent = () => {
             <MenuItem value="3XL">3XL</MenuItem>
             <MenuItem value="4XL">4XL</MenuItem>
           </Select>
-          <FormHelperText>For in-person attendees (subject to availability)</FormHelperText>
+          <FormHelperText>For people who complete the hackathon (subject to availability)</FormHelperText>
         </FormControl>
         
-        <TextField
-          label="Dietary Restrictions (Optional)"
-          name="dietaryRestrictions"
-          fullWidth
-          value={formData.dietaryRestrictions || ''}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-          helperText="Please let us know about any dietary restrictions for in-person attendees"
-        />
+        {/* Only show dietary restrictions for non-online events */}
+        {!eventData?.isOnlineEvent && (
+          <TextField
+            label="Dietary Restrictions (Optional)"
+            name="dietaryRestrictions"
+            fullWidth
+            value={formData.dietaryRestrictions || ''}
+            onChange={handleChange}
+            sx={{ mb: 3 }}
+            helperText="Please let us know about any dietary restrictions for in-person attendees"
+          />
+        )}
         
         {formData.arizonaResident === 'Arizona Resident' && (
           <FormControlLabel
