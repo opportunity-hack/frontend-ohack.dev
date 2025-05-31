@@ -166,9 +166,6 @@ const ManageTeamComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
 
-  const org = authInfo.userClass.getOrgByName("Opportunity Hack Org");
-  const orgId = org.orgId;
-
 
   useEffect(() => {
     if (event_id) {
@@ -224,8 +221,7 @@ const ManageTeamComponent = () => {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "X-Org-Id": orgId,
+            "Content-Type": "application/json",            
           },
         }
       );
@@ -345,8 +341,7 @@ const ManageTeamComponent = () => {
           {
             headers: {
             Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "X-Org-Id": orgId,
+            "Content-Type": "application/json",            
           },
           }
         );
@@ -364,7 +359,7 @@ const ManageTeamComponent = () => {
       }
     };
     fetchUserProfile();
-  }, [accessToken, orgId]);
+  }, [accessToken]);
   
 
   
