@@ -771,7 +771,7 @@ const HackerApplicationComponent = () => {
   };
   
   const validateLocationInfo = () => {
-    const requiredFields = ['inPerson', 'arizonaResident', 'country', 'state', 'ageRange'];
+    const requiredFields = ['arizonaResident', 'country', 'state', 'ageRange'];
     
     for (const field of requiredFields) {
       if (!formData[field]) {
