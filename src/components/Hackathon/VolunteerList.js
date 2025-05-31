@@ -452,13 +452,32 @@ const VolunteerList = ({ event_id, type }) => {
           originalSlot: slot,
           dayName: null,
           dayOrder: 99,
-          sortOrder: 99
+          sortOrder: 99,
+          month: null,
+          date: null
         };
         
         // Extract day name from the date part - handle both formats (with or without comma)
         const slotDatePart = slot.substring(0, slotColonIndex).trim();
-        // Get first word as the day name, regardless of comma
-        const dayName = slotDatePart.split(" ")[0].trim(); // "Friday", "Saturday", etc.
+        
+        // Parse both formats to extract day name, month, and date
+        let dayName, month, date;
+        
+        // Handle "Monday, May 12" format (with comma)
+        const commaMatch = slotDatePart.match(/(\w+),\s+(\w+)\s+(\d+)/);
+        if (commaMatch) {
+          dayName = commaMatch[1]; // "Monday"
+          month = commaMatch[2]; // "May"
+          date = parseInt(commaMatch[3], 10); // 12
+        } else {
+          // Handle "Friday Oct 10" format (no comma)
+          const noCommaMatch = slotDatePart.match(/(\w+)\s+(\w+)\s+(\d+)/);
+          if (noCommaMatch) {
+            dayName = noCommaMatch[1]; // "Friday"
+            month = noCommaMatch[2]; // "Oct"
+            date = parseInt(noCommaMatch[3], 10); // 10
+          }
+        }
         
         // Get everything after the colon, which should be like " 🌅 Early Morning (7am - 9am)"
         let timeInfo = slot.substring(slotColonIndex + 1).trim();
@@ -508,17 +527,36 @@ const VolunteerList = ({ event_id, type }) => {
           color: timeOfDayColors[timeOfDay] || null,
           dayName,
           dayOrder: dayOrder[dayName] || 99,
-          sortOrder: timeOfDay ? timeOfDayOrder[timeOfDay] || 99 : 99
+          sortOrder: timeOfDay ? timeOfDayOrder[timeOfDay] || 99 : 99,
+          month,
+          date
         };
       });
       
-      // Sort the slots first by day of week, then by time of day
+      // Sort the slots by calendar date first, then by time of day
       const sortedSlots = [...processedSlots].sort((a, b) => {
-        // First sort by day
-        if (a.dayOrder !== b.dayOrder) {
-          return a.dayOrder - b.dayOrder;
+        // Define month order for calendar sorting
+        const monthOrder = {
+          "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+          "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
+          "January": 1, "February": 2, "March": 3, "April": 4, "June": 6,
+          "July": 7, "August": 8, "September": 9, "October": 10, "November": 11, "December": 12
+        };
+        
+        // First compare by month
+        const monthOrderA = monthOrder[a.month] || 0;
+        const monthOrderB = monthOrder[b.month] || 0;
+        
+        if (monthOrderA !== monthOrderB) {
+          return monthOrderA - monthOrderB;
         }
-        // Then sort by time period
+        
+        // Then compare by day of month
+        if (a.date !== b.date) {
+          return (a.date || 0) - (b.date || 0);
+        }
+        
+        // Finally, compare by time period
         return a.sortOrder - b.sortOrder;
       });
       
