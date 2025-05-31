@@ -272,8 +272,9 @@ const VolunteerApplicationComponent = () => {
   const generateTimeSlots = (startDate, endDate) => {
     if (!startDate || !endDate) return [];
     
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // Parse dates more carefully to avoid timezone issues
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T23:59:59');
 
     console.log('Availability Start Date:', start);
     console.log('Availability End Date:', end);
@@ -290,8 +291,8 @@ const VolunteerApplicationComponent = () => {
     
     const slots = [];
     
-    // Loop through each day between start and end dates
-    for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+    // Loop through each day between start and end dates (inclusive)
+    for (let day = new Date(start); day <= end; ) {
       const dayDate = new Date(day);
       const dateString = dayDate.toLocaleDateString('en-US', { 
         weekday: 'long',
@@ -312,8 +313,11 @@ const VolunteerApplicationComponent = () => {
           displayText: `${dateString}: ${block.icon} ${block.label} (${block.time} PST)`
         });
       });
+      
+      // Move to next day
+      day.setDate(day.getDate() + 1);
     }
-    
+        
     return slots;
   };
   

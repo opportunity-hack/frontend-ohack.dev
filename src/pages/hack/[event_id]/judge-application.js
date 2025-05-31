@@ -172,17 +172,21 @@ const JudgeApplicationComponent = () => {
         // Format dates for display
         const startDate = new Date(eventData.start_date);
         const endDate = new Date(eventData.end_date);
-        const formattedStartDate = startDate.toLocaleDateString('en-US', {
+        
+        // Use UTC methods to avoid timezone conversion issues
+        const formattedStartDate = new Date(eventData.start_date + 'T00:00:00Z').toLocaleDateString('en-US', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
-          day: 'numeric'
+          day: 'numeric',
+          timeZone: 'UTC'
         });
-        const formattedEndDate = endDate.toLocaleDateString('en-US', {
+        const formattedEndDate = new Date(eventData.end_date + 'T00:00:00Z').toLocaleDateString('en-US', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
-          day: 'numeric'
+          day: 'numeric',
+          timeZone: 'UTC'
         });
         
         // Check if event is in the past (with 1-day buffer)
@@ -755,11 +759,12 @@ const JudgeApplicationComponent = () => {
             <Typography variant="body2" paragraph>
               Judging will take place on{' '}
               <Box component="span" fontWeight="bold">
-                {new Date(eventData.endDate).toLocaleDateString('en-US', {
+                {new Date(eventData.endDate + 'T00:00:00Z').toLocaleDateString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
-                  day: 'numeric'
+                  day: 'numeric',
+                  timeZone: 'UTC'
                 })}
               </Box>{' '}
               from{' '}
@@ -816,7 +821,13 @@ const JudgeApplicationComponent = () => {
         
         <FormControl required component="fieldset" sx={{ mb: 3 }}>
           <Typography variant="subtitle1" gutterBottom>
-            Are you joining us in-person at ASU in Tempe, Arizona?
+            {eventData && ['Virtual', 'Global', 'Online'].some(term => 
+              eventData.location?.toLowerCase().includes(term.toLowerCase())
+            ) ? (
+              'Will you be participating online?'
+            ) : (
+              `Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : ' at the event location'}?`
+            )}
           </Typography>
           <RadioGroup
             name="inPerson"

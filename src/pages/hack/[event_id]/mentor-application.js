@@ -170,8 +170,9 @@ const MentorApplicationComponent = () => {
   const generateTimeSlots = (startDate, endDate) => {
     if (!startDate || !endDate) return [];
     
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // Parse dates more carefully to avoid timezone issues
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T15:59:59');
     
     // Time blocks with icons and descriptions
     const timeBlocks = [
@@ -185,8 +186,8 @@ const MentorApplicationComponent = () => {
     
     const slots = [];
     
-    // Loop through each day between start and end dates
-    for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+    // Loop through each day between start and end dates (inclusive)
+    for (let day = new Date(start); day <= end; ) {
       const dayDate = new Date(day);
       const dateString = dayDate.toLocaleDateString('en-US', { 
         weekday: 'long',
@@ -206,6 +207,15 @@ const MentorApplicationComponent = () => {
           displayText: `${dateString}: ${block.icon} ${block.label} (${block.time} PST)`
         });
       });
+      
+      // Move to next day
+      day.setDate(day.getDate() + 1);
+    }
+
+    // Remove the last 2 slots
+    // This is to avoid showing slots that are too late for most people
+    if (slots.length > 3) {
+      slots.splice(-3, 3);
     }
     
     return slots;
