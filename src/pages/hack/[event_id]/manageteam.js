@@ -167,7 +167,6 @@ const ManageTeamComponent = () => {
   const { event_id } = router.query;
 
   const org = authInfo.userClass.getOrgByName("Opportunity Hack Org");
-  const isAdmin = org.hasPermission("volunteer.admin");
   const orgId = org.orgId;
 
 
