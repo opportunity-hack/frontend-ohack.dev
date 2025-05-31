@@ -75,8 +75,7 @@ const JudgeApplicationComponent = () => {
   const initialFormData = {
     timestamp: new Date().toISOString(),
     email: '',
-    selected: false,
-    helpedBefore: '',
+    selected: false,    
     name: '',
     title: '',
     biography: '',
@@ -397,7 +396,7 @@ const JudgeApplicationComponent = () => {
   };
   
   const validateBackgroundAndExperience = () => {
-    const requiredFields = ['helpedBefore', 'participationCount'];
+    const requiredFields = ['participationCount'];
     
     for (const field of requiredFields) {
       if (!formData[field]) {
@@ -604,21 +603,7 @@ const JudgeApplicationComponent = () => {
         Background & Experience
       </Typography>
       
-      <Box sx={{ mb: 3 }}>
-        <FormControl required component="fieldset" sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Have you helped us before?
-          </Typography>
-          <RadioGroup
-            name="helpedBefore"
-            value={formData.helpedBefore}
-            onChange={handleChange}
-          >
-            <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
-            <FormControlLabel value="No" control={<Radio />} label="No" />
-          </RadioGroup>
-        </FormControl>
-
+      <Box sx={{ mb: 3 }}>       
         <FormControl fullWidth required sx={{ mb: 3 }}>
           <InputLabel id="participation-count-label">How many times have you participated in Opportunity Hack?</InputLabel>
           <Select
