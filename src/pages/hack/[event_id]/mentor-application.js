@@ -889,6 +889,16 @@ const MentorApplicationComponent = () => {
     setExpandedDate(isExpanded ? date : null);
   };
 
+  // Helper function to determine if event is virtual/global
+  const isVirtualEvent = () => {
+    if (!eventData?.location) return false;
+    const location = eventData.location.toLowerCase();
+    return location.includes('global') || 
+           location.includes('virtual') || 
+           location.includes('online') ||
+           location.includes('remote');
+  };
+
   // Render basic information form
   const renderBasicInfoForm = () => (
     <Box sx={{ mb: 4 }}>
@@ -1103,112 +1113,142 @@ const MentorApplicationComponent = () => {
         dates.
       </Typography>
 
-      {/* Add in-person attendance field */}
-      <FormControl required component="fieldset" sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Will you be attending in person at ASU in Tempe, Arizona?
-        </Typography>
-        <RadioGroup
-          name="inPerson"
-          value={formData.inPerson}
-          onChange={handleChange}
-        >
-          <FormControlLabel
-            value="Yes!"
-            control={<RadioIcon />}
-            label="Yes! I'll be there in person"
-          />
-          <FormControlLabel
-            value="No, I'll be virtual"
-            control={<RadioIcon />}
-            label="No, I'll be joining virtually"
-          />
-        </RadioGroup>
-      </FormControl>
+      {/* Conditionally show in-person attendance field only for physical events */}
+      {!isVirtualEvent() && (
+        <FormControl required component="fieldset" sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Will you be attending in person at {eventData?.location || 'the event location'}?
+          </Typography>
+          <RadioGroup
+            name="inPerson"
+            value={formData.inPerson}
+            onChange={handleChange}
+          >
+            <FormControlLabel
+              value="Yes!"
+              control={<RadioIcon />}
+              label="Yes! I'll be there in person"
+            />
+            <FormControlLabel
+              value="No, I'll be virtual"
+              control={<RadioIcon />}
+              label="No, I'll be joining virtually"
+            />
+          </RadioGroup>
+        </FormControl>
+      )}
 
-      {/* Add location fields */}
+      {/* Location fields - conditional labels and requirements */}
       <FormControl fullWidth required sx={{ mb: 3 }}>
-        <InputLabel id="country-label">Country</InputLabel>
+        <InputLabel id="country-label">
+          {isVirtualEvent() ? "Which country will you be mentoring from?" : 
+           (formData.inPerson === "Yes!" ? "Which country are you traveling from?" : "Which country will you be mentoring from?")}
+        </InputLabel>
         <Select
           labelId="country-label"
           id="country"
           name="country"
           value={formData.country}
           onChange={handleChange}
-          label="Country"
+          label={isVirtualEvent() ? "Which country will you be mentoring from?" : 
+                 (formData.inPerson === "Yes!" ? "Which country are you traveling from?" : "Which country will you be mentoring from?")}
         >
           <MenuItem value="United States">United States</MenuItem>
           <MenuItem value="Canada">Canada</MenuItem>
           <MenuItem value="India">India</MenuItem>
           <MenuItem value="United Kingdom">United Kingdom</MenuItem>
           <MenuItem value="Australia">Australia</MenuItem>
+          <MenuItem value="Germany">Germany</MenuItem>
+          <MenuItem value="France">France</MenuItem>
+          <MenuItem value="Brazil">Brazil</MenuItem>
+          <MenuItem value="Mexico">Mexico</MenuItem>
           <MenuItem value="Other">Other</MenuItem>
         </Select>
       </FormControl>
 
-      <FormControl fullWidth required sx={{ mb: 3 }}>
-        <InputLabel id="state-label">State/Province/Region</InputLabel>
-        <Select
-          labelId="state-label"
-          id="state"
+      {/* Only show state dropdown if country is United States */}
+      {formData.country === "United States" && (
+        <FormControl fullWidth required sx={{ mb: 3 }}>
+          <InputLabel id="state-label">
+            {isVirtualEvent() ? "Which state will you be mentoring from?" : 
+             (formData.inPerson === "Yes!" ? "Which state are you traveling from?" : "Which state will you be mentoring from?")}
+          </InputLabel>
+          <Select
+            labelId="state-label"
+            id="state"
+            name="state"
+            value={formData.state}
+            onChange={handleChange}
+            label={isVirtualEvent() ? "Which state will you be mentoring from?" : 
+                   (formData.inPerson === "Yes!" ? "Which state are you traveling from?" : "Which state will you be mentoring from?")}
+          >
+            <MenuItem value="Alabama">Alabama</MenuItem>
+            <MenuItem value="Alaska">Alaska</MenuItem>
+            <MenuItem value="Arizona">Arizona</MenuItem>
+            <MenuItem value="Arkansas">Arkansas</MenuItem>
+            <MenuItem value="California">California</MenuItem>
+            <MenuItem value="Colorado">Colorado</MenuItem>
+            <MenuItem value="Connecticut">Connecticut</MenuItem>
+            <MenuItem value="Delaware">Delaware</MenuItem>
+            <MenuItem value="Florida">Florida</MenuItem>
+            <MenuItem value="Georgia">Georgia</MenuItem>
+            <MenuItem value="Hawaii">Hawaii</MenuItem>
+            <MenuItem value="Idaho">Idaho</MenuItem>
+            <MenuItem value="Illinois">Illinois</MenuItem>
+            <MenuItem value="Indiana">Indiana</MenuItem>
+            <MenuItem value="Iowa">Iowa</MenuItem>
+            <MenuItem value="Kansas">Kansas</MenuItem>
+            <MenuItem value="Kentucky">Kentucky</MenuItem>
+            <MenuItem value="Louisiana">Louisiana</MenuItem>
+            <MenuItem value="Maine">Maine</MenuItem>
+            <MenuItem value="Maryland">Maryland</MenuItem>
+            <MenuItem value="Massachusetts">Massachusetts</MenuItem>
+            <MenuItem value="Michigan">Michigan</MenuItem>
+            <MenuItem value="Minnesota">Minnesota</MenuItem>
+            <MenuItem value="Mississippi">Mississippi</MenuItem>
+            <MenuItem value="Missouri">Missouri</MenuItem>
+            <MenuItem value="Montana">Montana</MenuItem>
+            <MenuItem value="Nebraska">Nebraska</MenuItem>
+            <MenuItem value="Nevada">Nevada</MenuItem>
+            <MenuItem value="New Hampshire">New Hampshire</MenuItem>
+            <MenuItem value="New Jersey">New Jersey</MenuItem>
+            <MenuItem value="New Mexico">New Mexico</MenuItem>
+            <MenuItem value="New York">New York</MenuItem>
+            <MenuItem value="North Carolina">North Carolina</MenuItem>
+            <MenuItem value="North Dakota">North Dakota</MenuItem>
+            <MenuItem value="Ohio">Ohio</MenuItem>
+            <MenuItem value="Oklahoma">Oklahoma</MenuItem>
+            <MenuItem value="Oregon">Oregon</MenuItem>
+            <MenuItem value="Pennsylvania">Pennsylvania</MenuItem>
+            <MenuItem value="Rhode Island">Rhode Island</MenuItem>
+            <MenuItem value="South Carolina">South Carolina</MenuItem>
+            <MenuItem value="South Dakota">South Dakota</MenuItem>
+            <MenuItem value="Tennessee">Tennessee</MenuItem>
+            <MenuItem value="Texas">Texas</MenuItem>
+            <MenuItem value="Utah">Utah</MenuItem>
+            <MenuItem value="Vermont">Vermont</MenuItem>
+            <MenuItem value="Virginia">Virginia</MenuItem>
+            <MenuItem value="Washington">Washington</MenuItem>
+            <MenuItem value="West Virginia">West Virginia</MenuItem>
+            <MenuItem value="Wisconsin">Wisconsin</MenuItem>
+            <MenuItem value="Wyoming">Wyoming</MenuItem>
+          </Select>
+        </FormControl>
+      )}
+
+      {/* If country is not US, show a simple text field for state/region */}
+      {formData.country && formData.country !== "United States" && (
+        <TextField
+          label={isVirtualEvent() ? "State/Province/Region (where you'll be mentoring from)" : 
+                 (formData.inPerson === "Yes!" ? "State/Province/Region (where you're traveling from)" : "State/Province/Region (where you'll be mentoring from)")}
           name="state"
+          required
+          fullWidth
           value={formData.state}
           onChange={handleChange}
-          label="State/Province/Region"
-        >
-          <MenuItem value="Alabama">Alabama</MenuItem>
-          <MenuItem value="Alaska">Alaska</MenuItem>
-          <MenuItem value="Arizona">Arizona</MenuItem>
-          <MenuItem value="Arkansas">Arkansas</MenuItem>
-          <MenuItem value="California">California</MenuItem>
-          <MenuItem value="Colorado">Colorado</MenuItem>
-          <MenuItem value="Connecticut">Connecticut</MenuItem>
-          <MenuItem value="Delaware">Delaware</MenuItem>
-          <MenuItem value="Florida">Florida</MenuItem>
-          <MenuItem value="Georgia">Georgia</MenuItem>
-          <MenuItem value="Hawaii">Hawaii</MenuItem>
-          <MenuItem value="Idaho">Idaho</MenuItem>
-          <MenuItem value="Illinois">Illinois</MenuItem>
-          <MenuItem value="Indiana">Indiana</MenuItem>
-          <MenuItem value="Iowa">Iowa</MenuItem>
-          <MenuItem value="Kansas">Kansas</MenuItem>
-          <MenuItem value="Kentucky">Kentucky</MenuItem>
-          <MenuItem value="Louisiana">Louisiana</MenuItem>
-          <MenuItem value="Maine">Maine</MenuItem>
-          <MenuItem value="Maryland">Maryland</MenuItem>
-          <MenuItem value="Massachusetts">Massachusetts</MenuItem>
-          <MenuItem value="Michigan">Michigan</MenuItem>
-          <MenuItem value="Minnesota">Minnesota</MenuItem>
-          <MenuItem value="Mississippi">Mississippi</MenuItem>
-          <MenuItem value="Missouri">Missouri</MenuItem>
-          <MenuItem value="Montana">Montana</MenuItem>
-          <MenuItem value="Nebraska">Nebraska</MenuItem>
-          <MenuItem value="Nevada">Nevada</MenuItem>
-          <MenuItem value="New Hampshire">New Hampshire</MenuItem>
-          <MenuItem value="New Jersey">New Jersey</MenuItem>
-          <MenuItem value="New Mexico">New Mexico</MenuItem>
-          <MenuItem value="New York">New York</MenuItem>
-          <MenuItem value="North Carolina">North Carolina</MenuItem>
-          <MenuItem value="North Dakota">North Dakota</MenuItem>
-          <MenuItem value="Ohio">Ohio</MenuItem>
-          <MenuItem value="Oklahoma">Oklahoma</MenuItem>
-          <MenuItem value="Oregon">Oregon</MenuItem>
-          <MenuItem value="Pennsylvania">Pennsylvania</MenuItem>
-          <MenuItem value="Rhode Island">Rhode Island</MenuItem>
-          <MenuItem value="South Carolina">South Carolina</MenuItem>
-          <MenuItem value="South Dakota">South Dakota</MenuItem>
-          <MenuItem value="Tennessee">Tennessee</MenuItem>
-          <MenuItem value="Texas">Texas</MenuItem>
-          <MenuItem value="Utah">Utah</MenuItem>
-          <MenuItem value="Vermont">Vermont</MenuItem>
-          <MenuItem value="Virginia">Virginia</MenuItem>
-          <MenuItem value="Washington">Washington</MenuItem>
-          <MenuItem value="West Virginia">West Virginia</MenuItem>
-          <MenuItem value="Wisconsin">Wisconsin</MenuItem>
-          <MenuItem value="Wyoming">Wyoming</MenuItem>
-          <MenuItem value="Other">Other (Outside US)</MenuItem>
-        </Select>
-      </FormControl>
+          sx={{ mb: 3 }}
+        />
+      )}
 
       {/* Date filter/search */}
       <TextField
