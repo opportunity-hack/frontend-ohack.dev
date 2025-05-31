@@ -66,7 +66,7 @@ export default function LoginOrRegister({ introText, previousPage }) {
             </Stack>
             <Stack direction="column" spacing={1}>
               <ButtonStyled onClick={handleSignupClick}>
-                <ButtonStyledWithLink href={`${slackSignupUrl}`}>
+                <ButtonStyledWithLink href={`${slackSignupUrl}`} target="_blank" rel="noopener noreferrer">
                   Create a Slack account
                 </ButtonStyledWithLink>
               </ButtonStyled>
