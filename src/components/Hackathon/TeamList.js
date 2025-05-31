@@ -96,8 +96,20 @@ const LoadingIndicator = ({ message }) => (
   </Box>
 );
 
+// Utility function to check if hackathon has ended
+const isHackathonExpired = (endDate) => {
+  if (!endDate) return false;
+  const now = new Date();
+  const hackathonEnd = new Date(endDate);
+  
+  // Set the end time to 11:59:59 PM of the end date to allow participation until the last minute
+  hackathonEnd.setHours(23, 59, 59, 999);
+  
+  return now > hackathonEnd;
+};
+
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired }) => {
   const hasGithubLinks = team.github_links && team.github_links.length > 0;
   
   // Check if this team's button is currently loading
@@ -113,8 +125,8 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
       return user.id === userProfile.id;
     });
     
-  // Check if the team is active
-  const isActive = team.active === "True" || team.active === true;
+  // Check if the team is active - override with hackathon expiration
+  const isActive = !isHackathonExpired && (team.active === "True" || team.active === true);
 
   return (
     <Card sx={{
@@ -128,8 +140,8 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
             position: 'absolute',
             top: 0,
             right: 0,
-            backgroundColor: 'warning.light',
-            color: 'warning.contrastText',
+            backgroundColor: isHackathonExpired ? 'error.light' : 'warning.light',
+            color: isHackathonExpired ? 'error.contrastText' : 'warning.contrastText',
             px: 1,
             py: 0.5,
             borderBottomLeftRadius: 4,
@@ -138,14 +150,14 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
             zIndex: 1
           }}
         >
-          Inactive Team
+          {isHackathonExpired ? 'Hackathon Ended' : 'Inactive Team'}
         </Box>
       )}
       <CardContent>
         <Typography variant="h6">{team.name}</Typography>
         {!isActive && (
           <Typography variant="body2" color="error" sx={{ mb: 1 }}>
-            This team is currently inactive
+            {isHackathonExpired ? 'This hackathon has ended' : 'This team is currently inactive'}
           </Typography>
         )}
         <Typography variant="body2" color="textSecondary">
@@ -218,7 +230,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
             )}
             {!isActive && (
               <Typography variant="caption" color="error" display="block" sx={{ mt: 1 }}>
-                You cannot join/leave inactive teams
+                {isHackathonExpired ? 'Hackathon has ended - teams are now closed' : 'You cannot join/leave inactive teams'}
               </Typography>
             )}
           </div>
@@ -228,7 +240,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   );
 };
 
-const TeamList = ({ teams, eventId }) => {
+const TeamList = ({ teams, eventId, endDate }) => {
   const [teamData, setTeamData] = useState(teams);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
@@ -505,6 +517,7 @@ const TeamList = ({ teams, eventId }) => {
               onJoin={handleJoinTeam}
               onLeave={handleUnjoinTeam}
               loadingTeamId={loadingTeamId}
+              isHackathonExpired={isHackathonExpired}
             />
           </Grid>
         ))}

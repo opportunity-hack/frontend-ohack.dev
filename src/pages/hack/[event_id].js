@@ -750,7 +750,7 @@ export default function HackathonEvent({ eventData }) {
                   </Grid>
                 </Box>
 
-                <TeamList teams={event.teams} eventId={event_id} />
+                <TeamList teams={event.teams} eventId={event_id} endDate={event.end_date} />
               </Box>
             </LinksContainer>
           </Grid>
