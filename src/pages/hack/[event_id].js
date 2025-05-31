@@ -379,6 +379,31 @@ const faqData = [
         "Follow us on social media and join our Slack community for the latest updates and announcements.",
       icon: "📢",
     },
+    {
+      question: "Do you offer longer-term opportunities beyond weekend hackathons?",
+      answer: (
+        <>
+          <Typography variant="body1" paragraph>
+            Yes! Our Software Engineering & Product Summer Internship Program offers a deeper, longer-term experience that's quite different from our weekend hackathons:
+          </Typography>
+          <Typography component="ul">
+            <li><strong>Duration:</strong> Full summer program vs. weekend events</li>
+            <li><strong>Commitment:</strong> 10-15 hours weekly vs. intensive weekend sprints</li>
+            <li><strong>Scope:</strong> Complete product development lifecycle vs. rapid prototyping</li>
+            <li><strong>Mentorship:</strong> Regular ongoing mentorship vs. event-based guidance</li>
+            <li><strong>Portfolio:</strong> Production-ready software with real users vs. demo projects</li>
+            <li><strong>Flexibility:</strong> Remote participation with flexible scheduling</li>
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Perfect for students and early career professionals in software engineering, product management, UX/UI design, data science, and DevOps who want to build meaningful experience while creating lasting social impact.
+          </Typography>
+          <Typography variant="body1">
+            The program culminates in a demo day with partner organizations, giving you real-world experience presenting to stakeholders and seeing your work make a tangible difference.
+          </Typography>
+        </>
+      ),
+      icon: "🎯",
+    },
   ];
 
 export default function HackathonEvent({ eventData }) {
