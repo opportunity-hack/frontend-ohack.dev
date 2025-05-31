@@ -39,67 +39,69 @@ const MentorAvailability = ({ volunteers }) => {
     // Process each volunteer
     volunteers.forEach((volunteer) => {
       if (volunteer.isSelected && volunteer.volunteer_type === "mentor") {
-        // Handle new format where availability is a comma-separated string of displayText values
+        // Handle availability as a comma-separated string
         if (volunteer?.availability) {
-          // Use regex pattern to correctly split availability string with new format
-          // New format: "Friday Oct 10: 🌅 Early Morning (7am - 9am PST)"
-          const availabilityPattern = /([A-Za-z]+\s+[A-Za-z]+\s+\d+:\s+[^,]+)/g;
+          // More careful splitting to handle "Monday, May 12:" format
+          // We need to split on ", " but only when it's followed by a time/emoji pattern
+          // Use a more sophisticated split that looks for the pattern: ", [Weekday] [Month] [Day]:"
           
-          // Try to match with regex first
-          const matches = volunteer.availability.match(availabilityPattern);
+          const slots = [];
+          let currentSlot = "";
+          const parts = volunteer.availability.split(", ");
           
-          // If regex doesn't work, fall back to comma split
-          const availabilityArray = matches || volunteer.availability.split(", ");
+          for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            
+            // Check if this part starts a new time slot (contains weekday pattern or emoji)
+            const startsNewSlot = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(part);
+            
+            if (startsNewSlot && currentSlot) {
+              // We found a new slot, save the current one
+              slots.push(currentSlot.trim());
+              currentSlot = part;
+            } else if (currentSlot) {
+              // Continue building current slot
+              currentSlot += ", " + part;
+            } else {
+              // First slot
+              currentSlot = part;
+            }
+          }
           
-          // If availableArray exists in the new format directly
-          const useAvailableDays = Array.isArray(volunteer.availableDays) && volunteer.availableDays.length > 0;
+          // Don't forget the last slot
+          if (currentSlot) {
+            slots.push(currentSlot.trim());
+          }
           
-          // Use the appropriate array
-          const slotsToProcess = useAvailableDays ? volunteer.availableDays : availabilityArray;
+          console.log("Raw availability:", volunteer.availability);
+          console.log("Carefully split slots:", slots);
           
-          console.log("Mentor Availability array:", slotsToProcess);
-          
-          slotsToProcess.forEach((slot) => {
+          slots.forEach((slot) => {
             if (slot) {
-              // For availableDays format, convert to display format
-              let displaySlot = slot;
+              // Filter out slots that don't contain time information (emojis and time periods)
+              const hasTimeInfo = /🌅|☀️|🏙️|🌆|🌃|🌙/.test(slot) && 
+                                  /(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/.test(slot);
               
-              if (useAvailableDays) {
-                // Convert "Friday Oct 10-Early Morning" to display format
-                const parts = slot.split('-');
-                if (parts.length > 1) {
-                  const day = parts[0]; // "Friday Oct 10"
-                  const timeOfDay = parts[1]; // "Early Morning"
-                  
-                  // Map time of day to emoji
-                  const emojiMap = {
-                    "Early Morning": "🌅",
-                    "Morning": "☀️",
-                    "Afternoon": "🏙️",
-                    "Evening": "🌆",
-                    "Night": "🌃",
-                    "Late Night": "🌙"
-                  };
-                  
-                  const emoji = emojiMap[timeOfDay] || "";
-                  displaySlot = `${day}: ${emoji} ${timeOfDay}`;
+              if (hasTimeInfo) {
+                console.log("Processing slot:", slot); // Debug log
+                console.log("Slot will be stored as key:", slot); // Debug what gets stored
+                
+                // If this is the first time we've seen this slot, initialize counters
+                if (!totalCounts[slot]) {
+                  totalCounts[slot] = 0;
+                  inPersonCounts[slot] = 0;
+                  remoteCounts[slot] = 0;
+                  console.log("Created new slot key:", slot); // Debug new keys
                 }
-              }
-              
-              // If this is the first time we've seen this slot, initialize counters
-              if (!totalCounts[displaySlot]) {
-                totalCounts[displaySlot] = 0;
-                inPersonCounts[displaySlot] = 0;
-                remoteCounts[displaySlot] = 0;
-              }
-              
-              // Increment counters
-              totalCounts[displaySlot]++;
-              
-              if (volunteer.isInPerson) {
-                inPersonCounts[displaySlot]++;
-              } else {
-                remoteCounts[displaySlot]++;
+                
+                // Increment counters
+                totalCounts[slot]++;
+                
+                if (volunteer.isInPerson) {
+                  inPersonCounts[slot]++;
+                } else {
+                  remoteCounts[slot]++;
+                }
               }
             }
           });
@@ -107,6 +109,8 @@ const MentorAvailability = ({ volunteers }) => {
       }
     });
 
+    console.log("Final totalCounts keys:", Object.keys(totalCounts)); // Debug final keys
+    
     // Define day of week order for sorting
     const dayOrder = {
       "Sunday": 0,
@@ -130,15 +134,80 @@ const MentorAvailability = ({ volunteers }) => {
 
     // Sort the slots by date and time for better display
     const sortedSlots = Object.keys(totalCounts).sort((a, b) => {
-      // First extract day and time period
-      // New format: "Friday Oct 10: 🌅 Early Morning" (no comma after day)
-      // Old format: "Saturday, May 4: 🌅 Early Morning"
+      // Handle both formats:
+      // "Friday Oct 10: 🌅 Early Morning (7am - 9am PST)"
+      // "Monday, May 12: 🌅 Early Morning (7am - 9am PST)"
+      // "May 12: 🌅 Early Morning (7am - 9am PST)" (missing day name)
       
-      // Extract the day name (before the first space)
-      const dayA = a.split(" ")[0]?.trim(); // "Friday" or "Saturday"
-      const dayB = b.split(" ")[0]?.trim(); // "Friday" or "Saturday"
+      // Extract the full date part before the colon
+      const fullDayA = a.split(":")[0]?.trim(); // "Friday Oct 10" or "Monday, May 12" or "May 12"
+      const fullDayB = b.split(":")[0]?.trim(); // "Friday Oct 10" or "Monday, May 12" or "May 12"
       
-      // Compare days of the week
+      console.log("Sorting comparison:", fullDayA, "vs", fullDayB); // Debug log
+      
+      // Extract date parts for comparison - handle both formats properly
+      // Pattern 1: "Monday, May 12" (with comma)
+      // Pattern 2: "Friday Oct 10" (no comma)
+      // Pattern 3: "May 12" (missing day name)
+      let dayMatchA = fullDayA.match(/(\w+),\s+(\w+)\s+(\d+)/) || // "Monday, May 12"
+                      fullDayA.match(/(\w+)\s+(\w+)\s+(\d+)/) ||   // "Friday Oct 10"
+                      fullDayA.match(/(\w+)\s+(\d+)/);             // "May 12"
+                      
+      let dayMatchB = fullDayB.match(/(\w+),\s+(\w+)\s+(\d+)/) || // "Monday, May 12"
+                      fullDayB.match(/(\w+)\s+(\w+)\s+(\d+)/) ||   // "Friday Oct 10"
+                      fullDayB.match(/(\w+)\s+(\d+)/);             // "May 12"
+      
+      if (dayMatchA && dayMatchB) {
+        // Determine the format and extract month/date accordingly
+        let monthA, monthB, dateA, dateB;
+        
+        if (dayMatchA.length === 4) {
+          // Format: "Monday, May 12" or "Friday Oct 10"
+          monthA = dayMatchA[2];
+          dateA = parseInt(dayMatchA[3], 10);
+        } else {
+          // Format: "May 12"
+          monthA = dayMatchA[1];
+          dateA = parseInt(dayMatchA[2], 10);
+        }
+        
+        if (dayMatchB.length === 4) {
+          // Format: "Monday, May 12" or "Friday Oct 10"
+          monthB = dayMatchB[2];
+          dateB = parseInt(dayMatchB[3], 10);
+        } else {
+          // Format: "May 12"
+          monthB = dayMatchB[1];
+          dateB = parseInt(dayMatchB[2], 10);
+        }
+        
+        // Define month order based on calendar year
+        const monthOrder = {
+          "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+          "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
+          // Handle common abbreviations
+          "January": 1, "February": 2, "March": 3, "April": 4, "June": 6,
+          "July": 7, "August": 8, "September": 9, "October": 10, "November": 11, "December": 12
+        };
+        
+        const monthOrderA = monthOrder[monthA] || 0;
+        const monthOrderB = monthOrder[monthB] || 0;
+        
+        // First compare by month
+        if (monthOrderA !== monthOrderB) {
+          return monthOrderA - monthOrderB;
+        }
+        
+        // Then compare by day number
+        if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+          return dateA - dateB;
+        }
+      }
+      
+      // If dates are the same, compare by day of week (if available)
+      const dayA = a.split(/[,:]/)[0]?.trim().split(" ")[0]; // "Friday" or "Monday"
+      const dayB = b.split(/[,:]/)[0]?.trim().split(" ")[0]; // "Friday" or "Monday"
+      
       const dayOrderA = dayOrder[dayA] || 99;
       const dayOrderB = dayOrder[dayB] || 99;
       
@@ -146,45 +215,7 @@ const MentorAvailability = ({ volunteers }) => {
         return dayOrderA - dayOrderB;
       }
       
-      // For different days with same weekday but different dates
-      // If they have the same day of week, compare the date values
-      const fullDayA = a.split(":")[0]?.trim(); // "Friday Oct 10" or "Saturday, May 4"
-      const fullDayB = b.split(":")[0]?.trim(); // "Friday Oct 10" or "Saturday, May 4"
-      
-      if (fullDayA !== fullDayB) {
-        // Try to extract the date part, assuming format is "Day Month Number"
-        const dayMatchA = fullDayA.match(/(\w+)\s+(\w+)\s+(\d+)/);
-        const dayMatchB = fullDayB.match(/(\w+)\s+(\w+)\s+(\d+)/);
-        
-        if (dayMatchA && dayMatchB) {
-          // Compare month names if available
-          const monthA = dayMatchA[2];
-          const monthB = dayMatchB[2];
-          
-          // Define month order
-          const monthOrder = {
-            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
-          };
-          
-          const monthOrderA = monthOrder[monthA] || 0;
-          const monthOrderB = monthOrder[monthB] || 0;
-          
-          if (monthOrderA !== monthOrderB) {
-            return monthOrderA - monthOrderB;
-          }
-          
-          // Compare day numbers if available
-          const dateA = parseInt(dayMatchA[3], 10);
-          const dateB = parseInt(dayMatchB[3], 10);
-          
-          if (!isNaN(dateA) && !isNaN(dateB)) {
-            return dateA - dateB;
-          }
-        }
-      }
-      
-      // If days are the same, parse time period
+      // Finally, if everything else is the same, sort by time period
       const timePeriodRegexA = a.match(/🌅\s+(Early Morning)|☀️\s+(Morning)|🏙️\s+(Afternoon)|🌆\s+(Evening)|🌃\s+(Night)|🌙\s+(Late Night)/);
       const timePeriodRegexB = b.match(/🌅\s+(Early Morning)|☀️\s+(Morning)|🏙️\s+(Afternoon)|🌆\s+(Evening)|🌃\s+(Night)|🌙\s+(Late Night)/);
       

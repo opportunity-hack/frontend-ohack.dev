@@ -59,9 +59,7 @@ const VolunteerMediaContainer = styled(Box)({
 });
 
 const VolunteerMedia = styled(CardMedia)({
-  paddingTop: "100%", // 1:1 Aspect Ratio  
-  borderRadius: "50%",
-    
+  paddingTop: "100%" // 1:1 Aspect Ratio  
 });
 
 const InPersonBadge = styled(Box)(({ theme }) => ({
@@ -187,42 +185,39 @@ const VolunteerList = ({ event_id, type }) => {
 
   useEffect(() => {
     if (type === "mentor" && Array.isArray(volunteers) && volunteers.length > 0) {
-      // Determine if currently available for each volunteer.availability that is a list of available times
+      // Determine if currently available for each volunteer.availability
       const currentlyAvailable = volunteers.filter((volunteer) => {
-        if (volunteer?.isSelected) {
-          // Check if we have the new availableDays array format
-          if (Array.isArray(volunteer.availableDays) && volunteer.availableDays.length > 0) {
-            // Use the new array format
-            return volunteer.availableDays.some(slot => {
-              // Convert from "Friday Oct 10-Early Morning" to displayable format
-              const parts = slot.split('-');
-              if (parts.length < 2) return false;
-              
-              const day = parts[0]; // "Friday Oct 10"
-              const timeOfDay = parts[1]; // "Early Morning"
-              
-              // Create a displayable format with time information for checking availability
-              // We need to include the time range for isCurrentlyAvailable to work
-              const timeRanges = {
-                "Early Morning": "(7am - 9am PST)",
-                "Morning": "(9am - 12pm PST)",
-                "Afternoon": "(1pm - 3pm PST)",
-                "Evening": "(5pm - 8pm PST)",
-                "Night": "(8pm - 11pm PST)",
-                "Late Night": "(11pm - 2am PST)"
-              };
-              
-              const displaySlot = `${day}: ${timeOfDay} ${timeRanges[timeOfDay] || ""}`;
-              return isCurrentlyAvailable(displaySlot);
-            });
-          } else if (volunteer?.availability) {
-            // Fall back to old comma-split method
-            const availabilityPattern = /([A-Za-z]+\s+[A-Za-z]+\s+\d+:\s+[^,]+)/g;
-            const matches = volunteer.availability.match(availabilityPattern);
-            const availabilityArray = matches || volunteer.availability.split(", ");
+        if (volunteer?.isSelected && volunteer?.availability) {
+          // Use the same careful splitting logic as MentorAvailability.js
+          const slots = [];
+          let currentSlot = "";
+          const parts = volunteer.availability.split(", ");
+          
+          for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
             
-            return availabilityArray.some(isCurrentlyAvailable);
+            // Check if this part starts a new time slot (contains weekday pattern or emoji)
+            const startsNewSlot = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(part);
+            
+            if (startsNewSlot && currentSlot) {
+              // We found a new slot, save the current one
+              slots.push(currentSlot.trim());
+              currentSlot = part;
+            } else if (currentSlot) {
+              // Continue building current slot
+              currentSlot += ", " + part;
+            } else {
+              // First slot
+              currentSlot = part;
+            }
           }
+          
+          // Don't forget the last slot
+          if (currentSlot) {
+            slots.push(currentSlot.trim());
+          }
+          
+          return slots.some(isCurrentlyAvailable);
         }
         return false;
       });
@@ -236,20 +231,40 @@ const VolunteerList = ({ event_id, type }) => {
     if (!timeSpan || typeof timeSpan !== 'string') return false;
     
     const now = Moment(new Date(), "America/Los_Angeles"); // Everything is going to be in PST - we don't want to get the user's local time
-    const nowDay = now.format("dddd");
+    const nowDay = now.format("dddd"); // Day of week: "Friday"
+    const nowDate = now.date(); // Day of month: 10
 
     // New format example: "Friday Oct 10: 🌅 Early Morning (7am - 9am PST)"
-    // Old format example: "Friday, Oct 10: 🌅 Early Morning (7am - 9am PST)" (with comma)
-    // Extract the day name from the date part
-    const datePart = timeSpan.split(":")[0]; // "Friday Oct 10" or "Friday, Oct 10" or similar
+    // Old format example: "Monday, May 12: 🌅 Early Morning (7am - 9am PST)" (with comma)
+    // Extract the day name and date from the date part
+    const datePart = timeSpan.split(":")[0]; // "Friday Oct 10" or "Monday, May 12" or similar
     
     if (!datePart) return false;
     
-    // Extract the day name (first word) whether it has a comma or not
-    const dayName = datePart.split(" ")[0].trim(); // "Friday"
-    const isDayMatch = dayName === nowDay;
+    // Parse both formats to extract day name and date number
+    let dayName, dateNumber;
     
-    if (!isDayMatch) return false;
+    // Handle "Monday, May 12" format (with comma)
+    const commaMatch = datePart.match(/(\w+),\s+\w+\s+(\d+)/);
+    if (commaMatch) {
+      dayName = commaMatch[1]; // "Monday"
+      dateNumber = parseInt(commaMatch[2], 10); // 12
+    } else {
+      // Handle "Friday Oct 10" format (no comma)
+      const noCommaMatch = datePart.match(/(\w+)\s+\w+\s+(\d+)/);
+      if (noCommaMatch) {
+        dayName = noCommaMatch[1]; // "Friday"
+        dateNumber = parseInt(noCommaMatch[3], 10); // 10
+      } else {
+        return false; // Can't parse the date format
+      }
+    }
+    
+    // Check if both day of week and day of month match
+    const isDayMatch = dayName === nowDay;
+    const isDateMatch = dateNumber === nowDate;
+    
+    if (!isDayMatch || !isDateMatch) return false;
 
     // Safe string manipulation with proper error checking
     try {
@@ -336,28 +351,42 @@ const VolunteerList = ({ event_id, type }) => {
     if (!availability || typeof availability !== 'string') return null;
     
     try {
-      // First check if we have availableDays property in the volunteer
-      const availabilityArray = [];
+      // Use the same careful splitting logic from MentorAvailability.js
+      const slots = [];
+      let currentSlot = "";
+      const parts = availability.split(", ");
       
-      // New format: "Friday Oct 10: 🌅 Early Morning (7am - 9am PST), Friday Oct 10: ☀️ Morning..."
-      // Old format: "Friday, Oct 10: 🌅 Early Morning (7am - 9am PST), Friday, Oct 10: ☀️ Morning..."
-      // Handle both formats with a flexible pattern
-      const availabilityPattern = /([A-Za-z]+\s+[A-Za-z]+\s+\d+:\s+[^,]+)/g;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        
+        // Check if this part starts a new time slot (contains weekday pattern or emoji)
+        const startsNewSlot = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(part);
+        
+        if (startsNewSlot && currentSlot) {
+          // We found a new slot, save the current one
+          slots.push(currentSlot.trim());
+          currentSlot = part;
+        } else if (currentSlot) {
+          // Continue building current slot
+          currentSlot += ", " + part;
+        } else {
+          // First slot
+          currentSlot = part;
+        }
+      }
       
-      // Try to match with regex first
-      const matches = availability.match(availabilityPattern);
+      // Don't forget the last slot
+      if (currentSlot) {
+        slots.push(currentSlot.trim());
+      }
       
-      // If regex doesn't work, fall back to comma split
-      const extractedSlots = matches || availability.split(", ");
+      console.log("Volunteer Availability raw:", availability);
+      console.log("Volunteer Availability carefully split:", slots);
       
-      // Use the slots
-      availabilityArray.push(...extractedSlots);
-      
-      console.log("Volunteer Availability array:", availabilityArray);
-      if (availabilityArray.length === 0) return null;
+      if (slots.length === 0) return null;
       
       // Extract date part (assuming all entries have the same date)
-      const firstSlot = availabilityArray[0];
+      const firstSlot = slots[0];
       const colonIndex = firstSlot.indexOf(":");
       
       if (colonIndex === -1) {
@@ -365,7 +394,7 @@ const VolunteerList = ({ event_id, type }) => {
         return (
           <Box mt={2}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-              {availabilityArray.map((time, index) => (
+              {slots.map((time, index) => (
                 <AvailabilityChip
                   key={index}
                   icon={<AccessTimeIcon />}
@@ -379,7 +408,7 @@ const VolunteerList = ({ event_id, type }) => {
         );
       }
       
-      // Get the date part, like "Friday, Oct 10"
+      // Get the date part, like "Friday, Oct 10" or "Friday Oct 10"
       const datePart = firstSlot.substring(0, colonIndex).trim();
       
       // Define colors for different time periods
@@ -414,7 +443,7 @@ const VolunteerList = ({ event_id, type }) => {
       };
       
       // Process the time slots
-      const processedSlots = availabilityArray.map(slot => {
+      const processedSlots = slots.map(slot => {
         console.log("Processing slot:", slot);
         const slotColonIndex = slot.indexOf(":");
         if (slotColonIndex === -1) return { 
@@ -431,7 +460,7 @@ const VolunteerList = ({ event_id, type }) => {
         // Get first word as the day name, regardless of comma
         const dayName = slotDatePart.split(" ")[0].trim(); // "Friday", "Saturday", etc.
         
-        // Get everything after the colon, which should be like " 🌅 Early Morning (7am - 9am PST)"
+        // Get everything after the colon, which should be like " 🌅 Early Morning (7am - 9am)"
         let timeInfo = slot.substring(slotColonIndex + 1).trim();
         
         // Remove PST to save space
