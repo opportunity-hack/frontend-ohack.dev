@@ -97,13 +97,16 @@ const LoadingIndicator = ({ message }) => (
 );
 
 // Utility function to check if hackathon has ended
-const isHackathonExpired = (endDate) => {
+const isHackathonExpired = (endDate) => {  
   if (!endDate) return false;
   const now = new Date();
   const hackathonEnd = new Date(endDate);
   
   // Set the end time to 11:59:59 PM of the end date to allow participation until the last minute
   hackathonEnd.setHours(23, 59, 59, 999);
+
+  console.log("Hackathon Current time:", now);
+  console.log("Hackathon end time:", hackathonEnd);
   
   return now > hackathonEnd;
 };
@@ -517,7 +520,7 @@ const TeamList = ({ teams, eventId, endDate }) => {
               onJoin={handleJoinTeam}
               onLeave={handleUnjoinTeam}
               loadingTeamId={loadingTeamId}
-              isHackathonExpired={isHackathonExpired}
+              isHackathonExpired={isHackathonExpired(endDate)}
             />
           </Grid>
         ))}

@@ -971,10 +971,32 @@ export async function getStaticPaths() {
     // Fetch a list of all hackathon IDs
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathons`);
     const data = await res.json();
-    
-    // Create paths for all known events
-    const paths = data.map(event => ({
-      params: { event_id: event.event_id }
+
+    if (!res.ok) {
+      console.error("Failed to fetch hackathon paths:", data);
+      return {
+        paths: [],
+        fallback: 'blocking'
+      };
+    }
+
+    // Get data.hackathons if it exists, otherwise use data directly
+    const hackathons = data.hackathons;
+
+    console.log("Fetched hackathons:", hackathons);
+    if (!hackathons || !Array.isArray(hackathons)) {
+      console.error("Invalid hackathon data format:", hackathons);
+      return {
+        paths: [],
+        fallback: 'blocking'
+      };
+    }    
+
+    const paths = hackathons.map((event) => ({
+      // Handle case when event.event_id is null or undefined
+      params: {
+        event_id: event.event_id || event.id || event._id || "unknown-event",
+    },
     }));
 
     return {
