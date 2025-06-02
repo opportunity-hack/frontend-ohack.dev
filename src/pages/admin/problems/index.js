@@ -37,8 +37,10 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  Autocomplete,
+  OutlinedInput,
 } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon, Delete as DeleteIcon, Event as EventIcon } from "@mui/icons-material";
+import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon, Delete as DeleteIcon, Event as EventIcon, Close as CloseIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
 import LinkManagement from "../../../components/admin/LinkManagement";
 import useNonprofit from "../../../hooks/use-nonprofit";
@@ -57,6 +59,25 @@ const AdminProblemsPage = () => {
   const [selectedNonprofitId, setSelectedNonprofitId] = useState("");
   const [nonprofitSearchTerm, setNonprofitSearchTerm] = useState("");
   const [selectedHackathonId, setSelectedHackathonId] = useState("");
+  const [customSkillInput, setCustomSkillInput] = useState("");
+
+  // Common skills based on database examples
+  const commonSkills = [
+    "Java", "JavaScript", "Python", "TypeScript", "React", "Node.js",
+    "PostgreSQL", "MySQL", "MongoDB", "Firebase",
+    "Mobile", "iOS", "Android", "React Native", "Flutter",
+    "Full-stack", "Frontend", "Backend", "DevOps",
+    "Machine Learning", "AI", "NLP", "Data Science",
+    "Blockchain", "Solidity", "Web3",
+    "UI/UX", "Design", "Figma", "Adobe",
+    "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes",
+    "Testing", "A/B Testing", "QA", "Automation",
+    "API Development", "REST", "GraphQL", "ChatGPT API",
+    "E-commerce", "Shopify", "Shopify App",
+    "Security", "Authentication", "Identity Verification",
+    "Search", "Elasticsearch", "Geographical Search",
+    "Matching Algorithms", "Recommendation Systems"
+  ];
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -70,6 +91,8 @@ const AdminProblemsPage = () => {
   const { hackathons, handle_problem_statement_to_event_link_update } = useHackathonEvents(false);
 
   const fetchProblems = React.useCallback(async () => {
+    if (!accessToken || !isAdmin) return;
+    
     setLoading(true);
     try {
       const response = await fetch(
@@ -92,7 +115,7 @@ const AdminProblemsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, isAdmin]);
   
   // Create a lookup map for which problem statements each nonprofit has
   const nonprofitProblemStatementsMap = useMemo(() => {
@@ -116,10 +139,8 @@ const AdminProblemsPage = () => {
   }, [nonprofits]);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchProblems();
-    }
-  }, [isAdmin, fetchProblems]);
+    fetchProblems();
+  }, [fetchProblems]);
 
   const handleSort = (property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -168,10 +189,12 @@ const AdminProblemsPage = () => {
       rank: "",
       nonprofit_id: "",
       events: [],
+      skills: [],
     });
     setSelectedNonprofitId("");
     setNonprofitSearchTerm("");
     setSelectedHackathonId("");
+    setCustomSkillInput("");
     setDialogTabValue(0);
     setDialogOpen(true);
   };
@@ -181,11 +204,13 @@ const AdminProblemsPage = () => {
       ...problem,
       references: adaptReferencesToLinkFormat(problem.references),
       events: problem.events || [],
+      skills: problem.skills || [],
     };
     setEditingProblem(adaptedProblem);
     setSelectedNonprofitId(problem.nonprofit_id || "");
     setNonprofitSearchTerm("");
     setSelectedHackathonId("");
+    setCustomSkillInput("");
     setDialogTabValue(0);
     setDialogOpen(true);
   };
@@ -216,7 +241,8 @@ const AdminProblemsPage = () => {
     // Call the API to update the link
     handle_problem_statement_to_event_link_update(mapping, (response) => {
       console.log("Event linked:", response);
-      fetchProblems(); // Refresh the problems list
+      // Remove the fetchProblems call here to prevent unnecessary re-fetch
+      // The local state is already updated above
     });
 
     setSelectedHackathonId("");
@@ -235,6 +261,33 @@ const AdminProblemsPage = () => {
     // Note: We might need a separate API call to remove the link
     // For now, we'll just update the local state
     console.log("Event removed locally:", eventToRemove);
+  };
+
+  const handleAddCustomSkill = () => {
+    if (!customSkillInput.trim()) return;
+    
+    const newSkill = customSkillInput.trim();
+    if (!editingProblem.skills.includes(newSkill)) {
+      setEditingProblem(prev => ({
+        ...prev,
+        skills: [...prev.skills, newSkill]
+      }));
+    }
+    setCustomSkillInput("");
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setEditingProblem(prev => ({
+      ...prev,
+      skills: prev.skills.filter(skill => skill !== skillToRemove)
+    }));
+  };
+
+  const handleSkillsChange = (event, newValue) => {
+    setEditingProblem(prev => ({
+      ...prev,
+      skills: newValue
+    }));
   };
 
   const handleSaveProblem = async () => {
@@ -310,7 +363,8 @@ const AdminProblemsPage = () => {
           }
         }
         
-        fetchProblems();
+        // Only fetch problems after successful save, and close dialog
+        await fetchProblems();
         setDialogOpen(false);
       } else {
         throw new Error("Failed to save problem statement");
@@ -558,6 +612,27 @@ const AdminProblemsPage = () => {
                         </Box>
                       </>
                     )}
+
+                    {/* Add skills information */}
+                    {problem.skills && problem.skills.length > 0 && (
+                      <>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, mt: 2 }}>
+                          Skills:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {problem.skills.map((skill, index) => (
+                            <Chip
+                              key={index}
+                              label={skill}
+                              size="small"
+                              color="secondary"
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem', height: '20px' }}
+                            />
+                          ))}
+                        </Box>
+                      </>
+                    )}
                   </CardContent>
                   <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
                     <Button 
@@ -628,6 +703,15 @@ const AdminProblemsPage = () => {
                       Nonprofit
                     </TableSortLabel>
                   </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={orderBy === "skills"}
+                      direction={orderBy === "skills" ? order : "asc"}
+                      onClick={() => handleSort("skills")}
+                    >
+                      Skills
+                    </TableSortLabel>
+                  </TableCell>
                   <TableCell>Events</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
@@ -635,7 +719,7 @@ const AdminProblemsPage = () => {
               <TableBody>
                 {filteredAndSortedProblems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isTablet ? 5 : 7} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={isTablet ? 6 : 8} align="center" sx={{ py: 3 }}>
                       <Typography variant="body1" color="text.secondary">
                         No problem statements found.
                       </Typography>
@@ -698,6 +782,36 @@ const AdminProblemsPage = () => {
                               </Typography>
                             )}
                           </Box>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {problem.skills && problem.skills.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxWidth: '200px' }}>
+                            {problem.skills.slice(0, 3).map((skill, index) => (
+                              <Chip
+                                key={index}
+                                label={skill}
+                                size="small"
+                                color="secondary"
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem', height: '20px' }}
+                              />
+                            ))}
+                            {problem.skills.length > 3 && (
+                              <Chip
+                                label={`+${problem.skills.length - 3} more`}
+                                size="small"
+                                color="secondary"
+                                variant="filled"
+                                sx={{ fontSize: '0.65rem', height: '20px' }}
+                                title={problem.skills.slice(3).join(', ')}
+                              />
+                            )}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No skills
+                          </Typography>
                         )}
                       </TableCell>
                       <TableCell>
@@ -788,6 +902,91 @@ const AdminProblemsPage = () => {
                   multiline
                   rows={4}
                 />
+
+                {/* Skills Section */}
+                <Typography variant="subtitle1" sx={{ mt: 3, mb: 1, fontWeight: 'bold' }}>
+                  Required Skills
+                </Typography>
+                
+                {/* Skills Autocomplete */}
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={commonSkills}
+                  value={editingProblem?.skills || []}
+                  onChange={handleSkillsChange}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select or type skills"
+                      placeholder="Choose from common skills or type custom ones"
+                      helperText="Select from dropdown or press Enter to add custom skills"
+                    />
+                  )}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        variant="outlined"
+                        label={option}
+                        size="small"
+                        color="primary"
+                        {...getTagProps({ index })}
+                        key={option}
+                      />
+                    ))
+                  }
+                  sx={{ mb: 2 }}
+                />
+
+                {/* Custom Skill Input */}
+                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                  <TextField
+                    label="Add custom skill"
+                    value={customSkillInput}
+                    onChange={(e) => setCustomSkillInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomSkill();
+                      }
+                    }}
+                    size="small"
+                    sx={{ flexGrow: 1 }}
+                    placeholder="Type a custom skill and press Enter or click Add"
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={handleAddCustomSkill}
+                    disabled={!customSkillInput.trim()}
+                    startIcon={<AddIcon />}
+                    size="small"
+                  >
+                    Add
+                  </Button>
+                </Box>
+
+                {/* Display selected skills */}
+                {editingProblem?.skills && editingProblem.skills.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Selected Skills ({editingProblem.skills.length}):
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {editingProblem.skills.map((skill, index) => (
+                        <Chip
+                          key={index}
+                          label={skill}
+                          onDelete={() => handleRemoveSkill(skill)}
+                          color="primary"
+                          variant="filled"
+                          size="small"
+                          deleteIcon={<CloseIcon />}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
                 <TextField
                   fullWidth
                   label="Status"
