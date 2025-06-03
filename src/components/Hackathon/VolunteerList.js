@@ -6,7 +6,7 @@ import {
   CardMedia,
   Typography,
   Chip,
-  Box,  
+  Box,
   Paper,
   Link,
   Tooltip,
@@ -23,23 +23,27 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
-import CodeIcon from '@mui/icons-material/Code';
-import BugReportIcon from '@mui/icons-material/BugReport';
-import ForumIcon from '@mui/icons-material/Forum';
-import DesignServicesIcon from '@mui/icons-material/DesignServices';
+import CodeIcon from "@mui/icons-material/Code";
+import BugReportIcon from "@mui/icons-material/BugReport";
+import ForumIcon from "@mui/icons-material/Forum";
+import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import Moment from "moment";
 import NextLink from "next/link";
 import ShareVolunteer from "./ShareVolunteer";
 import { useEffect } from "react";
-import MentorAvailability from './MentorAvailability';
-
+import MentorAvailability from "./MentorAvailability";
+import GroupIcon from "@mui/icons-material/Group";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import LaunchIcon from "@mui/icons-material/Launch";
 
 const ArtifactList = styled(List)({
   padding: 0,
 });
 
 const ArtifactListItem = styled(ListItem)({
-  padding: '4px 0',
+  padding: "4px 0",
 });
 
 const VolunteerCard = styled(Card)(({ theme }) => ({
@@ -59,13 +63,13 @@ const VolunteerMediaContainer = styled(Box)({
 });
 
 const VolunteerMedia = styled(CardMedia)({
-  paddingTop: "100%" // 1:1 Aspect Ratio  
+  paddingTop: "100%", // 1:1 Aspect Ratio
 });
 
 const InPersonBadge = styled(Box)(({ theme }) => ({
   position: "absolute",
   bottom: 0,
-  right: 0,    
+  right: 0,
   backgroundColor: theme.palette.success.main,
   color: theme.palette.success.contrastText,
   padding: "4px 8px",
@@ -113,26 +117,30 @@ const ChipContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(1),
 }));
 
-const AvailabilityChip = styled(Chip)(({ theme, isavailablenow, timeofdaycolor }) => ({
-  margin: theme.spacing(0.5),
-  backgroundColor: isavailablenow
-    ? theme.palette.info.main
-    : timeofdaycolor || theme.palette.success.light,
-  color: theme.palette.getContrastText(
-    isavailablenow 
-      ? theme.palette.info.main 
-      : timeofdaycolor || theme.palette.success.light
-  ),
-  boxShadow: isavailablenow ? theme.shadows[2] : 'none',
-  transition: 'all 0.2s ease-in-out',
-  "&:hover": {
+const AvailabilityChip = styled(Chip)(
+  ({ theme, isavailablenow, timeofdaycolor }) => ({
+    margin: theme.spacing(0.5),
     backgroundColor: isavailablenow
-      ? theme.palette.info.dark
-      : timeofdaycolor ? alpha(timeofdaycolor, 0.8) : theme.palette.success.main,
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[3],
-  },
-}));
+      ? theme.palette.info.main
+      : timeofdaycolor || theme.palette.success.light,
+    color: theme.palette.getContrastText(
+      isavailablenow
+        ? theme.palette.info.main
+        : timeofdaycolor || theme.palette.success.light,
+    ),
+    boxShadow: isavailablenow ? theme.shadows[2] : "none",
+    transition: "all 0.2s ease-in-out",
+    "&:hover": {
+      backgroundColor: isavailablenow
+        ? theme.palette.info.dark
+        : timeofdaycolor
+          ? alpha(timeofdaycolor, 0.8)
+          : theme.palette.success.main,
+      transform: "translateY(-2px)",
+      boxShadow: theme.shadows[3],
+    },
+  }),
+);
 
 const AvailableMentorsSection = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
@@ -143,9 +151,11 @@ const AvailableMentorsSection = styled(Box)(({ theme }) => ({
 
 const AvailableMentorChip = styled(Chip)(({ theme, isInPerson }) => ({
   margin: theme.spacing(0.5),
-  backgroundColor: isInPerson ? theme.palette.success.main : theme.palette.info.main,
+  backgroundColor: isInPerson
+    ? theme.palette.success.main
+    : theme.palette.info.main,
   color: theme.palette.success.contrastText,
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.success.dark,
   },
 }));
@@ -155,19 +165,18 @@ const VolunteerList = ({ event_id, type }) => {
   const [error, setError] = React.useState(null);
   const [volunteers, setVolunteers] = React.useState([]);
   const [availableMentors, setAvailableMentors] = React.useState([]);
-  
-  
-
 
   useEffect(() => {
     // Call API to get data based on type
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}/${type}`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}/${type}`,
+        );
         if (res.ok) {
-          const data = await res.json();          
-          
+          const data = await res.json();
+
           setVolunteers(data.data);
         } else {
           throw new Error("Failed to fetch volunteers");
@@ -181,10 +190,14 @@ const VolunteerList = ({ event_id, type }) => {
     };
 
     fetchData();
-  }, [event_id, type]);  
+  }, [event_id, type]);
 
   useEffect(() => {
-    if (type === "mentor" && Array.isArray(volunteers) && volunteers.length > 0) {
+    if (
+      type === "mentor" &&
+      Array.isArray(volunteers) &&
+      volunteers.length > 0
+    ) {
       // Determine if currently available for each volunteer.availability
       const currentlyAvailable = volunteers.filter((volunteer) => {
         if (volunteer?.isSelected && volunteer?.availability) {
@@ -192,13 +205,16 @@ const VolunteerList = ({ event_id, type }) => {
           const slots = [];
           let currentSlot = "";
           const parts = volunteer.availability.split(", ");
-          
+
           for (let i = 0; i < parts.length; i++) {
             const part = parts[i];
-            
+
             // Check if this part starts a new time slot (contains weekday pattern or emoji)
-            const startsNewSlot = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(part);
-            
+            const startsNewSlot =
+              /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(
+                part,
+              );
+
             if (startsNewSlot && currentSlot) {
               // We found a new slot, save the current one
               slots.push(currentSlot.trim());
@@ -211,25 +227,24 @@ const VolunteerList = ({ event_id, type }) => {
               currentSlot = part;
             }
           }
-          
+
           // Don't forget the last slot
           if (currentSlot) {
             slots.push(currentSlot.trim());
           }
-          
+
           return slots.some(isCurrentlyAvailable);
         }
         return false;
       });
-      
+
       setAvailableMentors(currentlyAvailable);
     }
   }, [volunteers, type]);
 
-
   const isCurrentlyAvailable = (timeSpan) => {
-    if (!timeSpan || typeof timeSpan !== 'string') return false;
-    
+    if (!timeSpan || typeof timeSpan !== "string") return false;
+
     const now = Moment(new Date(), "America/Los_Angeles"); // Everything is going to be in PST - we don't want to get the user's local time
     const nowDay = now.format("dddd"); // Day of week: "Friday"
     const nowDate = now.date(); // Day of month: 10
@@ -238,12 +253,12 @@ const VolunteerList = ({ event_id, type }) => {
     // Old format example: "Monday, May 12: 🌅 Early Morning (7am - 9am PST)" (with comma)
     // Extract the day name and date from the date part
     const datePart = timeSpan.split(":")[0]; // "Friday Oct 10" or "Monday, May 12" or similar
-    
+
     if (!datePart) return false;
-    
+
     // Parse both formats to extract day name and date number
     let dayName, dateNumber;
-    
+
     // Handle "Monday, May 12" format (with comma)
     const commaMatch = datePart.match(/(\w+),\s+\w+\s+(\d+)/);
     if (commaMatch) {
@@ -259,11 +274,11 @@ const VolunteerList = ({ event_id, type }) => {
         return false; // Can't parse the date format
       }
     }
-    
+
     // Check if both day of week and day of month match
     const isDayMatch = dayName === nowDay;
     const isDateMatch = dateNumber === nowDate;
-    
+
     if (!isDayMatch || !isDateMatch) return false;
 
     // Safe string manipulation with proper error checking
@@ -271,20 +286,20 @@ const VolunteerList = ({ event_id, type }) => {
       // Extract the time portion from the string - anything in parentheses
       const timeMatch = timeSpan.match(/\((.*?)\)/);
       if (!timeMatch || !timeMatch[1]) return false;
-      
+
       let timeRange = timeMatch[1]; // "7am - 9am PST"
       timeRange = timeRange.replace(/PST/g, "").trim(); // "7am - 9am"
-      
+
       const timeParts = timeRange.split("-");
       if (timeParts.length !== 2) return false;
 
-      let [startTime, endTime] = timeParts.map(t => t.trim());
-      
+      let [startTime, endTime] = timeParts.map((t) => t.trim());
+
       // Standardize format: ensure times have minutes
       if (!startTime.includes(":")) {
         startTime = startTime.replace(/(\d+)([ap]m)/, "$1:00$2");
       }
-      
+
       // Add :59 to the end time to make it inclusive of the entire hour
       if (!endTime.includes(":")) {
         endTime = endTime.replace(/(\d+)([ap]m)/, "$1:59$2");
@@ -308,8 +323,9 @@ const VolunteerList = ({ event_id, type }) => {
   };
 
   const renderArtifacts = (artifacts) => {
-    if (!artifacts || !Array.isArray(artifacts) || artifacts.length === 0) return null;
-    
+    if (!artifacts || !Array.isArray(artifacts) || artifacts.length === 0)
+      return null;
+
     return (
       <Box mt={2}>
         <Typography variant="subtitle2" gutterBottom>
@@ -319,11 +335,11 @@ const VolunteerList = ({ event_id, type }) => {
           {artifacts.map((artifact, index) => (
             <ArtifactListItem key={index}>
               <ListItemIcon>
-                {artifact?.type === 'pull_request' && <CodeIcon />}
-                {artifact?.type === 'issue' && <BugReportIcon />}
-                {artifact?.type === 'coordination' && <ForumIcon />}
-                {artifact?.type === 'user_experience' && <DesignServicesIcon />}
-                {artifact?.type === 'standup' && <AccessTimeIcon />}
+                {artifact?.type === "pull_request" && <CodeIcon />}
+                {artifact?.type === "issue" && <BugReportIcon />}
+                {artifact?.type === "coordination" && <ForumIcon />}
+                {artifact?.type === "user_experience" && <DesignServicesIcon />}
+                {artifact?.type === "standup" && <AccessTimeIcon />}
                 {!artifact?.type && <CodeIcon />} {/* Default icon */}
               </ListItemIcon>
               <ListItemText
@@ -331,12 +347,18 @@ const VolunteerList = ({ event_id, type }) => {
                 secondary={
                   <>
                     {artifact?.comment || ""}
-                    {artifact?.url && Array.isArray(artifact.url) && artifact.url.length > 0 && (
-                      <Link href={artifact.url[0]} target="_blank" rel="noopener noreferrer">
-                        {" "}
-                        (Link)
-                      </Link>
-                    )}
+                    {artifact?.url &&
+                      Array.isArray(artifact.url) &&
+                      artifact.url.length > 0 && (
+                        <Link
+                          href={artifact.url[0]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {" "}
+                          (Link)
+                        </Link>
+                      )}
                   </>
                 }
               />
@@ -348,20 +370,23 @@ const VolunteerList = ({ event_id, type }) => {
   };
 
   const renderAvailability = (availability) => {
-    if (!availability || typeof availability !== 'string') return null;
-    
+    if (!availability || typeof availability !== "string") return null;
+
     try {
       // Use the same careful splitting logic from MentorAvailability.js
       const slots = [];
       let currentSlot = "";
       const parts = availability.split(", ");
-      
+
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-        
+
         // Check if this part starts a new time slot (contains weekday pattern or emoji)
-        const startsNewSlot = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(part);
-        
+        const startsNewSlot =
+          /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(
+            part,
+          );
+
         if (startsNewSlot && currentSlot) {
           // We found a new slot, save the current one
           slots.push(currentSlot.trim());
@@ -374,26 +399,26 @@ const VolunteerList = ({ event_id, type }) => {
           currentSlot = part;
         }
       }
-      
+
       // Don't forget the last slot
       if (currentSlot) {
         slots.push(currentSlot.trim());
       }
-      
+
       console.log("Volunteer Availability raw:", availability);
       console.log("Volunteer Availability carefully split:", slots);
-      
+
       if (slots.length === 0) return null;
-      
+
       // Extract date part (assuming all entries have the same date)
       const firstSlot = slots[0];
       const colonIndex = firstSlot.indexOf(":");
-      
+
       if (colonIndex === -1) {
         // Legacy format fallback
         return (
           <Box mt={2}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
               {slots.map((time, index) => (
                 <AvailabilityChip
                   key={index}
@@ -407,62 +432,63 @@ const VolunteerList = ({ event_id, type }) => {
           </Box>
         );
       }
-      
+
       // Get the date part, like "Friday, Oct 10" or "Friday Oct 10"
       const datePart = firstSlot.substring(0, colonIndex).trim();
-      
+
       // Define colors for different time periods
       const timeOfDayColors = {
         "Early Morning": "#9FC5E8", // Light blue
-        "Morning": "#FFD966",       // Light yellow
-        "Afternoon": "#93C47D",     // Light green
-        "Evening": "#B4A7D6",       // Light purple
-        "Night": "#8E7CC3",         // Medium purple
-        "Late Night": "#674EA7"     // Dark purple
+        Morning: "#FFD966", // Light yellow
+        Afternoon: "#93C47D", // Light green
+        Evening: "#B4A7D6", // Light purple
+        Night: "#8E7CC3", // Medium purple
+        "Late Night": "#674EA7", // Dark purple
       };
-      
+
       // Define day of week order for sorting
       const dayOrder = {
-        "Sunday": 0,
-        "Monday": 1,
-        "Tuesday": 2,
-        "Wednesday": 3,
-        "Thursday": 4,
-        "Friday": 5,
-        "Saturday": 6
+        Sunday: 0,
+        Monday: 1,
+        Tuesday: 2,
+        Wednesday: 3,
+        Thursday: 4,
+        Friday: 5,
+        Saturday: 6,
       };
-      
+
       // Define time period order for sorting
       const timeOfDayOrder = {
         "Early Morning": 1,
-        "Morning": 2,
-        "Afternoon": 3,
-        "Evening": 4,
-        "Night": 5,
-        "Late Night": 6
+        Morning: 2,
+        Afternoon: 3,
+        Evening: 4,
+        Night: 5,
+        "Late Night": 6,
       };
-      
+
       // Process the time slots
-      const processedSlots = slots.map(slot => {
+      const processedSlots = slots.map((slot) => {
         console.log("Processing slot:", slot);
         const slotColonIndex = slot.indexOf(":");
-        if (slotColonIndex === -1) return { 
-          display: slot, 
-          timeOfDay: null, 
-          originalSlot: slot,
-          dayName: null,
-          dayOrder: 99,
-          sortOrder: 99,
-          month: null,
-          date: null
-        };
-        
+        if (slotColonIndex === -1)
+          return {
+            display: slot,
+            timeOfDay: null,
+            originalSlot: slot,
+            dayName: null,
+            dayOrder: 99,
+            sortOrder: 99,
+            month: null,
+            date: null,
+          };
+
         // Extract day name from the date part - handle both formats (with or without comma)
         const slotDatePart = slot.substring(0, slotColonIndex).trim();
-        
+
         // Parse both formats to extract day name, month, and date
         let dayName, month, date;
-        
+
         // Handle "Monday, May 12" format (with comma)
         const commaMatch = slotDatePart.match(/(\w+),\s+(\w+)\s+(\d+)/);
         if (commaMatch) {
@@ -478,34 +504,40 @@ const VolunteerList = ({ event_id, type }) => {
             date = parseInt(noCommaMatch[3], 10); // 10
           }
         }
-        
+
         // Get everything after the colon, which should be like " 🌅 Early Morning (7am - 9am)"
         let timeInfo = slot.substring(slotColonIndex + 1).trim();
-        
+
         // Remove PST to save space
         if (timeInfo.includes(" PST)")) {
           timeInfo = timeInfo.replace(" PST)", ")");
         }
-        
-        let emoji = "", timeOfDay = "", timeRange = "", display = timeInfo;
-        
+
+        let emoji = "",
+          timeOfDay = "",
+          timeRange = "",
+          display = timeInfo;
+
         // Extract emoji, time label, and time range
-        const emojiTimeMatch = /([^\s]+)\s+([^(]+)\s*(\([^)]+\))/u.exec(timeInfo);
-        
+        const emojiTimeMatch = /([^\s]+)\s+([^(]+)\s*(\([^)]+\))/u.exec(
+          timeInfo,
+        );
+
         if (emojiTimeMatch) {
           emoji = emojiTimeMatch[1]; // 🌅
           timeOfDay = emojiTimeMatch[2].trim(); // Early Morning
           timeRange = emojiTimeMatch[3]; // (7am - 9am)
-          
+
           // Create integrated display with date, emoji and time
           // For new format: Extract "Oct 10" from "Friday Oct 10"
           // For old format: Extract "Oct 10" from "Friday, Oct 10"
           let dateOnly = slotDatePart;
-          
+
           // For old format with comma
           if (slotDatePart.includes(",")) {
             const dateParts = slotDatePart.split(","); // ["Friday", " Oct 10"]
-            dateOnly = dateParts.length > 1 ? dateParts[1].trim() : slotDatePart;
+            dateOnly =
+              dateParts.length > 1 ? dateParts[1].trim() : slotDatePart;
           } else {
             // For new format without comma - extract everything after the first word
             const dateParts = slotDatePart.split(" ");
@@ -514,75 +546,111 @@ const VolunteerList = ({ event_id, type }) => {
               dateOnly = dateParts.slice(1).join(" ");
             }
           }
-          
+
           display = `${dateOnly} · ${timeRange}`;
         }
-        
-        return { 
-          display, 
+
+        return {
+          display,
           emoji,
-          timeOfDay, 
+          timeOfDay,
           timeRange,
-          originalSlot: slot, 
+          originalSlot: slot,
           color: timeOfDayColors[timeOfDay] || null,
           dayName,
           dayOrder: dayOrder[dayName] || 99,
           sortOrder: timeOfDay ? timeOfDayOrder[timeOfDay] || 99 : 99,
           month,
-          date
+          date,
         };
       });
-      
+
       // Sort the slots by calendar date first, then by time of day
       const sortedSlots = [...processedSlots].sort((a, b) => {
         // Define month order for calendar sorting
         const monthOrder = {
-          "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-          "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
-          "January": 1, "February": 2, "March": 3, "April": 4, "June": 6,
-          "July": 7, "August": 8, "September": 9, "October": 10, "November": 11, "December": 12
+          Jan: 1,
+          Feb: 2,
+          Mar: 3,
+          Apr: 4,
+          May: 5,
+          Jun: 6,
+          Jul: 7,
+          Aug: 8,
+          Sep: 9,
+          Oct: 10,
+          Nov: 11,
+          Dec: 12,
+          January: 1,
+          February: 2,
+          March: 3,
+          April: 4,
+          June: 6,
+          July: 7,
+          August: 8,
+          September: 9,
+          October: 10,
+          November: 11,
+          December: 12,
         };
-        
+
         // First compare by month
         const monthOrderA = monthOrder[a.month] || 0;
         const monthOrderB = monthOrder[b.month] || 0;
-        
+
         if (monthOrderA !== monthOrderB) {
           return monthOrderA - monthOrderB;
         }
-        
+
         // Then compare by day of month
         if (a.date !== b.date) {
           return (a.date || 0) - (b.date || 0);
         }
-        
+
         // Finally, compare by time period
         return a.sortOrder - b.sortOrder;
       });
-      
+
       return (
         <Box mt={2}>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8, justifyContent: 'flex-start' }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 0.8,
+              justifyContent: "flex-start",
+            }}
+          >
             {sortedSlots.map((slot, index) => (
               <Tooltip
                 key={index}
-                title={isCurrentlyAvailable(slot.originalSlot) ? 
-                  "Available now (during the hackathon)!" : 
-                  slot.originalSlot}
+                title={
+                  isCurrentlyAvailable(slot.originalSlot)
+                    ? "Available now (during the hackathon)!"
+                    : slot.originalSlot
+                }
               >
                 <AvailabilityChip
-                  icon={slot.emoji ? 
-                    <span style={{ fontSize: '1.0rem', marginRight: '3px' }}>{slot.emoji}</span> : 
-                    <AccessTimeIcon />}
+                  icon={
+                    slot.emoji ? (
+                      <span style={{ fontSize: "1.0rem", marginRight: "3px" }}>
+                        {slot.emoji}
+                      </span>
+                    ) : (
+                      <AccessTimeIcon />
+                    )
+                  }
                   label={slot.originalSlot}
                   size="medium"
-                  isavailablenow={isCurrentlyAvailable(slot.originalSlot) ? 1 : 0}
+                  isavailablenow={
+                    isCurrentlyAvailable(slot.originalSlot) ? 1 : 0
+                  }
                   timeofdaycolor={slot.color}
-                  sx={{ 
+                  sx={{
                     fontWeight: 500,
-                    '& .MuiChip-label': { 
-                      paddingLeft: slot.emoji ? 0 : undefined 
-                    }
+                    "& .MuiChip-label": {
+                      paddingLeft: slot.emoji ? 0 : undefined,
+                    },
                   }}
                 />
               </Tooltip>
@@ -596,21 +664,23 @@ const VolunteerList = ({ event_id, type }) => {
     }
   };
 
-   const renderVolunteerCard = (volunteer) => {    
+  const renderVolunteerCard = (volunteer) => {
     // Check if volunteer exists
     if (!volunteer) return null;
 
     const isMentor = type === "mentor";
     const isJudge = type === "judge";
     const isVolunteer = type === "volunteer";
+    const isHacker = type === "hacker";
     const isSelected = !!volunteer.isSelected;
-    
+
     // Skip rendering if not selected
-    if (!isSelected) return null;    
+    if (!isSelected) return null;
 
     // Safely handle photo URL
-    let imageToDisplay = "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png";
-    if (volunteer.photoUrl && typeof volunteer.photoUrl === 'string') {
+    let imageToDisplay =
+      "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png";
+    if (volunteer.photoUrl && typeof volunteer.photoUrl === "string") {
       const googleDriveImage = volunteer.photoUrl.includes("drive.google.com");
       if (!googleDriveImage) {
         imageToDisplay = volunteer.photoUrl;
@@ -618,17 +688,32 @@ const VolunteerList = ({ event_id, type }) => {
     }
 
     return (
-      <Grid item xs={12} sm={6} md={4} key={volunteer.name || `volunteer-${Math.random().toString(36)}`} id={`mentor-${volunteer.name || "unknown"}`}>
+      <Grid
+        item
+        xs={12}
+        sm={6}
+        md={4}
+        key={volunteer.name || `volunteer-${Math.random().toString(36)}`}
+        id={`mentor-${volunteer.name || "unknown"}`}
+      >
         <VolunteerCard>
           <VolunteerMediaContainer>
             <VolunteerMedia
               image={imageToDisplay}
               title={volunteer.name || "Volunteer"}
             />
-            {volunteer.isInPerson ? <InPersonBadge>In-Person</InPersonBadge> : <RemoteBadge>Remote</RemoteBadge>}
+            {volunteer.isInPerson ? (
+              <InPersonBadge>In-Person</InPersonBadge>
+            ) : (
+              <RemoteBadge>Remote</RemoteBadge>
+            )}
           </VolunteerMediaContainer>
           <VolunteerContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+            >
               <Typography gutterBottom variant="h5" component="div">
                 {volunteer.name || "Volunteer"}
                 {volunteer.pronouns && (
@@ -645,11 +730,21 @@ const VolunteerList = ({ event_id, type }) => {
               <ShareVolunteer volunteer={volunteer} type={type} />
             </Box>
             <Typography variant="subtitle1" color="text.secondary">
-              {isMentor ? (volunteer.company || "") : (volunteer.companyName || "")}
-              {!isMentor && volunteer.title && ` - ${volunteer.title}`}
+              {isMentor
+                ? volunteer.company || ""
+                : isHacker
+                  ? volunteer.schoolOrganization || ""
+                  : volunteer.companyName || ""}
+              {!isMentor &&
+                !isHacker &&
+                volunteer.title &&
+                ` - ${volunteer.title}`}
+              {isHacker &&
+                volunteer.experienceLevel &&
+                ` • ${volunteer.experienceLevel}`}
             </Typography>
             <ChipContainer>
-              {volunteer.company && (
+              {volunteer.company && !isHacker && (
                 <Chip
                   icon={<WorkIcon />}
                   label={volunteer.company}
@@ -663,11 +758,40 @@ const VolunteerList = ({ event_id, type }) => {
                   size="small"
                 />
               )}
-              {isMentor && typeof volunteer.participationCount !== 'undefined' && (
+              {isMentor &&
+                typeof volunteer.participationCount !== "undefined" && (
+                  <Chip
+                    icon={<VolunteerActivismIcon />}
+                    label={volunteer.participationCount}
+                    size="small"
+                  />
+                )}
+              {isHacker && volunteer.participationCount && (
                 <Chip
-                  icon={<VolunteerActivismIcon />}
+                  icon={<EmojiEventsIcon />}
                   label={volunteer.participationCount}
                   size="small"
+                />
+              )}
+              {isHacker && volunteer.teamStatus && (
+                <Chip
+                  icon={<GroupIcon />}
+                  label={
+                    volunteer.teamStatus === "I have a team"
+                      ? "Has Team"
+                      : volunteer.teamStatus === "I'm looking for team members"
+                        ? "Seeking Members"
+                        : volunteer.teamStatus ===
+                            "I'd like to be matched with a team"
+                          ? "Looking for Team"
+                          : "Solo"
+                  }
+                  size="small"
+                  color={
+                    volunteer.teamStatus === "I have a team"
+                      ? "success"
+                      : "primary"
+                  }
                 />
               )}
               {volunteer.linkedinProfile && (
@@ -684,6 +808,34 @@ const VolunteerList = ({ event_id, type }) => {
                   />
                 </Link>
               )}
+              {isHacker && volunteer.github && (
+                <Link
+                  href={volunteer.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Chip
+                    icon={<GitHubIcon />}
+                    label="GitHub"
+                    size="small"
+                    clickable
+                  />
+                </Link>
+              )}
+              {isHacker && volunteer.portfolio && (
+                <Link
+                  href={volunteer.portfolio}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Chip
+                    icon={<LaunchIcon />}
+                    label="Portfolio"
+                    size="small"
+                    clickable
+                  />
+                </Link>
+              )}
             </ChipContainer>
             <Typography variant="body1" paragraph sx={{ mt: 2 }}>
               {volunteer.shortBio || volunteer.shortBiography || ""}
@@ -691,7 +843,8 @@ const VolunteerList = ({ event_id, type }) => {
             {isMentor && (
               <>
                 <Typography variant="body1" paragraph>
-                  <strong>Expertise:</strong> {volunteer.expertise || "Not specified"}
+                  <strong>Expertise:</strong>{" "}
+                  {volunteer.expertise || "Not specified"}
                 </Typography>
                 {volunteer.softwareEngineeringSpecifics && (
                   <Typography variant="body1" paragraph>
@@ -701,17 +854,61 @@ const VolunteerList = ({ event_id, type }) => {
                 )}
               </>
             )}
-            {(isJudge && volunteer.background) && (
+            {isJudge && volunteer.background && (
               <>
                 <Typography variant="body1" paragraph>
                   <strong>Expertise:</strong> {volunteer.background}
-                </Typography>                
+                </Typography>
               </>
             )}
             {isJudge && volunteer.whyJudge && (
               <Typography variant="body1" paragraph>
                 <strong>Why volunteering:</strong> {volunteer.whyJudge}
               </Typography>
+            )}
+            {isHacker && (
+              <>
+                {volunteer.primaryRoles && (
+                  <Typography variant="body1" paragraph>
+                    <strong>Primary Skills:</strong>{" "}
+                    {Array.isArray(volunteer.primaryRoles)
+                      ? volunteer.primaryRoles.join(", ")
+                      : volunteer.primaryRoles}
+                  </Typography>
+                )}
+                {volunteer.skills && (
+                  <Typography variant="body1" paragraph>
+                    <strong>Technical Skills:</strong>{" "}
+                    {Array.isArray(volunteer.skills)
+                      ? volunteer.skills.join(", ")
+                      : volunteer.skills}
+                  </Typography>
+                )}
+                {volunteer.socialCauses && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Passionate About:</strong>
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {(Array.isArray(volunteer.socialCauses)
+                        ? volunteer.socialCauses
+                        : volunteer.socialCauses.split(",").map((c) => c.trim())
+                      )
+                        .slice(0, 3)
+                        .map((cause, index) => (
+                          <Chip
+                            key={index}
+                            icon={<FavoriteIcon />}
+                            label={cause}
+                            size="small"
+                            color="secondary"
+                            variant="outlined"
+                          />
+                        ))}
+                    </Box>
+                  </Box>
+                )}                
+              </>
             )}
             {isMentor && renderAvailability(volunteer.availability)}
             {isVolunteer && renderArtifacts(volunteer.artifacts)}
@@ -724,63 +921,82 @@ const VolunteerList = ({ event_id, type }) => {
   const scrollToMentor = (mentorName) => {
     const element = document.getElementById(`mentor-${mentorName}`);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   };
- 
 
-  if( loading ) 
-  {
-    return(<Skeleton marginTop={5} variant="rect" width={210} height={300} />);
+  if (loading) {
+    return <Skeleton marginTop={5} variant="rect" width={210} height={300} />;
   }
 
   return (
-  <Box sx={{ mt: 4 }}>
-    <HeadingContainer>
-      <Typography variant="h4">
-        Our Amazing {type === "mentor" ? "Mentors" : type === "judge" ? "Judges" : "Volunteers"}
-      </Typography>
-      <NextLink
-        href={type === "mentor" ? "/about/mentors" : type === "judge" ? "/about/judges" : "/volunteer"}
-        passHref
-      >
-        <StyledLink color="secondary">(Learn more)</StyledLink>
-      </NextLink>
-    </HeadingContainer>    
-
-    {type === "mentor" && <MentorAvailability volunteers={volunteers} /> }
-
-    {type === "mentor" && Array.isArray(availableMentors) && availableMentors.length > 0 && (
-      <AvailableMentorsSection>
-        <Typography variant="h6" gutterBottom>
-          Currently Available Mentors:
+    <Box sx={{ mt: 4 }}>
+      <HeadingContainer>
+        <Typography variant="h4">          
+          {type === "mentor"
+            ? "Mentors"
+            : type === "judge"
+              ? "Judges"
+              : type === "hacker"
+                ? "Hackers"
+                : "Volunteers"}
         </Typography>
-        {availableMentors.map((mentor) => (
-          <Tooltip            
-            title={<span style={{ fontSize: "14px" }}>{
-              mentor?.isInPerson
-                ? "Available now (in-person)"
-                : "Available now (remote)"            
-            }</span>}
-            key={mentor?.name || `mentor-${Math.random().toString(36)}`}
-          >
-          <AvailableMentorChip
-            key={mentor?.name || `mentor-chip-${Math.random().toString(36)}`}
-            label={mentor?.name || "Mentor"}            
-            onClick={() => scrollToMentor(mentor?.name || "")}
-            isInPerson={!!mentor?.isInPerson}
-            clickable
-          />
-          </Tooltip>
-        ))}
-      </AvailableMentorsSection>
-    )}
-    
-    <Grid container spacing={3}>
-      {Array.isArray(volunteers) && volunteers.map((volunteer) => renderVolunteerCard(volunteer))}
-    </Grid>
-  </Box>
-);
+        <NextLink
+          href={
+            type === "mentor"
+              ? "/about/mentors"
+              : type === "judge"
+                ? "/about/judges"
+                : type === "hacker"
+                  ? "/hack"
+                  : "/volunteer"
+          }
+          passHref
+        >
+          <StyledLink color="secondary">(Learn more)</StyledLink>
+        </NextLink>
+      </HeadingContainer>
+
+      {type === "mentor" && <MentorAvailability volunteers={volunteers} />}
+
+      {type === "mentor" &&
+        Array.isArray(availableMentors) &&
+        availableMentors.length > 0 && (
+          <AvailableMentorsSection>
+            <Typography variant="h6" gutterBottom>
+              Currently Available Mentors:
+            </Typography>
+            {availableMentors.map((mentor) => (
+              <Tooltip
+                title={
+                  <span style={{ fontSize: "14px" }}>
+                    {mentor?.isInPerson
+                      ? "Available now (in-person)"
+                      : "Available now (remote)"}
+                  </span>
+                }
+                key={mentor?.name || `mentor-${Math.random().toString(36)}`}
+              >
+                <AvailableMentorChip
+                  key={
+                    mentor?.name || `mentor-chip-${Math.random().toString(36)}`
+                  }
+                  label={mentor?.name || "Mentor"}
+                  onClick={() => scrollToMentor(mentor?.name || "")}
+                  isInPerson={!!mentor?.isInPerson}
+                  clickable
+                />
+              </Tooltip>
+            ))}
+          </AvailableMentorsSection>
+        )}
+
+      <Grid container spacing={3}>
+        {Array.isArray(volunteers) &&
+          volunteers.map((volunteer) => renderVolunteerCard(volunteer))}
+      </Grid>
+    </Box>
+  );
 };
 
 export default VolunteerList;

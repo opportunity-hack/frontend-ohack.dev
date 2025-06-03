@@ -26,6 +26,7 @@ const sections = [
     ariaLabel: "See event timeline and countdown",
   },
 
+  { id: "hacker", name: "Hackers", ariaLabel: "See event hackers" },
   { id: "volunteer", name: "Volunteers", ariaLabel: "See event volunteers" },
   { id: "mentor", name: "Mentors", ariaLabel: "View hackathon mentors" },
   { id: "judge", name: "Judges", ariaLabel: "See event judges" },

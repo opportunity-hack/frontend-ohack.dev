@@ -10,6 +10,9 @@ import Breadcrumbs from '../../components/Breadcrumbs/Breadcrumbs';
 import Script from 'next/script';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
+import Fab from '@mui/material/Fab';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import Zoom from '@mui/material/Zoom';
 
 // Create a visually-hidden style for accessibility
 const VisuallyHidden = styled('span')({
@@ -24,6 +27,38 @@ const VisuallyHidden = styled('span')({
   borderWidth: '0',
 });
 
+// Styled Back to Top button
+const BackToTopButton = styled(Fab)(({ theme }) => ({
+  position: 'fixed',
+  bottom: theme.spacing(2),
+  right: theme.spacing(2),
+  zIndex: 1000,
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  '&:hover': {
+    backgroundColor: theme.palette.primary.dark,
+    transform: 'scale(1.1)',
+  },
+  transition: 'all 0.3s ease-in-out',
+  // Touch-friendly size for mobile
+  [theme.breakpoints.down('sm')]: {
+    width: 48,
+    height: 48,
+    bottom: theme.spacing(3),
+    right: theme.spacing(3),
+  },
+  // Larger size for desktop with better hover effects
+  [theme.breakpoints.up('sm')]: {
+    width: 56,
+    height: 56,
+    '&:hover': {
+      backgroundColor: theme.palette.primary.dark,
+      transform: 'scale(1.15)',
+      boxShadow: theme.shadows[8],
+    },
+  },
+}));
+
 const LinksContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
@@ -35,7 +70,6 @@ const LinksContainer = styled(Paper)(({ theme }) => ({
   overflowX: "hidden",
   overflowY: "auto",
 }));
-
 
 // Add the style to the Typography component
 Typography.defaultProps = {
@@ -408,6 +442,7 @@ const faqData = [
 
 export default function HackathonEvent({ eventData }) {
   const router = useRouter();
+  const [showBackToTop, setShowBackToTop] = useState(false);
   
   // If fallback is true and the page is being generated,
   // router.isFallback will be true
@@ -428,8 +463,24 @@ export default function HackathonEvent({ eventData }) {
           }, 100); // Small delay to ensure the page has rendered
         }
       }
+
+      // Handle back to top button visibility
+      const handleScroll = () => {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        setShowBackToTop(scrollTop > 300); // Show after scrolling 300px
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      return () => window.removeEventListener('scroll', handleScroll);
     }
   }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
 
   if (isLoading || !event) {
     return (
@@ -602,17 +653,19 @@ export default function HackathonEvent({ eventData }) {
         <Script
           id="event-structured-data"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventStructuredData) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(eventStructuredData),
+          }}
         />
       )}
-      
+
       <Script
         id="faq-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
       />
 
-      <Container maxWidth="lg" component="main">                
+      <Container maxWidth="lg" component="main">
         <HackathonHeader
           title={event.title}
           startDate={event.start_date}
@@ -775,7 +828,11 @@ export default function HackathonEvent({ eventData }) {
                   </Grid>
                 </Box>
 
-                <TeamList teams={event.teams} eventId={event_id} endDate={event.end_date} />
+                <TeamList
+                  teams={event.teams}
+                  eventId={event_id}
+                  endDate={event.end_date}
+                />
               </Box>
             </LinksContainer>
           </Grid>
@@ -916,6 +973,23 @@ export default function HackathonEvent({ eventData }) {
             </Typography>
             <VolunteerList event_id={event_id} type="judge" />
           </Grid>
+          <Grid
+            item
+            xs={12}
+            id="hacker"
+            component="section"
+            aria-labelledby="hacker-heading"
+          >
+            <Typography
+              variant="h2"
+              component="h2"
+              id="hacker-heading"
+              className="visually-hidden"
+            >
+              Hackers
+            </Typography>
+            <VolunteerList event_id={event_id} type="hacker" />
+          </Grid>
           {/* FAQ */}
           <Grid
             item
@@ -936,6 +1010,18 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Back to Top Button */}
+      <Zoom in={showBackToTop} timeout={300}>
+        <BackToTopButton
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          title="Back to top"
+          size="medium"
+        >
+          <KeyboardArrowUpIcon />
+        </BackToTopButton>
+      </Zoom>
     </>
   );
 }
