@@ -188,12 +188,9 @@ const EventCountdown = ({ countdowns }) => {
         });
       }
       
-      // Calculate overall progress
-      const firstEvent = Moment(sortedEvents[0].time);
-      const lastEvent = Moment(sortedEvents[sortedEvents.length - 1].time);
-      const totalDuration = lastEvent.diff(firstEvent);
-      const elapsed = now.diff(firstEvent);
-      const progressPercent = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+      // Calculate overall progress - simple ratio of completed events
+      const completedEvents = sortedEvents.filter(event => Moment(event.time).isBefore(now)).length;
+      const progressPercent = (completedEvents / sortedEvents.length) * 100;
       setProgress(progressPercent);
       
       // Calculate countdown to next event
