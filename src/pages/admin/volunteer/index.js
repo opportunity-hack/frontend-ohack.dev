@@ -13,10 +13,13 @@ import {
   Select,
   MenuItem,
   Badge,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import AdminPage from "../../../components/admin/AdminPage";
 import VolunteerTable from "../../../components/admin/VolunteerTable";
 import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";  
+import ApplicationReviewList from "../../../components/admin/ApplicationReviewList";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 
 import { Typography } from "@mui/material";
@@ -46,6 +49,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [editingVolunteer, setEditingVolunteer] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState("");
+  const [viewMode, setViewMode] = useState("table"); // "table" or "review"
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
@@ -319,6 +323,193 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     selectedEventId,
   ]);
 
+  // Application review functions
+  const handleApproveApplication = useCallback(async (application) => {
+    if (!selectedEventId) return;
+    
+    setLoading(true);
+    try {
+      const currentType = getCurrentVolunteerTypeSingular(tabValue);
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
+      
+      const updatedApplication = {
+        ...application,
+        isSelected: true
+      };
+
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "content-type": "application/json",
+          "X-Org-Id": orgId,
+        },
+        body: JSON.stringify(updatedApplication),
+      });
+
+      if (response.ok) {
+        setSnackbar({
+          open: true,
+          message: "Application approved successfully",
+          severity: "success",
+        });
+        fetchVolunteers();
+      } else {
+        throw new Error("Failed to approve application");
+      }
+    } catch (error) {
+      console.error('Error approving application:', error);
+      setSnackbar({
+        open: true,
+        message: "Failed to approve application. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, orgId, fetchVolunteers, getCurrentVolunteerTypeSingular, tabValue, selectedEventId]);
+
+  const handleRejectApplication = useCallback(async (application) => {
+    if (!selectedEventId) return;
+    
+    setLoading(true);
+    try {
+      const currentType = getCurrentVolunteerTypeSingular(tabValue);
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
+      
+      const updatedApplication = {
+        ...application,
+        isSelected: false
+      };
+
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "content-type": "application/json",
+          "X-Org-Id": orgId,
+        },
+        body: JSON.stringify(updatedApplication),
+      });
+
+      if (response.ok) {
+        setSnackbar({
+          open: true,
+          message: "Application rejected successfully",
+          severity: "success",
+        });
+        fetchVolunteers();
+      } else {
+        throw new Error("Failed to reject application");
+      }
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      setSnackbar({
+        open: true,
+        message: "Failed to reject application. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, orgId, fetchVolunteers, getCurrentVolunteerTypeSingular, tabValue, selectedEventId]);
+
+  const handleBatchApproveApplications = useCallback(async (applications) => {
+    if (!selectedEventId || applications.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const currentType = getCurrentVolunteerTypeSingular(tabValue);
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
+      
+      // Process applications in batches
+      await Promise.all(applications.map(async (application) => {
+        const updatedApplication = {
+          ...application,
+          isSelected: true
+        };
+
+        const response = await fetch(url, {
+          method: "PATCH",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            "content-type": "application/json",
+            "X-Org-Id": orgId,
+          },
+          body: JSON.stringify(updatedApplication),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to approve application for ${application.name || 'Unknown'}`);
+        }
+      }));
+
+      setSnackbar({
+        open: true,
+        message: `Successfully approved ${applications.length} applications`,
+        severity: "success",
+      });
+      fetchVolunteers();
+    } catch (error) {
+      console.error('Error batch approving applications:', error);
+      setSnackbar({
+        open: true,
+        message: "Failed to approve some applications. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, orgId, fetchVolunteers, getCurrentVolunteerTypeSingular, tabValue, selectedEventId]);
+
+  const handleBatchRejectApplications = useCallback(async (applications) => {
+    if (!selectedEventId || applications.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const currentType = getCurrentVolunteerTypeSingular(tabValue);
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
+      
+      // Process applications in batches
+      await Promise.all(applications.map(async (application) => {
+        const updatedApplication = {
+          ...application,
+          isSelected: false
+        };
+
+        const response = await fetch(url, {
+          method: "PATCH",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            "content-type": "application/json",
+            "X-Org-Id": orgId,
+          },
+          body: JSON.stringify(updatedApplication),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to reject application for ${application.name || 'Unknown'}`);
+        }
+      }));
+
+      setSnackbar({
+        open: true,
+        message: `Successfully rejected ${applications.length} applications`,
+        severity: "success",
+      });
+      fetchVolunteers();
+    } catch (error) {
+      console.error('Error batch rejecting applications:', error);
+      setSnackbar({
+        open: true,
+        message: "Failed to reject some applications. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, orgId, fetchVolunteers, getCurrentVolunteerTypeSingular, tabValue, selectedEventId]);
+
   const sortedVolunteers = useMemo(() => {
     const currentVolunteers =
       volunteers[getCurrentVolunteerType(tabValue)] || [];
@@ -380,6 +571,26 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               Add Single Volunteer
             </Button>
           </Grid>
+          <Grid item>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(event, newViewMode) => {
+                if (newViewMode !== null) {
+                  setViewMode(newViewMode);
+                }
+              }}
+              aria-label="view mode"
+              size="small"
+            >
+              <ToggleButton value="table" aria-label="table view">
+                Table View
+              </ToggleButton>
+              <ToggleButton value="review" aria-label="review view">
+                Review Mode
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Grid>
           <Grid item xs={3}>
             <FormControl fullWidth>
               <InputLabel id="hackathon-select-label">
@@ -404,14 +615,16 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs>
-            <TextField
-              fullWidth
-              label="Filter by Name, Email, Expertise, or Company"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
-          </Grid>
+          {viewMode === "table" && (
+            <Grid item xs>
+              <TextField
+                fullWidth
+                label="Filter by Name, Email, Expertise, or Company"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              />
+            </Grid>
+          )}
         </Grid>
       </Box>
 
@@ -469,21 +682,36 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         </Box>
       ) : (
         <Box sx={{ mt: 2 }}>
-          <VolunteerTable
-            volunteers={sortedVolunteers}
-            type={getCurrentVolunteerType(tabValue)}
-            orderBy={orderBy}
-            order={order}
-            onRequestSort={handleRequestSort}
-            onEditVolunteer={handleEditVolunteer}
-          />
-          {sortedVolunteers.length === 0 && (
-            <Box sx={{ mt: 2, textAlign: "center" }}>
-              <Typography>
-                No {getCurrentVolunteerType(tabValue)} found for this hackathon
-                event.
-              </Typography>
-            </Box>
+          {viewMode === "table" ? (
+            <>
+              <VolunteerTable
+                volunteers={sortedVolunteers}
+                type={getCurrentVolunteerType(tabValue)}
+                orderBy={orderBy}
+                order={order}
+                onRequestSort={handleRequestSort}
+                onEditVolunteer={handleEditVolunteer}
+              />
+              {sortedVolunteers.length === 0 && (
+                <Box sx={{ mt: 2, textAlign: "center" }}>
+                  <Typography>
+                    No {getCurrentVolunteerType(tabValue)} found for this hackathon
+                    event.
+                  </Typography>
+                </Box>
+              )}
+            </>
+          ) : (
+            <ApplicationReviewList
+              applications={sortedVolunteers}
+              applicationType={getCurrentVolunteerTypeSingular(tabValue)}
+              onApprove={handleApproveApplication}
+              onReject={handleRejectApplication}
+              onBatchApprove={handleBatchApproveApplications}
+              onBatchReject={handleBatchRejectApplications}
+              isLoading={loading}
+              eventId={selectedEventId}
+            />
           )}
         </Box>
       )}
