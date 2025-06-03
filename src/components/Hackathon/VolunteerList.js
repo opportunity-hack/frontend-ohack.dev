@@ -15,6 +15,8 @@ import {
   ListItemIcon,
   ListItemText,
   Skeleton,
+  Stack,
+  Divider,
 } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
@@ -37,6 +39,8 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import LaunchIcon from "@mui/icons-material/Launch";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 const ArtifactList = styled(List)({
   padding: 0,
@@ -63,7 +67,7 @@ const VolunteerMediaContainer = styled(Box)({
 });
 
 const VolunteerMedia = styled(CardMedia)({
-  paddingTop: "100%", // 1:1 Aspect Ratio
+  paddingTop: "100%" // 1:1 Aspect Ratio
 });
 
 const InPersonBadge = styled(Box)(({ theme }) => ({
@@ -160,11 +164,102 @@ const AvailableMentorChip = styled(Chip)(({ theme, isInPerson }) => ({
   },
 }));
 
+const AvailabilitySection = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  padding: theme.spacing(2),
+  backgroundColor: alpha(theme.palette.primary.main, 0.05),
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+}));
+
+const AvailableNowBanner = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.success.main,
+  color: theme.palette.success.contrastText,
+  padding: theme.spacing(1, 2),
+  borderRadius: theme.shape.borderRadius,
+  marginBottom: theme.spacing(2),
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  fontWeight: 600,
+}));
+
+const TimeSlotChip = styled(Chip)(({ theme, isAvailableNow }) => ({
+  margin: theme.spacing(0.5, 0.5, 0.5, 0),
+  backgroundColor: isAvailableNow 
+    ? theme.palette.success.main
+    : theme.palette.grey[100],
+  color: isAvailableNow 
+    ? theme.palette.success.contrastText 
+    : theme.palette.text.primary,
+  border: isAvailableNow 
+    ? `2px solid ${theme.palette.success.dark}`
+    : `1px solid ${theme.palette.grey[300]}`,
+  fontWeight: isAvailableNow ? 600 : 400,
+  boxShadow: isAvailableNow ? theme.shadows[3] : theme.shadows[1],
+  '&:hover': {
+    backgroundColor: isAvailableNow 
+      ? theme.palette.success.dark
+      : theme.palette.grey[200],
+    transform: 'translateY(-2px)',
+    boxShadow: theme.shadows[4],
+  },
+  '& .MuiChip-label': {
+    fontSize: '0.8rem',
+    paddingLeft: '8px',
+    paddingRight: '8px',
+  },
+}));
+
+const CompactTimeSlot = styled(Box)(({ theme, isAvailableNow }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: theme.spacing(0.5, 1),
+  margin: theme.spacing(0.25),
+  borderRadius: theme.shape.borderRadius,
+  fontSize: '0.75rem',
+  backgroundColor: isAvailableNow 
+    ? theme.palette.success.main
+    : theme.palette.grey[100],
+  color: isAvailableNow 
+    ? theme.palette.success.contrastText 
+    : theme.palette.text.secondary,
+  border: `1px solid ${isAvailableNow 
+    ? theme.palette.success.dark 
+    : theme.palette.grey[300]}`,
+  fontWeight: isAvailableNow ? 600 : 400,
+}));
+
+const ExpandButton = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(1),
+  marginTop: theme.spacing(1),
+  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+  borderRadius: theme.shape.borderRadius,
+  cursor: 'pointer',
+  transition: 'all 0.2s ease-in-out',
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.2),
+    transform: 'translateY(-1px)',
+  },
+}));
+
+const ExpandableSection = styled(Box)(({ isExpanded }) => ({
+  overflow: 'hidden',
+  transition: 'max-height 0.3s ease-in-out, opacity 0.2s ease-in-out',
+  maxHeight: isExpanded ? '400px' : '0px',
+  opacity: isExpanded ? 1 : 0,
+}));
+
 const VolunteerList = ({ event_id, type }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [volunteers, setVolunteers] = React.useState([]);
   const [availableMentors, setAvailableMentors] = React.useState([]);
+  const [expandedAvailability, setExpandedAvailability] = React.useState({});
 
   useEffect(() => {
     // Call API to get data based on type
@@ -369,8 +464,17 @@ const VolunteerList = ({ event_id, type }) => {
     );
   };
 
-  const renderAvailability = (availability) => {
+  const toggleExpanded = (volunteerName) => {
+    setExpandedAvailability(prev => ({
+      ...prev,
+      [volunteerName]: !prev[volunteerName]
+    }));
+  };
+
+  const renderAvailability = (availability, volunteerName) => {
     if (!availability || typeof availability !== "string") return null;
+
+    const isExpanded = expandedAvailability[volunteerName] || false;
 
     try {
       // Use the same careful splitting logic from MentorAvailability.js
@@ -380,284 +484,204 @@ const VolunteerList = ({ event_id, type }) => {
 
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-
-        // Check if this part starts a new time slot (contains weekday pattern or emoji)
         const startsNewSlot =
-          /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(
-            part,
-          );
+          /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(part);
 
         if (startsNewSlot && currentSlot) {
-          // We found a new slot, save the current one
           slots.push(currentSlot.trim());
           currentSlot = part;
         } else if (currentSlot) {
-          // Continue building current slot
           currentSlot += ", " + part;
         } else {
-          // First slot
           currentSlot = part;
         }
       }
 
-      // Don't forget the last slot
       if (currentSlot) {
         slots.push(currentSlot.trim());
       }
 
-      console.log("Volunteer Availability raw:", availability);
-      console.log("Volunteer Availability carefully split:", slots);
-
       if (slots.length === 0) return null;
 
-      // Extract date part (assuming all entries have the same date)
-      const firstSlot = slots[0];
-      const colonIndex = firstSlot.indexOf(":");
+      // Process and sort slots for better display
+      const processedSlots = slots.map((slot) => {
+        const slotIsCurrentlyAvailable = isCurrentlyAvailable(slot);
+        
+        // Extract readable parts
+        const datePart = slot.split(":")[0]?.trim(); // "Friday Oct 10"
+        const timePart = slot.split(":")[1]?.trim(); // "🌅 Early Morning (7am - 9am PST)"
+        
+        // Extract emoji and time period using Unicode escape sequences
+        const emojiMatch = timePart?.match(/([\u{1F305}\u{2600}\u{1F3D9}\u{1F306}\u{1F303}\u{1F319}])/u);
+        const timeRangeMatch = timePart?.match(/\(([^)]+)\)/);
+        const periodMatch = timePart?.match(/[\u{1F305}\u{2600}\u{1F3D9}\u{1F306}\u{1F303}\u{1F319}]\s+([^(]+)/u);
+        
+        const emoji = emojiMatch ? emojiMatch[1] : "";
+        const timeRange = timeRangeMatch ? timeRangeMatch[1].replace(' PST', '') : "";
+        const period = periodMatch ? periodMatch[1].trim() : "";
+        
+        // Create short date format (e.g., "Oct 10" from "Friday Oct 10")
+        const shortDate = datePart.split(' ').slice(-2).join(' ');
+        
+        return {
+          original: slot,
+          datePart,
+          shortDate,
+          emoji,
+          period,
+          timeRange,
+          isCurrentlyAvailable: slotIsCurrentlyAvailable,
+          // For sorting
+          sortKey: datePart + period
+        };
+      }).sort((a, b) => {
+        // Sort by date first, then by time period
+        return a.sortKey.localeCompare(b.sortKey);
+      });
 
-      if (colonIndex === -1) {
-        // Legacy format fallback
+      // Separate currently available from future slots
+      const availableNow = processedSlots.filter(slot => slot.isCurrentlyAvailable);
+      const futureSlots = processedSlots.filter(slot => !slot.isCurrentlyAvailable);
+
+      // For many slots (>6), show expandable compact view
+      if (processedSlots.length > 6) {
+        const visibleFutureSlots = isExpanded ? futureSlots : futureSlots.slice(0, 3);
+        
         return (
-          <Box mt={2}>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-              {slots.map((time, index) => (
-                <AvailabilityChip
-                  key={index}
-                  icon={<AccessTimeIcon />}
-                  label={time}
-                  size="small"
-                  isavailablenow={isCurrentlyAvailable(time) ? 1 : 0}
-                />
-              ))}
+          <AvailabilitySection>
+            {availableNow.length > 0 && (
+              <AvailableNowBanner>
+                <span>🟢</span>
+                <Typography variant="body2" component="span">
+                  Available RIGHT NOW!
+                </Typography>
+              </AvailableNowBanner>
+            )}
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="subtitle2" color="primary">
+                📅 {processedSlots.length} Time Slots Available
+              </Typography>
+              {futureSlots.length > 3 && (
+                <Typography variant="caption" color="text.secondary">
+                  {isExpanded ? 'Showing all slots' : `${visibleFutureSlots.length} of ${futureSlots.length} shown`}
+                </Typography>
+              )}
             </Box>
-          </Box>
+            
+            <Box sx={{ maxHeight: isExpanded ? '300px' : '120px', overflowY: 'auto', pr: 1 }}>
+              <Stack spacing={0.5}>
+                {/* Always show available now slots */}
+                {availableNow.map((slot, index) => (
+                  <Tooltip key={`now-${index}`} title="Available right now - perfect time to get help!">
+                    <CompactTimeSlot isAvailableNow={true}>
+                      <span style={{ marginRight: '6px' }}>{slot.emoji}</span>
+                      <strong>{slot.shortDate} • {slot.timeRange}</strong>
+                    </CompactTimeSlot>
+                  </Tooltip>
+                ))}
+                
+                {/* Show limited or all future slots based on expansion */}
+                {visibleFutureSlots.map((slot, index) => (
+                  <Tooltip key={`future-${index}`} title={slot.original}>
+                    <CompactTimeSlot isAvailableNow={false}>
+                      <span style={{ marginRight: '6px' }}>{slot.emoji}</span>
+                      {slot.shortDate} • {slot.timeRange}
+                    </CompactTimeSlot>
+                  </Tooltip>
+                ))}
+              </Stack>
+            </Box>
+            
+            {/* Expandable section for remaining slots */}
+            {futureSlots.length > 3 && (
+              <ExpandButton onClick={() => toggleExpanded(volunteerName)}>
+                <Typography variant="body2" color="primary" sx={{ mr: 1 }}>
+                  {isExpanded 
+                    ? 'Show Less' 
+                    : `Show ${futureSlots.length - 3} More Time Slots`
+                  }
+                </Typography>
+                {isExpanded ? <ExpandLessIcon color="primary" /> : <ExpandMoreIcon color="primary" />}
+              </ExpandButton>
+            )}
+            
+            <Divider sx={{ my: 1.5 }} />
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+              🟢 = Available Now • All times in PST • Click "Show More" to see all slots
+            </Typography>
+          </AvailabilitySection>
         );
       }
 
-      // Get the date part, like "Friday, Oct 10" or "Friday Oct 10"
-      const datePart = firstSlot.substring(0, colonIndex).trim();
-
-      // Define colors for different time periods
-      const timeOfDayColors = {
-        "Early Morning": "#9FC5E8", // Light blue
-        Morning: "#FFD966", // Light yellow
-        Afternoon: "#93C47D", // Light green
-        Evening: "#B4A7D6", // Light purple
-        Night: "#8E7CC3", // Medium purple
-        "Late Night": "#674EA7", // Dark purple
-      };
-
-      // Define day of week order for sorting
-      const dayOrder = {
-        Sunday: 0,
-        Monday: 1,
-        Tuesday: 2,
-        Wednesday: 3,
-        Thursday: 4,
-        Friday: 5,
-        Saturday: 6,
-      };
-
-      // Define time period order for sorting
-      const timeOfDayOrder = {
-        "Early Morning": 1,
-        Morning: 2,
-        Afternoon: 3,
-        Evening: 4,
-        Night: 5,
-        "Late Night": 6,
-      };
-
-      // Process the time slots
-      const processedSlots = slots.map((slot) => {
-        console.log("Processing slot:", slot);
-        const slotColonIndex = slot.indexOf(":");
-        if (slotColonIndex === -1)
-          return {
-            display: slot,
-            timeOfDay: null,
-            originalSlot: slot,
-            dayName: null,
-            dayOrder: 99,
-            sortOrder: 99,
-            month: null,
-            date: null,
-          };
-
-        // Extract day name from the date part - handle both formats (with or without comma)
-        const slotDatePart = slot.substring(0, slotColonIndex).trim();
-
-        // Parse both formats to extract day name, month, and date
-        let dayName, month, date;
-
-        // Handle "Monday, May 12" format (with comma)
-        const commaMatch = slotDatePart.match(/(\w+),\s+(\w+)\s+(\d+)/);
-        if (commaMatch) {
-          dayName = commaMatch[1]; // "Monday"
-          month = commaMatch[2]; // "May"
-          date = parseInt(commaMatch[3], 10); // 12
-        } else {
-          // Handle "Friday Oct 10" format (no comma)
-          const noCommaMatch = slotDatePart.match(/(\w+)\s+(\w+)\s+(\d+)/);
-          if (noCommaMatch) {
-            dayName = noCommaMatch[1]; // "Friday"
-            month = noCommaMatch[2]; // "Oct"
-            date = parseInt(noCommaMatch[3], 10); // 10
-          }
-        }
-
-        // Get everything after the colon, which should be like " 🌅 Early Morning (7am - 9am)"
-        let timeInfo = slot.substring(slotColonIndex + 1).trim();
-
-        // Remove PST to save space
-        if (timeInfo.includes(" PST)")) {
-          timeInfo = timeInfo.replace(" PST)", ")");
-        }
-
-        let emoji = "",
-          timeOfDay = "",
-          timeRange = "",
-          display = timeInfo;
-
-        // Extract emoji, time label, and time range
-        const emojiTimeMatch = /([^\s]+)\s+([^(]+)\s*(\([^)]+\))/u.exec(
-          timeInfo,
-        );
-
-        if (emojiTimeMatch) {
-          emoji = emojiTimeMatch[1]; // 🌅
-          timeOfDay = emojiTimeMatch[2].trim(); // Early Morning
-          timeRange = emojiTimeMatch[3]; // (7am - 9am)
-
-          // Create integrated display with date, emoji and time
-          // For new format: Extract "Oct 10" from "Friday Oct 10"
-          // For old format: Extract "Oct 10" from "Friday, Oct 10"
-          let dateOnly = slotDatePart;
-
-          // For old format with comma
-          if (slotDatePart.includes(",")) {
-            const dateParts = slotDatePart.split(","); // ["Friday", " Oct 10"]
-            dateOnly =
-              dateParts.length > 1 ? dateParts[1].trim() : slotDatePart;
-          } else {
-            // For new format without comma - extract everything after the first word
-            const dateParts = slotDatePart.split(" ");
-            if (dateParts.length > 1) {
-              // Remove the first word (day name) and keep the rest
-              dateOnly = dateParts.slice(1).join(" ");
-            }
-          }
-
-          display = `${dateOnly} · ${timeRange}`;
-        }
-
-        return {
-          display,
-          emoji,
-          timeOfDay,
-          timeRange,
-          originalSlot: slot,
-          color: timeOfDayColors[timeOfDay] || null,
-          dayName,
-          dayOrder: dayOrder[dayName] || 99,
-          sortOrder: timeOfDay ? timeOfDayOrder[timeOfDay] || 99 : 99,
-          month,
-          date,
-        };
-      });
-
-      // Sort the slots by calendar date first, then by time of day
-      const sortedSlots = [...processedSlots].sort((a, b) => {
-        // Define month order for calendar sorting
-        const monthOrder = {
-          Jan: 1,
-          Feb: 2,
-          Mar: 3,
-          Apr: 4,
-          May: 5,
-          Jun: 6,
-          Jul: 7,
-          Aug: 8,
-          Sep: 9,
-          Oct: 10,
-          Nov: 11,
-          Dec: 12,
-          January: 1,
-          February: 2,
-          March: 3,
-          April: 4,
-          June: 6,
-          July: 7,
-          August: 8,
-          September: 9,
-          October: 10,
-          November: 11,
-          December: 12,
-        };
-
-        // First compare by month
-        const monthOrderA = monthOrder[a.month] || 0;
-        const monthOrderB = monthOrder[b.month] || 0;
-
-        if (monthOrderA !== monthOrderB) {
-          return monthOrderA - monthOrderB;
-        }
-
-        // Then compare by day of month
-        if (a.date !== b.date) {
-          return (a.date || 0) - (b.date || 0);
-        }
-
-        // Finally, compare by time period
-        return a.sortOrder - b.sortOrder;
-      });
-
+      // For fewer slots (≤6), show full detailed view as before
       return (
-        <Box mt={2}>
-          <Box
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 0.8,
-              justifyContent: "flex-start",
-            }}
-          >
-            {sortedSlots.map((slot, index) => (
+        <AvailabilitySection>
+          {availableNow.length > 0 && (
+            <AvailableNowBanner>
+              <span>🟢</span>
+              <Typography variant="body2" component="span">
+                Available RIGHT NOW - Perfect time to ask for help!
+              </Typography>
+            </AvailableNowBanner>
+          )}
+          
+          <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
+            📅 When You Can Get Help
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {processedSlots.map((slot, index) => (
               <Tooltip
                 key={index}
                 title={
-                  isCurrentlyAvailable(slot.originalSlot)
-                    ? "Available now (during the hackathon)!"
-                    : slot.originalSlot
+                  <Box>
+                    <Typography variant="body2">{slot.original}</Typography>
+                    {slot.isCurrentlyAvailable && (
+                      <Typography variant="caption" color="success.light">
+                        🟢 Available right now!
+                      </Typography>
+                    )}
+                  </Box>
                 }
               >
-                <AvailabilityChip
-                  icon={
-                    slot.emoji ? (
-                      <span style={{ fontSize: "1.0rem", marginRight: "3px" }}>
-                        {slot.emoji}
-                      </span>
-                    ) : (
-                      <AccessTimeIcon />
-                    )
+                <TimeSlotChip
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <span>{slot.emoji}</span>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <Typography variant="caption" component="span" sx={{ lineHeight: 1, fontWeight: 600 }}>
+                          {slot.shortDate}
+                        </Typography>
+                        <Typography variant="caption" component="span" sx={{ lineHeight: 1, opacity: 0.9 }}>
+                          {slot.timeRange}
+                        </Typography>
+                      </Box>
+                    </Box>
                   }
-                  label={slot.originalSlot}
-                  size="medium"
-                  isavailablenow={
-                    isCurrentlyAvailable(slot.originalSlot) ? 1 : 0
-                  }
-                  timeofdaycolor={slot.color}
-                  sx={{
-                    fontWeight: 500,
-                    "& .MuiChip-label": {
-                      paddingLeft: slot.emoji ? 0 : undefined,
-                    },
+                  isAvailableNow={slot.isCurrentlyAvailable}
+                  clickable
+                  sx={{ 
+                    height: 'auto',
+                    '& .MuiChip-label': {
+                      padding: '8px 12px',
+                    }
                   }}
                 />
               </Tooltip>
             ))}
           </Box>
-        </Box>
+          
+          <Divider sx={{ my: 1.5 }} />
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+            {availableNow.length > 0 
+              ? "🟢 = Available Now • Click any slot to see details"
+              : "Hover for full details • Check back during these times"
+            }
+          </Typography>
+        </AvailabilitySection>
       );
+
     } catch (error) {
       console.error("Error rendering availability:", error);
       return null;
@@ -910,7 +934,7 @@ const VolunteerList = ({ event_id, type }) => {
                 )}                
               </>
             )}
-            {isMentor && renderAvailability(volunteer.availability)}
+            {isMentor && renderAvailability(volunteer.availability, volunteer.name)}
             {isVolunteer && renderArtifacts(volunteer.artifacts)}
           </VolunteerContent>
         </VolunteerCard>
