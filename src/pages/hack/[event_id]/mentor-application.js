@@ -561,7 +561,7 @@ const MentorApplicationComponent = () => {
   };
   
   const validateAvailability = () => {
-    const requiredFields = ['inPerson', 'participationCount', 'country', 'state'];
+    const requiredFields = ['participationCount', 'country', 'state'];
     
     for (const field of requiredFields) {
       if (!formData[field]) {
