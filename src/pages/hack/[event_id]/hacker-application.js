@@ -2402,7 +2402,11 @@ const HackerApplicationComponent = () => {
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       The hackathon begins on {eventData.formattedStartDate}. If you believe this is an error 
-                      or have special circumstances, please contact the organizers immediately.
+                      or have special circumstances, please{' '}
+                      <Link href="/contact" color="primary" underline="hover">
+                        contact the organizers
+                      </Link>
+                      {' '}immediately.
                     </Typography>
                   </Alert>
                   <Box textAlign="center" sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
