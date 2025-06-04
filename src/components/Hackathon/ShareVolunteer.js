@@ -106,7 +106,7 @@ function getSocialColor(platform) {
 const ShareVolunteer = ({
   volunteer,
   type,
-  eventTitle = "Opportunity Hack 2024",
+  eventTitle = "Opportunity Hack",
 }) => {
   const [open, setOpen] = useState(false);
   const [tabValue, setTabValue] = useState(0);
