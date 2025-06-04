@@ -30,6 +30,7 @@ const ApplicationReviewList = ({
   applicationType,
   onApprove,
   onReject,
+  onEdit,
   onBatchApprove,
   onBatchReject,
   isLoading = false,
@@ -421,6 +422,7 @@ const ApplicationReviewList = ({
                 applicationType={applicationType}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onEdit={onEdit}
                 isLoading={isLoading}
               />
             </Box>

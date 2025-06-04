@@ -27,7 +27,8 @@ import {
   GitHub as GitHubIcon,
   Language as WebsiteIcon,
   School as SchoolIcon,
-  LocationOn as LocationIcon
+  LocationOn as LocationIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 
 const ApplicationReviewCard = ({ 
@@ -35,6 +36,7 @@ const ApplicationReviewCard = ({
   applicationType, 
   onApprove, 
   onReject,
+  onEdit,
   isLoading = false
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -49,6 +51,12 @@ const ApplicationReviewCard = ({
 
   const handleReject = () => {
     onReject(application);
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(application);
+    }
   };
 
   // Get the configuration for this application type
@@ -344,27 +352,39 @@ const ApplicationReviewCard = ({
       </CardContent>
 
       {/* Action buttons */}
-      <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+      <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
         <Button
           variant="outlined"
-          color="error"
-          startIcon={<CloseIcon />}
-          onClick={handleReject}
+          startIcon={<EditIcon />}
+          onClick={handleEdit}
           disabled={isLoading}
           size="small"
         >
-          Reject
+          Edit Details
         </Button>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={isLoading ? <CircularProgress size={16} /> : <CheckIcon />}
-          onClick={handleApprove}
-          disabled={isApproved || isLoading}
-          size="small"
-        >
-          {isApproved ? 'Approved' : 'Approve'}
-        </Button>
+        
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<CloseIcon />}
+            onClick={handleReject}
+            disabled={isLoading}
+            size="small"
+          >
+            Reject
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={isLoading ? <CircularProgress size={16} /> : <CheckIcon />}
+            onClick={handleApprove}
+            disabled={isApproved || isLoading}
+            size="small"
+          >
+            {isApproved ? 'Approved' : 'Approve'}
+          </Button>
+        </Box>
       </CardActions>
     </Card>
   );

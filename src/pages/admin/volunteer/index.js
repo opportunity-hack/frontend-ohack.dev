@@ -20,6 +20,7 @@ import AdminPage from "../../../components/admin/AdminPage";
 import VolunteerTable from "../../../components/admin/VolunteerTable";
 import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";  
 import ApplicationReviewList from "../../../components/admin/ApplicationReviewList";
+import ApplicationEditDialog from "../../../components/admin/ApplicationEditDialog";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 
 import { Typography } from "@mui/material";
@@ -50,6 +51,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [viewMode, setViewMode] = useState("table"); // "table" or "review"
+  const [applicationEditDialogOpen, setApplicationEditDialogOpen] = useState(false);
+  const [editingApplication, setEditingApplication] = useState(null);
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
@@ -510,6 +513,54 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     }
   }, [accessToken, orgId, fetchVolunteers, getCurrentVolunteerTypeSingular, tabValue, selectedEventId]);
 
+  // Application edit functions
+  const handleEditApplication = useCallback((application) => {
+    setEditingApplication(application);
+    setApplicationEditDialogOpen(true);
+  }, []);
+
+  const handleSaveApplicationEdit = useCallback(async (updatedApplication) => {
+    if (!selectedEventId) return;
+    
+    setLoading(true);
+    try {
+      const currentType = getCurrentVolunteerTypeSingular(tabValue);
+      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
+      
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "content-type": "application/json",
+          "X-Org-Id": orgId,
+        },
+        body: JSON.stringify(updatedApplication),
+      });
+
+      if (response.ok) {
+        setSnackbar({
+          open: true,
+          message: "Application updated successfully",
+          severity: "success",
+        });
+        fetchVolunteers();
+        setApplicationEditDialogOpen(false);
+        setEditingApplication(null);
+      } else {
+        throw new Error("Failed to update application");
+      }
+    } catch (error) {
+      console.error('Error updating application:', error);
+      setSnackbar({
+        open: true,
+        message: "Failed to update application. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, orgId, fetchVolunteers, getCurrentVolunteerTypeSingular, tabValue, selectedEventId]);
+
   const sortedVolunteers = useMemo(() => {
     const currentVolunteers =
       volunteers[getCurrentVolunteerType(tabValue)] || [];
@@ -707,6 +758,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               applicationType={getCurrentVolunteerTypeSingular(tabValue)}
               onApprove={handleApproveApplication}
               onReject={handleRejectApplication}
+              onEdit={handleEditApplication}
               onBatchApprove={handleBatchApproveApplications}
               onBatchReject={handleBatchRejectApplications}
               isLoading={loading}
@@ -723,6 +775,18 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         onSave={handleSaveEdit}
         onChange={handleEditChange}
         isAdding={isAdding}
+      />
+
+      <ApplicationEditDialog
+        open={applicationEditDialogOpen}
+        onClose={() => {
+          setApplicationEditDialogOpen(false);
+          setEditingApplication(null);
+        }}
+        application={editingApplication}
+        applicationType={getCurrentVolunteerTypeSingular(tabValue)}
+        onSave={handleSaveApplicationEdit}
+        isLoading={loading}
       />
     </AdminPage>
   );

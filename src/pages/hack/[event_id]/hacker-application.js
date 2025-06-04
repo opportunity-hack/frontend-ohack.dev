@@ -41,6 +41,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
+import Moment from 'moment';
+import 'moment-timezone';
+
 
 const HackerApplicationComponent = () => {
   const router = useRouter();
@@ -539,46 +542,52 @@ const HackerApplicationComponent = () => {
         }
         
         // Format dates for display
-        const startDate = new Date(eventData.start_date);
-        const endDate = new Date(eventData.end_date);
-        const formattedStartDate = startDate.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        const formattedEndDate = endDate.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
+        const startDate = Moment.tz(eventData.start_date, 'America/Phoenix');
+        const endDate = Moment.tz(eventData.end_date, 'America/Phoenix');
+        const formattedStartDate = startDate.format('dddd, MMMM Do, YYYY');
+        const formattedEndDate = endDate.format('dddd, MMMM Do, YYYY');
         
-        // Check if event is in the past (with 1-day buffer)
-        const now = new Date();
-        const oneDayBuffer = 24 * 60 * 60 * 1000; // 1 day in milliseconds
-        const isEventPast = new Date(endDate.getTime() + oneDayBuffer) < now;
+        // Calculate application deadline: 3 days before start date at 8pm MST
+        const applicationDeadline = startDate
+          .clone()
+          .subtract(3, 'days')
+          .hour(20) // 8 PM
+          .minute(0)
+          .second(0)
+          .millisecond(0);
+        
+        // Check if event is in the past (with 1-day buffer for end date)
+        const now = Moment().tz('America/Phoenix');
+        const isEventPast = endDate.clone().add(1, 'day').isBefore(now);
+        
+        // Check if applications are closed (deadline has passed)
+        const isApplicationsClosed = now.isAfter(applicationDeadline);
         
         // Check if event is online/virtual
         const isOnlineEvent = ['Virtual', 'Global', 'Online'].some(term => 
           eventData.location?.toLowerCase().includes(term.toLowerCase())
         );
         
+        // Format application deadline for display
+        const formattedApplicationDeadline = applicationDeadline.format('dddd, MMMM Do, YYYY [at] h:mm A [MST]');
+        
         setEventData({
           name: eventData.title || `Opportunity Hack - ${event_id}`,
-          description:
-            eventData.description || "Annual hackathon for nonprofits",
-          date: new Date(eventData.start_date).getFullYear().toString(),
+          description: eventData.description || "Annual hackathon for nonprofits",
+          date: startDate.format('YYYY'),
           startDate: eventData.start_date,
           endDate: eventData.end_date,
           formattedStartDate,
           formattedEndDate,
           location: eventData.location || "Tempe, Arizona",
-          image:
-            eventData.image_url ||
-            "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
+          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
           isEventPast,
+          isApplicationsClosed,
           isOnlineEvent,
+          applicationDeadline: applicationDeadline.toISOString(),
+          formattedApplicationDeadline,
+          daysUntilDeadline: Math.max(0, applicationDeadline.diff(now, 'days')),
+          hoursUntilDeadline: Math.max(0, applicationDeadline.diff(now, 'hours'))
         });
         
         // If it's an online event, automatically set inPerson to "No"
@@ -869,6 +878,18 @@ const HackerApplicationComponent = () => {
   };
 
   const handleNext = () => {
+    // Check if applications are closed before allowing progression
+    if (eventData && eventData.isApplicationsClosed) {
+      setError('Applications are closed. The hackathon has already started.');
+      return;
+    }
+    
+    // Check if event has ended
+    if (eventData && eventData.isEventPast) {
+      setError('This event has already ended and applications are no longer accepted.');
+      return;
+    }
+    
     if (activeStep === 0 && !validateBasicInfo()) return;
     if (activeStep === 1 && !validateSkillsInfo()) return;
     if (activeStep === 2 && !validateLocationInfo()) return;
@@ -893,6 +914,18 @@ const HackerApplicationComponent = () => {
   // handleSubmit function - Ensure backward compatibility
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    
+    // Check if applications are closed
+    if (eventData && eventData.isApplicationsClosed) {
+      setError('Applications are closed. The hackathon has already started.');
+      return;
+    }
+    
+    // Check if event has ended
+    if (eventData && eventData.isEventPast) {
+      setError('This event has already ended and applications are no longer accepted.');
+      return;
+    }
     
     if (!formData.codeOfConduct) {
       setError('You must agree to the code of conduct');
@@ -2166,7 +2199,7 @@ const HackerApplicationComponent = () => {
               >
                 Find a Team
               </Button>
-            )}
+                       )}
           </Box>
         </Box>
       </Container>
@@ -2356,6 +2389,41 @@ const HackerApplicationComponent = () => {
                     </Button>
                   </Box>
                 </Paper>
+              ) : eventData && eventData.isApplicationsClosed ? (
+                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+                  <Alert severity="warning" sx={{ mb: 3 }}>
+                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                      Applications are now closed
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 2 }}>
+                      The application deadline has passed. Applications closed on{' '}
+                      <strong>{eventData.formattedApplicationDeadline}</strong> to allow time for 
+                      application review and acceptance notifications.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      The hackathon begins on {eventData.formattedStartDate}. If you believe this is an error 
+                      or have special circumstances, please contact the organizers immediately.
+                    </Typography>
+                  </Alert>
+                  <Box textAlign="center" sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => router.push(`/hack/${event_id}`)}
+                      sx={{ mt: 2 }}
+                    >
+                      View Event Details
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={() => router.push('/hack')}
+                      sx={{ mt: 2 }}
+                    >
+                      View Other Events
+                    </Button>
+                  </Box>
+                </Paper>
               ) : (
                 <>
                   <Stepper
@@ -2420,6 +2488,41 @@ const HackerApplicationComponent = () => {
                       </ul>
                     </Alert>
                     
+                    {eventData && (
+                      <Alert 
+                        severity={
+                          eventData.daysUntilDeadline <= 1 ? "error" : 
+                          eventData.daysUntilDeadline <= 3 ? "warning" : 
+                          "info"
+                        } 
+                        sx={{ mb: 4 }}
+                      >
+                        <Typography variant="body1" sx={{ mb: 1 }}>
+                          <strong>Application Deadline:</strong>
+                        </Typography>
+                        <Typography variant="body2">
+                          Applications close on {eventData.formattedApplicationDeadline}
+                          {eventData.hoursUntilDeadline > 0 && (
+                            <span>
+                              {' '}({eventData.daysUntilDeadline > 0 
+                                ? `${eventData.daysUntilDeadline} day${eventData.daysUntilDeadline !== 1 ? 's' : ''} remaining`
+                                : `${eventData.hoursUntilDeadline} hour${eventData.hoursUntilDeadline !== 1 ? 's' : ''} remaining`
+                              })
+                            </span>
+                          )}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          This early deadline allows us to review applications and send acceptance notifications 
+                          before the hackathon begins on {eventData.formattedStartDate}.
+                        </Typography>
+                        {eventData.daysUntilDeadline <= 1 && (
+                          <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>
+                            ⚠️ Deadline is approaching soon - please submit your application as early as possible!
+                          </Typography>
+                        )}
+                      </Alert>
+                    )}
+                    
                     {(error || recaptchaError) && (
                       <Alert severity="error" sx={{ mb: 4 }}>
                         {error || recaptchaError}
@@ -2442,7 +2545,7 @@ const HackerApplicationComponent = () => {
                           variant="contained"
                           color="primary"
                           onClick={handleNext}
-                          disabled={submitting || recaptchaLoading}
+                          disabled={submitting || recaptchaLoading || (eventData && (eventData.isApplicationsClosed || eventData.isEventPast))}
                         >
                           {activeStep === steps.length - 1 ? (
                             submitting || recaptchaLoading ? <CircularProgress size={24} /> : 'Submit Application'
