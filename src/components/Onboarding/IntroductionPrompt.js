@@ -11,8 +11,6 @@ import {
   Card,
   CardContent,
   Divider,
-  FormControlLabel,
-  Checkbox,
   Alert,
   IconButton,
   Tooltip,
@@ -71,7 +69,6 @@ const IntroductionPrompt = () => {
     goals: '',
     funFact: '',
     contactInfo: user?.email || '',
-    shareOnSlack: true
   });
   const [selectedExperience, setSelectedExperience] = useState('');
   const [copied, setCopied] = useState(false);
@@ -101,13 +98,6 @@ const IntroductionPrompt = () => {
     setFormData({
       ...formData,
       skills: newSkills
-    });
-  };
-
-  const handleShareChange = (e) => {
-    setFormData({
-      ...formData,
-      shareOnSlack: e.target.checked
     });
   };
 
@@ -282,43 +272,6 @@ const IntroductionPrompt = () => {
               InputLabelProps={{ style: { fontSize: '1.2rem' } }}
               InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-
-            <Box>
-              <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.25rem' }}>
-                Experience Level
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {experienceLevels.map((level) => (
-                  <Chip
-                    key={level}
-                    label={level}
-                    clickable
-                    color={selectedExperience === level ? 'primary' : 'default'}
-                    onClick={() => handleExperienceSelect(level)}
-                    sx={{ fontSize: '1.1rem' }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-
-            <Box>
-              <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.25rem' }}>
-                Skills (Select relevant ones)
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" rowGap={1}>
-                {skillsList.map((skill) => (
-                  <Chip
-                    key={skill}
-                    label={skill}
-                    clickable
-                    color={formData.skills.includes(skill) ? 'primary' : 'default'}
-                    onClick={() => handleSkillToggle(skill)}
-                    sx={{ fontSize: '1.1rem', m: 0.5 }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-
             <TextField
               label="Your Interests (e.g., Social Causes, Technologies)"
               name="interests"
@@ -359,27 +312,57 @@ const IntroductionPrompt = () => {
               InputLabelProps={{ style: { fontSize: '1.2rem' } }}
               InputProps={{ style: { fontSize: '1.2rem' } }}
             />
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formData.shareOnSlack}
-                  onChange={handleShareChange}
-                  name="shareOnSlack"
-                />
-              }
-              label={<Typography variant="body1" sx={{ fontSize: '1.5rem' }}>Include this information in my generated introduction</Typography>}
-            />
           </Stack>
         </Grid>
 
-        {/* Right side - generated introduction preview */}
+        {/* Right side - Experience Level and Skills */}
         <Grid item xs={12} md={6}>
+            <Stack spacing={3}>
+                {/* Experience Level */}
+                <Box>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.25rem' }}>
+                      Experience Level
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                    {experienceLevels.map((level) => (
+                        <Chip
+                        key={level}
+                        label={level}
+                        clickable
+                        color={selectedExperience === level ? 'primary' : 'default'}
+                        onClick={() => handleExperienceSelect(level)}
+                        sx={{ fontSize: '1.1rem' }}
+                        />
+                    ))}
+                    </Stack>
+                </Box>
+
+                {/* Skills */}
+                <Box>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.25rem' }}>
+                      Skills (Select relevant ones)
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" rowGap={1}>
+                    {skillsList.map((skill) => (
+                        <Chip
+                        key={skill}
+                        label={skill}
+                        clickable
+                        color={formData.skills.includes(skill) ? 'primary' : 'default'}
+                        onClick={() => handleSkillToggle(skill)}
+                        sx={{ fontSize: '1.1rem', m: 0.5 }}
+                        />
+                    ))}
+                    </Stack>
+                </Box>
+            </Stack>
+            {/* Generated Introduction Preview */}
+             <Box sx={{ mt: 3 }}>
           <Typography variant="h6" gutterBottom sx={{ fontSize: '1.3rem' }}>
             Generated Introduction Preview:
           </Typography>
           <IntroTemplate elevation={0}>
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', fontSize: '1.2rem' }}>
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', fontSize: '1.2rem' }}>
               {generateIntroduction()}
             </Typography>
             <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
@@ -397,14 +380,16 @@ const IntroductionPrompt = () => {
               />
             </Box>
           </IntroTemplate>
-          <Alert severity="info" sx={{ mt: 2, fontSize: '1.1rem' }}>
+              <Alert severity="info" sx={{ mt: 2, fontSize: '1.1rem' }}>
             Copy the generated introduction above and paste it into the #introductions channel in our Slack workspace. 
             <Button href={slackSignupUrl} target="_blank" rel="noopener noreferrer" variant="text" sx={{ fontSize: '1rem' }}>
               Join our Slack here
             </Button>
              if you haven't already.
           </Alert>
+            </Box>
         </Grid>
+
       </Grid>
     </Box>
   );

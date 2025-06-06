@@ -13,7 +13,9 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Chip
+  Chip,
+  StepButton,
+  LinearProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useAuthInfo } from '@propelauth/react';
@@ -22,7 +24,6 @@ import ExploreIcon from '@mui/icons-material/Explore';
 // Components
 import WelcomeSection from '../../components/Onboarding/WelcomeSection';
 import MissionOverview from '../../components/Onboarding/MissionOverview';
-import ChannelsExploration from '../../components/Onboarding/ChannelsExploration';
 import IntroductionPrompt from '../../components/Onboarding/IntroductionPrompt';
 import SlackTutorial from '../../components/Onboarding/SlackTutorial';
 import BuddySystem from '../../components/Onboarding/BuddySystem';
@@ -50,7 +51,6 @@ const AnimatedButton = styled(Button)(({ theme }) => ({
 const steps = [
   'Welcome',
   'Our Mission',
-  'Community Channels',
   'Introduce Yourself',
   'Slack Tutorial',
   'Find a Buddy',
@@ -64,7 +64,6 @@ const OnboardingJourney = {
   steps: {
     START_ONBOARDING: 'start_onboarding',
     VIEW_MISSION: 'view_mission',
-    EXPLORE_CHANNELS: 'explore_channels',
     COMPLETE_INTRODUCTION: 'complete_introduction',
     COMPLETE_TUTORIAL: 'complete_tutorial',
     FIND_BUDDY: 'find_buddy',
@@ -79,19 +78,30 @@ export default function Onboarding() {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
   const [completed, setCompleted] = useState({});
+  const [highestStepReached, setHighestStepReached] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [progress, setProgress] = useState(0);
   
   // Track onboarding progress and save to localStorage
   useEffect(() => {
-    // Load saved progress
     const savedProgress = localStorage.getItem('ohack_onboarding_progress');
     if (savedProgress) {
       try {
         const { step, completedSteps } = JSON.parse(savedProgress);
         setActiveStep(step);
         setCompleted(completedSteps);
+        // Also load highest step reached
+        const savedHighestStep = localStorage.getItem('ohack_onboarding_highest_step');
+        if (savedHighestStep) {
+          try {
+            setHighestStepReached(parseInt(savedHighestStep, 10));
+          } catch (err) {
+            console.error('Error parsing saved highest step reached:', err);
+            setHighestStepReached(step); // Fallback to active step if parsing fails
+          }
+        } else {
+          setHighestStepReached(step); // If no highest step saved, use current step
+        }
       } catch (err) {
         console.error('Error parsing saved onboarding progress:', err);
       }
@@ -104,6 +114,12 @@ export default function Onboarding() {
       step: activeStep,
       completedSteps: completed
     }));
+    
+    // Update highest step reached and save it
+    if (activeStep > highestStepReached) {
+      setHighestStepReached(activeStep);
+      localStorage.setItem('ohack_onboarding_highest_step', activeStep.toString());
+    }
     
     // Track journey step
     const currentStepKey = Object.keys(OnboardingJourney.steps)[activeStep];
@@ -126,22 +142,29 @@ export default function Onboarding() {
     }
   }, [activeStep, completed, user]);
 
+  // Calculate completion percentage
+  const completedCount = Object.values(completed).filter(Boolean).length;
+  const totalSteps = steps.length;
+  const completionPercentage = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0;
+
   const handleNext = () => {
-    // Mark current step as completed
-    const newCompleted = { ...completed };
-    newCompleted[activeStep] = true;
-    setCompleted(newCompleted);
-    
-    // Move to next step
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    if (activeStep === steps.length - 1) {
+      handleComplete();
+    } else {
+      // Mark current step as completed
+      const newCompleted = { ...completed };
+      newCompleted[activeStep] = true;
+      setCompleted(newCompleted);
+      
+      // Move to next step
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      // Scroll to top of the page when navigating to next step
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
-  const handleSkip = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
 
   const handleComplete = async () => {
@@ -177,16 +200,14 @@ export default function Onboarding() {
       case 1:
         return <MissionOverview />;
       case 2:
-        return <ChannelsExploration />;
-      case 3:
         return <IntroductionPrompt />;
-      case 4:
+      case 3:
         return <SlackTutorial />;
-      case 5:
+      case 4:
         return <BuddySystem />;
-      case 6:
+      case 5:
         return <OnboardingFAQ />;
-      case 7:
+      case 6:
         return <FeedbackSection />;
       default:
         return 'Unknown step';
@@ -282,7 +303,6 @@ export default function Onboarding() {
                 background: 'white',
                 transition: 'box-shadow 0.2s, background 0.2s',
               },
-              mb: 4
             }}
           >
             {steps.map((label, index) => {
@@ -294,75 +314,109 @@ export default function Onboarding() {
                   }
                 }
               };
+
+              // Determine if the step is being completed (visited but not finished and not current)
+              const isBeingCompleted = index <= highestStepReached && !completed[index] && index !== activeStep;
+
               return (
                 <Step key={label} {...stepProps} completed={completed[index]}>
-                  <StepLabel {...labelProps}>{label}</StepLabel>
+                  <StepButton
+                    onClick={() => setActiveStep(index)}
+                    disabled={index > highestStepReached}
+                    sx={{
+                      // Apply highlight if the step is being completed
+                      ...(isBeingCompleted && {
+                        // Only style the icon for visited but uncompleted steps
+                        '& .MuiStepIcon-root': {
+                          color: 'primary.main', // Just keep the blue circle
+                        },
+                        // Remove the background and other highlight styles
+                        '& .MuiStepLabel-label': {
+                          color: 'inherit', // Use default text color
+                          fontWeight: 'normal', // Use normal font weight
+                          background: 'none',
+                          boxShadow: 'none',
+                          px: 0,
+                          py: 0,
+                        }
+                      }),
+                      // Add styles for the currently active step
+                      ...(index === activeStep && {
+                        '& .MuiStepLabel-label': {
+                          color: 'primary.main',
+                          fontWeight: 800,
+                          background: 'rgba(25, 118, 210, 0.10)',
+                          borderRadius: 8,
+                          px: 2,
+                          py: 0.5,
+                          boxShadow: '0 2px 12px 0 rgba(25, 118, 210, 0.10)',
+                          display: 'inline-block',
+                        },
+                        '& .MuiStepIcon-root': {
+                          color: 'primary.main',
+                          boxShadow: '0 0 0 6px rgba(25, 118, 210, 0.18)',
+                          borderRadius: '50%',
+                          background: 'white',
+                        }
+                      }),
+                      // Keep existing styles for completed states as defined in the Stepper sx prop
+                    }}
+                  >{label}</StepButton>
                 </Step>
               );
             })}
           </Stepper>
-
-          {/* Step Content */}
-          <Box sx={{ mt: 4, mb: 4 }}>
-            {getStepContent(activeStep)}
-          </Box>
-
-          {/* Error message if any */}
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          {/* Navigation buttons */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button
-              variant="outlined"
-              disabled={activeStep === 0}
-              onClick={handleBack}
-              size="large"
-              sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
-            >
-              Back
-            </Button>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {activeStep < steps.length - 1 && (
-                <Button 
-                  variant="text" 
-                  onClick={handleSkip}
-                  sx={{ color: 'text.secondary', fontSize: '1.1rem', px: 2, py: 1.5 }}
-                  size="large"
-                >
-                  Skip
-                </Button>
-              )}
-              
-              {activeStep === steps.length - 1 ? (
-                <AnimatedButton
-                  variant="contained"
-                  color="primary"
-                  onClick={handleComplete}
-                  disabled={loading}
-                  size="large"
-                  sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
-                >
-                  Complete Onboarding
-                  {loading && <CircularProgress size={24} sx={{ ml: 1 }} />}
-                </AnimatedButton>
-              ) : (
-                <AnimatedButton
-                  variant="contained"
-                  color="primary"
-                  onClick={handleNext}
-                  size="large"
-                  sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
-                >
-                  Next
-                </AnimatedButton>
-              )}
-            </Box>
-          </Box>
         </StyledPaper>
+
+        {/* Step Content */}
+        <Box sx={{ mt: 4, mb: 4 }}>
+          {getStepContent(activeStep)}
+        </Box>
+
+        {/* Error message if any */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Navigation buttons */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+          <Button
+            variant="outlined"
+            disabled={activeStep === 0}
+            onClick={handleBack}
+            size="large"
+            sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
+          >
+            Back
+          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {activeStep === steps.length - 1 ? (
+              <AnimatedButton
+                variant="contained"
+                color="primary"
+                onClick={handleComplete}
+                disabled={loading}
+                size="large"
+                sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
+              >
+                Complete Onboarding
+                {loading && <CircularProgress size={24} sx={{ ml: 1 }} />}
+              </AnimatedButton>
+            ) : (
+              <AnimatedButton
+                variant="contained"
+                color="primary"
+                onClick={handleNext}
+                size="large"
+                sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
+              >
+                Next
+              </AnimatedButton>
+            )}
+          </Box>
+        </Box>
       </Box>
     </Container>
   );

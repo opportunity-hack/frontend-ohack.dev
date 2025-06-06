@@ -490,25 +490,6 @@ const OnboardingFAQ = () => {
         <Divider sx={{ mt: 2, mb: 3 }} />
       </Box>
 
-      {/* Search Input */}
-      <Box sx={{ mb: 4 }}>
-        <TextField
-          fullWidth
-          label={<span style={{ fontSize: '1.4rem', fontWeight: 600 }}>Search FAQs</span>}
-          value={searchTerm}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: '2rem' }} />
-              </InputAdornment>
-            ),
-            style: { fontSize: '1.3rem' }
-          }}
-          InputLabelProps={{ style: { fontSize: '1.3rem', fontWeight: 600 } }}
-        />
-      </Box>
-
       {/* FAQ List */}
       <InteractiveFAQ faqData={faqData} searchTerm={searchTerm} answerFontSize={answerFontSize} questionFontSize="1.4rem"/>
     </Box>
