@@ -144,7 +144,8 @@ END:VCALENDAR`;
                         <Skeleton variant="text" width="100%" height={40} />
                     ) : (
                         <Typography variant="body1" style={style} paragraph>
-                            Whether you're a student, bootcamp graduate, or experienced developer looking to give back, our office hours are the perfect opportunity to get guidance, share ideas, and make a real impact through coding.
+                            Whether you're a student, bootcamp graduate, or experienced developer looking to give back, our office hours are the perfect opportunity to get guidance, share ideas, and make a real impact through coding. 
+                            Since most of the people who volunteer with Opportunity Hack are working professionals, we host our office hours during our lunch break on Fridays from 12pm - 1pm PST.
                         </Typography>
                     )}
                     
@@ -155,9 +156,7 @@ END:VCALENDAR`;
                         <>
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="body1" style={style}>
-                                    • First & Third Fridays: 12pm - 1pm PST
-                                    <br />
-                                    • Second & Fourth Fridays: 2pm - 3pm PST
+                                    • Every Friday @ 12pm - 1pm PST                                   
                                 </Typography>
                             </Box>
                             <Box sx={{ 
