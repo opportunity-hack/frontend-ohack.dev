@@ -55,7 +55,7 @@ const ApplicationButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const EventLinks = ({ links, variant = "full" }) => {
+const EventLinks = ({ links, variant = "full", constraints = {} }) => {
   const router = useRouter();
   const { event_id } = router.query;
   
@@ -71,6 +71,7 @@ const EventLinks = ({ links, variant = "full" }) => {
       icon: <PersonIcon />,
       color: "primary",
       link: `/hack/${event_id}/hacker-application`,
+      enabled: constraints.application_hacker_enabled !== false,
     },
     {
       type: "mentor",
@@ -79,6 +80,7 @@ const EventLinks = ({ links, variant = "full" }) => {
       icon: <VolunteerActivismIcon />,
       color: "secondary",
       link: `/hack/${event_id}/mentor-application`,
+      enabled: constraints.application_mentor_enabled !== false,
     },
     {
       type: "judge",
@@ -87,6 +89,7 @@ const EventLinks = ({ links, variant = "full" }) => {
       icon: <GavelIcon />,
       color: "success",
       link: `/hack/${event_id}/judge-application`,
+      enabled: constraints.application_judge_enabled !== false,
     },
     {
       type: "volunteer",
@@ -95,6 +98,7 @@ const EventLinks = ({ links, variant = "full" }) => {
       icon: <GroupsIcon />,
       color: "info",
       link: `/hack/${event_id}/volunteer-application`,
+      enabled: true, // Always enabled since there's no constraint for this
     },
     {
       type: "sponsor",
@@ -103,6 +107,7 @@ const EventLinks = ({ links, variant = "full" }) => {
       icon: <BusinessIcon />,
       color: "warning",
       link: `/hack/${event_id}/sponsor-application`,
+      enabled: constraints.application_sponsor_enabled !== false,
     },
     {
       type: "nonprofit",
@@ -111,6 +116,7 @@ const EventLinks = ({ links, variant = "full" }) => {
       icon: <LightbulbIcon />,
       color: "error",
       link: `/nonprofits/apply`,
+      enabled: constraints.application_nonprofit_enabled !== false,
     },
   ];
 
@@ -166,13 +172,17 @@ const EventLinks = ({ links, variant = "full" }) => {
                   color={app.color}
                   fullWidth
                   startIcon={app.icon}
-                  href={app.link}
+                  href={app.enabled ? app.link : undefined}
+                  disabled={!app.enabled}
+                  component={app.enabled ? "a" : "button"}
                   sx={{ 
                     display: 'flex', 
                     flexDirection: 'column', 
                     alignItems: 'flex-start',
                     height: '100%',
-                    minHeight: '80px'
+                    minHeight: '80px',
+                    opacity: app.enabled ? 1 : 0.6,
+                    cursor: app.enabled ? 'pointer' : 'not-allowed'
                   }}
                 >
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
@@ -181,6 +191,7 @@ const EventLinks = ({ links, variant = "full" }) => {
                     </Typography>
                     <Typography variant="caption" component="span" align="left">
                       {app.description}
+                      {!app.enabled && " (Disabled)"}
                     </Typography>
                   </Box>
                 </ApplicationButton>
@@ -229,13 +240,17 @@ const EventLinks = ({ links, variant = "full" }) => {
                 color={app.color}
                 fullWidth
                 startIcon={app.icon}
-                href={app.link}
+                href={app.enabled ? app.link : undefined}
+                disabled={!app.enabled}
+                component={app.enabled ? "a" : "button"}
                 sx={{ 
                   display: 'flex', 
                   flexDirection: 'column', 
                   alignItems: 'flex-start',
                   height: '100%',
-                  minHeight: '80px'
+                  minHeight: '80px',
+                  opacity: app.enabled ? 1 : 0.6,
+                  cursor: app.enabled ? 'pointer' : 'not-allowed'
                 }}
               >
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
@@ -244,6 +259,7 @@ const EventLinks = ({ links, variant = "full" }) => {
                   </Typography>
                   <Typography variant="caption" component="span" align="left">
                     {app.description}
+                    {!app.enabled && " (Disabled)"}
                   </Typography>
                 </Box>
               </ApplicationButton>

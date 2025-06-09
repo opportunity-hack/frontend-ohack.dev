@@ -112,7 +112,7 @@ const isHackathonExpired = (endDate) => {
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled }) => {
   const hasGithubLinks = team.github_links && team.github_links.length > 0;
   
   // Check if this team's button is currently loading
@@ -128,39 +128,48 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
       return user.id === userProfile.id;
     });
     
-  // Check if the team is active - override with hackathon expiration
+  // Check if the team is active - override with hackathon expiration and team join enabled
   const isActive = !isHackathonExpired && (team.active === "True" || team.active === true);
+  const canJoinLeave = isActive && teamJoinEnabled;
 
   return (
-    <Card sx={{
-      position: 'relative',
-      opacity: isActive ? 1 : 0.7,
-      border: isActive ? 'none' : '1px solid #e0e0e0'
-    }}>
+    <Card
+      sx={{
+        position: "relative",
+        opacity: isActive ? 1 : 0.7,
+        border: isActive ? "none" : "1px solid #e0e0e0",
+      }}
+    >
       {!isActive && (
-        <Box 
+        <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             right: 0,
-            backgroundColor: isHackathonExpired ? 'error.light' : 'warning.light',
-            color: isHackathonExpired ? 'error.contrastText' : 'warning.contrastText',
+            backgroundColor: isHackathonExpired
+              ? "error.light"
+              : "warning.light",
+            color: isHackathonExpired
+              ? "error.contrastText"
+              : "warning.contrastText",
             px: 1,
             py: 0.5,
             borderBottomLeftRadius: 4,
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            zIndex: 1
+            fontSize: "0.75rem",
+            fontWeight: "bold",
+            zIndex: 1,
           }}
         >
-          {isHackathonExpired ? 'Hackathon Ended' : 'Inactive Team'}
+          {isHackathonExpired ? "Hackathon Ended" : "Inactive Team"}
         </Box>
       )}
       <CardContent>
         <Typography variant="h6">{team.name}</Typography>
         {!isActive && (
           <Typography variant="body2" color="error" sx={{ mb: 1 }}>
-            {isHackathonExpired ? 'This hackathon has ended' : 'This team is currently inactive'}
+            {isHackathonExpired
+              ? "This hackathon has ended"
+              : "This team is currently inactive"}
           </Typography>
         )}
         <Typography variant="body2" color="textSecondary">
@@ -173,7 +182,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
             {team.slack_channel}
           </Link>
         </Typography>
-        
+
         {hasGithubLinks && (
           <Link
             href={team.github_links[0].link}
@@ -183,29 +192,34 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
             GitHub Repository
           </Link>
         )}
-        
+
         <Typography variant="subtitle1" style={{ marginTop: "10px" }}>
           Team Members:
         </Typography>
         <Grid container spacing={1}>
-          {Array.isArray(team.users) && 
+          {Array.isArray(team.users) &&
             team.users.map((user, index) => {
               // Determine if this is the current logged-in user
-              const userId = typeof user === 'string' ? user : user?.id || user?.user_id;
-              const isCurrentUser = userProfile && 
+              const userId =
+                typeof user === "string" ? user : user?.id || user?.user_id;
+              const isCurrentUser =
+                userProfile &&
                 (userId === userProfile.id || userId === userProfile.user_id);
-                
+
               return (
-                <TeamMember 
-                  key={typeof user === 'string' ? user : user?.id || `user-${index}`} 
+                <TeamMember
+                  key={
+                    typeof user === "string"
+                      ? user
+                      : user?.id || `user-${index}`
+                  }
                   user={user}
                   isCurrentUser={isCurrentUser}
                 />
               );
-            })
-          }
+            })}
         </Grid>
-        
+
         {isLoggedIn && userProfile && (
           <div style={{ marginTop: "10px" }}>
             {isUserInTeam ? (
@@ -214,8 +228,8 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 variant="outlined"
                 color="secondary"
                 onClick={() => onLeave(team.id)}
-                disabled={isLoading || !isActive}
-                startIcon={isLoading && <CircularProgress size={16} />}
+                disabled={isLoading}
+                startIcon={isLoading && <CircularProgress size={16} />}                
               >
                 {isLoading ? "Leaving..." : "Leave Team"}
               </Button>
@@ -225,15 +239,24 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 variant="outlined"
                 color="primary"
                 onClick={() => onJoin(team.id)}
-                disabled={isLoading || !isActive}
-                startIcon={isLoading && <CircularProgress size={16} />}
+                disabled={isLoading || !canJoinLeave}
+                startIcon={isLoading && <CircularProgress size={16} />}                
               >
                 {isLoading ? "Joining..." : "Join Team"}
               </Button>
             )}
-            {!isActive && (
-              <Typography variant="caption" color="error" display="block" sx={{ mt: 1 }}>
-                {isHackathonExpired ? 'Hackathon has ended - teams are now closed' : 'You cannot join/leave inactive teams'}
+            {!canJoinLeave && (
+              <Typography
+                variant="caption"
+                color="error"
+                display="block"
+                sx={{ mt: 1 }}
+              >
+                {isHackathonExpired
+                  ? "Hackathon has ended - teams are now closed"
+                  : !teamJoinEnabled
+                    ? "Team joining is currently disabled"
+                    : "You cannot join/leave inactive teams"}
               </Typography>
             )}
           </div>
@@ -243,7 +266,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   );
 };
 
-const TeamList = ({ teams, eventId, endDate }) => {
+const TeamList = ({ teams, eventId, endDate, constraints = {} }) => {
   const [teamData, setTeamData] = useState(teams);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
@@ -257,6 +280,8 @@ const TeamList = ({ teams, eventId, endDate }) => {
   const [userProfile, setUserProfile] = useState(null);
   const { isLoggedIn, accessToken } = useAuthInfo();
 
+  // Check if team joining is enabled from constraints
+  const teamJoinEnabled = constraints.team_join_enabled !== false; // Default to true if not specified
 
   // Fetch detailed profile information for all team members
   const fetchTeamMemberProfiles = useCallback(
@@ -521,6 +546,7 @@ const TeamList = ({ teams, eventId, endDate }) => {
               onLeave={handleUnjoinTeam}
               loadingTeamId={loadingTeamId}
               isHackathonExpired={isHackathonExpired(endDate)}
+              teamJoinEnabled={teamJoinEnabled}
             />
           </Grid>
         ))}

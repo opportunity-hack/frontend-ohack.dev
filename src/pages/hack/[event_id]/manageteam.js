@@ -853,6 +853,12 @@ const ManageTeamComponent = () => {
     team.status === 'APPROVED' || team.status === 'PROJECT_COMPLETE'
   );
   
+  // Check if team creation is enabled from constraints
+  const teamCreationEnabled = event?.constraints?.team_creation_enabled !== false;
+  
+  // Check if team finding is enabled from constraints
+  const teamFindingEnabled = event?.constraints?.team_find_a_team_enabled !== false;
+  
   // Page title dynamically changes based on team status
   const pageTitle = hasApprovedTeam 
     ? "Manage Your Hackathon Team - Opportunity Hack" 
@@ -927,8 +933,27 @@ const ManageTeamComponent = () => {
           event={event}
         />
 
+        {/* Team Creation Disabled Message */}
+        {!teamCreationEnabled && (
+          <Box sx={{ mt: 6, mb: 4 }}>
+            <Alert 
+              severity="warning" 
+              variant="filled"
+              icon={<WarningIcon />}
+              sx={{ mb: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+            >
+              <Typography variant="h6" fontWeight="bold">
+                Team Creation Currently Disabled
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 1, fontSize: '1.05rem' }}>
+                Team creation has been disabled for this hackathon. Please check with the event organizers or wait for team creation to be re-enabled.
+              </Typography>
+            </Alert>
+          </Box>
+        )}
+
         {/* Team Creation Form - Collapsed by default when team exists */}
-        {hasExistingTeam ? (
+        {teamCreationEnabled && hasExistingTeam ? (
           <Box sx={{ mt: 6, mb: 4 }}>
             <Alert 
               severity="warning" 
@@ -1019,7 +1044,9 @@ const ManageTeamComponent = () => {
                     <Button 
                       variant="contained" 
                       color="primary"
-                      href={`/hack/${event_id}/findteam`}
+                      href={teamFindingEnabled ? `/hack/${event_id}/findteam` : undefined}
+                      disabled={!teamFindingEnabled}
+                      component={teamFindingEnabled ? "a" : "button"}
                       size="large"
                       sx={{ 
                         px: 3, 
@@ -1027,22 +1054,24 @@ const ManageTeamComponent = () => {
                         whiteSpace: 'nowrap',
                         minWidth: { xs: '100%', sm: 'auto' },
                         fontWeight: 'bold',
-                        boxShadow: '0 4px 8px rgba(33, 150, 243, 0.3)',
+                        boxShadow: teamFindingEnabled ? '0 4px 8px rgba(33, 150, 243, 0.3)' : 'none',
+                        opacity: teamFindingEnabled ? 1 : 0.6,
+                        cursor: teamFindingEnabled ? 'pointer' : 'not-allowed',
                         '&:hover': {
-                          boxShadow: '0 6px 12px rgba(33, 150, 243, 0.4)',
-                          transform: 'translateY(-2px)'
+                          boxShadow: teamFindingEnabled ? '0 6px 12px rgba(33, 150, 243, 0.4)' : 'none',
+                          transform: teamFindingEnabled ? 'translateY(-2px)' : 'none'
                         },
                         transition: 'transform 0.2s, box-shadow 0.2s'
                       }}
                     >
-                      Find Teammates
+                      {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Disabled)'}
                     </Button>
                   </Box>
                 </Box>
               </AccordionDetails>
             </Accordion>
           </Box>
-        ) : (
+        ) : teamCreationEnabled ? (
           <Box my={4} id="create-team-section">
             <Typography variant="h3" align="center" gutterBottom>
               Create a New Team <FaRocket style={{ verticalAlign: "middle" }} />
@@ -1081,7 +1110,9 @@ const ManageTeamComponent = () => {
               <Button 
                 variant="contained" 
                 color="primary"
-                href={`/hack/${event_id}/findteam`}
+                href={teamFindingEnabled ? `/hack/${event_id}/findteam` : undefined}
+                disabled={!teamFindingEnabled}
+                component={teamFindingEnabled ? "a" : "button"}
                 size="large"
                 sx={{ 
                   px: 3, 
@@ -1089,21 +1120,24 @@ const ManageTeamComponent = () => {
                   whiteSpace: 'nowrap',
                   minWidth: { xs: '100%', sm: 'auto' },
                   fontWeight: 'bold',
-                  boxShadow: '0 4px 8px rgba(33, 150, 243, 0.3)',
+                  boxShadow: teamFindingEnabled ? '0 4px 8px rgba(33, 150, 243, 0.3)' : 'none',
+                  opacity: teamFindingEnabled ? 1 : 0.6,
+                  cursor: teamFindingEnabled ? 'pointer' : 'not-allowed',
                   '&:hover': {
-                    boxShadow: '0 6px 12px rgba(33, 150, 243, 0.4)',
-                    transform: 'translateY(-2px)'
+                    boxShadow: teamFindingEnabled ? '0 6px 12px rgba(33, 150, 243, 0.4)' : 'none',
+                    transform: teamFindingEnabled ? 'translateY(-2px)' : 'none'
                   },
                   transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
               >
-                Find Teammates
+                {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Disabled)'}
               </Button>
             </Box>
           </Box>
-        )}
+        ) : null}
         
         {/* Team Creation Form */}
+        {teamCreationEnabled && (
         <Box id="create-team-section-form" sx={{ 
           display: (hasExistingTeam && !showNewTeamForm) ? 'none' : 'block'
         }}>
@@ -1405,6 +1439,7 @@ const ManageTeamComponent = () => {
         )}
           </StyledPaper>
         </Box>
+        )}
       </Box>
     </Container>
   );

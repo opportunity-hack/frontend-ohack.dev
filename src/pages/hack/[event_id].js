@@ -695,7 +695,7 @@ export default function HackathonEvent({ eventData }) {
             >
               Applications
             </Typography>
-            <EventLinks links={event.links} variant="applications" />
+            <EventLinks links={event.links} variant="applications" constraints={event.constraints} />
           </Grid>
 
           {/* Nonprofit List */}
@@ -748,7 +748,9 @@ export default function HackathonEvent({ eventData }) {
                         variant="contained"
                         color="primary"
                         fullWidth
-                        href={`/hack/${event_id}/findteam`}
+                        href={event.constraints?.team_find_a_team_enabled !== false ? `/hack/${event_id}/findteam` : undefined}
+                        disabled={event.constraints?.team_find_a_team_enabled === false}
+                        component={event.constraints?.team_find_a_team_enabled !== false ? "a" : "button"}
                         sx={{
                           py: 2,
                           display: "flex",
@@ -761,9 +763,11 @@ export default function HackathonEvent({ eventData }) {
                           transition:
                             "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
                           "&:hover": {
-                            transform: "translateY(-3px)",
-                            boxShadow: "0 6px 12px rgba(0, 0, 0, 0.15)",
+                            transform: event.constraints?.team_find_a_team_enabled !== false ? "translateY(-3px)" : "none",
+                            boxShadow: event.constraints?.team_find_a_team_enabled !== false ? "0 6px 12px rgba(0, 0, 0, 0.15)" : "0 4px 10px rgba(0, 0, 0, 0.1)",
                           },
+                          opacity: event.constraints?.team_find_a_team_enabled !== false ? 1 : 0.6,
+                          cursor: event.constraints?.team_find_a_team_enabled !== false ? 'pointer' : 'not-allowed'
                         }}
                       >
                         <Box sx={{ fontSize: "2rem", mb: 1 }}>🔍</Box>
@@ -780,6 +784,7 @@ export default function HackathonEvent({ eventData }) {
                           sx={{ opacity: 0.85, mt: 0.5 }}
                         >
                           Browse and join existing teams
+                          {event.constraints?.team_find_a_team_enabled === false && " (Disabled)"}
                         </Typography>
                       </Button>
                     </Grid>
@@ -789,7 +794,9 @@ export default function HackathonEvent({ eventData }) {
                         variant="outlined"
                         color="primary"
                         fullWidth
-                        href={`/hack/${event_id}/manageteam`}
+                        href={event.constraints?.team_creation_enabled !== false ? `/hack/${event_id}/manageteam` : undefined}
+                        disabled={event.constraints?.team_creation_enabled === false}
+                        component={event.constraints?.team_creation_enabled !== false ? "a" : "button"}
                         sx={{
                           py: 2,
                           display: "flex",
@@ -803,9 +810,11 @@ export default function HackathonEvent({ eventData }) {
                           transition:
                             "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
                           "&:hover": {
-                            transform: "translateY(-3px)",
-                            boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)",
+                            transform: event.constraints?.team_creation_enabled !== false ? "translateY(-3px)" : "none",
+                            boxShadow: event.constraints?.team_creation_enabled !== false ? "0 6px 12px rgba(0, 0, 0, 0.1)" : "0 4px 10px rgba(0, 0, 0, 0.05)",
                           },
+                          opacity: event.constraints?.team_creation_enabled !== false ? 1 : 0.6,
+                          cursor: event.constraints?.team_creation_enabled !== false ? 'pointer' : 'not-allowed'
                         }}
                       >
                         <Box sx={{ fontSize: "2rem", mb: 1 }}>🚀</Box>
@@ -822,6 +831,7 @@ export default function HackathonEvent({ eventData }) {
                           sx={{ opacity: 0.85, mt: 0.5 }}
                         >
                           Start your own team
+                          {event.constraints?.team_creation_enabled === false && " (Disabled)"}
                         </Typography>
                       </Button>
                     </Grid>
@@ -832,6 +842,7 @@ export default function HackathonEvent({ eventData }) {
                   teams={event.teams}
                   eventId={event_id}
                   endDate={event.end_date}
+                  constraints={event.constraints}
                 />
               </Box>
             </LinksContainer>
@@ -860,7 +871,7 @@ export default function HackathonEvent({ eventData }) {
               />
             </Grid>
             <Grid item xs={12} md={6}>
-              <EventLinks links={event.links} variant="event-links" />
+              <EventLinks links={event.links} variant="event-links" constraints={event.constraints} />
             </Grid>
           </Grid>
           {/* Hackathon Stats and Countdown side by side */}
