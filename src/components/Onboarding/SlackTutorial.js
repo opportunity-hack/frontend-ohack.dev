@@ -145,9 +145,7 @@ const SlackTutorial = () => {
             <Tab label="Getting Started" icon={<TagIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
             <Tab label="Channels & DMs" icon={<ForumIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
             <Tab label="Mentions & Notifications" icon={<NotificationsIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
-            <Tab label="Search & Navigation" icon={<SearchIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
             <Tab label="Etiquette & Best Practices" icon={<EmojiEmotionsIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
-            <Tab label="Keyboard Shortcuts" icon={<KeyboardIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
           </Tabs>
         </Box>
 
@@ -173,7 +171,15 @@ const SlackTutorial = () => {
                   <StepNumber>2</StepNumber>
                   <ListItemText 
                     primary="Download the Slack app" 
-                    secondary="For the best experience, download Slack on both your desktop and mobile device. This ensures you stay connected even when you're away from your computer."
+                    secondary={
+                      <Typography variant="body2" sx={{ fontSize: '1.15rem', color: 'text.secondary' }}>
+                        For the best experience,{' '}
+                        <Link href="https://slack.com/downloads" target="_blank" rel="noopener noreferrer">
+                          <b>download Slack {' '}</b>
+                        </Link>
+                        on both your desktop and mobile device. This ensures you stay connected even when you're away from your computer.
+                      </Typography>
+                    }
                     primaryTypographyProps={{ fontSize: '1.3rem' }}
                     secondaryTypographyProps={{ fontSize: '1.15rem' }}
                   />
@@ -206,20 +212,6 @@ const SlackTutorial = () => {
                   />
                 </ListItem>
               </List>
-              
-              <Box textAlign="center" mt={3}>
-                <Button 
-                  variant="outlined" 
-                  color="primary" 
-                  href="https://slack.com/help/categories/360000049043" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  startIcon={<SearchIcon />}
-                  sx={{ fontSize: '1.3rem' }}
-                >
-                  Slack's Official Getting Started Guide
-                </Button>
-              </Box>
             </Grid>
             <Grid item xs={12} md={5}>
               <Card elevation={2}>
@@ -283,6 +275,19 @@ const SlackTutorial = () => {
               </Box>
             </Grid>
           </Grid>
+          <Box textAlign="center" mt={3}>
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              href="https://slack.com/help/categories/360000049043" 
+              target="_blank"
+              rel="noopener noreferrer"
+              startIcon={<SearchIcon />}
+              sx={{ fontSize: '1.3rem' }}
+            >
+              Slack's Official Getting Started Guide
+            </Button>
+          </Box>
         </TabPanel>
 
         {/* Channels & DMs */}
@@ -333,7 +338,7 @@ const SlackTutorial = () => {
                 <ListItem>
                   <ListItemIcon><TagIcon /></ListItemIcon>
                   <ListItemText 
-                    primary="#general" 
+                    primary="general" 
                     secondary="Announcements and community-wide conversations" 
                     primaryTypographyProps={{ fontSize: '1.5rem' }}
                     secondaryTypographyProps={{ fontSize: '1.25rem' }}
@@ -342,7 +347,7 @@ const SlackTutorial = () => {
                 <ListItem>
                   <ListItemIcon><TagIcon /></ListItemIcon>
                   <ListItemText 
-                    primary="#introductions" 
+                    primary="introductions" 
                     secondary="Introduce yourself to the community" 
                     primaryTypographyProps={{ fontSize: '1.5rem' }}
                     secondaryTypographyProps={{ fontSize: '1.25rem' }}
@@ -351,7 +356,7 @@ const SlackTutorial = () => {
                 <ListItem>
                   <ListItemIcon><TagIcon /></ListItemIcon>
                   <ListItemText 
-                    primary="#help" 
+                    primary="help" 
                     secondary="Ask questions and get support" 
                     primaryTypographyProps={{ fontSize: '1.5rem' }}
                     secondaryTypographyProps={{ fontSize: '1.25rem' }}
@@ -360,7 +365,7 @@ const SlackTutorial = () => {
                 <ListItem>
                   <ListItemIcon><TagIcon /></ListItemIcon>
                   <ListItemText 
-                    primary="#project-matching" 
+                    primary="team-formation" 
                     secondary="Find projects to work on or team members" 
                     primaryTypographyProps={{ fontSize: '1.5rem' }}
                     secondaryTypographyProps={{ fontSize: '1.25rem' }}
@@ -369,7 +374,7 @@ const SlackTutorial = () => {
                 <ListItem>
                   <ListItemIcon><TagIcon /></ListItemIcon>
                   <ListItemText 
-                    primary="#technical-questions" 
+                    primary="ask-a-mentor" 
                     secondary="Get help with code and technical challenges" 
                     primaryTypographyProps={{ fontSize: '1.5rem' }}
                     secondaryTypographyProps={{ fontSize: '1.25rem' }}
@@ -623,194 +628,8 @@ const SlackTutorial = () => {
           </Grid>
         </TabPanel>
 
-        {/* Search & Navigation */}
-        <TabPanel value={activeTab} index={3}>
-          <Typography variant="h5" gutterBottom sx={{ fontSize: '2rem' }}>
-            Search and Navigation
-          </Typography>
-          <Typography variant="body1" paragraph sx={{ fontSize: '1.3rem' }}>
-            Finding information quickly in Slack is essential. Learn how to effectively use search and navigate between channels and conversations.
-          </Typography>
-          <Typography variant="subtitle1" sx={{ fontSize: '1.4rem' }}>
-            Basic Search
-          </Typography>
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
-              <List>
-                <ListItem alignItems="flex-start">
-                  <StepNumber>1</StepNumber>
-                  <ListItemText 
-                    primary="Click the search box at the top of Slack" 
-                    secondary="Or use the keyboard shortcut Ctrl/Cmd + G"
-                    primaryTypographyProps={{ fontSize: '1.3rem' }}
-                    secondaryTypographyProps={{ fontSize: '1.15rem' }}
-                  />
-                </ListItem>
-                <ListItem alignItems="flex-start">
-                  <StepNumber>2</StepNumber>
-                  <ListItemText 
-                    primary="Enter your search terms" 
-                    secondary="Slack will search through messages, files, and channels"
-                    primaryTypographyProps={{ fontSize: '1.3rem' }}
-                    secondaryTypographyProps={{ fontSize: '1.15rem' }}
-                  />
-                </ListItem>
-                <ListItem alignItems="flex-start">
-                  <StepNumber>3</StepNumber>
-                  <ListItemText 
-                    primary="Use filters to refine results" 
-                    secondary="Narrow by channel, person, date, and more"
-                    primaryTypographyProps={{ fontSize: '1.3rem' }}
-                    secondaryTypographyProps={{ fontSize: '1.15rem' }}
-                  />
-                </ListItem>
-              </List>
-              
-              <Typography variant="subtitle1" sx={{ fontSize: '1.4rem', mt: 3 }}>
-                Advanced Search Operators:
-              </Typography>
-              <Grid container spacing={1}>
-                <Grid item xs={6}>
-                  <KeyboardShortcut>from:@username</KeyboardShortcut>
-                  <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                    Messages from a specific user
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <KeyboardShortcut>in:#channel</KeyboardShortcut>
-                  <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                    Messages in a specific channel
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <KeyboardShortcut>has:link</KeyboardShortcut>
-                  <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                    Messages with links
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <KeyboardShortcut>has:reaction</KeyboardShortcut>
-                  <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                    Messages with reactions
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <KeyboardShortcut>before:2023/01/01</KeyboardShortcut>
-                  <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                    Messages before a date
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <KeyboardShortcut>after:2023/01/01</KeyboardShortcut>
-                  <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                    Messages after a date
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
-                Quick Navigation
-              </Typography>
-              
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.1rem' }}>
-                    Keyboard Shortcuts:
-                  </Typography>
-                  <Grid container spacing={1}>
-                    <Grid item xs={12} sm={6}>
-                      <KeyboardShortcut>Ctrl/Cmd + K</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Quick channel/DM switcher
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <KeyboardShortcut>Alt + Up/Down</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Move between channels
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <KeyboardShortcut>Ctrl/Cmd + G</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Search in Slack
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <KeyboardShortcut>Ctrl/Cmd + F</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Search in current channel
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-              
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
-                Saved Items & Reminders
-              </Typography>
-              <Typography variant="body2" paragraph sx={{ fontSize: '1.3rem' }}>
-                Slack allows you to save important messages and set reminders to follow up later.
-              </Typography>
-              
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.25rem' }}>
-                  Saving Items:
-                </Typography>
-                <List dense>
-                  <ListItem>
-                    <StepNumber>1</StepNumber>
-                    <ListItemText 
-                      primary="Hover over a message and click the bookmark icon" 
-                      primaryTypographyProps={{ fontSize: '1.2rem' }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <StepNumber>2</StepNumber>
-                    <ListItemText 
-                      primary="View saved items by clicking the bookmark icon in the top right" 
-                      primaryTypographyProps={{ fontSize: '1.2rem' }}
-                    />
-                  </ListItem>
-                </List>
-              </Box>
-              
-              <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.25rem' }}>
-                  Setting Reminders:
-                </Typography>
-                <List dense>
-                  <ListItem>
-                    <StepNumber>1</StepNumber>
-                    <ListItemText 
-                      primary="Hover over a message and click the 'More actions' menu (three dots)" 
-                      primaryTypographyProps={{ fontSize: '1.2rem' }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <StepNumber>2</StepNumber>
-                    <ListItemText 
-                      primary="Select 'Remind me about this'" 
-                      primaryTypographyProps={{ fontSize: '1.2rem' }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <StepNumber>3</StepNumber>
-                    <ListItemText 
-                      primary="Choose when you want to be reminded" 
-                      primaryTypographyProps={{ fontSize: '1.2rem' }}
-                    />
-                  </ListItem>
-                </List>
-              </Box>
-            </Grid>
-          </Grid>
-        </TabPanel>
-
         {/* Etiquette & Best Practices */}
-        <TabPanel value={activeTab} index={4}>
+        <TabPanel value={activeTab} index={3}>
           <Typography variant="h5" gutterBottom sx={{ fontSize: '2rem' }}>
             Etiquette and Best Practices
           </Typography>
@@ -970,231 +789,21 @@ const SlackTutorial = () => {
             </Typography>
           </Alert>
         </TabPanel>
+      </Box>
 
-        {/* Keyboard Shortcuts */}
-        <TabPanel value={activeTab} index={5}>
-          <Typography variant="h5" gutterBottom sx={{ fontSize: '2rem' }}>
-            Keyboard Shortcuts
-          </Typography>
-          
-          <Typography variant="body1" paragraph sx={{ fontSize: '1.15rem' }}>
-            Mastering Slack keyboard shortcuts can significantly speed up your workflow.
-          </Typography>
-          
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem', fontWeight: 'bold'  }}>
-                Navigation Shortcuts
-              </Typography>
-              
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + K</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Quick switcher (jump to conversations)
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Alt + Up/Down</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Move between channels/DMs
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Alt + Left/Right</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Navigate channel history (back/forward)
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + G</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Open search
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + Shift + K</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Open direct messages menu
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + Shift + A</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Open all unread threads
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-              
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem', fontWeight: 'bold' }}>
-                Message Formatting
-              </Typography>
-              <Card>
-                <CardContent>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + B</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Bold text
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + I</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Italic text
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + Shift + X</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Strikethrough
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Shift + Enter</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        New line without sending
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> ```code```</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Code block (multiline)
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> `code`</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Inline code
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem', fontWeight: 'bold' }}>
-                Common Actions
-              </Typography>
-              
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Up Arrow</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Edit your last message
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Esc</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Mark all messages as read
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + Shift + \</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Toggle sidebar
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> Cmd/Ctrl + /</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Show all keyboard shortcuts
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> R</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Reply to thread (when hovering)
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <KeyboardShortcut><KeyboardIcon sx={{ fontSize: '1rem' }} /> :</KeyboardShortcut>
-                      <Typography variant="body2" sx={{ fontSize: '1.2rem' }}>
-                        Start emoji autocomplete
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-              
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1.5rem' }}>
-                  Platform-Specific Notes:
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Card sx={{ height: '100%' }}>
-                      <CardContent>
-                        <Typography variant="body2" fontWeight="bold" gutterBottom sx={{ fontSize: '1.2rem' }}>
-                          Desktop App Benefits:
-                        </Typography>
-                        <List dense>
-                          <ListItem>
-                            <ListItemIcon><ArrowForwardIcon fontSize="small" /></ListItemIcon>
-                            <ListItemText primary="Supports all keyboard shortcuts" primaryTypographyProps={{ fontSize: '1.2rem' }} />
-                          </ListItem>
-                          <ListItem>
-                            <ListItemIcon><ArrowForwardIcon fontSize="small" /></ListItemIcon>
-                            <ListItemText primary="Desktop notifications" primaryTypographyProps={{ fontSize: '1.2rem' }} />
-                          </ListItem>
-                          <ListItem>
-                            <ListItemIcon><ArrowForwardIcon fontSize="small" /></ListItemIcon>
-                            <ListItemText primary="Better performance" primaryTypographyProps={{ fontSize: '1.2rem' }} />
-                          </ListItem>
-                        </List>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Card sx={{ height: '100%' }}>
-                      <CardContent>
-                        <Typography variant="body2" fontWeight="bold" gutterBottom sx={{ fontSize: '1.2rem' }}>
-                          Mobile App Features:
-                        </Typography>
-                        <List dense>
-                          <ListItem>
-                            <ListItemIcon><ArrowForwardIcon fontSize="small" /></ListItemIcon>
-                            <ListItemText primary="Swipe gestures for actions" primaryTypographyProps={{ fontSize: '1.2rem' }} />
-                          </ListItem>
-                          <ListItem>
-                            <ListItemIcon><ArrowForwardIcon fontSize="small" /></ListItemIcon>
-                            <ListItemText primary="Notification controls" primaryTypographyProps={{ fontSize: '1.2rem' }} />
-                          </ListItem>
-                          <ListItem>
-                            <ListItemIcon><ArrowForwardIcon fontSize="small" /></ListItemIcon>
-                            <ListItemText primary="Push notifications" primaryTypographyProps={{ fontSize: '1.2rem' }} />
-                          </ListItem>
-                        </List>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Grid>
-          </Grid>
-          
-          <Box textAlign="center">
-            <Button 
-              variant="contained" 
-              color="primary" 
-              href="https://slack.com/intl/en-gb/help/articles/201374176-Slack-keyboard-shortcuts" 
-              target="_blank"
-              rel="noopener noreferrer"
-              startIcon={<KeyboardIcon />}
-              sx={{ fontSize: '1.1rem', py: 1.2, px: 3 }}
-            >
-              View Full List of Shortcuts
-            </Button>
-          </Box>
-        </TabPanel>
+      {/* Button moved from Keyboard Shortcuts */}
+      <Box textAlign="center" mt={3}>
+        <Button
+          variant="contained"
+          color="primary"
+          href="https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts"
+          target="_blank"
+          rel="noopener noreferrer"
+          startIcon={<KeyboardIcon />}
+          sx={{ fontSize: '1.1rem', py: 1.2, px: 3 }}
+        >
+          View Full List of Shortcuts
+        </Button>
       </Box>
 
       {/* Join Slack CTA */}
