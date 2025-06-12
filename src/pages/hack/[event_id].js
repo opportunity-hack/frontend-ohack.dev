@@ -840,7 +840,8 @@ export default function HackathonEvent({ eventData }) {
 
                 <TeamList
                   teams={event.teams}
-                  eventId={event_id}
+                  event_id={event_id}
+                  id={event.id}
                   endDate={event.end_date}
                   constraints={event.constraints}
                 />

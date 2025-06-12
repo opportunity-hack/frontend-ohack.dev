@@ -3,12 +3,12 @@ module.exports = {
   // This will help with more accurate performance testing
   productionBrowserSourceMaps: false,
   swcMinify: true,
-  
+
   // Optimize bundle size
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === "production",
   },
-  
+
   // Rewrites configuration
   async rewrites() {
     return [
@@ -18,10 +18,10 @@ module.exports = {
       },
     ];
   },
-  
+
   // Optimize images
   images: {
-    formats: ['image/avif', 'image/webp'],
+    formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
     remotePatterns: [
       {
@@ -39,6 +39,12 @@ module.exports = {
       {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.squarespace-cdn.com",
         port: "",
         pathname: "/**",
       },
@@ -62,7 +68,7 @@ module.exports = {
       },
     ],
   },
-  
+
   // Improve caching headers
   async headers() {
     return [
