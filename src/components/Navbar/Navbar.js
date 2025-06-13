@@ -49,6 +49,7 @@ const getInvolvedMenuItems = [
   ["Become a Judge", "/about/judges"],
   ["Track Your Time", "/volunteer/track"],
   ["Join Our Slack", "/signup"],
+  ["Praise Board", "/praise"],
   ["Office Hours", "/office-hours"],
 ];
 
