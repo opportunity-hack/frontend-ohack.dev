@@ -34,6 +34,14 @@ const TEAM_STATUS_OPTIONS = [
   { value: 'INACTIVE', label: 'Inactive', color: 'error' }
 ];
 
+// Statuses that prevent new members from joining
+const JOINING_DISABLED_STATUSES = ['ONBOARDED', 'SWAG_RECEIVED', 'PROJECT_COMPLETE', 'INACTIVE'];
+
+// Helper function to check if team status prevents joining
+const isJoiningDisabledByStatus = (status) => {
+  return JOINING_DISABLED_STATUSES.includes(status);
+};
+
 // Reusable Alert component
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -224,6 +232,11 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   // Check if the team is active - override with hackathon expiration and team join enabled
   const isActive = !isHackathonExpired && (team.active === "True" || team.active === true);
   const canJoinLeave = isActive && teamJoinEnabled;
+  
+  // Check if joining is disabled by team status
+  const joiningDisabledByStatus = isJoiningDisabledByStatus(team?.status);
+  const canJoin = canJoinLeave && !joiningDisabledByStatus;
+  const canLeave = canJoinLeave; // Users can still leave teams with restricted statuses
 
   return (
     <Card
@@ -364,7 +377,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 variant="outlined"
                 color="secondary"
                 onClick={() => onLeave(team.id)}
-                disabled={isLoading}
+                disabled={isLoading || !canLeave}
                 startIcon={isLoading && <CircularProgress size={16} />}                
               >
                 {isLoading ? "Leaving..." : "Leave Team"}
@@ -375,13 +388,13 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 variant="outlined"
                 color="primary"
                 onClick={() => onJoin(team.id)}
-                disabled={isLoading || !canJoinLeave}
+                disabled={isLoading || !canJoin}
                 startIcon={isLoading && <CircularProgress size={16} />}                
               >
                 {isLoading ? "Joining..." : "Join Team"}
               </Button>
             )}
-            {!canJoinLeave && (
+            {(!canJoin || !canLeave) && (
               <Typography
                 variant="caption"
                 color="error"
@@ -392,7 +405,11 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                   ? "Hackathon has ended - teams are now closed"
                   : !teamJoinEnabled
                     ? "Team joining is currently disabled"
-                    : "You cannot join/leave inactive teams"}
+                    : !isActive
+                      ? "You cannot join/leave inactive teams"
+                      : joiningDisabledByStatus && !isUserInTeam
+                        ? "This team is no longer accepting new members"
+                        : "Team operations are currently restricted"}
               </Typography>
             )}
           </div>
