@@ -60,7 +60,8 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaExternalLinkAlt,
-  FaCheckCircle
+  FaCheckCircle,
+  FaBug
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
@@ -1118,6 +1119,90 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
       : "Not assigned";
   };
 
+  // Helper function to render GitHub links for a team
+  const renderGitHubCell = (team) => {
+    if (!team.github_links || team.github_links.length === 0) {
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+          <FaGithub style={{ marginRight: 4, opacity: 0.5 }} />
+          <Typography variant="body2" color="text.secondary">
+            No repos
+          </Typography>
+        </Box>
+      );
+    }
+
+    // If there's only one repository, show it directly
+    if (team.github_links.length === 1) {
+      const repo = team.github_links[0];
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Link
+            href={repo.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ 
+              display: 'flex',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: 'primary.main',
+              '&:hover': {
+                textDecoration: 'underline'
+              }
+            }}
+          >
+            <FaGithub style={{ marginRight: 4 }} />
+            <Typography variant="body2" noWrap sx={{ maxWidth: 120 }}>
+              {repo.name || 'Repository'}
+            </Typography>
+            <FaExternalLinkAlt size={12} style={{ marginLeft: 4 }} />
+          </Link>
+          <Tooltip title="View GitHub Issues">
+            <IconButton
+              size="small"
+              color="secondary"
+              component="a"
+              href={`${repo.link}/issues`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FaBug size={12} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      );
+    }
+
+    // If there are multiple repositories, show a dropdown or count
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Chip
+          icon={<FaGithub />}
+          label={`${team.github_links.length} repos`}
+          size="small"
+          color="primary"
+          variant="outlined"
+          onClick={() => {
+            // Open the first repository or show all in the edit dialog
+            if (team.github_links[0]) {
+              window.open(team.github_links[0].link, '_blank');
+            }
+          }}
+          sx={{ cursor: 'pointer' }}
+        />
+        <Tooltip title="View all repositories">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => handleEditTeam(team)}
+          >
+            <FaExternalLinkAlt size={12} />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    );
+  };
+
   return (
     <div>
       <Box sx={{ mb: 4 }}>
@@ -1271,6 +1356,7 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
                       </Box>
                     </TableCell>
                     <TableCell>Members</TableCell>
+                    <TableCell>GitHub</TableCell>
                     <TableCell>Nonprofit</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
@@ -1342,6 +1428,9 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
                               variant="outlined"
                             />
                           )}
+                        </TableCell>
+                        <TableCell>
+                          {renderGitHubCell(team)}
                         </TableCell>
                         <TableCell>
                           {getNonprofitName(team.selected_nonprofit_id)}
