@@ -78,6 +78,84 @@ const TEAM_STATUS_OPTIONS = [
   { value: 'INACTIVE', label: 'Inactive', color: 'error' }
 ];
 
+// Add message templates after TEAM_STATUS_OPTIONS
+const MESSAGE_TEMPLATES = {
+  CHECK_IN: {
+    category: "Check-in & Progress",
+    templates: [
+      {
+        id: "github_check",
+        title: "GitHub Progress Check",
+        message: "Hi team! 👋\n\nPlease check the GitHub issue above to give us a general sense that your project to support nonprofits is on track for this summer. We'd love to see:\n\n• Current progress status\n• Any blockers you're facing\n• Timeline for key milestones\n\nThanks for keeping us updated! 🚀",
+        icon: "🔍"
+      },
+      {
+        id: "first_checkin_complete",
+        title: "First Check-in Complete",
+        message: "Thanks for completing our first check-in! 🎉\n\nYour team is now locked from adding new members. This helps ensure stability as we move into the main development phase.\n\nNext steps:\n• Focus on your nonprofit project\n• Regular progress updates\n• Reach out if you need any support\n\nKeep up the great work! 💪",
+        icon: "✅"
+      },
+      {
+        id: "progress_reminder",
+        title: "Progress Update Reminder",
+        message: "Hi team! 👋\n\nJust a friendly reminder to update your progress in GitHub. Regular updates help us:\n\n• Provide better support\n• Track overall hackathon progress\n• Celebrate your achievements\n\nThanks for being awesome! 🌟",
+        icon: "⏰"
+      }
+    ]
+  },
+  APPROVAL: {
+    category: "Approval & Assignment",
+    templates: [
+      {
+        id: "nonprofit_assigned",
+        title: "Nonprofit Assignment Confirmation",
+        message: "Congratulations! 🎉\n\nYour team has been officially assigned to work with [NONPROFIT_NAME]. This is an exciting opportunity to make a real impact!\n\nNext steps:\n• Review the nonprofit's requirements\n• Schedule your kickoff meeting\n• Set up your development environment\n\nWe're here to support you throughout this journey. Let's build something amazing together! 🚀",
+        icon: "🎯"
+      },
+      {
+        id: "team_approved",
+        title: "Team Approval",
+        message: "Welcome to the approved teams! 🌟\n\nYour team has been reviewed and approved for the hackathon. You're now ready to start making a difference!\n\nWhat's next:\n• Review your assigned nonprofit\n• Plan your project approach\n• Start coding and creating\n\nExcited to see what you'll build! 💻✨",
+        icon: "✅"
+      }
+    ]
+  },
+  SUPPORT: {
+    category: "Support & Guidance",
+    templates: [
+      {
+        id: "need_help",
+        title: "Offering Help",
+        message: "Hi team! 👋\n\nWe noticed you might need some support. Our team is here to help with:\n\n• Technical challenges\n• Project planning\n• Nonprofit communication\n• Resource access\n\nDon't hesitate to reach out - we're all in this together! 🤝",
+        icon: "🆘"
+      },
+      {
+        id: "technical_resources",
+        title: "Technical Resources",
+        message: "Here are some helpful resources for your project: 🛠️\n\n• Documentation: [link]\n• Code examples: [link]\n• Best practices guide: [link]\n• Community forum: [link]\n\nFeel free to ask questions anytime. Happy coding! 💻",
+        icon: "📚"
+      }
+    ]
+  },
+  MILESTONE: {
+    category: "Milestones & Deadlines",
+    templates: [
+      {
+        id: "deadline_reminder",
+        title: "Deadline Reminder",
+        message: "Friendly reminder! ⏰\n\nYour next milestone is coming up on [DATE]. Please make sure to:\n\n• Complete your current tasks\n• Update your GitHub repository\n• Prepare for the next phase\n\nYou've got this! If you need any support, just let us know. 💪",
+        icon: "📅"
+      },
+      {
+        id: "milestone_achieved",
+        title: "Milestone Celebration",
+        message: "Fantastic work! 🎉\n\nYou've successfully reached an important milestone. Your progress is impressive and your nonprofit partner is going to love what you're building!\n\nKeep up the momentum - you're making a real difference! 🌟",
+        icon: "🏆"
+      }
+    ]
+  }
+};
+
 // Component for managing teams in the admin panel
 const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon }) => {
   const theme = useTheme();
@@ -107,6 +185,9 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
   // Dialog states
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
+  // Add new states for message templates
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [customMessage, setCustomMessage] = useState(false);
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false); // New state for approval dialog
   const [userSearchDialogOpen, setUserSearchDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -268,6 +349,10 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
       active: team.active === "True",
     });
     fetchNonprofits(selectedHackathon);
+    // Reset message dialog state when switching teams
+    setSelectedTemplate(null);
+    setCustomMessage(false);
+    setMessageText("");
     setEditDialogOpen(true);
   };
 
@@ -340,6 +425,34 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
       setLoading(false);
       loadTeamDetails(teamData.id); // Reload team details to reflect the message
     }
+  };
+
+  // Change message dialog close handler
+  const handleCloseMessageDialog = () => {
+    setMessageDialogOpen(false);
+    setMessageText("");
+    setSelectedTemplate(null);
+    setCustomMessage(false);
+  };
+
+  // Handle template selection
+  const handleTemplateSelect = (template) => {
+    setSelectedTemplate(template);
+    // Replace nonprofit placeholder if applicable
+    let message = template.message;
+    if (teamData?.selected_nonprofit_id && message.includes('[NONPROFIT_NAME]')) {
+      const nonprofitName = getNonprofitName(teamData.selected_nonprofit_id);
+      message = message.replace(/\[NONPROFIT_NAME\]/g, nonprofitName);
+    }
+    setMessageText(message);
+    setCustomMessage(false);
+  };
+
+  // Handle custom message toggle
+  const handleCustomMessageToggle = () => {
+    setCustomMessage(true);
+    setSelectedTemplate(null);
+    setMessageText("");
   };
 
   // Handle team approval and nonprofit assignment
@@ -1047,13 +1160,19 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
         <CardContent>
           <Box sx={{ mb: 2, display: "flex", gap: 2, alignItems: "center" }}>
             <Typography variant="body2" gutterBottom>
-              Send a message to #{teamData.slack_channel}
+              Send a message to #{teamData.slack_channel || 'team-channel'}
             </Typography>
             <Button
               startIcon={<FaPaperPlane />}
               variant="contained"
               color="primary"
-              onClick={() => setMessageDialogOpen(true)}
+              onClick={() => {
+                // Reset dialog state when opening
+                setSelectedTemplate(null);
+                setCustomMessage(false);
+                setMessageText("");
+                setMessageDialogOpen(true);
+              }}
               disabled={!teamData.slack_channel}
             >
               Send Message
@@ -1528,34 +1647,151 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
       {/* Send Message Dialog */}
       <Dialog
         open={messageDialogOpen}
-        onClose={() => setMessageDialogOpen(false)}
-        maxWidth="sm"
+        onClose={handleCloseMessageDialog}
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Send Message to #{teamData?.slack_channel}</DialogTitle>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <FaPaperPlane />
+            Send Message to #{teamData?.slack_channel}
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            label="Message"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Type your message to the team..."
-            sx={{ mt: 1 }}
-          />
+          <Box sx={{ mt: 1 }}>
+            {!customMessage && !selectedTemplate && (
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Choose a Message Template
+                </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Select from common messages or write a custom one
+                </Typography>
+                
+                {Object.entries(MESSAGE_TEMPLATES).map(([categoryKey, category]) => (
+                  <Box key={categoryKey} sx={{ mb: 3 }}>
+                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                      {category.category}
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {category.templates.map((template) => (
+                        <Grid item xs={12} sm={6} key={template.id}>
+                          <Card 
+                            variant="outlined" 
+                            sx={{ 
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              '&:hover': {
+                                borderColor: 'primary.main',
+                                boxShadow: 1
+                              }
+                            }}
+                            onClick={() => handleTemplateSelect(template)}
+                          >
+                            <CardContent sx={{ pb: 2 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                <Typography variant="h6" component="span">
+                                  {template.icon}
+                                </Typography>
+                                <Typography variant="subtitle2" fontWeight="bold">
+                                  {template.title}
+                                </Typography>
+                              </Box>
+                              <Typography 
+                                variant="body2" 
+                                color="text.secondary"
+                                sx={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 3,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}
+                              >
+                                {template.message}
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                ))}
+                
+                <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={handleCustomMessageToggle}
+                    startIcon={<FaEdit />}
+                  >
+                    Write Custom Message
+                  </Button>
+                </Box>
+              </Box>
+            )}
+
+            {(selectedTemplate || customMessage) && (
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="h6">
+                    {selectedTemplate ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span>{selectedTemplate.icon}</span>
+                        {selectedTemplate.title}
+                      </Box>
+                    ) : (
+                      'Custom Message'
+                    )}
+                  </Typography>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setSelectedTemplate(null);
+                      setCustomMessage(false);
+                      setMessageText("");
+                    }}
+                  >
+                    Back to Templates
+                  </Button>
+                </Box>
+                
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={8}
+                  label="Message Content"
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Type your message to the team..."
+                  variant="outlined"
+                  helperText={`Message will be sent to #${teamData?.slack_channel || 'team-channel'}`}
+                />
+                
+                {selectedTemplate && (
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    <Typography variant="body2">
+                      💡 Feel free to customize this template before sending. The message above can be edited to fit your specific needs.
+                    </Typography>
+                  </Alert>
+                )}
+              </Box>
+            )}
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMessageDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleSendMessage}
-            variant="contained"
-            color="primary"
-            disabled={loading || !messageText.trim()}
-            startIcon={<FaPaperPlane />}
-          >
-            Send Message
-          </Button>
+          <Button onClick={handleCloseMessageDialog}>Cancel</Button>
+          {(selectedTemplate || customMessage) && (
+            <Button
+              onClick={handleSendMessage}
+              variant="contained"
+              color="primary"
+              disabled={loading || !messageText.trim()}
+              startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
+            >
+              Send Message
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
