@@ -180,14 +180,14 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
     );
   };
   
-  // Validate hackathon date is at least 5 months in the future
+  // Validate hackathon date is at least 2 months in the future
   const validateHackathonDate = (date) => {
     if (!date || !isValid(date)) return false;
     
     const today = new Date();
-    const fiveMonthsFromNow = addMonths(today, 5);
+    const twoMonthsFromNow = addMonths(today, 2);
     
-    return isAfter(date, fiveMonthsFromNow);
+    return isAfter(date, twoMonthsFromNow);
   };
 
   // Validate email format
@@ -268,7 +268,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
       const isValidHackathonDate = validateHackathonDate(date);
       setErrors((prev) => ({ 
         ...prev, 
-        [name]: isValidHackathonDate ? undefined : "Hackathon date should be at least 5 months in the future to allow for proper planning"
+        [name]: isValidHackathonDate ? undefined : "Hackathon date should be at least 2 months in the future to allow for proper planning"
       }));
     }
   };
@@ -574,7 +574,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                     <MenuItem value="1000+">1000+ participants</MenuItem>
                   </Select>
                   {errors.employeeCount && (
-                    <Typography color="error" variant="caption" sx={{ mt: 1 }}>
+                    <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
                       {errors.employeeCount}
                     </Typography>
                   )}
@@ -584,7 +584,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               <Grid item xs={12}>
                 <FormControl component="fieldset" fullWidth margin="normal" error={!!errors.participantType}>
                   <FormLabel component="legend">Who will participate in your hackathon?</FormLabel>
-                  <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
+                  <Typography variant="body1" color="textSecondary" sx={{ mb: 2, fontWeight: 500 }}>
                     Select all that apply
                   </Typography>
                   <FormGroup row>
@@ -652,7 +652,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                     />
                   </FormGroup>
                   {errors.participantType && (
-                    <Typography color="error" variant="caption">
+                    <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
                       {errors.participantType}
                     </Typography>
                   )}
@@ -686,14 +686,16 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                     />
                   </RadioGroup>
                   {errors.eventFormat && (
-                    <Typography color="error" variant="caption">
+                    <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
                       {errors.eventFormat}
                     </Typography>
                   )}
                   {formData.eventFormat === 'hybrid' && (
-                    <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
-                      Hybrid events require additional coordination and resources. We recommend choosing either in-person or virtual for optimal engagement.
-                    </Typography>
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Hybrid events require additional coordination and resources. We recommend choosing either in-person or virtual for optimal engagement.
+                      </Typography>
+                    </Alert>
                   )}
                 </FormControl>
               </Grid>
@@ -756,7 +758,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                     />
                   </RadioGroup>
                   {errors.hackathonTheme && (
-                    <Typography color="error" variant="caption">
+                    <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
                       {errors.hackathonTheme}
                     </Typography>
                   )}
@@ -778,10 +780,12 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               </Grid>
               
               <Grid item xs={12}>
-                <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>When would you like to host your hackathon?</Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  We recommend planning at least 5 months in advance to ensure a successful event with proper preparation.
-                </Typography>
+                <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>When would you like to host your hackathon?</Typography>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    💡 We recommend planning at least 2 months in advance to ensure a successful event with proper preparation.
+                  </Typography>
+                </Alert>
                 
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DatePicker
@@ -794,19 +798,21 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                         required: true,
                         margin: "normal",
                         error: !!errors.expectedHackathonDate,
-                        helperText: errors.expectedHackathonDate || "Plan for at least 5 months of preparation time"
+                        helperText: errors.expectedHackathonDate || "Plan for at least 2 months of preparation time"
                       }
                     }}
-                    minDate={addMonths(new Date(), 5)}
+                    minDate={addMonths(new Date(), 2)}
                   />
                 </LocalizationProvider>
               </Grid>
               
               <Grid item xs={12}>
-                <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Schedule a Planning Call</Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  Please select a Friday for an initial planning call. Our team will confirm the call details after reviewing your request.
-                </Typography>
+                <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Schedule a Planning Call</Typography>
+                <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.light', borderRadius: 2, border: '1px solid', borderColor: 'primary.main' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: 'primary.contrastText' }}>
+                    📞 Please select a Friday for an initial planning call. Our team will confirm the call details after reviewing your request.
+                  </Typography>
+                </Box>
               </Grid>
               
               <Grid item xs={12} sm={6}>
@@ -959,7 +965,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                       <FormControlLabel value="no" control={<Radio />} label="No, we need help" />
                     </RadioGroup>
                     {errors.hasNonprofitList && (
-                      <Typography color="error" variant="caption">
+                      <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
                         {errors.hasNonprofitList}
                       </Typography>
                     )}
@@ -1031,7 +1037,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                         />
                       </FormGroup>
                       {errors.nonprofitSource && (
-                        <Typography color="error" variant="caption">
+                        <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
                           {errors.nonprofitSource}
                         </Typography>
                       )}
@@ -1052,7 +1058,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                       <FormControlLabel value="specific-region" control={<Radio />} label="From a specific region" />
                     </RadioGroup>
                     {errors.preferredNonprofitLocation && (
-                      <Typography color="error" variant="caption">
+                      <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
                         {errors.preferredNonprofitLocation}
                       </Typography>
                     )}
@@ -1136,7 +1142,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               Division of Responsibilities
             </Typography>
             
-            <Typography variant="body2" paragraph>
+            <Typography variant="body1" paragraph sx={{ mb: 3, fontWeight: 500 }}>
               Please indicate who will be responsible for each aspect of the hackathon.
               This helps us understand how to best support you.
             </Typography>
@@ -1149,7 +1155,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   </Typography>
                   
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Venue & Equipment</Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Venue & Equipment</Typography>
                     <RadioGroup
                       row
                       name="venue"
@@ -1163,7 +1169,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   </Box>
                   
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Food & Refreshments</Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Food & Refreshments</Typography>
                     <RadioGroup
                       row
                       name="food"
@@ -1177,7 +1183,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   </Box>
                   
                   <Box>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Prizes & Swag</Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Prizes & Swag</Typography>
                     <RadioGroup
                       row
                       name="prizes"
@@ -1199,7 +1205,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   </Typography>
                   
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Judges</Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Judges</Typography>
                     <RadioGroup
                       row
                       name="judges"
@@ -1213,7 +1219,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   </Box>
                   
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Technical Mentors</Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Technical Mentors</Typography>
                     <RadioGroup
                       row
                       name="mentors"
@@ -1227,7 +1233,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   </Box>
                   
                   <Box>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Marketing & Communications</Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Marketing & Communications</Typography>
                     <RadioGroup
                       row
                       name="marketing"
@@ -1251,7 +1257,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                       <Box sx={{ mb: { xs: 2, md: 0 } }}>
-                        <Typography variant="body2" sx={{ mb: 1 }}>Nonprofit Recruitment & Onboarding</Typography>
+                        <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Nonprofit Recruitment & Onboarding</Typography>
                         <RadioGroup
                           row
                           name="nonprofitRecruitment"
@@ -1267,7 +1273,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                     
                     <Grid item xs={12} md={6}>
                       <Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>Participant Recruitment</Typography>
+                        <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Participant Recruitment</Typography>
                         <RadioGroup
                           row
                           name="participantRecruitment"
@@ -1291,7 +1297,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   </Typography>
                   
                   <Box>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Project Implementation & Follow-up</Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Project Implementation & Follow-up</Typography>
                     <RadioGroup
                       row
                       name="postEventSupport"
@@ -1307,9 +1313,11 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               </Grid>
             </Grid>
             
-            <Typography variant="body2" color="textSecondary">
-              Note: Final responsibilities will be agreed upon during our follow-up discussion.
-            </Typography>
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                💡 Note: Final responsibilities will be agreed upon during our follow-up discussion.
+              </Typography>
+            </Alert>
           </Box>
         )}
         
@@ -1374,41 +1382,52 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </Typography>
               )}
               
-              <Box
+              <Paper 
+                elevation={2}
                 sx={{
-                  mt: 2,
-                  p: 2,
-                  bgcolor: "#f5f5f5",
-                  borderRadius: 1,
-                  border: "1px solid #e0e0e0",
+                  mt: 3,
+                  p: 3,
+                  bgcolor: "#f8f9ff",
+                  borderRadius: 2,
+                  border: "2px solid #e3f2fd",
                 }}
               >
-                <Typography variant="body2" color="textSecondary">
-                  <strong>Typical costs include:</strong>
-                  <ul style={{ margin: "8px 0" }}>
-                    <li>
-                      $97 - Meals and refreshments per participant (36 hours
-                      of continuous hacking)
-                    </li>
-                    <li>
-                      $19 - Participant swag pack (shirt, hat, stickers)
-                    </li>
-                    <li>
-                      Prizes for winning teams and special categories
-                    </li>
-                    <li>
-                      Thank-you gifts for judges, mentors, and volunteers
-                    </li>
-                    <li>
-                      Marketing materials and promotional items
-                    </li>
-                  </ul>
-                  <Typography sx={{ mt: 1, fontStyle: 'italic' }}>
-                    Note: Event venue costs are not included in this estimate and are typically 
-                    provided by the host organization.
-                  </Typography>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                  💰 Typical Budget Breakdown:
                 </Typography>
-              </Box>
+                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                  <Box component="li" sx={{ mb: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      $97 per participant - Meals and refreshments (36 hours of continuous hacking)
+                    </Typography>
+                  </Box>
+                  <Box component="li" sx={{ mb: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      $19 per participant - Swag pack (shirt, hat, stickers)
+                    </Typography>
+                  </Box>
+                  <Box component="li" sx={{ mb: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      Prizes for winning teams and special categories
+                    </Typography>
+                  </Box>
+                  <Box component="li" sx={{ mb: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      Thank-you gifts for judges, mentors, and volunteers
+                    </Typography>
+                  </Box>
+                  <Box component="li">
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      Marketing materials and promotional items
+                    </Typography>
+                  </Box>
+                </Box>
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    ℹ️ Note: Event venue costs are not included and are typically provided by the host organization.
+                  </Typography>
+                </Alert>
+              </Paper>
             </Box>
             
             <Box 
@@ -1531,48 +1550,78 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               placeholder="Tell us about your organization's social responsibility goals or any specific areas of impact you're interested in..."
             />
             
-            <Box sx={{ mt: 3 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.agreeToContact}
-                    onChange={handleCheckboxChange}
-                    name="agreeToContact"
-                  />
-                }
-                label="I agree to be contacted by the Opportunity Hack team to discuss my request"
-              />
-              {errors.agreeToContact && (
-                <Typography color="error" variant="caption" display="block">
-                  {errors.agreeToContact}
-                </Typography>
-              )}
+            <Paper 
+              elevation={0}
+              sx={{ 
+                mt: 4, 
+                p: 3, 
+                bgcolor: 'grey.50',
+                border: '2px solid',
+                borderColor: 'primary.light',
+                borderRadius: 2
+              }}
+            >
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
+                📋 Required Agreements
+              </Typography>
               
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.agreeToTimeline}
-                    onChange={handleCheckboxChange}
-                    name="agreeToTimeline"
-                  />
-                }
-                label="I understand that hackathons require at least 5 months of preparation time for optimal success"
-              />
-              {errors.agreeToTimeline && (
-                <Typography color="error" variant="caption" display="block">
-                  {errors.agreeToTimeline}
-                </Typography>
-              )}
-            </Box>
+              <Box sx={{ mb: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.agreeToContact}
+                      onChange={handleCheckboxChange}
+                      name="agreeToContact"
+                      size="large"
+                    />
+                  }
+                  label={
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      I agree to be contacted by the Opportunity Hack team to discuss my request
+                    </Typography>
+                  }
+                />
+                {errors.agreeToContact && (
+                  <Typography color="error" variant="body2" display="block" sx={{ mt: 1, fontWeight: 600 }}>
+                    {errors.agreeToContact}
+                  </Typography>
+                )}
+              </Box>
+              
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.agreeToTimeline}
+                      onChange={handleCheckboxChange}
+                      name="agreeToTimeline"
+                      size="large"
+                    />
+                  }
+                  label={
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      I understand that hackathons require at least 2 months of preparation time for optimal success
+                    </Typography>
+                  }
+                />
+                {errors.agreeToTimeline && (
+                  <Typography color="error" variant="body2" display="block" sx={{ mt: 1, fontWeight: 600 }}>
+                    {errors.agreeToTimeline}
+                  </Typography>
+                )}
+              </Box>
+            </Paper>
           </Box>
         )}
         
         {/* Navigation buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 5, gap: 2 }}>
           <Button
             variant="outlined"
             onClick={handleBack}
             disabled={activeStep === 0}
+            size="large"
+            sx={{ minWidth: 100 }}
           >
             Back
           </Button>
@@ -1583,9 +1632,16 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
             onClick={handleNext}
             endIcon={activeStep === steps.length - 1 ? <CheckCircleIcon /> : <ArrowForwardIcon />}
             disabled={isSubmitting}
+            size="large"
+            sx={{ 
+              minWidth: 160,
+              fontWeight: 600,
+              fontSize: '1.1rem',
+              py: 1.5
+            }}
           >
             {activeStep === steps.length - 1 ? (
-              isSubmitting ? <CircularProgress size={24} /> : (isEdit ? "Update Request" : "Submit Request")
+              isSubmitting ? <CircularProgress size={24} color="inherit" /> : (isEdit ? "Update Request" : "Submit Request")
             ) : (
               "Continue"
             )}

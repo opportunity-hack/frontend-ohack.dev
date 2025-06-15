@@ -1,397 +1,540 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEffect } from 'react';
 
 import { TitleContainer, LayoutContainer, ProjectsContainer} from '../../../styles/nonprofit/styles';
 import Head from 'next/head';
-import { Typography, Grid, Card, CardContent, Box, Alert } from "@mui/material";
+import { 
+  Typography, 
+  Grid, 
+  Card, 
+  CardContent, 
+  Box, 
+  Alert, 
+  Paper,
+  Chip,
+  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  CircularProgress
+} from "@mui/material";
 import LoginOrRegister from '../../LoginOrRegister/LoginOrRegister';
 import Button from '@mui/material/Button';
-import { InstagramEmbed } from 'react-social-media-embed';
 import Link from 'next/link';
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
-import MentorChecklist from './MentorChecklist';
-
-
-const style = { fontSize: '15px' };
-const SponsorshipCTA = () => {
-  return (
-    <Alert severity="info" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h6" gutterBottom>
-        Did you know your mentorship can count towards sponsorship?
-      </Typography>
-      <Typography variant="body1" paragraph>
-        By tracking your volunteer hours as a mentor, you or your company can be
-        recognized as an Opportunity Hack sponsor!
-      </Typography>
-      <Link href="/sponsor" passHref>
-        <Button
-          component="a"
-          variant="outlined"
-          color="primary"
-          onClick={() =>
-            trackOnClickButtonClickWithGoogleAndFacebook("sponsorship_cta")
-          }
-        >
-          Learn About Sponsorship
-        </Button>
-      </Link>
-    </Alert>
-  );
-};
-
-const JudgeCTA = () => {
-  return (
-    <Box sx={{ mt: 4, p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-      <Typography variant="h5" gutterBottom>
-        Interested in another way to contribute? Consider becoming a judge!
-      </Typography>
-      <Typography variant="body1" paragraph>
-        As a judge, you'll evaluate innovative solutions, provide valuable feedback, and play a crucial role in recognizing top projects at Opportunity Hack.
-      </Typography>
-      <Link href="/about/judges" passHref>
-        <Button
-          component="a"
-          variant="contained"
-          color="secondary"
-        >
-          Learn About Judging
-        </Button>
-      </Link>
-    </Box>
-  );
-};
+import useHackathonEvents from '../../../hooks/use-hackathon-events';
+import {
+  SchoolRounded,
+  GroupsRounded,
+  CodeRounded,
+  BrushRounded,
+  BusinessRounded,
+  BarChartRounded,
+  CloudRounded,
+  GitHubRounded,
+  CheckCircleRounded,
+  EventRounded,
+  LocationOnRounded,
+  CalendarTodayRounded,
+  ExpandMoreRounded,
+  PersonRounded,
+  FavoriteRounded,
+  AssignmentRounded,
+  SupportRounded
+} from '@mui/icons-material';
 
 const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
     trackEvent("click_mentors", buttonName);
 }
- 
-const mentorGoogleForm = "https://forms.gle/WFBEwHVQcfpVXyYFA"
 
 const Mentorship = () => {
+  const [expandedSection, setExpandedSection] = useState('mentorTypes');
+  
+  // Use the same hook as volunteer page for consistency
+  const { hackathons: upcomingEvents, loading: loadingEvents } = useHackathonEvents("current");
 
-    useEffect(() => {
-        initFacebookPixel();
-      }
-    , []);
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
 
+  const formatEventDate = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (start.toDateString() === end.toDateString()) {
+      return start.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+    
+    return `${start.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    })} - ${end.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    })}`;
+  };
 
-return (
-  <LayoutContainer key="mentorship" container>
-    <Head>
-      <title>
-        Opportunity Hack Mentors: Guide Tech Innovation for Nonprofits | Join
-        Our Community
-      </title>
-      <meta
-        name="description"
-        content="Join Opportunity Hack as a mentor and use your skills to make a difference for nonprofits around the world."
-      />
-      <meta
-        name="keywords"
-        content="Opportunity Hack, Hackathon, Mentorship, Nonprofits, Software Engineers, Product Managers, UX Designers, Project Managers"
-      />
-      <meta property="og:title" content="Opportunity Hack - Mentorship" />
-      <meta
-        property="og:description"
-        content="Join Opportunity Hack as a mentor and use your skills to make a difference for nonprofits around the world."
-      />
-      <meta property="og:image" content="https://i.imgur.com/pzcF1aj.jpg" />
-      <meta property="og:url" content="https://ohack.dev/about/mentors" />
-    </Head>
+  const mentorTypes = [
+    {
+      title: 'Technical Mentor',
+      icon: <CodeRounded color="primary" />,
+      description: 'Guide teams through technical challenges, architecture decisions, and code implementation.',
+      skills: ['Software Engineering', 'Full-Stack Development', 'System Architecture', 'Code Review'],
+      color: 'primary'
+    },
+    {
+      title: 'Product Mentor',
+      icon: <BusinessRounded color="secondary" />,
+      description: 'Help teams understand user needs, define product scope, and prioritize features effectively.',
+      skills: ['Product Strategy', 'User Research', 'Feature Prioritization', 'Market Analysis'],
+      color: 'secondary'
+    },
+    {
+      title: 'UX/Design Mentor',
+      icon: <BrushRounded color="success" />,
+      description: 'Support teams in creating user-centered designs and improving user experience.',
+      skills: ['User Experience Design', 'Prototyping', 'Design Systems', 'User Testing'],
+      color: 'success'
+    },
+    {
+      title: 'Cloud & DevOps Mentor',
+      icon: <CloudRounded color="warning" />,
+      description: 'Help teams deploy their solutions and implement scalable cloud infrastructure.',
+      skills: ['Cloud Platforms', 'CI/CD', 'Infrastructure as Code', 'Deployment'],
+      color: 'warning'
+    },
+    {
+      title: 'Presentation Mentor',
+      icon: <BarChartRounded color="info" />,
+      description: 'Guide teams in creating compelling presentations and effective pitches.',
+      skills: ['Public Speaking', 'Storytelling', 'Pitch Development', 'Communication'],
+      color: 'info'
+    },
+    {
+      title: 'Project Management Mentor',
+      icon: <AssignmentRounded color="error" />,
+      description: 'Help teams organize their work, manage timelines, and coordinate effectively.',
+      skills: ['Agile Methodology', 'Team Coordination', 'Timeline Management', 'Risk Assessment'],
+      color: 'error'
+    }
+  ];
 
-    <TitleContainer container>
-      <Typography variant="h3" component="h1">
-        Opportunity Hack Mentorship
-      </Typography>
+  const mentorGuidelines = [
+    {
+      title: 'Team Assignment & Preferences',
+      content: `You have flexibility in how you'd like to mentor teams. During application, you can choose to: be matched with a specific team based on your expertise, select your preferred team(s) from the available options, or rotate between multiple teams to provide broader support. Let us know your preference and we'll accommodate your mentoring style and the needs of the teams.`
+    },
+    {
+      title: 'Nonprofit Context Understanding',
+      content: `Each team works with a specific nonprofit partner. Take time to understand the nonprofit's mission, constraints, and real-world challenges. This context is crucial for guiding teams toward practical, impactful solutions that the nonprofit can actually implement.`
+    },
+    {
+      title: 'Time Commitment & Availability',
+      content: `We ask for a minimum 3-hour commitment, but the most effective mentors typically engage for 6-8 hours across the event. You can mentor remotely through Slack and video calls, or attend in-person if the event is local to you.`
+    },
+    {
+      title: 'Communication Best Practices',
+      content: `Use team Slack channels for ongoing communication. Schedule regular check-ins (every 4-6 hours). Ask probing questions rather than giving direct answers. Focus on helping teams discover solutions independently while providing guidance when they're truly stuck.`
+    }
+  ];
 
-      <Grid container spacing={1}>
-        <Grid item xs={12} sm={6} md={8}>
-          <Typography variant="body1" style={style} paragraph>
-            Welcome to Opportunity Hack! As a mentor, you are instrumental to
-            the success of our event. Your skills, knowledge, and experience
-            will shape the outcomes of projects and the experience of our
-            participants. With different domains calling for expertise, we
-            invite Software Engineers, Product Managers, UX Designers, and
-            Project Managers to help make a difference for nonprofits around the
-            world.
-          </Typography>
-          <Box sx={{ flexGrow: 1, margin: 2 }}>
+  return (
+    <LayoutContainer key="mentorship" container>
+      <Head>
+        <title>
+          Mentor Guide - Shape the Future of Tech for Good | Opportunity Hack
+        </title>
+        <meta
+          name="description"
+          content="Guide the next generation of social impact technologists. Mentor teams building solutions for nonprofits at Opportunity Hack hackathons worldwide."
+        />
+        <meta
+          name="keywords"
+          content="Opportunity Hack, mentor, tech for good, nonprofit technology, hackathon mentorship, volunteer, social impact"
+        />
+        <meta property="og:title" content="Mentor Guide - Opportunity Hack" />
+        <meta
+          property="og:description"
+          content="Guide teams building technology solutions for nonprofits. Join our community of mentors making real impact through code."
+        />
+        <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/mentors_hero.webp" />
+        <meta property="og:url" content="https://ohack.dev/about/mentors" />
+      </Head>
+
+      <TitleContainer container>
+        <Typography
+          variant="h1"
+          component="h1"
+          sx={{ fontSize: { xs: "2.5rem", sm: "3rem", md: "3.5rem" }, mb: 2 }}
+        >
+          Become a Mentor
+        </Typography>
+        
+        <Typography variant="h5" component="h2" sx={{ mb: 3, color: 'text.secondary', fontWeight: 300 }}>
+          Guide Teams Building Technology Solutions for Nonprofits
+        </Typography>
+
+        <Typography variant="body1" sx={{ fontSize: '18px', mb: 4, maxWidth: '800px', mx: 'auto', lineHeight: 1.7 }}>
+          Share your expertise to help teams create meaningful technology solutions that make a real difference. 
+          As a mentor, you'll guide participants through technical challenges, strategic decisions, and product development 
+          while helping nonprofits achieve their missions through technology.
+        </Typography>
+
+        <Grid container spacing={2} sx={{ maxWidth: '600px', mx: 'auto', mb: 4 }}>
+          <Grid item xs={12} sm={6}>
             <Button
-              onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_1")}
+              variant="contained"
+              color="primary"
+              size="large"
+              fullWidth
+              href="#upcoming-events"
+              startIcon={<EventRounded />}
+              onClick={() => {
+                setTimeout(() => {
+                  document.getElementById('upcoming-events')?.scrollIntoView({ 
+                    behavior: 'smooth' 
+                  });
+                }, 100);
+              }}
+            >
+              Find Events to Mentor
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              fullWidth
+              href="/volunteer"
+              startIcon={<GroupsRounded />}
+            >
+              Explore All Roles
+            </Button>
+          </Grid>
+        </Grid>
+      </TitleContainer>
+
+      {/* Hero Image Section */}
+      <Box sx={{ textAlign: 'center', mb: 5 }}>
+        <Box
+          component="img"
+          src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp"
+          alt="Mentor providing hands-on guidance to a hackathon participant, demonstrating collaborative problem-solving"
+          sx={{
+            width: '100%',
+            maxWidth: '800px',
+            height: 'auto',
+            borderRadius: 2,
+            boxShadow: 3,
+            mb: 2
+          }}
+        />
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            color: 'text.secondary',
+            fontStyle: 'italic',
+            display: 'block'
+          }}
+        >
+          Mentor providing hands-on guidance to help teams build impactful solutions
+        </Typography>
+      </Box>
+
+      <ProjectsContainer style={{ marginTop: 20 }}>
+        {/* Upcoming Events Section */}
+        <Paper sx={{ p: 4, mb: 5, bgcolor: 'secondary.light', color: 'white' }} id="upcoming-events">
+          <Typography variant="h3" component="h2" gutterBottom sx={{ color: 'white' }}>
+            <SchoolRounded sx={{ mr: 2, verticalAlign: 'bottom' }} />
+            Upcoming Mentoring Opportunities
+          </Typography>
+          <Typography variant="body1" sx={{ fontSize: "18px", mb: 3, color: 'white' }}>
+            Join one of our upcoming hackathons as a mentor and make a direct impact on nonprofit technology solutions.
+          </Typography>
+          
+          {loadingEvents ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress color="inherit" />
+            </Box>
+          ) : upcomingEvents && upcomingEvents.length > 0 ? (
+            <Grid container spacing={3}>
+              {upcomingEvents.map((event) => (
+                <Grid item xs={12} md={6} key={event.event_id}>
+                  <Card sx={{ bgcolor: 'white', color: 'text.primary', height: '100%' }}>
+                    <CardContent>
+                      <Typography variant="h5" gutterBottom>
+                        {event.title}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                        <LocationOnRounded sx={{ mr: 0.5, fontSize: 16 }} />
+                        {event.location}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                        <CalendarTodayRounded sx={{ mr: 0.5, fontSize: 16 }} />
+                        {formatEventDate(event.start_date, event.end_date)}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Button 
+                          variant="contained" 
+                          color="secondary"
+                          href={`/hack/${event.event_id}/mentor-application`}
+                          onClick={() => trackOnClickButtonClickWithGoogleAndFacebook("mentor_apply_upcoming")}
+                          startIcon={<SchoolRounded />}
+                        >
+                          Apply to Mentor
+                        </Button>
+                        <Button 
+                          variant="contained"
+                          color="primary"
+                          href={`/hack/${event.event_id}/mentor-checkin`}
+                          startIcon={<SupportRounded />}
+                        >
+                          Mentor Check-in
+                        </Button>
+                        <Button 
+                          variant="outlined"
+                          href={`/hack/${event.event_id}`}
+                        >
+                          Event Details
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Alert severity="info" sx={{ bgcolor: 'rgba(255,255,255,0.9)', color: 'text.primary' }}>
+              <Typography variant="body1" gutterBottom>
+                No upcoming events scheduled at the moment.
+              </Typography>
+              <Typography variant="body2">
+                Check back soon or{' '}
+                <Link href="/hack" style={{ color: 'blue', textDecoration: 'underline' }}>
+                  view all hackathons
+                </Link>
+                {' '}to see past events and get notified about future opportunities.
+              </Typography>
+            </Alert>
+          )}
+          
+          <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button 
+              variant="contained" 
+              sx={{ bgcolor: 'white', color: 'secondary.main' }}
+              href="/hack"
+            >
+              View All Hackathons
+            </Button>
+            <Button 
+              variant="outlined" 
+              sx={{ borderColor: 'white', color: 'white' }}
+              href="/signup"
+            >
+              Join Our Community
+            </Button>
+          </Box>
+        </Paper>
+
+        {/* Why Mentor Section */}
+        <Box sx={{ mb: 5 }}>
+          <Typography variant="h3" component="h2" gutterBottom sx={{ textAlign: 'center' }}>
+            Why Become a Mentor?
+          </Typography>
+          <Typography variant="body1" sx={{ textAlign: 'center', mb: 4, maxWidth: '700px', mx: 'auto', fontSize: '18px', color: 'text.secondary' }}>
+            Mentoring at Opportunity Hack is more than volunteering—it's about using your professional skills to create lasting social impact.
+          </Typography>
+          
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ textAlign: 'center', height: '100%', p: 3 }}>
+                <FavoriteRounded color="primary" sx={{ fontSize: 48, mb: 2 }} />
+                <Typography variant="h5" gutterBottom>
+                  Make Real Impact
+                </Typography>
+                <Typography variant="body1">
+                  Guide teams creating solutions that nonprofits actually implement to help their communities
+                </Typography>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ textAlign: 'center', height: '100%', p: 3 }}>
+                <PersonRounded color="secondary" sx={{ fontSize: 48, mb: 2 }} />
+                <Typography variant="h5" gutterBottom>
+                  Develop Leadership
+                </Typography>
+                <Typography variant="body1">
+                  Enhance your mentoring and leadership skills while helping the next generation of technologists
+                </Typography>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ textAlign: 'center', height: '100%', p: 3 }}>
+                <GroupsRounded color="success" sx={{ fontSize: 48, mb: 2 }} />
+                <Typography variant="h5" gutterBottom>
+                  Expand Network
+                </Typography>
+                <Typography variant="body1">
+                  Connect with passionate developers, designers, and nonprofits from around the world
+                </Typography>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Divider sx={{ my: 5 }} />
+
+        {/* Mentor Types Section */}
+        <Box sx={{ mb: 5 }}>
+          <Typography variant="h3" component="h2" gutterBottom>
+            Types of Mentors We Need
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 4, maxWidth: '700px', fontSize: '18px', color: 'text.secondary' }}>
+            We welcome mentors from all technical backgrounds. Choose the area that best matches your expertise and interests.
+          </Typography>
+          
+          <Grid container spacing={3}>
+            {mentorTypes.map((mentorType, index) => (
+              <Grid item xs={12} md={6} key={index}>
+                <Card sx={{ height: '100%', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      {mentorType.icon}
+                      <Typography variant="h5" sx={{ ml: 2 }}>
+                        {mentorType.title}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" sx={{ mb: 3 }}>
+                      {mentorType.description}
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      Key Areas:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {mentorType.skills.map((skill) => (
+                        <Chip 
+                          key={skill} 
+                          label={skill} 
+                          size="small" 
+                          color={mentorType.color}
+                          variant="outlined"
+                        />
+                      ))}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+
+        <Divider sx={{ my: 5 }} />
+
+        {/* Mentor Guidelines Section */}
+        <Box sx={{ mb: 5 }}>
+          <Typography variant="h3" component="h2" gutterBottom>
+            Mentor Guidelines & Best Practices
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 4, maxWidth: '700px', fontSize: '18px', color: 'text.secondary' }}>
+            Essential information to help you be an effective mentor and create the best experience for both you and your teams.
+          </Typography>
+          
+          {mentorGuidelines.map((guideline, index) => (
+            <Accordion key={index} sx={{ mb: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMoreRounded />}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  {guideline.title}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
+                  {guideline.content}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Box>
+
+
+        {/* Sponsorship Recognition */}
+        <Alert severity="info" sx={{ mb: 5 }}>
+          <Typography variant="h6" gutterBottom>
+            <CheckCircleRounded sx={{ mr: 1, verticalAlign: 'bottom' }} />
+            Did you know your mentorship counts toward sponsorship?
+          </Typography>
+          <Typography variant="body1">
+            By tracking your volunteer hours as a mentor, you or your company can be recognized as an Opportunity Hack sponsor! 
+            Learn more about how your time investment creates value for everyone.
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              href="/sponsor"
+              onClick={() => trackOnClickButtonClickWithGoogleAndFacebook("sponsorship_cta")}
+            >
+              Learn About Sponsorship Recognition
+            </Button>
+          </Box>
+        </Alert>
+
+        {/* Call to Action */}
+        <Box sx={{ textAlign: 'center', mb: 5 }}>
+          <Typography variant="h3" component="h2" gutterBottom>
+            Ready to Make a Difference?
+          </Typography>
+          <Typography variant="body1" sx={{ fontSize: '18px', mb: 4, maxWidth: '600px', mx: 'auto', color: 'text.secondary' }}>
+            Join our community of mentors using their expertise to create technology solutions that help nonprofits change the world.
+          </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button
               variant="contained"
               size="large"
               color="primary"
-              href={mentorGoogleForm}
+              href="#upcoming-events"
+              onClick={() => {
+                document.getElementById('upcoming-events')?.scrollIntoView({ 
+                  behavior: 'smooth' 
+                });
+              }}
+              sx={{ fontSize: '16px' }}
             >
-              Mentor for OHack!
+              Find Events to Mentor
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              href="/about/judges"
+              sx={{ fontSize: '16px' }}
+            >
+              Consider Judging Instead
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              href="/volunteer"
+              sx={{ fontSize: '16px' }}
+            >
+              Explore Other Ways to Help
             </Button>
           </Box>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <InstagramEmbed
-            url="https://www.instagram.com/p/CxVnPC5vLYa/"
-            maxWidth={328}
-            height={500}
-          />
-        </Grid>
-      </Grid>
-    </TitleContainer>
+        </Box>
 
-    <ProjectsContainer style={{ marginTop: 10 }}>
-      <Typography variant="h4" component="h1">
-        Seeking Meaningful Impact in Your Career?
-      </Typography>
-      <Typography variant="body1" paragraph style={style}>
-        Are you a professional in the tech industry, but find yourself longing
-        to make a tangible, meaningful difference in the world? Does your daily
-        work leave you yearning for a deeper contribution to society? If this
-        strikes a chord with you, we have an opportunity that might just answer
-        your call.
-      </Typography>
-      <Typography variant="body1" paragraph style={style}>
-        Join us as a mentor at Opportunity Hack. Use your skills to guide and
-        support teams dedicated to creating software solutions for nonprofits.
-        Your expertise could be the catalyst that transforms a project from a
-        mere concept to a life-changing reality, impacting lives worldwide.
-      </Typography>
-      <Typography variant="body1" paragraph style={style}>
-        As a mentor, you provide invaluable service to the community, aid
-        nonprofits in resolving real-world problems, and make a genuine, lasting
-        difference. This is your opportunity to apply your skills in a fresh
-        context, challenge yourself, and learn and grow along the journey.
-      </Typography>
-      <Typography variant="h4" gutterBottom>
-        Opportunity Hack: More Than Just Coding
-      </Typography>
-      <Typography variant="body1" paragraph style={style}>
-        At its core, Opportunity Hack is about community. It's about harnessing
-        our collective skills to drive genuine change. As a mentor, you are a
-        cornerstone of this process. You'll bring ideas to life, and in doing
-        so, inspire, motivate, and empower participants by imparting your wisdom
-        and experiences.
-      </Typography>
-      <Typography variant="body1" paragraph style={style}>
-        If you're searching for purpose in your professional life, consider
-        volunteering as an Opportunity Hack mentor. It's not just about what you
-        can teach—it's also about what you can learn, the connections you can
-        forge, and the impact you can make. Together, we can use technology to
-        shape a better world. Are you ready to make a difference?
-      </Typography>
-      <Box sx={{ flexGrow: 1, margin: 2 }}>
-        <Button
-          onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_2")}
-          variant="contained"
-          size="large"
-          color="primary"
-          href={mentorGoogleForm}
-        >
-          Sign up to mentor for OHack!
-        </Button>
-      </Box>
-
-      <Grid container spacing={1}>
-        <Grid item xs={12} sm={6} md={8}>
-          <Typography variant="h4" component="h2">
-            The Role of a Mentor
-          </Typography>
-          <Typography variant="body1" paragraph style={style}>
-            As a mentor, you play a vital role in our hackathon. Your primary
-            responsibility is to provide guidance and support to participants as
-            they navigate through technical and strategic challenges. You're not
-            just a sounding board for ideas; you're the beacon that guides teams
-            towards their goals. You provide balance, expertise, and ensure
-            teams can rely on you when they need help the most.
-          </Typography>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} marginTop={1} marginBottom={2}>
-          <InstagramEmbed
-            url="https://www.instagram.com/p/CxQ7ycBh66q/"
-            maxWidth={328}
-            height={500}
-          />
-        </Grid>
-      </Grid>
-
-      <MentorChecklist hackathonStart={
-        new Date("2024-10-12T08:00:00-07:00")
-      } 
-      hackathonEnd={        
-        new Date("2024-10-13T18:00:00-07:00")
-      }
-      />
-
-      <SponsorshipCTA />
-
-      <Typography variant="h4" gutterBottom>
-        Types of Mentors
-      </Typography>
-
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Grid container direction="column" spacing={3}>
-            <Grid item>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h5" component="h3" gutterBottom>
-                    General Mentor
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    As a general mentor, you help steer the teams in the right
-                    direction. You'll leverage your experience and knowledge to
-                    help teams narrow down their project scope and assess the
-                    feasibility of their ideas. You'll be critical in ensuring
-                    projects are unique, viable, and considerate of their target
-                    demographic.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h5" component="h3" gutterBottom>
-                    Product Mentor
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    In this role, you'll bridge the gap between the nonprofit's
-                    needs and the user experience. Your focus will be on design
-                    thinking, project scoping, and customer requirements. You'll
-                    help teams to prioritize their work and ensure they keep
-                    their vision in alignment with the needs of the customer.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h5" component="h3" gutterBottom>
-                    Project Manager Mentor
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Your organizational skills are a lifeline for teams. You'll
-                    help define deliverables, set outcomes, and remove any
-                    roadblocks that teams may face. You ensure the teams stay on
-                    track and progress smoothly.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Grid container direction="column" spacing={3}>
-            <Grid item>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h5" component="h3" gutterBottom>
-                    Presentation Mentor
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Your job will be to guide teams in pitching their ideas
-                    effectively. You'll move from one team to another, helping
-                    them refine their presentation skills and make the best use
-                    of their presentation time. You will ensure that the team's
-                    pitch is coherent, succinct, and compelling.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h5" component="h3" gutterBottom>
-                    GitHub Mentor
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    As a GitHub mentor, you'll support teams in understanding
-                    code commits, solving merge conflicts, and meeting all
-                    GitHub-related requirements. You may also need to assist
-                    teams with submitting their projects on DevPost.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h5" component="h3" gutterBottom>
-                    Cloud Services Mentor
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Your expertise will help transform ideas from local
-                    prototypes into global solutions. You'll support teams in
-                    deploying their projects on the cloud, be it Heroku, AWS, or
-                    Google Cloud, ensuring their ideas can reach the audience
-                    they're intended for.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h5" component="h3" gutterBottom>
-                    Software Engineering Mentor
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    In the early stages, you'll guide teams in defining the
-                    right technology stack for their projects. As the event
-                    progresses, you'll switch gears to troubleshoot
-                    NullPointers, solve runtime exceptions, and help resolve UI
-                    display issues.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-
-      <Box sx={{ flexGrow: 1, margin: 2 }}>
-        <Button
-          onClick={trackOnClickButtonClickWithGoogleAndFacebook("mentor_3")}
-          variant="contained"
-          size="large"
-          color="secondary"
-          href={mentorGoogleForm}
-        >
-          Be a mentor for OHack!
-        </Button>
-      </Box>
-
-      <Typography variant="h4" component="h2" gutterBottom>
-        What It Takes
-      </Typography>
-
-      <Typography variant="body1" paragraph style={style}>
-        Being a mentor at Opportunity Hack requires patience, empathy, and a
-        knack for breaking down complex concepts into easily digestible bits. It
-        calls for a commitment to help others learn, grow, and the willingness
-        to share your expertise.
-      </Typography>
-
-      <Typography variant="body1" paragraph style={style}>
-        Remember, being a mentor is not about having all the answers, but about
-        asking the right questions and guiding participants to find their own
-        solutions.
-      </Typography>
-
-      <Typography variant="body1" paragraph style={style}>
-        Are you ready to make a difference? Join us as a mentor at Opportunity
-        Hack and help shape the future of nonprofit solutions!
-      </Typography>
-
-      <JudgeCTA />
-
-      <LoginOrRegister
-        introText="Ready to join us as a mentor?"
-        previousPage={"/about/mentors"}
-      />
-    </ProjectsContainer>
-  </LayoutContainer>
-);
+        <LoginOrRegister
+          introText="Ready to join our mentor community?"
+          previousPage={"/about/mentors"}
+        />
+      </ProjectsContainer>
+    </LayoutContainer>
+  );
 }
 
 export default Mentorship;
