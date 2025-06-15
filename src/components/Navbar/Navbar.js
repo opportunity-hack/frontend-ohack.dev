@@ -49,31 +49,21 @@ const getInvolvedMenuItems = [
   ["Become a Judge", "/about/judges"],
   ["Track Your Time", "/volunteer/track"],
   ["Join Our Slack", "/signup"],
-  ["Praise Board", "/praise"],
   ["Office Hours", "/office-hours"],
 ];
 
-// Reorganized about_settings with cleaner groupings
-const aboutMenuGroups = [
-  {
-    title: "About Opportunity Hack",
-    items: [
-      ["Our Mission", "/about"],
-      ["Success Stories", "/about/success-stories"],
-      ["Find Your Why", "/about/why"],
-      ["Project Completion", "/about/completion"],
-      ["Reward System", "/about/hearts"],
-    ],
-  },
-  {
-    title: "Resources",
-    items: [
-      ["Blog", "/blog"],
-      ["Give Feedback", "/feedback"],
-      ["Nonprofit Grants", "/nonprofit-grants"],
-      ["Contact Us", "/contact"],
-    ],
-  },
+// Unified about menu structure for both mobile and desktop
+const aboutMenuItems = [
+  ["Our Mission", "/about"],
+  ["Success Stories", "/about/success-stories"],
+  ["Find Your Why", "/about/why"],
+  ["Project Completion", "/about/completion"],
+  ["Reward System", "/about/hearts"],
+  ["Blog", "/blog"],
+  ["Praise Board", "/praise"],
+  ["Give Feedback", "/feedback"],
+  ["Nonprofit Grants", "/nonprofit-grants"],
+  ["Contact Us", "/contact"],
 ];
 
 const auth_settings = [
@@ -241,6 +231,7 @@ export default function NavBar() {
                 overflowY: "auto"
               }}
             >
+              {/* Main Navigation Pages */}
               {pages.map((page) => (
                 <Link href={page[1]} key={page[0]} passHref>
                   <MenuItem 
@@ -251,18 +242,7 @@ export default function NavBar() {
                   </MenuItem>
                 </Link>
               ))}
-              <Divider />
-              <ListSubheader>Get Involved</ListSubheader>
-              {getInvolvedMenuItems.map((item) => (
-                <Link href={item[1]} key={item[0]} passHref>
-                  <MenuItem 
-                    onClick={handleCloseNavMenu} 
-                    sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
-                  >
-                    <Typography textAlign="center">{item[0]}</Typography>
-                  </MenuItem>
-                </Link>
-              ))}
+              
               <Divider />
               <ListSubheader>Hackathon Resources</ListSubheader>
               {hackathonMenuItems.slice(1).map((item) => (
@@ -275,41 +255,79 @@ export default function NavBar() {
                   </MenuItem>
                 </Link>
               ))}
+              
               <Divider />
-              <ListSubheader>About Opportunity Hack</ListSubheader>
-              {aboutMenuGroups.map((group, index) => (
-                <div key={group.title}>
-                  {index > 0 && <Divider />}
-                  <ListSubheader>{group.title}</ListSubheader>
-                  {group.items.map((setting) => (
-                    <Link href={setting[1]} key={setting[0]} passHref>
-                      <MenuItem 
-                        onClick={handleCloseNavMenu} 
-                        sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
-                      >
-                        <Typography textAlign="center">{setting[0]}</Typography>
-                      </MenuItem>
-                    </Link>
-                  ))}
-                </div>
+              <ListSubheader>Get Involved</ListSubheader>
+              {getInvolvedMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu} 
+                    sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
+              
+              <Divider />
+              <ListSubheader>About & Resources</ListSubheader>
+              {aboutMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu} 
+                    sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
               ))}
             </Menu>
           </Box>
 
-          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-            <Link href="/" passHref>
-              <Image
-                src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
-                alt="Opportunity Hack logo"
-                width={100}
-                height={46}
-                priority
-              />
-            </Link>
-          </Box>
-
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            {pages.map((page) => (
+            {/* Hackathons dropdown for desktop */}
+            <Tooltip title="Hackathon Information">
+              <NavbarButton
+                onClick={handleOpenHackathonsMenu}
+                sx={{ my: 1, color: "white", display: "block" }}
+              >
+                Hackathons
+              </NavbarButton>
+            </Tooltip>
+            <Menu
+              sx={{ 
+                mt: "45px",
+                maxHeight: "75vh",
+                overflowY: "auto"
+              }}
+              id="hackathons-menu"
+              anchorEl={anchorElHackathons}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={Boolean(anchorElHackathons)}
+              onClose={handleCloseHackathonsMenu}
+            >
+              {hackathonMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseHackathonsMenu}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
+            </Menu>
+
+            {/* Other main pages */}
+            {pages.slice(1).map((page) => (
               <NavbarLink href={page[1]} key={page[0]}>
                 <Button
                   onClick={handleCloseNavMenu}
@@ -367,7 +385,7 @@ export default function NavBar() {
               ))}
             </Menu>
 
-            <Tooltip title="About Us">
+            <Tooltip title="About & Resources">
               <NavbarButton
                 onClick={handleOpenAboutMenu}
                 sx={{ my: 1, color: "white", display: "block" }}
@@ -395,21 +413,15 @@ export default function NavBar() {
               open={Boolean(anchorElAbout)}
               onClose={handleCloseAboutMenu}
             >
-              {aboutMenuGroups.map((group, index) => (
-                <div key={group.title}>
-                  {index > 0 && <Divider />}
-                  <ListSubheader>{group.title}</ListSubheader>
-                  {group.items.map((setting) => (
-                    <Link href={setting[1]} key={setting[0]} passHref>
-                      <MenuItem 
-                        onClick={handleCloseAboutMenu}
-                        sx={{ py: 1.5, minHeight: "48px" }}
-                      >
-                        <Typography textAlign="center">{setting[0]}</Typography>
-                      </MenuItem>
-                    </Link>
-                  ))}
-                </div>
+              {aboutMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseAboutMenu}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
               ))}
             </Menu>
           </Box>
