@@ -35,7 +35,8 @@ import {
   AccessTime as TimeIcon,
   Group as TeamsIcon,
   ChevronLeft as ChevronLeftIcon,
-  Dashboard as DashboardIcon
+  Dashboard as DashboardIcon,
+  Share as ShareIcon
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -122,6 +123,11 @@ const adminPages = [
     path: "/admin/giveaways", 
     label: "Giveaways", 
     icon: <GiftIcon style={{ color: "#ff9800" }} />
+  },
+  { 
+    path: "/admin/social-media", 
+    label: "Social Media", 
+    icon: <ShareIcon style={{ color: "#1DA1F2" }} />
   },
 ];
 
