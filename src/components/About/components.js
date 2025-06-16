@@ -44,7 +44,7 @@ export const ActionButtons = ({ gaButton }) => (
         onClick={() => gaButton('button_sponsorship', 'Learn about sponsorship')} 
         style={{ fontSize: '15px' }} 
         color="primary" 
-        href="/hack/2024_fall/sponsor"
+        href="/sponsor"
       >
         Sponsor Opportunities
       </Button>
