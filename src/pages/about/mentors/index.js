@@ -14,7 +14,7 @@ export default function Mentors() {
 
 export const getStaticProps = async () => {    
     const title = "Mentor Guide - Shape the Future of Tech for Good | Opportunity Hack";
-    const description = "Guide teams building technology solutions for nonprofits at Opportunity Hack hackathons worldwide. Share your expertise to create lasting social impact through mentorship.";
+    const description = "Become a mentor at Opportunity Hack and guide talented teams building life-changing technology solutions for nonprofits. Share your expertise, develop leadership skills, and create lasting social impact through code.";
     return {
         props: {
             title: "Mentor Guide - Opportunity Hack",
@@ -114,7 +114,65 @@ export const getStaticProps = async () => {
                     content: "@opportunityhack",
                     key: "twittercreator"
                 }               
-            ]
+            ],
+            structuredData: {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "Organization",
+                        "@id": "https://ohack.dev/#organization",
+                        "name": "Opportunity Hack",
+                        "url": "https://ohack.dev",
+                        "logo": {
+                            "@type": "ImageObject",
+                            "url": "https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp"
+                        },
+                        "sameAs": [
+                            "https://twitter.com/opportunityhack",
+                            "https://github.com/opportunity-hack"
+                        ]
+                    },
+                    {
+                        "@type": "WebPage",
+                        "@id": "https://ohack.dev/about/mentors#webpage",
+                        "url": "https://ohack.dev/about/mentors",
+                        "name": title,
+                        "description": description,
+                        "isPartOf": {
+                            "@type": "WebSite",
+                            "@id": "https://ohack.dev/#website"
+                        },
+                        "about": {
+                            "@type": "EducationalOrganization",
+                            "name": "Opportunity Hack Mentorship Program",
+                            "description": "A mentorship program connecting experienced technologists with teams building solutions for nonprofits"
+                        }
+                    },
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "Home",
+                                "item": "https://ohack.dev"
+                            },
+                            {
+                                "@type": "ListItem", 
+                                "position": 2,
+                                "name": "About",
+                                "item": "https://ohack.dev/about"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 3,
+                                "name": "Mentors",
+                                "item": "https://ohack.dev/about/mentors"
+                            }
+                        ]
+                    }
+                ]
+            }
         },
     };
 };

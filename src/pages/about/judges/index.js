@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Head from "next/head";
 import Link from "next/link";
 import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 import useHackathonEvents from '../../../hooks/use-hackathon-events';
@@ -204,32 +203,6 @@ const AboutJudges = () => {
 
   return (
     <Container maxWidth="lg">
-      <Head>
-        <title>
-          Judge Guide - Evaluate Tech Solutions for Social Impact | Opportunity
-          Hack
-        </title>
-        <meta
-          name="description"
-          content="Become an Opportunity Hack judge to evaluate innovative nonprofit technology solutions. Use your expertise to identify projects that create real social impact worldwide."
-        />
-        <meta
-          name="keywords"
-          content="Opportunity Hack, judge, hackathon judging, tech evaluation, nonprofit solutions, social impact, technology assessment, visa applications, community service, volunteer, social good, nonprofit technology, hackathon judge"
-        />
-        <meta property="og:title" content="Judge Guide - Opportunity Hack" />
-        <meta
-          property="og:description"
-          content="Evaluate innovative technology solutions for nonprofits. Join our community of judges assessing projects that create real social impact."
-        />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/about/judges" />
-        <meta
-          property="og:image"
-          content="https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
-        />
-        <link rel="canonical" href="https://ohack.dev/about/judges" />
-      </Head>
 
       <Box sx={{ padding: "2rem", fontSize: "1em" }}>
         <Typography
@@ -762,3 +735,168 @@ const AboutJudges = () => {
 };
 
 export default AboutJudges;
+
+export const getStaticProps = async () => {    
+    const title = "Judge Guide - Evaluate Tech Solutions for Social Impact | Opportunity Hack";
+    const description = "Become an Opportunity Hack judge and evaluate innovative technology solutions that transform nonprofits. Use your expertise to identify projects creating real social impact worldwide.";
+    return {
+        props: {
+            title: "Judge Guide - Opportunity Hack",
+            description: description,
+            openGraphData: [
+                {
+                    name: "title",
+                    property: "title",
+                    content: title,
+                    key: "title"
+                },
+                {
+                    name: "og:title",
+                    property: "og:title",
+                    content: title,
+                    key: "ogtitle"
+                },
+                {
+                    name: "author",
+                    property: "author",
+                    content: "Opportunity Hack",
+                    key: "author"
+                },
+                {
+                    name: "og:description",
+                    property: "og:description",
+                    content: description,
+                    key: "ogdescription"
+                },                                
+                {
+                    name: "image",
+                    property: "og:image",
+                    content: "https://cdn.ohack.dev/ohack.dev/judge_1.jpg",
+                    key: "ognameimage"
+                },
+                {
+                    property: "og:image:width",
+                    content: "1200",
+                    key: "ogimagewidth",
+                },
+                {
+                    property: "og:image:height",
+                    content: "630",
+                    key: "ogimageheight",
+                },
+                {
+                    name: "url",
+                    property: "url",
+                    content: "https://ohack.dev/about/judges",
+                    key: "url"
+                },
+                {
+                    name: "og:url",
+                    property: "og:url",
+                    content: "https://ohack.dev/about/judges",
+                    key: "ogurl"
+                },
+                {
+                    name: "twitter:card",
+                    property: "twitter:card",
+                    content: "summary_large_image",
+                    key: "twittercard"
+                },
+                {
+                    name: "twitter:site",
+                    property: "twitter:site",
+                    content: "@opportunityhack",
+                    key: "twittersite"
+                },
+                {
+                    name: "twitter:title",
+                    property: "twitter:title",
+                    content: title,
+                    key: "twittertitle"
+                },
+                {
+                    name: "twitter:description",
+                    property: "twitter:description",
+                    content: description,
+                    key: "twitterdesc"
+                },
+                {
+                    name: "twitter:image",
+                    property: "twitter:image",
+                    content: "https://cdn.ohack.dev/ohack.dev/judge_1.jpg",
+                    key: "twitterimage"
+                },
+                {
+                    name: "twitter:image:alt",
+                    property: "twitter:image:alt",                    
+                    content: "Judges evaluating hackathon projects and providing feedback to teams at Opportunity Hack",
+                    key: "twitterimagealt"
+                },
+                {
+                    name: "twitter:creator",
+                    property: "twitter:creator",
+                    content: "@opportunityhack",
+                    key: "twittercreator"
+                }               
+            ],
+            structuredData: {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "Organization",
+                        "@id": "https://ohack.dev/#organization",
+                        "name": "Opportunity Hack",
+                        "url": "https://ohack.dev",
+                        "logo": {
+                            "@type": "ImageObject",
+                            "url": "https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
+                        },
+                        "sameAs": [
+                            "https://twitter.com/opportunityhack",
+                            "https://github.com/opportunity-hack"
+                        ]
+                    },
+                    {
+                        "@type": "WebPage",
+                        "@id": "https://ohack.dev/about/judges#webpage",
+                        "url": "https://ohack.dev/about/judges",
+                        "name": title,
+                        "description": description,
+                        "isPartOf": {
+                            "@type": "WebSite",
+                            "@id": "https://ohack.dev/#website"
+                        },
+                        "about": {
+                            "@type": "EducationalOrganization",
+                            "name": "Opportunity Hack Judging Program", 
+                            "description": "Judges use their expertise as experienced professionals to give feedback to teams building technology solutions for nonprofits"
+                        }
+                    },
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "Home",
+                                "item": "https://ohack.dev"
+                            },
+                            {
+                                "@type": "ListItem", 
+                                "position": 2,
+                                "name": "About",
+                                "item": "https://ohack.dev/about"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 3,
+                                "name": "Judges",
+                                "item": "https://ohack.dev/about/judges"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+    };
+};

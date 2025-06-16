@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Head from "next/head";
 import Link from "next/link";
 import {
   Typography,
@@ -47,7 +46,7 @@ const VolunteerPage = () => {
   // Use the same hook as sponsor page for consistency
   const { hackathons: upcomingEvents, loading: loadingEvents } = useHackathonEvents("current");
 
-  // Define the three main role categories
+  // Define the four main role categories
   const roleTypes = {
     hacker: {
       title: "🚀 Hacker",
@@ -144,6 +143,38 @@ const VolunteerPage = () => {
           skills: ["Flexibility", "Teamwork", "Positive attitude", "Willingness to help"]
         }
       ]
+    },
+    judge: {
+      title: "⚖️ Judge",
+      subtitle: "Evaluate Solutions",
+      description: "You're an experienced professional who can evaluate team solutions, provide constructive feedback, and help select winning projects. Judges can be technical, product-focused, industry experts, or nonprofit sector experts.",
+      color: "warning",
+      roles: [
+        {
+          title: "Technical Judges",
+          icon: <EngineeringRounded />,
+          description: "Evaluate technical implementation, code quality, architecture, and feasibility of solutions.",
+          skills: ["Software engineering", "System architecture", "Code review", "Technical leadership"]
+        },
+        {
+          title: "Product Judges",
+          icon: <AssignmentRounded />,
+          description: "Assess user experience, market fit, and overall product viability for nonprofit use.",
+          skills: ["Product management", "UX evaluation", "Market analysis", "User research"]
+        },
+        {
+          title: "Nonprofit Sector Judges",
+          icon: <VolunteerActivismRounded />,
+          description: "Evaluate solutions based on nonprofit needs, impact potential, and sector expertise.",
+          skills: ["Nonprofit experience", "Social impact", "Sector knowledge", "Mission alignment"]
+        },
+        {
+          title: "Industry Expert Judges",
+          icon: <WorkRounded />,
+          description: "Bring domain-specific expertise to evaluate solutions in specialized areas.",
+          skills: ["Domain expertise", "Industry knowledge", "Strategic thinking", "Innovation assessment"]
+        }
+      ]
     }
   };
 
@@ -199,17 +230,6 @@ const VolunteerPage = () => {
 
   return (
     <>
-      <Head>
-        <title>How to Get Involved - Hacker, Mentor, or Volunteer | Opportunity Hack</title>
-        <meta
-          name="description"
-          content="Join Opportunity Hack as a Hacker (build solutions), Mentor (guide teams), or Volunteer (support events). Find the perfect role for your skills and make a difference in the nonprofit sector through technology."
-        />
-        <meta
-          name="keywords"
-          content="opportunity hack, hacker, mentor, volunteer, tech for good, nonprofit hackathon, software development, mentorship, event volunteer, coding for nonprofits"
-        />
-      </Head>
       <Box sx={{ padding: "2rem", fontSize: "1em" }}>
         <Typography
           variant="h1"
@@ -228,6 +248,42 @@ const VolunteerPage = () => {
           there's a perfect role for you!
         </Typography>
 
+        {/* Hero Image */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            mb: 5,
+            mt: 3,
+            textAlign: 'center'
+          }}
+        >
+          <Box sx={{ maxWidth: '600px', width: '100%' }}>
+            <Box
+              component="img"
+              src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp"
+              alt="Volunteers, mentors, hackers, and judges collaborating at an Opportunity Hack event to build technology solutions for nonprofits"
+              sx={{
+                width: '100%',
+                height: 'auto',
+                borderRadius: 2,
+                boxShadow: 3,
+                mb: 2
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                fontStyle: "italic",
+                display: "block",
+              }}
+            >
+              Hackers, mentors, volunteers, and judges working together to create impactful technology solutions for nonprofits
+            </Typography>
+          </Box>
+        </Box>
+
         {/* Role Overview Cards */}
         <Typography variant="h2" sx={{ fontSize: "2em", mb: 3, mt: 4 }}>
           Choose Your Role
@@ -235,7 +291,7 @@ const VolunteerPage = () => {
         
         <Grid container spacing={3} sx={{ mb: 5 }}>
           {Object.entries(roleTypes).map(([key, roleType]) => (
-            <Grid item xs={12} md={4} key={key}>
+            <Grid item xs={12} md={3} key={key}>
               <Card 
                 sx={{ 
                   height: '100%', 
@@ -380,7 +436,7 @@ const VolunteerPage = () => {
               <Tab 
                 key={key}
                 label={roleType.title} 
-                icon={key === 'hacker' ? <BuildRounded /> : key === 'mentor' ? <SchoolRounded /> : <VolunteerActivismRounded />}
+                icon={key === 'hacker' ? <BuildRounded /> : key === 'mentor' ? <SchoolRounded /> : key === 'volunteer' ? <VolunteerActivismRounded /> : <EmojiEventsRounded />}
                 iconPosition="start"
               />
             ))}
@@ -394,6 +450,46 @@ const VolunteerPage = () => {
                 {roleType.description}
               </Typography>
             </Alert>
+            
+            {/* Special callout for Judge role */}
+            {key === 'judge' && (
+              <Paper 
+                elevation={3} 
+                sx={{ 
+                  p: 3, 
+                  mb: 3, 
+                  bgcolor: 'warning.light', 
+                  color: 'white',
+                  textAlign: 'center'
+                }}
+              >
+                <EmojiEventsRounded sx={{ fontSize: 48, mb: 2 }} />
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+                  Want to Learn More About Judging?
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3, maxWidth: '600px', mx: 'auto' }}>
+                  Get the complete guide to judging at Opportunity Hack! Learn about evaluation criteria, 
+                  judging responsibilities, time commitments, and how to provide constructive feedback that helps teams grow.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  size="large"
+                  href="/about/judges"
+                  sx={{ 
+                    bgcolor: 'white', 
+                    color: 'warning.main',
+                    fontWeight: 'bold',
+                    '&:hover': { 
+                      bgcolor: 'grey.100',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                  startIcon={<EmojiEventsRounded />}
+                >
+                  Read the Complete Judge Guide
+                </Button>
+              </Paper>
+            )}
             
             {/* Special callout for Mentor role */}
             {key === 'mentor' && (
@@ -507,7 +603,7 @@ const VolunteerPage = () => {
                   Choose Your Role
                 </Typography>
                 <Typography variant="body1">
-                  Decide if you want to be a Hacker (build), Mentor (guide), or Volunteer (support)
+                  Decide if you want to be a Hacker (build), Mentor (guide), Volunteer (support), or Judge (evaluate)
                 </Typography>
               </CardContent>
             </Card>
@@ -599,7 +695,7 @@ const VolunteerPage = () => {
             Ready to Make a Difference?
           </Typography>
           <Typography variant="body1" sx={{ fontSize: "1.2em", mb: 3, maxWidth: '600px', mx: 'auto' }}>
-            Join thousands of developers, designers, and volunteers who are using their skills 
+            Join thousands of developers, designers, mentors, judges, and volunteers who are using their skills 
             to create positive change in the world through technology.
           </Typography>
           
@@ -638,3 +734,199 @@ const VolunteerPage = () => {
 };
 
 export default VolunteerPage;
+
+export const getStaticProps = async () => {    
+    const title = "How to Get Involved - Hacker, Mentor, or Volunteer | Opportunity Hack";
+    const description = "Join Opportunity Hack and make a difference! Whether you're a developer who wants to hack solutions, an experienced professional ready to mentor teams, or someone who loves supporting events, we have the perfect volunteer role for you.";
+    return {
+        props: {
+            title: "How to Get Involved - Opportunity Hack",
+            description: description,
+            openGraphData: [
+                {
+                    name: "title",
+                    property: "title",
+                    content: title,
+                    key: "title"
+                },
+                {
+                    name: "og:title",
+                    property: "og:title",
+                    content: title,
+                    key: "ogtitle"
+                },
+                {
+                    name: "author",
+                    property: "author",
+                    content: "Opportunity Hack",
+                    key: "author"
+                },
+                {
+                    name: "og:description",
+                    property: "og:description",
+                    content: description,
+                    key: "ogdescription"
+                },                                
+                {
+                    name: "image",
+                    property: "og:image",
+                    content: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp",
+                    key: "ognameimage"
+                },
+                {
+                    property: "og:image:width",
+                    content: "1200",
+                    key: "ogimagewidth",
+                },
+                {
+                    property: "og:image:height",
+                    content: "630",
+                    key: "ogimageheight",
+                },
+                {
+                    name: "url",
+                    property: "url",
+                    content: "https://ohack.dev/volunteer",
+                    key: "url"
+                },
+                {
+                    name: "og:url",
+                    property: "og:url",
+                    content: "https://ohack.dev/volunteer",
+                    key: "ogurl"
+                },
+                {
+                    name: "twitter:card",
+                    property: "twitter:card",
+                    content: "summary_large_image",
+                    key: "twittercard"
+                },
+                {
+                    name: "twitter:site",
+                    property: "twitter:site",
+                    content: "@opportunityhack",
+                    key: "twittersite"
+                },
+                {
+                    name: "twitter:title",
+                    property: "twitter:title",
+                    content: title,
+                    key: "twittertitle"
+                },
+                {
+                    name: "twitter:description",
+                    property: "twitter:description",
+                    content: description,
+                    key: "twitterdesc"
+                },
+                {
+                    name: "twitter:image",
+                    property: "twitter:image",
+                    content: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp",
+                    key: "twitterimage"
+                },
+                {
+                    name: "twitter:image:alt",
+                    property: "twitter:image:alt",                    
+                    content: "Volunteers, mentors, and hackers collaborating at an Opportunity Hack event to build technology solutions for nonprofits",
+                    key: "twitterimagealt"
+                },
+                {
+                    name: "twitter:creator",
+                    property: "twitter:creator",
+                    content: "@opportunityhack",
+                    key: "twittercreator"
+                }               
+            ],
+            structuredData: {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "Organization",
+                        "@id": "https://ohack.dev/#organization",
+                        "name": "Opportunity Hack",
+                        "url": "https://ohack.dev",
+                        "logo": {
+                            "@type": "ImageObject",
+                            "url": "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp"
+                        },
+                        "sameAs": [
+                            "https://twitter.com/opportunityhack",
+                            "https://github.com/opportunity-hack"
+                        ]
+                    },
+                    {
+                        "@type": "WebPage",
+                        "@id": "https://ohack.dev/volunteer#webpage",
+                        "url": "https://ohack.dev/volunteer",
+                        "name": title,
+                        "description": description,
+                        "isPartOf": {
+                            "@type": "WebSite",
+                            "@id": "https://ohack.dev/#website"
+                        },
+                        "about": {
+                            "@type": "VolunteerEvent",
+                            "name": "Opportunity Hack Volunteer Program",
+                            "description": "Our volunteer program has opportunities for developers, mentors, and event supporters to contribute to nonprofit technology solutions"
+                        }
+                    },
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "Home",
+                                "item": "https://ohack.dev"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 2,
+                                "name": "Volunteer",
+                                "item": "https://ohack.dev/volunteer"
+                            }
+                        ]
+                    },
+                    {
+                        "@type": "ItemList",
+                        "name": "Volunteer Opportunities",
+                        "description": "Various ways to contribute to Opportunity Hack",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "Hacker - Build Solutions",
+                                "description": "Developers and designers who build technology solutions for nonprofits"
+                            },
+                            {
+                                "@type": "ListItem", 
+                                "position": 2,
+                                "name": "Mentor - Guide Teams",
+                                "description": "Experienced professionals who guide teams and provide technical expertise"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 3, 
+                                "name": "Volunteer - Support Events",
+                                "description": "Event coordinators and support staff who help make hackathons successful"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 4,
+                                "name": "Judge - Evaluate Solutions",
+                                "description": "Judges who evaluate and provide feedback on technology solutions built during hackathons"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 5,
+                                "name": "Sponsor - Support Our Mission",
+                                "description": "Organizations and individuals who sponsor Opportunity Hack events and initiatives"
+                            }                                                
+                        ]
+                    }
+                ]
+            }
+        },
+    };
+};
