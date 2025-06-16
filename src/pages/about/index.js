@@ -505,3 +505,199 @@ export default function AboutUsPage() {
     </Container>
   );
 }
+
+export const getStaticProps = async () => {    
+    const title = "About Opportunity Hack - Coding for Social Good Since 2013 | Opportunity Hack";
+    const description = "Founded in 2013, Opportunity Hack harnesses the power of code for social good. Learn about our mission, founders, board members, and join our community of tech volunteers making sustainable change through hackathons and nonprofit technology solutions.";
+    return {
+        props: {
+            title: "About Opportunity Hack - Coding for Social Good Since 2013",
+            description: description,
+            openGraphData: [
+                {
+                    name: "title",
+                    property: "title",
+                    content: title,
+                    key: "title"
+                },
+                {
+                    name: "og:title",
+                    property: "og:title",
+                    content: title,
+                    key: "ogtitle"
+                },
+                {
+                    name: "author",
+                    property: "author",
+                    content: "Opportunity Hack",
+                    key: "author"
+                },
+                {
+                    name: "og:description",
+                    property: "og:description",
+                    content: description,
+                    key: "ogdescription"
+                },                                
+                {
+                    name: "image",
+                    property: "og:image",
+                    content: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_6.webp",
+                    key: "ognameimage"
+                },
+                {
+                    property: "og:image:width",
+                    content: "1200",
+                    key: "ogimagewidth",
+                },
+                {
+                    property: "og:image:height",
+                    content: "630",
+                    key: "ogimageheight",
+                },
+                {
+                    name: "url",
+                    property: "url",
+                    content: "https://ohack.dev/about",
+                    key: "url"
+                },
+                {
+                    name: "og:url",
+                    property: "og:url",
+                    content: "https://ohack.dev/about",
+                    key: "ogurl"
+                },
+                {
+                    name: "twitter:card",
+                    property: "twitter:card",
+                    content: "summary_large_image",
+                    key: "twittercard"
+                },
+                {
+                    name: "twitter:site",
+                    property: "twitter:site",
+                    content: "@opportunityhack",
+                    key: "twittersite"
+                },
+                {
+                    name: "twitter:title",
+                    property: "twitter:title",
+                    content: title,
+                    key: "twittertitle"
+                },
+                {
+                    name: "twitter:description",
+                    property: "twitter:description",
+                    content: description,
+                    key: "twitterdesc"
+                },
+                {
+                    name: "twitter:image",
+                    property: "twitter:image",
+                    content: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_6.webp",
+                    key: "twitterimage"
+                },
+                {
+                    name: "twitter:image:alt",
+                    property: "twitter:image:alt",                    
+                    content: "Developers, designers, and nonprofit partners collaborating at an Opportunity Hack event building technology solutions",
+                    key: "twitterimagealt"
+                },
+                {
+                    name: "twitter:creator",
+                    property: "twitter:creator",
+                    content: "@opportunityhack",
+                    key: "twittercreator"
+                }               
+            ],
+            structuredData: {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "Organization",
+                        "@id": "https://ohack.dev/#organization",
+                        "name": "Opportunity Hack",
+                        "url": "https://ohack.dev",
+                        "logo": {
+                            "@type": "ImageObject",
+                            "url": "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Dark_Blue.png"
+                        },
+                        "sameAs": [
+                            "https://twitter.com/opportunityhack",
+                            "https://github.com/opportunity-hack",
+                            "https://www.linkedin.com/company/opportunity-hack/",
+                            "https://www.instagram.com/opportunityhack/",
+                            "https://www.facebook.com/opportunityhack/"
+                        ],
+                        "foundingDate": "2013",
+                        "description": "Harness the power of code for social good, fostering an inclusive society and championing impactful, sustainable change through technology volunteering and hackathons since 2013.",
+                        "contactPoint": {
+                            "@type": "ContactPoint",
+                            "contactType": "customer service",
+                            "email": "board@ohack.dev"
+                        },
+                        "founder": [
+                            {
+                                "@type": "Person",
+                                "name": "Prashanthi Ravanavarapu"
+                            },
+                            {
+                                "@type": "Person", 
+                                "name": "Jot Powers"
+                            },
+                            {
+                                "@type": "Person",
+                                "name": "Bryant Chan"
+                            },
+                            {
+                                "@type": "Person",
+                                "name": "Smitha Satish"
+                            }
+                        ]
+                    },
+                    {
+                        "@type": "WebPage",
+                        "@id": "https://ohack.dev/about#webpage",
+                        "url": "https://ohack.dev/about",
+                        "name": title,
+                        "description": description,
+                        "isPartOf": {
+                            "@type": "WebSite",
+                            "@id": "https://ohack.dev/#website"
+                        },
+                        "about": {
+                            "@type": "Organization",
+                            "name": "Opportunity Hack",
+                            "description": "Organization focused on using technology for social good through hackathons and nonprofit partnerships"
+                        }
+                    },
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "Home",
+                                "item": "https://ohack.dev"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 2,
+                                "name": "About",
+                                "item": "https://ohack.dev/about"
+                            }
+                        ]
+                    },
+                    {
+                        "@type": "AboutPage",
+                        "mainEntity": {
+                            "@type": "Organization",
+                            "name": "Opportunity Hack"
+                        },
+                        "url": "https://ohack.dev/about",
+                        "description": "Learn about Opportunity Hack's mission, history, founders, and commitment to using technology for social good."
+                    }
+                ]
+            }
+        },
+    };
+};
