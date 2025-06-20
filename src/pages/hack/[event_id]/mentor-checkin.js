@@ -48,6 +48,7 @@ const MentorCheckinPage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [availabilitySlots, setAvailabilitySlots] = useState([]);
   const [currentActiveSlot, setCurrentActiveSlot] = useState(null);
+  const [showPreviousSlots, setShowPreviousSlots] = useState(false);
 
   // Helper function to check if a time slot is current
   const isCurrentTimeSlot = (slot) => {    
@@ -106,6 +107,30 @@ const MentorCheckinPage = () => {
     };
     return months[monthName] || 0;
   };
+
+  // Helper function to compare Month/Day only
+  const compareDatesDayMonthOnly = (date1, date2) => {
+    // Get the month (0-indexed) and day of the month for both dates
+    const month1 = date1.getMonth();
+    const day1 = date1.getDate();
+    const month2 = date2.getMonth();
+    const day2 = date2.getDate();
+  
+    // Compare month and day
+    if (month1 === month2 && day1 === day2) {
+      return 0; // Dates are the same day and month
+    } else if (month1 < month2 || (month1 === month2 && day1 < day2)) {
+      return -1; // date1 is earlier in the year (day and month) than date2
+    } else {
+      return 1; // date1 is later in the year (day and month) than date2
+    }
+  }
+
+  // Compare month and day of Date to current time
+  const isDateInThePast = (date1) => {
+    const currDate = new Date();
+    return compareDatesDayMonthOnly(date1, currDate) >= 0
+  }
 
   // Fetch event data and mentor data
   useEffect(() => {
@@ -639,13 +664,13 @@ const MentorCheckinPage = () => {
           ))}
         </Box>
 
-        {mentor.softwareEngineeringSpecifics && (
+        {mentor.engineeringSpecifics && (
           <>
             <Typography variant="body2" sx={{ mb: 1 }}>
               <strong>Software Specialties:</strong>
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {mentor.softwareEngineeringSpecifics.split(', ').map((specialty, index) => (
+              {mentor.engineeringSpecifics.map((specialty, index) => (
                 <Chip key={index} label={specialty} size="small" color="primary" variant="outlined" />
               ))}
             </Box>
@@ -878,7 +903,17 @@ const MentorCheckinPage = () => {
 
               {Object.keys(groupedAvailabilitySlots).length > 0 ? (                
                 <Box>
-                  {Object.entries(groupedAvailabilitySlots).map(([date, slots]) => (
+                {!showPreviousSlots && Object.entries(groupedAvailabilitySlots).filter(([date, _]) => (isDateInThePast(new Date(date)))).length > 0 && (
+                  <Button
+                    variant="text"
+                    color="primary"
+                    onClick={() => setShowPreviousSlots(true)}
+                  >
+                    Show Previous Slots
+                  </Button>
+                )}
+                {Object.entries(groupedAvailabilitySlots).filter(([date, _]) => (showPreviousSlots || isDateInThePast(new Date(date)))).map(([date, slots]) => {
+                  return (
                     <Paper key={date} elevation={2} sx={{ mb: 3, overflow: 'hidden' }}>
                       <Box sx={{
                         bgcolor: 'primary.light',
@@ -928,8 +963,7 @@ const MentorCheckinPage = () => {
                         })}
                       </Box>
                     </Paper>
-                  ))}
-
+                  )})}
                   {!currentActiveSlot && (
                     <Alert severity="info" sx={{ mt: 2 }}>
                       None of your registered time slots are currently active. You can still check in if you're available to mentor outside your scheduled times.
