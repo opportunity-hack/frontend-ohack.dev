@@ -309,7 +309,7 @@ const HackathonLeaderboard = ({
   
   const getGitHubTeamUrl = (team) => {
     if (!team || !orgName) return null;
-    return `https://github.com/orgs/${orgName}/teams/${team}`;
+    return `https://github.com/${orgName}/${team}`;
   };
 
   const renderContextualPlaceholder = () => {
