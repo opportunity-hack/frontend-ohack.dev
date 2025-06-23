@@ -217,8 +217,7 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
         (team.team_members &&
           team.team_members.some(
             (member) =>
-              member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              member.email.toLowerCase().includes(searchTerm.toLowerCase())
+              member.name.toLowerCase().includes(searchTerm.toLowerCase())              
           ))
     );
 
