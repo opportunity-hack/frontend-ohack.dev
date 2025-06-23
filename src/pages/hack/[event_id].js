@@ -839,7 +839,15 @@ export default function HackathonEvent({ eventData }) {
                 </Box>
 
                 <TeamList
-                  teams={event.teams}
+                  teams={event.teams?.sort((a, b) => {
+                    // Sort active teams first, inactive teams last
+                    const aActive = a.active === "True" || a.active === true;
+                    const bActive = b.active === "True" || b.active === true;
+                    
+                    if (aActive && !bActive) return -1;
+                    if (!aActive && bActive) return 1;
+                    return 0; // Keep original order for teams with same active status
+                  })}
                   event_id={event_id}
                   id={event.id}
                   endDate={event.end_date}
