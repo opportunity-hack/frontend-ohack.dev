@@ -14,12 +14,19 @@ import {
   IconButton,
   Chip,
   Divider,
+  Badge,
+  LinearProgress,
 } from "@mui/material";
 import { 
   FaGithub, 
   FaCalendarAlt, 
   FaUser, 
-  FaHeart 
+  FaHeart,
+  FaCodeBranch,
+  FaExclamationCircle,
+  FaCheckCircle,
+  FaCode,
+  FaGitAlt,
 } from 'react-icons/fa';
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
@@ -212,9 +219,326 @@ const formatCreatedDate = (dateString) => {
   }
 };
 
+// Helper function to extract org and repo from GitHub URL
+const parseGithubUrl = (url) => {
+  try {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/').filter(part => part);
+    if (pathParts.length >= 2) {
+      return {
+        org: pathParts[0],
+        repo: pathParts[1]
+      };
+    }
+  } catch (error) {
+    console.error('Invalid GitHub URL:', url, error);
+  }
+  return null;
+};
+
+// Enhanced TeamMember component with GitHub stats integration
+const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
+  if (!user) return null;
+  
+  // Handle both profile objects and user ID strings
+  const userId = typeof user === 'string' ? user : user.user_id || user.id;
+  const displayName = user.name || user.nickname || '';
+  const githubUsername = user.github || user.github_username;
+  
+  // Extract just the username if a full GitHub URL was provided
+  const cleanGithubUsername = githubUsername ? githubUsername.replace(/^https?:\/\/(www\.)?github\.com\//, '') : null;
+  const profileUrl = `/profile/${userId}`;
+  const firstLetter = displayName && displayName.length > 0 ? displayName[0] : '?';
+  
+  // Get GitHub stats for this member
+  const hasActivity = githubStats && (githubStats.commits > 0 || githubStats.issues?.total > 0);
+  
+  return (
+    <Grid item>
+      <Tooltip
+        title={
+          <Box sx={{ fontSize: "12px" }}>
+            <div>
+              <strong>{displayName}</strong>
+              {isCurrentUser && " (You)"}
+            </div>
+            {cleanGithubUsername && (
+              <div style={{ marginTop: "4px", fontSize: "11px", opacity: 0.8 }}>
+                <FaGithub style={{ marginRight: "4px", fontSize: "10px" }} />@
+                {cleanGithubUsername}
+              </div>
+            )}
+            {githubStats ? (
+              <Box sx={{ mt: 1, fontSize: "11px" }}>
+                <div>📝 {githubStats.commits || 0} commits</div>
+                <div>🐛 {githubStats.issues?.total || 0} issues</div>
+                <div>🔀 {githubStats.pull_requests?.total || 0} PRs</div>
+                {githubStats.latest_commit_time && (
+                  <div style={{ marginTop: 4, fontSize: '10px', opacity: 0.8 }}>
+                    Last active: {new Date(githubStats.latest_commit_time).toLocaleDateString()}
+                  </div>
+                )}
+              </Box>
+            ) : (
+              <div style={{ fontSize: '10px', opacity: 0.8, marginTop: 4 }}>
+                {cleanGithubUsername ? 'No GitHub activity yet' : 'No GitHub username'}
+              </div>
+            )}
+          </Box>
+        }
+      >
+        <IconButton
+          component={Link}
+          href={profileUrl}
+          aria-label={`${displayName}'s profile`}
+          sx={{
+            p: 0,
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.04)",
+            },
+          }}
+        >
+          <Badge
+            badgeContent={githubStats?.commits || 0}
+            color={hasActivity ? 'success' : 'default'}
+            max={99}
+            sx={{
+              '& .MuiBadge-badge': {
+                fontSize: '10px',
+                height: '16px',
+                minWidth: '16px',
+              }
+            }}
+          >
+            <Avatar
+              src={user.profile_image}
+              alt={displayName}
+              sx={{
+                ...(isCurrentUser && {
+                  border: "4px solid #3f51b5",
+                  boxShadow: "0 0 4px rgba(63, 81, 181, 0.5)",
+                }),
+                ...(hasActivity && {
+                  border: hasActivity ? '2px solid #4caf50' : '1px solid #e0e0e0',
+                }),
+                ...(cleanGithubUsername && {
+                  position: "relative",
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: -2,
+                    right: -2,
+                    width: 16,
+                    height: 16,
+                    backgroundColor: "#24292e",
+                    borderRadius: "50%",
+                    border: "2px solid white",
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z'/%3E%3C/svg%3E")`,
+                    backgroundSize: "10px 10px",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                  },
+                }),
+              }}
+            >
+              {firstLetter}
+            </Avatar>
+          </Badge>
+        </IconButton>
+      </Tooltip>
+      <Box sx={{ textAlign: "center", maxWidth: 64 }}>
+        <Typography
+          variant="caption"
+          display="block"
+          sx={{
+            mt: 0.5,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            fontWeight: isCurrentUser ? "bold" : "normal",
+            color: isCurrentUser ? "primary.main" : "inherit",
+          }}
+        >
+          {displayName}
+        </Typography>
+        {cleanGithubUsername && (
+          <Typography
+            variant="caption"
+            display="block"
+            sx={{
+              fontSize: "10px",
+              color: "text.secondary",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              mt: 0.25,
+            }}
+          >
+            <FaGithub style={{ marginRight: "2px", fontSize: "8px" }} />@
+            {cleanGithubUsername}
+          </Typography>
+        )}
+        {githubStats && hasActivity && (
+          <Typography
+            variant="caption"
+            display="block"
+            sx={{
+              fontSize: "9px",
+              color: "success.main",
+              fontWeight: "bold",
+              mt: 0.25,
+            }}
+          >
+            Active
+          </Typography>
+        )}
+      </Box>
+    </Grid>
+  );
+};
+
+// Updated GitHubStats component - now only shows repository overview
+const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => {
+  const [githubData, setGithubData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchGithubStats = async () => {
+      if (!githubUrl || !accessToken) return;
+
+      const parsedUrl = parseGithubUrl(githubUrl);
+      if (!parsedUrl) {
+        setError('Invalid GitHub URL');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/repository?org=${parsedUrl.org}&repo=${parsedUrl.repo}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to fetch GitHub data`);
+        }
+
+        const data = await response.json();
+        setGithubData(data);
+        
+        // Pass stats back to parent component
+        if (onStatsLoaded) {
+          onStatsLoaded(data);
+        }
+      } catch (err) {
+        console.error('Error fetching GitHub stats:', err);
+        setError('Failed to load GitHub statistics');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGithubStats();
+  }, [githubUrl, accessToken, onStatsLoaded]);
+
+  if (loading) {
+    return (
+      <Box sx={{ mt: 1, mb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <FaGithub style={{ marginRight: 8, fontSize: '14px' }} />
+          <Typography variant="body2">Loading GitHub stats...</Typography>
+        </Box>
+        <LinearProgress size="small" />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ mt: 1, mb: 1 }}>
+        <Typography variant="caption" color="error" sx={{ display: 'flex', alignItems: 'center' }}>
+          <FaExclamationCircle style={{ marginRight: 4, fontSize: '12px' }} />
+          {error}
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!githubData) return null;
+
+  // Calculate total commits
+  const totalCommits = githubData.contributors?.reduce((sum, contributor) => sum + (contributor.commits || 0), 0) || 0;
+  
+  // Calculate total issues
+  const totalIssues = githubData.contributors?.reduce((sum, contributor) => {
+    const issues = contributor.issues || {};
+    return sum + (issues.total || 0);
+  }, 0) || 0;
+
+  // Calculate total PRs
+  const totalPRs = githubData.contributors?.reduce((sum, contributor) => {
+    const prs = contributor.pull_requests || {};
+    return sum + (prs.total || 0);
+  }, 0) || 0;
+
+  return (
+    <Box sx={{ mt: 1, mb: 1 }}>
+      {/* Repository Overview Stats */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+        <Chip
+          icon={<FaGitAlt />}
+          label={`${totalCommits} commits`}
+          size="small"
+          color={totalCommits > 0 ? 'success' : 'default'}
+          variant={totalCommits > 0 ? 'filled' : 'outlined'}
+        />
+        {totalIssues > 0 && (
+          <Chip
+            icon={<FaExclamationCircle />}
+            label={`${totalIssues} issues`}
+            size="small"
+            color="info"
+            variant="outlined"
+          />
+        )}
+        {totalPRs > 0 && (
+          <Chip
+            icon={<FaCodeBranch />}
+            label={`${totalPRs} PRs`}
+            size="small"
+            color="primary"
+            variant="outlined"
+          />
+        )}
+        <Typography variant="caption" color="textSecondary">
+          {githubData.contributor_count} contributor{githubData.contributor_count !== 1 ? 's' : ''}
+        </Typography>
+      </Box>
+
+      {/* Encouragement message for inactive teams */}
+      {totalCommits === 0 && (
+        <Box sx={{ mt: 1, p: 1, backgroundColor: '#fff3e0', borderRadius: 1, border: '1px solid #ffcc02' }}>
+          <Typography variant="caption" color="#e65100" sx={{ display: 'flex', alignItems: 'center' }}>
+            <FaCode style={{ marginRight: 4, fontSize: '12px' }} />
+            Get started! No commits yet - time to push some code! 🚀
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
+  const [githubData, setGithubData] = useState(null);
   
   // Check if this team's button is currently loading
   const isLoading = loadingTeamId === team?.id;
@@ -237,6 +561,22 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   const joiningDisabledByStatus = isJoiningDisabledByStatus(team?.status);
   const canJoin = canJoinLeave && !joiningDisabledByStatus;
   const canLeave = canJoinLeave; // Users can still leave teams with restricted statuses
+
+  // Map team members to their GitHub stats
+  const getStatsForMember = (teamMember) => {
+    if (!githubData?.contributors || !teamMember) return null;
+    
+    // Try to match by GitHub username
+    const githubUsername = teamMember.github || teamMember.github_username;
+    if (!githubUsername) return null;
+
+    // Clean the username (remove @ and URL parts)
+    const cleanUsername = githubUsername.replace(/^@/, '').replace(/^https?:\/\/(www\.)?github\.com\//, '');
+    
+    return githubData.contributors.find(contributor => 
+      contributor.login === cleanUsername || contributor.id === cleanUsername
+    );
+  };
 
   return (
     <Card
@@ -307,17 +647,27 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
         {/* GitHub Repository and Admin */}
         <Box sx={{ mb: 1 }}>
           {hasGithubLinks && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-              <FaGithub style={{ marginRight: 8, fontSize: '14px' }} />
-              <Link
-                href={team.github_links[0].link}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="body2"
-              >
-                GitHub Repository
-              </Link>
-            </Box>
+            <>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                <FaGithub style={{ marginRight: 8, fontSize: '14px' }} />
+                <Link
+                  href={team.github_links[0].link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="body2"
+                >
+                  GitHub Repository
+                </Link>
+              </Box>
+              
+              {/* GitHub Statistics */}
+              <GitHubStats 
+                githubUrl={team.github_links[0].link}
+                teamMembers={team.users}
+                accessToken={accessToken}
+                onStatsLoaded={setGithubData}
+              />
+            </>
           )}
           
           {team?.github_username && (
@@ -342,7 +692,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
         <Divider sx={{ my: 1 }} />
 
-        <Typography variant="subtitle1" style={{ marginTop: "10px" }}>
+        <Typography variant="subtitle1" style={{ marginTop: "10px", marginBottom: "8px" }}>
           Team Members:
         </Typography>
         <Grid container spacing={1}>
@@ -355,8 +705,11 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 userProfile &&
                 (userId === userProfile.id || userId === userProfile.user_id);
 
+              // Get GitHub stats for this user
+              const githubStats = getStatsForMember(user);
+
               return (
-                <TeamMember
+                <TeamMemberWithStats
                   key={
                     typeof user === "string"
                       ? user
@@ -364,6 +717,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                   }
                   user={user}
                   isCurrentUser={isCurrentUser}
+                  githubStats={githubStats}
                 />
               );
             })}
@@ -749,6 +1103,7 @@ const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
               isHackathonExpired={isHackathonExpired(endDate)}
               teamJoinEnabled={teamJoinEnabled}
               nonprofitMap={nonprofitMap}
+              accessToken={accessToken}
             />
           </Grid>        
         ))}
