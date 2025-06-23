@@ -29,9 +29,8 @@ export default function CertInfoPage(){
             { 
                 
                 certInfos.map((certInfo) => {
-                return (                    
-                        <Certificate certInfo={certInfo} />
-                    
+                return (
+                  <Certificate key={certInfo.file_id} certInfo={certInfo} />
                 );
                 })    
             }

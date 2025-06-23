@@ -12,7 +12,9 @@ export default function SkillSet({Skills}) {
                 Skills !== undefined && Skills.map((skill) => {
                         return (
                             
-                            <Tooltip title={<span style={{ fontSize: "14px" }}>Skill: {skill}</span>}>
+                            <Tooltip key={
+                                skill
+                            } title={<span style={{ fontSize: "14px" }}>Skill: {skill}</span>}>
                                 <Chip key="mine" color="default" label={skill} icon={<HardwareIcon />} />
                             </Tooltip>
                             

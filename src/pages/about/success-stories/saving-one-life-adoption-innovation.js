@@ -52,6 +52,23 @@ export default function SavingOneLifeSuccessStory() {
         </Typography>
 
         <StyledPaper>
+          <Typography variant="h3" gutterBottom>
+            Final Demo (Summer 2020)
+          </Typography>
+          <VideoWrapper>
+            <iframe
+              width="560"
+              height="315"
+              src="https://www.youtube.com/embed/i_KQ0Z-0kkc"
+              title="Saving One Life Adoption Innovation Demo"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </VideoWrapper>
+        </StyledPaper>
+
+        <StyledPaper>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Typography variant="h2" gutterBottom>
@@ -144,20 +161,7 @@ export default function SavingOneLifeSuccessStory() {
               />
             </ListItem>
           </List>
-          <Typography variant="h3" gutterBottom>
-            Final Demo (Summer 2020)
-          </Typography>
-          <VideoWrapper>
-            <iframe
-              width="560"
-              height="315"
-              src="https://www.youtube.com/embed/i_KQ0Z-0kkc"
-              title="Saving One Life Adoption Innovation Demo"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </VideoWrapper>
+          
         </StyledPaper>
 
         <Grid container spacing={4} justifyContent="center" marginTop={4} marginBottom={4}>

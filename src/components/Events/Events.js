@@ -12,8 +12,7 @@ export default function Events({
   teams,
   userDetails,
   user,
-  problemStatementId,
-  onTeamCreate,
+  problemStatementId,  
   onTeamLeave,  
   onTeamJoin,
   isHelping,
@@ -174,8 +173,7 @@ export default function Events({
               problemStatementId={problemStatementId}
               eventId={event.id}
               eventStringId={event.event_id}
-              constraints={event.constraints}
-              onTeamCreate={onTeamCreate}
+              constraints={event.constraints}              
               onTeamLeave={onTeamLeave}              
               onTeamJoin={onTeamJoin}
               isHelping={isHelping}

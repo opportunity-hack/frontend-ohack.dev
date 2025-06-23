@@ -89,211 +89,289 @@ export default function FeedbackLite ( {feedback_url, history} ){
         }        
     }
 
-    return (                 
-        <div className="profile__details">            
-            
-            <p className="indent">
-            
-                <TextField onClick={handleClick} 
-                    sx={{width:350}} id="outlined-basic" 
-                    label="Your feedback link" defaultValue="..." 
-                    size="small" variant="outlined" value={feedback_url} />
-                <CopyAllIcon onClick={handleClick}  />    
+    return (
+      <div className="profile__details">
+        <p className="indent">
+          <TextField
+            onClick={handleClick}
+            sx={{ width: 350 }}
+            id="outlined-basic"
+            label="Your feedback link"
+            defaultValue="..."
+            size="small"
+            variant="outlined"
+            value={feedback_url}
+          />
+          <CopyAllIcon onClick={handleClick} />
 
-                <Snackbar
-                    open={open}
-                    onClose={() => setOpen(false)}
-                    autoHideDuration={2000}
-                    message="Copied link to clipboard"
-                />            
-            </p>
+          <Snackbar
+            open={open}
+            onClose={() => setOpen(false)}
+            autoHideDuration={2000}
+            message="Copied link to clipboard"
+          />
+        </p>
+        <Stack spacing={2} direction="row" sx={{ mb: 2 }}>
+          <Link href="/cert">
+            <Button style={{ marginTop: "10px" }} variant="contained">
+              See all certificates
+            </Button>
+          </Link>
+          <Link href="/about/hearts">
+            <Button style={{ marginTop: "10px" }} variant="contained">
+              Why we give out hearts
+            </Button>
+          </Link>
+        </Stack>
+        <h2 className="profile__title">
+          What{" "}
+          <FormControlLabel
+            onClick={handleWhatPrivateClick}
+            control={<Switch defaultChecked />}
+            label={whatPrivateText}
+          />
+        </h2>
+        What you've completed for nonprofits
+        <p className="indent">
+          <Typography component="legend">
+            <b>Productionalized Projects:</b> The number of projects that have
+            been operationalized.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.productionalized_projects}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-            <Stack spacing={2} direction="row" sx={{ mb: 2 }}>
-            <Link href="/cert"><Button style={{marginTop:'10px'}} variant="contained">See all certificates</Button></Link>
-            <Link href="/about/hearts"><Button style={{marginTop:'10px'}} variant="contained">Why we give out hearts</Button></Link>
-            </Stack>
+          <Typography component="legend">
+            <b>Requirements Gathering:</b> The number of projects where you
+            gathered requirements.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.requirements_gathering}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-            <h2 className="profile__title">What <FormControlLabel onClick={handleWhatPrivateClick} control={<Switch defaultChecked />} label={whatPrivateText} /></h2>
-            What you've completed for nonprofits
-            <p className="indent">
-                <Typography component="legend"><b>Productionalized Projects:</b> The number of projects that have been operationalized.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.productionalized_projects}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
+          <Typography component="legend">
+            <b>Documentation:</b> The number of projects where you wrote awesome
+            documentation for developers and nonprofits.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.documentation}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-                <Typography component="legend"><b>Requirements Gathering:</b> The number of projects where you gathered requirements.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.requirements_gathering}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
+          <Typography component="legend">
+            <b>Design Architecture:</b> UML-like diagrams like: sequence,
+            deployment, ERD, etc.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.design_architecture}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-                <Typography component="legend"><b>Documentation:</b> The number of projects where you wrote awesome documentation for developers and nonprofits.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.documentation}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
+          <Typography component="legend">Code Quality</Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.code_quality}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-                <Typography component="legend"><b>Design Architecture:</b> UML-like diagrams like: sequence, deployment, ERD, etc.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.design_architecture}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
-                
-                <Typography component="legend">Code Quality</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.code_quality}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
+          <Typography component="legend">Unit Test Writing</Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.unit_test_writing}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-                <Typography component="legend">Unit Test Writing</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.unit_test_writing}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
+          <Typography component="legend">Unit Test Coverage</Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.unit_test_coverage}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-                <Typography component="legend">Unit Test Coverage</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.unit_test_coverage}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
+          <Typography component="legend">
+            <b>Observability:</b> You added monitoring capabilities to your
+            software{" "}
+            <a
+              href="https://orangematter.solarwinds.com/2017/10/05/monitoring-and-observability-with-use-and-red/"
+              rel="noreferrer"
+              target="_black"
+            >
+              like USE and RED.
+            </a>
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.observability}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-                <Typography component="legend"><b>Observability:</b> You added monitoring capabilities to your software <a href="https://orangematter.solarwinds.com/2017/10/05/monitoring-and-observability-with-use-and-red/" rel="noreferrer" target="_black">like USE and RED.</a></Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.observability}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                /> 
+          <Typography component="legend">
+            <b>Judge:</b> You judged other people's work.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.judge}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-                <Typography component="legend"><b>Judge:</b> You judged other people's work.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.judge}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}                    
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
+          <Typography component="legend">
+            <b>Mentor:</b> You mentored other people.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.what.mentor}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
+        </p>
+        <h2 className="profile__title">
+          How{" "}
+          <FormControlLabel
+            onClick={handleHowPrivateClick}
+            control={<Switch defaultChecked />}
+            label={howPrivateText}
+          />
+        </h2>
+        How you went about it
+        <p className="indent">
+          <Typography component="legend">
+            <b>Standups Completed:</b> You provided updates on your work and
+            communicated to your team.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.how.standups_completed}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-                <Typography component="legend"><b>Mentor:</b> You mentored other people.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.what.mentor}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}                    
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
-                 
-            </p>
+          <Typography component="legend">
+            <b>Code Reliability:</b> the code you write doesn't crash and is
+            available for people to use.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.how.code_reliability}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
+          <Typography component="legend">
+            <b>
+              <a
+                href="https://www.linkedin.com/pulse/cdi-customer-driven-innovation-fredrik-haren/"
+                rel="noreferrer"
+                style={{
+                    color: "blue"
+                }}
+                target="_blank"
+              >
+                Customer Driven Innovation (CDI)
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://designthinking.ideo.com/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Design Thinking
+              </a>
+              :
+            </b>{" "}
+            You have consistent conversations with your customer to get feedback
+            on what you're building.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={
+              history.how.customer_driven_innovation_and_design_thinking
+            }
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
 
-            
-            <h2 className="profile__title">How <FormControlLabel onClick={handleHowPrivateClick} control={<Switch defaultChecked />} label={howPrivateText}/></h2>
-            How you went about it
-            <p className="indent">
-                <Typography component="legend"><b>Standups Completed:</b> You provided updates on your work and communicated to your team.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.how.standups_completed}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
-
-                <Typography component="legend"><b>Code Reliability:</b> the code you write doesn't crash and is available for people to use.</Typography>                
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.how.code_reliability}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
-
-                <Typography component="legend"><b><a href="https://www.linkedin.com/pulse/cdi-customer-driven-innovation-fredrik-haren/" rel="noreferrer" target="_blank">Customer Driven Innovation (CDI)</a> and <a href="https://designthinking.ideo.com/" rel="noreferrer" target="_blank">Design Thinking</a>:</b> You have consistent conversations with your customer to get feedback on what you're building.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.how.customer_driven_innovation_and_design_thinking}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
-
-                <Typography component="legend"><b>Iterations of code pushed to production:</b> You iterated on the final product.</Typography>
-                <StyledRating
-                    readOnly
-                    name="customized-color"
-                    defaultValue={history.how.iterations_of_code_pushed_to_production}
-                    getLabelText={(value) => `${value} Heart${value !== 1 ? 's' : ''}`}
-                    precision={0.5}
-                    max={MAX_HEARTS}
-                    icon={<FavoriteIcon fontSize="inherit" />}
-                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-                />
-            </p>
-
-
-        </div>
-
+          <Typography component="legend">
+            <b>Iterations of code pushed to production:</b> You iterated on the
+            final product.
+          </Typography>
+          <StyledRating
+            readOnly
+            name="customized-color"
+            defaultValue={history.how.iterations_of_code_pushed_to_production}
+            getLabelText={(value) => `${value} Heart${value !== 1 ? "s" : ""}`}
+            precision={0.5}
+            max={MAX_HEARTS}
+            icon={<FavoriteIcon fontSize="inherit" />}
+            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+          />
+        </p>
+      </div>
     );
 };

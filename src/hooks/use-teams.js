@@ -51,32 +51,7 @@ export default function useTeams(){
         onComplete(data);
         return data;
     };
-
-
-    const handle_new_team_submission = async (teamName, teamSlackChannel, problemStatementId, eventId, githubUsername, onComplete) => {
-        if (!user)
-            return null;
-
-        const config = {
-            url: `${apiServerUrl}/api/messages/team`,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: {
-                name: teamName,                
-                eventId: eventId,
-                problemStatementId: problemStatementId,
-                slackChannel: teamSlackChannel,
-                githubUsername: githubUsername   
-            }
-        };
-
-        const data = await makeRequest({ config, authenticated: true });
-        onComplete(data, problemStatementId, eventId);
-        return data;
-    };
+    
 
     const handle_join_team = async (teamId, onComplete) => {
         if (!user)
@@ -183,8 +158,7 @@ export default function useTeams(){
 
 
     return {
-        teams,
-        handle_new_team_submission,
+        teams,        
         handle_unjoin_a_team,
         handle_join_team,
         handle_get_team

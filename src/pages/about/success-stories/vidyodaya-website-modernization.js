@@ -18,7 +18,6 @@ import PeopleIcon from "@mui/icons-material/People";
 import GroupIcon from "@mui/icons-material/Group";
 import BusinessIcon from "@mui/icons-material/Business";
 import CodeIcon from "@mui/icons-material/Code";
-import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import BuildIcon from "@mui/icons-material/Build";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -89,6 +88,23 @@ export default function VidyodayaSuccessStory() {
         <Typography mt={10} variant="h2" align="center" gutterBottom>
           Vidyodaya: Modernizing Education Outreach for Adivasi Communities
         </Typography>
+
+        <StyledPaper>
+          <Typography variant="h3" gutterBottom>
+            Final Demo (Fall 2020)
+          </Typography>
+          <VideoWrapper>
+            <iframe
+              width="560"
+              height="315"
+              src="https://www.youtube.com/embed/03IeMq9qye4?si=aEdjB9nwQ-2GggBj"
+              title="Vidyodaya: Modernizing Education Outreach Demo"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </VideoWrapper>
+        </StyledPaper>
 
         <StyledPaper>
           <Grid container spacing={3}>
@@ -224,21 +240,6 @@ export default function VidyodayaSuccessStory() {
             and better showcasing their mission to improve education for Adivasi
             children.
           </Typography>
-
-          <Typography mt={3} variant="h3" gutterBottom>
-            Final Demo (Fall 2020)
-          </Typography>
-          <VideoWrapper>
-            <iframe
-              width="560"
-              height="315"
-              src="https://www.youtube.com/embed/03IeMq9qye4?si=aEdjB9nwQ-2GggBj"
-              title="Vidyodaya: Modernizing Education Outreach Demo"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </VideoWrapper>
         </StyledPaper>
 
         <Grid

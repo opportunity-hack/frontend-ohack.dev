@@ -75,8 +75,7 @@ export default function EventTeams(
         problemStatementId,
         eventId,
         eventStringId,
-        constraints,
-        onTeamCreate,
+        constraints,        
         onTeamLeave,        
         onTeamJoin,
         isHelping }) {     
@@ -132,8 +131,7 @@ export default function EventTeams(
         console.log("Delete Button Clicked");    
         onTeamLeave(team.id)
     };
-
-    const showCreateTeamButton = !isLoggedInUserAlreadyOnTeam && !isEventStartDateOlderThanToday && isHelping && constraints?.max_teams_per_problem > teamCounter;
+    
 
     // Declare const that will return Alert dialog if constraints.max_teams_per_problem is reached
     const AlertMaxTeamsPerProblem = () => {
@@ -190,51 +188,61 @@ export default function EventTeams(
             const isOnTeam = isUserOnThisTeam.includes(true);            
 
             
-        return (<Team team={team} userDetails={userDetails} isHelping={isHelping} _isOnTeam={isOnTeam} _isOnAnyTeam={isLoggedInUserAlreadyOnTeam} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} />);
+        return (<Team key={
+         team.id 
+        } team={team} userDetails={userDetails} isHelping={isHelping} _isOnTeam={isOnTeam} _isOnAnyTeam={isLoggedInUserAlreadyOnTeam} onJoin={handleJoinClicked} onDelete={handleDeleteClicked} />);
     });
     
     
-    return(                        
-            <Stack spacing={0}>
-            <div ref={myRef} id={`create-team-${eventStringId}-${problemStatementId}`}>
-            {
-                constraints?.max_teams_per_problem <= teamCounter && <AlertMaxTeamsPerProblem />
-            }
-                        
-            {
-            showCreateTeamButton &&                
-                <Button style={{ marginTop: 5, marginBottom: 5, padding: 10, fontSize: 15}} color="success" onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained">Create Team (and GitHub repo)</Button>
-            }
-            </div>
-                        
-            {
-            !isHelping && !isLoggedInUserAlreadyOnTeam  && !isEventStartDateOlderThanToday &&
-                <Tooltip 
-                    placement="right"
-                    enterTouchDelay={0}
-                    title={
-                        <span style={{ fontSize: '15px' }}>
-                            You need to be helping to create or join a team, slide that » slider below to the right to help. 👇
-                        </span>
-                    }                    
-                    >
-                <Badge color="error" badgeContent="!">
-                <Button onClick={() => onTeamCreate(problemStatementId, eventId)} variant="contained" disabled>Create Team</Button>                
-                </Badge>
-                </Tooltip>
-            }
-            
-            
-            {teamCounter > 0 && <div><GroupIcon style={{ color: "blue" }} /> {teamCounter} team{teamCounter > 1 || teamCounter === 0 ? "s" : ""}</div> }
-            
-            
-            <Stack spacing={0}>
-            { user && teamsToShow}
-            { !user && <Typography>Log in to see teams</Typography>}
-            </Stack>
+    return (
+      <Stack spacing={0}>
+        <div
+          ref={myRef}
+          id={`create-team-${eventStringId}-${problemStatementId}`}
+        >
+          {constraints?.max_teams_per_problem <= teamCounter && (
+            <AlertMaxTeamsPerProblem />
+          )}
+          
+        </div>
 
-            
-            </Stack>
-        
-    )
+        { // FIXME: Hard disable the create team button so that people have to use http://localhost:3000/hack/manageteam
+        false && !isHelping &&
+          !isLoggedInUserAlreadyOnTeam &&
+          !isEventStartDateOlderThanToday && (
+            <Tooltip
+              placement="right"
+              enterTouchDelay={0}
+              title={
+                <span style={{ fontSize: "15px" }}>
+                  You need to be helping to create or join a team, slide that »
+                  slider below to the right to help. 👇
+                </span>
+              }
+            >
+              <Badge color="error" badgeContent="!">
+                <Button
+                  onClick={() => onTeamCreate(problemStatementId, eventId)}
+                  variant="contained"
+                  disabled
+                >
+                  Create Team
+                </Button>
+              </Badge>
+            </Tooltip>
+          )}
+
+        {teamCounter > 0 && (
+          <div>
+            <GroupIcon style={{ color: "blue" }} /> {teamCounter} team
+            {teamCounter > 1 || teamCounter === 0 ? "s" : ""}
+          </div>
+        )}
+
+        <Stack spacing={0}>
+          {user && teamsToShow}
+          {!user && <Typography>Log in to see teams</Typography>}
+        </Stack>
+      </Stack>
+    );
 }    

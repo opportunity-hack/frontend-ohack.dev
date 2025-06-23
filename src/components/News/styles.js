@@ -2,7 +2,7 @@ import {
   Grid, 
   Button, 
   Typography, 
-  // Box 
+  Box 
 } from "@mui/material";
 import { styled, keyframes, css } from "@mui/material";
 
@@ -13,7 +13,7 @@ export const SlackButton = styled(Button)({
   marginTop: "0.5rem",
   fontWeight: 200,
   padding: "0.5rem 0.9rem",
-  fontSize: "11px",
+  fontSize: "12px",
   textTransform: "unset !important",  
   
   "&:hover": {
@@ -28,7 +28,7 @@ export const NewsLinkButton = styled(Button)({
   marginTop: "0.5rem",
 
   fontWeight: 200,
-  fontSize: "11px",
+  fontSize: "12px",
   textTransform: "unset !important",  
   
   "&:hover": {
@@ -142,51 +142,37 @@ export const GridStyled = styled(Grid)((props) => ({
   },
 }));
 
-export const BlankContainer = styled(Grid)((props) => ({
-  display: "flex",
-  flexDirection: "column",
-  position: "relative",    
-
+export const BlankContainer = styled(Grid)({
+  padding: '24px',
+  backgroundColor: '#ffffff',
+  borderRadius: '12px',
+  marginBottom: '20px',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+  transition: 'transform 0.2s ease',
   
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+  }
+});
+
+export const EventCards = styled(Grid)(({ frontpage }) => ({
+  width: '100%',
+  padding: frontpage ? '20px 0' : '20px',
+  backgroundColor: 'transparent',
+  boxShadow: 'none',
 }));
 
-export const EventCards = styled(Grid)((props) => ({
-  height: "auto",
-  padding: "2%",
-  maxWidth: props.frontpage ? "30%" : "100%",
-  boxShadow: "10px",
-  backgroundColor: "#e6f7ff",
-  borderRadius: "15px",
-  // margin: "3% 2% 2% 0%",
+export const TitleContainer = styled(Grid)({
+  marginBottom: '16px',
+});
 
-  [props.theme.breakpoints.down("md")]: {
-    maxWidth: "100%",
-    width: "100%",
-    marginTop: "3%",
-  },
-}));
-
-
-export const TitleContainer = styled(Grid)((props) => ({
-  padding: "1rem 5% 0px 0px",
-  marginTop: "1.1rem",
-
-  [props.theme.breakpoints.down("md")]: {
-    padding: props.right === "true" ? "15% 5% 5% 5%" : "3rem 2px 0 10px",
-    justifyContent: "center",
-    textAlign: "center",
-  },
-}));
-
-export const CaptionContainer = styled(Grid)((props) => ({
-  color: "#425466",
-  alignContent: "flex-start",
-  justifyContent: "flex-start",
-  justifyItems: "flex-start",
-  alignItems: "flex-start",
-
-  
-}));
+export const CaptionContainer = styled(Box)({
+  fontSize: '1.1rem',
+  lineHeight: '1.6',
+  color: '#424242',
+  marginBottom: '20px',
+});
 
 export const ButtonContainers = styled(Grid)((props) => ({
   display: "flex",
@@ -195,11 +181,13 @@ export const ButtonContainers = styled(Grid)((props) => ({
   gap: "1rem",
 }));
 
-export const ButtonContainersSmall = styled(Grid)((props) => ({  
-  flexDirection: "column",
-  width: "auto",
-  gap: "1rem",
-}));
+export const ButtonContainersSmall = styled(Grid)({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '10px',
+  justifyContent: 'flex-start',
+  marginTop: '16px',
+});
 
 export const TitleStyledCenter = styled(Typography)((props) => ({
   fontSize: "1.9em",

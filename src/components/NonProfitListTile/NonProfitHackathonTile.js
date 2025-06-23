@@ -113,12 +113,19 @@ export default function NonProfitHackathonTile({ eventId, npo, teams }) {
       // Return ProblemStatementChip and TeamsChip
       if (teamsWithThisProblemStatement.length > 0) {
         return (
-          <div>
-            <Link href={`/nonprofit/${npo.id}#create-team-${eventId}-${ps}`}><Button style={{ marginLeft:2}} variant="contained" size="small">Join team</Button></Link>
+          <div
+          key={ps.id}>
+            <Link 
+            key={npo.id}
+            href={`/nonprofit/${npo.id}#create-team-${eventId}-${ps}`}><Button style={{ marginLeft:2}} variant="contained" size="small">Join team</Button></Link>
             
-          <ProblemStatementChip problem_statement_id={ps} />     
+          <ProblemStatementChip 
+          key={ps.id}
+          problem_statement_id={ps} />     
           {teamsWithThisProblemStatement.map((t) => {
-            return <TeamsChip team_id={t.id} />;
+            return <TeamsChip 
+            key={t.id}
+            team_id={t.id} />;
           })}
           
           </div>
@@ -128,7 +135,7 @@ export default function NonProfitHackathonTile({ eventId, npo, teams }) {
 
     // Otherwise only return the problem statement chip
     return (
-     <ProblemStatementChip problem_statement_id={ps} />     
+     <ProblemStatementChip key={ps.id} problem_statement_id={ps} />     
     );
   }
   );

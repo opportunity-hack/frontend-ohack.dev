@@ -1,235 +1,175 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
 import MenuIcon from "@mui/icons-material/Menu";
-import * as ga from "../../lib/ga";
-
+import { trackEvent, initFacebookPixel, set } from "../../lib/ga";
 import Button from "@mui/material/Button";
-import ReactPixel from "react-facebook-pixel";
-import {useLogoutFunction} from "@propelauth/react"
-
-
-import {  
-  LoginButton,
-  // LogoutButton,
-  
-  NavbarLink,
-  NavbarButton,  
-} from "./styles";
-import {  
+import {
+  useLogoutFunction,
+  useAuthInfo,
+  useRedirectFunctions,
+} from "@propelauth/react";
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
   Typography,
+  Container,
+  Avatar,
+  Tooltip,
+  MenuItem,
+  Menu,
+  Divider,
+  ListSubheader,
 } from "@mui/material";
 
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-
-
-import Menu from '@mui/material/Menu';
-
-import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
-
-import Tooltip from '@mui/material/Tooltip';
-import MenuItem from '@mui/material/MenuItem';
-import { useAuthInfo  } from '@propelauth/react';
-import {useRedirectFunctions} from "@propelauth/react"
-
-
-
-/*
-TODO: In the future we may want to show notifications using something like this
-import NotificationsActive from '@mui/icons-material/NotificationsActive';
-import Badge from '@mui/material/Badge';
-import Tooltip from '@mui/material/Tooltip';
-*/
-
+import { LoginButton, NavbarLink, NavbarButton } from "./styles";
 
 const pages = [
-  [ '📩 Submit Project', '/nonprofits/apply' ],
-  [ '📖 Projects', '/nonprofits' ],      
-  [ '#️⃣ Join Slack', '/signup'],
-  [ '🙏 Mentors', '/about/mentors' ],
-  [ '🏆 Judges', '/about/judges' ],
-  // Sponsors
-  [ '🎉 Sponsors', '/sponsor' ],
-
-  
-  
-  // ['[TODO] Dashboard', '/myprofile'],
+  ["Hackathons", "/hack"],
+  ["Projects", "/projects"],
+  ["Nonprofits", "/nonprofits"],
+  ["Sponsors", "/sponsor"],
 ];
 
-const about_settings = [
-  [ 'ℹ️ About Us', '/about' ],  
-  [ '🙌 Success Stories', '/about/success-stories' ],
-  [ '🎉 Hackathon?' ,'/hack'],
+// Hackathon-related dropdown menu
+const hackathonMenuItems = [
+  ["Upcoming Events", "/hack"],
+  ["What is a Hackathon?", "/about/process"],
+  ["Request a Hackathon", "/hack/request"],
+  ["Code of Conduct", "/hack/code-of-conduct"],
+];
 
-  [ '❤️ Rewards', '/about/hearts' ],
-  [ '✅ Project Completion', '/about/completion' ],
- 
-  // Process
-  [ '📝 Process', '/about/process' ],
- 
-  [ '🚪 Office Hours', '/office-hours' ],
-  // Style Guide
-  [ '🎨 Style Guide', '/about/style-guide' ],
+// Get Involved dropdown menu
+const getInvolvedMenuItems = [
+  ["Volunteer", "/volunteer"],
+  ["Become a Mentor", "/about/mentors"],
+  ["Become a Judge", "/about/judges"],
+  ["Track Your Time", "/volunteer/track"],
+  ["Join Our Slack", "/signup"],
+  ["Office Hours", "/office-hours"],
+];
+
+// Unified about menu structure for both mobile and desktop
+const aboutMenuItems = [
+  ["Our Mission", "/about"],
+  ["Success Stories", "/about/success-stories"],
+  ["Find Your Why", "/about/why"],
+  ["Project Completion", "/about/completion"],
+  ["Reward System", "/about/hearts"],
+  ["Blog", "/blog"],
+  ["Praise Board", "/praise"],
+  ["Give Feedback", "/feedback"],
+  ["Nonprofit Grants", "/nonprofit-grants"],
+  ["Contact Us", "/contact"],
 ];
 
 const auth_settings = [
-  [ 'Profile', '/profile' ],  
+  ["My Profile", "/profile"],
+  ["My Feedback", "/myfeedback"],
+  ["Track Time", "/volunteer/track"],
 ];
 
-
-
-
-
-export default function NavBar() {  
+export default function NavBar() {
   const { isLoggedIn, user } = useAuthInfo();
   const { redirectToLoginPage } = useRedirectFunctions();
-  const logout = useLogoutFunction()
+  const logout = useLogoutFunction();
 
-  
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const [anchorElAbout, setAnchorElAbout] = React.useState(null);  
-  
+  const [anchorElAbout, setAnchorElAbout] = React.useState(null);
+  const [anchorElGetInvolved, setAnchorElGetInvolved] = React.useState(null);
+  const [anchorElHackathons, setAnchorElHackathons] = React.useState(null);
 
-  if (isLoggedIn && user && user.email) {    
-    ga.set(user.email);  
-    
-    ReactPixel.track('Login Email Set');
-  }
-
-  
-  
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      var advancedMatching = undefined;
-      if( isLoggedIn && user && user.email )
-      {
-        advancedMatching = {
-          em: user.email,
-          ct: '', // Add the missing properties
-          country: '',
-          db: '',
-          fn: '',
-          // Add the remaining properties
-        };
-      }
+    if (isLoggedIn && user?.email) {
+      // Set user data for analytics
+      set(user.email);
       
-      const options = {
-        autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-        debug: false, // enable logs
-      };
-
-      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
+      // Track login event
+      trackEvent({
+        action: "Login Email Set",
+        params: {}
+      });
     }
-  }, []);
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
+    // Initialize Facebook Pixel
+    initFacebookPixel();
+  }, [isLoggedIn, user]);
+
+  const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
+  const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
+  const handleOpenAboutMenu = (event) => setAnchorElAbout(event.currentTarget);
+  const handleOpenGetInvolvedMenu = (event) => setAnchorElGetInvolved(event.currentTarget);
+  const handleOpenHackathonsMenu = (event) => setAnchorElHackathons(event.currentTarget);
+  const handleCloseNavMenu = () => setAnchorElNav(null);
+  const handleCloseUserMenu = () => setAnchorElUser(null);
+  const handleCloseAboutMenu = () => setAnchorElAbout(null);
+  const handleCloseGetInvolvedMenu = () => setAnchorElGetInvolved(null);
+  const handleCloseHackathonsMenu = () => setAnchorElHackathons(null);
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Opportunity Hack",
+    url: "https://www.ohack.dev/",
+    logo: "https://cdn.ohack.dev/ohack.dev/ohack_white.webp",
+    description:
+      "Opportunity Hack connects technology with nonprofits to create innovative solutions through hackathons and ongoing projects. Based in Phoenix, Arizona.",
+    sameAs: [
+      "https://www.facebook.com/opportunityhack",
+      "https://twitter.com/opportunityhack",
+      "https://threads.net/opportunityhack",
+      "https://www.linkedin.com/company/opportunity-hack",
+      "https://www.instagram.com/opportunityhack",
+    ],
+    knowsAbout: [
+      "Hackathons",
+      "Nonprofit Technology",
+      "Social Impact",
+      "Volunteer Coding",
+      "Tech for Good",
+      "Arizona Tech",
+    ],
+    event: {
+      "@type": "Event",
+      name: "Opportunity Hack Arizona Hackathon",
+      startDate: "2024-10-12T08:00:00-07:00",
+      endDate: "2024-10-13T18:00:00-07:00",
+      location: {
+        "@type": "Place",
+        name: "ASU Tempe Engineering Center - Generator Labs",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "501 E Tyler Mall",
+          addressLocality: "Tempe",
+          addressRegion: "AZ",
+          postalCode: "85281",
+          addressCountry: "US",
+        },
+      },
+      description:
+        "Annual hackathon bringing together developers, designers, and nonprofits to create tech solutions for social good.",
+      url: "https://www.ohack.dev/hack",
+    },
   };
-
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-    // Check if logged in
-    if (isLoggedIn && user && user.email) {
-      ga.event({
-        action: "Open User Menu",
-        params: {
-          category: 'User',          
-          label: user.email,
-        }
-      });
-
-      /*
-      <!-- Event snippet for Page view conversion page
-      In your html page, add the snippet and call gtag_report_conversion when someone clicks on the chosen link or button. -->
-      <script>
-      function gtag_report_conversion(url) {
-        var callback = function () {
-          if (typeof(url) != 'undefined') {
-            window.location = url;
-          }
-        };
-        gtag('event', 'conversion', {
-            'send_to': 'AW-11474351176/JCk6COG-q4kZEMjost8q',
-            'event_callback': callback
-        });
-        return false;
-      }
-      </script>
-      */    
-
-      ga.event({ 
-        action: "conversion",
-        params: {
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
-    }    
-  };
-
-  const handleOpenAboutMenu = (event) => {
-    ga.event({ 
-        action: "conversion",        
-        params: {
-          "category": "handleOpenAboutMenu",
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
-    setAnchorElAbout(event.currentTarget);
-  }
-
-  const handleCloseNavMenu = () => {
-    ga.event({ 
-        action: "conversion",        
-        params: {
-          "category": "handleCloseNavMenu",
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
-    setAnchorElNav(null);
-  };
-
-  const handleCloseUserMenu = () => {
-    ga.event({ 
-        action: "conversion",        
-        params: {
-          "category": "handleCloseUserMenu",
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
-    setAnchorElUser(null);
-  };
-  
-  const handleCloseAboutMenu = () => {
-    ga.event({ 
-        action: "conversion",        
-        params: {
-          "category": "handleCloseAboutMenu",
-          send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-        }      
-      });
-
-    setAnchorElAbout(null);
-  }
-
 
   return (
-    <AppBar key="navbar" position="fixed">
-       <Head>
-        <link rel="preload" href="https://cdn.ohack.dev/ohack.dev/ohack_white.webp" as="image" />
-       </Head>
-      <Container key="navbarcontainer" maxWidth="xl">
+    <AppBar position="fixed">
+      <Head>
+        <link
+          rel="preload"
+          href="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
+          as="image"
+        />
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Head>
+      <Container maxWidth="xl">
         <Toolbar disableGutters>
-          
           <Typography
             variant="h6"
             noWrap
@@ -237,28 +177,25 @@ export default function NavBar() {
             href="/"
             sx={{
               mr: 2,
-              display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
+              display: { xs: "none", md: "flex" },
+              fontFamily: "monospace",
               fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
+              letterSpacing: ".3rem",
+              color: "inherit",
+              textDecoration: "none",
             }}
-          >            
+          >
             <Image
-                className="nav-bar__logo"
-                src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
-                alt="Opportunity Hack logo"
-                width={100}
-                height={86}            
-                justifyContent="center"
-                alignItems="center"
-                alignContent="center"                              
-                style={{ cursor: "pointer" }}
-              />            
+              className="nav-bar__logo"
+              src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
+              alt="Opportunity Hack logo"
+              width={256 / 2.5}
+              height={122 / 2.5}
+              priority
+            />
           </Typography>
 
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -266,6 +203,11 @@ export default function NavBar() {
               aria-haspopup="true"
               onClick={handleOpenNavMenu}
               color="inherit"
+              sx={{ 
+                padding: "12px",
+                minWidth: "48px", 
+                minHeight: "48px"
+              }}
             >
               <MenuIcon />
             </IconButton>
@@ -273,158 +215,284 @@ export default function NavBar() {
               id="menu-appbar"
               anchorEl={anchorElNav}
               anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
+                vertical: "bottom",
+                horizontal: "left",
               }}
               keepMounted
               transformOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
+                vertical: "top",
+                horizontal: "left",
               }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
               sx={{
-                display: { xs: 'block', md: 'none' },
+                display: { xs: "block", md: "none" },
+                maxHeight: "75vh",
+                overflowY: "auto"
               }}
-            >              
-            
+            >
+              {/* Main Navigation Pages */}
               {pages.map((page) => (
-                <Link prefetch={false} href={page[1]}>
-                  <MenuItem key={page[0]} onClick={handleCloseNavMenu}>
+                <Link href={page[1]} key={page[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
                     <Typography textAlign="center">{page[0]}</Typography>
                   </MenuItem>
                 </Link>
               ))}
-
-              {about_settings.map((setting) => (
-                <MenuItem key={setting[0]} onClick={handleCloseNavMenu}>
-                <Link prefetch={false} href={setting[1]}>                  
-                    <Typography textAlign="center">{setting[0]}</Typography>                  
+              
+              <Divider />
+              <ListSubheader>Hackathon Resources</ListSubheader>
+              {hackathonMenuItems.slice(1).map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu} 
+                    sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
                 </Link>
-                </MenuItem>
-              ))
-              }
-            
-
+              ))}
+              
+              <Divider />
+              <ListSubheader>Get Involved</ListSubheader>
+              {getInvolvedMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu} 
+                    sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
+              
+              <Divider />
+              <ListSubheader>About & Resources</ListSubheader>
+              {aboutMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseNavMenu} 
+                    sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
             </Menu>
           </Box>
-          
-          {
-            // Only display Image on mobile
-          }
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <Link prefetch={false} href="/" passHref>
-              <Image                                    
-                  src="https://i.imgur.com/A3FpKQQ.png"
-                  alt="Opportunity Hack logo"
-                  width={100}
-                  height={46}                                              
-                />
-            </Link>
-          </Box>          
-          
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
-              <NavbarLink prefetch={false} href={page[1]}><Button                
-                onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: 'white', display: 'block' }}
-              >                
-                {page[0]}
-              </Button>
+
+          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+            {/* Hackathons dropdown for desktop */}
+            <Tooltip title="Hackathon Information">
+              <NavbarButton
+                onClick={handleOpenHackathonsMenu}
+                sx={{ my: 1, color: "white", display: "block" }}
+              >
+                Hackathons
+              </NavbarButton>
+            </Tooltip>
+            <Menu
+              sx={{ 
+                mt: "45px",
+                maxHeight: "75vh",
+                overflowY: "auto"
+              }}
+              id="hackathons-menu"
+              anchorEl={anchorElHackathons}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={Boolean(anchorElHackathons)}
+              onClose={handleCloseHackathonsMenu}
+            >
+              {hackathonMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseHackathonsMenu}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
+            </Menu>
+
+            {/* Other main pages */}
+            {pages.slice(1).map((page) => (
+              <NavbarLink href={page[1]} key={page[0]}>
+                <Button
+                  onClick={handleCloseNavMenu}
+                  sx={{ 
+                    my: 2, 
+                    color: "white", 
+                    display: "block",
+                    px: 2,
+                    minWidth: "48px",
+                    minHeight: "48px"
+                  }}
+                >
+                  {page[0]}
+                </Button>
               </NavbarLink>
             ))}
 
-            <Tooltip title="About Us">
-              <NavbarButton                
+            <Tooltip title="Get Involved">
+              <NavbarButton
+                onClick={handleOpenGetInvolvedMenu}
+                sx={{ my: 1, color: "white", display: "block" }}
+              >
+                Get Involved
+              </NavbarButton>
+            </Tooltip>
+            <Menu
+              sx={{ 
+                mt: "45px",
+                maxHeight: "75vh",
+                overflowY: "auto"
+              }}
+              id="get-involved-menu"
+              anchorEl={anchorElGetInvolved}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={Boolean(anchorElGetInvolved)}
+              onClose={handleCloseGetInvolvedMenu}
+            >
+              {getInvolvedMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseGetInvolvedMenu}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
+                  </MenuItem>
+                </Link>
+              ))}
+            </Menu>
+
+            <Tooltip title="About & Resources">
+              <NavbarButton
                 onClick={handleOpenAboutMenu}
-                sx={{ my: 1, color: 'white', display: 'block' }}
+                sx={{ my: 1, color: "white", display: "block" }}
               >
                 About
               </NavbarButton>
             </Tooltip>
             <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
+              sx={{ 
+                mt: "45px",
+                maxHeight: "75vh",
+                overflowY: "auto"
+              }}
+              id="about-menu"
               anchorEl={anchorElAbout}
               anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
+                vertical: "top",
+                horizontal: "right",
               }}
               keepMounted
               transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
+                vertical: "top",
+                horizontal: "right",
               }}
               open={Boolean(anchorElAbout)}
               onClose={handleCloseAboutMenu}
             >
-              {about_settings.map((setting) => (
-                <Link prefetch={false} href={setting[1]}>
-                  <MenuItem key={setting[0]} onClick={handleCloseAboutMenu}>
-                    <Typography textAlign="center">{setting[0]}</Typography>
+              {aboutMenuItems.map((item) => (
+                <Link href={item[1]} key={item[0]} passHref>
+                  <MenuItem 
+                    onClick={handleCloseAboutMenu}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">{item[0]}</Typography>
                   </MenuItem>
                 </Link>
-              ))
-              }
-            </Menu> 
+              ))}
+            </Menu>
           </Box>
 
-          { isLoggedIn && <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Profile details">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt={user?.firstName} src={user?.pictureUrl} />
-              </IconButton>
-            </Tooltip>
-
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {auth_settings.map((setting) => (
-                <Link prefetch={false} href={setting[1]}>
-                  <MenuItem key={setting[0]} onClick={handleCloseUserMenu}>
-                    <Typography textAlign="center">{setting[0]}</Typography>
-                  </MenuItem>
-                </Link>
-              ))
-              }
-              <MenuItem onClick={() => logout(true)}>
-                <Typography textAlign="center">Log Out</Typography>
-              </MenuItem>
-
-
-              
-            </Menu>         
-          </Box>
-        }
-
-        { !isLoggedIn && <LoginButton
-                variant="contained"
-                disableElevation
-                  onClick={() => redirectToLoginPage({
-                    postLoginRedirectUrl: window.location.href
-                  })}
-                className="login-button"
+          {isLoggedIn && (
+            <Box sx={{ flexGrow: 0 }}>
+              <Tooltip title="Open settings">
+                <IconButton 
+                  onClick={handleOpenUserMenu} 
+                  sx={{ 
+                    p: 0,
+                    minWidth: "48px", 
+                    minHeight: "48px",
+                    margin: "4px" 
+                  }}
+                >
+                  <Avatar alt={user?.firstName} src={user?.pictureUrl} />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                sx={{ mt: "45px" }}
+                id="menu-appbar"
+                anchorEl={anchorElUser}
+                anchorOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+                open={Boolean(anchorElUser)}
+                onClose={handleCloseUserMenu}
               >
-                Log In                
-              </LoginButton>             
-            }           
+                {auth_settings.map((setting) => (
+                  <Link href={setting[1]} key={setting[0]} passHref>
+                    <MenuItem 
+                      onClick={handleCloseUserMenu}
+                      sx={{ py: 1.5, minHeight: "48px" }}
+                    >
+                      <Typography textAlign="center">{setting[0]}</Typography>
+                    </MenuItem>
+                  </Link>
+                ))}
+                <MenuItem 
+                  onClick={() => logout(true)}
+                  sx={{ py: 1.5, minHeight: "48px" }}
+                >
+                  <Typography textAlign="center">Log Out</Typography>
+                </MenuItem>
+              </Menu>
+            </Box>
+          )}
 
-
+          {!isLoggedIn && (
+            <LoginButton
+              variant="contained"
+              disableElevation
+              onClick={() =>
+                redirectToLoginPage({
+                  postLoginRedirectUrl: window.location.href,
+                })
+              }
+              className="login-button"
+            >
+              Log In
+            </LoginButton>
+          )}
         </Toolbar>
       </Container>
-    </AppBar>    
+    </AppBar>
   );
 }

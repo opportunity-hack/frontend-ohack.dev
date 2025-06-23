@@ -1,6 +1,6 @@
-import React, { use } from "react";
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
+// MUI Components
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
 import BuildIcon from "@mui/icons-material/Build";
@@ -10,309 +10,237 @@ import Switch from "@mui/material/Switch";
 import Stack from "@mui/material/Stack";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { styled } from "@mui/material/styles";
-import CoPresentIcon from '@mui/icons-material/CoPresent';
-import GitHubIcon from '@mui/icons-material/GitHub';
-
-import ReactMarkdown from 'react-markdown'
 import Divider from '@mui/material/Divider';
-
-
-
 import SupportIcon from "@mui/icons-material/Support";
 import Badge from "@mui/material/Badge";
 import { LoginButton } from "../Navbar/styles";
-
-
 import ArticleIcon from "@mui/icons-material/Article";
-import SmartDisplayIcon from '@mui/icons-material/SmartDisplay';
 import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import TextField from "@mui/material/TextField";
-
 import DeveloperModeIcon from "@mui/icons-material/DeveloperMode";
-
-import useProfileApi from "../../hooks/use-profile-api";
-import ProjectProgress from "../ProjectProgress/ProjectProgress";
-
 import Box from "@mui/material/Box";
-
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
 import Typography from "@mui/material/Typography";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import InputAdornment from "@mui/material/InputAdornment";
-
 import NotesIcon from '@mui/icons-material/Notes'; 
 import EventIcon from "@mui/icons-material/Event";
 import CodeIcon from "@mui/icons-material/Code";
-
 import useMediaQuery from '@mui/material/useMediaQuery';
-
-import Tab from '@mui/material/Tab';
-import TabContext from '@mui/lab/TabContext';
-import TabList from '@mui/lab/TabList';
-import TabPanel from '@mui/lab/TabPanel';
 import Link from "next/link";
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-// Add circle spinner
+import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Container from '@mui/material/Container';
+import Collapse from '@mui/material/Collapse';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import Fade from '@mui/material/Fade';
+import Zoom from '@mui/material/Zoom';
+import { useTheme } from '@mui/material/styles';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LaunchIcon from '@mui/icons-material/Launch';
+import ShareIcon from '@mui/icons-material/Share';
+import StarIcon from '@mui/icons-material/Star';
+import PeopleIcon from '@mui/icons-material/People';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import ReactMarkdown from 'react-markdown';
 
 
+// Imported Components
+import useProfileApi from "../../hooks/use-profile-api";
+import ProjectProgress from "../ProjectProgress/ProjectProgress";
 import useTeams from "../../hooks/use-teams";
-import Events from "../Events/Events";
-import {
-  AccordionButton,
-  AccordionContainer,
-  AccordionTitle,  
+import SkillSet from "../skill-set";
+import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
+import useProblemstatements from "../../hooks/use-problem-statements";
+import useHackathonEvents from "../../hooks/use-hackathon-events";
+import {useRedirectFunctions} from "@propelauth/react";
+import { trackEvent, initFacebookPixel } from '../../lib/ga';
+import { 
   ProjectCard,
   ProjectDescText,
   ShortDescText,
   TitleStyled,
   ReferencesStyled,
   YearStyled,
+  AccordionButton,
 } from "./styles";
-import Grid from '@mui/material/Grid';
+import Events from "../Events/Events";
+import ReferenceItem from "../ReferenceItem/ReferenceItem";
+import ProblemStatementContent from "../ProblemStatementContent/ProblemStatementContent";
+import { HelpDialog, UnhelpDialog } from "../HelpDialog/HelpDialog";
 
+// Modern styled components for engagement-driven UX
+const ModernProjectCard = styled(Card)(({ theme, status }) => ({
+  position: 'relative',
+  marginBottom: theme.spacing(4),
+  borderRadius: theme.spacing(3),
+  background: status === 'production' 
+    ? 'linear-gradient(135deg, #e8f5e8 0%, #f0fdf4 100%)'
+    : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+  border: `1px solid ${status === 'production' ? '#22c55e20' : '#e2e8f0'}`,
+  overflow: 'hidden',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+  },
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    background: status === 'production'
+      ? 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)'
+      : 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)',
+  }
+}));
 
-import SkillSet from "../skill-set";
-import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
-import ReactPixel from 'react-facebook-pixel';
-import useProblemstatements from "../../hooks/use-problem-statements";
-import useHackathonEvents from "../../hooks/use-hackathon-events";
-import {useRedirectFunctions} from "@propelauth/react"
+const HeroSection = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(4),
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  borderRadius: `${theme.spacing(3)} ${theme.spacing(3)} 0 0`,
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'url("data:image/svg+xml,%3Csvg width=\\"20\\" height=\\"20\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cdefs%3E%3Cpattern id=\\"grid\\" width=\\"20\\" height=\\"20\\" patternUnits=\\"userSpaceOnUse\\"%3E%3Cpath d=\\"M 20 0 L 0 0 0 20\\" fill=\\"none\\" stroke=\\"%23ffffff\\" stroke-width=\\"0.5\\" opacity=\\"0.1\\"%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect width=\\"100%25\\" height=\\"100%25\\" fill=\\"url(%23grid)\\" %2F%3E%3C%2Fsvg%3E")',
+  }
+}));
 
-import * as ga from '../../lib/ga';
+const MetricCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2.5),
+  textAlign: 'center',
+  background: 'linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)',
+  border: '1px solid rgba(0,0,0,0.06)',
+  borderRadius: theme.spacing(2),
+  transition: 'all 0.3s ease',
+  cursor: 'pointer',
+  '&:hover': {
+    transform: 'translateY(-2px) scale(1.02)',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.12)',
+    borderColor: theme.palette.primary.main
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme, variant: buttonVariant }) => ({
+  borderRadius: theme.spacing(4),
+  textTransform: 'none',
+  fontWeight: 600,
+  fontSize: '1rem',
+  padding: theme.spacing(1.5, 4),
+  minHeight: 48,
+  boxShadow: buttonVariant === 'contained' ? '0 4px 14px rgba(0,0,0,0.1)' : 'none',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  position: 'relative',
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: buttonVariant === 'contained' ? '0 8px 25px rgba(0,0,0,0.15)' : '0 4px 14px rgba(0,0,0,0.1)',
+  }
+}));
+
+const StatusChip = styled(Chip)(({ theme, chipstatus }) => ({
+  fontWeight: 600,
+  fontSize: '0.875rem',
+  padding: theme.spacing(0.5, 1),
+  background: chipstatus === 'production'
+    ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+    : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+  color: 'white',
+  border: 'none',
+  '& .MuiChip-icon': {
+    color: 'white'
+  }
+}));
+
+const SectionCard = styled(Card)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  borderRadius: theme.spacing(2),
+  border: '1px solid #e2e8f0',
+  background: '#ffffff',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    borderColor: theme.palette.primary.main + '40',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+  }
+}));
+
+const SectionHeader = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2, 3),
+  background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+  borderBottom: '1px solid #e2e8f0',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+  }
+}));
+
+const HelpToggle = styled(FormControlLabel)(({ theme }) => ({
+  margin: 0,
+  padding: theme.spacing(2),
+  borderRadius: theme.spacing(2),
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  border: '2px solid #e2e8f0',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    borderColor: theme.palette.primary.main,
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+  }
+}));
 
 export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isLargeScreen = useMediaQuery('(min-width: 768px)');
 
   const { redirectToLoginPage } = useRedirectFunctions();
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
-  const { handle_get_team, handle_new_team_submission, handle_join_team, handle_unjoin_a_team } = useTeams();
+  const { handle_join_team, handle_unjoin_a_team } = useTeams();
   
-
-  // For every item in problem_statement.events, get the event details with useCallback using handle_get_hackathon(event_id, onComplete) 
-  const [hackathonEvents, setHackathonEvents] = useState([]);
-  const [teamCreationError, setTeamCreationError] = useState(false);
-  const [teamCreationErrorDetails, setTeamCreationErrorDetails] = useState("");
-  const [sendingTeamDetails, setSendingTeamDetails] = useState(false);
+  // States
+  const [hackathonEvents, setHackathonEvents] = useState([]);  
   const [teamSuggestions, setTeamSuggestions] = useState(null);
-
   const [hackathonEventsLoaded, setHackathonEventsLoaded] = useState(false);
   const [hackathonEventsError, setHackathonEventsError] = useState(false);
-  const [hackathonEventsErrorDetails, setHackathonEventsErrorDetails] = useState(null);
-
-  const songs = [
-    "Lover",
-    "Willow",
-    "Blank Space",
-    "Shake It Off",
-    "Code Style",
-    "Good Blood",
-    "You Belong With Me",
-    "Fearless",
-    "Red",
-    "Sparks Fly",
-    "Enchanted",    
-    "Mine",
-    "Back To December",
-    "The Story Of Us",
-    "Speak Now",
-    "Fifteen",    
-    "Hey Stephen",
-    "White Horse",
-  ];
-
-  const codeAdjectives = [
-  "Compiler",
-  "Cryptic",
-  "Systematic", 
-  "Coding",
-  "Serverless",
-  "Codable",
-  "Codified", 
-  "Exception", 
-  "Exceptional"
-];
-
-const volunteerWords = [
-  "Leaders",
-  "Heroes",  
-  "Visionaries",
-  "Helpers",
-  "Humans",
-  "Advocates", 
-  "Volunteers",  
-  "Champions",
-  "Ambassadors"  
-];
-
-  useEffect(() => {
-    // Generate random team name suggestions using Taylor Swift songs and social good as the topic and only provide two words from them
-    // Pick 1 word from songs, codeAdjectives, and volunteerWords
-    const teamSuggestions = [];
-    const randomSong = songs[Math.floor(Math.random() * songs.length)];
-    const randomCodeAdjective = codeAdjectives[Math.floor(Math.random() * codeAdjectives.length)];
-    const randomVolunteerWord = volunteerWords[Math.floor(Math.random() * volunteerWords.length)];
-    teamSuggestions.push(randomSong + " " + randomCodeAdjective + " " + randomVolunteerWord);    
-    setTeamSuggestions(teamSuggestions);
-  
-
-
-    if (problem_statement && problem_statement.events) {
-      const events = problem_statement.events;
-      const hackathonEvents = [];
-      const promises = [];
-      events.forEach((id) => {        
-        const promise = new Promise((resolve, reject) => {          
-          handle_get_hackathon_id(id, (hackathonEvent) => {
-            if (hackathonEvent) {
-              
-              hackathonEvents.push(hackathonEvent);
-              resolve(hackathonEvent);
-            } else {
-              reject("Error getting hackathon event");
-            }
-          });
-        });
-        promises.push(promise);
-      });
-      Promise.all(promises)
-        .then((values) => {          
-          setHackathonEvents(hackathonEvents);
-          setHackathonEventsLoaded(true);
-        })
-        .catch((error) => {
-          setHackathonEventsError(true);
-          setHackathonEventsErrorDetails(error);
-        });
-    }
-  }, [problem_statement_id, problem_statement]);
-  
-
   const [teams, setTeams] = useState([]);
-  const [teamsLoaded, setTeamsLoaded] = useState(false);
-  const [teamsError, setTeamsError] = useState(false);
-  const [teamsErrorDetails, setTeamsErrorDetails] = useState(null);
-  useEffect(() => {
-    if (hackathonEvents) {      
-      const teamsArray = [];
-      const promises = [];
-      hackathonEvents.forEach((event) => {          
-          event.teams && event.teams.forEach((team) => {            
-            promises.push(
-              handle_get_team(team, (team) => {
-                teamsArray.push(team);
-              })
-            );
-          }
-        );
-      });                            
-        Promise.all(promises)
-          .then((values) => {
-            setTeams(teamsArray);
-            setTeamsLoaded(true);
-          })
-          .catch((error) => {
-            setTeamsError(true);
-            setTeamsErrorDetails(error);
-          });
-      }
-    }, [hackathonEvents]);
-
-
-  const { get_user_by_id, profile, handle_help_toggle} = useProfileApi();
+  const [userDetails, setUserDetails] = useState(null);
   const [userLoaded, setUserLoaded] = useState(false);
   const [userError, setUserError] = useState(false);
-  const [userErrorDetails, setUserErrorDetails] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
-  
-  // For all users within teams, call get_user_by_id to get the user details in a map and store in userDetails
-  useEffect(() => {
-    if (teams && teams.length > 0) {
-      const userDetailsMap = {};
-      const promises = [];
-      teams.forEach((team) => {
-        team.users && team.users.forEach((user_id) => {
-          promises.push(
-            get_user_by_id(user_id, (user) => {
-              userDetailsMap[user_id] = user;
-            })
-          );
-        });
-      });
-      Promise.all(promises)
-        .then((values) => {            
-          setUserDetails(userDetailsMap);
-          setUserLoaded(true);
-        })
-        .catch((error) => {
-          setUserError(true);
-          setUserErrorDetails(error);
-        });
-    }
-  }, [teams]);
-
-
   const [open, setOpen] = useState(false);
   const [openUnhelp, setOpenUnhelp] = useState(false);
   const [help_checked, setHelpedChecked] = useState("");
-  const [helpingType, setHelpingType] = useState("");
-
-  const [createTeamOpen, setCreateTeamOpen] = useState(false);
-
-  
-
-  const [newTeamSlackChannel, setNewTeamSlackChannel] = useState("");
-  const [newTeamName, setNewTeamName] = useState("");
-  const [newTeamEventId, setNewTeamEventId] = useState("");
-  const [newTeamProblemStatementId, setNewTeamProblemStatementId] =
-    useState("");
-  const [newGithubUsername, setNewGithubUsername] = useState("");
-
-
-
-  const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-  };
-  const advancedMatching = undefined; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-    }
-  }, []);
-
-
+  const [helpingType, setHelpingType] = useState("");  
   const [expanded, setExpanded] = useState("Events");
-  const handleChange = (panel) => (event, isExpanded) => {
-    // Set user object and handle null
-    
-    const params = {
-      action_name: isExpanded ? "open" : "close",
-      panel_id: panel,
-      npo_id: npo_id,
-      problem_statement_id: problem_statement.id,
-      problem_statement_title: problem_statement.title,
-      user_id: user?.userId // Propel User ID
-    }    
-    ReactPixel.trackCustom("problem_statement_accordion", params);
-    ga.event({
-      action: "problem_statement_accordion",
-      params: params
-    })
-    setExpanded(isExpanded ? panel : false);
+  const [tabValue, setTabValue] = useState('Events');
+  const [expandedSection, setExpandedSection] = useState(null);
+  const { get_user_by_id, profile, handle_help_toggle } = useProfileApi();
+  const [helperProfiles, setHelperProfiles] = useState({});
+  const [isCheckingHelperStatus, setIsCheckingHelperStatus] = useState(false);
+
+  // Helper function to toggle sections
+  const handleSectionToggle = (section) => {
+    setExpandedSection(expandedSection === section ? null : section);
   };
 
+  // Modern styled switch for the help toggle
   const MaterialUISwitch = styled(Switch)(({ theme }) => ({
-    width: 62,
-    height: 34,
+    width: 70,
+    height: 38,
     padding: 7,
     "& .MuiSwitch-switchBase": {
       margin: 1,
@@ -320,22 +248,23 @@ const volunteerWords = [
       transform: "translateX(6px)",
       "&.Mui-checked": {
         color: "#fff",
-        transform: "translateX(22px)",
+        transform: "translateX(26px)",
         "& .MuiSwitch-thumb:before": {
           backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
             "#fff"
-          )}" d="M4.375 17.542v-3.584h1.583v3.584Zm3.458 0v-9.25q-1.021.52-1.739 1.385-.719.865-.782 2.198H4.229q.063-1.937 1.427-3.448 1.365-1.51 3.302-1.51H10.5q1.708 0 2.938-1 1.229-1 1.27-2.667h1.084q-.021 1.729-1.052 2.927-1.032 1.198-2.573 1.615v9.75h-1.084v-4.959H8.917v4.959ZM10 5.396q-.688 0-1.156-.469-.469-.469-.469-1.156 0-.667.479-1.136.479-.468 1.146-.468.688 0 1.156.468.469.469.469 1.157 0 .666-.479 1.135T10 5.396Z"/></svg>')`,
+          )}" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>')`,
         },
         "& + .MuiSwitch-track": {
           opacity: 1,
-          backgroundColor: "#00BB00",
+          backgroundColor: "#22c55e",
         },
       },
     },
     "& .MuiSwitch-thumb": {
-      backgroundColor: "#000",
+      backgroundColor: "#fff",
       width: 32,
       height: 32,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
       "&:before": {
         content: "''",
         position: "absolute",
@@ -345,272 +274,261 @@ const volunteerWords = [
         top: 0,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
-        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20"><path fill="${encodeURIComponent(
-          "#fff"
-        )}" d="m4.646 15.646-1.688-1.708L6.917 10 2.958 6.062l1.688-1.708L10.292 10Zm6.75 0-1.688-1.708L13.688 10l-3.98-3.938 1.688-1.708L17.042 10Z"/></svg>')`,
+        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+          "#64748b"
+        )}" d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>')`,
       },
     },
     "& .MuiSwitch-track": {
       opacity: 1,
-      backgroundColor: "#FFFF00",
-      borderRadius: 20 / 2,
+      backgroundColor: "#e2e8f0",
+      borderRadius: 20,
     },
   }));
 
+  // Initialize Facebook Pixel
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
+
+  // Generate team name suggestions and fetch hackathon events - FIXED: removed unstable dependencies
+  useEffect(() => {  
+    // Fetch hackathon events
+    if (problem_statement?.events?.length > 0) {
+      const eventsData = [];
+      const promises = [];
+      
+      problem_statement.events.forEach((id) => {        
+        const promise = new Promise((resolve, reject) => {          
+          handle_get_hackathon_id(id, (hackathonEvent) => {
+            if (hackathonEvent) {
+              eventsData.push(hackathonEvent);
+              resolve(hackathonEvent);
+            } else {
+              reject("Error getting hackathon event");
+            }
+          });
+        });
+        promises.push(promise);
+      });
+      
+      Promise.all(promises)
+        .then(() => {          
+          setHackathonEvents(eventsData);
+          setHackathonEventsLoaded(true);
+        })
+        .catch(() => {
+          setHackathonEventsError(true);
+        });
+    }
+  }, [problem_statement_id, problem_statement?.events]);
+  
+  // Get user details for team members - FIXED: removed unstable dependencies
+  useEffect(() => {
+    if (teams?.length > 0) {
+      const userDetailsMap = {};
+      const promises = [];
+      
+      teams.forEach((team) => {
+        team.users?.forEach((user_id) => {
+          promises.push(
+            get_user_by_id(user_id, (user) => {
+              userDetailsMap[user_id] = user;
+            })
+          );
+        });
+      });
+      
+      Promise.all(promises)
+        .then(() => {
+          setUserDetails(userDetailsMap);
+          setUserLoaded(true);
+        })
+        .catch(() => {
+          setUserError(true);
+        });
+    }
+  }, [teams]);
+
+  // Fetch and store profiles for all helpers - FIXED: removed unstable dependencies
+  useEffect(() => {
+    if (problem_statement?.helping?.length > 0) {
+      setIsCheckingHelperStatus(true);
+      const helperProfileMap = {};
+      const fetchPromises = [];
+      
+      problem_statement.helping.forEach(helper => {
+        if (helper.user) {
+          const fetchPromise = fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${helper.user}/profile`)
+            .then(response => {
+              if (!response.ok) throw new Error('Failed to fetch helper profile');
+              return response.json();
+            })
+            .then(data => {
+              helperProfileMap[helper.user] = data;
+              return data;
+            })
+            .catch(error => {
+              console.error(`Error fetching helper profile for user ${helper.user}:`, error);
+              return null;
+            });
+          
+          fetchPromises.push(fetchPromise);
+        }
+      });
+      
+      Promise.all(fetchPromises)
+        .then(() => {
+          setHelperProfiles(helperProfileMap);
+          setIsCheckingHelperStatus(false);
+        })
+        .catch(error => {
+          console.error('Error fetching helper profiles:', error);
+          setIsCheckingHelperStatus(false);
+        });
+    }
+  }, [problem_statement?.helping]);
+
+  // Check if current user is helping with this project
+  useEffect(() => {
+    if (
+      !isCheckingHelperStatus && 
+      problem_statement?.helping?.length > 0 && 
+      user && 
+      Object.keys(helperProfiles).length > 0
+    ) {
+      // Find if current user is in the helpers list
+      const currentUserHelper = problem_statement.helping.find(helper => {
+        // If we have the helper's profile and it has a propel_id
+        if (helper.user && helperProfiles[helper.user] && helperProfiles[helper.user].propel_id) {
+          // Check if the propel_id matches the current user's ID
+          return helperProfiles[helper.user].propel_id === user.userId;
+        }
+        // Fallback to the old method for backward compatibility
+        return helper.slack_user === profile?.user_id;
+      });
+      
+      if (currentUserHelper) {
+        setHelpedChecked("checked");
+        setHelpingType(currentUserHelper.type);
+        console.log(`User is helping as ${currentUserHelper.type}`);
+      } else {
+        setHelpedChecked("");
+        setHelpingType("");
+      }
+    }
+  }, [problem_statement, user, profile, helperProfiles, isCheckingHelperStatus]);
+
+  // Event handlers
+  const handleChange = (panel) => (event, isExpanded) => {
+    const params = {
+      action_name: isExpanded ? "open" : "close",
+      panel_id: panel,
+      npo_id: npo_id,
+      problem_statement_id: problem_statement?.id,
+      problem_statement_title: problem_statement?.title,
+      user_id: user?.userId
+    };
+    
+    trackEvent({
+      action: "problem_statement_accordion",
+      params: params
+    });
+    
+    setExpanded(isExpanded ? panel : false);
+  };
+
   const handleClickOpen = (event) => {
     if (event.target.checked) {
-      // Only when selecting yes
       setOpen(true);
-      ReactPixel.track("Helping Dialog Opened", {
-        problem_statement_id: problem_statement.id,
-        problem_statement_title: problem_statement.title,
-        npo_id: npo_id,
-        user_id: user.userId // Propel User ID
-        });
+      trackEvent({
+        action: "Helping Dialog Opened",
+        params: {
+          problem_statement_id: problem_statement?.id,
+          problem_statement_title: problem_statement?.title,
+          npo_id: npo_id,
+          user_id: user?.userId
+        }
+      });
     } else {
       setOpenUnhelp(true);
-
-      ReactPixel.track("Not Helping Dialog Opened", {
-        problem_statement_id: problem_statement.id,
-        problem_statement_title: problem_statement.title,
-        npo_id: npo_id,
-        user_id: user.userId 
-        });
+      trackEvent({
+        action: "Not Helping Dialog Opened",
+        params: {
+          problem_statement_id: problem_statement?.id,
+          problem_statement_title: problem_statement?.title,
+          npo_id: npo_id,
+          user_id: user?.userId 
+        }
+      });
     }
   };
 
   const handleLeavingTeam = (teamId) => {
     handle_unjoin_a_team(teamId, handleTeamLeavingResponse);
 
-    ReactPixel.track("Team Left", {
-      team_id: teamId
-      });
-
-    ga.event({
+    trackEvent({
       action: "team_left",
-      params: {
-        team_id: teamId
-      }
+      params: { team_id: teamId }
     });
-
   };
 
   const handleJoiningTeam = (teamId) => {
     handle_join_team(teamId, handleTeamLeavingResponse);
 
-    ReactPixel.track("Team Joined", {
-      team_id: teamId
-      });
-    
-    ga.event({
+    trackEvent({
       action: "team_joined",
-      params: {
-        team_id: teamId
-      }
+      params: { team_id: teamId }
     });
-
   };
 
-  const handleTeamCreate = (problemStatementId, eventId) => {    
-    setNewTeamProblemStatementId(problemStatementId);
-    setNewTeamEventId(eventId);
-    setCreateTeamOpen(true); // Open the modal
-
-    ReactPixel.track("Team Create Dialog Opened", {
-      problem_statement_id: problemStatementId,
-      event_id: eventId
-      });
-
-    ga.event({
-      action: "team_create_dialog_opened",
-      params: {
-        problem_statement_id: problemStatementId,
-        event_id: eventId
-      }
-    });
-
-  };
-
-  const handleUpdateTeamName = (event) => {
-    const value = event.target.value;   
-    setNewTeamName(value);
-
-    ReactPixel.track("Team Name Updated", {
-      team_name: value
-      });
-
-    ga.event({
-      action: "team_name_updated",
-      params: {
-        team_name: value
-      }
-    });
-
-  };
-
-  const handleUpdateSlackChannel = (event) => {
-    const value = event.target.value;
-    setNewTeamSlackChannel(value);
-
-    ReactPixel.track("Slack Channel Entered", {
-      slack_channel: value
-      });
-
-    ga.event({
-      action: "slack_channel_entered",
-      params: {
-        slack_channel: value
-      }
-    });
-
-  };
-
-  const handleUpdateGithubUsername = (event) => {
-    const value = event.target.value;
-    setNewGithubUsername(value);
-
-    ReactPixel.track("Github Username Entered", {
-      github_username: value
-    });
-
-    ga.event({
-      action: "github_username_event",
-      params: {
-        github_username: value
-      }
-    });
-
-  };
-
-  const handleConfirmTeamCreate = (event) => {
-    setSendingTeamDetails(true);
-
-    // Submit button pressed to create team    
-    const params = {
-      team_name: newTeamName,
-      slack_channel: newTeamSlackChannel,
-      problem_statement_id: newTeamProblemStatementId,
-      event_id: newTeamEventId      
-    }
-    ReactPixel.trackCustom("team_create", params);
-    ga.event({
-      action: "team_create",
-      params: params
-    })
-
-
-    handle_new_team_submission(
-      newTeamName,
-      newTeamSlackChannel,
-      newTeamProblemStatementId,
-      newTeamEventId,
-      newGithubUsername,      
-      handleTeamCreationResponse
-    );
-    
-  };
-
-  const handleTeamLeavingResponse = (data) => {
-    // Person left a team
-    ReactPixel.track("Team Left");
-    ga.event({
-      category: "Team",
+  const handleTeamLeavingResponse = () => {
+    trackEvent({
       action: "Team Left",
-      label: "Team",
+      params: {
+        category: "Team",
+        label: "Team",
+      }
     });
-
-    
-    // We don't do anything when someone leaves
   };
-
-  const handleTeamCreationResponse = (data, problemStatementId, eventId) => {
-    // We need to update our state to temporarily show the user that they have created a team
-    // This should be followed up on refresh of the page with a hit to grab the real version from the backend/DB
-    setSendingTeamDetails(false); // We are done sending the team details
-    setTeamCreationErrorDetails("");
-    setTeamCreationError(false); // No error
-
-    // Check if data is success (has data.message that contains "Saved Team"
-    if (data.success) {    
-      // Success
-      setTeamCreationError(false); // No error
-      setTeamCreationErrorDetails("");
-
-      // Append this to the current teams state 
-      setTeams(teams => [...teams, data.team]);  
-
-      // Update hackathonEvents to include this team
-      const hackathonEventsCopy = hackathonEvents;
-      hackathonEventsCopy.forEach((event) => {
-        if (event.id === eventId) {
-          event.teams.push(data.team.id);
-        }
-      });
-      setHackathonEvents(hackathonEventsCopy);
-
-      setTeamCreationErrorDetails(data.message); // Success message
-      setCreateTeamOpen(false); // Submit button pressed to create team
-    }
-    else {
-      setCreateTeamOpen(true); // Error, so keep open
-      setTeamCreationError(true); // Error
-      setTeamCreationErrorDetails(data.message); // Error details      
-    }      
-  };
-
-  const handleCloseTeamCreate = (event) => {
-    setCreateTeamOpen(false); // Cancel or close selected
-    ReactPixel.track("Team Creation Dialog Closed", {
-      user_id: user.userId
+  
+  const handleClose = (helperType) => {    
+    trackEvent({
+      action: "Helping: User Finalized Start Helping",
+      params: {
+        category: "Helping",
+        label: "Helping",
+        problem_statement_id: problem_statement?.id,
+        problem_statement_title: problem_statement?.title,
+        npo_id: npo_id,
+        user_id: user?.userId,
+        mentor_or_hacker: helperType
+      }
     });
-    ga.event({
-      category: "Team Creation",
-      action: "Team Creation Dialog Closed",
-      label: "Team Creation",
-    });
-
-  };
-
-  const handleClose = (event) => {
-    // They wanted to start helping
-    ReactPixel.track("Helping: User Finalized Start Helping", {
-      problem_statement_id: problem_statement.id,
-      problem_statement_title: problem_statement.title,
-      npo_id: npo_id,
-      user_id: user.userId,
-      mentor_or_hacker: event.target.value
-      });
-    ga.event({
-      category: "Helping",
-      action: "User Finalized Helping",
-      label: "Helping",
-    });
-
 
     setOpen(false);
     setHelpedChecked("checked");
-    setHelpingType(event.target.value);
-    // event.target.value will be either "mentor" or "hacker"
+    setHelpingType(helperType);
+    // FIXED: Use correct parameter order
     handle_help_toggle(
       "helping",
       problem_statement.id,
-      event.target.value,
+      helperType,
       npo_id
     );
   };
 
-  const handleCancel = (event) => {
-    // They didn't want to start helping (cancel button pressed)
-    ReactPixel.track("Helping: User Canceled Helping", {
-      problem_statement_id: problem_statement.id,
-      problem_statement_title: problem_statement.title,
-      npo_id: npo_id,
-      user_id: user.userId
-      });
-    ga.event({
-      category: "Helping",
-      action: "User Canceled Helping",
-      label: "Helping",
+  const handleCancel = () => {
+    trackEvent({
+      action: "Helping: User Canceled Helping",
+      params: {
+        category: "Helping",
+        label: "Helping",
+        problem_statement_id: problem_statement?.id,
+        problem_statement_title: problem_statement?.title,
+        npo_id: npo_id,
+        user_id: user?.userId
+      }
     });
 
     setOpen(false);
@@ -618,154 +536,67 @@ const volunteerWords = [
     setHelpingType("");
   };
 
-  const handleCloseUnhelp = (event) => {
-    // They wanted to stop helping
-    ReactPixel.track("Helping: User Finalized Stop Helping", {
-      problem_statement_id: problem_statement.id,
-      problem_statement_title: problem_statement.title,
-      npo_id: npo_id,
-      user_id: user.userId
-    });
-    ga.event({
-      category: "Helping",
-      action: "User Finalized Stop Helping",
-      label: "Helping",
+  const handleCloseUnhelp = () => {
+    trackEvent({
+      action: "Helping: User Finalized Stop Helping",
+      params: {
+        category: "Helping",
+        label: "Helping",
+        problem_statement_id: problem_statement?.id,
+        problem_statement_title: problem_statement?.title,
+        npo_id: npo_id,
+        user_id: user?.userId
+      }
     });
 
     setOpenUnhelp(false);
     setHelpedChecked("");
     setHelpingType("");
+    // FIXED: Use correct parameter order
     handle_help_toggle("not_helping", problem_statement.id, "", npo_id);
   };
 
-  const handleCloseUnhelpCancel = (event) => {
-    // They didn't want to stop helping (cancel button pressed)
-    ReactPixel.track("Helping: User Canceled Stop Helping");
-    ga.event({
-      category: "Helping",
-      action: "User Canceled Stop Helping",
-      label: "Helping",
+  const handleCloseUnhelpCancel = () => {
+    trackEvent({
+      action: "Helping: User Canceled Stop Helping",
+      params: {
+        category: "Helping",
+        label: "Helping"
+      }
     });
 
     setOpenUnhelp(false);
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   function getWordStr(str) {
-    if( str != null && str.length > 0 && typeof str === "string" )
-    {
+    if(str != null && str.length > 0 && typeof str === "string") {
       return str.split(/\s+/).slice(0, 30).join(" ");
-    }
-    else {
+    } else {
       return "";
     }
-    
   }
 
-  function getIconForReferenceLinkOrName(link, name) {
-    const documentExtensions = [".pdf", ".doc", ".docx"];
-    for (const extension of documentExtensions) {
-        if (link.endsWith(extension)) {
-            return <ArticleIcon />;
-        }
-    }
- 
-    const documentPlatforms = ["docs.google.com"]; 
-    for (const platform of documentPlatforms) {
-        if (link.includes(platform)) {
-            return <ArticleIcon />;
-        }
-    }
-
-    // If YouTube is in the name or video is in the name
-    const videoIconText = ["youtube", "video"];
-    const videoIconLink = ["youtube.com", "vimeo.com"];
-    if (videoIconText.some((text) => name.toLowerCase().includes(text)) || videoIconLink.some((text) => link.includes(text))) {
-        return <SmartDisplayIcon />;
-    }
-
-    // If .pptx or slides.google.com, use a presentation icon
-    const presentationExtensions = [".pptx"];
-    for (const extension of presentationExtensions) {
-        if (link.endsWith(extension)) {
-            return <CoPresentIcon />;
-        }
-    }
-
-    const presentationPlatforms = ["slides.google.com"];
-    for (const platform of presentationPlatforms) {
-        if (link.includes(platform)) {
-            return <CoPresentIcon />;
-        }
-    }
-
-    // Handle github name or link
-    const githubPlatforms = ["github.com"];
-    for (const platform of githubPlatforms) {
-        if (link.includes(platform)) {
-            return <GitHubIcon />;
-        }
-    }
-
-
-
-
-    // Default to a link icon
-    return <OpenInNewIcon />;
-    
-  }
-
-  var TeamText = "";
-  if (hackathonEvents != null) {
-    var teamCounter = teams.filter((team) => team.problem_statements?.includes(problem_statement_id)).length;
-    // Count the number of teams across all events for this problem statement
-    
-
-
-    
-    
-    var s = teamCounter === 1 ? "" : "s";
-    var is_are = teamCounter === 1 ? " is " : " are ";
-    TeamText =
-      "There" + is_are + teamCounter + " team" + s + " working on this";
-  }
-
-  var status = "";  
-  var cardBackground = "#f5f7f77f";
-
-  if (problem_statement.status === "production") {
-    status = (
-      <Tooltip
-        enterTouchDelay={0}
-        title={
-          <span style={{ fontSize: "14px" }}>We pushed this to production!</span>
-        }
-        arrow
-      >
-      <Chip variant="outlined" icon={<WorkspacePremiumIcon />} color="success" label="Live" />      
-      </Tooltip>
+  // If problem_statement isn't loaded yet, don't try to render the component
+  if (!problem_statement) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
+        <CircularProgress />
+      </Box>
     );
-    cardBackground = "#e5fbe5";
-
-    
-  } else {
-    status = <Tooltip
-      enterTouchDelay={0}
-      title={
-        <span style={{ fontSize: "14px" }}>This project isn't complete yet, and we need your help!</span>
-      }
-      arrow
-    >
-    <Chip icon={<BuildIcon />} color="warning" label="Needs Help" />
-    </Tooltip>
   }
 
-  var callToAction = "";
-  var helpingSwitch = "";
-  var helpingSwitchType = "";
-
-  var countOfHackers = 0;
-  var countOfMentors = 0;
-  if (problem_statement.helping != null && problem_statement.helping.length > 0) {
+  // Count team and helper stats
+  const teamCounter = teams.filter(team => team.problem_statements?.includes(problem_statement_id)).length;
+  const teamText = `There ${teamCounter === 1 ? "is" : "are"} ${teamCounter} team${teamCounter === 1 ? "" : "s"} working on this`;
+  
+  // Count helpers using the correct field: problem_statement.helping
+  let countOfHackers = 0;
+  let countOfMentors = 0;
+  if (problem_statement.helping?.length > 0) {
     problem_statement.helping.forEach((help) => {
       if (help.type === "mentor") {
         countOfMentors++;
@@ -775,633 +606,494 @@ const volunteerWords = [
     });
   }
 
-  // Read the DB details passed into this component and update the state accordingly
-  useMemo(() => {
-    if (problem_statement.helping != null && user != null && problem_statement.helping.length > 0) {
-      problem_statement.helping.forEach((help) => {
-        
-        if (help.slack_user === profile.user_id) {          
-          setHelpedChecked("checked");
-          setHelpingType(help.type);
-        }
-      });
-    }
-  }, [problem_statement, user, profile]);
-
-  if (user == null) {     
-    // helpingSwitch should set a FormControlLabel and helpingSwitch should show everyting disabled
-    helpingSwitch = (
-      <FormControlLabel
-        labelPlacement="bottom"
-        control={
-          
-        <Tooltip
-          enterTouchDelay={0}  
-          placement="top-start"       
-          title={<span
-              style={{ fontSize: "14px" }}
-            >Login first, then you can help by sliding this</span>
-          }
-          style={{ marginLeft: "2rem" }}
-        >
-          <Badge color="secondary" variant="dot" anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-            }}>
-            <MaterialUISwitch sx={{ m: 1, color: "gray"}} disabled />
-          </Badge>
-        </Tooltip>
-        }
-        label="Login to help"
-      />
-    );
-
-    callToAction = (
-    <Grid container direction="column" justifyContent="flex-start" alignItems="flex-start">  
-      <Grid item padding={1}>
-      <Link href={`/signup?previousPage=/nonprofit/${npo_id}`}>    
-        <Button variant="contained" color="primary">
-          Create OHack Slack Account
-        </Button>
-      </Link>
-      </Grid>
-      
-      <Grid item padding={1}>
-        <LoginButton
-                variant="contained"
-                disableElevation
-                  onClick={() => redirectToLoginPage(
-                    {
-                      postLoginRedirectUrl: window.location.href
-                    }
-                  )}
-                className="login-button"
-              >
-                Log In
-                <svg
-                  fill="none"
-                  viewBox="0 0 10 10"
-                  stroke="currentColor"
-                  height="1em"
-                  width="1em"
-                >
-                  <path className="arrow" d="M3,2 L6,5 L3,8" />
-                  <path className="line" d="M3,5 L8,5" />
-                </svg>
-        </LoginButton>
-      </Grid>
-
-      </Grid>
-    );
+  const totalContributors = countOfHackers + countOfMentors;
+  const eventsCount = hackathonEvents.length;
+  const hackersPlural = countOfHackers === 1 ? "" : "s";
+  const hackersVerb = countOfHackers === 1 ? "is" : "are";
+  const mentorsVerb = countOfMentors === 1 ? "is" : "are";
   
-
-  } else {
-    callToAction = (
-      <a
-        href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <button className="button button--compact button--primary">
-          Join <TagIcon />
-          {problem_statement.slack_channel} to help
-        </button>
-      </a>
-    );
-    if (helpingType === "hacker") {
-      helpingSwitchType = (
-        <div>
-          <DeveloperModeIcon />
-          I'm helping as a hacker
-        </div>
-      );
-    } else if (helpingType === "mentor") {
-      helpingSwitchType = (
-        <div>
-          <SupportIcon /> I'm helping as a mentor
-        </div>
+  // Calculate engagement level for visual indicators
+  const getEngagementLevel = () => {
+    if (totalContributors >= 10 || eventsCount >= 3) return 'high';
+    if (totalContributors >= 5 || eventsCount >= 2) return 'medium'; 
+    return 'low';
+  };
+  
+  // Enhanced status component with modern design
+  const renderStatus = () => {
+    if (problem_statement.status === "production") {
+      return (
+        <Tooltip
+          title="This project is live and being used by the nonprofit!"
+          arrow
+          placement="top"
+        >
+          <StatusChip 
+            chipstatus="production"
+            icon={<WorkspacePremiumIcon />} 
+            label="🚀 Live in Production" 
+          />
+        </Tooltip>
       );
     } else {
-      helpingSwitchType = <span>Slide to help</span>;
+      return (
+        <Tooltip
+          title="This project needs your help to reach completion!"
+          arrow
+          placement="top"
+        >
+          <StatusChip 
+            chipstatus="development"
+            icon={<BuildIcon />} 
+            label="🔧 Needs Help" 
+          />
+        </Tooltip>
+      );
+    }
+  };
+
+  // Modern help toggle and call-to-action components
+  const renderHelpToggle = () => {
+    if (!user) {
+      return (
+        <HelpToggle
+          control={
+            <Tooltip
+              title="Sign in to join this project and make an impact!"
+              arrow
+              placement="top"
+            >
+              <MaterialUISwitch disabled />
+            </Tooltip>
+          }
+          label={
+            <Box sx={{ ml: 2 }}>
+              <Typography variant="body1" fontWeight={600} color="text.secondary">
+                🔐 Sign in to help
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Join {totalContributors} contributors making impact
+              </Typography>
+            </Box>
+          }
+          labelPlacement="end"
+        />
+      );
     }
 
-    helpingSwitch = (
-      <Tooltip enterTouchDelay={0} title={<span style={{ fontSize: "15px" }}> {help_checked === "checked" ? "Click to stop helping 😭" : "Click to help 😍"} </span>}>
-      <FormControlLabel
-        onClick={handleClickOpen}
-        onChange={handleClickOpen}
-        labelPlacement="bottom"        
-        control={<MaterialUISwitch sx={{ m: 1 }} checked={help_checked} />}
-        label={helpingSwitchType}
-      />
-      </Tooltip>
-    );
-  }
-
-  var reference_count = 0;
-  var references_buttons = "";
-  if (
-    problem_statement.references != null &&
-    problem_statement.references.length > 0
-  ) {
-    reference_count = problem_statement.references.length;
-    references_buttons = problem_statement.references.map((reference) => {
-      return (
-        <a target="_blank" rel="noopener noreferrer" href={reference.link}>
-          <Button
-            key={reference.name}
-            variant="outlined"
-            style={{ margin: "0.5rem", fontSize: '13px' }}
+    return (
+      <HelpToggle
+        control={
+          <Tooltip
+            title={help_checked === "checked" ? "You're making a difference! Click to stop helping" : "Join this project and start making impact!"}
+            arrow
+            placement="top"
           >
-            { getIconForReferenceLinkOrName(reference.link, reference.name)}
-            &nbsp;
-            {reference.name}
-          </Button>
-        </a>
-      );
-    });
-  } else {
-    references_buttons = <p>No references yet</p>;
-  }
-
-  var mentorsAddPlural = [];
-  var hackersAddPlural = [];
-
-  if (countOfHackers === 0 || countOfHackers > 1) {
-    hackersAddPlural[0] = "s";
-    hackersAddPlural[1] = "are";
-  } else {
-    hackersAddPlural[0] = "";
-    hackersAddPlural[1] = "is";
-  }
-
-  if (countOfMentors === 0 || countOfMentors > 1) {
-    mentorsAddPlural[0] = "s";
-    mentorsAddPlural[1] = "are";
-  } else {
-    mentorsAddPlural[0] = "";
-    mentorsAddPlural[1] = "is";
-  }
-
-  const copyProjectLink = "project/"+problem_statement.id;
-
-  const myItems = [
-    {
-      label: 'Events',
-      icon: <EventIcon />,      
-      description: <Stack>
-        <ShortDescText>
-          {hackathonEvents && hackathonEvents.length > 0
-            ? `We've hacked on this at ${hackathonEvents.length
-            } event${hackathonEvents.length > 1 ? "s" : ""}`
-            : "We haven't hacked on this project yet!"}
-        </ShortDescText>
-        <ShortDescText>{TeamText}</ShortDescText>
-      </Stack>,
-      content:       
-        <Events          
-          teams={teams}
-          userDetails={userDetails}
-          events={hackathonEvents}
-          onTeamCreate={handleTeamCreate}
-          onTeamLeave={handleLeavingTeam}          
-          onTeamJoin={handleJoiningTeam}
-          user={profile}
-          problemStatementId={problem_statement.id}
-          isHelping={help_checked}
-        />              
-    },
-    {
-      label: 'Description',
-      icon: <NotesIcon />,
-      description: <Typography fontSize={13}>
-        {getWordStr(problem_statement.description)}...
-      </Typography>,
-      content: 
-        <ProjectDescText>
-          <ReactMarkdown>
-          {problem_statement.description}
-          </ReactMarkdown>
-        </ProjectDescText>        
-    },    
-    {
-      label: 'Code & Tasks',
-      icon: <CodeIcon />,
-      description: "GitHub repos and Tasks associated with this project",
-
-      content: 
-      <ProjectDescText>
-      <Grid container direction="row" spacing={0.5} padding={0}>
-        <Stack spacing={1} padding={0.5}>
-        {
-          problem_statement.github != null &&
-          problem_statement.github.length > 0 &&
-          typeof problem_statement.github !== "string" ? (
-          problem_statement.github.map((github) => (
-            <AccordionButton
-              target="_blank"
-              rel="noopener noreferrer"
-              key={github.name}
-              href={github.link}
-              className="button button--primary button--compact"
-            >
-              {github.name}
-            </AccordionButton>
-          ))
-        ) : (
-          <p>No GitHub links yet.</p>
-        )}
-          </Stack>
-
-        <Stack spacing={1} padding={0.5}>
-        {problem_statement.github != null &&
-          problem_statement.github.length > 0 &&
-          typeof problem_statement.github !== "string" &&
-          problem_statement.github.map((github) => (
-            <AccordionButton
-              target="_blank"
-              rel="noopener noreferrer"
-              key={github.name}
-              className="button button--primary button--compact"
-              href={`${github.link}/issues`}
-            >
-              Tasks for {github.name}
-            </AccordionButton>
-          ))}
-          </Stack>
-        </Grid>   
-        </ProjectDescText>   
-    },
-    {
-      label: 'References',
-      icon: <ArticleIcon />,
-      description: <ShortDescText>
-        {reference_count} doc{
-          // handle plural vs singular
-          (reference_count === 0 || reference_count > 1) ? "s" : ""
-          // handle zero records 
-        } that will help you better understand the problem
-      </ShortDescText>,
-      content: <ProjectDescText>{references_buttons}</ProjectDescText>
-    },    
-  ];
-
-  // Accordion for large screens
-  const myAccordion = myItems.map((item) => (
-    <Accordion
-      expanded={expanded === item.label}
-      onChange={handleChange(item.label)}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        aria-controls={item.label + "bh-content"}
-        id={item.label + "bh-header"}
-      >
-        <AccordionTitle>
-          {item.icon}
-          {item.label}  
-        </AccordionTitle>
-        {item.description}
-      </AccordionSummary>
-      <Stack marginLeft={2}>
-          {item.content}                    
-        </Stack>          
-    </Accordion>
-  ));
-
-  // Tabs for small screens
-  const myTabs = myItems.map((item) => (
-    <Tab onClick={handleChange(item.label)} sx={{ width: "50px" }} icon={item.icon} label={item.label} value={item.label} />
-  ));
-
-  const myTabPanel = myItems.map((item) => (
-    <TabPanel  sx={{ padding:0, margin:0, width: "100%" }} value={item.label}>                    
-      {item.content}         
-    </TabPanel>
-  ));
-
-  const [tabValue, setTabValue] = React.useState('Events');
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
+            <MaterialUISwitch 
+              checked={help_checked === "checked"} 
+              onChange={handleClickOpen}
+            />
+          </Tooltip>
+        }
+        label={
+          <Box sx={{ ml: 2 }}>
+            <Typography variant="body1" fontWeight={600}>
+              {help_checked === "checked" ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {helpingType === "hacker" ? <DeveloperModeIcon /> : <SupportIcon />}
+                  {helpingType === "hacker" ? "🚀 Hacking" : "🎯 Mentoring"}
+                </Box>
+              ) : (
+                "❤️ Want to help?"
+              )}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {help_checked === "checked" 
+                ? "You're part of the solution!" 
+                : "Join the community of changemakers"
+              }
+            </Typography>
+          </Box>
+        }
+        labelPlacement="end"
+      />
+    );
   };
+
+  const renderCallToAction = () => {
+    if (!user) {
+      return (
+        <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mt: 3 }}>
+          <ActionButton
+            component={Link}
+            href={`/signup?previousPage=/nonprofit/${npo_id}`}
+            variant="contained"
+            size="large"
+            fullWidth={isMobile}
+            startIcon={<StarIcon />}
+            sx={{ 
+              background: 'linear-gradient(45deg, #667eea 0%, #764ba2 100%)',
+              color: 'white'
+            }}
+          >
+            🚀 Join the Impact
+          </ActionButton>
+          <ActionButton
+            variant="outlined"
+            size="large"
+            fullWidth={isMobile}
+            onClick={() => redirectToLoginPage({
+              postLoginRedirectUrl: window.location.href
+            })}
+            startIcon={<LaunchIcon />}
+          >
+            Sign In
+          </ActionButton>
+        </Stack>
+      );
+    }
+
+    return (
+      <Stack direction={isMobile ? 'column' : 'row'} spacing={2} alignItems="center" sx={{ mt: 3 }}>
+        {problem_statement.slack_channel && (
+          <ActionButton
+            component="a"
+            href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="contained"
+            startIcon={<TagIcon />}
+            sx={{ 
+              background: 'linear-gradient(45deg, #4ade80 0%, #22c55e 100%)',
+              color: 'white'
+            }}
+          >
+            Join #{problem_statement.slack_channel}
+          </ActionButton>
+        )}
+        <ActionButton
+          variant="outlined"
+          startIcon={<ShareIcon />}
+          onClick={() => {
+            navigator.share?.({
+              title: problem_statement.title,
+              text: `Check out this impactful project: ${problem_statement.title}`,
+              url: window.location.href
+            }) || navigator.clipboard.writeText(window.location.href);
+          }}
+        >
+          Share Project
+        </ActionButton>
+      </Stack>
+    );
+  };
+
+  const copyProjectLink = "project/" + problem_statement.id;
 
 
   return (
-    <ProjectCard container bgcolor={cardBackground} sx={{ border: 1, borderColor: "#C0C0C0" }} key={problem_statement.id}>
-      <Grid container item xs={6} md={6} justifyItems="flex-start">        
-        {status}
-      </Grid>
-      <Grid container item xs={6} md={6} justifyContent="flex-end" justifyItems="flex-end">
-        <CopyToClipboardButton location={copyProjectLink} />                
-      </Grid>
-      <Grid container item xs={12} md={12} justifyContent="flex-start">
-        <Stack direction="row" spacing={0} justifyContent="flex-end">          
-          <SkillSet Skills={problem_statement.skills} />          
-        </Stack>
-      </Grid>
-            
-      <Grid container item xs={12} md={12} justifyItems="flex-end" justifyContent="flex-end">
-        <Tooltip
-         enterTouchDelay={0}
-          title={
-            <span
-              style={{ fontSize: "14px" }}
-            >{`${countOfHackers} hacker${hackersAddPlural[0]} ${hackersAddPlural[1]} hacking`}</span>
-          }
-          style={{ marginLeft: "2rem" }}
-        >
-          <Badge
-            showZero
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            badgeContent={countOfHackers}
-            color="secondary"
-          >
-            <DeveloperModeIcon fontSize="large" />
-          </Badge>
-        </Tooltip>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
+      <Fade in timeout={800}>
+        <ModernProjectCard status={problem_statement.status}>
+          {/* Hero Section */}
+          <HeroSection>
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+                {renderStatus()}
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <CopyToClipboardButton location={copyProjectLink} />
+                  {problem_statement.first_thought_of && (
+                    <Chip 
+                      label={`Since ${problem_statement.first_thought_of}`} 
+                      size="small" 
+                      sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                    />
+                  )}
+                </Stack>
+              </Stack>
+              
+              <Typography 
+                variant="h3" 
+                component="h1" 
+                sx={{ 
+                  fontWeight: 700, 
+                  mb: 2, 
+                  color: 'white',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                {problem_statement.title}
+              </Typography>
+              
+              <SkillSet Skills={problem_statement.skills} />
+              
+              <Box sx={{ mt: 3 }}>
+                <ProjectProgress state={problem_statement.status} />
+              </Box>
+            </Box>
+          </HeroSection>
 
-        <Tooltip
-          enterTouchDelay={0}
-          title={
-            <span
-              style={{ fontSize: "14px" }}
-            >{`${countOfMentors} mentor${mentorsAddPlural[0]} ${mentorsAddPlural[1]} mentoring`}</span>
-          }
-          style={{ marginLeft: "2rem" }}
-        >
-          <Badge
-            showZero
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            badgeContent={countOfMentors}
-            color="secondary"
-          >
-            <SupportIcon fontSize="large" />
-          </Badge>
-        </Tooltip>       
-      </Grid>
-      
-    <TitleStyled sx={{marginBottom: "5px"}} variant="h2">{problem_statement.title}</TitleStyled>            
-    
-    <YearStyled>{problem_statement.first_thought_of}</YearStyled>      
-    <ProjectProgress state={problem_statement.status} />      
-    
+          <CardContent sx={{ p: 4 }}>
+            {/* Engagement Metrics */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={4}>
+                <Zoom in timeout={600} style={{ transitionDelay: '200ms' }}>
+                  <MetricCard>
+                    <Stack alignItems="center" spacing={1}>
+                      <Badge badgeContent={countOfHackers} color="primary" max={99}>
+                        <DeveloperModeIcon color="primary" sx={{ fontSize: 32 }} />
+                      </Badge>
+                      <Typography variant="h6" fontWeight={700}>
+                        {countOfHackers}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Developer{countOfHackers === 1 ? '' : 's'}
+                      </Typography>
+                    </Stack>
+                  </MetricCard>
+                </Zoom>
+              </Grid>
+              <Grid item xs={4}>
+                <Zoom in timeout={600} style={{ transitionDelay: '400ms' }}>
+                  <MetricCard>
+                    <Stack alignItems="center" spacing={1}>
+                      <Badge badgeContent={countOfMentors} color="secondary" max={99}>
+                        <SupportIcon color="secondary" sx={{ fontSize: 32 }} />
+                      </Badge>
+                      <Typography variant="h6" fontWeight={700}>
+                        {countOfMentors}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Mentor{countOfMentors === 1 ? '' : 's'}
+                      </Typography>
+                    </Stack>
+                  </MetricCard>
+                </Zoom>
+              </Grid>
+              <Grid item xs={4}>
+                <Zoom in timeout={600} style={{ transitionDelay: '600ms' }}>
+                  <MetricCard>
+                    <Stack alignItems="center" spacing={1}>
+                      <EventIcon color="action" sx={{ fontSize: 32 }} />
+                      <Typography variant="h6" fontWeight={700}>
+                        {eventsCount}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Event{eventsCount === 1 ? '' : 's'}
+                      </Typography>
+                    </Stack>
+                  </MetricCard>
+                </Zoom>
+              </Grid>
+            </Grid>
 
-    {
-      // Add references here
-    }
-    <Grid container item xs={12} md={12} justifyContent="flex-start" sx={{ marginTop: "10px" }}>      
-      
-            
-      <Grid item textAlign="justify" xs={12} md={12}>                    
-          <ReferencesStyled>Reference Docs</ReferencesStyled>          
-          <ShortDescText>Check these first to get more detail on the problem.  Most of these are Google docs, so feel free to comment on them to collaborate!</ShortDescText>
-      </Grid>
-      <Grid item xs={12} md={12}>
-        <ProjectDescText>{references_buttons}</ProjectDescText>
-      </Grid>      
-
-      <Grid item xs={12} md={12}>
-          <Divider/>
-        </Grid>
-    </Grid>
-    
-    
-    { 
-      isLargeScreen ? 
-      <AccordionContainer>
-        {myAccordion}
-      </AccordionContainer> 
-      : 
-      <TabContext allowScrollButtonsMobile scrollButtons={true}  value={tabValue}>          
-        <TabList allowScrollButtonsMobile scrollButtons={true} onChange={handleTabChange} aria-label="lab API tabs example">              
-          {myTabs}                          
-        </TabList>
-        {myTabPanel}  
-      </TabContext>    
-    }
-
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <DialogTitle id="alert-dialog-title" style={{fontSize: '15px'}}>
-        Thank you for helping a nonprofit with your talent!
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText component={"span"} style={{fontSize: '15px'}} id="alert-dialog-description">
-          There are several ways to contibute, if you want, when you want.
-          <Typography variant="h4">Hacker</Typography>
-          You'll be <b>creating</b> something that benefits nonprofits. Most of what
-          you do will take place on:
-          <ul>
-            <li>
-              <b>Slack</b> - communication with your team, nonprofits, mentors
-            </li>
-            <li>
-              <b>DevPost</b> - for hackathons this is where you formally submit your projects
-            </li>
-            <li>
-              <b>GitHub</b> - your code must be publically available and well
-              documented so that others can use it, all code is open source for the public good
-            </li>
-            <li>
-              <b><Link href="https://heroku.com" target="_blank">Heroku<OpenInNewIcon/></Link> | <Link href="https://fly.io" target="_blank">Fly<OpenInNewIcon/></Link> | <Link href="https://aws.amazon.com/" target="_blank">AWS<OpenInNewIcon/></Link></b> - 
-              when you productionalize your code, use something like this to make it available to the masses
-            </li>
-          </ul>
-          <Typography variant="h4">
-            Mentor &nbsp;
-            <Link
-            href="https://www.ohack.org/about/mentors"
-            rel="noreferrer"
-            target="_blank"
-          >
-            <Button variant="outlined">More details on mentoring</Button>
-          </Link>
-          
-          </Typography>
-          
-          
-          
-          You'll be <b>assisting</b> hackers with their project. Most of what you do
-          will take place on:
-          <ul>
-            <li>
-              Slack/In-person - checking in on teams, troubleshooting, giving them guidance, and jumping into a screenshare here
-              and there
-            </li>            
-          </ul>
-          As a mentor, your goals are:
-          <ul>
-            <li>Make sure the team knows the problem they are solving</li>
-            <li>...are solving that problem 👆</li>
-            <li>
-              Are using libraries and are not trying to reinvent the wheel
-            </li>
-            <li>Are looking at the judging criteria (on DevPost)</li>
-            <li>
-              Ensure teams have a demo video that describes the problem
-              and solution using tools like <Link href="https://www.loom.com/">Loom<OpenInNewIcon/></Link> or <Link href="https://support.apple.com/guide/quicktime-player/record-your-screen-qtp97b08e666/">Quicktime Screen recording<OpenInNewIcon/></Link>.
-            </li>
-          </ul>          
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          class="button button--compact button--third"
-          onClick={handleClose}
-          value="hacker"
-          autoFocus
-        >
-          Help as Hacker
-        </Button>
-        <Button
-          class="button button--compact button--third"
-          onClick={handleClose}
-          value="mentor"
-        >
-          Help as Mentor
-        </Button>
-        <Button
-          class="button button--compact button--secondary"
-          className="error"
-          onClick={handleCancel}
-        >
-          Cancel
-        </Button>
-      </DialogActions>
-    </Dialog>
-
-    <Dialog
-      open={openUnhelp}
-      onClose={handleCloseUnhelp}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <DialogTitle id="alert-dialog-title">
-        Helping has completed!
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText component={"span"} id="alert-dialog-description">
-          <h4>What this means</h4>
-          You are recording the fact that you're no longer helping this
-          nonprofit
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          class="button button--compact button--secondary"
-          onClick={handleCloseUnhelpCancel}
-        >
-          Cancel
-        </Button>
-        <Button
-          class="button button--compact button--red"
-          onClick={handleCloseUnhelp}
-          autoFocus
-        >
-          Withdrawl Help
-        </Button>
-      </DialogActions>
-    </Dialog>
-
-    <Dialog
-      open={createTeamOpen}
-      onClose={handleCloseTeamCreate}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <DialogTitle id="alert-dialog-title">Create a new team</DialogTitle>
-      <DialogContent>
-      <b>Team Name Suggestion:</b> {teamSuggestions}
-
-        <DialogContentText component={"span"} id="alert-dialog-description">
-          <Stack spacing={2}>
-            <TextField
-              id="team-name"
-              label=<span style={{ fontSize: "15px" }}>Team Name (at least 3 letters)</span>
-              helperText=<span style={{ color:"black", fontSize: "14px" }}>A unique team name - we will create a GitHub repo for you</span>
-              onChange={handleUpdateTeamName}
-              margin="dense"
-              FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
-              variant="filled"
-            />
-
-            <TextField
-              id="slack-name"
-              label=<span style={{ fontSize: "15px" }}>Slack Channel (at least 3 letters)</span>
-              helperText=<span  style={{ color:"black", fontSize: "14px" }}>Create this public channel first <Link href="https://slack.com/help/articles/201402297-Create-a-channel" target="_blank"><Button variant="text" size="small" >How?</Button></Link></span>
-              onChange={handleUpdateSlackChannel}
-              margin="dense"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">#</InputAdornment>
-                ),
+            {/* Description Preview */}
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                mb: 4,
+                lineHeight: 1.7,
+                fontSize: '1.1rem',
+                color: 'text.secondary'
               }}
-              FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
-              variant="filled"
-            />
+            >
+              {problem_statement.description?.length > 200 
+                ? `${problem_statement.description.substring(0, 200)}...`
+                : problem_statement.description
+              }
+            </Typography>
 
-            <TextField
-              id="github-name"
-              label=<span style={{ fontSize: "15px" }}>Github Username</span>
-              helperText=<span style={{ color:"black", fontSize: "14px" }}>Enter your Github username (we will make you an admin)</span>
-              onChange={handleUpdateGithubUsername}
-              margin="dense"
-              FormHelperTextProps={{ style: { fontSize: 12 } }} // font size of helper label
-              variant="filled"
-            />
+            {/* Help Toggle */}
+            <Box sx={{ mb: 4 }}>
+              {renderHelpToggle()}
+            </Box>
 
-          </Stack>
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Stack container>
-        <Stack spacing={2} direction="row">
-        <Button
-          class="button button--compact button--secondary"
-          onClick={handleCloseTeamCreate}
-        >
-          Cancel
-        </Button>
-        { ( (newTeamName!== "" && newTeamName.length > 2) &&  (newTeamSlackChannel!=="" && newTeamSlackChannel.length > 2)  ) && <Button        
-          class="button button--compact button--third"
-          disabled={sendingTeamDetails}
-          onClick={handleConfirmTeamCreate}                              
-        >
-          Submit
-            {" "}
-            { sendingTeamDetails && 
-              <CircularProgress size={20} />
-            }
-            <Typography variant="body1">Takes ~14 seconds :(</Typography>
-        </Button>
-        }
-        </Stack>
-      <Stack spacing={0} direction="row" alignContent={"right"} alignItems={"right"} justifyContent={"right"}>
-      <Typography>
-        {teamCreationErrorDetails}
-      </Typography>      
-      </Stack>                
-      </Stack>
-        
-      </DialogActions>
-      
-    </Dialog>
+            {/* Call to Action */}
+            {renderCallToAction()}
 
-    <Stack spacing={2} direction="row">      
-        {helpingSwitch}      
-      <Box sx={{ width: "75%" }}>{callToAction}</Box>      
-    </Stack>
-  </ProjectCard>
+            <Divider sx={{ my: 4 }} />
+
+            {/* Expandable Sections */}
+            <Stack spacing={3}>
+              {/* Full Description */}
+              <SectionCard>
+                <SectionHeader onClick={() => handleSectionToggle('description')}>
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    <NotesIcon color="primary" />
+                    <Typography variant="h6" fontWeight={600}>
+                      Project Description
+                    </Typography>
+                  </Stack>
+                  <IconButton>
+                    <ExpandMoreIcon 
+                      sx={{ 
+                        transform: expandedSection === 'description' ? 'rotate(180deg)' : 'none',
+                        transition: 'transform 0.3s'
+                      }} 
+                    />
+                  </IconButton>
+                </SectionHeader>
+                <Collapse in={expandedSection === 'description'}>
+                  <Box sx={{ p: 3 }}>
+                    <ReactMarkdown>{problem_statement.description}</ReactMarkdown>
+                  </Box>
+                </Collapse>
+              </SectionCard>
+
+              {/* Reference Documents */}
+              {problem_statement.references?.length > 0 && (
+                <SectionCard>
+                  <SectionHeader onClick={() => handleSectionToggle('references')}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      <ArticleIcon color="primary" />
+                      <Typography variant="h6" fontWeight={600}>
+                        Reference Documents ({problem_statement.references.length})
+                      </Typography>
+                    </Stack>
+                    <IconButton>
+                      <ExpandMoreIcon 
+                        sx={{ 
+                          transform: expandedSection === 'references' ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.3s'
+                        }} 
+                      />
+                    </IconButton>
+                  </SectionHeader>
+                  <Collapse in={expandedSection === 'references'}>
+                    <Box sx={{ p: 3 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        📚 Review these documents to understand the problem better. Most are collaborative Google docs!
+                      </Typography>
+                      <Stack spacing={2}>
+                        {problem_statement.references.map((reference, index) => (
+                          <ReferenceItem key={index} reference={reference} />
+                        ))}
+                      </Stack>
+                    </Box>
+                  </Collapse>
+                </SectionCard>
+              )}
+
+              {/* GitHub Repositories */}
+              {problem_statement.github?.length > 0 && (
+                <SectionCard>
+                  <SectionHeader onClick={() => handleSectionToggle('github')}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      <GitHubIcon color="primary" />
+                      <Typography variant="h6" fontWeight={600}>
+                        Code & Tasks ({problem_statement.github.length} repos)
+                      </Typography>
+                    </Stack>
+                    <IconButton>
+                      <ExpandMoreIcon 
+                        sx={{ 
+                          transform: expandedSection === 'github' ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.3s'
+                        }} 
+                      />
+                    </IconButton>
+                  </SectionHeader>
+                  <Collapse in={expandedSection === 'github'}>
+                    <Box sx={{ p: 3 }}>
+                      <Grid container spacing={2}>
+                        {problem_statement.github.map((repo, index) => (
+                          <Grid item xs={12} sm={6} key={index}>
+                            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                                {repo.name}
+                              </Typography>
+                              <Stack direction="row" spacing={1}>
+                                <ActionButton
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<CodeIcon />}
+                                  href={repo.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  component="a"
+                                >
+                                  Code
+                                </ActionButton>
+                                <ActionButton
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<AssignmentIcon />}
+                                  href={`${repo.link}/issues`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  component="a"
+                                >
+                                  Issues
+                                </ActionButton>
+                              </Stack>
+                            </Paper>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  </Collapse>
+                </SectionCard>
+              )}
+
+              {/* Events & Teams */}
+              <SectionCard>
+                <SectionHeader onClick={() => handleSectionToggle('events')}>
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    <PeopleIcon color="primary" />
+                    <Typography variant="h6" fontWeight={600}>
+                      Events & Teams ({eventsCount} events)
+                    </Typography>
+                  </Stack>
+                  <IconButton>
+                    <ExpandMoreIcon 
+                      sx={{ 
+                        transform: expandedSection === 'events' ? 'rotate(180deg)' : 'none',
+                        transition: 'transform 0.3s'
+                      }} 
+                    />
+                  </IconButton>
+                </SectionHeader>
+                <Collapse in={expandedSection === 'events'}>
+                  <Box sx={{ p: 3 }}>
+                    {hackathonEventsLoaded ? (
+                      <Events
+                        key={problem_statement.id}
+                        teams={teams}
+                        userDetails={userDetails}
+                        events={hackathonEvents}
+                        onTeamLeave={handleLeavingTeam}
+                        onTeamJoin={handleJoiningTeam}
+                        user={profile}
+                        problemStatementId={problem_statement.id}
+                        isHelping={help_checked}
+                      />
+                    ) : (
+                      <Box display="flex" justifyContent="center" p={3}>
+                        <CircularProgress />
+                      </Box>
+                    )}
+                  </Box>
+                </Collapse>
+              </SectionCard>
+            </Stack>
+          </CardContent>
+        </ModernProjectCard>
+      </Fade>
+
+      {/* Help Dialogs */}
+      <HelpDialog
+        open={open}
+        onClose={handleClose}
+        onConfirm={handleClose}
+        onHelp={handleClose}
+        onCancel={handleCancel}
+      />
+
+      <UnhelpDialog
+        open={openUnhelp}
+        onClose={handleCloseUnhelp}
+        onCancel={handleCloseUnhelpCancel}
+      />
+    </Container>
   );
 }

@@ -11,8 +11,7 @@ import { LayoutContainer } from '../../styles/nonprofit/styles';
 import { TitleContainer } from '../../styles/nonprofit/styles';
 import Typography from '@mui/material/Typography';
 
-import ReactPixel from 'react-facebook-pixel';
-import * as ga from '../../lib/ga';
+import { trackEvent, initFacebookPixel } from '../../lib/ga';
 
 import axios from 'axios';
 import Image from 'next/image';
@@ -22,24 +21,25 @@ export default function Unsubscribe({email_address}) {
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState(email_address);
     const [status, setStatus] = useState(''); // 'success' or 'error'    
+    
+    useEffect(() => {
+        // Initialize Facebook Pixel
+        initFacebookPixel();
+    }, []);
 
 
     const handleClickOpen = () => {
         setStatus('');
         setOpen(true);
 
-        ga.event({
+        trackEvent({
             action: 'UnsubscribeOpened',
             params: {
                 email: email_address,
+                value: 0.00,
+                currency: 'USD',  
             },
         });
-
-        ReactPixel.track('UnsubscribeOpened', {
-            value: 0.00,
-            currency: 'USD',            
-        });
-
     };
 
     const handleClose = () => {
@@ -49,16 +49,13 @@ export default function Unsubscribe({email_address}) {
     
 
     const handleUnsubscribe = () => {
-        ga.event({
+        trackEvent({
             action: 'Unsubscribe',
             params: {
                 email: email_address,
+                value: 0.00,
+                currency: 'USD',
             },
-        });
-
-        ReactPixel.track('Unsubscribe', {
-            value: 0.00,
-            currency: 'USD',
         });
 
 

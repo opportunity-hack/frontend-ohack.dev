@@ -12,14 +12,14 @@ import {
 } from "./styles";
 
 import { Grid, Button } from "@mui/material";
+import SponsorMinimal from "../Sponsors/SponsorMinimal";
 
 import { 
   CircularProgressbar
 } from "react-circular-progressbar";
 
 import { Typography } from "@mui/material";
-import * as ga from "../../lib/ga";
-import ReactPixel from 'react-facebook-pixel';
+import { initFacebookPixel, trackEvent } from "../../lib/ga";
 import NonProfitHackathonTile from "../NonProfitListTile/NonProfitHackathonTile";
 import Countdown from "../Countdown/Countdown";
 
@@ -44,37 +44,24 @@ function EventFeatureExtended(props) {
     icon,
     constraints,
   } = props;
-
-  const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-  };
-  var advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
   
   useEffect(() => {
-       if (typeof window !== 'undefined') {
-      ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-    }
-    }, []);
+    // Initialize Facebook Pixel
+    initFacebookPixel();
+  }, []);
 
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
 
   const trackClick = (link, name) => {    
-    ga.event({
-      action: "eventClick",
+    // Track the event in both Google Analytics and Facebook Pixel
+    trackEvent({
+      action: "eventClick", 
       params: {
         event_category: "event",
         event_label: name,
         value: link,
-      },
+      }
     });
-
-    ReactPixel.trackCustom("ClickEvent", {
-      event_category: "eventClick",
-      event_label: name,
-      value: link,
-    });
-
   };  
 
   // Shuffle the nonprofits so that they are in a random order and check for null
@@ -186,6 +173,7 @@ function EventFeatureExtended(props) {
               { donationCurrent && donationCurrent.thank_you.length > 0 ? `Special thanks to: ${donationCurrent?.thank_you} for donating!` : ""}
             </TypographyStyled>
           </ThankYouContainer>
+          <SponsorMinimal />
         </ProgressContainer>
       </EventExtendedCard>
 
@@ -199,7 +187,9 @@ function EventFeatureExtended(props) {
         >
           {          
               eventLinks?.map((Link) => {
-                return <ExtendedEventButton onClick={trackClick(Link?.link, Link?.name)} color={Link.color} variant={Link.variant} href={Link?.link}>{Link?.name}</ExtendedEventButton>;
+                return <ExtendedEventButton 
+                key={Link?.name}
+                 onClick={() => trackClick(Link?.link, Link?.name)} color={Link.color} variant={Link.variant} href={Link?.link}>{Link?.name}</ExtendedEventButton>;
               })
         }
         </ButtonContainer>                
@@ -248,7 +238,14 @@ function EventFeatureExtended(props) {
         <Grid container spacing={2} justifyContent="center" marginTop={1}>          
         { 
           nonprofitsShuffle?.map((nonprofit) => {
-            return <NonProfitHackathonTile eventId={event_id} npo={nonprofit} teams={teams}  />
+            return (
+              <NonProfitHackathonTile
+                key={event_id}
+                eventId={event_id}
+                npo={nonprofit}
+                teams={teams}
+              />
+            );
           })
         } 
         </Grid>        
@@ -259,7 +256,9 @@ function EventFeatureExtended(props) {
       {
         countdowns && countdowns.length > 0 && (
           countdowns.map((countdown) => {
-            return <Countdown details={countdown} />
+            return <Countdown 
+            key={countdown.name}
+             details={countdown} />
           }
         ))
 

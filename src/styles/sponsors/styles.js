@@ -9,6 +9,22 @@ import {
 } from "@mui/material";
 import { styled as styling } from "@mui/material";
 
+export const ButtonBasicStyle = styling(Button)({
+  borderRadius: "2rem",
+  paddingLeft: "1.5rem",
+  paddingRight: "1.5rem",
+  fontWeight: 600,
+  fontSize: "15px",
+  textTransform: "unset !important",
+  backgroundColor: "#E0E0E0",
+  color: "#000000",
+  minWidth: "25rem",
+
+  "&:hover": {
+    backgroundColor: `var(--blue)`,
+  },
+});
+
 export const MoreNewsStyle = styling(Button)({
   borderRadius: "1rem",
   paddingLeft: "0.9rem",

@@ -1,7 +1,7 @@
 import React from "react";
 import Chip from "@mui/material/Chip";
 import useTeams from "../../hooks/use-teams";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Puff } from "react-loading-icons";
 
@@ -10,11 +10,11 @@ export default function TeamsChip({ team_id }) {
      const { handle_get_team } = useTeams();
     
     const [team, setTeam] = useState(null);
-    useEffect(() => {                
-        handle_get_team(team_id, (data) => {            
-          setTeam(data);                        
-        });
-    }, []);        
+    useEffect(() => {
+      handle_get_team(team_id, (data) => {
+        setTeam(data);
+      });
+    }, [team_id]);        
 
     // Handle if team is null
     if (!team) {

@@ -13,11 +13,11 @@ export default function Mentors() {
 }
 
 export const getStaticProps = async () => {    
-    const title = "How to Become a Mentor for Opportunity Hack and Help Nonprofits";
-    const description =  "Opportunity Hack is an event where mentors guide participants to create solutions for nonprofits. Join us as a Software Engineer, Product Manager, UX Designer, or Project Manager and make a difference.";
+    const title = "Mentor Guide - Shape the Future of Tech for Good | Opportunity Hack";
+    const description = "Become a mentor at Opportunity Hack and guide talented teams building life-changing technology solutions for nonprofits. Share your expertise, develop leadership skills, and create lasting social impact through code.";
     return {
         props: {
-            title: "Opportunity Hack Mentorship",
+            title: "Mentor Guide - Opportunity Hack",
             description: description,
             openGraphData: [
                 {
@@ -39,18 +39,6 @@ export const getStaticProps = async () => {
                     key: "author"
                 },
                 {
-                    name: "author",
-                    property: "author",
-                    content: "Opportunity Hack",
-                    key: "author"
-                },
-                {
-                    name: "publish_date",
-                    property: "og:publish_date",
-                    content: "2023-09-23T00:00:00-0700",
-                    key: "publishdate"
-                },
-                {
                     name: "og:description",
                     property: "og:description",
                     content: description,
@@ -59,29 +47,29 @@ export const getStaticProps = async () => {
                 {
                     name: "image",
                     property: "og:image",
-                    content: "https://cdn.ohack.dev/ohack.dev/mentor_1.jpg",
+                    content: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp",
                     key: "ognameimage"
                 },
                 {
                     property: "og:image:width",
-                    content: "400",
+                    content: "1200",
                     key: "ogimagewidth",
                 },
                 {
                     property: "og:image:height",
-                    content: "300",
+                    content: "630",
                     key: "ogimageheight",
                 },
                 {
                     name: "url",
                     property: "url",
-                    content: "https://mentor.ohack.dev",
+                    content: "https://ohack.dev/about/mentors",
                     key: "url"
                 },
                 {
-                    name: "org:url",
-                    property: "org:url",
-                    content: "https://mentor.ohack.dev",
+                    name: "og:url",
+                    property: "og:url",
+                    content: "https://ohack.dev/about/mentors",
                     key: "ogurl"
                 },
                 {
@@ -111,13 +99,13 @@ export const getStaticProps = async () => {
                 {
                     name: "twitter:image",
                     property: "twitter:image",
-                    content: "https://cdn.ohack.dev/ohack.dev/mentor_1.jpg",
+                    content: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp",
                     key: "twitterimage"
                 },
                 {
                     name: "twitter:image:alt",
                     property: "twitter:image:alt",                    
-                    content: "Opportunity Hack mentorship needed!",
+                    content: "Mentor helping a participant at Opportunity Hack hackathon, demonstrating hands-on guidance and support",
                     key: "twitterimagealt"
                 },
                 {
@@ -125,32 +113,66 @@ export const getStaticProps = async () => {
                     property: "twitter:creator",
                     content: "@opportunityhack",
                     key: "twittercreator"
-                },
-                {
-                    name: "twitter:label1",
-                    property: "twitter:label1",
-                    value: "Status",
-                    key: "twitterlabel1"
-                },
-                {
-                    name: "twitter:data1",
-                    property: "twitter:data1",
-                    value: "Accepting Mentors of all backgrounds",
-                    key: "twitterdata1"
-                },
-                {
-                    name: "twitter:label2",
-                    property: "twitter:label2",
-                    value: "Signup Deadline",
-                    key: "twitterlabel2"
-                },
-                {
-                    name: "twitter:data2",
-                    property: "twitter:data2",
-                    value: "October 1, 2023",
-                    key: "twitterdata2"
-                }                
-            ]
+                }               
+            ],
+            structuredData: {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "Organization",
+                        "@id": "https://ohack.dev/#organization",
+                        "name": "Opportunity Hack",
+                        "url": "https://ohack.dev",
+                        "logo": {
+                            "@type": "ImageObject",
+                            "url": "https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp"
+                        },
+                        "sameAs": [
+                            "https://twitter.com/opportunityhack",
+                            "https://github.com/opportunity-hack"
+                        ]
+                    },
+                    {
+                        "@type": "WebPage",
+                        "@id": "https://ohack.dev/about/mentors#webpage",
+                        "url": "https://ohack.dev/about/mentors",
+                        "name": title,
+                        "description": description,
+                        "isPartOf": {
+                            "@type": "WebSite",
+                            "@id": "https://ohack.dev/#website"
+                        },
+                        "about": {
+                            "@type": "EducationalOrganization",
+                            "name": "Opportunity Hack Mentorship Program",
+                            "description": "A mentorship program connecting experienced technologists with teams building solutions for nonprofits"
+                        }
+                    },
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "Home",
+                                "item": "https://ohack.dev"
+                            },
+                            {
+                                "@type": "ListItem", 
+                                "position": 2,
+                                "name": "About",
+                                "item": "https://ohack.dev/about"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 3,
+                                "name": "Mentors",
+                                "item": "https://ohack.dev/about/mentors"
+                            }
+                        ]
+                    }
+                ]
+            }
         },
     };
 };

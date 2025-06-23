@@ -4,7 +4,7 @@ import {
   Typography,
   css,
   keyframes,
-  styled,
+  styled,  
 } from "@mui/material";
 
 // Button
@@ -58,14 +58,14 @@ export const ButtonBasicStyle = styled(Button)({
 
 // Grid
 export const GridStyled = styled(Grid)((props) => ({
-  padding: "8rem 6rem 6rem 6rem",
+  padding: "2rem",
   height: "100%",
   width: "80%",
   margin: "auto",
   justifyContent: "center",
 
   [props.theme.breakpoints.down("lg")]: {
-    padding: "8rem 0rem 6rem 0rem",
+    padding: "2rem 0rem 2rem 0rem",
   },
 
   [props.theme.breakpoints.down("md")]: {
@@ -83,7 +83,7 @@ export const BlankContainer = styled(Grid)({
 
 export const TitleContainer = styled(Grid)((props) => ({
   padding: "1rem 5% 0px 0px",
-  marginTop: "3rem",
+  marginTop: "0rem",
   minHeight: '200px',
   alignItems: "center",
   justifyContent: "center",
@@ -119,32 +119,39 @@ export const ButtonContainers = styled(Grid)((props) => ({
   justifyContent: "center",
 }));
 
-// Typography
-export const TitleStyled = styled(Typography)((props) => ({
+
+export const TitleStyled = styled(Typography)(({ theme }) => ({
   fontDisplay: "swap",
-  fontSize: "1.9em",
-  lineHeight: "1em",
-  fontWeight: "400",
+  fontSize: "clamp(19px, 3vw, 22px)",
+  lineHeight: 1.2,
+  fontWeight: 250,
   color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-  letterSpacing: "-0.1rem",
-  alignItems: "center",
+  letterSpacing: "-0.03em",
+  textAlign: "center",
+  maxWidth: "100%",
+  margin: "0 auto",
+  padding: "14px",
 
+  "& .highlight": {
+    color: theme.palette.primary.main,
+    display: "inline",
+    fontWeight: 600,
+  },
 
-  [props.theme.breakpoints.down("md")]: {
-    fontSize: "8vw",
-    lineHeight: "8.25vw",
+  [theme.breakpoints.down("md")]: {
+    fontSize: "clamp(15px, 5vw, 19px)",
   },
 }));
 
 export const TextStyled = styled(Typography)({
   fontDisplay: "swap",
-  fontSize: "2.0rem",  
+  fontSize: "1.5rem",  
   marginTop: "0.8rem",
   marginBottom: "0.8rem",
   width: "100%",
-  alignItems: "center",
-  justifyContent: "center",
+  textAlign: "center",
+  
 });
 
 export const SpanText = styled("span") ((props) => ({

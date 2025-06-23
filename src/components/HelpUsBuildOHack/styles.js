@@ -7,6 +7,11 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material";
 
+export const CloseButtonContainer = styled("div")({
+  position: "absolute",
+  top: 5,
+  right: 5,
+});
 
 // help-us-build-ohack__title
 export const HelpUsBuildOHackTitle = styled(Typography)({
