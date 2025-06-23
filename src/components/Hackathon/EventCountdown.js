@@ -153,7 +153,6 @@ const EventProgress = styled(LinearProgress)(({ theme }) => ({
 const EventCountdown = ({ countdowns }) => {
   const [timeLeft, setTimeLeft] = useState(null);
   const [nextEvent, setNextEvent] = useState(null);
-  const [currentEvent, setCurrentEvent] = useState(null);
   const [expandedEvents, setExpandedEvents] = useState(new Set());
   const [progress, setProgress] = useState(0);
   const theme = useTheme();
@@ -166,24 +165,16 @@ const EventCountdown = ({ countdowns }) => {
       const now = Moment();
       const sortedEvents = [...countdowns].sort((a, b) => Moment(a.time).diff(Moment(b.time)));
       
-      // Find current event (happening now)
-      const current = sortedEvents.find((event, index) => {
-        const eventTime = Moment(event.time);
-        const nextEventTime = sortedEvents[index + 1] ? Moment(sortedEvents[index + 1].time) : null;
-        return eventTime.isBefore(now) && (!nextEventTime || nextEventTime.isAfter(now));
-      });
-      
       // Find next upcoming event
       const upcoming = sortedEvents.find(event => Moment(event.time).isAfter(now));
       
-      setCurrentEvent(current);
       setNextEvent(upcoming);
       
-      // Auto-expand current event
-      if (current) {
+      // Auto-expand next event
+      if (upcoming) {
         setExpandedEvents(prev => {
           const newSet = new Set(prev);
-          newSet.add(current.name);
+          newSet.add(upcoming.name);
           return newSet;
         });
       }
@@ -268,8 +259,8 @@ const EventCountdown = ({ countdowns }) => {
     const now = Moment();
     const eventTime = Moment(event.time);
     
-    if (currentEvent && event.name === currentEvent.name) {
-      return { status: 'current', icon: <PlayCircleOutlineIcon fontSize="small" />, label: 'In Progress', color: 'primary' };
+    if (nextEvent && event.name === nextEvent.name) {
+      return { status: 'next', icon: <PlayCircleOutlineIcon fontSize="small" />, label: 'Up Next', color: 'primary' };
     } else if (eventTime.isBefore(now)) {
       return { status: 'past', icon: <CheckCircleIcon fontSize="small" />, label: 'Completed', color: 'success' };
     } else {
@@ -280,7 +271,7 @@ const EventCountdown = ({ countdowns }) => {
   const renderEvent = (event, index) => {
     const { status, icon, label, color } = getEventStatus(event);
     const isPast = status === 'past';
-    const isCurrent = status === 'current';
+    const isNext = status === 'next';
     const isExpanded = expandedEvents.has(event.name);
     const eventTime = Moment(event.time);
     
@@ -288,13 +279,13 @@ const EventCountdown = ({ countdowns }) => {
       <Fade in={true} timeout={300 + index * 100} key={event.name}>
         <EventCard 
           past={isPast} 
-          current={isCurrent}
+          current={isNext}
           onClick={() => toggleEventExpansion(event.name)}
         >
-          {isCurrent && <EventProgress variant="indeterminate" color="primary" />}
-          <EventDot past={isPast} current={isCurrent}>
+          {isNext && <EventProgress variant="indeterminate" color="primary" />}
+          <EventDot past={isPast} current={isNext}>
             {isPast && <CheckCircleIcon sx={{ fontSize: 8, color: 'white' }} />}
-            {isCurrent && <PlayCircleOutlineIcon sx={{ fontSize: 10, color: 'white' }} />}
+            {isNext && <PlayCircleOutlineIcon sx={{ fontSize: 10, color: 'white' }} />}
           </EventDot>
           
           <CardContent sx={{ pb: 1 }}>
@@ -325,7 +316,7 @@ const EventCountdown = ({ countdowns }) => {
                   label={label}
                   color={color}
                   size="small"
-                  variant={isCurrent ? 'filled' : 'outlined'}
+                  variant={isNext ? 'filled' : 'outlined'}
                 />
                 <IconButton size="small">
                   {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -333,7 +324,7 @@ const EventCountdown = ({ countdowns }) => {
               </Box>
             </Box>
             
-            <Collapse in={isExpanded} timeout={isCurrent ? 'auto' : 300}>
+            <Collapse in={isExpanded} timeout={isNext ? 'auto' : 300}>
               <Box mt={2} pt={1} borderTop={1} borderColor="divider">
                 <Typography 
                   variant="body2" 
