@@ -21,6 +21,7 @@ import VolunteerTable from "../../../components/admin/VolunteerTable";
 import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";  
 import ApplicationReviewList from "../../../components/admin/ApplicationReviewList";
 import ApplicationEditDialog from "../../../components/admin/ApplicationEditDialog";
+import VolunteerCommunication from "../../../components/admin/VolunteerCommunication";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 
 import { Typography } from "@mui/material";
@@ -53,6 +54,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [viewMode, setViewMode] = useState("table"); // "table" or "review"
   const [applicationEditDialogOpen, setApplicationEditDialogOpen] = useState(false);
   const [editingApplication, setEditingApplication] = useState(null);
+  const [communicationDialogOpen, setCommunicationDialogOpen] = useState(false);
+  const [selectedVolunteerForMessage, setSelectedVolunteerForMessage] = useState(null);
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
@@ -250,6 +253,14 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     },
     [tabValue, getCurrentVolunteerType]
   );
+
+  const handleMessageVolunteer = useCallback((volunteer) => {
+    setSelectedVolunteerForMessage({
+      ...volunteer,
+      type: getCurrentVolunteerType(tabValue),
+    });
+    setCommunicationDialogOpen(true);
+  }, [tabValue, getCurrentVolunteerType]);
 
   const handleAddSingleVolunteer = useCallback(() => {
     setEditingVolunteer({
@@ -742,6 +753,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 order={order}
                 onRequestSort={handleRequestSort}
                 onEditVolunteer={handleEditVolunteer}
+                onMessageVolunteer={handleMessageVolunteer}
               />
               {sortedVolunteers.length === 0 && (
                 <Box sx={{ mt: 2, textAlign: "center" }}>
@@ -788,6 +800,27 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         onSave={handleSaveApplicationEdit}
         isLoading={loading}
       />
+
+      {/* Volunteer Communication Dialog */}
+      {selectedVolunteerForMessage && (
+        <VolunteerCommunication
+          volunteer={selectedVolunteerForMessage}
+          volunteerType={getCurrentVolunteerTypeSingular(tabValue)}
+          eventId={selectedEventId}
+          orgId={orgId}
+          accessToken={accessToken}
+          open={communicationDialogOpen}
+          onClose={() => {
+            setCommunicationDialogOpen(false);
+            setSelectedVolunteerForMessage(null);
+          }}
+          onMessageSent={() => {
+            setCommunicationDialogOpen(false);
+            setSelectedVolunteerForMessage(null);
+            fetchVolunteers(); // Refresh data
+          }}
+        />
+      )}
     </AdminPage>
   );
 });

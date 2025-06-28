@@ -13,10 +13,12 @@ import {
   Typography,
   Chip,
   Tooltip,
+  Box,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import { FaPaperPlane } from 'react-icons/fa';
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
@@ -67,6 +69,7 @@ const VolunteerTable = ({
   order,
   onRequestSort,
   onEditVolunteer,
+  onMessageVolunteer,
 }) => {
   console.log("VolunteerTable", volunteers);
   const columns = useMemo(() => {
@@ -202,9 +205,26 @@ const VolunteerTable = ({
                   />
                 </StyledTableCell>
                 <StyledTableCell data-label="Actions">
-                  <Button onClick={() => onEditVolunteer(volunteer)}>
-                    Edit
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+                    <Button 
+                      onClick={() => onEditVolunteer(volunteer)}
+                      size="small"
+                      variant="outlined"
+                    >
+                      Edit
+                    </Button>
+                    {onMessageVolunteer && (
+                      <Button 
+                        onClick={() => onMessageVolunteer(volunteer)}
+                        size="small"
+                        variant="contained"
+                        color="primary"
+                        startIcon={<FaPaperPlane size={12} />}
+                      >
+                        Message
+                      </Button>
+                    )}
+                  </Box>
                 </StyledTableCell>
                 {columns.map((column) => (
                   <StyledTableCell key={column.id} data-label={column.label}>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import {
   Card,
   CardContent,
@@ -78,9 +79,9 @@ const ApplicationReviewCard = ({
       },
       judge: {
         title: 'Judge Application',
-        primaryFields: ['name', 'email', 'company', 'title'],
-        secondaryFields: ['expertise', 'yearsExperience', 'judgingExperience'],
-        additionalFields: ['bio', 'linkedin', 'availability', 'criteriaPreferences'],
+        primaryFields: ['name', 'email', 'title', 'companyName'],
+        secondaryFields: ['participationCount', 'backgroundAreas', 'canAttendJudging', 'inPerson'],
+        additionalFields: ['biography', 'whyJudge', 'availability', 'additionalInfo', 'pronouns', 'country', 'state', 'otherBackground', 'linkedinProfile', 'photoUrl'],
         statusField: 'isSelected'
       },
       volunteer: {
@@ -107,6 +108,27 @@ const ApplicationReviewCard = ({
   // Helper function to format field values
   const formatFieldValue = (field, value) => {
     if (!value) return 'Not provided';
+    
+    // Handle boolean fields with Yes/No
+    if (field === 'inPerson') {
+      if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+      }
+      return value; // If it's already a string like "Yes"/"No"
+    }
+    
+    // Handle special formatting for participation count
+    if (field === 'participationCount') {
+      return value;
+    }
+    
+    // Handle canAttendJudging with better formatting
+    if (field === 'canAttendJudging') {
+      if (value === 'Yes') return '✅ Yes, full judging period';
+      if (value === 'No') return '❌ Cannot attend';
+      if (value === 'Partial') return '⚠️ Partial attendance';
+      return value;
+    }
     
     if (Array.isArray(value)) {
       return value.join(', ');
@@ -164,13 +186,27 @@ const ApplicationReviewCard = ({
       previousVolunteering: 'Previous Volunteering',
       previousMentoring: 'Previous Mentoring',
       criteriaPreferences: 'Criteria Preferences',
-      companyName: 'Company Name',
+      companyName: 'Company',
       contactName: 'Contact Name',
       sponsorshipLevel: 'Sponsorship Level',
       industry: 'Industry',
       employeeCount: 'Employee Count',
       website: 'Website',
-      specialRequests: 'Special Requests'
+      specialRequests: 'Special Requests',
+      // Judge-specific fields
+      participationCount: 'OHack Participation',
+      backgroundAreas: 'Background Areas',
+      canAttendJudging: 'Can Attend Judging',
+      inPerson: 'In Person',
+      biography: 'Biography',
+      whyJudge: 'Why Judge?',
+      additionalInfo: 'Additional Information',
+      pronouns: 'Pronouns',
+      country: 'Country',
+      state: 'State',
+      otherBackground: 'Other Background',
+      linkedinProfile: 'LinkedIn Profile',
+      photoUrl: 'Photo'
     };
     return labelMap[field] || field.charAt(0).toUpperCase() + field.slice(1);
   };
@@ -187,7 +223,10 @@ const ApplicationReviewCard = ({
         {/* Header with name and approval status */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
+            <Avatar 
+              src={application.photoUrl} 
+              sx={{ mr: 2, bgcolor: 'primary.main', width: 48, height: 48 }}
+            >
               <PersonIcon />
             </Avatar>
             <Box>
@@ -253,7 +292,20 @@ const ApplicationReviewCard = ({
                     <Typography variant="body2" color="text.secondary">
                       {getFieldLabel(field)}
                     </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 500,
+                        ...(field === 'canAttendJudging' && {
+                          p: 1,
+                          borderRadius: 1,
+                          bgcolor: value === 'Yes' ? 'success.light' : 
+                                   value === 'No' ? 'error.light' : 'warning.light',
+                          color: value === 'Yes' ? 'success.contrastText' : 
+                                 value === 'No' ? 'error.contrastText' : 'warning.contrastText'
+                        })
+                      }}
+                    >
                       {renderField(field, value)}
                     </Typography>
                   </Grid>
@@ -278,7 +330,19 @@ const ApplicationReviewCard = ({
                   <Typography variant="body2" color="text.secondary">
                     {getFieldLabel(field)}
                   </Typography>
-                  <Typography variant="body2">
+                  <Typography 
+                    variant="body2"
+                    sx={{ 
+                      ...(field === 'canAttendJudging' && {
+                        p: 1,
+                        borderRadius: 1,
+                        bgcolor: value === 'Yes' ? 'success.light' : 
+                                 value === 'No' ? 'error.light' : 'warning.light',
+                        color: value === 'Yes' ? 'success.contrastText' : 
+                               value === 'No' ? 'error.contrastText' : 'warning.contrastText'
+                      })
+                    }}
+                  >
                     {renderField(field, value)}
                   </Typography>
                 </Grid>
@@ -296,21 +360,48 @@ const ApplicationReviewCard = ({
                 const value = application[field];
                 if (!value) return null;
                 
-                const isLink = ['linkedin', 'github', 'portfolio', 'website'].includes(field);
+                const isLink = ['linkedin', 'github', 'portfolio', 'website', 'linkedinProfile'].includes(field);
                 
                 return (
                   <Grid item xs={12} key={field}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                      {field === 'linkedin' && <LinkedInIcon fontSize="small" color="action" />}
+                      {(field === 'linkedin' || field === 'linkedinProfile') && <LinkedInIcon fontSize="small" color="action" />}
                       {field === 'github' && <GitHubIcon fontSize="small" color="action" />}
                       {(field === 'portfolio' || field === 'website') && <WebsiteIcon fontSize="small" color="action" />}
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" color="text.secondary">
                           {getFieldLabel(field)}
                         </Typography>
-                        <Typography variant="body2" sx={{ mt: 0.5 }}>
-                          {renderField(field, value, isLink)}
-                        </Typography>
+                        {field === 'photoUrl' && value ? (
+                          <Box sx={{ mt: 1, position: 'relative', width: '120px', height: '120px' }}>
+                            <Image 
+                              src={value} 
+                              alt="Judge photo" 
+                              fill
+                              style={{ 
+                                borderRadius: '8px',
+                                objectFit: 'cover'
+                              }} 
+                            />
+                          </Box>
+                        ) : field === 'biography' || field === 'whyJudge' ? (
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              mt: 0.5, 
+                              p: 2, 
+                              bgcolor: 'grey.50', 
+                              borderRadius: 1,
+                              fontStyle: field === 'whyJudge' ? 'italic' : 'normal'
+                            }}
+                          >
+                            {renderField(field, value, isLink)}
+                          </Typography>
+                        ) : (
+                          <Typography variant="body2" sx={{ mt: 0.5 }}>
+                            {renderField(field, value, isLink)}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   </Grid>
