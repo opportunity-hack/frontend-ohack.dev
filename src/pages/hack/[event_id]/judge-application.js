@@ -552,7 +552,7 @@ const JudgeApplicationComponent = () => {
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Basic Information
       </Typography>
-      
+
       <Box sx={{ mb: 3 }}>
         <TextField
           label="Email Address"
@@ -564,7 +564,7 @@ const JudgeApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
         />
-        
+
         <TextField
           label="Your Name"
           name="name"
@@ -574,7 +574,17 @@ const JudgeApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
         />
-        
+
+        <TextField
+          label="Pronouns"
+          name="pronouns"
+          fullWidth
+          value={formData.pronouns}
+          onChange={handleChange}
+          helperText="e.g. he/him, she/her, they/them"
+          sx={{ mb: 3 }}
+        />
+
         <TextField
           label="Your Title"
           name="title"
@@ -582,14 +592,25 @@ const JudgeApplicationComponent = () => {
           value={formData.title}
           onChange={handleChange}
           sx={{ mb: 3 }}
+          helperText="e.g. Software Engineer, Product Manager, etc."
         />
-        
+
         <TextField
           label="Company Name"
           name="companyName"
           fullWidth
           value={formData.companyName}
           onChange={handleChange}
+          sx={{ mb: 3 }}          
+        />
+
+        <TextField
+          label="LinkedIn Profile"
+          name="linkedinProfile"
+          fullWidth
+          value={formData.linkedinProfile}
+          onChange={handleChange}
+          helperText="Optional - link to your LinkedIn profile"
           sx={{ mb: 3 }}
         />
       </Box>
