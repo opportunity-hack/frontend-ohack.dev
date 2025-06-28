@@ -74,9 +74,10 @@ const VolunteerTable = ({
   console.log("VolunteerTable", volunteers);
   const columns = useMemo(() => {
     const baseColumns = [
-      { id: "id", label: "ID", minWidth: 100 }, 
+      { id: "id", label: "ID", minWidth: 100 },
       { id: "name", label: "Name", minWidth: 120 },
       { id: "email", label: "Email", minWidth: 150 },
+      { id: "messages_sent", label: "Messages Sent", minWidth: 120 },
       { id: "pronouns", label: "Pronouns", minWidth: 100 },
       { id: "company", label: "Company", minWidth: 120 },
       { id: "isInPerson", label: "In Person", minWidth: 100 },
@@ -145,6 +146,18 @@ const VolunteerTable = ({
             icon={<CancelIcon />}
             label="Not Selected"
             size="small"
+          />
+        );
+      case "messages_sent":
+        const messageCount = Array.isArray(volunteer.messages_sent) 
+          ? volunteer.messages_sent.length 
+          : 0;
+        return (
+          <Chip 
+            label={messageCount} 
+            size="small" 
+            variant="outlined"
+            color={messageCount > 0 ? "primary" : "default"}
           />
         );
       case "artifacts":
