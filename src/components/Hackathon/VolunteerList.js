@@ -17,6 +17,8 @@ import {
   Skeleton,
   Stack,
   Divider,
+  Collapse,
+  Button,
 } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
@@ -254,12 +256,29 @@ const ExpandableSection = styled(Box)(({ isExpanded }) => ({
   opacity: isExpanded ? 1 : 0,
 }));
 
+const ExpandableText = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+}));
+
+const ReadMoreButton = styled(Button)(({ theme }) => ({
+  padding: theme.spacing(0.5, 1),
+  marginTop: theme.spacing(0.5),
+  fontSize: '0.75rem',
+  textTransform: 'none',
+  fontWeight: 500,
+  minHeight: 'auto',
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+  },
+}));
+
 const VolunteerList = ({ event_id, type }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [volunteers, setVolunteers] = React.useState([]);
   const [availableMentors, setAvailableMentors] = React.useState([]);
   const [expandedAvailability, setExpandedAvailability] = React.useState({});
+  const [expandedBios, setExpandedBios] = React.useState({});
 
   useEffect(() => {
     // Call API to get data based on type
@@ -469,6 +488,65 @@ const VolunteerList = ({ event_id, type }) => {
       ...prev,
       [volunteerName]: !prev[volunteerName]
     }));
+  };
+
+  const toggleBioExpanded = (volunteerName, field) => {
+    const key = `${volunteerName}-${field}`;
+    setExpandedBios(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  const renderExpandableText = (text, volunteerName, field, label) => {
+    if (!text || typeof text !== 'string') return null;
+    
+    const MAX_LENGTH = 150;
+    const key = `${volunteerName}-${field}`;
+    const isExpanded = expandedBios[key] || false;
+    const needsTruncation = text.length > MAX_LENGTH;
+    
+    if (!needsTruncation) {
+      return (
+        <Typography variant="body2" paragraph sx={{ mb: 1.5 }}>
+          {label && <strong>{label}:</strong>} {text}
+        </Typography>
+      );
+    }
+
+    // Find the last complete word within MAX_LENGTH characters
+    let truncateAt = MAX_LENGTH;
+    while (truncateAt > 0 && text[truncateAt] !== ' ') {
+      truncateAt--;
+    }
+    
+    // If we couldn't find a space, fall back to character limit
+    if (truncateAt === 0) {
+      truncateAt = MAX_LENGTH;
+    }
+
+    const previewText = text.substring(0, truncateAt).trim();
+    const remainingText = text.substring(truncateAt).trim();
+
+    return (
+      <ExpandableText>
+        <Typography variant="body2" sx={{ mb: 0.5 }}>
+          {label && <strong>{label}:</strong>} {previewText}
+          {!isExpanded && '...'}
+          {isExpanded && ` ${remainingText}`}
+        </Typography>
+        
+        <ReadMoreButton
+          size="small"
+          onClick={() => toggleBioExpanded(volunteerName, field)}
+          endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          color="primary"
+          variant="text"
+        >
+          {isExpanded ? 'Show Less' : 'Read More'}
+        </ReadMoreButton>
+      </ExpandableText>
+    );
   };
 
   const renderAvailability = (availability, volunteerName) => {
@@ -861,17 +939,19 @@ const VolunteerList = ({ event_id, type }) => {
                 </Link>
               )}
             </ChipContainer>
-            <Typography variant="body1" paragraph sx={{ mt: 2 }}>
-              {volunteer.shortBio || volunteer.shortBiography || ""}
-            </Typography>
+            {renderExpandableText(
+              volunteer.shortBio || volunteer.shortBiography,
+              volunteer.name,
+              'bio'
+            )}
             {isMentor && (
               <>
-                <Typography variant="body1" paragraph>
+                <Typography variant="body2" paragraph sx={{ mb: 1.5 }}>
                   <strong>Expertise:</strong>{" "}
                   {volunteer.expertise || "Not specified"}
                 </Typography>
                 {volunteer.softwareEngineeringSpecifics && (
-                  <Typography variant="body1" paragraph>
+                  <Typography variant="body2" paragraph sx={{ mb: 1.5 }}>
                     <strong>Software Specifics:</strong>{" "}
                     {volunteer.softwareEngineeringSpecifics}
                   </Typography>
@@ -880,16 +960,19 @@ const VolunteerList = ({ event_id, type }) => {
             )}
             {isJudge && volunteer.background && (
               <>
-                <Typography variant="body1" paragraph>
+                <Typography variant="body2" paragraph sx={{ mb: 1.5 }}>
                   <strong>Expertise:</strong> {volunteer.background}
                 </Typography>
               </>
             )}
-            {isJudge && volunteer.whyJudge && (
-              <Typography variant="body1" paragraph>
-                <strong>Why volunteering:</strong> {volunteer.whyJudge}
-              </Typography>
-            )}
+            {isJudge && volunteer.whyJudge && 
+              renderExpandableText(
+                volunteer.whyJudge,
+                volunteer.name,
+                'whyJudge',
+                'Why volunteering'
+              )
+            }
             {isHacker && (
               <>
                 {volunteer.primaryRoles && (
