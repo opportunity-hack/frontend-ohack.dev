@@ -53,75 +53,6 @@ const BuddyAvatar = styled(Avatar)(({ theme }) => ({
   boxShadow: theme.shadows[3]
 }));
 
-// Sample buddy data (in a real app, this would come from an API)
-const sampleBuddies = [
-  {
-    id: 1,
-    name: 'Alex Johnson',
-    avatar: '/path/to/avatar1.jpg', // Replace with actual path or use initials for demo
-    title: 'Senior Frontend Developer',
-    experience: 'Expert',
-    skills: ['React', 'TypeScript', 'CSS', 'Accessibility'],
-    interests: ['Education', 'Healthcare'],
-    availability: 'High',
-    bio: "I've been volunteering with Opportunity Hack for 3 years and love helping new members get acclimated. I specialize in frontend development and accessibility.",
-    linkedin: 'https://linkedin.com/in/alexjohnson',
-    github: 'https://github.com/alexj'
-  },
-  {
-    id: 2,
-    name: 'Maya Patel',
-    avatar: '/path/to/avatar2.jpg',
-    title: 'Full Stack Developer',
-    experience: 'Advanced',
-    skills: ['Node.js', 'React', 'MongoDB', 'AWS'],
-    interests: ['Environment', 'Animal Welfare'],
-    availability: 'Medium',
-    bio: "Full stack developer with a passion for environmental causes. I've mentored several teams through their first projects and enjoy seeing new ideas come to life.",
-    linkedin: 'https://linkedin.com/in/mayapatel',
-    github: 'https://github.com/mayap'
-  },
-  {
-    id: 3,
-    name: 'David Kim',
-    avatar: '/path/to/avatar3.jpg',
-    title: 'Backend Developer',
-    experience: 'Advanced',
-    skills: ['Python', 'Django', 'SQL', 'Docker'],
-    interests: ['Food Security', 'Education'],
-    availability: 'Medium',
-    bio: "Passionate about building reliable backend systems that power nonprofit solutions. I enjoy helping newcomers understand system architecture and database design.",
-    linkedin: 'https://linkedin.com/in/davidkim',
-    github: 'https://github.com/davidk'
-  },
-  {
-    id: 4,
-    name: 'Sarah Chen',
-    avatar: '/path/to/avatar4.jpg',
-    title: 'UX/UI Designer',
-    experience: 'Expert',
-    skills: ['UX Research', 'UI Design', 'Figma', 'User Testing'],
-    interests: ['Mental Health', 'Accessibility'],
-    availability: 'High',
-    bio: "Designer focused on creating accessible, inclusive experiences. I love helping teams understand user needs and translating them into effective designs.",
-    linkedin: 'https://linkedin.com/in/sarahchen',
-    github: 'https://github.com/sarahc'
-  },
-  {
-    id: 5,
-    name: 'James Wilson',
-    avatar: '/path/to/avatar5.jpg',
-    title: 'Data Scientist',
-    experience: 'Advanced',
-    skills: ['Python', 'Machine Learning', 'Data Visualization', 'Statistics'],
-    interests: ['Healthcare', 'Public Policy'],
-    availability: 'Low',
-    bio: "I help nonprofits make sense of their data and build predictive models. Always excited to introduce new members to the world of data science for social good.",
-    linkedin: 'https://linkedin.com/in/jameswilson',
-    github: 'https://github.com/jwilson'
-  }
-];
-
 /**
  * BuddySystem component
  * Matches new members with experienced buddies to provide guidance and support
@@ -175,43 +106,6 @@ const BuddySystem = () => {
       setRequestSent(true);
     }, 1500);
   };
-
-  // Filter buddies based on filters and search term
-  const filteredBuddies = sampleBuddies.filter(buddy => {
-    // Apply skill filter
-    if (filters.skills && !buddy.skills.includes(filters.skills)) {
-      return false;
-    }
-    
-    // Apply interest filter
-    if (filters.interests && !buddy.interests.includes(filters.interests)) {
-      return false;
-    }
-    
-    // Apply availability filter
-    if (filters.availability && buddy.availability !== filters.availability) {
-      return false;
-    }
-    
-    // Apply search term
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      return (
-        buddy.name.toLowerCase().includes(lowerSearchTerm) ||
-        buddy.title.toLowerCase().includes(lowerSearchTerm) ||
-        buddy.skills.some(skill => skill.toLowerCase().includes(lowerSearchTerm)) ||
-        buddy.interests.some(interest => interest.toLowerCase().includes(lowerSearchTerm)) ||
-        buddy.bio.toLowerCase().includes(lowerSearchTerm)
-      );
-    }
-    
-    return true;
-  });
-
-  // Collect all unique skills, interests, and availability levels for filters
-  const allSkills = [...new Set(sampleBuddies.flatMap(buddy => buddy.skills))].sort();
-  const allInterests = [...new Set(sampleBuddies.flatMap(buddy => buddy.interests))].sort();
-  const allAvailability = [...new Set(sampleBuddies.map(buddy => buddy.availability))].sort();
 
   return (
     <Box>
@@ -474,9 +368,7 @@ const BuddySystem = () => {
                         sx={{ fontSize: '1.2rem' }}
                       >
                         <MenuItem value="" sx={{ fontSize: '1.2rem' }}>Any Skills</MenuItem>
-                        {allSkills.map((skill) => (
-                          <MenuItem key={skill} value={skill} sx={{ fontSize: '1.2rem' }}>{skill}</MenuItem>
-                        ))}
+                        {/* Add skill options here */}
                       </Select>
                     </FormControl>
                   </Grid>
@@ -491,9 +383,7 @@ const BuddySystem = () => {
                         sx={{ fontSize: '1.2rem' }}
                       >
                         <MenuItem value="" sx={{ fontSize: '1.2rem' }}>Any Interests</MenuItem>
-                        {allInterests.map((interest) => (
-                          <MenuItem key={interest} value={interest} sx={{ fontSize: '1.2rem' }}>{interest}</MenuItem>
-                        ))}
+                        {/* Add interest options here */}
                       </Select>
                     </FormControl>
                   </Grid>
@@ -508,9 +398,7 @@ const BuddySystem = () => {
                         sx={{ fontSize: '1.2rem' }}
                       >
                         <MenuItem value="" sx={{ fontSize: '1.2rem' }}>Any Availability</MenuItem>
-                        {allAvailability.map((availability) => (
-                          <MenuItem key={availability} value={availability} sx={{ fontSize: '1.2rem' }}>{availability}</MenuItem>
-                        ))}
+                        {/* Add availability options here */}
                       </Select>
                     </FormControl>
                   </Grid>
@@ -519,88 +407,16 @@ const BuddySystem = () => {
             </Accordion>
           </Box>
 
-          {/* Buddy cards grid */}
-          <Typography variant="h5" gutterBottom>
-            Available Buddies
-          </Typography>
-          
-          {filteredBuddies.length === 0 ? (
-            <Alert severity="info" sx={{ mb: 3 }}>
-              No buddies match your current filters. Try adjusting your search criteria.
-            </Alert>
-          ) : (
-            <Grid container spacing={3}>
-              {filteredBuddies.map((buddy) => (
-                <Grid item xs={12} sm={6} md={4} key={buddy.id}>
-                  <BuddyCard onClick={() => handleSelectBuddy(buddy)}>
-                    <CardContent>
-                      <Box sx={{ textAlign: 'center', mb: 2 }}>
-                        <Avatar sx={{ width: 64, height: 64, margin: '0 auto', mb: 1 }}>
-                          {buddy.name.charAt(0)}
-                        </Avatar>
-                        <Typography variant="h6" sx={{ fontSize: '1.4rem', fontWeight: 'bold' }}>
-                          {buddy.name}
-                        </Typography>
-                        <Typography variant="subtitle2" sx={{ fontSize: '1.2rem' }}>
-                          {buddy.title}
-                        </Typography>
-                      </Box>
-                      
-                      <Divider sx={{ my: 1 }} />
-                      
-                      <Typography sx={{ fontSize: '1.2rem', fontWeight: 'bold', mt: 1 }}>
-                        Experience:
-                      </Typography>
-                      <Typography sx={{ fontSize: '1.2rem', display: 'inline' }}>
-                        {buddy.experience}
-                      </Typography>
-                      
-                      <Typography sx={{ fontSize: '1.2rem', fontWeight: 'bold', mt: 1 }}>
-                        Interests:
-                      </Typography>
-                      <Typography sx={{ fontSize: '1.2rem', display: 'inline' }}>
-                        {buddy.interests.join(', ')}
-                      </Typography>
-                      
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="body2" sx={{ fontSize: '1.2rem', fontWeight: 'bold', mb: 0.5 }}>
-                          Skills:
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
-                          {buddy.skills.slice(0, 3).map((skill, index) => (
-                            <Chip key={index} label={skill} size="medium" sx={{ fontSize: '1.1rem', height: 32 }} />
-                          ))}
-                          {buddy.skills.length > 3 && (
-                            <Chip 
-                              label={`+${buddy.skills.length - 3}`} 
-                              size="medium" 
-                              variant="outlined" 
-                              sx={{ fontSize: '1.1rem', height: 32 }}
-                            />
-                          )}
-                        </Box>
-                      </Box>
-                    </CardContent>
-                    <Box sx={{ flexGrow: 1 }} />
-                    <CardActions>
-                      <Button 
-                        fullWidth
-                        variant="outlined" 
-                        size="large"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectBuddy(buddy);
-                        }}
-                        sx={{ fontSize: '1.1rem' }}
-                      >
-                        View Profile
-                      </Button>
-                    </CardActions>
-                  </BuddyCard>
-                </Grid>
-              ))}
-            </Grid>
-          )}
+          {/* Buddy Finder Section - NEED TO REPLACE PLACEHOLDER WITH JSON OF REAL BUDDIES*/}
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Typography variant="h4" gutterBottom sx={{ fontSize: '2rem', mb: 3 }}>
+              Available Mentors: Coming Soon!
+            </Typography>
+            <Typography variant="body1" color="textSecondary" sx={{ fontSize: '1.2rem' }}>
+              We are actively working on building our mentor network.
+              Please check back soon for a list of available mentors.
+            </Typography>
+          </Box>
         </>
       )}
 
