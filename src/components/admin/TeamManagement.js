@@ -38,7 +38,11 @@ import {
   TableBody,
   TablePagination,
   useTheme,
-  Link
+  Link,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon
 } from '@mui/material';
 import { 
   FaEdit, 
@@ -77,6 +81,48 @@ const TEAM_STATUS_OPTIONS = [
   { value: 'PROJECT_COMPLETE', label: 'Project Complete', color: 'success' },
   { value: 'INACTIVE', label: 'Inactive', color: 'error' }
 ];
+
+// GitHub Issue Templates for different hackathon phases
+const GITHUB_ISSUE_TEMPLATES = {
+  PHASE_1: {
+    title: "First Check-in",
+    body: `Hey there! It's only been a week, but based on our [timeline](https://www.ohack.dev/hack/2025_summer#countdown), we want to check-in with all teams.
+
+Here's what we're looking for:
+- [ ] Make sure your team members are all added [here](https://www.ohack.dev/hack/2025_summer#teams) - if there is anyone that shouldn't be on your team, either ask them to hit the Leave Team button, or add a note here in this task and we'll get to it
+- [ ] Do you have questions about the problem? If you aren't sure about the specific details, please ask in the corresponding \`#npo-\` channel for your nonprofit.  We'll batch up questions and ask nonprofits if we're unable to answer your questions with our internal knowledge
+- [ ] Has your team met yet? Either synchronous or asynchronous, schedule time to understand the background of your team, how much time they can dedicate this summer, and look for something you all have in common (maybe the reason you're here this summer?)
+- [ ] Google around for similar solutions today to understand what the cost of current solutions are, how easy they are to use, and how easy/hard they are to use - also see if there is anything free and open-source on GitHub
+- [ ] Where do you think you'll need (technical) help? Call that out here as a comment
+- [ ] Do you have any designs we can review? Google doc, Google slides, excalidraw.com, etc.
+- [ ] Do you have a roadmap or tasks? Ideally you are using GitHub to track the work to be done, but Google Docs and checklists work too - try to add some dates
+- [ ] Anything else on your mind? Please share anything else we might have missed that is top of mind for you
+
+Click all of the boxes as you go through these with your team, add comments to this with any questions you have or add them in Slack, either way!`,
+    phase: "Phase 1"
+  },
+  PHASE_2: {
+    title: "Second Check-in",
+    body: `Hey teams! We're now a month into the summer program and it's time for our second major check-in. Based on our [timeline](https://www.ohack.dev/hack/2025_summer#countdown), you should be deep into development with a working prototype to show.
+
+Here's what we're looking for:
+
+- [ ] **Technical Architecture**: Document your tech stack, database design, API structure, and overall system architecture. This can be in your README, a separate docs folder, or a design document. This can be super simple and high-level, but we want to understand the scope of your solution through this documentation.
+- [ ] **Code Structure**: Peek at your GitHub repo - folder structure, main components/modules, and key files. We want to see clean, organized code even if it's still in progress
+- [ ] **Working Prototype/MVP**: Deploy a basic version we can interact with (even if rough). Include the live link or demo video showing core functionality working. If you're struggling here, screenshots of localhost work too.
+- [ ] **Core Features Implemented**: List which key features are working, partially working, or still in development. Be honest about current state vs. goals
+- [ ] **Technical Blockers**: What's slowing you down? Specific bugs, integration challenges, performance issues, or knowledge gaps where you need help
+- [ ] **Nonprofit Problem**: Are you stuck on any additional context for the problem?  Keep in mind that while the single nonprofit has this issue, you should consider the general solve for all of the other nonprofits that will have the same problem.  Start by solving for this specific nonprofit, but think about how this generalizes given that [Scope of Solution in the Judging Criteria](https://www.ohack.dev/about/judges) is 25% of your overall score.
+- [ ] **Team Velocity**: How is your team working together? Are you meeting your timeline goals or do you need to adjust (and cut down) scope?
+- [ ] **Demo Day Preparation**: Start thinking about how you'll present your final solution. What story will you tell about the impact you're creating?
+- [ ] **DevPost**: We'll be using this for judging and this will be how you show off your work for your portfolio [Start a Project on our DevPost here](https://opportunity-hack-summer-2025.devpost.com/) you can update and submit as many times as needed up until the final deadline.
+
+**Remember**: It's better to have a simple, working solution that solves a real problem than a complex, broken one. Focus on core value first, polish later.
+
+Click all boxes as you complete them and add detailed comments below. If you're behind schedule or facing major challenges, reach out in Slack - we're here to help you succeed!`,
+    phase: "Phase 2"
+  }
+};
 
 // Add message templates after TEAM_STATUS_OPTIONS
 const MESSAGE_TEMPLATES = {
@@ -194,6 +240,15 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
   const [confirmDialogAction, setConfirmDialogAction] = useState(null);
   const [confirmDialogData, setConfirmDialogData] = useState(null);
   const [confirmDialogMessage, setConfirmDialogMessage] = useState("");
+  const [githubIssueDialogOpen, setGithubIssueDialogOpen] = useState(false);
+  const [selectedIssueTemplate, setSelectedIssueTemplate] = useState(null);
+  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [creatingIssue, setCreatingIssue] = useState(false);
+  const [githubIssues, setGithubIssues] = useState({});
+  const [loadingIssues, setLoadingIssues] = useState(false);
+  const [issueFilter, setIssueFilter] = useState('all');
+  const [expandedRepo, setExpandedRepo] = useState(null);
+  const [githubIssueSummaries, setGithubIssueSummaries] = useState({}); // Add state for table issue summaries
 
   // Fetch teams for the selected hackathon
   useEffect(() => {
@@ -241,6 +296,55 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
     setFilteredTeams(sortedTeams);
   }, [sortConfig]);
 
+  // Add function to fetch issue summary for table display
+  const fetchGithubIssueSummary = async (repo) => {
+    const repoKey = `${repo.link}-summary`;
+    
+    // Don't refetch if we already have the data
+    if (githubIssueSummaries[repoKey]) {
+      return githubIssueSummaries[repoKey];
+    }
+
+    try {
+      // Extract org and repo from the GitHub URL
+      const urlParts = repo.link.split('/');
+      const org = urlParts[urlParts.length - 2];
+      const repoName = urlParts[urlParts.length - 1];
+
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues`,
+        {
+          params: {
+            org: org,
+            repo: repoName,
+            state: 'all'
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        const issues = response.data.issues || [];
+        const openCount = issues.filter(issue => issue.state === 'open').length;
+        const closedCount = issues.filter(issue => issue.state === 'closed').length;
+        const summary = { open: openCount, closed: closedCount, total: issues.length };
+        
+        setGithubIssueSummaries(prev => ({
+          ...prev,
+          [repoKey]: summary
+        }));
+        
+        return summary;
+      }
+    } catch (error) {
+      console.error("Error fetching GitHub issues summary:", error);
+      return { open: 0, closed: 0, total: 0 };
+    }
+  };
+
   // Fetch teams for a hackathon
   const fetchTeams = async (hackathonId) => {
     setLoading(true);
@@ -261,6 +365,15 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
         
         // Fetch nonprofits to build the map for displaying nonprofit names
         fetchNonprofits(hackathonId);
+        
+        // Fetch GitHub issue summaries for all teams with repositories
+        response.data.teams.forEach(team => {
+          if (team.github_links && team.github_links.length > 0) {
+            team.github_links.forEach(repo => {
+              fetchGithubIssueSummary(repo);
+            });
+          }
+        });
       }
     } catch (error) {
       console.error("Error fetching teams:", error);
@@ -319,7 +432,7 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
           ...response.data.team,
           team_members: response.data.team.team_members || [],
           active: response.data.team.active === "True",
-        };
+        };      
         setSelectedTeam(team);
         setTeamData(team);
       }
@@ -347,6 +460,13 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
       ...team,
       active: team.active === "True",
     });
+    // Fetch GitHub issues for all repositories to populate summaries
+    console.log("Fetching GitHub issues for team:", team);
+    if (team.github_links && team.github_links.length > 0) {
+      team.github_links.forEach((repo) => {
+        fetchGithubIssues(repo, "all"); // Fetch all issues for summary
+      });
+    }
     fetchNonprofits(selectedHackathon);
     // Reset message dialog state when switching teams
     setSelectedTemplate(null);
@@ -666,6 +786,131 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
     setConfirmDialogData(data);
     setConfirmDialogMessage(message);
     setConfirmDialogOpen(true);
+  };
+
+  // Fetch GitHub issues for a repository
+  const fetchGithubIssues = async (repo, state = 'all') => {
+    const repoKey = `${repo.link}-${state}`;
+    
+    // Don't refetch if we already have the data
+    if (githubIssues[repoKey] && !loadingIssues) {
+      return githubIssues[repoKey];
+    }
+
+    setLoadingIssues(true);
+    try {
+      // Extract org and repo from the GitHub URL
+      const urlParts = repo.link.split('/');
+      const org = urlParts[urlParts.length - 2];
+      const repoName = urlParts[urlParts.length - 1];
+
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues`,
+        {
+          params: {
+            org: org,
+            repo: repoName,
+            state: state
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        const issues = response.data.issues || [];
+        setGithubIssues(prev => ({
+          ...prev,
+          [repoKey]: issues
+        }));
+        return issues;
+      }
+    } catch (error) {
+      console.error("Error fetching GitHub issues:", error);
+      enqueueSnackbar("Failed to fetch GitHub issues", { variant: "error" });
+      return [];
+    } finally {
+      setLoadingIssues(false);
+    }
+  };
+
+  // Handle GitHub issue creation
+  const handleCreateGithubIssue = async () => {
+    if (!selectedIssueTemplate) return;
+    
+    // Use selectedRepo or the only repo if there's just one
+    const repoToUse = selectedRepo || (teamData?.github_links?.length === 1 ? teamData.github_links[0] : null);
+    if (!repoToUse) return;
+
+    setCreatingIssue(true);
+    try {
+      // Extract org and repo from the GitHub URL
+      const urlParts = repoToUse.link.split('/');
+      const org = urlParts[urlParts.length - 2];
+      const repo = urlParts[urlParts.length - 1];
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/create_issue`,
+        {
+          repo: repo,
+          org: org,
+          title: selectedIssueTemplate.title,
+          body: selectedIssueTemplate.body
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        enqueueSnackbar(
+          `GitHub issue "${selectedIssueTemplate.title}" created successfully`,
+          { variant: "success" }
+        );
+        setGithubIssueDialogOpen(false);
+        setSelectedIssueTemplate(null);
+        setSelectedRepo(null);
+
+        // Show issue URL if available
+        // if (response.data.issue.issue_url) {
+        //   setTimeout(() => {
+        //     window.open(response.data.issue.issue_url, '_blank');
+        //   }, 1000);
+        // }
+
+        // Refresh issues for the repository after creating new issue
+        const repoToUse =
+          selectedRepo ||
+          (teamData?.github_links?.length === 1
+            ? teamData.github_links[0]
+            : null);
+        if (repoToUse) {
+          // Clear cached issues to force refresh
+          const repoKey = `${repoToUse.link}-${issueFilter}`;
+          setGithubIssues((prev) => {
+            const updated = { ...prev };
+            delete updated[repoKey];
+            return updated;
+          });
+          // Fetch fresh issues
+          fetchGithubIssues(repoToUse, "all");
+        }
+      }
+    } catch (error) {
+      console.error("Error creating GitHub issue:", error);
+      enqueueSnackbar(
+        error.response?.data?.message || "Failed to create GitHub issue", 
+        { variant: "error" }
+      );
+    } finally {
+      setCreatingIssue(false);
+    }
   };
 
   // Render team status chip
@@ -1073,42 +1318,97 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
         <CardHeader
-          title="GitHub Repositories"
-          subheader="Manage team repositories"
+          title="GitHub Repositories & Issues"
+          subheader="Manage team repositories and create hackathon phase issues"
           action={
-            <Button
-              startIcon={<FaGithub />}
-              onClick={() => {
-                /* Open GitHub link dialog */
-              }}
-              color="primary"
-              variant="contained"
-              size="small"
-              disabled
-            >
-              Add Repository
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                startIcon={<FaBug />}
+                onClick={() => setGithubIssueDialogOpen(true)}
+                color="secondary"
+                variant="contained"
+                size="small"
+                disabled={!teamData.github_links || teamData.github_links.length === 0}
+              >
+                Create Issue
+              </Button>
+              <Button
+                startIcon={<FaGithub />}
+                onClick={() => {
+                  /* Open GitHub link dialog */
+                }}
+                color="primary"
+                variant="contained"
+                size="small"
+                disabled
+              >
+                Add Repository
+              </Button>
+            </Box>
           }
         />
         <Divider />
         <CardContent>
           {teamData.github_links && teamData.github_links.length > 0 ? (
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Repository Name</TableCell>
-                    <TableCell>URL</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {teamData.github_links.map((repo, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{repo.name}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <Typography variant="body2" sx={{ mr: 1 }}>
+            <Box>
+              {/* Issues Filter Controls */}
+              <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Repositories & Issues
+                </Typography>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Issue Filter</InputLabel>
+                  <Select
+                    value={issueFilter}
+                    label="Issue Filter"
+                    onChange={(e) => {
+                      setIssueFilter(e.target.value);
+                      // Clear cached issues for all repos when filter changes
+                      setGithubIssues({});
+                    }}
+                  >
+                    <MenuItem value="all">All Issues</MenuItem>
+                    <MenuItem value="open">Open Only</MenuItem>
+                    <MenuItem value="closed">Closed Only</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* Repository Cards with Issues */}
+              {teamData.github_links.map((repo, index) => {
+                const repoKey = `${repo.link}-${issueFilter}`;
+                const issues = githubIssues[repoKey] || [];
+                const summary = getIssuesSummary(repo);
+                const isExpanded = expandedRepo === index;
+
+                return (
+                  <Card key={index} variant="outlined" sx={{ mb: 2 }}>
+                    <CardHeader
+                      title={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <FaGithub />
+                            <Typography variant="h6">{repo.name}</Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Chip
+                              size="small"
+                              label={`${summary.open} open`}
+                              color="success"
+                              variant="outlined"
+                            />
+                            <Chip
+                              size="small"
+                              label={`${summary.closed} closed`}
+                              color="default"
+                              variant="outlined"
+                            />
+                          </Box>
+                        </Box>
+                      }
+                      subheader={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                          <Typography variant="body2" color="text.secondary" noWrap>
                             {repo.link}
                           </Typography>
                           <IconButton
@@ -1119,25 +1419,157 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <FaExternalLinkAlt />
+                            <FaExternalLinkAlt size={12} />
                           </IconButton>
                         </Box>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Tooltip title="Remove repository">
-                          <IconButton size="small" color="error">
-                            <FaTrash />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                      }
+                      action={
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Tooltip title="Create Phase Issue">
+                            <IconButton
+                              size="small"
+                              color="secondary"
+                              onClick={() => {
+                                setSelectedRepo(repo);
+                                setGithubIssueDialogOpen(true);
+                              }}
+                            >
+                              <FaBug />
+                              <Box component="span" sx={{ fontSize: '8px', ml: 0.5 }}>+</Box>
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={isExpanded ? "Hide Issues" : "Show Issues"}>
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                if (!isExpanded) {
+                                  fetchGithubIssues(repo, issueFilter);
+                                }
+                                setExpandedRepo(isExpanded ? null : index);
+                              }}
+                            >
+                              {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Remove repository">
+                            <IconButton size="small" color="error">
+                              <FaTrash />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
+                    />
+                    
+                    {/* Expandable Issues List */}
+                    {isExpanded && (
+                      <CardContent sx={{ pt: 0 }}>
+                        {loadingIssues ? (
+                          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                            <CircularProgress size={24} />
+                          </Box>
+                        ) : issues.length > 0 ? (
+                          <Box>
+                            <Typography variant="subtitle2" gutterBottom sx={{ mb: 2 }}>
+                              Issues ({issueFilter === 'all' ? 'all' : issueFilter})
+                            </Typography>
+                            <List dense>
+                              {issues.slice(0, 10).map((issue, issueIndex) => (
+                                <ListItem
+                                  key={issueIndex}
+                                  sx={{
+                                    border: 1,
+                                    borderColor: 'divider',
+                                    borderRadius: 1,
+                                    mb: 1,
+                                    bgcolor: issue.state === 'open' ? 'success.light' : 'grey.100',
+                                    '&:hover': {
+                                      bgcolor: issue.state === 'open' ? 'success.main' : 'grey.200',
+                                    }
+                                  }}
+                                  button
+                                  component="a"
+                                  href={issue.html_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ListItemIcon>
+                                    <Chip
+                                      size="small"
+                                      label={issue.state}
+                                      color={getIssueStatusColor(issue.state)}
+                                      sx={{ minWidth: 60 }}
+                                    />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Typography variant="body2" fontWeight="medium" noWrap>
+                                        #{issue.number}: {issue.title}
+                                      </Typography>
+                                    }
+                                    secondary={
+                                      <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+                                        <Typography variant="caption" color="text.secondary">
+                                          {formatDate(issue.created_at)}
+                                        </Typography>
+                                        {issue.assignee && (
+                                          <Typography variant="caption" color="text.secondary">
+                                            @{issue.assignee.login}
+                                          </Typography>
+                                        )}
+                                        {issue.labels && issue.labels.length > 0 && (
+                                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                            {issue.labels.slice(0, 2).map((label, labelIndex) => (
+                                              <Chip
+                                                key={labelIndex}
+                                                size="small"
+                                                label={label.name}
+                                                sx={{
+                                                  height: 16,
+                                                  fontSize: '0.65rem',
+                                                  backgroundColor: `#${label.color}`,
+                                                  color: 'white'
+                                                }}
+                                              />
+                                            ))}
+                                          </Box>
+                                        )}
+                                      </Box>
+                                    }
+                                  />
+                                  <IconButton size="small" color="primary">
+                                    <FaExternalLinkAlt size={12} />
+                                  </IconButton>
+                                </ListItem>
+                              ))}
+                            </List>
+                            {issues.length > 10 && (
+                              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                                <Button
+                                  size="small"
+                                  component="a"
+                                  href={`${repo.link}/issues`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  View all {issues.length} issues on GitHub
+                                </Button>
+                              </Box>
+                            )}
+                          </Box>
+                        ) : (
+                          <Alert severity="info" sx={{ mt: 1 }}>
+                            No {issueFilter === 'all' ? '' : issueFilter} issues found for this repository.
+                          </Alert>
+                        )}
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+            </Box>
           ) : (
             <Alert severity="info">
-              No GitHub repositories have been linked to this team yet.
+              No GitHub repositories have been linked to this team yet. Add repositories first to create hackathon phase issues.
             </Alert>
           )}
         </CardContent>
@@ -1237,6 +1669,36 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
       : "Not assigned";
   };
 
+  // Helper function to get issue status color
+  const getIssueStatusColor = (state) => {
+    switch (state) {
+      case 'open':
+        return 'success';
+      case 'closed':
+        return 'default';
+      default:
+        return 'info';
+    }
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Helper function to get issues summary for a repo
+  const getIssuesSummary = (repo) => {
+    const repoKey = `${repo.link}-all`;
+    const issues = githubIssues[repoKey] || [];
+    const openCount = issues.filter(issue => issue.state === 'open').length;
+    const closedCount = issues.filter(issue => issue.state === 'closed').length;
+    return { total: issues.length, open: openCount, closed: closedCount };
+  };
+
   // Helper function to render GitHub links for a team
   const renderGitHubCell = (team) => {
     if (!team.github_links || team.github_links.length === 0) {
@@ -1250,9 +1712,12 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
       );
     }
 
-    // If there's only one repository, show it directly
+    // If there's only one repository, show it directly with issue counts
     if (team.github_links.length === 1) {
       const repo = team.github_links[0];
+      const repoKey = `${repo.link}-summary`;
+      const summary = githubIssueSummaries[repoKey] || { open: 0, closed: 0, total: 0 };
+      
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Link
@@ -1275,23 +1740,51 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
             </Typography>
             <FaExternalLinkAlt size={12} style={{ marginLeft: 4 }} />
           </Link>
-          <Tooltip title="View GitHub Issues">
-            <IconButton
-              size="small"
-              color="secondary"
-              component="a"
-              href={`${repo.link}/issues`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FaBug size={12} />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Tooltip title={`${summary.open} open issues, ${summary.closed} closed issues`}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Chip
+                  size="small"
+                  label={summary.open}
+                  color="success"
+                  sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
+                />
+                <Chip
+                  size="small"
+                  label={summary.closed}
+                  color="default"
+                  sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
+                />
+              </Box>
+            </Tooltip>
+            <Tooltip title="View GitHub Issues">
+              <IconButton
+                size="small"
+                color="secondary"
+                component="a"
+                href={`${repo.link}/issues`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaBug size={12} />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
       );
     }
 
-    // If there are multiple repositories, show a dropdown or count
+    // If there are multiple repositories, show aggregate counts and dropdown
+    const totalSummary = team.github_links.reduce((acc, repo) => {
+      const repoKey = `${repo.link}-summary`;
+      const summary = githubIssueSummaries[repoKey] || { open: 0, closed: 0, total: 0 };
+      return {
+        open: acc.open + summary.open,
+        closed: acc.closed + summary.closed,
+        total: acc.total + summary.total
+      };
+    }, { open: 0, closed: 0, total: 0 });
+
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Chip
@@ -1308,15 +1801,33 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
           }}
           sx={{ cursor: 'pointer' }}
         />
-        <Tooltip title="View all repositories">
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => handleEditTeam(team)}
-          >
-            <FaExternalLinkAlt size={12} />
-          </IconButton>
-        </Tooltip>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title={`Total: ${totalSummary.open} open issues, ${totalSummary.closed} closed issues across all repositories`}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Chip
+                size="small"
+                label={totalSummary.open}
+                color="success"
+                sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
+              />
+              <Chip
+                size="small"
+                label={totalSummary.closed}
+                color="default"
+                sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
+              />
+            </Box>
+          </Tooltip>
+          <Tooltip title="View all repositories">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleEditTeam(team)}
+            >
+              <FaExternalLinkAlt size={12} />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
     );
   };
@@ -1859,6 +2370,184 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
           >
             Confirm
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* GitHub Issue Creation Dialog */}
+      <Dialog
+        open={githubIssueDialogOpen}
+        onClose={() => {
+          setGithubIssueDialogOpen(false);
+          setSelectedIssueTemplate(null);
+          setSelectedRepo(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <FaBug />
+            Create GitHub Issue
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1 }}>
+            {/* Repository Selection */}
+            {!selectedRepo && teamData?.github_links && teamData.github_links.length > 1 && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Select Repository
+                </Typography>
+                <Grid container spacing={2}>
+                  {teamData.github_links.map((repo, index) => (
+                    <Grid item xs={12} sm={6} key={index}>
+                      <Card 
+                        variant="outlined" 
+                        sx={{ 
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            boxShadow: 1
+                          }
+                        }}
+                        onClick={() => setSelectedRepo(repo)}
+                      >
+                        <CardContent sx={{ pb: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <FaGithub />
+                            <Typography variant="subtitle2" fontWeight="bold">
+                              {repo.name}
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {repo.link}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+
+            {/* Template Selection */}
+            {(selectedRepo || (teamData?.github_links && teamData.github_links.length === 1)) && !selectedIssueTemplate && (
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Select Issue Template
+                </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Choose a hackathon phase template to create a check-in issue
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  {Object.entries(GITHUB_ISSUE_TEMPLATES).map(([templateKey, template]) => (
+                    <Grid item xs={12} sm={6} key={templateKey}>
+                      <Card 
+                        variant="outlined" 
+                        sx={{ 
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            boxShadow: 1
+                          }
+                        }}
+                        onClick={() => setSelectedIssueTemplate(template)}
+                      >
+                        <CardContent sx={{ pb: 2 }}>
+                          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                            {template.phase}
+                          </Typography>
+                          <Typography variant="h6" gutterBottom>
+                            {template.title}
+                          </Typography>
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary"
+                            sx={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}
+                          >
+                            {template.body}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+
+            {/* Confirmation and Preview */}
+            {selectedIssueTemplate && (selectedRepo || (teamData?.github_links && teamData.github_links.length === 1)) && (
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Review Issue Details
+                </Typography>
+                
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <Typography variant="body2">
+                    This will create a new issue in the repository: <strong>{selectedRepo?.name || teamData.github_links[0]?.name}</strong>
+                  </Typography>
+                </Alert>
+                
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Issue Title:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {selectedIssueTemplate.title}
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Issue Body:
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 2, maxHeight: 300, overflow: 'auto' }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontFamily: 'monospace', 
+                        whiteSpace: 'pre-wrap',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      {selectedIssueTemplate.body}
+                    </Typography>
+                  </Paper>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => {
+              setGithubIssueDialogOpen(false);
+              setSelectedIssueTemplate(null);
+              setSelectedRepo(null);
+            }}
+          >
+            Cancel
+          </Button>
+          {selectedIssueTemplate && (selectedRepo || (teamData?.github_links && teamData.github_links.length === 1)) && (
+            <Button
+              onClick={handleCreateGithubIssue}
+              variant="contained"
+              color="primary"
+              disabled={creatingIssue}
+              startIcon={creatingIssue ? <CircularProgress size={16} /> : <FaBug />}
+            >
+              {creatingIssue ? 'Creating Issue...' : 'Create Issue'}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
