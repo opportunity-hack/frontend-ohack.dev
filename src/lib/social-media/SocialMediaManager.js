@@ -1,15 +1,17 @@
 import { NewsService } from './NewsService';
 import { ThreadsService } from './ThreadsService';
+import { SlackService } from './SlackService';
 
 /**
  * Central manager for social media posting operations
  * Handles coordination between news fetching and multiple social media platforms
  */
 export class SocialMediaManager {
-  constructor(apiServerUrl) {
+  constructor(apiServerUrl, userCredentials = null) {
     this.newsService = new NewsService(apiServerUrl);
     this.socialMediaServices = new Map();
     this.postingHistory = [];
+    this.userCredentials = userCredentials; // Optional user credentials for API server
   }
 
   /**
@@ -47,28 +49,36 @@ export class SocialMediaManager {
   }
 
   /**
+   * Gets user credentials for the API server
+   * @returns {Object|null} - User credentials or null if not set
+   */
+  getUserCredentials() {
+    return this.userCredentials || null;
+  }
+
+  /**
    * Validates credentials for all registered services
    * @returns {Promise<Object>} - Validation results for each platform
    */
   async validateAllCredentials() {
     const results = {};
-    
+
     for (const [platformName, service] of this.socialMediaServices) {
       try {
         results[platformName] = {
           valid: await service.validateCredentials(),
           platform: service.getPlatformName(),
-          error: null
+          error: null,
         };
       } catch (error) {
         results[platformName] = {
           valid: false,
           platform: service.getPlatformName(),
-          error: error.message
+          error: error.message,
         };
       }
     }
-    
+
     return results;
   }
 
@@ -76,32 +86,33 @@ export class SocialMediaManager {
    * Posts a single news item to specified platforms
    * @param {Object} newsItem - News item to post
    * @param {Array<string>} platforms - Array of platform names to post to
+   * @param {Object} options - Additional options like slack channel
    * @returns {Promise<Object>} - Results from each platform
    */
-  async postToMultiplePlatforms(newsItem, platforms = []) {
+  async postToMultiplePlatforms(newsItem, platforms = [], options = {}) {
     const results = {
       newsItem: {
         id: newsItem.id,
         title: newsItem.title,
-        publishedAt: newsItem.publishedAt
+        publishedAt: newsItem.publishedAt,
       },
       platforms: {},
       summary: {
         total: platforms.length,
         successful: 0,
         failed: 0,
-        errors: []
-      }
+        errors: [],
+      },
     };
 
     for (const platformName of platforms) {
       const service = this.getService(platformName);
-      
+
       if (!service) {
         results.platforms[platformName] = {
           success: false,
           error: `Platform '${platformName}' is not registered`,
-          platform: platformName
+          platform: platformName,
         };
         results.summary.failed++;
         results.summary.errors.push(`Platform '${platformName}' not found`);
@@ -109,20 +120,28 @@ export class SocialMediaManager {
       }
 
       try {
-        const result = await service.postNews(newsItem);
+        // Special handling for Slack to include channel
+        let result;
+        if (platformName === "slack" && options.slackChannel) {
+          result = await service.postNews(newsItem, options.slackChannel);
+        } else {
+          result = await service.postNews(newsItem);
+        }
         results.platforms[platformName] = result;
-        
+
         if (result.success) {
           results.summary.successful++;
         } else {
           results.summary.failed++;
-          results.summary.errors.push(`${platformName}: ${result.error || 'Unknown error'}`);
+          results.summary.errors.push(
+            `${platformName}: ${result.error || "Unknown error"}`
+          );
         }
       } catch (error) {
         results.platforms[platformName] = {
           success: false,
           error: error.message,
-          platform: service.getPlatformName()
+          platform: service.getPlatformName(),
         };
         results.summary.failed++;
         results.summary.errors.push(`${platformName}: ${error.message}`);
@@ -134,7 +153,7 @@ export class SocialMediaManager {
       timestamp: new Date().toISOString(),
       newsItem: newsItem,
       results: results,
-      platforms: platforms
+      platforms: platforms,
     });
 
     return results;
@@ -150,21 +169,21 @@ export class SocialMediaManager {
       platforms = this.getRegisteredPlatforms(),
       limit = 5,
       newsOptions = {},
-      dryRun = false
+      dryRun = false,
     } = options;
 
     try {
       // Fetch news suitable for social media
       const newsItems = await this.newsService.getNewsForSocialMedia({
         limit,
-        ...newsOptions
+        ...newsOptions,
       });
 
       if (newsItems.length === 0) {
         return {
           success: true,
-          message: 'No news items available for posting',
-          results: []
+          message: "No news items available for posting",
+          results: [],
         };
       }
 
@@ -177,42 +196,53 @@ export class SocialMediaManager {
             newsItem: {
               id: newsItem.id,
               title: newsItem.title,
-              publishedAt: newsItem.publishedAt
+              publishedAt: newsItem.publishedAt,
             },
             platforms: {},
-            dryRun: true
+            dryRun: true,
           };
 
           for (const platformName of platforms) {
             const service = this.getService(platformName);
             if (service) {
+              const formattedContent = service.formatContent(newsItem);
               dryRunResult.platforms[platformName] = {
-                formattedContent: service.formatContent(newsItem),
-                characterCount: service.formatContent(newsItem).length,
-                withinLimit: service.formatContent(newsItem).length <= service.characterLimit
+                formattedContent: formattedContent,
+                characterCount: formattedContent.length,
+                withinLimit: formattedContent.length <= service.characterLimit,
               };
+
+              // Add channel info for Slack
+              if (platformName === "slack" && options.slackChannel) {
+                dryRunResult.platforms[platformName].channel =
+                  options.slackChannel;
+              }
             }
           }
 
           results.push(dryRunResult);
         } else {
-          const result = await this.postToMultiplePlatforms(newsItem, platforms);
+          const result = await this.postToMultiplePlatforms(
+            newsItem,
+            platforms,
+            options
+          );
           results.push(result);
         }
       }
 
       return {
         success: true,
-        message: `${dryRun ? 'Dry run completed' : 'Posting completed'} for ${results.length} news items`,
-        results: results
+        message: `${dryRun ? "Dry run completed" : "Posting completed"} for ${results.length} news items`,
+        results: results,
       };
     } catch (error) {
-      console.error('Error posting latest news:', error);
+      console.error("Error posting latest news:", error);
       return {
         success: false,
         message: `Error posting latest news: ${error.message}`,
         error: error.message,
-        results: []
+        results: [],
       };
     }
   }
@@ -223,9 +253,7 @@ export class SocialMediaManager {
    * @returns {Array} - Array of posting history entries
    */
   getPostingHistory(limit = 50) {
-    return this.postingHistory
-      .slice(-limit)
-      .reverse(); // Most recent first
+    return this.postingHistory.slice(-limit).reverse(); // Most recent first
   }
 
   /**
@@ -241,15 +269,15 @@ export class SocialMediaManager {
    */
   getPlatformStats() {
     const stats = {};
-    
+
     for (const [platformName, service] of this.socialMediaServices) {
       stats[platformName] = {
         name: service.getPlatformName(),
         limits: service.getPlatformLimits(),
-        isConfigured: !!service.credentials
+        isConfigured: !!service.credentials,
       };
     }
-    
+
     return stats;
   }
 
@@ -257,10 +285,11 @@ export class SocialMediaManager {
    * Factory method to create and configure the manager with environment variables
    * @param {Object} env - Environment variables object
    * @param {string} apiServerUrl - API server URL from environment context
+   * @param {Object} userCredentials - Optional user credentials for the Backend API server
    * @returns {SocialMediaManager} - Configured manager instance
    */
-  static createFromEnvironment(env = process.env, apiServerUrl) {
-    const manager = new SocialMediaManager(apiServerUrl);
+  static createFromEnvironment(env = process.env, apiServerUrl, userCredentials = null) {
+    const manager = new SocialMediaManager(apiServerUrl, userCredentials);
 
     // Configure Threads if credentials are available
     if (env.THREADS_ACCESS_TOKEN && env.THREADS_USER_ID) {
@@ -268,13 +297,20 @@ export class SocialMediaManager {
         const threadsService = new ThreadsService({
           accessToken: env.THREADS_ACCESS_TOKEN,
           userId: env.THREADS_USER_ID,
-          username: env.THREADS_USERNAME || 'opportunityhack'
+          username: env.THREADS_USERNAME || "opportunityhack",
+          // Add user credentials for API calls if needed
+          ...userCredentials
         });
-        manager.registerService('threads', threadsService);
+        manager.registerService("threads", threadsService);
       } catch (error) {
-        console.warn('Failed to configure Threads service:', error.message);
+        console.warn("Failed to configure Threads service:", error.message);
       }
     }
+
+    // Configure Slack (always available since it uses our internal API)
+    // Pass user credentials for API authentication
+    const slackService = new SlackService(userCredentials || {});
+    manager.registerService("slack", slackService);
 
     // Add more platforms here as needed
     // Example for Twitter/X:

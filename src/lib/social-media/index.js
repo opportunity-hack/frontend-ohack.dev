@@ -3,6 +3,7 @@
 
 export { SocialMediaService } from './SocialMediaService';
 export { ThreadsService } from './ThreadsService';
+export { SlackService } from './SlackService';
 export { NewsService } from './NewsService';
 export { SocialMediaManager } from './SocialMediaManager';
 
@@ -14,6 +15,7 @@ export const createSocialMediaManager = (env = process.env, apiServerUrl) => {
 // Platform constants for easy reference
 export const SUPPORTED_PLATFORMS = {
   THREADS: 'threads',
+  SLACK: 'slack',
   // Add more platforms here as they are implemented
   // TWITTER: 'twitter',
   // LINKEDIN: 'linkedin',
@@ -31,7 +33,7 @@ export const DEFAULT_NEWS_OPTIONS = {
 };
 
 export const DEFAULT_POSTING_OPTIONS = {
-  platforms: [SUPPORTED_PLATFORMS.THREADS],
+  platforms: [SUPPORTED_PLATFORMS.THREADS, SUPPORTED_PLATFORMS.SLACK],
   limit: 5,
   dryRun: false
 };

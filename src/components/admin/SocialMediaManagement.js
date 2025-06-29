@@ -27,7 +27,11 @@ import {
   AccordionSummary,
   AccordionDetails,
   IconButton,
-  Tooltip
+  Tooltip,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -43,8 +47,10 @@ import {
 import { useEnv } from '../../context/env.context';
 import { SocialMediaManager } from '../../lib/social-media/SocialMediaManager';
 import { SUPPORTED_PLATFORMS } from '../../lib/social-media/index';
+import { useAuthInfo } from '@propelauth/react';
 
 const SocialMediaManagement = ({ onSnackbar }) => {
+  const { accessToken, userClass } = useAuthInfo();
   const { apiServerUrl } = useEnv();
   const [manager, setManager] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,13 +61,19 @@ const SocialMediaManagement = ({ onSnackbar }) => {
   const [previewDialog, setPreviewDialog] = useState({ open: false, newsItem: null, platform: null });
   const [settingsDialog, setSettingsDialog] = useState(false);
   const [postingHistory, setPostingHistory] = useState([]);
+  const [adhocMessage, setAdhocMessage] = useState({
+    text: '',
+    channel: 'general',
+    sending: false
+  });
 
   // Settings state
   const [settings, setSettings] = useState({
     dryRun: true,
     platforms: [SUPPORTED_PLATFORMS.THREADS],
     newsLimit: 5,
-    autoRefresh: false
+    autoRefresh: false,
+    slackChannel: 'general'
   });
 
   // Fetch news from backend
@@ -88,9 +100,17 @@ const SocialMediaManagement = ({ onSnackbar }) => {
     const initializeManager = async () => {
       try {
         // Only initialize on client side to avoid SSR issues
-        if (typeof window === 'undefined' || !apiServerUrl) return;
+        if (typeof window === 'undefined' || !apiServerUrl || !accessToken) return;
         
-        const socialMediaManager = SocialMediaManager.createFromEnvironment(process.env, apiServerUrl);
+        const org = userClass?.getOrgByName("Opportunity Hack Org");
+        const orgId = org?.orgId;
+        
+        const userCredentials = {
+          accessToken,
+          orgId
+        };
+        
+        const socialMediaManager = SocialMediaManager.createFromEnvironment(process.env, apiServerUrl, userCredentials);
         setManager(socialMediaManager);
         
         // Validate platform credentials
@@ -110,7 +130,7 @@ const SocialMediaManagement = ({ onSnackbar }) => {
     };
 
     initializeManager();
-  }, [apiServerUrl]); // Remove onSnackbar from dependencies
+  }, [apiServerUrl, accessToken, userClass]); // Add accessToken and userClass dependencies
 
   // Separate useEffect for fetching news when manager is ready  
   useEffect(() => {
@@ -128,7 +148,8 @@ const SocialMediaManagement = ({ onSnackbar }) => {
       const results = await manager.postLatestNews({
         platforms: settings.platforms,
         limit: settings.newsLimit,
-        dryRun: settings.dryRun
+        dryRun: settings.dryRun,
+        slackChannel: settings.slackChannel
       });
       
       setPostingResults(results.results || []);
@@ -179,6 +200,35 @@ const SocialMediaManagement = ({ onSnackbar }) => {
     } catch (error) {
       console.error('Error refreshing status:', error);
       onSnackbar?.('Failed to refresh platform status', 'error');
+    }
+  };
+
+  // Send adhoc message to Slack
+  const handleSendAdhocMessage = async () => {
+    if (!manager || !adhocMessage.text.trim()) return;
+    
+    try {
+      setAdhocMessage({ ...adhocMessage, sending: true });
+      
+      const slackService = manager.getService('slack');
+      if (!slackService) {
+        onSnackbar?.('Slack service not available', 'error');
+        return;
+      }
+
+      const result = await slackService.post(adhocMessage.text, adhocMessage.channel);
+      
+      if (result.success) {
+        onSnackbar?.(`Message sent to #${adhocMessage.channel}`, 'success');
+        setAdhocMessage({ text: '', channel: adhocMessage.channel, sending: false });
+      } else {
+        onSnackbar?.(result.message || 'Failed to send message', 'error');
+      }
+    } catch (error) {
+      console.error('Error sending adhoc message:', error);
+      onSnackbar?.('Failed to send message', 'error');
+    } finally {
+      setAdhocMessage({ ...adhocMessage, sending: false });
     }
   };
 
@@ -243,6 +293,48 @@ const SocialMediaManagement = ({ onSnackbar }) => {
         </Grid>
       </Box>
 
+      {/* Adhoc Slack Message */}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Send Message to Slack
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel size="small">Channel</InputLabel>
+            <Select
+              size="small"
+              value={adhocMessage.channel}
+              label="Channel"
+              onChange={(e) => setAdhocMessage({ ...adhocMessage, channel: e.target.value })}
+            >
+              <MenuItem value="general">general</MenuItem>
+              <MenuItem value="ask-a-mentor">ask-a-mentor</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            multiline
+            rows={3}
+            placeholder="Type your message here..."
+            value={adhocMessage.text}
+            onChange={(e) => setAdhocMessage({ ...adhocMessage, text: e.target.value })}
+            sx={{ flexGrow: 1 }}
+            disabled={adhocMessage.sending}
+          />
+          <Button
+            variant="contained"
+            startIcon={adhocMessage.sending ? <CircularProgress size={16} /> : <SendIcon />}
+            onClick={handleSendAdhocMessage}
+            disabled={adhocMessage.sending || !adhocMessage.text.trim()}
+            sx={{ height: 'fit-content', mt: 1 }}
+          >
+            Send
+          </Button>
+        </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+          This will send a direct message to the selected Slack channel
+        </Typography>
+      </Paper>
+
       {/* Controls */}
       <Paper sx={{ p: 3, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -287,6 +379,13 @@ const SocialMediaManagement = ({ onSnackbar }) => {
             label={settings.dryRun ? 'Preview Mode' : 'Live Mode'}
             color={settings.dryRun ? 'warning' : 'success'}
           />
+          {settings.platforms.includes(SUPPORTED_PLATFORMS.SLACK) && (
+            <Chip
+              label={`Slack: #${settings.slackChannel}`}
+              color="info"
+              size="small"
+            />
+          )}
         </Box>
       </Paper>
 
@@ -382,11 +481,17 @@ const SocialMediaManagement = ({ onSnackbar }) => {
                         <Typography variant="caption" color="text.secondary">
                           {platformResult.characterCount} characters
                           {platformResult.withinLimit ? ' ✓' : ' ⚠️ Exceeds limit'}
+                          {platformResult.channel && ` | Channel: #${platformResult.channel}`}
                         </Typography>
                       </Box>
                     ) : (
                       <Alert severity={platformResult.success ? 'success' : 'error'}>
                         {platformResult.message}
+                        {platformResult.channel && (
+                          <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                            Posted to #{platformResult.channel}
+                          </Typography>
+                        )}
                         {platformResult.url && (
                           <Box sx={{ mt: 1 }}>
                             <Button
@@ -485,6 +590,22 @@ const SocialMediaManagement = ({ onSnackbar }) => {
                 />
               ))}
             </Box>
+
+            {settings.platforms.includes(SUPPORTED_PLATFORMS.SLACK) && (
+              <Box sx={{ mt: 3 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Slack Channel</InputLabel>
+                  <Select
+                    value={settings.slackChannel}
+                    label="Slack Channel"
+                    onChange={(e) => setSettings({ ...settings, slackChannel: e.target.value })}
+                  >
+                    <MenuItem value="general">general</MenuItem>
+                    <MenuItem value="ask-a-mentor">ask-a-mentor</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
