@@ -638,6 +638,16 @@ const VolunteerPage = () => {
               </CardContent>
             </Card>
           </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              href="/onboarding"
+              style={{ fontSize: "1.1em" }}
+            >
+              Start Onboarding
+            </Button>
+          </Grid>
         </Grid>
 
         {/* Additional Resources */}

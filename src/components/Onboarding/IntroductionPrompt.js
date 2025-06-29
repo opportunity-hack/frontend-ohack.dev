@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -59,6 +59,19 @@ const experienceLevels = [
 const IntroductionPrompt = () => {
   const { user } = useAuthInfo();
   const { slackSignupUrl } = useEnv();
+
+  // Load from localStorage if available
+  useEffect(() => {
+    const savedFormData = localStorage.getItem('ohack_intro_formData');
+    const savedExperience = localStorage.getItem('ohack_intro_experience');
+    if (savedFormData) {
+      setFormData(JSON.parse(savedFormData));
+    }
+    if (savedExperience) {
+      setSelectedExperience(savedExperience);
+    }
+  }, []);
+
   const [formData, setFormData] = useState({
     name: user?.firstName ? `${user.firstName} ${user.lastName || ''}` : '',
     role: '',
@@ -72,6 +85,14 @@ const IntroductionPrompt = () => {
   });
   const [selectedExperience, setSelectedExperience] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Persist formData and selectedExperience to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('ohack_intro_formData', JSON.stringify(formData));
+  }, [formData]);
+  useEffect(() => {
+    localStorage.setItem('ohack_intro_experience', selectedExperience);
+  }, [selectedExperience]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
