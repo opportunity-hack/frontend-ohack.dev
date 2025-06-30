@@ -685,7 +685,10 @@ const JudgeApplicationComponent = () => {
       {profileDataLoaded && !profileLoading && (
         <Alert severity="success" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            ✓ We've automatically filled in some fields using your existing profile information. You can edit any field as needed.
+            ✓ We've automatically filled in some fields using your existing profile information. You can edit any field as needed.{' '}
+            <Link href="/profile" sx={{ fontWeight: "bold" }}>
+              View/edit your profile
+            </Link>
           </Typography>
         </Alert>
       )}
