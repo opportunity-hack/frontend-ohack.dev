@@ -41,6 +41,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
+import useProfileApi from '../../../hooks/use-profile-api';
 
 const JudgeApplicationComponent = () => {
   const router = useRouter();
@@ -50,12 +51,16 @@ const JudgeApplicationComponent = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
+  // Profile API integration
+  const { profile, isLoading: profileLoading } = useProfileApi();
+  
   // Form navigation state
   const [activeStep, setActiveStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [eventData, setEventData] = useState(null);
+  const [profileDataLoaded, setProfileDataLoaded] = useState(false);
   
   // reCAPTCHA integration
   const { 
@@ -67,6 +72,10 @@ const JudgeApplicationComponent = () => {
   } = useRecaptcha();
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  
+  // Use ref to store uploaded photo URL to avoid race conditions
+  const uploadedPhotoUrlRef = useRef('');
   
   // Prevent duplicate confirmation dialogs
   const confirmationShownRef = useRef(false);
@@ -214,15 +223,43 @@ const JudgeApplicationComponent = () => {
         
         // Process user information if available
         if (user) {
-          setFormData(prevFormData => ({
-            ...prevFormData,
-            email: user.email || prevFormData.email,
+          // Start with basic user info
+          const baseFormData = {
+            email: user.email || '',
             name: user.firstName && user.lastName 
               ? `${user.firstName} ${user.lastName}` 
-              : user.username || prevFormData.name,
-          }));
+              : user.username || '',
+          };
+
+          // Add profile data if available and not loading
+          if (profile && !profileLoading && profile.role) {
+            const profileFormData = {
+              ...baseFormData,
+              // Map profile fields to form fields
+              companyName: profile.company || '',
+              linkedinProfile: profile.linkedin_url || '',
+              country: profile.country || '',
+              state: profile.state || ''
+              
+            };
+
+            setFormData(prevFormData => ({
+              ...prevFormData,
+              ...profileFormData,
+              event_id: event_id
+            }));
+            
+            // Indicate that profile data was loaded
+            setProfileDataLoaded(true);
+          } else {
+            setFormData(prevFormData => ({
+              ...prevFormData,
+              ...baseFormData,
+              event_id: event_id
+            }));
+          }
           
-          // Then try to load previous submission
+          // Then try to load previous submission (which will override profile data if exists)
           try {
             const prevData = await loadPreviousSubmission();
             if (prevData && !confirmationShownRef.current) {
@@ -231,37 +268,54 @@ const JudgeApplicationComponent = () => {
               if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
                 // Transform API data to match our form structure
                 const transformedData = {
-                  ...formData,
+                  ...formData, // Start with current form data as base
+                  // Basic info fields
                   email: prevData.email || formData.email,
                   name: prevData.name || formData.name,
                   pronouns: prevData.pronouns || '',
                   title: prevData.title || '',
-                  biography: prevData.biography || prevData.shortBio || '',
-                  whyJudge: prevData.whyJudge || '',
-                  availability: prevData.availability || '',
-                  canAttendJudging: prevData.canAttendJudging || '',
-                  inPerson: prevData.inPerson || '',
-                  additionalInfo: prevData.additionalInfo || '',
                   companyName: prevData.companyName || '',
+                  linkedinProfile: prevData.linkedinProfile || '',
+                  country: prevData.country || '',
+                  state: prevData.state || '',
+                  
+                  // Biography and experience fields
+                  biography: prevData.biography || prevData.shortBio || '',
+                  shortBio: prevData.shortBio || prevData.biography || '',
+                  whyJudge: prevData.whyJudge || '',
+                  
+                  // Background areas - handle both array and string formats
                   backgroundAreas: Array.isArray(prevData.backgroundAreas) 
                     ? prevData.backgroundAreas 
                     : (prevData.backgroundAreas || prevData.background || '').split(', ').filter(Boolean),
-                  otherBackground: prevData.otherBackground || '', 
+                  otherBackground: prevData.otherBackground || '',
                   participationCount: prevData.participationCount || '',
-                  codeOfConduct: Boolean(prevData.agreedToCodeOfConduct),
-                  country: prevData.country || '',
-                  state: prevData.state || '',
-                  event_id: event_id,
-                  linkedinProfile: prevData.linkedinProfile || '',
-                  shortBio: prevData.shortBio || '',
-                  photoUrl: prevData.photoUrl || ''
+                  
+                  // Availability fields
+                  availability: prevData.availability || '',
+                  canAttendJudging: prevData.canAttendJudging || '',
+                  inPerson: prevData.inPerson || '',
+                  
+                  // Additional info
+                  additionalInfo: prevData.additionalInfo || '',
+                  
+                  // Agreement and photo
+                  codeOfConduct: Boolean(prevData.agreedToCodeOfConduct || prevData.codeOfConduct),
+                  agreedToCodeOfConduct: Boolean(prevData.agreedToCodeOfConduct || prevData.codeOfConduct),
+                  photoUrl: prevData.photoUrl || '',
+                  
+                  // Ensure event_id is always set
+                  event_id: event_id
                 };
                 
+                console.log('Loading previous submission:', transformedData); // Debug log
                 setFormData(transformedData);
+
                 
-                // If there's a photo URL, set the preview
+                // If there's a photo URL (base64 or URL), set the preview and ref
                 if (prevData.photoUrl) {
                   setPhotoPreview(prevData.photoUrl);
+                  uploadedPhotoUrlRef.current = prevData.photoUrl; // Also set the ref
                 }
               } else {
                 // If user declined to load previous submission, load from localStorage instead
@@ -291,7 +345,7 @@ const JudgeApplicationComponent = () => {
     };
 
     fetchEventData();
-  }, [event_id, apiServerUrl, user, setFormData, loadPreviousSubmission, loadFromLocalStorage, initializeRecaptcha]);
+  }, [event_id, apiServerUrl, user, profile, profileLoading, setFormData, loadPreviousSubmission, loadFromLocalStorage, initializeRecaptcha]);
 
   // Extend handleFormChange to handle otherBackground field
   const handleChange = (e) => {
@@ -325,34 +379,90 @@ const JudgeApplicationComponent = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // Check file size (limit to 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image file is too large. Please choose an image under 5MB.');
+    // Check file size (limit to 10MB to match ImageUpload.js)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image file is too large. Please choose an image under 10MB.');
       return;
     }
     
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Selected file is not an image. Please select an image file.');
+    // Validate file type (match ImageUpload.js validation)
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please select a valid image file (JPG, PNG, GIF, or WebP)');
       return;
     }
     
     setPhotoFile(file);
     setError(''); // Clear any previous errors
+    setImageUploading(true);
     
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPhotoPreview(reader.result);
-    };
-    reader.onerror = () => {
-      setError('Failed to read the selected file. Please try again.');
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Create preview immediately for better UX
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Upload to backend API using same approach as ImageUpload.js
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('directory', 'judges'); // Use judges directory
+      
+      // Generate a meaningful filename
+      const timestamp = Date.now();
+      const cleanFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      uploadFormData.append('filename', `${timestamp}_${cleanFilename}`);
+
+      const uploadResponse = await fetch(`${apiServerUrl}/api/messages/upload-image`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "X-Org-Id": user?.orgId || user?.userId || 'default',
+          // Don't set Content-Type, let browser set it with boundary for FormData
+        },
+        body: uploadFormData,
+      });
+      
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
+      }
+      
+      const uploadResult = await uploadResponse.json();
+      console.log('Upload result:', uploadResult); // Debug log
+      
+      if (!uploadResult.success || !uploadResult.url) {
+        throw new Error(uploadResult.error || 'No URL returned from upload');
+      }
+      
+      // Store URL in both ref (for submission) and state (for form persistence)
+      uploadedPhotoUrlRef.current = uploadResult.url;
+      setFormData(prev => ({
+        ...prev,
+        photoUrl: uploadResult.url
+      }));
+      
+      console.log('Photo URL saved to form and ref:', uploadResult.url); // Debug log
+      
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      setError(`Failed to upload image: ${err.message}. Please try again.`);
+      // Clear the file, preview, and URLs on error
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      uploadedPhotoUrlRef.current = '';
+      setFormData(prev => ({
+        ...prev,
+        photoUrl: ''
+      }));
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   // Define steps for stepper
@@ -468,6 +578,7 @@ const JudgeApplicationComponent = () => {
         setError(
           "Failed to verify you are human. Please refresh the page and try again."
         );
+        setSubmitting(false);
         return;
       }
 
@@ -482,11 +593,17 @@ const JudgeApplicationComponent = () => {
             : formData.backgroundAreas.join(", ")
           : "";
 
+      // Use the ref value as the source of truth for photoUrl to avoid race conditions
+      const finalPhotoUrl = uploadedPhotoUrlRef.current || formData.photoUrl || "";
+
       // Create a complete submission object with all required fields
+      // IMPORTANT: Extract photoUrl from formData to avoid conflicts, then spread the rest
+      const { photoUrl: formDataPhotoUrl, ...restFormData } = formData;
+      
       const submissionData = {
-        ...formData,
+        ...restFormData,
         timestamp: new Date().toISOString(),
-        photoUrl: photoPreview || formData.photoUrl || "", // Use preview if available
+        photoUrl: finalPhotoUrl, // Use ref value as primary source - this will NOT be overwritten
         background: backgroundAreasFormatted, // Replace the original background field with formatted list
         backgroundAreas: backgroundAreasFormatted, // Include both formats for compatibility
         volunteer_type: "judge",
@@ -497,7 +614,7 @@ const JudgeApplicationComponent = () => {
         shortBio: formData.biography || "", // Map to appropriate field
         shortBiography: formData.biography || "", // Ensure we have both formats
         recaptchaToken, // Add reCAPTCHA token
-      };
+      };     
 
       if (apiServerUrl) {
         // Submit to API - use the correct endpoint based on whether this is an update
@@ -525,6 +642,9 @@ const JudgeApplicationComponent = () => {
             `Failed to submit application: ${response.status}${errorData ? ` - ${errorData.message}` : ""}`
           );
         }
+        
+        const responseData = await response.json();
+        console.log('Submission successful:', responseData); // Debug log
       } else {
         // In a test environment, log the data and simulate API delay
         console.log("Submitting judge application:", submissionData);
@@ -553,6 +673,23 @@ const JudgeApplicationComponent = () => {
         Basic Information
       </Typography>
 
+      {profileLoading && (
+        <Alert severity="info" sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+          <CircularProgress size={20} sx={{ mr: 2 }} />
+          <Typography variant="body2">
+            Loading your profile information to pre-fill the form...
+          </Typography>
+        </Alert>
+      )}
+
+      {profileDataLoaded && !profileLoading && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          <Typography variant="body2">
+            ✓ We've automatically filled in some fields using your existing profile information. You can edit any field as needed.
+          </Typography>
+        </Alert>
+      )}
+
       <Box sx={{ mb: 3 }}>
         <TextField
           label="Email Address"
@@ -563,6 +700,7 @@ const JudgeApplicationComponent = () => {
           value={formData.email}
           onChange={handleChange}
           sx={{ mb: 3 }}
+          helperText={profileDataLoaded && formData.email ? "Auto-filled from your profile" : undefined}
         />
 
         <TextField
@@ -573,6 +711,7 @@ const JudgeApplicationComponent = () => {
           value={formData.name}
           onChange={handleChange}
           sx={{ mb: 3 }}
+          helperText={profileDataLoaded && formData.name ? "Auto-filled from your profile" : undefined}
         />
 
         <TextField
@@ -601,7 +740,8 @@ const JudgeApplicationComponent = () => {
           fullWidth
           value={formData.companyName}
           onChange={handleChange}
-          sx={{ mb: 3 }}          
+          sx={{ mb: 3 }}
+          helperText={profileDataLoaded && formData.companyName ? "Auto-filled from your profile" : undefined}
         />
 
         <TextField
@@ -610,7 +750,7 @@ const JudgeApplicationComponent = () => {
           fullWidth
           value={formData.linkedinProfile}
           onChange={handleChange}
-          helperText="Optional - link to your LinkedIn profile"
+          helperText={profileDataLoaded && formData.linkedinProfile ? "Auto-filled from your profile - Optional link to your LinkedIn profile" : "Optional - link to your LinkedIn profile"}
           sx={{ mb: 3 }}
         />
       </Box>
@@ -712,19 +852,26 @@ const JudgeApplicationComponent = () => {
           <Button
             component="label"
             variant="outlined"
-            startIcon={<CloudUploadIcon />}
+            startIcon={imageUploading ? <CircularProgress size={16} /> : <CloudUploadIcon />}
+            disabled={imageUploading}
             sx={{ mb: 1 }}
           >
-            Upload Photo
+            {imageUploading ? 'Uploading...' : 'Upload Photo'}
             <input
               id="photo-upload"
               type="file"
               accept="image/*"
               hidden
               onChange={handleFileChange}
+              disabled={imageUploading}
             />
           </Button>
-          <FormHelperText>Please upload a professional photo of yourself</FormHelperText>
+          <FormHelperText>
+            {imageUploading 
+              ? "Uploading your photo..." 
+              : "Please upload a professional photo of yourself"
+            }
+          </FormHelperText>
           
           {photoPreview && (
             <Box sx={{ mt: 2, maxWidth: 200 }}>
@@ -733,6 +880,11 @@ const JudgeApplicationComponent = () => {
                 alt="Preview" 
                 style={{ width: '100%', borderRadius: '4px' }} 
               />
+              {formData.photoUrl && (
+                <Typography variant="caption" color="success.main" sx={{ display: 'block', mt: 1 }}>
+                  ✓ Photo uploaded successfully
+                </Typography>
+              )}
             </Box>
           )}
         </Box>
@@ -831,9 +983,9 @@ const JudgeApplicationComponent = () => {
               eventData.location?.toLowerCase().includes(term.toLowerCase())
             ) ? (
               'Will you be participating online?'
-            ) : (
+            ) :
               `Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : ' at the event location'}?`
-            )}
+          }
           </Typography>
           <RadioGroup
             name="inPerson"
@@ -1384,7 +1536,7 @@ const JudgeApplicationComponent = () => {
                           variant="contained"
                           color="primary"
                           onClick={handleNext}
-                          disabled={submitting || recaptchaLoading}
+                          disabled={submitting || recaptchaLoading || imageUploading}
                         >
                           {activeStep === steps.length - 1 ? (
                             submitting || recaptchaLoading ? (
