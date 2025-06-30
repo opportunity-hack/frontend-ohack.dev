@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from "@propelauth/react";
 import {
@@ -61,6 +61,7 @@ const JudgeApplicationComponent = () => {
   const [success, setSuccess] = useState(false);
   const [eventData, setEventData] = useState(null);
   const [profileDataLoaded, setProfileDataLoaded] = useState(false);
+  const [dataLoadingStatus, setDataLoadingStatus] = useState('idle'); // 'idle', 'loading-backend', 'loading-localStorage', 'completed', 'error'
   
   // reCAPTCHA integration
   const { 
@@ -81,7 +82,7 @@ const JudgeApplicationComponent = () => {
   const confirmationShownRef = useRef(false);
   
   // Initial form state
-  const initialFormData = {
+  const initialFormData = useMemo(() => ({
     timestamp: new Date().toISOString(),
     email: '',
     selected: false,    
@@ -106,7 +107,7 @@ const JudgeApplicationComponent = () => {
     country: '',
     state: '',
     event_id: '' // Ensure event_id is included
-  };
+  }), []);
 
   // Use form persistence hook
   const {
@@ -152,6 +153,98 @@ const JudgeApplicationComponent = () => {
     "Healthcare Technology",
     "Other" // Option to specify custom background
   ];
+
+  // Load form data with proper sequencing: backend API first, then localStorage
+  const loadFormDataSequentially = useCallback(async (baseFormData) => {
+    setDataLoadingStatus('loading-backend');
+    
+    // Always try to load from backend API first if user is logged in
+    if (user?.userId) {
+      try {
+        console.log('Attempting to load previous submission from backend API...');
+        const prevData = await loadPreviousSubmission();
+        
+        if (prevData && !confirmationShownRef.current) {
+          confirmationShownRef.current = true;
+          // If the user has submitted before, ask if they want to load it
+          if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
+            // Transform API data to match our form structure
+            const transformedData = {
+              ...baseFormData, // Start with current form data as base
+              // Basic info fields
+              email: prevData.email || baseFormData.email,
+              name: prevData.name || baseFormData.name,
+              pronouns: prevData.pronouns || '',
+              title: prevData.title || '',
+              companyName: prevData.companyName || '',
+              linkedinProfile: prevData.linkedinProfile || '',
+              country: prevData.country || '',
+              state: prevData.state || '',
+              
+              // Biography and experience fields
+              biography: prevData.biography || prevData.shortBio || '',
+              shortBio: prevData.shortBio || prevData.biography || '',
+              whyJudge: prevData.whyJudge || '',
+              
+              // Background areas - handle both array and string formats
+              backgroundAreas: Array.isArray(prevData.backgroundAreas) 
+                ? prevData.backgroundAreas 
+                : (prevData.backgroundAreas || prevData.background || '').split(', ').filter(Boolean),
+              otherBackground: prevData.otherBackground || '',
+              participationCount: prevData.participationCount || '',
+              
+              // Availability fields
+              availability: prevData.availability || '',
+              canAttendJudging: prevData.canAttendJudging || '',
+              inPerson: prevData.inPerson || '',
+              
+              // Additional info
+              additionalInfo: prevData.additionalInfo || '',
+              
+              // Agreement and photo
+              codeOfConduct: Boolean(prevData.agreedToCodeOfConduct || prevData.codeOfConduct),
+              agreedToCodeOfConduct: Boolean(prevData.agreedToCodeOfConduct || prevData.codeOfConduct),
+              photoUrl: prevData.photoUrl || '',
+              
+              // Ensure event_id is always set
+              event_id: event_id
+            };
+            
+            console.log('Successfully loaded previous submission from backend API:', transformedData);
+            setFormData(transformedData);
+
+            // If there's a photo URL (base64 or URL), set the preview and ref
+            if (prevData.photoUrl) {
+              setPhotoPreview(prevData.photoUrl);
+              uploadedPhotoUrlRef.current = prevData.photoUrl;
+            }
+            
+            setDataLoadingStatus('completed');
+            return; // Exit early - we've loaded from backend
+          }
+        }
+        
+        // If no previous submission found or user declined, fall through to localStorage
+        console.log('No previous submission found or user declined, checking localStorage...');
+      } catch (err) {
+        console.error('Backend API error, falling back to localStorage:', err);
+        // Continue to localStorage fallback - don't set error state yet
+      }
+    }
+    
+    // Fallback to localStorage (either no backend submission or user not logged in)
+    setDataLoadingStatus('loading-localStorage');
+    try {
+      console.log('Loading from localStorage...');
+      loadFromLocalStorage();
+      setDataLoadingStatus('completed');
+    } catch (err) {
+      console.error('Error loading from localStorage:', err);
+      setDataLoadingStatus('error');
+      // If both fail, we'll still use the base form data that's already set
+      // Don't throw error here as the form can still work with base data
+    }
+  }, [user?.userId, loadPreviousSubmission, setFormData, setPhotoPreview, loadFromLocalStorage, event_id]);
 
   // fetch event data from the backend API
   useEffect(() => {
@@ -215,16 +308,16 @@ const JudgeApplicationComponent = () => {
           isEventPast
         });
         
-        // Initialize form data with event_id
-        setFormData(prevFormData => ({
-          ...prevFormData,
+        // Prepare base form data with user info and profile data
+        let baseFormData = {
+          ...initialFormData,
           event_id: event_id
-        }));
-        
+        };
+
         // Process user information if available
         if (user) {
           // Start with basic user info
-          const baseFormData = {
+          const userFormData = {
             email: user.email || '',
             name: user.firstName && user.lastName 
               ? `${user.firstName} ${user.lastName}` 
@@ -234,106 +327,45 @@ const JudgeApplicationComponent = () => {
           // Add profile data if available and not loading
           if (profile && !profileLoading && profile.role) {
             const profileFormData = {
-              ...baseFormData,
+              ...userFormData,
               // Map profile fields to form fields
               companyName: profile.company || '',
               linkedinProfile: profile.linkedin_url || '',
               country: profile.country || '',
               state: profile.state || ''
-              
             };
 
-            setFormData(prevFormData => ({
-              ...prevFormData,
-              ...profileFormData,
-              event_id: event_id
-            }));
+            baseFormData = {
+              ...baseFormData,
+              ...profileFormData
+            };
             
             // Indicate that profile data was loaded
             setProfileDataLoaded(true);
           } else {
-            setFormData(prevFormData => ({
-              ...prevFormData,
+            baseFormData = {
               ...baseFormData,
-              event_id: event_id
-            }));
+              ...userFormData
+            };
           }
           
-          // Then try to load previous submission (which will override profile data if exists)
-          try {
-            const prevData = await loadPreviousSubmission();
-            if (prevData && !confirmationShownRef.current) {
-              confirmationShownRef.current = true;
-              // If the user has submitted before, ask if they want to load it
-              if (window.confirm('We found a previous application. Would you like to load it for editing?')) {
-                // Transform API data to match our form structure
-                const transformedData = {
-                  ...formData, // Start with current form data as base
-                  // Basic info fields
-                  email: prevData.email || formData.email,
-                  name: prevData.name || formData.name,
-                  pronouns: prevData.pronouns || '',
-                  title: prevData.title || '',
-                  companyName: prevData.companyName || '',
-                  linkedinProfile: prevData.linkedinProfile || '',
-                  country: prevData.country || '',
-                  state: prevData.state || '',
-                  
-                  // Biography and experience fields
-                  biography: prevData.biography || prevData.shortBio || '',
-                  shortBio: prevData.shortBio || prevData.biography || '',
-                  whyJudge: prevData.whyJudge || '',
-                  
-                  // Background areas - handle both array and string formats
-                  backgroundAreas: Array.isArray(prevData.backgroundAreas) 
-                    ? prevData.backgroundAreas 
-                    : (prevData.backgroundAreas || prevData.background || '').split(', ').filter(Boolean),
-                  otherBackground: prevData.otherBackground || '',
-                  participationCount: prevData.participationCount || '',
-                  
-                  // Availability fields
-                  availability: prevData.availability || '',
-                  canAttendJudging: prevData.canAttendJudging || '',
-                  inPerson: prevData.inPerson || '',
-                  
-                  // Additional info
-                  additionalInfo: prevData.additionalInfo || '',
-                  
-                  // Agreement and photo
-                  codeOfConduct: Boolean(prevData.agreedToCodeOfConduct || prevData.codeOfConduct),
-                  agreedToCodeOfConduct: Boolean(prevData.agreedToCodeOfConduct || prevData.codeOfConduct),
-                  photoUrl: prevData.photoUrl || '',
-                  
-                  // Ensure event_id is always set
-                  event_id: event_id
-                };
-                
-                console.log('Loading previous submission:', transformedData); // Debug log
-                setFormData(transformedData);
-
-                
-                // If there's a photo URL (base64 or URL), set the preview and ref
-                if (prevData.photoUrl) {
-                  setPhotoPreview(prevData.photoUrl);
-                  uploadedPhotoUrlRef.current = prevData.photoUrl; // Also set the ref
-                }
-              } else {
-                // If user declined to load previous submission, load from localStorage instead
-                loadFromLocalStorage();
-              }
-            } else {
-              // If no previous submission, load from localStorage
-              loadFromLocalStorage();
-            }
-          } catch (err) {
-            console.error('Error loading previous submission:', err);
-            // Fallback to localStorage if API call fails
-            loadFromLocalStorage();
-          }
+          // Set the base form data first
+          setFormData(baseFormData);
+          
+          // Then sequentially try to load saved data (backend first, then localStorage)
+          await loadFormDataSequentially(baseFormData);
         } else {
-          // For non-logged in users, try localStorage
+          // For non-logged in users, set base data and try localStorage
+          setFormData(baseFormData);
+          setDataLoadingStatus('loading-localStorage');
           console.log('User not logged in, loading from localStorage');
-          loadFromLocalStorage();
+          try {
+            loadFromLocalStorage();
+            setDataLoadingStatus('completed');
+          } catch (err) {
+            console.error('Error loading from localStorage for non-logged in user:', err);
+            setDataLoadingStatus('error');
+          }
         }
         
         setIsLoading(false);
@@ -345,7 +377,7 @@ const JudgeApplicationComponent = () => {
     };
 
     fetchEventData();
-  }, [event_id, apiServerUrl, user, profile, profileLoading, setFormData, loadPreviousSubmission, loadFromLocalStorage, initializeRecaptcha]);
+  }, [event_id, apiServerUrl, user, profile, profileLoading, setFormData, loadFormDataSequentially, loadFromLocalStorage, initializeRecaptcha, initialFormData, setIsLoading]);
 
   // Extend handleFormChange to handle otherBackground field
   const handleChange = (e) => {
@@ -682,13 +714,39 @@ const JudgeApplicationComponent = () => {
         </Alert>
       )}
 
-      {profileDataLoaded && !profileLoading && (
+      {dataLoadingStatus === 'loading-backend' && (
+        <Alert severity="info" sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+          <CircularProgress size={20} sx={{ mr: 2 }} />
+          <Typography variant="body2">
+            Checking for your previous application...
+          </Typography>
+        </Alert>
+      )}
+
+      {dataLoadingStatus === 'loading-localStorage' && (
+        <Alert severity="info" sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+          <CircularProgress size={20} sx={{ mr: 2 }} />
+          <Typography variant="body2">
+            Loading your saved progress...
+          </Typography>
+        </Alert>
+      )}
+
+      {profileDataLoaded && !profileLoading && dataLoadingStatus === 'completed' && (
         <Alert severity="success" sx={{ mb: 3 }}>
           <Typography variant="body2">
             ✓ We've automatically filled in some fields using your existing profile information. You can edit any field as needed.{' '}
             <Link href="/profile" sx={{ fontWeight: "bold" }}>
               View/edit your profile
             </Link>
+          </Typography>
+        </Alert>
+      )}
+
+      {dataLoadingStatus === 'error' && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          <Typography variant="body2">
+            Unable to load previous data, but you can still complete the form. Your progress will be saved as you work.
           </Typography>
         </Alert>
       )}
