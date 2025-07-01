@@ -823,14 +823,14 @@ export default function HackathonEvent({ eventData }) {
                           component="span"
                           fontWeight="bold"
                         >
-                          Create a Team
+                          Manage a Team
                         </Typography>
                         <Typography
                           variant="body2"
                           color="inherit"
                           sx={{ opacity: 0.85, mt: 0.5 }}
                         >
-                          Start your own team
+                          Create or manage your own team
                           {event.constraints?.team_creation_enabled === false && " (Disabled)"}
                         </Typography>
                       </Button>

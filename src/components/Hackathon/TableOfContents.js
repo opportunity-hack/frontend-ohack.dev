@@ -14,7 +14,7 @@ const sections = [
     name: "Review Projects",
     ariaLabel: "Browse participating nonprofits",
   },
-  { id: "teams", name: "Create a Team", ariaLabel: "Browse hackathon teams" },
+  { id: "teams", name: "Teams", ariaLabel: "Browse hackathon teams" },
   {
     id: "stats",
     name: "Hackathon Stats",
