@@ -931,6 +931,7 @@ const ManageTeamComponent = () => {
           error={error}
           nonprofits={nonprofits}
           event={event}
+          accessToken={accessToken}
         />
 
         {/* Team Creation Disabled Message */}

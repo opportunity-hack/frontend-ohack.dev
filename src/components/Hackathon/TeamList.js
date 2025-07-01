@@ -27,6 +27,7 @@ import {
   FaCheckCircle,
   FaCode,
   FaGitAlt,
+  FaExternalLinkAlt,
 } from 'react-icons/fa';
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
@@ -676,6 +677,34 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
               <Typography variant="caption" color="textSecondary">
                 Admin: @{team.github_username}
               </Typography>
+            </Box>
+          )}
+        </Box>
+
+        {/* DevPost Project */}
+        <Box sx={{ mb: 1 }}>
+          {team?.devpost_link ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <FaExternalLinkAlt style={{ marginRight: 8, fontSize: '14px' }} />
+              <Link
+                href={team.devpost_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="body2"
+              >
+                DevPost Project
+              </Link>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <FaExternalLinkAlt style={{ marginRight: 8, fontSize: '14px', opacity: 0.5 }} />
+              <Link
+                href={`/hack/${team.hackathon_event_id}/manageteam`}
+                variant="body2"
+                sx={{ fontStyle: 'italic', color: 'text.secondary' }}
+              >
+                Add DevPost Project
+              </Link>
             </Box>
           )}
         </Box>
