@@ -16,6 +16,7 @@ import Link from 'next/link';
 import Moment from 'moment';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ImpactMetrics from '../ImpactMetrics';
 
 function PreviousHackathonList() {
   const { hackathons } = useHackathonEvents("previous");
@@ -48,32 +49,52 @@ function PreviousHackathonList() {
   return (
     <OuterGrid
       container
-      alignItems='center'
-      direction='column'
-      textAlign='center'
+      alignItems="center"
+      direction="column"
+      textAlign="center"
       id="previous-events"
     >
-      <SectionTitle variant='h1'>Previous Events</SectionTitle>
-      
-      <Typography variant="body1" color="textSecondary" sx={{ mb: 3, maxWidth: '800px' }}>
-        Browse our archive of past hackathons. Since 2013, we've organized over 20 events connecting tech talent with nonprofits to create lasting technology solutions.
+      <SectionTitle variant="h1">Previous Events</SectionTitle>
+
+      <Typography
+        variant="body1"
+        color="textSecondary"
+        sx={{ mb: 3, maxWidth: "800px" }}
+      >
+        Browse our archive of past hackathons. Since 2013, we've organized over
+        20 events connecting tech talent with nonprofits to create lasting
+        technology solutions.
       </Typography>
-      
+
       {/* Year filter chips */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', mb: 4 }}>
-        <Chip 
-          label="All Years" 
-          color={yearFilter === 'All' ? 'primary' : 'default'}
-          onClick={() => { setYearFilter('All'); setCurrentPage(1); }}
-          sx={{ fontWeight: yearFilter === 'All' ? 'bold' : 'normal' }}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 1,
+          justifyContent: "center",
+          mb: 4,
+        }}
+      >
+        <Chip
+          label="All Years"
+          color={yearFilter === "All" ? "primary" : "default"}
+          onClick={() => {
+            setYearFilter("All");
+            setCurrentPage(1);
+          }}
+          sx={{ fontWeight: yearFilter === "All" ? "bold" : "normal" }}
         />
-        {allYears.map(year => (
-          <Chip 
-            key={year} 
-            label={year} 
-            color={yearFilter === year ? 'primary' : 'default'}
-            onClick={() => { setYearFilter(year); setCurrentPage(1); }}
-            sx={{ fontWeight: yearFilter === year ? 'bold' : 'normal' }}
+        {allYears.map((year) => (
+          <Chip
+            key={year}
+            label={year}
+            color={yearFilter === year ? "primary" : "default"}
+            onClick={() => {
+              setYearFilter(year);
+              setCurrentPage(1);
+            }}
+            sx={{ fontWeight: yearFilter === year ? "bold" : "normal" }}
           />
         ))}
       </Box>
@@ -84,28 +105,55 @@ function PreviousHackathonList() {
           currentEvents.map((event) => (
             <PastEventCard key={event.event_id || event.title}>
               <Link href={`/hack/${event.event_id}`} passHref legacyBehavior>
-                <a style={{ display: 'block', textDecoration: 'none', color: 'inherit', width: '100%', height: '100%' }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <a
+                  style={{
+                    display: "block",
+                    textDecoration: "none",
+                    color: "inherit",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      height: "100%",
+                    }}
+                  >
                     <PastEventYear>
                       <CalendarTodayIcon fontSize="small" sx={{ mr: 1 }} />
-                      {Moment(event.start_date).format('YYYY')}
+                      {Moment(event.start_date).format("YYYY")}
                     </PastEventYear>
-                    
+
                     <EventLink variant="h5">{event.title}</EventLink>
-                    
+
                     <PastEventText>{event.description}</PastEventText>
-                    
-                    <Box sx={{ mt: 'auto', pt: 2 }}>
+
+                    {/* Impact Metrics Section */}
+                    <ImpactMetrics
+                      event_id={event.event_id}
+                      eventData={{
+                        start_date: event.start_date,
+                        end_date: event.end_date,
+                        location: event.location,
+                        title: event.title,
+                        id: event.id,
+                      }}
+                      minimal={true}
+                    />
+
+                    <Box sx={{ mt: "auto", pt: 2 }}>
                       <PastEventLocation>
                         <LocationOnIcon fontSize="small" sx={{ mr: 1 }} />
                         {event.location}
                       </PastEventLocation>
-                      
+
                       <Grid container spacing={1} sx={{ mt: 2 }}>
                         {event.links && event.links.length > 0 && (
                           <Grid item xs={12}>
-                            <ToggleButton 
-                              color="primary" 
+                            <ToggleButton
+                              color="primary"
                               variant="outlined"
                               component="button"
                               fullWidth
@@ -127,24 +175,24 @@ function PreviousHackathonList() {
           </Typography>
         )}
       </PastEventGrid>
-      
+
       {/* Pagination */}
       {totalPages > 1 && (
         <Box sx={{ mt: 4, mb: 2 }}>
-          <Pagination 
-            count={totalPages} 
-            page={currentPage} 
-            onChange={handlePageChange} 
-            color="primary" 
+          <Pagination
+            count={totalPages}
+            page={currentPage}
+            onChange={handlePageChange}
+            color="primary"
             size="large"
           />
         </Box>
       )}
-      
+
       {/* Total events count */}
       <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
         Showing {currentEvents.length} of {filteredHackathons.length} events
-        {yearFilter !== 'All' && ` from ${yearFilter}`}
+        {yearFilter !== "All" && ` from ${yearFilter}`}
       </Typography>
     </OuterGrid>
   );

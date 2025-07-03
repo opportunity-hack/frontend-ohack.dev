@@ -79,6 +79,7 @@ function HackathonList() {
           <HackathonGrid>
             {hackathons.map((event) => (
               <EventFeature
+                id={event?.id}
                 title={event?.title}
                 event_id={event?.event_id}
                 description={event?.description}

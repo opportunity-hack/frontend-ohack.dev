@@ -841,8 +841,8 @@ export default function HackathonEvent({ eventData }) {
                 <TeamList
                   teams={event.teams?.sort((a, b) => {
                     // Sort active teams first, inactive teams last
-                    const aActive = a.active === "True" || a.active === true;
-                    const bActive = b.active === "True" || b.active === true;
+                    const aActive = a?.active === "True" || a?.active === true;
+                    const bActive = b?.active === "True" || b?.active === true;
                     
                     if (aActive && !bActive) return -1;
                     if (!aActive && bActive) return 1;

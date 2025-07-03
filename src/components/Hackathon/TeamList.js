@@ -699,7 +699,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <FaExternalLinkAlt style={{ marginRight: 8, fontSize: '14px', opacity: 0.5 }} />
               <Link
-                href={`/hack/${team.hackathon_event_id}/manageteam`}
+                href={`/hack/${team?.hackathon_event_id}/manageteam`}
                 variant="body2"
                 sx={{ fontStyle: 'italic', color: 'text.secondary' }}
               >

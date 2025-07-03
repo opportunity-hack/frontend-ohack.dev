@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   BlankContainer,
   ButtonContainer,
@@ -17,13 +17,27 @@ import {
   // buildStyles 
 } from "react-circular-progressbar";
 
-import { Typography } from "@mui/material";
+import { 
+  Typography, 
+  Box, 
+  Grid, 
+  Chip, 
+  Card, 
+  CardContent, 
+  LinearProgress, 
+  Skeleton,
+  Tooltip,
+  useTheme
+} from "@mui/material";
 import Moment from 'moment';
 import Link from 'next/link';
+import { useAuthInfo } from '@propelauth/react';
+import ImpactMetrics from '../ImpactMetrics';
 
 
 function EventFeature(props) {
   // TODO: Fix unused variable warning here
+  console.log("EventFeature props:", props);
   const {
     title,
     description,
@@ -34,11 +48,10 @@ function EventFeature(props) {
     location,
     devpostUrl,
     event_id,
-    rawEventLinks,    
-    donationUrl,    
+    id,
+    rawEventLinks,        
     donationGoals,
-    donationCurrent,
-    icon,
+    donationCurrent,    
   } = props;
 
   
@@ -72,7 +85,7 @@ function EventFeature(props) {
           
           <br/>
         
-          <EventGreyText variant="button">{location}</EventGreyText>
+          <EventGreyText variant="button">{location}</EventGreyText>                    
           
           {/* Only render the donation progress if there is data */}
           {(donationCurrent?.food > 0 || donationCurrent?.prize > 0 || donationCurrent?.swag > 0) && (
@@ -211,6 +224,12 @@ function EventFeature(props) {
               })
             }
           </ButtonContainer>
+        
+          {/* Impact Metrics Section */}
+          <ImpactMetrics 
+              event_id={event_id} 
+              eventData={{ start_date, end_date, location, title, id }} 
+            />
         </div>
       </Link>
     </EventCards>
