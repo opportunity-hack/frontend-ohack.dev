@@ -41,6 +41,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
+import GiveButterWidget from '../../../components/GiveButterWidget';
 import Moment from 'moment';
 import 'moment-timezone';
 
@@ -2179,6 +2180,18 @@ const HackerApplicationComponent = () => {
           <Alert severity="success" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
             Thank you for applying to participate in Opportunity Hack. We'll review your application and contact you with next steps soon.
           </Alert>
+          
+          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <GiveButterWidget 
+              context="success"
+              userId={user?.userId}
+              applicationType="hacker"
+              size="large"
+              onDonationEvent={(eventData) => {
+                console.log('Hacker donation event:', eventData);
+              }}
+            />
+          </Box>
           
           <Box sx={{ mt: 2, display: 'flex', flexDirection: {xs: 'column', sm: 'row'}, gap: 2, justifyContent: 'center' }}>
             <Button

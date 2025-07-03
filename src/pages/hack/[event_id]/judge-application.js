@@ -41,6 +41,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
+import GiveButterWidget from '../../../components/GiveButterWidget';
 import useProfileApi from '../../../hooks/use-profile-api';
 
 const JudgeApplicationComponent = () => {
@@ -1274,6 +1275,18 @@ const JudgeApplicationComponent = () => {
           <Alert severity="success" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
             Thank you for applying to be a judge at Opportunity Hack. We'll review your application and contact you soon.
           </Alert>
+          
+          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <GiveButterWidget 
+              context="success"
+              userId={user?.userId}
+              applicationType="judge"
+              size="large"
+              onDonationEvent={(eventData) => {
+                console.log('Judge donation event:', eventData);
+              }}
+            />
+          </Box>
           
           <Button
             variant="contained"

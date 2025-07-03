@@ -40,6 +40,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
+import GiveButterWidget from '../../../components/GiveButterWidget';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -1564,6 +1565,20 @@ const MentorApplicationComponent = () => {
           <Alert severity="success" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
             Thank you for applying to be a mentor at Opportunity Hack. We'll review your application and contact you soon.
           </Alert>
+          
+          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <GiveButterWidget 
+              context="success"
+              userId={user?.userId}
+              applicationType="mentor"
+              size="large"
+              onDonationEvent={(eventData) => {
+                // Track mentor application donations
+                console.log('Mentor donation event:', eventData);
+                // You can add additional tracking here
+              }}
+            />
+          </Box>
           
           <Button
             variant="contained"

@@ -46,6 +46,7 @@ import Breadcrumbs from '../../../components/Breadcrumbs/Breadcrumbs';
 import FormPersistenceControls from '../../../components/FormPersistenceControls';
 import { useFormPersistence } from '../../../hooks/use-form-persistence';
 import { useRecaptcha } from '../../../hooks/use-recaptcha';
+import GiveButterWidget from '../../../components/GiveButterWidget';
 
 // Sponsorship tiers
 const sponsorshipTiers = [
@@ -1316,6 +1317,20 @@ const SponsorApplicationComponent = () => {
           <Alert severity="success" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
             Thank you for your interest in sponsoring Opportunity Hack. Our team will review your application and contact you within 2-3 business days.
           </Alert>
+          
+          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <GiveButterWidget 
+              context="success"
+              userId={user?.userId}
+              applicationType="sponsor"
+              size="large"
+              onDonationEvent={(eventData) => {
+                // Track sponsor application donations
+                console.log('Sponsor donation event:', eventData);
+                // You can add additional tracking here
+              }}
+            />
+          </Box>
           
           <Button
             variant="contained"
