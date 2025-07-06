@@ -28,9 +28,11 @@ import {
   FaCode,
   FaGitAlt,
   FaExternalLinkAlt,
+  FaClock,
 } from 'react-icons/fa';
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
+import moment from 'moment';
 
 // Status options and their colors for visual representation
 const TEAM_STATUS_OPTIONS = [
@@ -432,6 +434,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
         }
 
         const data = await response.json();
+        console.log("GitHub stats data:", data);
         setGithubData(data);
         
         // Pass stats back to parent component
@@ -476,6 +479,12 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 
   // Calculate total commits
   const totalCommits = githubData.contributors?.reduce((sum, contributor) => sum + (contributor.commits || 0), 0) || 0;
+
+  // Get the latest_commit_time from all contributors
+  const latestCommitTime = githubData.contributors?.reduce((latest, contributor) => 
+    contributor.latest_commit_time && (!latest || new Date(contributor.latest_commit_time) > new Date(latest))
+      ? contributor.latest_commit_time 
+      : latest, null) || null;
   
   // Calculate total issues
   const totalIssues = githubData.contributors?.reduce((sum, contributor) => {
@@ -492,7 +501,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
   return (
     <Box sx={{ mt: 1, mb: 1 }}>
       {/* Repository Overview Stats */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>        
         <Chip
           icon={<FaGitAlt />}
           label={`${totalCommits} commits`}
@@ -522,6 +531,16 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
           {githubData.contributor_count} contributor{githubData.contributor_count !== 1 ? 's' : ''}
         </Typography>
       </Box>
+
+      {/* Last commit time */}
+      {latestCommitTime && (
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <FaClock style={{ marginRight: 6, fontSize: '12px', color: '#666' }} />
+          <Typography variant="caption" color="textSecondary">
+            Last commit: {moment(latestCommitTime).fromNow()}
+          </Typography>
+        </Box>
+      )}
 
       {/* Encouragement message for inactive teams */}
       {totalCommits === 0 && (
