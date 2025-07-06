@@ -16,127 +16,191 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
   const theme = useTheme();
   const { accessToken } = useAuthInfo();
   const [metrics, setMetrics] = useState({
-    loading: true,
+    loading: false, // Overall loading state
     error: null,
-    volunteers: { total: 0, mentors: 0, judges: 0, volunteers: 0 },
-    teams: { total: 0, active: 0 },
-    nonprofits: { total: 0 },
-    github: { commits: 0, issues: 0, contributors: 0 },
-    hackers: { total: 0, returning: 0 }
+    volunteers: { total: 0, mentors: 0, judges: 0, volunteers: 0, loading: true },
+    teams: { total: 0, active: 0, loading: true, requiresAuth: false },
+    nonprofits: { total: 0, loading: true },
+    github: { commits: 0, issues: 0, contributors: 0, loading: true },
+    hackers: { total: 0, returning: 0, loading: true, requiresAuth: false }
   });
+
+  // Fetch volunteers data
+  const fetchVolunteers = useCallback(async () => {
+    if (!event_id) return;
+
+    try {
+      const volunteerTypes = ['mentor', 'judge', 'volunteer', 'hacker'];
+      const volunteerPromises = volunteerTypes.map(type =>
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}/${type}`)
+          .then(res => res.ok ? res.json() : { data: [] })
+          .then(data => ({ type, data: data.data || [] }))
+          .catch(() => ({ type, data: [] }))
+      );
+
+      const volunteerResults = await Promise.all(volunteerPromises);
+      const volunteerMetrics = { total: 0, mentors: 0, judges: 0, volunteers: 0, loading: false };
+
+      volunteerResults.forEach(result => {
+        const selectedVolunteers = result.data.filter(v => v.isSelected);
+        volunteerMetrics[result.type + 's'] = selectedVolunteers.length;
+        volunteerMetrics.total += selectedVolunteers.length;
+      });
+
+      setMetrics(prev => ({
+        ...prev,
+        volunteers: volunteerMetrics
+      }));
+    } catch (error) {
+      console.error('Error fetching volunteers:', error);
+      setMetrics(prev => ({
+        ...prev,
+        volunteers: { ...prev.volunteers, loading: false }
+      }));
+    }
+  }, [event_id]);
+
+  // Fetch GitHub data
+  const fetchGitHub = useCallback(async () => {
+    if (!event_id) return;
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/leaderboard/${event_id}`);
+      const githubData = response.ok ? await response.json() : {};
+      
+      const githubMetrics = { commits: 0, issues: 0, contributors: 0, loading: false };
+
+      if (githubData.generalStats) {
+        githubData.generalStats.forEach(stat => {
+          if (stat.stat?.toLowerCase().includes('commit')) {
+            githubMetrics.commits += stat.value || 0;
+          } else if (stat.stat?.toLowerCase().includes('issue')) {
+            githubMetrics.issues += stat.value || 0;
+          } else if (stat.stat?.toLowerCase().includes('contributor')) {
+            githubMetrics.contributors += stat.value || 0;
+          }
+        });
+      }
+
+      setMetrics(prev => ({
+        ...prev,
+        github: githubMetrics
+      }));
+    } catch (error) {
+      console.error('Error fetching GitHub data:', error);
+      setMetrics(prev => ({
+        ...prev,
+        github: { ...prev.github, loading: false }
+      }));
+    }
+  }, [event_id]);
+
+  // Fetch teams data
+  const fetchTeams = useCallback(async () => {
+    if (!event_id) return;
+
+    // If no access token, indicate auth is required
+    if (!accessToken) {
+      setMetrics(prev => ({
+        ...prev,
+        teams: { total: 0, active: 0, loading: false, requiresAuth: true },
+        hackers: { total: 0, returning: 0, loading: false, requiresAuth: true }
+      }));
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${eventData.id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const data = response.ok ? await response.json() : { teams: [] };
+      const teams = data.teams || [];
+
+      const teamMetrics = {
+        total: teams.length,
+        active: teams.filter(team => team.active === "True" || team.active === true).length,
+        loading: false,
+        requiresAuth: false
+      };
+
+      // Count unique team members as hackers
+      const uniqueHackers = new Set();
+      teams.forEach(team => {
+        if (Array.isArray(team.users)) {
+          team.users.forEach(user => {
+            const userId = typeof user === 'string' ? user : user.id || user.user_id;
+            if (userId) uniqueHackers.add(userId);
+          });
+        }
+      });
+
+      const hackerMetrics = {
+        total: uniqueHackers.size,
+        returning: 0, // This would need additional logic to calculate
+        loading: false,
+        requiresAuth: false
+      };
+
+      setMetrics(prev => ({
+        ...prev,
+        teams: teamMetrics,
+        hackers: hackerMetrics
+      }));
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      setMetrics(prev => ({
+        ...prev,
+        teams: { ...prev.teams, loading: false },
+        hackers: { ...prev.hackers, loading: false }
+      }));
+    }
+  }, [event_id, accessToken, eventData.id]);
+
+  // Fetch nonprofits data
+  const fetchNonprofits = useCallback(async () => {
+    if (!eventData.id) return;
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos/hackathon/${eventData.id}`);
+      const data = response.ok ? await response.json() : { nonprofits: [] };
+      
+      setMetrics(prev => ({
+        ...prev,
+        nonprofits: {
+          total: (data.nonprofits || []).length,
+          loading: false
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching nonprofits:', error);
+      setMetrics(prev => ({
+        ...prev,
+        nonprofits: { ...prev.nonprofits, loading: false }
+      }));
+    }
+  }, [eventData.id]);
 
   // Fetch all metrics data
   const fetchMetrics = useCallback(async () => {
     if (!event_id) return;
 
-    try {
-      setMetrics(prev => ({ ...prev, loading: true, error: null }));
+    // Reset loading states
+    setMetrics(prev => ({
+      ...prev,
+      error: null,
+      volunteers: { ...prev.volunteers, loading: true },
+      teams: { ...prev.teams, loading: true },
+      nonprofits: { ...prev.nonprofits, loading: true },
+      github: { ...prev.github, loading: true },
+      hackers: { ...prev.hackers, loading: true }
+    }));
 
-      // Fetch multiple data sources in parallel
-      const promises = [];
-
-      // 1. Fetch volunteers (mentors, judges, volunteers)
-      const volunteerTypes = ['mentor', 'judge', 'volunteer'];
-      volunteerTypes.forEach(type => {
-        promises.push(
-          fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}/${type}`)
-            .then(res => res.ok ? res.json() : { data: [] })
-            .then(data => ({ type, data: data.data || [] }))
-            .catch(() => ({ type, data: [] }))
-        );
-      });
-
-      // 2. Fetch GitHub leaderboard data
-      promises.push(
-        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/leaderboard/${event_id}`)
-          .then(res => res.ok ? res.json() : {})
-          .then(data => ({ type: 'github', data }))
-          .catch(() => ({ type: 'github', data: {} }))
-      );
-
-      // 3. Fetch teams data (only if user is logged in)
-      if (accessToken) {
-        promises.push(
-          fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${eventData.id}`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          })
-            .then(res => res.ok ? res.json() : { teams: [] })
-            .then(data => ({ type: 'teams', data: data.teams || [] }))
-            .catch(() => ({ type: 'teams', data: [] }))
-        );
-      }
-
-      // 4. Fetch nonprofits data
-      promises.push(
-        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos/hackathon/${eventData.id}`)
-          .then(res => res.ok ? res.json() : { nonprofits: [] })
-          .then(data => ({ type: 'nonprofits', data: data.nonprofits || [] }))
-          .catch(() => ({ type: 'nonprofits', data: [] }))
-      );
-
-      const results = await Promise.all(promises);
-      
-      // Process results
-      const newMetrics = {
-        loading: false,
-        error: null,
-        volunteers: { total: 0, mentors: 0, judges: 0, volunteers: 0 },
-        teams: { total: 0, active: 0 },
-        nonprofits: { total: 0 },
-        github: { commits: 0, issues: 0, contributors: 0 },
-        hackers: { total: 0, returning: 0 }
-      };
-
-      results.forEach(result => {
-        if (result.type === 'mentor' || result.type === 'judge' || result.type === 'volunteer') {
-          const selectedVolunteers = result.data.filter(v => v.isSelected);
-          newMetrics.volunteers[result.type + 's'] = selectedVolunteers.length;
-          newMetrics.volunteers.total += selectedVolunteers.length;
-        } else if (result.type === 'github') {
-          const githubData = result.data;
-          // Calculate GitHub metrics from general stats
-          if (githubData.generalStats) {
-            githubData.generalStats.forEach(stat => {
-              if (stat.stat?.toLowerCase().includes('commit')) {
-                newMetrics.github.commits += stat.value || 0;
-              } else if (stat.stat?.toLowerCase().includes('issue')) {
-                newMetrics.github.issues += stat.value || 0;
-              } else if (stat.stat?.toLowerCase().includes('contributor')) {
-                newMetrics.github.contributors += stat.value || 0;
-              }
-            });
-          }
-        } else if (result.type === 'teams') {
-          newMetrics.teams.total = result.data.length;
-          newMetrics.teams.active = result.data.filter(team => 
-            team.active === "True" || team.active === true
-          ).length;
-          // Count unique team members as hackers
-          const uniqueHackers = new Set();
-          result.data.forEach(team => {
-            if (Array.isArray(team.users)) {
-              team.users.forEach(user => {
-                const userId = typeof user === 'string' ? user : user.id || user.user_id;
-                if (userId) uniqueHackers.add(userId);
-              });
-            }
-          });
-          newMetrics.hackers.total = uniqueHackers.size;
-        } else if (result.type === 'nonprofits') {
-          newMetrics.nonprofits.total = result.data.length;
-        }
-      });
-
-      setMetrics(newMetrics);
-    } catch (error) {
-      console.error('Error fetching impact metrics:', error);
-      setMetrics(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Failed to load impact metrics'
-      }));
-    }
-  }, [event_id, accessToken, eventData.id]);
+    // Fetch all metrics independently
+    fetchVolunteers();
+    fetchGitHub();
+    fetchTeams();
+    fetchNonprofits();
+  }, [event_id, fetchVolunteers, fetchGitHub, fetchTeams, fetchNonprofits]);
 
   useEffect(() => {
     // Debounce the fetch to avoid rapid API calls
@@ -201,12 +265,13 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
     ) : null;
   }
 
-  const MetricCard = ({ title, value, icon, description, isLoading, color = "primary" }) => (
+  const MetricCard = ({ title, value, icon, description, isLoading, color = "primary", requiresAuth = false }) => (
     <Card sx={{ 
       height: '100%', 
       transition: 'transform 0.2s', 
       '&:hover': { transform: 'translateY(-2px)' },
-      minHeight: compact ? 50 : 120
+      minHeight: compact ? 50 : 120,
+      opacity: requiresAuth ? 0.7 : 1
     }}>
       <CardContent sx={{ 
         textAlign: 'center', 
@@ -215,11 +280,18 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: compact ? 0.25 : 1 }}>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: compact ? '0.65rem' : '0.75rem' }}>
-            {icon} {title}
+            {requiresAuth ? '🔒' : icon} {title}
           </Typography>
         </Box>
         {isLoading ? (
           <Skeleton variant="text" width="60%" sx={{ margin: '0 auto', height: compact ? 18 : 32 }} />
+        ) : requiresAuth ? (
+          <Typography variant={compact ? "caption" : "body2"} color="text.secondary" sx={{ 
+            fontSize: compact ? '0.7rem' : '0.9rem',
+            fontStyle: 'italic'
+          }}>
+            {compact ? 'Login req.' : 'Login required'}
+          </Typography>
         ) : (
           <Typography variant={compact ? "body2" : "h6"} color={`${color}.main`} sx={{ 
             fontWeight: 'bold', 
@@ -228,7 +300,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
             {value.toLocaleString()}
           </Typography>
         )}
-        {description && !compact && (
+        {description && !compact && !requiresAuth && (
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
             {description}
           </Typography>
@@ -244,12 +316,6 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
           🌟 Impact at a Glance
         </Typography>
       )}
-      
-      {metrics.loading && (
-        <Box sx={{ mb: compact ? 1 : 2 }}>
-          <LinearProgress sx={{ borderRadius: 1 }} />
-        </Box>
-      )}
 
       <Grid container spacing={compact ? 0.5 : 1.5}>
         {/* Volunteers Metric */}
@@ -258,8 +324,8 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
             title="Volunteers"
             value={metrics.volunteers.total}
             icon="👥"
-            description={compact ? null : "Mentors, judges & volunteers"}
-            isLoading={metrics.loading}
+            description={compact ? null : "Hackers, mentors, judges & volunteers"}
+            isLoading={metrics.volunteers.loading}
             color="info"
           />
         </Grid>
@@ -271,8 +337,9 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
             value={metrics.teams.active || metrics.teams.total}
             icon="🚀"
             description={compact ? null : "Competing teams"}
-            isLoading={metrics.loading}
+            isLoading={metrics.teams.loading}
             color="success"
+            requiresAuth={metrics.teams.requiresAuth}
           />
         </Grid>
 
@@ -284,7 +351,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
               value={metrics.github.commits}
               icon="💻"
               description="Commits made"
-              isLoading={metrics.loading}
+              isLoading={metrics.github.loading}
               color="warning"
             />
           </Grid>
@@ -297,7 +364,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
             value={metrics.nonprofits.total}
             icon="❤️"
             description={compact ? null : "Organizations helped"}
-            isLoading={metrics.loading}
+            isLoading={metrics.nonprofits.loading}
             color="error"
           />
         </Grid>
@@ -309,7 +376,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
               title="Commits"
               value={metrics.github.commits}
               icon="💻"
-              isLoading={metrics.loading}
+              isLoading={metrics.github.loading}
               color="warning"
             />
           </Grid>
@@ -326,7 +393,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
                 value={metrics.github.issues}
                 icon="🐛"
                 description="Issues opened/closed"
-                isLoading={metrics.loading}
+                isLoading={metrics.github.loading}
                 color="secondary"
               />
             </Grid>
@@ -338,7 +405,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
                 value={metrics.github.contributors}
                 icon="👨‍💻"
                 description="Active contributors"
-                isLoading={metrics.loading}
+                isLoading={metrics.github.loading}
                 color="primary"
               />
             </Grid>
@@ -350,8 +417,9 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
                 value={metrics.hackers.total}
                 icon="⚡"
                 description="Registered participants"
-                isLoading={metrics.loading}
+                isLoading={metrics.hackers.loading}
                 color="info"
+                requiresAuth={metrics.hackers.requiresAuth}
               />
             </Grid>
           )}
