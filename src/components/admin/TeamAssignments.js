@@ -236,8 +236,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
         );
       case ASSIGNMENT_STATUS.MULTIPLE:
         return (
-          <Chip 
-            icon={<FaExclamationTriangle />} 
+          <Chip             
             label="Multiple Teams" 
             color="warning" 
             size="small" 
@@ -366,10 +365,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
                     <Box sx={{ display: "flex", flexDirection: "column" }}>
                       <Typography variant="body1" fontWeight="medium">
                         {nonprofit.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {nonprofit.project_type || "No project type specified"}
-                      </Typography>
+                      </Typography>                      
                     </Box>
                   </TableCell>
                   <TableCell>
@@ -990,10 +986,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" color="text.secondary">
                         Project Type:
-                      </Typography>
-                      <Typography variant="body1" gutterBottom>
-                        {selectedNonprofit.project_type || "Not specified"}
-                      </Typography>
+                      </Typography>                      
                     </Grid>
                     <Grid item xs={12}>
                       <Typography variant="body2" color="text.secondary">
