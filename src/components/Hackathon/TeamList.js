@@ -240,7 +240,7 @@ const parseGithubUrl = (url) => {
 };
 
 // Enhanced TeamMember component with GitHub stats integration
-const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
+const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUsername }) => {
   if (!user) return null;
   
   // Handle both profile objects and user ID strings
@@ -256,6 +256,36 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
   // Get GitHub stats for this member
   const hasActivity = githubStats && (githubStats.commits > 0 || githubStats.issues?.total > 0);
   
+  const handleCopyGithubUsername = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!cleanGithubUsername) return;
+    
+    try {
+      await navigator.clipboard.writeText(cleanGithubUsername);
+      if (onCopyGithubUsername) {
+        onCopyGithubUsername(cleanGithubUsername);
+      }
+    } catch (err) {
+      console.error('Failed to copy GitHub username:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = cleanGithubUsername;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        if (onCopyGithubUsername) {
+          onCopyGithubUsername(cleanGithubUsername);
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed:', fallbackErr);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+  
   return (
     <Grid item>
       <Tooltip
@@ -269,6 +299,8 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
               <div style={{ marginTop: "4px", fontSize: "11px", opacity: 0.8 }}>
                 <FaGithub style={{ marginRight: "4px", fontSize: "10px" }} />@
                 {cleanGithubUsername}
+                <br />
+                <em style={{ fontSize: "10px" }}>Click username below to copy</em>
               </div>
             )}
             {githubStats ? (
@@ -368,6 +400,7 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
           <Typography
             variant="caption"
             display="block"
+            onClick={handleCopyGithubUsername}
             sx={{
               fontSize: "10px",
               color: "text.secondary",
@@ -375,7 +408,21 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               mt: 0.25,
+              cursor: "pointer",
+              userSelect: "none",
+              padding: "2px 4px",
+              borderRadius: "4px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                backgroundColor: "rgba(0, 0, 0, 0.08)",
+                color: "primary.main",
+                transform: "scale(1.05)",
+              },
+              "&:active": {
+                transform: "scale(0.95)",
+              },
             }}
+            title="Click to copy GitHub username"
           >
             <FaGithub style={{ marginRight: "2px", fontSize: "8px" }} />@
             {cleanGithubUsername}
@@ -556,7 +603,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken, onCopyGithubUsername }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
   
@@ -766,6 +813,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                   user={user}
                   isCurrentUser={isCurrentUser}
                   githubStats={githubStats}
+                  onCopyGithubUsername={onCopyGithubUsername}
                 />
               );
             })}
@@ -1114,6 +1162,14 @@ const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleCopyGithubUsername = (username) => {
+    setSnackbar({
+      open: true,
+      message: `GitHub username "${username}" copied to clipboard!`,
+      severity: "success",
+    });
+  };
+
   if (loading) {
     return <LoadingIndicator message="Loading teams..." />;
   }
@@ -1152,10 +1208,12 @@ const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
               teamJoinEnabled={teamJoinEnabled}
               nonprofitMap={nonprofitMap}
               accessToken={accessToken}
+              onCopyGithubUsername={handleCopyGithubUsername}
             />
           </Grid>        
         ))}
       </Grid>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
