@@ -1930,7 +1930,7 @@ const VolunteerApplicationComponent = () => {
 };
 
 // Export the component with RequiredAuthProvider
-const VolunteerApplicationPage = () => {
+const VolunteerApplicationPage = ({ seoMetadata }) => {
   const router = useRouter();
   const { event_id } = router.query;
 
@@ -1940,17 +1940,181 @@ const VolunteerApplicationPage = () => {
     : null;
 
   return (
-    <RequiredAuthProvider
-      authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-      displayIfLoggedOut={
-        <RedirectToLogin
-          postLoginRedirectUrl={currentUrl || window.location.href}
+    <>
+      {/* SEO metadata available to crawlers before authentication */}
+      <Head>
+        <title>{seoMetadata.title}</title>
+        <meta name="description" content={seoMetadata.description} />
+        <meta
+          name="keywords"
+          content="hackathon volunteer, volunteer application, tech for good, nonprofit hackathon, opportunity hack, volunteering, community service"
         />
-      }
-    >
-      <VolunteerApplicationComponent />
-    </RequiredAuthProvider>
+        <link rel="canonical" href={seoMetadata.canonicalUrl} />
+
+        {/* Open Graph tags */}
+        <meta property="og:title" content={seoMetadata.title} />
+        <meta property="og:description" content={seoMetadata.description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={seoMetadata.canonicalUrl} />
+        <meta property="og:image" content={seoMetadata.imageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="Volunteers supporting teams at Opportunity Hack" />
+        <meta property="og:site_name" content="Opportunity Hack" />
+
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoMetadata.title} />
+        <meta name="twitter:description" content={seoMetadata.description} />
+        <meta name="twitter:image" content={seoMetadata.imageUrl} />
+        <meta name="twitter:image:alt" content="Volunteers supporting teams at Opportunity Hack" />
+
+        {/* Additional SEO meta tags */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="Opportunity Hack" />
+        <meta name="theme-color" content="#1976d2" />
+      </Head>
+
+      {/* Structured Data for SEO */}
+      <Script
+        id="volunteer-application-structured-data-seo"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": seoMetadata.title,
+            "description": seoMetadata.description,
+            "url": seoMetadata.canonicalUrl,
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Opportunity Hack",
+              "url": "https://ohack.dev"
+            },
+            "breadcrumb": {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://ohack.dev"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Hackathons",
+                  "item": "https://ohack.dev/hack"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": seoMetadata.eventName,
+                  "item": `https://ohack.dev/hack/${event_id}`
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 4,
+                  "name": "Volunteer Application",
+                  "item": seoMetadata.canonicalUrl
+                }
+              ]
+            },
+            "mainEntity": {
+              "@type": "JobPosting",
+              "title": `Volunteer for ${seoMetadata.eventName}`,
+              "description": "Support teams and help organize our hackathon event focused on building tech solutions for nonprofits",
+              "hiringOrganization": {
+                "@type": "Organization",
+                "name": "Opportunity Hack"
+              },
+              "jobLocation": {
+                "@type": "Place",
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": seoMetadata.location.split(',')[0] || "Tempe",
+                  "addressRegion": "Arizona",
+                  "addressCountry": "US"
+                }
+              },
+              "employmentType": "VOLUNTEER",
+              "industry": "Technology for Social Good",
+              "responsibilities": [
+                "Assist with event setup and logistics",
+                "Support participants during the hackathon",
+                "Help with registration and check-in processes",
+                "Provide general event support and assistance"
+              ],
+              "qualifications": [
+                "Enthusiasm for social impact and nonprofit work",
+                "Strong communication and interpersonal skills",
+                "Ability to work in a fast-paced environment",
+                "Willingness to help teams and participants"
+              ]
+            }
+          })
+        }}
+      />
+
+      <RequiredAuthProvider
+        authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
+        displayIfLoggedOut={
+          <RedirectToLogin
+            postLoginRedirectUrl={currentUrl || window.location.href}
+          />
+        }
+      >
+        <VolunteerApplicationComponent />
+      </RequiredAuthProvider>
+    </>
   );
 };
+
+// Server-side props for SEO metadata (available to crawlers before auth)
+export async function getServerSideProps(context) {
+  const { event_id } = context.params;
+  
+  // Default metadata for SEO
+  let seoMetadata = {
+    title: "Volunteer at Opportunity Hack | Support Tech for Good",
+    description: "Apply to volunteer at our hackathon event. Help support teams building tech solutions for nonprofits and make a difference in your community.",
+    eventName: "Opportunity Hack",
+    location: "Tempe, Arizona",
+    canonicalUrl: `https://ohack.dev/hack/${event_id}/volunteer-application`,
+    imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp"
+  };
+
+  // Try to fetch event data for better SEO
+  try {
+    const apiServerUrl = process.env.NEXT_PUBLIC_REACT_APP_API_SERVER_URL;
+    if (apiServerUrl) {
+      const response = await fetch(`${apiServerUrl}/api/messages/hackathon/${event_id}`);
+      
+      if (response.ok) {
+        const eventData = await response.json();
+        
+        if (eventData && eventData.title) {
+          seoMetadata = {
+            title: `Volunteer at ${eventData.title} | Support Tech for Good`,
+            description: `Apply to volunteer at ${eventData.title} in ${eventData.location || 'Tempe, Arizona'}. Help support teams building innovative tech solutions for nonprofits.`,
+            eventName: eventData.title,
+            location: eventData.location || 'Tempe, Arizona',
+            canonicalUrl: `https://ohack.dev/hack/${event_id}/volunteer-application`,
+            imageUrl: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp"
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch event data for SEO:', error);
+    // Continue with default metadata
+  }
+
+  return {
+    props: {
+      seoMetadata
+    }
+  };
+}
 
 export default VolunteerApplicationPage;
