@@ -1060,7 +1060,21 @@ const VolunteerList = ({ event_id, type }) => {
           }
           passHref
         >
-          <StyledLink color="secondary">(Learn more)</StyledLink>
+          <StyledLink 
+            color="secondary" 
+            component="a"
+            href={
+              type === "mentor"
+                ? "/about/mentors"
+                : type === "judge"
+                  ? "/about/judges"
+                  : type === "hacker"
+                    ? "/hack"
+                    : "/volunteer"
+            }
+          >
+            (Learn more)
+          </StyledLink>
         </NextLink>
       </HeadingContainer>
 
