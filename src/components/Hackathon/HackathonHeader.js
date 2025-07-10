@@ -60,10 +60,22 @@ const HackathonHeader = ({
   description,
 }) => {
   const formatDate = (date) => Moment(date).format("MMM Do YYYY");
+  const formatDateISO = (date) => Moment(date).format("YYYY-MM-DD");
 
   return (
-    <HeaderContainer elevation={3} component="header">
-      <EventTitle variant="h2" component="h1" mt={5}>
+    <HeaderContainer 
+      elevation={3} 
+      component="header" 
+      role="banner"
+      itemScope
+      itemType="https://schema.org/Event"
+    >
+      <EventTitle 
+        variant="h2" 
+        component="h1" 
+        mt={5}
+        itemProp="name"
+      >
         {title}
       </EventTitle>
 
@@ -71,21 +83,42 @@ const HackathonHeader = ({
         <Grid item>
           <EventChip
             icon={<CalendarTodayIcon />}
-            label={`${formatDate(startDate)} - ${formatDate(endDate)}`}
+            label={
+              <span>
+                <time 
+                  dateTime={formatDateISO(startDate)} 
+                  itemProp="startDate"
+                >
+                  {formatDate(startDate)}
+                </time>
+                {" - "}
+                <time 
+                  dateTime={formatDateISO(endDate)} 
+                  itemProp="endDate"
+                >
+                  {formatDate(endDate)}
+                </time>
+              </span>
+            }
             aria-label={`Event dates: ${formatDate(startDate)} to ${formatDate(endDate)}`}
           />
         </Grid>
         <Grid item>
           <EventChip
             icon={<LocationOnIcon />}
-            label={location}
+            label={<span itemProp="location">{location}</span>}
             aria-label={`Event location: ${location}`}
           />
         </Grid>
       </EventInfo>
 
-      <DescriptionContainer>
-        <Typography component="div" className="event-description">
+      <DescriptionContainer itemProp="description">
+        <Typography 
+          component="div" 
+          className="event-description"
+          role="article"
+          aria-label="Event description"
+        >
           <ReactMarkdown>{description}</ReactMarkdown>
         </Typography>
       </DescriptionContainer>

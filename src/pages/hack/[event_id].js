@@ -526,7 +526,7 @@ export default function HackathonEvent({ eventData }) {
       "@type": "Organization",
       "name": "Opportunity Hack",
       "url": "https://ohack.dev",
-      "logo": "https://ohack.dev/ohack.png",
+      "logo": "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Light_Blue.png",
       "sameAs": [
         "https://www.linkedin.com/company/opportunity-hack",
         "https://twitter.com/opportunityhack",
