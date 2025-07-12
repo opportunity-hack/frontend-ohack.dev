@@ -71,16 +71,7 @@ import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
 import UserSearchDialog from './UserSearchDialog';
-
-// Status options and their colors for visual representation
-const TEAM_STATUS_OPTIONS = [
-  { value: 'IN_REVIEW', label: 'In Review', color: 'default' },
-  { value: 'NONPROFIT_SELECTED', label: 'Nonprofit Selected', color: 'primary' },
-  { value: 'ONBOARDED', label: 'Onboarded', color: 'info' },
-  { value: 'SWAG_RECEIVED', label: 'Swag Received', color: 'success' },
-  { value: 'PROJECT_COMPLETE', label: 'Project Complete', color: 'success' },
-  { value: 'INACTIVE', label: 'Inactive', color: 'error' }
-];
+import { TEAM_STATUS_OPTIONS, getStatusOption } from '../../constants/teamStatus';
 
 // GitHub Issue Templates for different hackathon phases
 const GITHUB_ISSUE_TEMPLATES = {
@@ -915,9 +906,7 @@ const TeamManagement = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
 
   // Render team status chip
   const renderStatusChip = (status) => {
-    const statusOption =
-      TEAM_STATUS_OPTIONS.find((opt) => opt.value === status) ||
-      TEAM_STATUS_OPTIONS[0];
+    const statusOption = getStatusOption(status);
     return (
       <Chip
         label={statusOption.label}

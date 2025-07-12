@@ -33,23 +33,11 @@ import {
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
 import moment from 'moment';
-
-// Status options and their colors for visual representation
-const TEAM_STATUS_OPTIONS = [
-  { value: 'IN_REVIEW', label: 'In Review', color: 'default' },
-  { value: 'NONPROFIT_SELECTED', label: 'Nonprofit Selected', color: 'primary' },
-  { value: 'ONBOARDED', label: 'Onboarded', color: 'info' },
-  { value: 'SWAG_RECEIVED', label: 'Swag Received', color: 'success' },
-  { value: 'PROJECT_COMPLETE', label: 'Project Complete', color: 'success' },
-  { value: 'INACTIVE', label: 'Inactive', color: 'error' }
-];
-
-// Statuses that prevent new members from joining
-const JOINING_DISABLED_STATUSES = ['ONBOARDED', 'SWAG_RECEIVED', 'PROJECT_COMPLETE', 'INACTIVE'];
+import { TEAM_STATUS_OPTIONS, getStatusOption, isJoiningDisabled } from '../../constants/teamStatus';
 
 // Helper function to check if team status prevents joining
 const isJoiningDisabledByStatus = (status) => {
-  return JOINING_DISABLED_STATUSES.includes(status);
+  return isJoiningDisabled(status);
 };
 
 // Reusable Alert component

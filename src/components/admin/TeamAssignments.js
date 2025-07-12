@@ -35,6 +35,7 @@ import {
   Tabs,
   Tab
 } from '@mui/material';
+import { TEAM_STATUS_OPTIONS, getStatusOption } from '../../constants/teamStatus';
 import { 
   FaEdit, 
   FaUsers, 
@@ -62,15 +63,6 @@ const ASSIGNMENT_STATUS = {
   MULTIPLE: 'multiple',
   FINALIZING: 'finalizing'
 };
-
-const TEAM_STATUS_OPTIONS = [
-  { value: 'IN_REVIEW', label: 'In Review', color: 'default' },
-  { value: 'NONPROFIT_SELECTED', label: 'Nonprofit Selected', color: 'primary' },
-  { value: 'ONBOARDED', label: 'Onboarded', color: 'info' },
-  { value: 'SWAG_RECEIVED', label: 'Swag Received', color: 'success' },
-  { value: 'PROJECT_COMPLETE', label: 'Project Complete', color: 'success' },
-  { value: 'INACTIVE', label: 'Inactive', color: 'error' }
-];
 
 const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon }) => {
   const theme = useTheme();
@@ -267,9 +259,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
 
   // Render team status chip
   const renderTeamStatus = (status) => {
-    const statusOption =
-      TEAM_STATUS_OPTIONS.find((opt) => opt.value === status) ||
-      TEAM_STATUS_OPTIONS[0];
+    const statusOption = getStatusOption(status);
     return (
       <Chip
         label={statusOption.label}
