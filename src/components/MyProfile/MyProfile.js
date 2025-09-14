@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Grid, Box, Typography } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import ProfileHeader from './ProfileHeader';
 import ProfileDetails from './ProfileDetails';
 import ProjectList from './ProjectList';
 import WeeklyStats from './WeeklyProjectList';
+import FileUploads from './FileUploads';
 import { CenteredContent, EditButton, ProfileContainer, StyledPaper } from './styles';
 import useProfileApi from '../../hooks/use-profile-api';
 import { useAuthInfo } from '@propelauth/react';
@@ -17,12 +19,49 @@ import {
 
 const ProfilePage = () => {
     const { isLoggedIn, user: authUser } = useAuthInfo();
-    const { profile, isLoading } = useProfileApi();
+    const { profile, isLoading, uploadProfileFiles, deleteProfileFile } = useProfileApi();
     const [mockData, setMockData] = useState(null);
+    const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+    const { enqueueSnackbar } = useSnackbar();
 
     const handleEditProfile = () => {
         // Implement logic to navigate to the edit profile page or show an edit profile modal
         console.log('Editing profile...');
+    };
+
+    // Handle file upload
+    const handleFileUpload = async (file, fileType) => {
+        setIsUploadingFiles(true);
+        try {
+            await uploadProfileFiles(file, fileType);
+            enqueueSnackbar(`${fileType === 'resume' ? 'Resume' : 'Receipt'} uploaded successfully!`, { 
+                variant: 'success' 
+            });
+            // Refresh profile data here in a real implementation
+        } catch (error) {
+            console.error('Upload error:', error);
+            enqueueSnackbar(`Failed to upload ${fileType === 'resume' ? 'resume' : 'receipt'}. Please try again.`, { 
+                variant: 'error' 
+            });
+        } finally {
+            setIsUploadingFiles(false);
+        }
+    };
+
+    // Handle file deletion
+    const handleFileDelete = async (fileType, fileId) => {
+        try {
+            await deleteProfileFile(fileType, fileId);
+            enqueueSnackbar(`${fileType === 'resume' ? 'Resume' : 'Receipt'} deleted successfully!`, { 
+                variant: 'success' 
+            });
+            // Refresh profile data here in a real implementation
+        } catch (error) {
+            console.error('Delete error:', error);
+            enqueueSnackbar(`Failed to delete ${fileType === 'resume' ? 'resume' : 'receipt'}. Please try again.`, { 
+                variant: 'error' 
+            });
+        }
     };
 
     // This is mock data for demonstration purposes
@@ -137,6 +176,18 @@ const ProfilePage = () => {
                     <Grid item xs={12} md={6}>
                         <StyledPaper elevation={3}>
                             <ProfileDetails details={mockData.details} />
+                        </StyledPaper>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <StyledPaper elevation={3}>
+                            <FileUploads
+                                resumeFile={profile?.resume_file}
+                                receiptFiles={profile?.receipt_files || []}
+                                onResumeUpload={(file) => handleFileUpload(file, 'resume')}
+                                onReceiptUpload={(file) => handleFileUpload(file, 'receipt')}
+                                onFileDelete={handleFileDelete}
+                                isUploading={isUploadingFiles}
+                            />
                         </StyledPaper>
                     </Grid>
                     <Grid item xs={12}>

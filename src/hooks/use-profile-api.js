@@ -123,6 +123,71 @@ export default function useProfileApi(){
             return null;
         }
     }, []);
+
+    // File upload function for resume and receipts
+    const uploadProfileFiles = async (files, fileType) => {
+        if (!user) {
+            throw new Error('User not authenticated');
+        }
+
+        const formData = new FormData();
+        
+        if (fileType === 'resume' && files) {
+            formData.append('resume', files);
+        } else if (fileType === 'receipt' && files) {
+            if (Array.isArray(files)) {
+                files.forEach((file, index) => {
+                    formData.append(`receipts`, file);
+                });
+            } else {
+                formData.append('receipts', files);
+            }
+        }
+
+        try {
+            const response = await axios({
+                url: `${apiServerUrl}/api/profile/upload`,
+                method: "POST",
+                headers: {
+                    "Accept": "application/json"
+                    // Don't set Content-Type header - let axios set it for FormData
+                },
+                data: formData
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Error uploading files:', error);
+            throw error;
+        }
+    };
+
+    // File delete function
+    const deleteProfileFile = async (fileType, fileId) => {
+        if (!user) {
+            throw new Error('User not authenticated');
+        }
+
+        try {
+            const response = await axios({
+                url: `${apiServerUrl}/api/profile/file`,
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                data: {
+                    file_type: fileType,
+                    file_id: fileId
+                }
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting file:', error);
+            throw error;
+        }
+    };
     
     /*
     User is already signed in via Auth0 SDK
@@ -185,6 +250,9 @@ export default function useProfileApi(){
                         country: data.text.country,
                         // Added sticker preference
                         want_stickers: data.text.want_stickers,
+                        // Added file upload fields
+                        resume_file: data.text.resume_file || null,
+                        receipt_files: data.text.receipt_files || [],
                     };
 
                     setProfile(profileData);
@@ -220,6 +288,8 @@ export default function useProfileApi(){
         handle_help_toggle,
         update_profile_metadata,
         get_user_profile_by_id,
+        uploadProfileFiles,
+        deleteProfileFile,
         isLoading
     };
 };
