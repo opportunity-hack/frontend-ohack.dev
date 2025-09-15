@@ -1,0 +1,106 @@
+/* Print-specific styles for Event Information */
+@media print {
+  /* Hide unnecessary elements during print */
+  nav,
+  .MuiFab-root,
+  .print-hidden,
+  .MuiDialog-root,
+  .MuiAppBar-root,
+  .MuiToolbar-root,
+  header,
+  footer {
+    display: none !important;
+  }
+
+  /* Ensure print content is visible */
+  .print-content,
+  .print-content * {
+    visibility: visible !important;
+    display: block !important;
+  }
+
+  /* Reset page styling for print */
+  body {
+    margin: 0;
+    padding: 0;
+    font-size: 12pt;
+    line-height: 1.4;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Page break control */
+  .print-section {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    padding: 10px;
+  }
+
+  .print-header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+  }
+
+  /* Participant cards for print */
+  .print-participant-card {
+    border: 1px solid #eee;
+    margin: 5px 0;
+    padding: 8px;
+    page-break-inside: avoid;
+    font-size: 10pt;
+  }
+
+  /* QR Code styling for print */
+  .print-qr-container {
+    text-align: center;
+    page-break-inside: avoid;
+    margin: 20px 0;
+  }
+
+  /* Ensure proper spacing */
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #000 !important;
+  }
+
+  /* Grid layout adjustments for print */
+  .print-grid {
+    display: block !important;
+  }
+  
+  .print-grid-item {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+
+  /* Two-column layout for participants */
+  .print-participants-grid {
+    column-count: 2;
+    column-gap: 20px;
+    column-fill: balance;
+  }
+
+  .print-participants-grid .print-participant-card {
+    break-inside: avoid;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  /* Force page breaks */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .no-page-break {
+    page-break-inside: avoid;
+  }
+}

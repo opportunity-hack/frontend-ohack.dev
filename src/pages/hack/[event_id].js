@@ -15,9 +15,11 @@ import {
   Zoom 
 } from "@mui/material";
 import { KeyboardArrowUp as KeyboardArrowUpIcon } from '@mui/icons-material';
+import PrintIcon from '@mui/icons-material/Print';
 import Script from 'next/script';
 import HackathonHeader from "../../components/Hackathon/HackathonHeader";
 import TableOfContents from '../../components/Hackathon/TableOfContents';
+import PrintEventInfo from '../../components/Hackathon/PrintEventInfo';
 
 // Create a visually-hidden style for accessibility
 const VisuallyHidden = styled('span')({
@@ -203,6 +205,7 @@ export default function HackathonEvent({ eventData }) {
   const router = useRouter();
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [faqData, setFaqData] = useState(null);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
   
   // If fallback is true and the page is being generated,
   // router.isFallback will be true
@@ -587,6 +590,25 @@ export default function HackathonEvent({ eventData }) {
           location={event.location}
           description={event.description}
         />
+
+        {/* Print Button for Event Coordinators */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={() => setShowPrintDialog(true)}
+            sx={{
+              borderColor: 'primary.main',
+              color: 'primary.main',
+              '&:hover': {
+                backgroundColor: 'primary.main',
+                color: 'primary.contrastText',
+              },
+            }}
+          >
+            Print Event Info
+          </Button>
+        </Box>
 
         <nav aria-label="Event navigation">
           <TableOfContents />
@@ -1048,6 +1070,14 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Print Event Info Dialog */}
+      <PrintEventInfo
+        open={showPrintDialog}
+        onClose={() => setShowPrintDialog(false)}
+        eventData={event}
+        eventId={event_id}
+      />
 
       {/* Back to Top Button */}
       <Zoom in={showBackToTop} timeout={300}>
