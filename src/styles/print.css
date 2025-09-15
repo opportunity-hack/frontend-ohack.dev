@@ -1,4 +1,4 @@
-/* Print-specific styles for Event Information */
+/* Minimal print styles optimized for clean participant lists */
 @media print {
   /* Hide unnecessary elements during print */
   nav,
@@ -19,79 +19,105 @@
     display: block !important;
   }
 
-  /* Reset page styling for print */
+  /* Clean print layout */
   body {
     margin: 0;
-    padding: 0;
-    font-size: 12pt;
-    line-height: 1.4;
+    padding: 15px;
+    font-size: 11px;
+    line-height: 1.2;
     color: #000 !important;
     background: #fff !important;
+    font-family: Arial, sans-serif;
   }
 
-  /* Page break control */
+  /* Page settings */
+  @page {
+    margin: 0.5in;
+    size: letter;
+  }
+
+  /* Section spacing */
   .print-section {
-    page-break-inside: avoid;
     margin-bottom: 20px;
-    border: 1px solid #ddd;
-    padding: 10px;
+    page-break-inside: avoid;
   }
 
+  /* Header styling */
   .print-header {
     text-align: center;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #333;
-    padding-bottom: 10px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 8px;
   }
 
-  /* Participant cards for print */
-  .print-participant-card {
-    border: 1px solid #eee;
-    margin: 5px 0;
-    padding: 8px;
+  /* Participant rows */
+  .print-participant-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding: 6px 0;
     page-break-inside: avoid;
-    font-size: 10pt;
+    font-size: 10px;
   }
 
-  /* QR Code styling for print */
-  .print-qr-container {
+  /* Participant photos */
+  .print-participant-photo {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 8px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+  }
+
+  /* Two column layout */
+  .print-two-column {
+    display: flex;
+    gap: 15px;
+  }
+
+  .print-column {
+    flex: 1;
+  }
+
+  /* Section headers */
+  .print-section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    border-bottom: 1px solid #999;
+    padding-bottom: 3px;
+  }
+
+  /* QR code section */
+  .print-qr-section {
     text-align: center;
+    margin-top: 20px;
     page-break-inside: avoid;
-    margin: 20px 0;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
   }
 
-  /* Ensure proper spacing */
+  /* Force clean text rendering */
   h1, h2, h3, h4, h5, h6 {
-    margin-top: 0;
-    margin-bottom: 10px;
+    margin: 0 0 8px 0;
     color: #000 !important;
+    font-weight: bold;
   }
 
-  /* Grid layout adjustments for print */
-  .print-grid {
-    display: block !important;
-  }
-  
-  .print-grid-item {
-    width: 100% !important;
-    margin-bottom: 10px;
+  /* Remove Material-UI artifacts */
+  .MuiTypography-root {
+    margin: 0 !important;
   }
 
-  /* Two-column layout for participants */
-  .print-participants-grid {
-    column-count: 2;
-    column-gap: 20px;
-    column-fill: balance;
+  .MuiBox-root {
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  .print-participants-grid .print-participant-card {
-    break-inside: avoid;
-    display: inline-block;
-    width: 100%;
-    margin-bottom: 10px;
-  }
-
-  /* Force page breaks */
+  /* Ensure good page breaks */
   .page-break-before {
     page-break-before: always;
   }

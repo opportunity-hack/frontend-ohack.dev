@@ -22,82 +22,102 @@ import {
 import { styled } from '@mui/material/styles';
 import PrintIcon from '@mui/icons-material/Print';
 import QRCode from 'react-qr-code';
-import PersonIcon from '@mui/icons-material/Person';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import GavelIcon from '@mui/icons-material/Gavel';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
-// Print-specific styling
+// Print-specific styling for minimal, print-optimized layout
 const PrintContainer = styled(Box)(({ theme }) => ({
   '@media print': {
     '& *': {
       visibility: 'visible !important',
     },
-    fontSize: '12px',
-    lineHeight: '1.4',
+    fontSize: '11px',
+    lineHeight: '1.2',
     color: '#000 !important',
     backgroundColor: '#fff !important',
-    pageBreakInside: 'avoid',
-  },
-}));
-
-const PrintSection = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  '@media print': {
-    boxShadow: 'none',
-    border: '1px solid #ddd',
-    pageBreakInside: 'avoid',
-    backgroundColor: '#fff !important',
-    padding: '10px',
-    marginBottom: '15px',
+    fontFamily: 'Arial, sans-serif',
   },
 }));
 
 const PrintHeader = styled(Box)(({ theme }) => ({
-  textAlign: 'center',
-  marginBottom: theme.spacing(3),
+  '@media print': {
+    textAlign: 'center',
+    marginBottom: '15px',
+    borderBottom: '2px solid #000',
+    paddingBottom: '8px',
+  },
+}));
+
+const PrintSection = styled(Box)(({ theme }) => ({
   '@media print': {
     marginBottom: '20px',
-    borderBottom: '2px solid #333',
-    paddingBottom: '10px',
+    pageBreakInside: 'avoid',
   },
 }));
 
-const ParticipantCard = styled(Card)(({ theme }) => ({
-  marginBottom: theme.spacing(1),
+const ParticipantRow = styled(Box)(({ theme }) => ({
   '@media print': {
-    boxShadow: 'none',
-    border: '1px solid #eee',
-    marginBottom: '8px',
-    backgroundColor: '#fff !important',
+    display: 'flex',
+    alignItems: 'center',
+    borderBottom: '1px solid #ddd',
+    padding: '6px 0',
     pageBreakInside: 'avoid',
-    padding: '6px',
-    fontSize: '10pt',
+    fontSize: '10px',
   },
 }));
 
-const QRCodeContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: theme.spacing(2),
+const ParticipantPhoto = styled('img')({
   '@media print': {
-    pageBreakInside: 'avoid',
+    width: '30px',
+    height: '30px',
+    borderRadius: '50%',
+    marginRight: '8px',
+    objectFit: 'cover',
+    border: '1px solid #ccc',
+  },
+});
+
+const ParticipantInfo = styled(Box)({
+  '@media print': {
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+});
+
+const QRSection = styled(Box)({
+  '@media print': {
     textAlign: 'center',
-    margin: '20px 0',
+    marginTop: '20px',
+    pageBreakInside: 'avoid',
+    borderTop: '1px solid #ddd',
+    paddingTop: '15px',
   },
-}));
+});
 
-const PrintParticipantsGrid = styled(Grid)(({ theme }) => ({
+const SectionHeader = styled(Box)({
   '@media print': {
-    columnCount: 2,
-    columnGap: '20px',
-    columnFill: 'balance',
-    display: 'block !important',
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '8px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    borderBottom: '1px solid #999',
+    paddingBottom: '3px',
   },
-}));;
+});
+
+const TwoColumnLayout = styled(Box)({
+  '@media print': {
+    display: 'flex',
+    gap: '15px',
+  },
+});
+
+const Column = styled(Box)({
+  '@media print': {
+    flex: 1,
+  },
+});;
 
 const PrintEventInfo = ({ open, onClose, eventData, eventId }) => {
   const [selectedSections, setSelectedSections] = useState({
@@ -180,56 +200,56 @@ const PrintEventInfo = ({ open, onClose, eventData, eventId }) => {
     window.print();
   };
 
-  const renderParticipantList = (participants, title, icon) => {
-    if (!selectedSections[title.toLowerCase()] || participants.length === 0) {
+  const renderParticipantList = (participants, title, sectionKey) => {
+    if (!selectedSections[sectionKey] || participants.length === 0) {
       return null;
     }
 
-    const IconComponent = icon;
-    
     return (
       <PrintSection key={title}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <IconComponent sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6" component="h3">
-            {title} ({participants.length})
-          </Typography>
-        </Box>
+        <SectionHeader>
+          <span style={{ marginRight: '8px' }}>
+            {sectionKey === 'volunteers' && '🙋‍♀️'}
+            {sectionKey === 'mentors' && '👨‍🏫'}
+            {sectionKey === 'judges' && '⚖️'}
+            {sectionKey === 'hackers' && '💻'}
+          </span>
+          {title} ({participants.length})
+        </SectionHeader>
         
-        <PrintParticipantsGrid container spacing={1} className="print-participants-grid">
-          {participants.map((participant, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index} className="print-grid-item">
-              <ParticipantCard variant="outlined" className="print-participant-card">
-                <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    {participant.name || participant.firstName || 'Name not provided'}
-                  </Typography>
-                  
-                  {(participant.company || participant.schoolOrganization) && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {participant.company || participant.schoolOrganization}
-                    </Typography>
-                  )}
-                  
-                  {participant.skills && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Skills: {typeof participant.skills === 'string' 
-                        ? participant.skills 
-                        : participant.skills.join(', ')
-                      }
-                    </Typography>
-                  )}
-                  
-                  {participant.location && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Location: {participant.location}
-                    </Typography>
-                  )}
-                </CardContent>
-              </ParticipantCard>
-            </Grid>
-          ))}
-        </PrintParticipantsGrid>
+        {participants.map((participant, index) => (
+          <ParticipantRow key={index}>
+            <ParticipantPhoto
+              src={participant.slack_user_profile_photo || participant.profile_photo || '/default-avatar.png'}
+              alt={participant.name || participant.firstName || 'Participant'}
+              onError={(e) => {
+                e.target.src = '/default-avatar.png';
+              }}
+            />
+            <ParticipantInfo>
+              <Box>
+                <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
+                  {participant.name || participant.firstName || 'Name not provided'}
+                </div>
+                <div style={{ fontSize: '9px', color: '#666' }}>
+                  {participant.company || participant.schoolOrganization || ''}
+                </div>
+              </Box>
+              <Box style={{ textAlign: 'right', fontSize: '9px', color: '#666' }}>
+                {participant.skills && (
+                  <div style={{ maxWidth: '120px' }}>
+                    {typeof participant.skills === 'string' 
+                      ? participant.skills.substring(0, 30) + (participant.skills.length > 30 ? '...' : '')
+                      : Array.isArray(participant.skills) 
+                        ? participant.skills.slice(0, 2).join(', ') + (participant.skills.length > 2 ? '...' : '')
+                        : ''
+                    }
+                  </div>
+                )}
+              </Box>
+            </ParticipantInfo>
+          </ParticipantRow>
+        ))}
       </PrintSection>
     );
   };
@@ -239,42 +259,40 @@ const PrintEventInfo = ({ open, onClose, eventData, eventId }) => {
 
     return (
       <PrintSection>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <AccessTimeIcon sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6" component="h3">
-            Event Timeline
-          </Typography>
-        </Box>
+        <SectionHeader>
+          <span style={{ marginRight: '8px' }}>📅</span>
+          Event Information
+        </SectionHeader>
         
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" gutterBottom>
+        <TwoColumnLayout>
+          <Column>
+            <div style={{ marginBottom: '6px' }}>
               <strong>Event:</strong> {eventData.title}
-            </Typography>
-            <Typography variant="body2" gutterBottom>
-              <strong>Start Date:</strong> {eventData.start_date ? new Date(eventData.start_date).toLocaleDateString() : 'TBA'}
-            </Typography>
-            <Typography variant="body2" gutterBottom>
-              <strong>End Date:</strong> {eventData.end_date ? new Date(eventData.end_date).toLocaleDateString() : 'TBA'}
-            </Typography>
-            <Typography variant="body2" gutterBottom>
+            </div>
+            <div style={{ marginBottom: '6px' }}>
+              <strong>Start:</strong> {eventData.start_date ? new Date(eventData.start_date).toLocaleDateString() : 'TBA'}
+            </div>
+            <div style={{ marginBottom: '6px' }}>
+              <strong>End:</strong> {eventData.end_date ? new Date(eventData.end_date).toLocaleDateString() : 'TBA'}
+            </div>
+            <div style={{ marginBottom: '6px' }}>
               <strong>Location:</strong> {eventData.location || 'TBA'}
-            </Typography>
-          </Grid>
+            </div>
+          </Column>
           
           {eventData.countdowns && eventData.countdowns.length > 0 && (
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" gutterBottom>
+            <Column>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '10px' }}>
                 Important Dates:
-              </Typography>
-              {eventData.countdowns.slice(0, 5).map((countdown, index) => (
-                <Typography key={index} variant="caption" display="block" color="text.secondary">
+              </div>
+              {eventData.countdowns.slice(0, 4).map((countdown, index) => (
+                <div key={index} style={{ fontSize: '9px', marginBottom: '3px', color: '#666' }}>
                   {countdown.name}: {countdown.date ? new Date(countdown.date).toLocaleDateString() : 'TBA'}
-                </Typography>
+                </div>
               ))}
-            </Grid>
+            </Column>
           )}
-        </Grid>
+        </TwoColumnLayout>
       </PrintSection>
     );
   };
@@ -285,24 +303,19 @@ const PrintEventInfo = ({ open, onClose, eventData, eventId }) => {
     const eventUrl = `https://ohack.dev/hack/${eventId}`;
     
     return (
-      <PrintSection className="print-section no-page-break">
-        <Typography variant="h6" component="h3" gutterBottom align="center">
-          Event Information
-        </Typography>
-        
-        <QRCodeContainer className="print-qr-container">
-          <Box sx={{ textAlign: 'center' }}>
-            <QRCode 
-              value={eventUrl}
-              size={150}
-              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-            />
-            <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-              Scan to visit: {eventUrl}
-            </Typography>
-          </Box>
-        </QRCodeContainer>
-      </PrintSection>
+      <QRSection>
+        <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>
+          📱 Event Information
+        </div>
+        <QRCode 
+          value={eventUrl}
+          size={80}
+          style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+        />
+        <div style={{ fontSize: '8px', marginTop: '5px', color: '#666' }}>
+          Scan to visit: {eventUrl}
+        </div>
+      </QRSection>
     );
   };
 
@@ -448,44 +461,49 @@ const PrintEventInfo = ({ open, onClose, eventData, eventId }) => {
         </DialogActions>
       </Dialog>
 
-      {/* Hidden print content */}
+      {/* Hidden print content - minimal layout optimized for print */}
       <Box sx={{ display: 'none', '@media print': { display: 'block' } }} className="print-content">
         <PrintContainer ref={printRef}>
-          <PrintHeader className="print-header">
-            <Typography variant="h4" component="h1" gutterBottom>
+          <PrintHeader>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>
               {eventData?.title || 'Hackathon Event'}
-            </Typography>
-            <Typography variant="h6" color="text.secondary">
-              Participant Guide
-            </Typography>
-            <Divider sx={{ my: 2 }} />
+            </div>
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              Participant Guide • Generated {new Date().toLocaleDateString()}
+            </div>
           </PrintHeader>
 
           {renderEventCountdown()}
           
-          {renderParticipantList(
-            participantData.volunteers,
-            'Volunteers',
-            VolunteerActivismIcon
-          )}
-          
-          {renderParticipantList(
-            participantData.mentors,
-            'Mentors',
-            PersonIcon
-          )}
-          
-          {renderParticipantList(
-            participantData.hackers,
-            'Hackers',
-            EmojiEventsIcon
-          )}
-          
-          {renderParticipantList(
-            participantData.judges,
-            'Judges',
-            GavelIcon
-          )}
+          <TwoColumnLayout>
+            <Column>
+              {renderParticipantList(
+                participantData.volunteers,
+                'Volunteers',
+                'volunteers'
+              )}
+              
+              {renderParticipantList(
+                participantData.judges,
+                'Judges',
+                'judges'
+              )}
+            </Column>
+            
+            <Column>
+              {renderParticipantList(
+                participantData.mentors,
+                'Mentors',
+                'mentors'
+              )}
+              
+              {renderParticipantList(
+                participantData.hackers,
+                'Hackers',
+                'hackers'
+              )}
+            </Column>
+          </TwoColumnLayout>
           
           {renderQRCode()}
         </PrintContainer>
