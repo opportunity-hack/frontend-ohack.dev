@@ -1,4 +1,5 @@
 import "../styles/styles.css";
+import "../styles/print.css";
 import dynamic from 'next/dynamic'
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";

@@ -27,7 +27,6 @@ import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GavelIcon from '@mui/icons-material/Gavel';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import '../../styles/print.css';
 
 // Print-specific styling
 const PrintContainer = styled(Box)(({ theme }) => ({
