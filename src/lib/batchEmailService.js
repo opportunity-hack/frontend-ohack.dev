@@ -1,6 +1,10 @@
 /**
  * Batch Email Service
  * Handles sending emails to multiple selected users via the backend API
+ *
+ * Automatically detects recipient type and uses appropriate API endpoint:
+ * - Registered users (with ID): /api/admin/{user.id}/message
+ * - Email-only recipients: /api/admin/email/send
  */
 
 class BatchEmailService {
@@ -27,38 +31,67 @@ class BatchEmailService {
         processedMessage = message.replace(/\[EVENT_ID\]/g, eventId);
       }
 
-      const response = await fetch(`${this.apiServerUrl}/api/admin/${user.id}/message`, {
+      // Determine if this is a user with an ID (registered user) or email-only recipient
+      const isEmailOnlyRecipient = !user.id || user.source === 'custom' || user.source === 'csv';
+
+      let endpoint, requestBody;
+
+      if (isEmailOnlyRecipient) {
+        // Use email-only endpoint for recipients without user accounts
+        endpoint = `${this.apiServerUrl}/api/admin/email/send`;
+        requestBody = {
+          email: user.email,
+          message: processedMessage,
+          subject: subject,
+          recipient_type: recipientType,
+          name: user.name || user.email || 'Recipient'
+        };
+      } else {
+        // Use user ID endpoint for registered users
+        endpoint = `${this.apiServerUrl}/api/admin/${user.id}/message`;
+        requestBody = {
+          message: processedMessage,
+          subject: subject,
+          recipient_type: recipientType,
+          recipient_id: user.id
+        };
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,
           'Content-Type': 'application/json',
           'X-Org-Id': this.orgId,
         },
-        body: JSON.stringify({
-          message: processedMessage,
-          subject: subject,
-          recipient_type: recipientType,
-          recipient_id: user.id
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
         const data = await response.json();
-        return { 
-          success: data.success || true, 
-          data 
+        return {
+          success: data.success || true,
+          data,
+          endpoint: isEmailOnlyRecipient ? 'email-only' : 'user-id'
         };
       } else {
         const errorData = await response.json().catch(() => ({}));
-        return { 
-          success: false, 
-          error: errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`
+        const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+
+        // Add context about which endpoint was used for better debugging
+        const contextualError = `${errorMessage} (via ${isEmailOnlyRecipient ? 'email-only' : 'user-ID'} endpoint)`;
+
+        return {
+          success: false,
+          error: contextualError,
+          endpoint: isEmailOnlyRecipient ? 'email-only' : 'user-id'
         };
       }
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.message || 'Network error occurred'
+      return {
+        success: false,
+        error: `${error.message || 'Network error occurred'} (${isEmailOnlyRecipient ? 'email-only' : 'user-ID'} endpoint)`,
+        endpoint: isEmailOnlyRecipient ? 'email-only' : 'user-id'
       };
     }
   }
@@ -98,7 +131,9 @@ class BatchEmailService {
       const userResult = {
         user: user,
         success: result.success,
-        error: result.error
+        error: result.error,
+        data: result.data,
+        endpoint: result.endpoint // Track which endpoint was used
       };
 
       results.push(userResult);

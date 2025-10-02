@@ -49,11 +49,63 @@ import {
   AccessTimeRounded,
   FlashOnRounded,
   TrendingUpRounded,
-  WorkspacesRounded
+  WorkspacesRounded,
+  LinkRounded
 } from "@mui/icons-material";
 
 const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
   trackEvent("click_hackers", buttonName);
+};
+
+// Component for section headings with anchor links
+const SectionHeading = ({ id, variant = "h3", children, sx = {}, icon }) => {
+  const [showLink, setShowLink] = useState(false);
+  
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}${window.location.pathname}#${id}`;
+    navigator.clipboard.writeText(url);
+    window.history.pushState(null, '', `#${id}`);
+  };
+
+  return (
+    <Box
+      id={id}
+      sx={{ 
+        position: 'relative',
+        scrollMarginTop: '100px', // Offset for fixed headers
+        mb: 2
+      }}
+      onMouseEnter={() => setShowLink(true)}
+      onMouseLeave={() => setShowLink(false)}
+    >
+      <Typography
+        variant={variant}
+        component="h2"
+        gutterBottom
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          ...sx
+        }}
+      >
+        {icon}
+        {children}
+        <IconButton
+          size="small"
+          onClick={handleCopyLink}
+          sx={{
+            opacity: showLink ? 1 : 0,
+            transition: 'opacity 0.2s',
+            ml: 1
+          }}
+          aria-label="Copy link to section"
+        >
+          <LinkRounded fontSize="small" />
+        </IconButton>
+      </Typography>
+    </Box>
+  );
 };
 
 const AboutHackers = () => {
@@ -225,10 +277,14 @@ const AboutHackers = () => {
 
         {/* YouTube Video Section */}
         <Box sx={{ mb: 5, textAlign: "center" }}>
-          <Typography variant="h4" component="h2" gutterBottom>
-            <PlayArrowRounded sx={{ mr: 1, verticalAlign: "bottom" }} />
+          <SectionHeading 
+            id="what-is-a-hacker" 
+            variant="h4"
+            sx={{ textAlign: "center", justifyContent: "center" }}
+            icon={<PlayArrowRounded sx={{ mr: 1 }} />}
+          >
             What is a Hacker?
-          </Typography>
+          </SectionHeading>
           <Typography
             variant="body1"
             sx={{
@@ -301,17 +357,15 @@ const AboutHackers = () => {
         {/* Upcoming Events Section */}
         <Paper
           sx={{ p: 4, mb: 5, bgcolor: "primary.light", color: "white" }}
-          id="upcoming-events"
         >
-          <Typography
+          <SectionHeading 
+            id="upcoming-events" 
             variant="h3"
-            component="h2"
-            gutterBottom
             sx={{ color: "white" }}
+            icon={<CodeRounded sx={{ mr: 2 }} />}
           >
-            <CodeRounded sx={{ mr: 2, verticalAlign: "bottom" }} />
             Upcoming Hackathons
-          </Typography>
+          </SectionHeading>
           <Typography
             variant="body1"
             sx={{ fontSize: "18px", mb: 3, color: "white" }}
@@ -418,16 +472,81 @@ const AboutHackers = () => {
           </Box>
         </Paper>
 
+        {/* Team Creation Video Section */}
+        <Box sx={{ mb: 5, textAlign: "center" }}>
+          <SectionHeading 
+            id="team-creation" 
+            variant="h4"
+            sx={{ textAlign: "center", justifyContent: "center" }}
+            icon={<GroupsRounded sx={{ mr: 1 }} />}
+          >
+            How to Find and Create Your Team
+          </SectionHeading>
+          <Typography
+            variant="body1"
+            sx={{
+              mb: 3,
+              maxWidth: "700px",
+              mx: "auto",
+              fontSize: "16px",
+              color: "text.secondary",
+            }}
+          >
+            Once accepted to a hackathon, you can find teammates and create your team 
+            before the event begins. This walkthrough shows you how to use our team 
+            matching system, create a team, get your Slack channel, and receive approval 
+            to start working on your nonprofit project.
+          </Typography>
+          <Box
+            sx={{
+              position: "relative",
+              paddingBottom: "56.25%", // 16:9 aspect ratio
+              height: 0,
+              overflow: "hidden",
+              maxWidth: "800px",
+              mx: "auto",
+              borderRadius: 2,
+              boxShadow: 3,
+            }}
+          >
+            <Box
+              component="iframe"
+              src="https://www.youtube.com/embed/cUvbkG91Rf4"
+              title="Hacker Team Creation: Opportunity Hack Hackathon ASU October 2025"
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                border: "none",
+              }}
+              allowFullScreen
+            />
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              fontStyle: "italic",
+              display: "block",
+              mt: 2,
+            }}
+          >
+            Step-by-step guide: Finding teammates, creating your team, and getting started with your nonprofit project
+          </Typography>
+        </Box>
+
         {/* What Hackers Do Section */}
         <Box sx={{ mb: 5 }}>
-          <Typography
+          <SectionHeading 
+            id="what-hackers-do" 
             variant="h3"
-            component="h2"
-            gutterBottom
-            sx={{ textAlign: "center" }}
+            sx={{ textAlign: "center", justifyContent: "center" }}
+            icon={null}
           >
             What Do Hackers Do?
-          </Typography>
+          </SectionHeading>
           <Typography
             variant="body1"
             sx={{
@@ -485,14 +604,14 @@ const AboutHackers = () => {
 
         {/* Why Join Section */}
         <Box sx={{ mb: 5 }}>
-          <Typography
+          <SectionHeading 
+            id="why-become-hacker" 
             variant="h3"
-            component="h2"
-            gutterBottom
-            sx={{ textAlign: "center" }}
+            sx={{ textAlign: "center", justifyContent: "center" }}
+            icon={null}
           >
             Why Become a Hacker?
-          </Typography>
+          </SectionHeading>
           <Typography
             variant="body1"
             sx={{
@@ -603,15 +722,14 @@ const AboutHackers = () => {
             <FlashOnRounded sx={{ fontSize: 120 }} />
           </Box>
           
-          <Typography
+          <SectionHeading 
+            id="hackathon-never-stops" 
             variant="h3"
-            component="h2"
-            gutterBottom
             sx={{ color: "white", position: "relative", zIndex: 1 }}
+            icon={<AccessTimeRounded sx={{ mr: 2 }} />}
           >
-            <AccessTimeRounded sx={{ mr: 2, verticalAlign: "bottom" }} />
             Why Wait? The Hackathon Never Stops!
-          </Typography>
+          </SectionHeading>
           
           <Typography
             variant="h6"
@@ -764,9 +882,13 @@ const AboutHackers = () => {
 
         {/* What to Bring Section */}
         <Box sx={{ mb: 5 }}>
-          <Typography variant="h3" component="h2" gutterBottom>
+          <SectionHeading 
+            id="what-to-bring" 
+            variant="h3"
+            icon={null}
+          >
             What to Bring to the Hackathon
-          </Typography>
+          </SectionHeading>
           <Typography
             variant="body1"
             sx={{
@@ -807,9 +929,13 @@ const AboutHackers = () => {
 
         {/* Hacker Toolbox Section */}
         <Box sx={{ mb: 5 }}>
-          <Typography variant="h3" component="h2" gutterBottom>
+          <SectionHeading 
+            id="hacker-toolbox" 
+            variant="h3"
+            icon={null}
+          >
             Recommended Hacker Toolbox
-          </Typography>
+          </SectionHeading>
           <Typography
             variant="body1"
             sx={{
@@ -917,9 +1043,14 @@ const AboutHackers = () => {
 
         {/* Call to Action */}
         <Box sx={{ textAlign: "center", mb: 5 }}>
-          <Typography variant="h3" component="h2" gutterBottom>
+          <SectionHeading 
+            id="ready-to-code" 
+            variant="h3"
+            sx={{ textAlign: "center", justifyContent: "center" }}
+            icon={null}
+          >
             Ready to Code for Good?
-          </Typography>
+          </SectionHeading>
           <Typography
             variant="body1"
             sx={{

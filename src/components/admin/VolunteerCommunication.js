@@ -189,14 +189,35 @@ const VolunteerCommunication = ({
 
     setLoading(true);
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/${volunteer.id}/message`,
-        {
+      // Determine if this is a user with an ID (registered user) or email-only recipient
+      const isEmailOnlyRecipient = !volunteer.id || volunteer.source === 'custom' || volunteer.source === 'csv';
+
+      let endpoint, requestBody;
+
+      if (isEmailOnlyRecipient) {
+        // Use email-only endpoint for recipients without user accounts
+        endpoint = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/email/send`;
+        requestBody = {
+          email: volunteer.email,
+          message: messageText,
+          subject: selectedTemplate ? selectedTemplate.title : "Message from Opportunity Hack",
+          recipient_type: volunteer.type || 'volunteer',
+          name: volunteer.name || volunteer.email || 'Recipient'
+        };
+      } else {
+        // Use user ID endpoint for registered users
+        endpoint = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/${volunteer.id}/message`;
+        requestBody = {
           message: messageText,
           subject: selectedTemplate ? selectedTemplate.title : "Message from Opportunity Hack",
           recipient_type: volunteer.type || 'volunteer',
           recipient_id: volunteer.id
-        },
+        };
+      }
+
+      const response = await axios.post(
+        endpoint,
+        requestBody,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
