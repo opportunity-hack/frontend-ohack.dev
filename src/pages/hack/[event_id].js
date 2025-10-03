@@ -13,9 +13,27 @@ import {
   Paper
 } from "@mui/material";
 import Script from 'next/script';
-import HackathonHeader from "../../components/Hackathon/HackathonHeader";
 import TableOfContents from '../../components/Hackathon/TableOfContents';
 import FloatingNavigation from '../../components/Hackathon/FloatingNavigation';
+
+// Dynamically import HackathonHeader with high priority
+const HackathonHeader = dynamic(
+  () => import("../../components/Hackathon/HackathonHeader"),
+  {
+    ssr: true,
+    loading: () => (
+      <Box
+        sx={{
+          minHeight: '220px',
+          background: 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
+          borderRadius: '4px',
+          mb: 3,
+          mt: 5
+        }}
+      />
+    )
+  }
+);
 
 // Create a visually-hidden style for accessibility
 const VisuallyHidden = styled('span')({
