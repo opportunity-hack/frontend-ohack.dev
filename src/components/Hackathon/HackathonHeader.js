@@ -3,7 +3,6 @@ import { Typography, Paper, Grid, Chip, Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import Moment from "moment";
 import ReactMarkdown from "react-markdown";
 
 const HeaderContainer = styled(Paper)(({ theme }) => ({
@@ -59,8 +58,14 @@ const HackathonHeader = ({
   location,
   description,
 }) => {
-  const formatDate = (date) => Moment(date).format("MMM Do YYYY");
-  const formatDateISO = (date) => Moment(date).format("YYYY-MM-DD");
+  const formatDate = (date) => {
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  const formatDateISO = (date) => {
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
+  };
 
   return (
     <HeaderContainer 
