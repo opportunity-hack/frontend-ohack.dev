@@ -283,6 +283,7 @@ const VolunteerTable = ({
       return [
         ...baseColumns,
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
+        { id: "teamCode", label: "Team Code", minWidth: 50 }, // Reduced from 120, shorter label
         { id: "participantType", label: "Type", minWidth: 80 }, // Reduced from 120, shorter label
         { id: "experienceLevel", label: "Exp.", minWidth: 60 }, // Reduced from 120, shorter label
         { id: "teamStatus", label: "Team", minWidth: 80 }, // Reduced from 120, shorter label
