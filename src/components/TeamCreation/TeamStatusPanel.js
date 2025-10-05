@@ -164,12 +164,12 @@ const getStatusLabel = (status) => {
 */
 const getTeamGitHubLink = (team) => {
   const githubLinks = team?.github_links || [];
-  return githubLinks.length > 0 ? githubLinks[0].link : '';
+  return githubLinks.length > 0 && githubLinks[0].link ? githubLinks[0].link : null;
 };
 
 const getTeamGitHubName = (team) => {
   const githubLinks = team?.github_links || [];
-  return githubLinks.length > 0 ? githubLinks[0].name : '';
+  return githubLinks.length > 0 && githubLinks[0].name ? githubLinks[0].name : null;
 };
 
 // Function to get the color for header background based on team status
@@ -1127,22 +1127,31 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                         )}
 
                         <Box mt={1.5}>
-                          <ActionButton
-                            variant="contained"
-                            color="inherit"
-                            size="small"
-                            href={getTeamGitHubLink(team)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            startIcon={<GitHubIcon />}
-                            sx={{
-                              bgcolor: "#171515",
-                              color: "white",
-                              "&:hover": { bgcolor: "#2b2b2b" },
-                            }}
-                          >
-                            {getTeamGitHubName(team)}
-                          </ActionButton>                            
+                          {getTeamGitHubLink(team) ? (
+                            <ActionButton
+                              variant="contained"
+                              color="inherit"
+                              size="small"
+                              href={getTeamGitHubLink(team)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              startIcon={<GitHubIcon />}
+                              sx={{
+                                bgcolor: "#171515",
+                                color: "white",
+                                "&:hover": { bgcolor: "#2b2b2b" },
+                              }}
+                            >
+                              {getTeamGitHubName(team) || 'View Team Repository'}
+                            </ActionButton>
+                          ) : (
+                            <Alert severity="warning" sx={{ mb: 1.5 }}>
+                              <AlertTitle>Repository Not Yet Created</AlertTitle>
+                              <Typography variant="body2">
+                                Your team's GitHub repository has not been created yet. It will be automatically created by the Opportunity Hack team and linked here once your team is approved. Check back soon!
+                              </Typography>
+                            </Alert>
+                          )}
                           <ActionButton
                             variant="contained"
                             color="primary"
@@ -1151,7 +1160,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                             target="_blank"
                             rel="noopener noreferrer"
                             startIcon={<YouTubeIcon />}
-                            sx={{ ml: 1 }}
+                            sx={{ ml: getTeamGitHubLink(team) ? 1 : 0 }}
                           >
                             How to add people to your GitHub Repo
                           </ActionButton>
