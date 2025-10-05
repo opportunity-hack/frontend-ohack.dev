@@ -356,17 +356,22 @@ const TeamManagement = ({ orgId }) => {
     if (!teams) return;
 
     const filtered = teams.filter(
-      (team) =>
-        team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (team.slack_channel &&
-          team.slack_channel
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase())) ||
-        (team.team_members &&
-          team.team_members.some(
-            (member) =>
-              member.name.toLowerCase().includes(searchTerm.toLowerCase())              
-          ))
+      (team) => {
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Check team name
+        const nameMatch = team.name?.toLowerCase().includes(searchLower);
+        
+        // Check slack channel
+        const slackMatch = team.slack_channel?.toLowerCase().includes(searchLower);
+        
+        // Check team members - with null-safe checks
+        const memberMatch = team.team_members?.some(
+          (member) => member?.name?.toLowerCase().includes(searchLower)
+        );
+        
+        return nameMatch || slackMatch || memberMatch;
+      }
     );
 
     setFilteredTeams(filtered);
