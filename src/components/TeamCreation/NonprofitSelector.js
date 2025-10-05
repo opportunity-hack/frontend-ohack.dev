@@ -27,6 +27,11 @@ const NonprofitSelector = memo(({
   clearSearch,
   proceedToRanking
 }) => {
+  const MIN_SELECTIONS = 2;
+  const selectionCount = selectedNonprofits.length;
+  const meetsMinimum = selectionCount >= MIN_SELECTIONS;
+  const needsMore = MIN_SELECTIONS - selectionCount;
+
   return (
     <Box 
       sx={{ 
@@ -37,11 +42,18 @@ const NonprofitSelector = memo(({
         bgcolor: 'rgba(25, 118, 210, 0.04)'
       }}
     >
-      <Typography variant="h6" gutterBottom>
-        Select the nonprofits you're interested in
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Typography variant="h6">
+          Select the nonprofits you're interested in
+        </Typography>
+        <Chip 
+          label={`${selectionCount} selected`}
+          color={meetsMinimum ? "success" : "default"}
+          size="small"
+        />
+      </Box>
       <Typography variant="body2" color="text.secondary" paragraph>
-        Browse the nonprofits below and select all that interest you. You'll be able to rank them in the next step.
+        Browse the nonprofits below and select at least {MIN_SELECTIONS} that interest you. You'll be able to rank them in the next step.
       </Typography>
       
       {/* Search Filter */}
@@ -166,10 +178,23 @@ const NonprofitSelector = memo(({
             color="primary" 
             size="large"
             onClick={proceedToRanking}
+            disabled={!meetsMinimum}
             startIcon={<FaRocket />}
           >
-            Continue to Rank {selectedNonprofits.length} Selected Nonprofit{selectedNonprofits.length > 1 ? 's' : ''}
+            {meetsMinimum 
+              ? `Continue to Rank ${selectionCount} Selected Nonprofit${selectionCount > 1 ? 's' : ''}`
+              : `Select ${needsMore} More Nonprofit${needsMore > 1 ? 's' : ''} to Continue`
+            }
           </Button>
+          {!meetsMinimum && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', mt: 1 }}
+            >
+              Minimum {MIN_SELECTIONS} nonprofits required
+            </Typography>
+          )}
         </Box>
       )}
     </Box>
