@@ -557,7 +557,7 @@ const ManageTeamComponent = () => {
       } finally {
         setIsValidatingGithub(false);
       }
-    }, 800),
+    }, 400),
     []
   );
 
@@ -600,7 +600,7 @@ const ManageTeamComponent = () => {
       } finally {
         setIsValidatingSlack(false);
       }
-    }, 800),
+    }, 400),
     []
   );
 
