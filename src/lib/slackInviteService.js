@@ -132,7 +132,7 @@ class SlackInviteService {
     // Slack channel names must be lowercase, no spaces, and contain only letters, numbers, hyphens, and underscores
     const channelRegex = /^[a-z0-9_-]+$/;
     
-    return channelRegex.test(cleanChannel) && cleanChannel.length <= 21;
+    return channelRegex.test(cleanChannel) && cleanChannel.length <= 50;
   }
 
   /**

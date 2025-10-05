@@ -89,7 +89,7 @@ const SlackInviteDialog = ({
     }
     
     if (!SlackInviteService.isValidChannelName(channel)) {
-      return 'Channel name must be lowercase, contain only letters, numbers, hyphens, and underscores (max 21 chars)';
+      return 'Channel name must be lowercase, contain only letters, numbers, hyphens, and underscores (max 50 chars)';
     }
     
     return '';
