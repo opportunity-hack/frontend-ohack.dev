@@ -51,35 +51,46 @@ const NonprofitSelectionStep = memo(({
 
       {/* Selection/Ranking Tabs */}
       <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: "flex", mb: 3 }}>
-          <Button
-            variant={rankingMode === "select" ? "contained" : "outlined"}
-            onClick={backToSelection}
-            sx={{
-              flexGrow: 1,
-              borderTopRightRadius: 0,
-              borderBottomRightRadius: 0,
-              opacity: rankingMode === "select" ? 1 : 0.7,
-            }}
-          >
-            1. Select Nonprofits
-          </Button>
-          <Button
-            variant={rankingMode === "rank" ? "contained" : "outlined"}
-            onClick={proceedToRanking}
-            disabled={selectedNonprofits.length === 0}
-            sx={{
-              flexGrow: 1,
-              borderTopLeftRadius: 0,
-              borderBottomLeftRadius: 0,
-              opacity:
-                rankingMode === "rank" || selectedNonprofits.length === 0
-                  ? 1
-                  : 0.7,
-            }}
-          >
-            2. Rank Your Choices ({selectedNonprofits.length})
-          </Button>
+        <Box sx={{ display: "flex", flexDirection: "column", mb: 3 }}>
+          <Box sx={{ display: "flex" }}>
+            <Button
+              variant={rankingMode === "select" ? "contained" : "outlined"}
+              onClick={backToSelection}
+              sx={{
+                flexGrow: 1,
+                borderTopRightRadius: 0,
+                borderBottomRightRadius: 0,
+                opacity: rankingMode === "select" ? 1 : 0.7,
+              }}
+            >
+              1. Select Nonprofits
+            </Button>
+            <Button
+              variant={rankingMode === "rank" ? "contained" : "outlined"}
+              onClick={proceedToRanking}
+              disabled={selectedNonprofits.length < 2}
+              sx={{
+                flexGrow: 1,
+                borderTopLeftRadius: 0,
+                borderBottomLeftRadius: 0,
+                opacity:
+                  rankingMode === "rank" || selectedNonprofits.length < 2
+                    ? 1
+                    : 0.7,
+              }}
+            >
+              2. Rank Your Choices ({selectedNonprofits.length})
+            </Button>
+          </Box>
+          {rankingMode === "select" && selectedNonprofits.length > 0 && selectedNonprofits.length < 2 && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 1, textAlign: "center" }}
+            >
+              Select at least {2 - selectedNonprofits.length} more nonprofit{2 - selectedNonprofits.length > 1 ? 's' : ''} to continue
+            </Typography>
+          )}
         </Box>
 
         {/* Selection Mode */}
