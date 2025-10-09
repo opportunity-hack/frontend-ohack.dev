@@ -235,6 +235,8 @@ const VolunteerTable = ({
     const baseColumns = [
       { id: "id", label: "ID", minWidth: 60 }, // Reduced from 100
       { id: "name", label: "Name", minWidth: 100 }, // Reduced from 120
+      // created_timestamp
+        { id: "created_timestamp", label: "Created", minWidth: 50 }, // Reduced from 120, shorter label
       { id: "messages_sent", label: "Msgs", minWidth: 20 }, // Reduced from 120, shorter label
       { id: "email", label: "Email", minWidth: 140, priority: 2 }, // Increased from 100 to prevent overlap
       { id: "pronouns", label: "Pronouns", minWidth: 80, priority: 3 }, // Increased from 70 for better spacing
@@ -267,12 +269,11 @@ const VolunteerTable = ({
         { id: "messages_sent", label: "Msgs", minWidth: 20, priority: 3 },
         { id: "email", label: "Email", minWidth: 120, priority: 2 },
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
-        { id: "experienceLevel", label: "Experience", minWidth: 90 },
-        { id: "availability", label: "Availability", minWidth: 130 }, // Always visible - this is the key column
+        { id: "availableDays", label: "Time Slots", minWidth: 100, priority: 3 },
+        { id: "experienceLevel", label: "Experience", minWidth: 90 },        
         { id: "title", label: "Title", minWidth: 90, priority: 2 },
         { id: "company", label: "Company", minWidth: 90, priority: 2 },
-        { id: "socialCauses", label: "Causes", minWidth: 100, priority: 3 },
-        { id: "availableDays", label: "Time Slots", minWidth: 100, priority: 3 },
+        { id: "socialCauses", label: "Causes", minWidth: 100, priority: 3 },        
         { id: "isInPerson", label: "In Person", minWidth: 70, priority: 2 },
         { id: "isSelected", label: "Selected", minWidth: 80 },
         { id: "pronouns", label: "Pronouns", minWidth: 80, priority: 3 },
@@ -283,7 +284,7 @@ const VolunteerTable = ({
       return [
         ...baseColumns,
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
-        { id: "teamCode", label: "Team Code", minWidth: 50 }, // Reduced from 120, shorter label
+        { id: "teamCode", label: "Team Code", minWidth: 50 }, // Reduced from 120, shorter label        
         { id: "participantType", label: "Type", minWidth: 80 }, // Reduced from 120, shorter label
         { id: "experienceLevel", label: "Exp.", minWidth: 60 }, // Reduced from 120, shorter label
         { id: "teamStatus", label: "Team", minWidth: 80 }, // Reduced from 120, shorter label
@@ -908,38 +909,88 @@ const VolunteerTable = ({
         );
       case "availableDays":
         const availDays = volunteer.availableDays || [];
-        const roleTypes = [...new Set(availDays.map(day => {
-          const parts = day.split('-');
-          return parts[parts.length - 1]; // Get the role type
-        }).filter(Boolean))];
+        if (!availDays.length) {
+          return <Typography variant="caption" color="text.secondary">No days</Typography>;
+        }
+        
+        // Count unique days
+        const days = new Set();
+        const roles = new Set();
+        
+        availDays.forEach(dayStr => {
+          // Extract day (Friday, Saturday, Sunday)
+          if (dayStr.includes('Friday')) days.add('Fri');
+          if (dayStr.includes('Saturday')) days.add('Sat');
+          if (dayStr.includes('Sunday')) days.add('Sun');
+          
+          // Extract role types
+          if (dayStr.includes('Food Service')) roles.add('🍽️');
+          if (dayStr.includes('Cleanup')) roles.add('🧹');
+          if (dayStr.includes('Photography')) roles.add('📸');
+          if (dayStr.includes('Registration')) roles.add('📋');
+          if (dayStr.includes('Setup')) roles.add('🔧');
+        });
+        
+        const dayArray = Array.from(days);
+        const roleArray = Array.from(roles);
         
         return (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {roleTypes.slice(0, 3).map((role, index) => {
-              const roleIcon = role === 'Photography' ? '📸' :
-                              role === 'Cleanup Crew' ? '🧹' :
-                              role === 'Judging Support' ? '🏆' :
-                              role === 'Registration' ? '📋' :
-                              role === 'Setup' ? '🔧' : '👥';
-              return (
-                <Tooltip key={index} title={role}>
-                  <Chip 
-                    label={roleIcon} 
-                    size="small" 
-                    sx={{ fontSize: '0.8rem', minWidth: 25 }}
-                  />
-                </Tooltip>
-              );
-            })}
-            {roleTypes.length > 3 && (
+            <Tooltip 
+              title={
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    Time Slots ({availDays.length})
+                  </Typography>
+                  {availDays.map((dayStr, idx) => (
+                    <Typography key={idx} variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+                      {dayStr}
+                    </Typography>
+                  ))}
+                </Box>
+              }
+              arrow
+              placement="bottom-start"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    maxWidth: 400,
+                    '& .MuiTooltip-arrow': {
+                      color: 'rgba(97, 97, 97, 0.9)',
+                    },
+                  },
+                },
+              }}
+            >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Chip 
-                label={`+${roleTypes.length - 3}`} 
+                label={availDays.length}
                 size="small" 
-                variant="outlined"
-                sx={{ fontSize: '0.65rem', height: 20 }}
+                color="primary"
+                sx={{ fontSize: '0.75rem', minWidth: 28 }}
               />
-            )}
-          </Box>
+              <Box sx={{ display: 'flex', gap: 0.25 }}>
+                {dayArray.slice(0, 3).map((day, idx) => (                  
+                  <Chip 
+                    key={idx}
+                    label={day} 
+                    size="small" 
+                    variant="outlined"
+                    sx={{ fontSize: '0.65rem', height: 18, minWidth: 28 }}
+                  />
+                ))}
+              </Box>
+              <Box sx={{ display: 'flex', gap: 0.25 }}>
+                {roleArray.slice(0, 2).map((role, idx) => (
+                  <span key={idx} style={{ fontSize: '0.8rem' }}>{role}</span>
+                ))}
+                {roleArray.length > 2 && (
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                    +{roleArray.length - 2}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          </Tooltip>
         );
       case "title":
         const jobTitle = volunteer.title || "";
