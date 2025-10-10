@@ -350,11 +350,18 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
 
   const calculateTotal = () => {
     console.log('Calculating total score:', scores);
-    // Filter out the 'total' key to avoid double counting
+
+    // Get all special category keys to exclude from main total
+    const specialCategoryKeys = SPECIAL_CATEGORIES.flatMap(category =>
+      category.subCriteria.map(sub => sub.key)
+    );
+
+    // Filter out 'total' key and special category keys to avoid counting them in main score
     const total_score = Object.entries(scores)
-      .filter(([key]) => key !== 'total')
+      .filter(([key]) => key !== 'total' && !specialCategoryKeys.includes(key))
       .reduce((sum, [, score]) => sum + (score || 0), 0);
-    console.log('Total score calculated:', total_score);
+
+    console.log('Total score calculated (excluding special categories):', total_score);
     return total_score;
   };
 
@@ -836,8 +843,8 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
                 )}
 
                 {/* Score Summary */}
-                <Box sx={{ 
-                  p: 2, 
+                <Box sx={{
+                  p: 2,
                   bgcolor: totalScore >= 32 ? 'success.light' : totalScore >= 24 ? 'warning.light' : 'error.light',
                   borderRadius: 1,
                   textAlign: 'center'
@@ -849,6 +856,39 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
                     Current Total Score
                   </Typography>
                 </Box>
+
+                {/* Special Category Score Summary - Only for Round 1 */}
+                {round === 'round1' && SPECIAL_CATEGORIES.length > 0 && (
+                  <Box sx={{
+                    mt: 2,
+                    p: 2,
+                    bgcolor: 'warning.light',
+                    borderRadius: 1,
+                    textAlign: 'center',
+                    border: '1px solid',
+                    borderColor: 'warning.main'
+                  }}>
+                    <Typography variant="caption" color="warning.dark" sx={{ fontWeight: 600, display: 'block', mb: 1 }}>
+                      Special Category
+                    </Typography>
+                    {SPECIAL_CATEGORIES.map(category =>
+                      category.subCriteria.map(sub => (
+                        <Box key={sub.key}>
+                          <Typography variant="h6" component="div" color="warning.dark">
+                            {scores[sub.key] || 0}/{category.maxPoints}
+                          </Typography>
+                          <Typography variant="caption" color="warning.dark">
+                            {category.name}
+                          </Typography>
+                        </Box>
+                      ))
+                    )}
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                      Not included in total score
+                    </Typography>
+                  </Box>
+                )}
 
                 {/* Auto-save Toggle */}
                 <FormControlLabel

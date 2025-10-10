@@ -68,10 +68,10 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
   const [finalistTeams, setFinalistTeams] = useState([]);
   const [selectedHackathonData, setSelectedHackathonData] = useState(null);
   const [sessionSettings, setSessionSettings] = useState({
-    sessionDuration: 15, // minutes per team presentation
-    breakDuration: 5,    // minutes between presentations
-    startTime: '09:00',
-    room: 'Main Hall'
+    sessionDuration: 6, // minutes per team presentation
+    breakDuration: 1,    // minutes between presentations
+    startTime: '16:40',
+    room: 'Main Room'
   });
   const [settingsDialog, setSettingsDialog] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1487,7 +1487,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                                 />
                               </Box>
                             }
-                            secondary={`${sessionSettings.sessionDuration} minute presentation + Q&A`}
+                            secondary={`${sessionSettings.sessionDuration} minute presentation with Q&A`}
                           />
                         </ListItem>
                         {index < schedule.length - 1 && <Divider />}
