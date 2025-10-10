@@ -126,9 +126,10 @@ const AboutJudges = () => {
     documentationCode: JUDGING_CONSTANTS.DEFAULT_SCORE,
     documentationEase: JUDGING_CONSTANTS.DEFAULT_SCORE,
     polishWorkRemaining: JUDGING_CONSTANTS.DEFAULT_SCORE,
-    polishCanUseToday: JUDGING_CONSTANTS.DEFAULT_SCORE,    
+    polishCanUseToday: JUDGING_CONSTANTS.DEFAULT_SCORE,
     securityData: JUDGING_CONSTANTS.DEFAULT_SCORE,
     securityRole: JUDGING_CONSTANTS.DEFAULT_SCORE,
+    accessibility: JUDGING_CONSTANTS.DEFAULT_SCORE,
   });
 
   const [totalScore, setTotalScore] = useState(0);
@@ -283,6 +284,23 @@ const AboutJudges = () => {
       ],
       tip: "Assess data protection and role-based security implementation.",
     },
+  ];
+
+  const specialCategoriesInfo = [
+    {
+      category: "accessibility",
+      name: "Accessibility",
+      maxPoints: 5,
+      description: "Accessibility is important when building software. This special category prize recognizes teams that excel at implementing the four W3C usability principles: perceivable, operable, understandable, and robust.",
+      subCriteria: [
+        {
+          name: "Accessibility Implementation - how well does the solution consider users with disabilities?",
+          key: "accessibility",
+        },
+      ],
+      tip: "Special category prizes are judged separately and don't affect main scoring. Consider W3C principles and Lighthouse scores.",
+      reference: "https://www.w3.org/WAI/fundamentals/accessibility-principles/"
+    }
   ];
 
   const renderSlider = (criterion, maxPoints) => (
@@ -831,6 +849,88 @@ const AboutJudges = () => {
               evaluation criteria
             </Typography>
           </Paper>
+
+          {/* Special Categories Section */}
+          <Divider sx={{ my: 4 }} />
+
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Special Category Prizes
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                mb: 3,
+                fontSize: "16px",
+                color: "text.secondary",
+              }}
+            >
+              In addition to the main judging criteria, we may offer special category prizes that recognize excellence in specific areas. These are judged separately and do not affect the main competition scoring.
+            </Typography>
+
+            {specialCategoriesInfo.map((criterion) => (
+              <Accordion key={criterion.category} sx={{ mb: 2, borderLeft: '4px solid', borderColor: 'warning.main' }}>
+                <AccordionSummary expandIcon={<ExpandMoreRounded />}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", flexGrow: 1 }}>
+                      {criterion.name} ({criterion.maxPoints} points)
+                    </Typography>
+                    <Chip
+                      label="Special Prize"
+                      size="small"
+                      color="warning"
+                      variant="outlined"
+                      sx={{ mr: 1 }}
+                    />
+                    <Tooltip
+                      title={<span style={{ fontSize: 14 }}>{criterion.tip}</span>}
+                      enterDelay={0}
+                      enterTouchDelay={0}
+                      arrow
+                    >
+                      <InfoRounded color="primary" />
+                    </Tooltip>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {criterion.description && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      <Typography variant="body2">
+                        {criterion.description}
+                        {criterion.reference && (
+                          <>
+                            {' '}
+                            <Link
+                              href={criterion.reference}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{ color: 'primary.main', textDecoration: 'underline' }}
+                            >
+                              Learn more
+                            </Link>
+                          </>
+                        )}
+                      </Typography>
+                    </Alert>
+                  )}
+                  {criterion.subCriteria
+                    ? criterion.subCriteria.map((subCriterion) =>
+                        renderSlider(subCriterion, criterion.maxPoints)
+                      )
+                    : renderSlider(
+                        { name: criterion.name, key: criterion.category },
+                        criterion.maxPoints
+                      )}
+                </AccordionDetails>
+              </Accordion>
+            ))}
+
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>Note:</strong> Special category prizes are judged only during Round 1 and do not contribute to the overall team score. Winners are determined by averaging all judges' scores for that specific category.
+              </Typography>
+            </Alert>
+          </Box>
         </Box>
 
         {/* Sponsorship Recognition */}
