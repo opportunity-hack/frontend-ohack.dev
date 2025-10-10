@@ -273,7 +273,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                     </Typography>
                     <Typography variant="caption" component="span" align="left">
                       {app.description}
-                      {!app.enabled && " (Disabled)"}
+                      {!app.enabled && " (Closed)"}
                     </Typography>
 
                     {/* Social Proof Indicator */}
@@ -397,7 +397,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                   </Typography>
                   <Typography variant="caption" component="span" align="left">
                     {app.description}
-                    {!app.enabled && " (Disabled)"}
+                    {!app.enabled && " (Closed)"}
                   </Typography>
                 </Box>
               </ApplicationButton>

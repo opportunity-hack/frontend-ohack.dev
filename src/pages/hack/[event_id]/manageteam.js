@@ -1247,7 +1247,7 @@ const ManageTeamComponent = () => {
                         transition: 'transform 0.2s, box-shadow 0.2s'
                       }}
                     >
-                      {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Disabled)'}
+                      {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Closed)'}
                     </Button>
                   </Box>
                 </Box>
@@ -1313,7 +1313,7 @@ const ManageTeamComponent = () => {
                   transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
               >
-                {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Disabled)'}
+                {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Closed)'}
               </Button>
             </Box>
           </Box>

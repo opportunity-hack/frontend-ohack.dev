@@ -686,7 +686,7 @@ export default function HackathonEvent({ eventData }) {
                           sx={{ opacity: 0.85, mt: 0.5 }}
                         >
                           Browse and join existing teams
-                          {event.constraints?.team_find_a_team_enabled === false && " (Disabled)"}
+                          {event.constraints?.team_find_a_team_enabled === false && " (Closed)"}
                         </Typography>
                       </Button>
                     </Grid>
@@ -733,7 +733,7 @@ export default function HackathonEvent({ eventData }) {
                           sx={{ opacity: 0.85, mt: 0.5 }}
                         >
                           Create or manage your own team
-                          {event.constraints?.team_creation_enabled === false && " (Disabled)"}
+                          {event.constraints?.team_creation_enabled === false && " (Closed)"}
                         </Typography>
                       </Button>
                     </Grid>
