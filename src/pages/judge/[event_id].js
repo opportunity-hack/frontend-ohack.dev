@@ -282,10 +282,53 @@ const HackathonJudgePage = withRequiredAuthInfo(({ userClass }) => {
 
           {/* Score Display */}
           {team.judged && team.score && (
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
-              <Typography variant="body2" color="success.dark">
-                <strong>Your Score: {team.score}/40</strong>
-              </Typography>              
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1, mb: 1 }}>
+                <Typography variant="body2" color="success.dark">
+                  <strong>Your Score: {team.score}/40</strong>
+                </Typography>
+              </Box>
+              {round === 'round1' && team.specialCategoryScores && Object.keys(team.specialCategoryScores).length > 0 && (
+                <Box sx={{
+                  p: 2,
+                  bgcolor: Object.values(team.specialCategoryScores).some(score => score === null) ? 'grey.100' : 'warning.light',
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: Object.values(team.specialCategoryScores).some(score => score === null) ? 'grey.400' : 'warning.main'
+                }}>
+                  <Typography
+                    variant="caption"
+                    color={Object.values(team.specialCategoryScores).some(score => score === null) ? 'text.secondary' : 'warning.dark'}
+                    sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}
+                  >
+                    Special Category
+                  </Typography>
+                  {Object.entries(team.specialCategoryScores).map(([category, score]) => (
+                    <Box key={category} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        variant="body2"
+                        color={score === null ? 'text.secondary' : 'warning.dark'}
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {category.charAt(0).toUpperCase() + category.slice(1)}:
+                      </Typography>
+                      {score === null ? (
+                        <Chip
+                          label="Not scored yet"
+                          size="small"
+                          variant="outlined"
+                          color="default"
+                          sx={{ height: 20, fontSize: '0.7rem' }}
+                        />
+                      ) : (
+                        <Typography variant="body2" color="warning.dark" sx={{ fontWeight: 600 }}>
+                          {score}/5
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </Box>
           )}
 

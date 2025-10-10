@@ -686,6 +686,13 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     };
   };
 
+  // Get special category mapping for score fields
+  const getSpecialCategoryMapping = () => {
+    return {
+      accessibility: ['accessibility']
+    };
+  };
+
   // Analyze top teams by scoring categories
   const analyzeTopTeamsByCategory = () => {
     if (round1Scores.length === 0) return {};
@@ -734,6 +741,62 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
   };
 
   const topTeamsByCategory = analyzeTopTeamsByCategory();
+
+  // Analyze top teams by special categories
+  const analyzeTopTeamsBySpecialCategory = () => {
+    if (round1Scores.length === 0) return {};
+
+    const specialCategoryMapping = getSpecialCategoryMapping();
+    const specialCategoryResults = {};
+
+    Object.entries(specialCategoryMapping).forEach(([categoryName, scoreFields]) => {
+      const teamsWithCategoryScores = round1Scores
+        .filter(teamData => teamData.judgeCount > 0)
+        .map(teamData => {
+          // Calculate special category scores for each judge
+          const categoryScores = teamData.scores
+            .map(judgeScore => {
+              const categoryTotal = scoreFields.reduce((sum, field) => {
+                return sum + (judgeScore.score.scores[field] || 0);
+              }, 0);
+              return categoryTotal;
+            })
+            .filter(score => score > 0); // Only include if judge scored this special category
+
+          // Only include teams that have at least one special category score
+          if (categoryScores.length === 0) return null;
+
+          // Calculate average and standard deviation for this special category
+          const averageScore = categoryScores.reduce((sum, score) => sum + score, 0) / categoryScores.length;
+          const standardDeviation = calculateStandardDeviation(categoryScores);
+
+          return {
+            ...teamData,
+            categoryScores,
+            categoryAverage: averageScore,
+            categoryStandardDeviation: standardDeviation,
+            maxPossible: scoreFields.length * 5, // Assuming max score of 5 per field
+            categoryPercentage: (averageScore / (scoreFields.length * 5)) * 100,
+            judgesWhoScored: categoryScores.length
+          };
+        })
+        .filter(team => team !== null) // Remove teams with no special category scores
+        .sort((a, b) => {
+          // Primary sort: highest average score
+          if (Math.abs(a.categoryAverage - b.categoryAverage) > 0.01) {
+            return b.categoryAverage - a.categoryAverage;
+          }
+          // Tiebreaker: lowest standard deviation (more consistent)
+          return a.categoryStandardDeviation - b.categoryStandardDeviation;
+        });
+
+      specialCategoryResults[categoryName] = teamsWithCategoryScores.slice(0, 3); // Top 3 teams per special category
+    });
+
+    return specialCategoryResults;
+  };
+
+  const topTeamsBySpecialCategory = analyzeTopTeamsBySpecialCategory();
 
   if (loading) {
     return (
@@ -1176,6 +1239,152 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
               )}
             </AccordionDetails>
           </Accordion>
+
+          {/* Special Category Prizes */}
+          {Object.keys(topTeamsBySpecialCategory).length > 0 && (
+            <Accordion defaultExpanded sx={{ mb: 3 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6">
+                  Top Teams by Special Category
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Teams ranked by average performance in special category prizes. These are judged separately from main criteria and recognize excellence in specific areas.
+                </Typography>
+
+                <Grid container spacing={3}>
+                  {Object.entries(topTeamsBySpecialCategory).map(([categoryName, teams]) => (
+                    <Grid item xs={12} key={categoryName}>
+                      <Card variant="outlined">
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom sx={{
+                            textTransform: 'capitalize',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                          }}>
+                            <StarIcon color="warning" />
+                            {categoryName} Prize
+                          </Typography>
+
+                          <List dense>
+                            {teams.map((teamData, index) => {
+                              const isTopTeam = index === 0;
+                              const isTied = index > 0 && Math.abs(teams[0].categoryAverage - teamData.categoryAverage) < 0.01;
+
+                              return (
+                                <ListItem key={teamData.team.id} sx={{
+                                  px: 0,
+                                  backgroundColor: isTopTeam ? 'action.selected' : 'transparent',
+                                  borderRadius: 1,
+                                  mb: 1
+                                }}>
+                                  <ListItemIcon sx={{ minWidth: 36 }}>
+                                    <Box sx={{
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: '50%',
+                                      backgroundColor: isTopTeam ? 'warning.main' : isTied ? 'warning.light' : 'action.disabled',
+                                      color: 'white',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 600
+                                    }}>
+                                      {index + 1}
+                                    </Box>
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Typography variant="body2" sx={{ fontWeight: isTopTeam ? 600 : 400 }}>
+                                          {teamData.team.name}
+                                        </Typography>
+                                        {isTopTeam && (
+                                          <Chip
+                                            label="Winner"
+                                            size="small"
+                                            color="warning"
+                                            variant="outlined"
+                                          />
+                                        )}
+                                        {isTied && (
+                                          <Chip
+                                            label="Tied"
+                                            size="small"
+                                            color="warning"
+                                            variant="outlined"
+                                          />
+                                        )}
+                                      </Box>
+                                    }
+                                    secondary={
+                                      <Box sx={{ mt: 0.5 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5 }}>
+                                          <Typography variant="caption" color="text.secondary">
+                                            Avg: {teamData.categoryAverage.toFixed(1)} / {teamData.maxPossible}
+                                          </Typography>
+                                          <Typography variant="caption" color="text.secondary">
+                                            SD: {teamData.categoryStandardDeviation.toFixed(2)}
+                                          </Typography>
+                                          <Typography variant="caption" color="text.secondary">
+                                            {teamData.categoryPercentage.toFixed(0)}%
+                                          </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                          <Box sx={{
+                                            width: 100,
+                                            height: 4,
+                                            backgroundColor: 'action.hover',
+                                            borderRadius: 2,
+                                            overflow: 'hidden'
+                                          }}>
+                                            <Box sx={{
+                                              width: `${Math.min(teamData.categoryPercentage, 100)}%`,
+                                              height: '100%',
+                                              backgroundColor: isTopTeam ? 'warning.main' : isTied ? 'warning.light' : 'action.disabled',
+                                              transition: 'width 0.3s ease'
+                                            }} />
+                                          </Box>
+                                          <Chip
+                                            label={`${teamData.judgesWhoScored} judges scored`}
+                                            size="small"
+                                            variant="outlined"
+                                            sx={{ fontSize: '0.6rem', height: 20 }}
+                                          />
+                                        </Box>
+                                      </Box>
+                                    }
+                                  />
+                                </ListItem>
+                              );
+                            })}
+                          </List>
+
+                          {teams.length === 0 && (
+                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                              No teams have scores in this special category yet
+                            </Typography>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                {Object.keys(topTeamsBySpecialCategory).length > 0 && (
+                  <Box sx={{ mt: 3, p: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Special Category Notes:</strong> Special category prizes are judged only in Round 1 and are separate from main judging criteria.
+                      Teams are ranked by average score, with ties broken by standard deviation (lower is better, indicating more consistent judging).
+                    </Typography>
+                  </Box>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          )}
 
           {/* Judging Panel */}
           <Accordion defaultExpanded sx={{ mb: 3 }}>

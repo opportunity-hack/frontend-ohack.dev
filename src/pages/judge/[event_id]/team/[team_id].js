@@ -185,6 +185,34 @@ const JUDGING_CRITERIA = [
   },
 ];
 
+// Special Category Prizes (configured separately, not part of main judging)
+const SPECIAL_CATEGORIES = [
+  {
+    category: "accessibility",
+    name: "Accessibility",
+    maxPoints: 5,
+    icon: <PersonIcon />,
+    color: "info",
+    description: "Accessibility is important when building software. Consider the four W3C usability principles: perceivable, operable, understandable, robust.",
+    subCriteria: [
+      {
+        name: "Accessibility Implementation",
+        description: "How well does the solution implement accessibility principles?",
+        key: "accessibility",
+        examples: [
+          "Is the content perceivable? (Can users see/hear content regardless of disabilities?)",
+          "Is it operable? (Can users navigate with keyboard, screen readers, etc.?)",
+          "Is it understandable? (Is the UI intuitive and error messages clear?)",
+          "Is it robust? (Does it work across different browsers and assistive technologies?)",
+          "What is the Lighthouse Accessibility score? (95+ is excellent)"
+        ]
+      }
+    ],
+    tip: "Special category prizes recognize excellence in specific areas beyond main judging criteria.",
+    reference: "https://www.w3.org/WAI/fundamentals/accessibility-principles/"
+  }
+];
+
 const SCORE_DESCRIPTIONS = {
   1: "Poor - Significantly below expectations",
   2: "Fair - Below expectations", 
@@ -223,8 +251,16 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
         defaultScores[subCriterion.key] = 3; // Default to "Good"
       });
     });
+    // Add Special Category scores only for Round 1
+    if (round === 'round1') {
+      SPECIAL_CATEGORIES.forEach(criterion => {
+        criterion.subCriteria.forEach(subCriterion => {
+          defaultScores[subCriterion.key] = 3; // Default to "Good"
+        });
+      });
+    }
     return defaultScores;
-  }, []);
+  }, [round]);
 
   // Fetch team data and existing scores
   useEffect(() => {
@@ -848,7 +884,7 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
                       <Typography variant="h6" sx={{ flexGrow: 1 }}>
                         {criterion.name} ({criterion.maxPoints} points)
                       </Typography>
-                      <Chip 
+                      <Chip
                         label={`${criterion.subCriteria.reduce((sum, sub) => sum + (scores[sub.key] || 0), 0)}/${criterion.maxPoints}`}
                         size="small"
                         color={criterion.color}
@@ -863,6 +899,65 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
                   </AccordionDetails>
                 </Accordion>
               ))}
+
+              {/* Special Categories Section - Only for Round 1 */}
+              {round === 'round1' && SPECIAL_CATEGORIES.length > 0 && (
+                <>
+                  <Divider sx={{ my: 4 }} />
+                  <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+                    Special Category Prizes
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    These special categories are judged separately and do not affect the main scoring. They recognize excellence in specific areas.
+                  </Typography>
+
+                  {SPECIAL_CATEGORIES.map((criterion) => (
+                    <Accordion key={criterion.category} sx={{ mb: 2, borderLeft: '4px solid', borderColor: `${criterion.color}.main` }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          <Box sx={{ color: `${criterion.color}.main`, mr: 2 }}>
+                            {criterion.icon}
+                          </Box>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="h6">
+                              {criterion.name} ({criterion.maxPoints} points)
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Special Category Prize
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={`${criterion.subCriteria.reduce((sum, sub) => sum + (scores[sub.key] || 0), 0)}/${criterion.maxPoints}`}
+                            size="small"
+                            color={criterion.color}
+                          />
+                          <Tooltip title={criterion.tip} arrow>
+                            <InfoIcon color="action" sx={{ ml: 1, fontSize: 20 }} />
+                          </Tooltip>
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        {criterion.description && (
+                          <Alert severity="info" sx={{ mb: 2 }}>
+                            <Typography variant="body2">
+                              {criterion.description}
+                              {criterion.reference && (
+                                <>
+                                  {' '}
+                                  <Link href={criterion.reference} target="_blank" rel="noopener noreferrer">
+                                    Learn more
+                                  </Link>
+                                </>
+                              )}
+                            </Typography>
+                          </Alert>
+                        )}
+                        {criterion.subCriteria.map(renderSlider)}
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                </>
+              )}
 
               {/* Feedback Section */}
               <Card sx={{ mt: 4, mb: 3 }}>
