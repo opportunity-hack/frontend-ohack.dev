@@ -7,6 +7,8 @@
  * - Email-only recipients: /api/admin/email/send
  */
 
+import { replacePlaceholders } from './messageTemplates';
+
 class BatchEmailService {
   constructor(apiServerUrl, accessToken, orgId) {
     this.apiServerUrl = apiServerUrl;
@@ -25,11 +27,12 @@ class BatchEmailService {
    */
   async sendEmailToUser(user, message, subject, recipientType, eventId) {
     try {
-      // Replace [EVENT_ID] placeholder in message if present
-      let processedMessage = message;
-      if (eventId && message.includes('[EVENT_ID]')) {
-        processedMessage = message.replace(/\[EVENT_ID\]/g, eventId);
-      }
+      // Use shared utility to replace placeholders in message
+      const processedMessage = replacePlaceholders(message, {
+        eventId: eventId,
+        volunteerId: user.id,
+        volunteerType: recipientType
+      });
 
       // Determine if this is a user with an ID (registered user) or email-only recipient
       const isEmailOnlyRecipient = !user.id || user.source === 'custom' || user.source === 'csv';
