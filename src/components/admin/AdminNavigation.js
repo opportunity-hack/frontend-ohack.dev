@@ -85,6 +85,31 @@ const adminPages = [
     path: "/admin/check-in",
     label: "Check In",
     icon: <HandshakeIcon color="primary" />
+  },  
+  {
+    path: "/admin/volunteer",
+    label: "Volunteer",
+    icon: <HandshakeIcon color="secondary" />
+  },
+  {
+    path: "/admin/teams",
+    label: "Teams",
+    icon: <TeamsIcon color="info" />
+  },
+  {
+    path: "/admin/judging",
+    label: "Judging",
+    icon: <JudgingIcon style={{ color: "#673ab7" }} />
+  },
+  {
+    path: "/admin/giveaways",
+    label: "Giveaways",
+    icon: <GiftIcon style={{ color: "#ff9800" }} />
+  },
+  {
+    path: "/admin/profile",
+    label: "Profile",
+    icon: <ProfileIcon color="primary" />
   },
   {
     path: "/admin/certificates",
@@ -106,36 +131,12 @@ const adminPages = [
     label: "Nonprofit Applications",
     icon: <BusinessIcon style={{ color: "#f57c00" }} />
   },
-  {
-    path: "/admin/profile",
-    label: "Profile",
-    icon: <ProfileIcon color="primary" />
-  },
-  {
-    path: "/admin/volunteer",
-    label: "Volunteer",
-    icon: <HandshakeIcon color="secondary" />
-  },
-  {
-    path: "/admin/teams",
-    label: "Teams",
-    icon: <TeamsIcon color="info" />
-  },
-  {
-    path: "/admin/judging",
-    label: "Judging",
-    icon: <JudgingIcon style={{ color: "#673ab7" }} />
-  },
+  
   {
     path: "/admin/time-tracking",
     label: "Time Tracking",
     icon: <TimeIcon style={{ color: "#9c27b0" }} />
-  },
-  {
-    path: "/admin/giveaways",
-    label: "Giveaways",
-    icon: <GiftIcon style={{ color: "#ff9800" }} />
-  },
+  },  
   {
     path: "/admin/social-media",
     label: "Social Media",
