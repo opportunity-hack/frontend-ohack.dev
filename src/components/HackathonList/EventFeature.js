@@ -111,9 +111,9 @@ function EventFeature(props) {
             </Typography>
             
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Typography variant="caption" sx={{ color: '#333', fontWeight: 500 }}>
+              {/* <Typography variant="caption" sx={{ color: '#333', fontWeight: 500 }}>
                 📅 {Moment(start_date).format('MMM Do')} - {Moment(end_date).format('MMM Do')}
-              </Typography>
+              </Typography> */}
               <Typography variant="caption" sx={{ color: '#666' }}>
                 📍 {location}
               </Typography>
