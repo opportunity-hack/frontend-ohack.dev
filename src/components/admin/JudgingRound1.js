@@ -1324,6 +1324,14 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                           primary={judge.name || judge.firstName + ' ' + judge.lastName}
                           secondary={judge.company || judge.companyName}
                         />
+                        {
+                          // Also add status and title
+                        }
+                        <ListItemText 
+                          primary={judge.title || judge.jobTitle}
+                          secondary={judge.status ? `Status: ${judge.status}` : null}
+                          sx={{ textAlign: 'right', mr: 2 }}
+                        />
                         <FormControl size="small" sx={{ minWidth: 120 }}>
                           <Select
                             displayEmpty
