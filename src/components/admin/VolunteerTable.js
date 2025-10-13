@@ -35,7 +35,7 @@ import { styled } from "@mui/system";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
-import { Email as EmailIcon } from '@mui/icons-material';
+import { Email as EmailIcon, VolunteerActivism as CertificateIcon } from '@mui/icons-material';
 import { FaPaperPlane, FaSlack } from 'react-icons/fa';
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
@@ -190,6 +190,7 @@ const VolunteerTable = ({
   onSlackInvite,
   onBatchEmail,
   onBatchEmailNotSelected,
+  onBulkCertificate, // New prop for bulk certificate sending
 }) => {
   const [copyFeedback, setCopyFeedback] = useState({ open: false, message: '' });
   const theme = useTheme();
@@ -319,16 +320,24 @@ const VolunteerTable = ({
   }, [volunteers]);
 
   const eligibleForEmailCount = useMemo(() => {
-    return volunteers.filter((volunteer) => 
+    return volunteers.filter((volunteer) =>
       volunteer.isSelected && volunteer.email && volunteer.email.trim() !== '' && volunteer.id
     ).length;
   }, [volunteers]);
 
   const notSelectedForEmailCount = useMemo(() => {
-    return volunteers.filter((volunteer) => 
+    return volunteers.filter((volunteer) =>
       !volunteer.isSelected && volunteer.email && volunteer.email.trim() !== '' && volunteer.id
     ).length;
   }, [volunteers]);
+
+  const eligibleForCertificateCount = useMemo(() => {
+    // Only mentors and judges can receive certificates
+    if (type !== 'mentors' && type !== 'judges') return 0;
+    return volunteers.filter((volunteer) =>
+      volunteer.isSelected && volunteer.slack_user_id && volunteer.slack_user_id.trim() !== ''
+    ).length;
+  }, [volunteers, type]);
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
@@ -1275,6 +1284,22 @@ const VolunteerTable = ({
                 <FaSlack size={14} />
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
                   {eligibleForSlackCount}
+                </Typography>
+              </Button>
+            </Tooltip>
+          )}
+          {onBulkCertificate && eligibleForCertificateCount > 0 && (
+            <Tooltip title={`Send Certificates to ${eligibleForCertificateCount} selected ${type}`}>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={() => onBulkCertificate(volunteers, type)}
+                size={isMobile ? 'small' : 'small'}
+                sx={{ minWidth: 'auto', px: 1 }}
+              >
+                <CertificateIcon fontSize="small" />
+                <Typography variant="caption" sx={{ ml: 0.5 }}>
+                  {eligibleForCertificateCount}
                 </Typography>
               </Button>
             </Tooltip>

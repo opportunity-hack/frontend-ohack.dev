@@ -40,6 +40,7 @@ import ApplicationEditDialog from "../../../components/admin/ApplicationEditDial
 import VolunteerCommunication from "../../../components/admin/VolunteerCommunication";
 import SlackInviteDialog from "../../../components/admin/SlackInviteDialog";
 import BatchEmailDialog from "../../../components/admin/BatchEmailDialog";
+import BulkCertificateDialog from "../../../components/admin/BulkCertificateDialog";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 
 // Define initial state outside component to prevent re-initialization
@@ -130,6 +131,9 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [volunteersForBatchEmail, setVolunteersForBatchEmail] = useState([]);
   const [volunteerTypeForBatchEmail, setVolunteerTypeForBatchEmail] = useState('');
   const [isSelectedUsersForEmail, setIsSelectedUsersForEmail] = useState(true);
+  const [bulkCertificateDialogOpen, setBulkCertificateDialogOpen] = useState(false);
+  const [volunteersForBulkCertificate, setVolunteersForBulkCertificate] = useState([]);
+  const [volunteerTypeForBulkCertificate, setVolunteerTypeForBulkCertificate] = useState('');
   const [shareSnackbar, setShareSnackbar] = useState({ open: false, message: '' });
 
   // Filter state management
@@ -745,6 +749,26 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     setVolunteerTypeForBatchEmail('');
     setIsSelectedUsersForEmail(true);
   }, [isSelectedUsersForEmail]);
+
+  const handleBulkCertificate = useCallback((volunteers, type) => {
+    setVolunteersForBulkCertificate(volunteers);
+    setVolunteerTypeForBulkCertificate(type);
+    setBulkCertificateDialogOpen(true);
+  }, []);
+
+  const handleBulkCertificateComplete = useCallback((summary) => {
+    setSnackbar({
+      open: true,
+      message: `Bulk certificates completed: ${summary.successful} successful, ${summary.failed} failed`,
+      severity: summary.failed > 0 ? "warning" : "success",
+    });
+    setBulkCertificateDialogOpen(false);
+    setVolunteersForBulkCertificate([]);
+    setVolunteerTypeForBulkCertificate('');
+    // Optionally refresh volunteers data to reflect updated heart counts
+    dataLoadedRef.current = false;
+    fetchVolunteers();
+  }, [fetchVolunteers]);
 
   const handleAddSingleVolunteer = useCallback(() => {
     setEditingVolunteer({
@@ -1430,6 +1454,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 onSlackInvite={handleSlackInvite}
                 onBatchEmail={handleBatchEmail}
                 onBatchEmailNotSelected={handleBatchEmail}
+                onBulkCertificate={handleBulkCertificate}
               />
               {sortedVolunteers.length === 0 && (
                 <Box sx={{ mt: 2, textAlign: "center" }}>
@@ -1543,6 +1568,21 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         eventId={selectedEventId}
         onComplete={handleBatchEmailComplete}
         isSelectedUsers={isSelectedUsersForEmail}
+      />
+
+      {/* Bulk Certificate Dialog */}
+      <BulkCertificateDialog
+        open={bulkCertificateDialogOpen}
+        onClose={() => {
+          setBulkCertificateDialogOpen(false);
+          setVolunteersForBulkCertificate([]);
+          setVolunteerTypeForBulkCertificate('');
+        }}
+        volunteers={volunteersForBulkCertificate}
+        volunteerType={volunteerTypeForBulkCertificate}
+        accessToken={accessToken}
+        orgId={orgId}
+        onComplete={handleBulkCertificateComplete}
       />
 
       {/* Share Link Snackbar */}
