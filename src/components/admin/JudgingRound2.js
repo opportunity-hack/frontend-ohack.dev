@@ -52,7 +52,8 @@ import {
   Star as StarIcon,
   Visibility as ViewIcon,
   Sort as SortIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  ContentCopy as ContentCopyIcon
 } from '@mui/icons-material';
 import { useAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
@@ -81,6 +82,8 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
   const [sortOrder, setSortOrder] = useState('desc');
   const [viewScoresDialog, setViewScoresDialog] = useState(false);
   const [selectedTeamScores, setSelectedTeamScores] = useState(null);
+  const [detailScoresSortBy, setDetailScoresSortBy] = useState('judge');
+  const [detailScoresSortOrder, setDetailScoresSortOrder] = useState('asc');
   const [nonprofitNames, setNonprofitNames] = useState({});
   const [loadingNonprofits, setLoadingNonprofits] = useState(false);
   const [loadingJudgeDetails, setLoadingJudgeDetails] = useState({});
@@ -298,19 +301,48 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
               total_score: scoreData.total_score,
               scores: scoreData.scores,
               feedback: scoreData.feedback?.general || '',
-              is_draft: false // Scores from this endpoint are submitted
+              is_draft: false, // Scores from this endpoint are submitted
+              created_at: scoreData.created_at,
+              submitted_at: scoreData.submitted_at
             }
           });
         }
       });
       
-      // Calculate averages and totals for each team
+      // Calculate averages, totals, and statistics for each team
       const teamScores = Array.from(teamScoreMap.values()).map(teamData => {
         if (teamData.scores.length > 0) {
           const totalScores = teamData.scores.map(s => s.score.total_score || 0);
           teamData.totalScore = totalScores.reduce((sum, score) => sum + score, 0);
           teamData.averageScore = teamData.totalScore / teamData.scores.length;
           teamData.judgeCount = teamData.scores.length;
+
+          // Calculate standard deviation
+          if (totalScores.length > 1) {
+            const mean = teamData.averageScore;
+            const variance = totalScores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / totalScores.length;
+            teamData.standardDeviation = Math.sqrt(variance);
+          } else {
+            teamData.standardDeviation = 0;
+          }
+
+          // Calculate highest and lowest scores
+          teamData.highestScore = Math.max(...totalScores);
+          teamData.lowestScore = Math.min(...totalScores);
+
+          // Calculate median score
+          const sortedScores = [...totalScores].sort((a, b) => a - b);
+          const mid = Math.floor(sortedScores.length / 2);
+          if (sortedScores.length % 2 === 0) {
+            teamData.medianScore = (sortedScores[mid - 1] + sortedScores[mid]) / 2;
+          } else {
+            teamData.medianScore = sortedScores[mid];
+          }
+        } else {
+          teamData.standardDeviation = 0;
+          teamData.highestScore = 0;
+          teamData.lowestScore = 0;
+          teamData.medianScore = 0;
         }
         return teamData;
       });
@@ -510,20 +542,37 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
 
   // Get sorted teams with scores
   const getSortedTeamsWithScores = () => {
-    if (round1Scores.length === 0) return teams.map(team => ({ team, averageScore: 0, judgeCount: 0, scores: [] }));
-    
+    if (round1Scores.length === 0) return teams.map(team => ({
+      team,
+      averageScore: 0,
+      judgeCount: 0,
+      scores: [],
+      standardDeviation: 0,
+      highestScore: 0,
+      lowestScore: 0,
+      medianScore: 0
+    }));
+
     const sorted = [...round1Scores].sort((a, b) => {
       switch (sortBy) {
         case 'teamName':
           return sortOrder === 'asc' ? a.team.name.localeCompare(b.team.name) : b.team.name.localeCompare(a.team.name);
         case 'judgeCount':
           return sortOrder === 'asc' ? a.judgeCount - b.judgeCount : b.judgeCount - a.judgeCount;
+        case 'standardDeviation':
+          return sortOrder === 'asc' ? a.standardDeviation - b.standardDeviation : b.standardDeviation - a.standardDeviation;
+        case 'highestScore':
+          return sortOrder === 'asc' ? a.highestScore - b.highestScore : b.highestScore - a.highestScore;
+        case 'lowestScore':
+          return sortOrder === 'asc' ? a.lowestScore - b.lowestScore : b.lowestScore - a.lowestScore;
+        case 'medianScore':
+          return sortOrder === 'asc' ? a.medianScore - b.medianScore : b.medianScore - a.medianScore;
         case 'totalScore':
         default:
           return sortOrder === 'asc' ? a.averageScore - b.averageScore : b.averageScore - a.averageScore;
       }
     });
-    
+
     return sorted;
   };
 
@@ -531,6 +580,119 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
   const viewTeamScores = (teamScoreData) => {
     setSelectedTeamScores(teamScoreData);
     setViewScoresDialog(true);
+    // Reset sorting when opening dialog
+    setDetailScoresSortBy('judge');
+    setDetailScoresSortOrder('asc');
+  };
+
+  // Handle sorting for detail scores table
+  const handleDetailScoresSort = (field) => {
+    const isAsc = detailScoresSortBy === field && detailScoresSortOrder === 'asc';
+    setDetailScoresSortOrder(isAsc ? 'desc' : 'asc');
+    setDetailScoresSortBy(field);
+  };
+
+  // Get sorted judge scores for detail view
+  const getSortedDetailScores = () => {
+    if (!selectedTeamScores || !selectedTeamScores.scores) return [];
+
+    const sorted = [...selectedTeamScores.scores].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (detailScoresSortBy) {
+        case 'judge':
+          aValue = a.judge.name || `${a.judge.firstName} ${a.judge.lastName}`;
+          bValue = b.judge.name || `${b.judge.firstName} ${b.judge.lastName}`;
+          return detailScoresSortOrder === 'asc'
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+
+        case 'total':
+          aValue = a.score.total_score || 0;
+          bValue = b.score.total_score || 0;
+          return detailScoresSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+
+        case 'created_at':
+          aValue = new Date(a.score.created_at || 0).getTime();
+          bValue = new Date(b.score.created_at || 0).getTime();
+          return detailScoresSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+
+        case 'submitted_at':
+          aValue = new Date(a.score.submitted_at || 0).getTime();
+          bValue = new Date(b.score.submitted_at || 0).getTime();
+          return detailScoresSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+
+        default:
+          // Handle criteria sorting
+          aValue = a.score.scores[detailScoresSortBy] || 0;
+          bValue = b.score.scores[detailScoresSortBy] || 0;
+          return detailScoresSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+    });
+
+    return sorted;
+  };
+
+  // Format timestamp for display (readable format with seconds)
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '-';
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return timestamp;
+    }
+  };
+
+  // Copy team ID to clipboard
+  const copyTeamId = (teamId, teamName) => {
+    navigator.clipboard.writeText(teamId).then(() => {
+      enqueueSnackbar(`Copied team ID for ${teamName}`, { variant: 'success' });
+    }).catch((err) => {
+      console.error('Failed to copy team ID:', err);
+      enqueueSnackbar('Failed to copy team ID', { variant: 'error' });
+    });
+  };
+
+  // Copy judge ID to clipboard
+  const copyJudgeId = (judgeId, judgeName) => {
+    navigator.clipboard.writeText(judgeId).then(() => {
+      enqueueSnackbar(`Copied judge ID for ${judgeName}`, { variant: 'success' });
+    }).catch((err) => {
+      console.error('Failed to copy judge ID:', err);
+      enqueueSnackbar('Failed to copy judge ID', { variant: 'error' });
+    });
+  };
+
+  // Copy all feedback from judges to clipboard
+  const copyAllFeedback = () => {
+    if (!selectedTeamScores || selectedTeamScores.scores.length === 0) return;
+
+    const feedbackText = selectedTeamScores.scores
+      .map((judgeScore, index) => {
+        const judgeName = judgeScore.judge.name || `${judgeScore.judge.firstName} ${judgeScore.judge.lastName}`;
+        const feedback = judgeScore.score.feedback || 'No feedback provided';
+        const createdAt = formatTimestamp(judgeScore.score.created_at);
+        const submittedAt = formatTimestamp(judgeScore.score.submitted_at);
+        return `Judge ${index + 1} - ${judgeName}:\nCreated: ${createdAt}\nSubmitted: ${submittedAt}\nFeedback: ${feedback}`;
+      })
+      .join('\n\n---\n\n');
+
+    navigator.clipboard.writeText(feedbackText).then(() => {
+      enqueueSnackbar('Feedback copied to clipboard!', { variant: 'success' });
+    }).catch((err) => {
+      console.error('Failed to copy feedback:', err);
+      enqueueSnackbar('Failed to copy feedback', { variant: 'error' });
+    });
   };
 
   // Auto-select top N teams as finalists
@@ -734,7 +896,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
           return a.categoryStandardDeviation - b.categoryStandardDeviation;
         });
       
-      categoryResults[categoryName] = teamsWithCategoryScores.slice(0, 3); // Top 3 teams per category
+      categoryResults[categoryName] = teamsWithCategoryScores.slice(0, 6); // Top 3 teams per category
     });
     
     return categoryResults;
@@ -790,7 +952,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
           return a.categoryStandardDeviation - b.categoryStandardDeviation;
         });
 
-      specialCategoryResults[categoryName] = teamsWithCategoryScores.slice(0, 3); // Top 3 teams per special category
+      specialCategoryResults[categoryName] = teamsWithCategoryScores.slice(0, 6); // Top 6 teams per special category
     });
 
     return specialCategoryResults;
@@ -982,14 +1144,52 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                           Avg Score
                         </TableSortLabel>
                       </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Standard Deviation - Lower means more consistent judging">
+                          <TableSortLabel
+                            active={sortBy === 'standardDeviation'}
+                            direction={sortBy === 'standardDeviation' ? sortOrder : 'asc'}
+                            onClick={() => handleSort('standardDeviation')}
+                          >
+                            Std Dev
+                          </TableSortLabel>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell align="center">
+                        <TableSortLabel
+                          active={sortBy === 'medianScore'}
+                          direction={sortBy === 'medianScore' ? sortOrder : 'asc'}
+                          onClick={() => handleSort('medianScore')}
+                        >
+                          Median
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="center">
+                        <TableSortLabel
+                          active={sortBy === 'highestScore'}
+                          direction={sortBy === 'highestScore' ? sortOrder : 'asc'}
+                          onClick={() => handleSort('highestScore')}
+                        >
+                          High
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="center">
+                        <TableSortLabel
+                          active={sortBy === 'lowestScore'}
+                          direction={sortBy === 'lowestScore' ? sortOrder : 'asc'}
+                          onClick={() => handleSort('lowestScore')}
+                        >
+                          Low
+                        </TableSortLabel>
+                      </TableCell>
                       <TableCell align="center">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {getSortedTeamsWithScores().map((teamScoreData, index) => {
-                      const { team, averageScore, judgeCount, scores } = teamScoreData;
+                      const { team, averageScore, judgeCount, scores, standardDeviation, medianScore, highestScore, lowestScore } = teamScoreData;
                       const isFinalist = finalistTeams.some(t => t.id === team.id);
-                      const nonprofitName = team.selected_nonprofit_id ? 
+                      const nonprofitName = team.selected_nonprofit_id ?
                         (nonprofitNames[team.selected_nonprofit_id] || 'Loading...') : 'No nonprofit';
                       
                       return (
@@ -1061,9 +1261,65 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                             )}
                           </TableCell>
                           <TableCell align="center">
+                            {judgeCount > 0 ? (
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: standardDeviation < 1 ? 'success.main' : standardDeviation < 2 ? 'warning.main' : 'error.main',
+                                  fontWeight: 500
+                                }}
+                              >
+                                {standardDeviation.toFixed(2)}
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                -
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {judgeCount > 0 ? (
+                              <Typography variant="body2">
+                                {medianScore.toFixed(1)}
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                -
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {judgeCount > 0 ? (
+                              <Chip
+                                label={highestScore.toFixed(1)}
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                              />
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                -
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {judgeCount > 0 ? (
+                              <Chip
+                                label={lowestScore.toFixed(1)}
+                                size="small"
+                                color="warning"
+                                variant="outlined"
+                              />
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                -
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
                             <Tooltip title="View detailed scores">
-                              <IconButton 
-                                size="small" 
+                              <IconButton
+                                size="small"
                                 onClick={() => viewTeamScores(teamScoreData)}
                                 disabled={judgeCount === 0}
                               >
@@ -1250,7 +1506,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
               </AccordionSummary>
               <AccordionDetails>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Teams ranked by average performance in special category prizes. These are judged separately from main criteria and recognize excellence in specific areas.
+                  Teams ranked by average performance in special category prizes. These are judged separately from main criteria and recognize excellence in specific areas.  We want to pick teams who already haven't won a prize in the most ideal way.
                 </Typography>
 
                 <Grid container spacing={3}>
@@ -1577,16 +1833,53 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       </Dialog>
 
       {/* Team Scores Detail Dialog */}
-      <Dialog 
-        open={viewScoresDialog} 
-        onClose={() => setViewScoresDialog(false)} 
-        maxWidth="md" 
+      <Dialog
+        open={viewScoresDialog}
+        onClose={() => setViewScoresDialog(false)}
+        maxWidth="xl"
         fullWidth
       >
         <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TrophyIcon />
-            Detailed Scores: {selectedTeamScores?.team?.name}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TrophyIcon />
+              <Typography variant="h6" component="span">
+                Detailed Scores:{' '}
+              </Typography>
+              {selectedTeamScores && (
+                <Tooltip title={`Click to copy Team ID: ${selectedTeamScores.team.id}`} arrow>
+                  <Box
+                    onClick={() => copyTeamId(selectedTeamScores.team.id, selectedTeamScores.team.name)}
+                    sx={{
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                        borderRadius: 1,
+                        padding: '2px 6px',
+                        margin: '-2px -6px'
+                      }
+                    }}
+                  >
+                    <Typography variant="h6" component="span">
+                      {selectedTeamScores.team.name}
+                    </Typography>
+                    <ContentCopyIcon sx={{ fontSize: 18, opacity: 0.6 }} />
+                  </Box>
+                </Tooltip>
+              )}
+            </Box>
+            <Tooltip title="Copy all feedback to clipboard">
+              <IconButton
+                onClick={copyAllFeedback}
+                disabled={!selectedTeamScores || selectedTeamScores.scores.length === 0}
+                color="primary"
+              >
+                <ContentCopyIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -1639,47 +1932,112 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Judge</TableCell>
-                        <TableCell align="center">Total</TableCell>
-                        <TableCell>Company</TableCell>
+                        <TableCell>
+                          <TableSortLabel
+                            active={detailScoresSortBy === 'judge'}
+                            direction={detailScoresSortBy === 'judge' ? detailScoresSortOrder : 'asc'}
+                            onClick={() => handleDetailScoresSort('judge')}
+                          >
+                            Judge
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="center">
+                          <TableSortLabel
+                            active={detailScoresSortBy === 'total'}
+                            direction={detailScoresSortBy === 'total' ? detailScoresSortOrder : 'asc'}
+                            onClick={() => handleDetailScoresSort('total')}
+                          >
+                            Total
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell>
+                          <TableSortLabel
+                            active={detailScoresSortBy === 'created_at'}
+                            direction={detailScoresSortBy === 'created_at' ? detailScoresSortOrder : 'asc'}
+                            onClick={() => handleDetailScoresSort('created_at')}
+                          >
+                            First Created At
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell>
+                          <TableSortLabel
+                            active={detailScoresSortBy === 'submitted_at'}
+                            direction={detailScoresSortBy === 'submitted_at' ? detailScoresSortOrder : 'asc'}
+                            onClick={() => handleDetailScoresSort('submitted_at')}
+                          >
+                            Submitted At
+                          </TableSortLabel>
+                        </TableCell>
                         {selectedTeamScores.scores[0] && Object.keys(selectedTeamScores.scores[0].score.scores).map(criteria => (
                           <TableCell key={criteria} align="center">
-                            {criteria.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            <TableSortLabel
+                              active={detailScoresSortBy === criteria}
+                              direction={detailScoresSortBy === criteria ? detailScoresSortOrder : 'asc'}
+                              onClick={() => handleDetailScoresSort(criteria)}
+                            >
+                              {criteria.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </TableSortLabel>
                           </TableCell>
                         ))}
-                        
+
                         <TableCell>Feedback</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {selectedTeamScores.scores.map((judgeScore, index) => {
+                      {getSortedDetailScores().map((judgeScore, index) => {
                         const totalScore = judgeScore.score.total_score || 0;
+                        const judgeName = judgeScore.judge.name || judgeScore.judge.firstName + ' ' + judgeScore.judge.lastName;
+                        const judgeId = judgeScore.judge.user_id;
                         return (
                           <TableRow key={index}>
                             <TableCell>
-                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {judgeScore.judge.name || judgeScore.judge.firstName + ' ' + judgeScore.judge.lastName}
-                              </Typography>
+                              <Tooltip title={`Click to copy Judge ID: ${judgeId}`} arrow>
+                                <Box
+                                  onClick={() => copyJudgeId(judgeId, judgeName)}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
+                                    '&:hover': {
+                                      backgroundColor: 'action.hover',
+                                      borderRadius: 1,
+                                      padding: '2px 4px',
+                                      margin: '-2px -4px'
+                                    }
+                                  }}
+                                >
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {judgeName}
+                                  </Typography>
+                                  <ContentCopyIcon sx={{ fontSize: 14, opacity: 0.6 }} />
+                                </Box>
+                              </Tooltip>
                             </TableCell>
                             <TableCell align="center">
                               <Typography variant="body1" sx={{ fontWeight: 600 }}>
                                 {totalScore}
                               </Typography>
+                            </TableCell>                            
+                            <TableCell>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatTimestamp(judgeScore.score.created_at)}
+                              </Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography variant="body2" color="text.secondary">
-                                {judgeScore.judge.company || judgeScore.judge.companyName}
+                              <Typography variant="caption" color="text.secondary">
+                                {formatTimestamp(judgeScore.score.submitted_at)}
                               </Typography>
                             </TableCell>
                             {Object.entries(judgeScore.score.scores).map(([criteria, score]) => (
                               <TableCell key={criteria} align="center">
-                                <Chip 
-                                  label={score} 
-                                  size="small" 
+                                <Chip
+                                  label={score}
+                                  size="small"
                                   color={score >= 8 ? 'success' : score >= 6 ? 'warning' : 'default'}
                                 />
                               </TableCell>
-                            ))}                            
+                            ))}
                             <TableCell>
                               <Typography variant="body2" color="text.secondary">
                                 {judgeScore.score.feedback || 'No feedback provided'}
