@@ -39,6 +39,7 @@ const ApplicationReviewList = ({
   filter,
   statusFilter,
   inPersonFilter,
+  checkedInFilter,
   sortBy,
   sortOrder,
   showBatchActions,
@@ -46,6 +47,7 @@ const ApplicationReviewList = ({
   onFilterChange,
   onStatusFilterChange,
   onInPersonFilterChange,
+  onCheckedInFilterChange,
   onSortByChange,
   onSortOrderChange,
   onShowBatchActionsChange
@@ -56,14 +58,16 @@ const ApplicationReviewList = ({
   const [localFilter, setLocalFilter] = useState('');
   const [localStatusFilter, setLocalStatusFilter] = useState('all');
   const [localInPersonFilter, setLocalInPersonFilter] = useState('all');
+  const [localCheckedInFilter, setLocalCheckedInFilter] = useState('all');
   const [localSortBy, setLocalSortBy] = useState('timestamp');
   const [localSortOrder, setLocalSortOrder] = useState('desc');
   const [localShowBatchActions, setLocalShowBatchActions] = useState(false);
-  
+
   // Use controlled values if provided, otherwise use local state
   const currentFilter = filter !== undefined ? filter : localFilter;
   const currentStatusFilter = statusFilter !== undefined ? statusFilter : localStatusFilter;
   const currentInPersonFilter = inPersonFilter !== undefined ? inPersonFilter : localInPersonFilter;
+  const currentCheckedInFilter = checkedInFilter !== undefined ? checkedInFilter : localCheckedInFilter;
   const currentSortBy = sortBy !== undefined ? sortBy : localSortBy;
   const currentSortOrder = sortOrder !== undefined ? sortOrder : localSortOrder;
   const currentShowBatchActions = showBatchActions !== undefined ? showBatchActions : localShowBatchActions;
@@ -92,7 +96,15 @@ const ApplicationReviewList = ({
       setLocalInPersonFilter(value);
     }
   };
-  
+
+  const handleCheckedInFilterChange = (value) => {
+    if (onCheckedInFilterChange) {
+      onCheckedInFilterChange(value);
+    } else {
+      setLocalCheckedInFilter(value);
+    }
+  };
+
   const handleSortByChange = (value) => {
     if (onSortByChange) {
       onSortByChange(value);
@@ -164,6 +176,15 @@ const ApplicationReviewList = ({
       }
     }
 
+    // Apply checked-in filter (for all volunteer types)
+    if (currentCheckedInFilter !== 'all') {
+      if (currentCheckedInFilter === 'yes') {
+        filtered = filtered.filter(app => app.checkedIn === true);
+      } else if (currentCheckedInFilter === 'no') {
+        filtered = filtered.filter(app => app.checkedIn === false || app.checkedIn === null || app.checkedIn === undefined);
+      }
+    }
+
     // Apply sorting
     filtered.sort((a, b) => {
       let aValue = a[currentSortBy];
@@ -184,7 +205,7 @@ const ApplicationReviewList = ({
     });
 
     return filtered;
-  }, [applications, currentFilter, currentStatusFilter, currentInPersonFilter, currentSortBy, currentSortOrder, applicationType]);
+  }, [applications, currentFilter, currentStatusFilter, currentInPersonFilter, currentCheckedInFilter, currentSortBy, currentSortOrder, applicationType]);
 
   // Handle individual application actions
   const handleApprove = useCallback(async (application) => {
@@ -360,6 +381,22 @@ const ApplicationReviewList = ({
             </FormControl>
           </Grid>
 
+          {/* Checked In Filter - Show for all volunteer types */}
+          <Grid item xs={12} sm={2}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Checked In</InputLabel>
+              <Select
+                value={currentCheckedInFilter}
+                onChange={(e) => handleCheckedInFilterChange(e.target.value)}
+                label="Checked In"
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="yes">Checked In</MenuItem>
+                <MenuItem value="no">Not Checked In</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
           {/* In Person Filter - Only show for judges */}
           {applicationType === 'judge' && (
             <Grid item xs={12} sm={2}>
@@ -492,6 +529,15 @@ const ApplicationReviewList = ({
           />
         )}
 
+        {currentCheckedInFilter !== 'all' && (
+          <Chip
+            label={`Checked In: ${currentCheckedInFilter === 'yes' ? 'Yes' : 'No'}`}
+            onDelete={() => handleCheckedInFilterChange('all')}
+            size="small"
+            variant="outlined"
+          />
+        )}
+
         {currentInPersonFilter !== 'all' && applicationType === 'judge' && (
           <Chip
             label={`In Person: ${currentInPersonFilter === 'yes' ? 'Yes' : 'No'}`}
@@ -511,13 +557,14 @@ const ApplicationReviewList = ({
               : 'No applications match your current filters'
             }
           </Typography>
-          {currentFilter || currentStatusFilter !== 'all' || currentInPersonFilter !== 'all' ? (
+          {currentFilter || currentStatusFilter !== 'all' || currentInPersonFilter !== 'all' || currentCheckedInFilter !== 'all' ? (
             <Button
               variant="outlined"
               onClick={() => {
                 handleFilterChange('');
                 handleStatusFilterChange('all');
                 handleInPersonFilterChange('all');
+                handleCheckedInFilterChange('all');
               }}
               sx={{ mt: 2 }}
             >
