@@ -291,7 +291,7 @@ const AboutJudges = () => {
       category: "accessibility",
       name: "Accessibility",
       maxPoints: 5,
-      description: "Accessibility is important when building software. This special category prize recognizes teams that excel at implementing the four W3C usability principles: perceivable, operable, understandable, and robust.",
+      description: "Accessibility is important when building software. This special category prize recognizes teams that excel at implementing the four W3C accessibility principles: perceivable, operable, understandable, and robust. Winning teams typically achieve a Lighthouse Accessibility score over 95.",
       subCriteria: [
         {
           name: "Accessibility Implementation - how well does the solution consider users with disabilities?",
