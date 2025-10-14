@@ -142,6 +142,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       filter: '',
       statusFilter: 'all',
       inPersonFilter: 'all',
+      checkedInFilter: 'all',
       sortBy: 'timestamp',
       sortOrder: 'desc',
       showBatchActions: false
@@ -150,6 +151,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       filter: '',
       statusFilter: 'all',
       inPersonFilter: 'all',
+      checkedInFilter: 'all',
       sortBy: 'timestamp',
       sortOrder: 'desc',
       showBatchActions: false
@@ -158,6 +160,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       filter: '',
       statusFilter: 'all',
       inPersonFilter: 'all',
+      checkedInFilter: 'all',
       sortBy: 'timestamp',
       sortOrder: 'desc',
       showBatchActions: false
@@ -166,6 +169,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       filter: '',
       statusFilter: 'all',
       inPersonFilter: 'all',
+      checkedInFilter: 'all',
       sortBy: 'timestamp',
       sortOrder: 'desc',
       showBatchActions: false
@@ -174,6 +178,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       filter: '',
       statusFilter: 'all',
       inPersonFilter: 'all',
+      checkedInFilter: 'all',
       sortBy: 'timestamp',
       sortOrder: 'desc',
       showBatchActions: false
@@ -267,12 +272,13 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   useEffect(() => {
     if (!router?.query) return;
     
-    const { 
-      event_id, 
-      tab, 
+    const {
+      event_id,
+      tab,
       filter,
       statusFilter,
       inPersonFilter,
+      checkedInFilter,
       sortBy,
       sortOrder,
       showBatchActions,
@@ -325,14 +331,15 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       const currentType = getCurrentVolunteerType(finalTabValue);
       if (currentType) {
         const filterToApply = volunteer_id ? volunteer_id : (filter || '');
-        
-        if (filterToApply || statusFilter || inPersonFilter || sortBy || sortOrder || showBatchActions) {
+
+        if (filterToApply || statusFilter || inPersonFilter || checkedInFilter || sortBy || sortOrder || showBatchActions) {
           setFilterStates(prev => ({
             ...prev,
             [currentType]: {
               filter: filterToApply,
               statusFilter: statusFilter || 'all',
               inPersonFilter: inPersonFilter || 'all',
+              checkedInFilter: checkedInFilter || 'all',
               sortBy: sortBy || 'timestamp',
               sortOrder: sortOrder || 'desc',
               showBatchActions: showBatchActions === 'true'
@@ -371,6 +378,9 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       }
       if (currentFilterState.inPersonFilter !== 'all') {
         queryParams.set('inPersonFilter', currentFilterState.inPersonFilter);
+      }
+      if (currentFilterState.checkedInFilter !== 'all') {
+        queryParams.set('checkedInFilter', currentFilterState.checkedInFilter);
       }
       if (currentFilterState.sortBy !== 'timestamp') {
         queryParams.set('sortBy', currentFilterState.sortBy);
@@ -563,6 +573,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       filter: '',
       statusFilter: 'all',
       inPersonFilter: 'all',
+      checkedInFilter: 'all',
       sortBy: 'timestamp',
       sortOrder: 'desc',
       showBatchActions: false
@@ -1455,6 +1466,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 onBatchEmail={handleBatchEmail}
                 onBatchEmailNotSelected={handleBatchEmail}
                 onBulkCertificate={handleBulkCertificate}
+                checkedInFilter={getCurrentFilterState().checkedInFilter}
+                onCheckedInFilterChange={(value) => updateFilterState('checkedInFilter', value)}
               />
               {sortedVolunteers.length === 0 && (
                 <Box sx={{ mt: 2, textAlign: "center" }}>
@@ -1480,6 +1493,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               filter={getCurrentFilterState().filter}
               statusFilter={getCurrentFilterState().statusFilter}
               inPersonFilter={getCurrentFilterState().inPersonFilter}
+              checkedInFilter={getCurrentFilterState().checkedInFilter}
               sortBy={getCurrentFilterState().sortBy}
               sortOrder={getCurrentFilterState().sortOrder}
               showBatchActions={getCurrentFilterState().showBatchActions}
@@ -1487,6 +1501,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               onFilterChange={(value) => updateFilterState('filter', value)}
               onStatusFilterChange={(value) => updateFilterState('statusFilter', value)}
               onInPersonFilterChange={(value) => updateFilterState('inPersonFilter', value)}
+              onCheckedInFilterChange={(value) => updateFilterState('checkedInFilter', value)}
               onSortByChange={(value) => updateFilterState('sortBy', value)}
               onSortOrderChange={(value) => updateFilterState('sortOrder', value)}
               onShowBatchActionsChange={(value) => updateFilterState('showBatchActions', value)}
