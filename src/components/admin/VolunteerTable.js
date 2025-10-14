@@ -30,6 +30,10 @@ import {
   ListItemAvatar,
   ListItemText,
   ListItemSecondaryAction,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -191,6 +195,9 @@ const VolunteerTable = ({
   onBatchEmail,
   onBatchEmailNotSelected,
   onBulkCertificate, // New prop for bulk certificate sending
+  // Filter props
+  checkedInFilter = 'all',
+  onCheckedInFilterChange,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState({ open: false, message: '' });
   const theme = useTheme();
@@ -338,6 +345,26 @@ const VolunteerTable = ({
       volunteer.isSelected && volunteer.slack_user_id && volunteer.slack_user_id.trim() !== ''
     ).length;
   }, [volunteers, type]);
+
+  // Filter volunteers based on checked-in status
+  const filteredVolunteers = useMemo(() => {
+    let filtered = volunteers;
+
+    // Apply checked-in filter
+    if (checkedInFilter !== 'all') {
+      if (checkedInFilter === 'yes') {
+        filtered = filtered.filter(volunteer => volunteer.checkedIn === true);
+      } else if (checkedInFilter === 'no') {
+        filtered = filtered.filter(volunteer =>
+          volunteer.checkedIn === false ||
+          volunteer.checkedIn === null ||
+          volunteer.checkedIn === undefined
+        );
+      }
+    }
+
+    return filtered;
+  }, [volunteers, checkedInFilter]);
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
@@ -1244,10 +1271,35 @@ const VolunteerTable = ({
 
   return (
     <>
+      {/* Filter Controls */}
+      <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Checked In</InputLabel>
+          <Select
+            value={checkedInFilter}
+            onChange={(e) => onCheckedInFilterChange && onCheckedInFilterChange(e.target.value)}
+            label="Checked In"
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="yes">Checked In</MenuItem>
+            <MenuItem value="no">Not Checked In</MenuItem>
+          </Select>
+        </FormControl>
+
+        {checkedInFilter !== 'all' && (
+          <Chip
+            label={`Checked In: ${checkedInFilter === 'yes' ? 'Yes' : 'No'}`}
+            onDelete={() => onCheckedInFilterChange && onCheckedInFilterChange('all')}
+            size="small"
+            variant="outlined"
+          />
+        )}
+      </Box>
+
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={1}>
         <Box>
           <Typography variant="subtitle1" sx={{ fontSize: isMobile ? '0.9rem' : '0.95rem' }}>
-            {type}: {volunteers.length} | Selected: {selectedCount}
+            {type}: {filteredVolunteers.length} of {volunteers.length} | Selected: {selectedCount}
           </Typography>
           {type === 'volunteers' && !isMobile && (
             <Typography variant="caption" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
@@ -1324,7 +1376,7 @@ const VolunteerTable = ({
       </Box>
 
       {isMobile ? (
-        <MobileCardView volunteers={volunteers} />
+        <MobileCardView volunteers={filteredVolunteers} />
       ) : (
         <StyledTableContainer component={Paper}>
         <Table stickyHeader size="small">
@@ -1425,7 +1477,7 @@ const VolunteerTable = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {volunteers.map((volunteer, index) => (
+            {filteredVolunteers.map((volunteer, index) => (
               <StyledTableRow
                 key={volunteer.id || `${volunteer.name}-${index}`}
                 style={{
