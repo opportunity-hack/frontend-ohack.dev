@@ -123,7 +123,7 @@ const TeamAssignments = ({ orgId }) => {
         setViewMode(tabIndex);
       }
     }
-  }, [hackathons, selectedHackathon, router?.query]);
+  }, [hackathons, router?.query]);
   
   // Update URL when selectedHackathon or viewMode changes
   useEffect(() => {

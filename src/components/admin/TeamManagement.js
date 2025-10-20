@@ -313,7 +313,7 @@ const TeamManagement = ({ orgId }) => {
         setSelectedHackathon(sortedHackathons[0].id);
       }
     }
-  }, [hackathons, selectedHackathon, router?.query]);
+  }, [hackathons, router?.query]);
   
   // Update URL when selectedHackathon changes
   useEffect(() => {
