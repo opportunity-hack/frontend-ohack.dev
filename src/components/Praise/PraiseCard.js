@@ -3,6 +3,7 @@ import { Card, CardContent, CardMedia, Box, Typography, Avatar, Tooltip, IconBut
 import { FavoriteRounded, StarRounded, ThumbUpRounded, EmojiEmotionsRounded } from '@mui/icons-material';
 import { styled, keyframes } from '@mui/material/styles';
 import moment from 'moment';
+import { useRouter } from 'next/router';
 
 // Helper function to get a user avatar URL from Slack
 const getSlackAvatarUrl = (userId) => {
@@ -126,12 +127,25 @@ const TimeStamp = styled(Typography)({
   fontStyle: 'italic',
 });
 
+const ClickableName = styled(Typography)(({ theme }) => ({
+  cursor: 'pointer',
+  transition: 'all 0.2s ease-in-out',
+  '&:hover': {
+    color: theme.palette.primary.main,
+    textDecoration: 'underline',
+    transform: 'scale(1.05)',
+  },
+}));
+
 const PraiseCard = ({ praise }) => {
+  const router = useRouter();
   const {
     praise_message,
     praise_gif,
     praise_sender_details,
     praise_receiver_details,
+    praise_sender_ohack_id,
+    praise_receiver_ohack_id,
     timestamp
   } = praise;
 
@@ -167,6 +181,17 @@ const PraiseCard = ({ praise }) => {
     return 'Awesome';
   };
 
+  //Function to handle clicking on a user's profile on a Praise Card
+  const handleUserClick = (ohackId) => {
+    try {
+      const profileId = ohackId || 'unknown';
+      router.push(`/profile/${profileId}`);
+    } catch (error) {
+      console.error('Error navigating to user profile:', error);
+      // Fallback: could show a toast or alert
+    }
+  };
+
   return (
     <StyledCard isLiked={Object.values(userReactions).some(Boolean)}>
       {isRecent && (
@@ -198,15 +223,42 @@ const PraiseCard = ({ praise }) => {
               />
             </Tooltip>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="body1" component="span" fontWeight="bold" color="primary">
-                {praise_sender_details?.real_name || 'Unknown'}
-              </Typography>
+              <Tooltip title={`View ${praise_sender_details?.real_name || 'Unknown'}'s profile`} arrow>
+                <ClickableName 
+                  variant="body1" 
+                  component="span" 
+                  fontWeight="bold" 
+                  color={praise_sender_details?.real_name ? "primary" : "text.secondary"}
+                  onClick={() => handleUserClick(praise_sender_ohack_id)}
+                >
+                  {praise_sender_details?.real_name || 'Unknown'}
+                </ClickableName>
+              </Tooltip>
               <Typography variant="body2" component="span" sx={{ mx: 1, fontStyle: 'italic' }}>
                 🙏 praised
               </Typography>
-              <Typography variant="body1" component="span" fontWeight="bold" color="secondary">
-                {praise_receiver_details?.real_name || 'Unknown'}
-              </Typography>
+              {praise_receiver_details?.real_name ? (
+                <Tooltip title={`View ${praise_receiver_details.real_name}'s profile`} arrow>
+                  <ClickableName 
+                    variant="body1" 
+                    component="span" 
+                    fontWeight="bold" 
+                    color="secondary"
+                    onClick={() => handleUserClick(praise_receiver_ohack_id)}
+                  >
+                    {praise_receiver_details.real_name}
+                  </ClickableName>
+                </Tooltip>
+              ) : (
+                <Typography 
+                  variant="body1" 
+                  component="span" 
+                  fontWeight="bold" 
+                  color="text.secondary"
+                >
+                  Unknown
+                </Typography>
+              )}
             </Box>
             <Tooltip title={praise_receiver_details?.real_name || 'Unknown'}>
               <Avatar 
