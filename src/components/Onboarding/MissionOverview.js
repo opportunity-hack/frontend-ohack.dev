@@ -83,18 +83,71 @@ const MissionOverview = () => {
         </Typography>
       </Box>
 
+      {/* Video section */}
+      <Paper elevation={2} sx={{ p: 4, mb: 4, borderRadius: 2, bgcolor: 'background.default' }}>
+        <Typography variant="h4" gutterBottom align="center">
+          Writing Code for Social Good
+        </Typography>
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.15rem', textAlign: 'center', mb: 3, color: 'text.secondary' }}>
+          Discover how Opportunity Hack empowers volunteers to create meaningful technical solutions while building lasting connections in their communities.
+        </Typography>
+
+        <Box sx={{
+          position: 'relative',
+          paddingBottom: '56.25%',
+          height: 0,
+          overflow: 'hidden',
+          maxWidth: '100%',
+          borderRadius: 2,
+          boxShadow: 3
+        }}>
+          <iframe
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              border: 0
+            }}
+            src="https://www.youtube.com/embed/Ia_xsX-318E"
+            title="Opportunity Hack: Writing Code for Social Good"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </Box>
+
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
+            As technologists, we have a unique opportunity to drive positive change. By contributing to Opportunity Hack,
+            you'll leverage your skills to create real-world impact while building valuable experience and meaningful connections.
+          </Typography>
+
+          <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
+            Our platform enables you to work on technical solutions that address genuine challenges faced by nonprofit
+            organizations. Beyond the tangible difference you'll make in communities, you'll enhance your portfolio,
+            demonstrate your commitment to social responsibility, and discover the profound fulfillment that comes
+            from purpose-driven engineering.
+          </Typography>
+
+          <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
+            Join our community of developers, designers, and innovators who are transforming the way technology serves society.
+          </Typography>
+        </Box>
+      </Paper>
+
       {/* How we work */}
       <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Typography variant="h4" gutterBottom>
           How We Work
         </Typography>
         <Typography variant="body1" paragraph sx={{ fontSize: '1.25rem' }}>
-          Opportunity Hack creates a collaborative ecosystem where technology professionals and nonprofits come together 
-          to solve real-world challenges. We organize hackathons, ongoing project development, and educational resources 
+          Opportunity Hack creates a collaborative ecosystem where technology professionals and nonprofits come together
+          to solve real-world challenges. We organize hackathons, ongoing project development, and educational resources
           to help nonprofits leverage technology effectively.
         </Typography>
         <Typography variant="body1" sx={{ fontSize: '1.25rem' }}>
-          Unlike traditional hackathons, our focus goes beyond the initial event. We build lasting solutions and maintain 
+          Unlike traditional hackathons, our focus goes beyond the initial event. We build lasting solutions and maintain
           ongoing relationships with nonprofits to ensure that projects continue to evolve and serve their needs over time.
         </Typography>
       </Paper>

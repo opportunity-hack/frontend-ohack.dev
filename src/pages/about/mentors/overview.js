@@ -193,7 +193,7 @@ const MentorOverview = () => {
   const videoHighlights = [
     {
       icon: SchoolRounded,
-      title: "Know Your Role",
+      title: "Your Role",
       description: "Understand what mentoring means at Opportunity Hack and how you can make the biggest impact guiding teams through their nonprofit tech solutions.",
       chipLabel: "Foundation Knowledge",
       chipColor: "primary"
@@ -428,65 +428,7 @@ const MentorOverview = () => {
             ))}
           </Grid>
         </Box>
-
-        {/* Video Timeline */}
-        <Box component="section" sx={{ mb: 5 }} aria-labelledby="video-timeline">
-          <SectionHeader
-            variant="h3"
-            component="h2"
-            sectionId="video-timeline"
-            onCopyLink={copyLinkToSection}
-          >
-            Video Timeline
-          </SectionHeader>
-
-          <Paper sx={{ p: 3 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>0:22</strong> - Know your role
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>0:50</strong> - Why be a mentor?
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>1:27</strong> - Types of mentors
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>1:50</strong> - Judging criteria
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>2:31</strong> - Hackathon mentor best practices
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>3:11</strong> - Nonprofit problems to review
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>3:38</strong> - In-person or Remote with Slack
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>3:55</strong> - Check-in process
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>4:38</strong> - Mentor application process
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>6:09</strong> - Tracking your time
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>6:58</strong> - Sponsors and recognition
-                </Typography>
-                <Typography variant="body1">
-                  <strong>7:34</strong> - Wrap up
-                </Typography>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Box>
+      
 
         {/* Ready to Mentor CTA */}
         <Alert
