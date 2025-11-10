@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
-import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { useEnv } from '../context/env.context';
+import { useState, useCallback } from "react";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { useEnv } from "../context/env.context";
 
 /**
  * A hook to handle reCAPTCHA v3 integration
@@ -19,9 +19,15 @@ export const useRecaptcha = () => {
    * @returns {Promise<boolean>} - Whether initialization was successful
    */
   const initializeRecaptcha = useCallback(async () => {
-    // Skip reCAPTCHA in development or if not configured
-    if (!recaptchaSiteKey || recaptchaSiteKey === '<TODO>' || process.env.NODE_ENV === 'development') {
-      console.log('Skipping reCAPTCHA in development or site key not configured');
+    // In production, always require a valid configuration
+    // Only skip in development if site key is not configured
+    if (
+      process.env.NODE_ENV === "development" &&
+      (!recaptchaSiteKey || recaptchaSiteKey === "<TODO>")
+    ) {
+      console.log(
+        "Skipping reCAPTCHA in development (site key not configured)",
+      );
       return true;
     }
 
@@ -35,32 +41,41 @@ export const useRecaptcha = () => {
    * @param {string} action - The action name for this reCAPTCHA execution (default: 'submit')
    * @returns {Promise<string|null>} - The reCAPTCHA token or null if unsuccessful
    */
-  const getRecaptchaToken = useCallback(async (action = 'submit') => {
-    // Skip token generation in development or if not configured
-    if (!recaptchaSiteKey || recaptchaSiteKey === '<TODO>' || process.env.NODE_ENV === 'development') {
-      console.log('Using mock reCAPTCHA token in development');
-      return 'development-mock-token';
-    }
+  const getRecaptchaToken = useCallback(
+    async (action = "submit") => {
+      // In production, always require a valid reCAPTCHA token
+      // Only skip in development if explicitly disabled via site key
+      if (
+        process.env.NODE_ENV === "development" &&
+        (!recaptchaSiteKey || recaptchaSiteKey === "<TODO>")
+      ) {
+        console.log(
+          "Using mock reCAPTCHA token in development (site key not configured)",
+        );
+        return "development-mock-token";
+      }
 
-    if (!executeRecaptcha) {
-      console.error('Execute recaptcha not yet available');
-      setError('reCAPTCHA not ready. Please try again.');
-      return null;
-    }
+      if (!executeRecaptcha) {
+        console.error("Execute recaptcha not yet available");
+        setError("reCAPTCHA not ready. Please try again.");
+        return null;
+      }
 
-    try {
-      setIsLoading(true);
-      setError(null);
-      const token = await executeRecaptcha(action);
-      return token;
-    } catch (error) {
-      console.error('Error getting reCAPTCHA token:', error);
-      setError('Failed to verify you are human. Please try again.');
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [executeRecaptcha, recaptchaSiteKey]);
+      try {
+        setIsLoading(true);
+        setError(null);
+        const token = await executeRecaptcha(action);
+        return token;
+      } catch (error) {
+        console.error("Error getting reCAPTCHA token:", error);
+        setError("Failed to verify you are human. Please try again.");
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [executeRecaptcha, recaptchaSiteKey],
+  );
 
   return {
     initializeRecaptcha,
@@ -68,6 +83,6 @@ export const useRecaptcha = () => {
     isLoading,
     error,
     isRecaptchaReady: !!executeRecaptcha,
-    setError
+    setError,
   };
 };
