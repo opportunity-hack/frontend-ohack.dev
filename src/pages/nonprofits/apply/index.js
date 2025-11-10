@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
-import { 
-  Typography, TextField, Button, FormControlLabel, Checkbox, 
-  Container, Box, Grid, Paper, List, ListItem, ListItemIcon, 
+import {
+  Typography, TextField, Button, FormControlLabel, Checkbox,
+  Container, Box, Grid, Paper, List, ListItem, ListItemIcon,
   ListItemText, CircularProgress, Alert, Card, CardContent
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -14,7 +14,7 @@ import CloudIcon from '@mui/icons-material/Cloud';
 import BuildIcon from '@mui/icons-material/Build';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { useTheme } from '@mui/material/styles';
-import ReactRecaptcha3 from 'react-google-recaptcha3';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import * as ga from '../../../lib/ga';
 import ScrollTracker from '../../../components/ScrollTracker';
 import JourneyTracker, { JourneyTypes } from '../../../components/JourneyTracker';
@@ -45,6 +45,7 @@ const InfoCardContent = styled(CardContent)(({ theme }) => ({
 export default function Apply({ title, description, openGraphData }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -68,8 +69,7 @@ export default function Apply({ title, description, openGraphData }) {
   useEffect(() => {
     // Initialize tracking
     ga.initFacebookPixel();
-    ReactRecaptcha3.init(process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY);
-    
+
     // Set form start time for time-to-completion tracking
     setFormStartTime(new Date());
 
@@ -162,7 +162,7 @@ export default function Apply({ title, description, openGraphData }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Track form submission attempt
     ga.trackForm(
       'nonprofit_application',
@@ -170,9 +170,16 @@ export default function Apply({ title, description, openGraphData }) {
       null,
       null
     );
-    
+
     try {
-      const token = await ReactRecaptcha3.getToken();
+      if (!executeRecaptcha) {
+        console.error('Execute recaptcha not yet available');
+        alert('reCAPTCHA not ready. Please try again in a moment.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const token = await executeRecaptcha('nonprofit_application_submit');
       const formDataWithToken = { ...formData, token };
     
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/submit-application`, {

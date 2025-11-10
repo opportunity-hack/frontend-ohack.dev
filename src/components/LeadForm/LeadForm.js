@@ -8,15 +8,16 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import CheckIcon from "@mui/icons-material/Check";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 const LeadForm = () => {
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [email, setEmail] = useState("");
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [submitted, setSubmitted] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
 
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
@@ -24,20 +25,9 @@ const LeadForm = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true);
-    try {
-      const ReactRecaptcha3 = (await import("react-google-recaptcha3")).default;
-      await ReactRecaptcha3.init(
-        process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY
-      );
-      setRecaptchaLoaded(true);
-    } catch (error) {
-      console.error("Error loading reCAPTCHA:", error);
-      setError("Failed to load reCAPTCHA. Please try again.");
-    } finally {
-      setIsLoading(false);
-      setOpen(true);
-    }
+    // Simply open the dialog to collect the name
+    // reCAPTCHA will be executed when they submit the final form
+    setOpen(true);
   };
 
   const handleNameChange = (event) => {
@@ -45,8 +35,8 @@ const LeadForm = () => {
   };
 
   const handleClose = async () => {
-    if (!recaptchaLoaded) {
-      setError("reCAPTCHA not loaded. Please try again.");
+    if (!executeRecaptcha) {
+      setError("reCAPTCHA not ready. Please try again.");
       return;
     }
 
@@ -54,8 +44,7 @@ const LeadForm = () => {
     setError(null);
 
     try {
-      const ReactRecaptcha3 = (await import("react-google-recaptcha3")).default;
-      const token = await ReactRecaptcha3.getToken();
+      const token = await executeRecaptcha('lead_form_submit');
 
       if (!token) {
         throw new Error("Failed to obtain reCAPTCHA token");
@@ -141,7 +130,7 @@ const LeadForm = () => {
           <Button
             onClick={handleClose}
             color="success"
-            disabled={isLoading || !recaptchaLoaded}
+            disabled={isLoading || !executeRecaptcha}
           >
             {isLoading ? <CircularProgress size={24} /> : "Ship it"}
           </Button>
