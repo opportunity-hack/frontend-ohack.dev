@@ -35,11 +35,9 @@ describe("LeadForm Bot Detection", () => {
 
   it("renders the form with email input", () => {
     renderWithTheme(<LeadForm />);
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(
-      screen.getByLabelText(/email address/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /subscribe to newsletter/i })
+      screen.getByRole("button", { name: /subscribe to newsletter/i }),
     ).toBeInTheDocument();
   });
 
@@ -60,15 +58,15 @@ describe("LeadForm Bot Detection", () => {
 
     // Start interaction to set timing
     fireEvent.change(emailInput, { target: { value: "invalid-email" } });
-    
+
     // Wait a bit to pass timing check
-    await new Promise(resolve => setTimeout(resolve, 2100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2100));
+
     fireEvent.click(submitButton);
 
     await waitFor(() => {
       expect(
-        screen.getByText(/please enter a valid email address/i)
+        screen.getByText(/please enter a valid email address/i),
       ).toBeInTheDocument();
     });
   });
@@ -85,15 +83,15 @@ describe("LeadForm Bot Detection", () => {
     fireEvent.change(emailInput, {
       target: { value: "test@tempmail.com" },
     });
-    
+
     // Wait to pass timing check
-    await new Promise(resolve => setTimeout(resolve, 2100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2100));
+
     fireEvent.click(submitButton);
 
     await waitFor(() => {
       expect(
-        screen.getByText(/please enter a valid email address/i)
+        screen.getByText(/please enter a valid email address/i),
       ).toBeInTheDocument();
     });
   });
@@ -108,10 +106,10 @@ describe("LeadForm Bot Detection", () => {
 
     // Submit valid email to open dialog
     fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    
+
     // Wait to pass timing check
-    await new Promise(resolve => setTimeout(resolve, 2100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2100));
+
     fireEvent.click(submitButton);
 
     // Wait for dialog to appear
@@ -130,7 +128,7 @@ describe("LeadForm Bot Detection", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/please enter a valid name/i)
+        screen.getByText(/please enter a valid name/i),
       ).toBeInTheDocument();
     });
   });
@@ -144,10 +142,10 @@ describe("LeadForm Bot Detection", () => {
     });
 
     fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    
+
     // Wait to pass timing check
-    await new Promise(resolve => setTimeout(resolve, 2100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2100));
+
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -162,7 +160,7 @@ describe("LeadForm Bot Detection", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/please enter a valid name/i)
+        screen.getByText(/please enter a valid name/i),
       ).toBeInTheDocument();
     });
   });
@@ -176,10 +174,10 @@ describe("LeadForm Bot Detection", () => {
     });
 
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    
+
     // Wait to pass timing check
-    await new Promise(resolve => setTimeout(resolve, 2100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2100));
+
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -198,7 +196,7 @@ describe("LeadForm Bot Detection", () => {
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining("john@example.com"),
-        })
+        }),
       );
     });
   });
@@ -210,7 +208,7 @@ describe("LeadForm Bot Detection", () => {
     renderWithTheme(<LeadForm />);
 
     const emailInput = screen.getByLabelText(/email address/i);
-    
+
     // Type email
     fireEvent.change(emailInput, { target: { value: "test@example.com" } });
 
@@ -218,7 +216,7 @@ describe("LeadForm Bot Detection", () => {
     const submitButton = screen.getByRole("button", {
       name: /subscribe to newsletter/i,
     });
-    
+
     // In the test environment, timing may not work perfectly,
     // but we verify the function exists and can be called
     fireEvent.click(submitButton);
