@@ -44,6 +44,9 @@ import CodeIcon from '@mui/icons-material/Code';
 import SendIcon from '@mui/icons-material/Send';
 import CheckIcon from '@mui/icons-material/Check';
 import YouTubeIcon from '@mui/icons-material/YouTube';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import StarIcon from '@mui/icons-material/Star';
 import Link from 'next/link';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -128,6 +131,14 @@ const getStatusIcon = (status) => {
       return <VolunteerActivismIcon />;
     case 'PROJECT_COMPLETE':
       return <LaptopIcon />;
+    case 'COMPLETED_HACKATHON':
+      return <CheckCircleIcon />;
+    case 'FOUNDING_ENGINEERS':
+      return <EmojiEventsIcon />;
+    case 'COMPLETION_SUPPORT':
+      return <WorkspacePremiumIcon />;
+    case 'CATEGORY_WINNER':
+      return <StarIcon />;
     case 'INACTIVE':
       return <ErrorIcon />;
     default:
@@ -147,6 +158,14 @@ const getStatusLabel = (status) => {
       return 'Swag Received';
     case 'PROJECT_COMPLETE':
       return 'Project Complete';
+    case 'COMPLETED_HACKATHON':
+      return 'Completed Hackathon';
+    case 'FOUNDING_ENGINEERS':
+      return 'Founding Engineers - 1st Place';
+    case 'COMPLETION_SUPPORT':
+      return 'Completion Support - 2nd Place';
+    case 'CATEGORY_WINNER':
+      return 'Category Winner';
     case 'INACTIVE':
       return 'Inactive';
     default:
