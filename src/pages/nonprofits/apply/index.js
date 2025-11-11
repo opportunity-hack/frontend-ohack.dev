@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import {
   Typography, TextField, Button, FormControlLabel, Checkbox,
@@ -30,6 +30,100 @@ const debounce = (func, delay) => {
   };
 };
 
+// Bot detection utility functions
+const isValidEmail = (email) => {
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) return false;
+
+  // Block common disposable email domains
+  const disposableDomains = [
+    "tempmail.com",
+    "throwaway.email",
+    "guerrillamail.com",
+    "mailinator.com",
+    "10minutemail.com",
+    "trashmail.com",
+    "temp-mail.org",
+    "fakeinbox.com",
+  ];
+  const domain = email.split("@")[1]?.toLowerCase();
+  return !disposableDomains.includes(domain);
+};
+
+const isValidTextInput = (text, fieldName, minLength = 2) => {
+  if (!text || text.trim().length < minLength) return false;
+
+  const trimmedText = text.trim();
+
+  // Check for suspicious patterns
+  // 1. Text that is too long (likely random strings)
+  const maxLength = fieldName === 'idea' ? 2000 : 100;
+  if (trimmedText.length > maxLength) return false;
+
+  // 2. Excessive consecutive consonants (likely random) - 10+ is very suspicious
+  // Increased from 7 to 10 to avoid false positives with legitimate text
+  const consonantPattern = /[bcdfghjklmnpqrstvwxyz]{10,}/i;
+  if (consonantPattern.test(trimmedText)) return false;
+
+  // 3. Mixed case in unnatural patterns (like bot examples: BbdtIwmYxnPPTOkegnETF)
+  // Check for single words with suspicious mixed case patterns
+  const words = trimmedText.split(/\s+/);
+  for (const word of words) {
+    // For words over 15 chars, check for excessive mixed case
+    if (word.length > 15) {
+      const uppercaseCount = (word.match(/[A-Z]/g) || []).length;
+      const lowercaseCount = (word.match(/[a-z]/g) || []).length;
+
+      // If a long word has lots of mixed case (but not all caps or all lowercase), it's suspicious
+      // This catches bot patterns like "BbdtIwmYxnPPTOkegnETF" or "wCEPXYnsnOLajUiYCx"
+      if (uppercaseCount >= 4 && lowercaseCount >= 4) {
+        // Calculate the ratio of case changes (alternations)
+        let caseChanges = 0;
+        for (let i = 1; i < word.length; i++) {
+          const prevIsUpper = /[A-Z]/.test(word[i - 1]);
+          const currIsUpper = /[A-Z]/.test(word[i]);
+          if (prevIsUpper !== currIsUpper) {
+            caseChanges++;
+          }
+        }
+        // If there are many case changes relative to word length, it's suspicious
+        if (caseChanges > word.length * 0.3) {
+          return false;
+        }
+      }
+    }
+  }
+
+  // 4. Check for lack of vowels (except for very short text)
+  if (trimmedText.length > 8 && !/[aeiou]/i.test(trimmedText)) return false;
+
+  // 5. For names and organizations, require at least one space or reasonable single word
+  if ((fieldName === 'name' || fieldName === 'organization') && trimmedText.length > 25) {
+    // If it's longer than 25 chars and has no spaces, it's suspicious
+    if (!trimmedText.includes(' ')) return false;
+  }
+
+  // 6. Check for repetitive patterns (like "ababab" or "123123")
+  // Only check for short repetitive patterns (bots use random repeated strings)
+  // Skip this check for 'idea' field to avoid false positives
+  if (fieldName !== 'idea') {
+    const repetitivePattern = /(.{3,})\1{2,}/;
+    if (repetitivePattern.test(trimmedText.replace(/\s/g, ''))) return false;
+  }
+
+  // 7. Check character diversity - if all characters are too similar, it's suspicious
+  // Only check for shorter texts (bots use random strings)
+  if (fieldName !== 'idea' && trimmedText.length <= 30) {
+    const uniqueChars = new Set(trimmedText.toLowerCase().replace(/\s/g, ''));
+    const charDiversityRatio = uniqueChars.size / Math.max(1, trimmedText.replace(/\s/g, '').length);
+    // Reduced threshold from 0.3 to 0.25 to be less strict
+    if (charDiversityRatio < 0.25 && trimmedText.replace(/\s/g, '').length > 15) return false;
+  }
+
+  return true;
+};
+
 const InfoCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(2),
   backgroundColor: theme.palette.primary.light,
@@ -54,7 +148,7 @@ export default function Apply({ title, description, openGraphData }) {
     idea: '',
     isNonProfit: false,
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [lastTrackedValues, setLastTrackedValues] = useState({
@@ -65,6 +159,14 @@ export default function Apply({ title, description, openGraphData }) {
     isNonProfit: false,
   });
   const [formStartTime, setFormStartTime] = useState(null);
+  const [formError, setFormError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  // Bot detection state
+  const [honeypot, setHoneypot] = useState('');
+  const formInteractionStartTime = useRef(null);
+  const submissionAttemptsRef = useRef(0);
+  const lastSubmissionTimeRef = useRef(0);
 
   useEffect(() => {
     // Initialize tracking
@@ -149,12 +251,31 @@ export default function Apply({ title, description, openGraphData }) {
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
     const fieldValue = name === 'isNonProfit' ? checked : value;
-    
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: fieldValue 
+
+    // Start tracking interaction time when user first interacts
+    if (!formInteractionStartTime.current) {
+      formInteractionStartTime.current = Date.now();
+    }
+
+    // Clear field-specific error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+
+    // Clear general form error
+    if (formError) {
+      setFormError(null);
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: fieldValue
     }));
-    
+
     // Track changes with debounce to reduce tracking frequency
     debouncedTrackFieldChange(name, fieldValue);
   };
@@ -162,6 +283,8 @@ export default function Apply({ title, description, openGraphData }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setFormError(null);
+    setFieldErrors({});
 
     // Track form submission attempt
     ga.trackForm(
@@ -172,23 +295,109 @@ export default function Apply({ title, description, openGraphData }) {
     );
 
     try {
+      // === BOT DETECTION CHECKS ===
+
+      // 1. Check honeypot (should be empty)
+      if (honeypot) {
+        console.warn('Bot detected: honeypot filled');
+        setFormError('Something went wrong. Please try again.');
+        setIsSubmitting(false);
+        ga.trackError('bot_detection', 'honeypot_filled', 'nonprofit_application');
+        return;
+      }
+
+      // 2. Check submission timing (bots submit too quickly)
+      if (formInteractionStartTime.current) {
+        const timeTaken = Date.now() - formInteractionStartTime.current;
+        if (timeTaken < 3000) { // Less than 3 seconds
+          console.warn('Bot detected: submission too quick', timeTaken);
+          setFormError('Please take your time filling out the form.');
+          setIsSubmitting(false);
+          ga.trackError('bot_detection', 'submission_too_quick', 'nonprofit_application');
+          return;
+        }
+      }
+
+      // 3. Rate limiting check
+      const now = Date.now();
+      const timeSinceLastSubmission = now - lastSubmissionTimeRef.current;
+      if (timeSinceLastSubmission < 10000) { // 10 seconds between attempts
+        setFormError('Please wait a moment before submitting again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 4. Check max attempts per session
+      if (submissionAttemptsRef.current >= 3) {
+        setFormError('Too many attempts. Please refresh the page and try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 5. Validate all text fields
+      const errors = {};
+
+      if (!isValidEmail(formData.email)) {
+        errors.email = 'Please enter a valid email address';
+      }
+
+      if (!isValidTextInput(formData.name, 'name', 2)) {
+        errors.name = 'Please enter a valid name (at least 2 characters, no random strings)';
+      }
+
+      if (formData.organization && !isValidTextInput(formData.organization, 'organization', 2)) {
+        errors.organization = 'Please enter a valid organization name (no random strings)';
+      }
+
+      if (!isValidTextInput(formData.idea, 'idea', 10)) {
+        errors.idea = 'Please provide a meaningful description of your idea (at least 10 characters)';
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        setFormError('Please fix the errors in the form before submitting.');
+        setIsSubmitting(false);
+        ga.trackError('form_validation', 'invalid_fields', 'nonprofit_application');
+        return;
+      }
+
+      // === RECAPTCHA CHECK ===
       if (!executeRecaptcha) {
         console.error('Execute recaptcha not yet available');
-        alert('reCAPTCHA not ready. Please try again in a moment.');
+        setFormError('reCAPTCHA not ready. Please try again in a moment.');
         setIsSubmitting(false);
         return;
       }
 
       const token = await executeRecaptcha('nonprofit_application_submit');
-      const formDataWithToken = { ...formData, token };
-    
+      if (!token) {
+        throw new Error('Failed to obtain reCAPTCHA token');
+      }
+
+      // Update rate limiting trackers
+      submissionAttemptsRef.current += 1;
+      lastSubmissionTimeRef.current = Date.now();
+
+      // === SUBMIT FORM ===
+      const formDataWithToken = {
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        organization: formData.organization.trim(),
+        idea: formData.idea.trim(),
+        isNonProfit: formData.isNonProfit,
+        token
+      };
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/submit-application`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formDataWithToken),
       });
 
-      if (!response.ok) throw new Error('Network response was not ok');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Network response was not ok');
+      }
 
       const result = await response.json();
       console.log(result);
@@ -203,7 +412,7 @@ export default function Apply({ title, description, openGraphData }) {
         null,
         timeToComplete
       );
-      
+
       // Track as part of nonprofit journey
       ga.trackJourneyStep(
         JourneyTypes.NONPROFIT.name,
@@ -219,6 +428,7 @@ export default function Apply({ title, description, openGraphData }) {
       // Associate user with their email for future tracking
       if (formData.email) ga.set(formData.email);
 
+      // Reset form on success
       setFormData({
         name: '',
         email: '',
@@ -226,19 +436,20 @@ export default function Apply({ title, description, openGraphData }) {
         idea: '',
         isNonProfit: false,
       });
+      formInteractionStartTime.current = null;
 
       setSubmitSuccess(true);
     } catch (error) {
       console.error('Error submitting form:', error);
-      
+
       // Track form submission error
       ga.trackError(
         'form_submission_error',
         error.message,
         'nonprofit_application'
       );
-      
-      alert('An error occurred while submitting the form. Please try again.');
+
+      setFormError(error.message || 'An error occurred while submitting the form. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -247,17 +458,37 @@ export default function Apply({ title, description, openGraphData }) {
   // For significant text fields, add specialized debounced handlers for smarter tracking
   const handleIdeaChange = useCallback((e) => {
     const value = e.target.value;
+
+    // Start tracking interaction time when user first interacts
+    if (!formInteractionStartTime.current) {
+      formInteractionStartTime.current = Date.now();
+    }
+
+    // Clear field-specific error when user starts typing
+    if (fieldErrors.idea) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.idea;
+        return newErrors;
+      });
+    }
+
+    // Clear general form error
+    if (formError) {
+      setFormError(null);
+    }
+
     setFormData(prev => ({ ...prev, idea: value }));
-    
+
     // Only track significant changes (when they pause typing or at certain lengths)
     const significantThresholds = [20, 50, 100, 200];
     const previousLength = formData.idea.length;
     const currentLength = value.length;
-    
+
     // If they've crossed a threshold, track it
     const previousThreshold = significantThresholds.findIndex(threshold => previousLength < threshold);
     const currentThreshold = significantThresholds.findIndex(threshold => currentLength < threshold);
-    
+
     if (previousThreshold !== currentThreshold && currentThreshold !== -1) {
       // Track milestone reached
       ga.trackForm(
@@ -270,7 +501,7 @@ export default function Apply({ title, description, openGraphData }) {
       // Otherwise use normal debounced tracking
       debouncedTrackFieldChange('idea', value);
     }
-  }, [formData.idea, debouncedTrackFieldChange]);
+  }, [formData.idea, debouncedTrackFieldChange, fieldErrors, formError]);
 
   return (
     <>
@@ -482,6 +713,31 @@ export default function Apply({ title, description, openGraphData }) {
             </Alert>
           ) : (
             <form onSubmit={handleSubmit}>
+              {/* Honeypot field - hidden from users but bots will fill it */}
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  width: '1px',
+                  height: '1px',
+                  opacity: 0,
+                  pointerEvents: 'none',
+                }}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+              />
+
+              {formError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {formError}
+                </Alert>
+              )}
+
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <TextField
@@ -492,6 +748,8 @@ export default function Apply({ title, description, openGraphData }) {
                     onChange={handleChange}
                     required
                     disabled={isSubmitting}
+                    error={!!fieldErrors.name}
+                    helperText={fieldErrors.name || ''}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -504,6 +762,8 @@ export default function Apply({ title, description, openGraphData }) {
                     onChange={handleChange}
                     required
                     disabled={isSubmitting}
+                    error={!!fieldErrors.email}
+                    helperText={fieldErrors.email || ''}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -514,6 +774,8 @@ export default function Apply({ title, description, openGraphData }) {
                     value={formData.organization}
                     onChange={handleChange}
                     disabled={isSubmitting}
+                    error={!!fieldErrors.organization}
+                    helperText={fieldErrors.organization || ''}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -528,6 +790,8 @@ export default function Apply({ title, description, openGraphData }) {
                     onChange={handleIdeaChange}
                     required
                     disabled={isSubmitting}
+                    error={!!fieldErrors.idea}
+                    helperText={fieldErrors.idea || ''}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -544,11 +808,11 @@ export default function Apply({ title, description, openGraphData }) {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    type="submit" 
-                    fullWidth 
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                    fullWidth
                     size="large"
                     disabled={isSubmitting}
                     startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : null}
