@@ -2,10 +2,7 @@ import React, { useEffect } from 'react';
 import {useRedirectFunctions} from "@propelauth/react"
 import { useAuthInfo } from '@propelauth/react'
 import { Alert, AlertTitle, Stack, Typography, Box, Divider } from '@mui/material';
-import { SocialLoginProvider } from "@propelauth/frontend-apis";
-import { useAuthFrontendApis } from "@propelauth/frontend-apis-react";
 import { useEnv } from "../../context/env.context";
-
 
 // Import ga
 import { initFacebookPixel, trackEvent } from '../../lib/ga';
@@ -18,7 +15,6 @@ import {
 export default function LoginOrRegister({ introText, previousPage }) {
     const { isLoggedIn, user } = useAuthInfo();
     const { redirectToLoginPage } = useRedirectFunctions();
-    const { loginWithSocialProvider } = useAuthFrontendApis();
     const { slackSignupUrl } = useEnv();
 
     const options = {
@@ -32,9 +28,12 @@ export default function LoginOrRegister({ introText, previousPage }) {
     }, []);
 
     const handleLoginClick = () => {
-        trackEvent('login_slack', { current_page: window.location.pathname });        
-
-        loginWithSocialProvider(SocialLoginProvider.SLACK);        
+        trackEvent('login_slack', { current_page: window.location.pathname });
+        
+        // Direct navigation to PropelAuth Slack login with teams parameter
+        const authUrl = process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL;
+        const slackTeamId = process.env.NEXT_PUBLIC_SLACK_TEAM_ID || 'T1Q7936BH'; // Opportunity Hack workspace ID
+        window.location.href = `${authUrl}/slack/login?external_param_team=${slackTeamId}`;
     };
 
     const handleSignupClick = () => {
