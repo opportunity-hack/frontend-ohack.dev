@@ -28,9 +28,10 @@
 - `/public` - Static assets
 
 ## Environment
-- Node v20.x
-- Next.js 14.x
+- Node v22.x
+- Next.js 16.x
 - Material UI for components
+- Use nvm for Node Version Management
 
 ## Testing
 - Don't worry about writing or running tests

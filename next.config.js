@@ -2,7 +2,6 @@ module.exports = {
   // Enable production optimizations in development
   // This will help with more accurate performance testing
   productionBrowserSourceMaps: false,
-  swcMinify: true,
 
   // Optimize bundle size
   compiler: {
