@@ -12,12 +12,6 @@ export default function LoginOrRegister({ introText, previousPage }) {
   const { isLoggedIn, user } = useAuthInfo();
   const { redirectToLoginPage } = useRedirectFunctions();
 
-  const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-  };
-  const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-
   useEffect(() => {
     initFacebookPixel();
   }, []);
@@ -35,6 +29,12 @@ export default function LoginOrRegister({ introText, previousPage }) {
 
     // Direct navigation to PropelAuth Google login
     const authUrl = process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL;
+
+    if (!authUrl) {
+      console.error("NEXT_PUBLIC_REACT_APP_AUTH_URL is not configured");
+      return;
+    }
+
     window.location.href = `${authUrl}/google/login`;
   };
 

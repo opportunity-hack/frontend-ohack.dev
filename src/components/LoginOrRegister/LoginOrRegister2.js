@@ -21,12 +21,6 @@ export default function LoginOrRegister({ introText, previousPage }) {
   const { redirectToLoginPage } = useRedirectFunctions();
   const { slackSignupUrl } = useEnv();
 
-  const options = {
-    autoConfig: true, // set pixel's autoConfig. More info: https://developers.facebook.com/docs/facebook-pixel/advanced/
-    debug: false, // enable logs
-  };
-  const advancedMatching = null; // { em: 'some@email.com' }; // optional, more info: https://developers.facebook.com/docs/facebook-pixel/advanced/advanced-matching
-
   useEffect(() => {
     initFacebookPixel();
   }, []);
@@ -37,6 +31,12 @@ export default function LoginOrRegister({ introText, previousPage }) {
     // Direct navigation to PropelAuth Slack login with teams parameter
     const authUrl = process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL;
     const slackTeamId = process.env.NEXT_PUBLIC_SLACK_TEAM_ID || "T1Q7936BH"; // Opportunity Hack workspace ID
+
+    if (!authUrl) {
+      console.error("NEXT_PUBLIC_REACT_APP_AUTH_URL is not configured");
+      return;
+    }
+
     window.location.href = `${authUrl}/slack/login?external_param_team=${slackTeamId}`;
   };
 
@@ -45,6 +45,12 @@ export default function LoginOrRegister({ introText, previousPage }) {
 
     // Direct navigation to PropelAuth Google login
     const authUrl = process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL;
+
+    if (!authUrl) {
+      console.error("NEXT_PUBLIC_REACT_APP_AUTH_URL is not configured");
+      return;
+    }
+
     window.location.href = `${authUrl}/google/login`;
   };
 
@@ -107,7 +113,7 @@ export default function LoginOrRegister({ introText, previousPage }) {
                   </Typography>
                 </Stack>
 
-                <Divider sx={{ width: "100%" }}>OR</Divider>
+                <Divider sx={{ width: "100%" }}>or</Divider>
 
                 <Stack
                   direction="column"
@@ -128,7 +134,7 @@ export default function LoginOrRegister({ introText, previousPage }) {
               </Stack>
             </Box>
 
-            <Divider sx={{ my: 2 }}>NEW USER?</Divider>
+            <Divider sx={{ my: 2 }}>or</Divider>
 
             {/* New Users Section */}
             <Box>
