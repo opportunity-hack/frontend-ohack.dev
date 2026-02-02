@@ -24,24 +24,24 @@ import Link from 'next/link';
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import useHackathonEvents from '../../../hooks/use-hackathon-events';
 import {
-  SchoolRounded,
-  GroupsRounded,
-  CodeRounded,
-  BrushRounded,
-  BusinessRounded,
-  BarChartRounded,
-  CloudRounded,
-  GitHubRounded,
-  CheckCircleRounded,
-  EventRounded,
-  LocationOnRounded,
-  CalendarTodayRounded,
-  ExpandMoreRounded,
-  PersonRounded,
-  FavoriteRounded,
-  AssignmentRounded,
-  SupportRounded,
-  PlayCircleOutlineRounded
+  School as SchoolRounded,
+  Groups as GroupsRounded,
+  Code as CodeRounded,
+  Brush as BrushRounded,
+  Business as BusinessRounded,
+  BarChart as BarChartRounded,
+  Cloud as CloudRounded,
+  GitHub as GitHubRounded,
+  CheckCircle as CheckCircleRounded,
+  Event as EventRounded,
+  LocationOn as LocationOnRounded,
+  CalendarToday as CalendarTodayRounded,
+  ExpandMore as ExpandMoreRounded,
+  Person as PersonRounded,
+  Favorite as FavoriteRounded,
+  Assignment as AssignmentRounded,
+  Support as SupportRounded,
+  PlayCircleOutline as PlayCircleOutlineRounded
 } from '@mui/icons-material';
 
 const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {

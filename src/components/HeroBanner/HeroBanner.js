@@ -1,4 +1,5 @@
 import React, {useEffect} from "react";
+import PropTypes from "prop-types";
 import { useAuthInfo, useRedirectFunctions } from "@propelauth/react";
 import {
   BlankContainer,
@@ -7,12 +8,13 @@ import {
   ButtonGoldStyle,
   CaptionContainer,
   GridStyled,
-  TextStyled,
 } from "./styles";
 import SponsorMinimal from "../Sponsors/SponsorMinimal";
 import { LoginButton } from "../Navbar/styles";
 import { useEnv } from "../../context/env.context";
+import { JourneyTypes } from "../JourneyTracker";
 import * as ga from "../../lib/ga";
+
 // Lazy load non-critical components
 
 
@@ -98,8 +100,8 @@ const HeroBanner = ({ children }) => {
 
                 // Track as part of nonprofit journey
                 ga.trackJourneyStep(
-                  ga.JourneyTypes.NONPROFIT.name,
-                  ga.JourneyTypes.NONPROFIT.steps.VIEW_APPLY,
+                  JourneyTypes.NONPROFIT.name,
+                  JourneyTypes.NONPROFIT.steps.VIEW_APPLY,
                   { source: "hero_banner" }
                 );
               }}
@@ -155,8 +157,8 @@ const HeroBanner = ({ children }) => {
 
                 // Track as part of volunteer journey
                 ga.trackJourneyStep(
-                  ga.JourneyTypes.VOLUNTEER.name,
-                  ga.JourneyTypes.VOLUNTEER.steps.VIEW_OPPORTUNITIES,
+                  JourneyTypes.VOLUNTEER.name,
+                  JourneyTypes.VOLUNTEER.steps.VIEW_OPPORTUNITIES,
                   { source: "hero_banner" }
                 );
               }}
@@ -173,8 +175,8 @@ const HeroBanner = ({ children }) => {
 
                 // Track as part of donation journey
                 ga.trackJourneyStep(
-                  ga.JourneyTypes.DONATION.name,
-                  ga.JourneyTypes.DONATION.steps.VIEW_DONATE,
+                  JourneyTypes.DONATION.name,
+                  JourneyTypes.DONATION.steps.VIEW_DONATE,
                   { source: "hero_banner", button: "paypal" }
                 );
               }}
@@ -195,8 +197,8 @@ const HeroBanner = ({ children }) => {
 
                 // Track as part of hackathon journey
                 ga.trackJourneyStep(
-                  ga.JourneyTypes.HACKATHON.name,
-                  ga.JourneyTypes.HACKATHON.steps.VIEW_INFO,
+                  JourneyTypes.HACKATHON.name,
+                  JourneyTypes.HACKATHON.steps.VIEW_INFO,
                   { source: "hero_banner" }
                 );
               }}
@@ -212,6 +214,10 @@ const HeroBanner = ({ children }) => {
       </BlankContainer>
     </GridStyled>
   );
+};
+
+HeroBanner.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default React.memo(HeroBanner);

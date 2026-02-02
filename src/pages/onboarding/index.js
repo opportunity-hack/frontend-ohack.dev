@@ -31,7 +31,8 @@ import WelcomeSection from '../../components/Onboarding/WelcomeSection';
 import MissionOverview from '../../components/Onboarding/MissionOverview';
 import IntroductionPrompt from '../../components/Onboarding/IntroductionPrompt';
 import SlackTutorial from '../../components/Onboarding/SlackTutorial';
-import BuddySystem from '../../components/Onboarding/BuddySystem';
+import JudgingOverview from '../../components/Onboarding/JudgingOverview';
+import MentoringOverview from '../../components/Onboarding/MentoringOverview';
 import OnboardingFAQ from '../../components/Onboarding/OnboardingFAQ';
 import FeedbackSection from '../../components/Onboarding/FeedbackSection';
 import JourneyTracker, { JourneyTypes } from '../../components/JourneyTracker';
@@ -58,7 +59,8 @@ const steps = [
   'Our Mission',
   'Introduce Yourself',
   'Slack Tutorial',
-  'Find a Buddy',
+  'Judging Overview',
+  'Mentoring',
   'FAQs',
   'Feedback'
 ];
@@ -71,7 +73,8 @@ const OnboardingJourney = {
     VIEW_MISSION: 'view_mission',
     COMPLETE_INTRODUCTION: 'complete_introduction',
     COMPLETE_TUTORIAL: 'complete_tutorial',
-    FIND_BUDDY: 'find_buddy',
+    VIEW_JUDGING: 'view_judging',
+    VIEW_MENTORING: 'view_mentoring',
     READ_FAQ: 'read_faq',
     PROVIDE_FEEDBACK: 'provide_feedback',
     COMPLETE_ONBOARDING: 'complete_onboarding'
@@ -228,10 +231,12 @@ function OnboardingComponent() {
       case 3:
         return <SlackTutorial />;
       case 4:
-        return <BuddySystem />;
+        return <JudgingOverview />;
       case 5:
-        return <OnboardingFAQ />;
+        return <MentoringOverview />;
       case 6:
+        return <OnboardingFAQ />;
+      case 7:
         return <FeedbackSection />;
       default:
         return 'Unknown step';

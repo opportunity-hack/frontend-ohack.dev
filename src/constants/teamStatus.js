@@ -6,6 +6,10 @@ export const TEAM_STATUS_OPTIONS = [
   { value: 'SWAG_RECEIVED', label: 'Swag Received', color: 'success' },
   { value: 'PROJECT_SUBMITTED', label: 'Project Submitted', color: 'success' },
   { value: 'COMPLETED_DEMO', label: 'Completed Demo', color: 'success' },
+  { value: 'COMPLETED_HACKATHON', label: 'Completed Hackathon', color: 'success' },
+  { value: 'FOUNDING_ENGINEERS', label: 'Founding Engineers - 1st Place', color: 'warning' },
+  { value: 'COMPLETION_SUPPORT', label: 'Completion Support - 2nd Place', color: 'info' },
+  { value: 'CATEGORY_WINNER', label: 'Category Winner', color: 'secondary' },
   { value: 'DEPLOYED', label: 'Deployed', color: 'success' },
   { value: 'NONPROFIT_SIGNOFF', label: 'Nonprofit Signoff', color: 'success' },
   { value: 'INACTIVE', label: 'Inactive', color: 'error' }
@@ -13,12 +17,16 @@ export const TEAM_STATUS_OPTIONS = [
 
 // Statuses that prevent new members from joining
 export const JOINING_DISABLED_STATUSES = [
-  'ONBOARDED', 
-  'SWAG_RECEIVED', 
-  'PROJECT_SUBMITTED', 
-  'COMPLETED_DEMO', 
-  'DEPLOYED', 
-  'NONPROFIT_SIGNOFF', 
+  'ONBOARDED',
+  'SWAG_RECEIVED',
+  'PROJECT_SUBMITTED',
+  'COMPLETED_DEMO',
+  'COMPLETED_HACKATHON',
+  'FOUNDING_ENGINEERS',
+  'COMPLETION_SUPPORT',
+  'CATEGORY_WINNER',
+  'DEPLOYED',
+  'NONPROFIT_SIGNOFF',
   'INACTIVE'
 ];
 
