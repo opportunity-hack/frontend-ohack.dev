@@ -88,6 +88,10 @@ const HackathonIndex = () => {
               fullWidth
               href="#upcoming-events"
               startIcon={<EventAvailable />}
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('upcoming-events')?.scrollIntoView({ behavior: 'smooth' });
+              }}
             >
               View Upcoming Events
             </Button>
@@ -193,7 +197,12 @@ const HackathonIndex = () => {
         </Paper>
         
         {/* Upcoming Events Section - Now positioned after "Why Join" */}
-        <Box id="upcoming-events" mb={5}>
+        <Box 
+          id="upcoming-events" 
+          component="section"
+          aria-labelledby="upcoming-events-heading"
+          mb={5}
+        >
           <HackathonList />
         </Box>
         
@@ -205,7 +214,7 @@ const HackathonIndex = () => {
 
       {/* Before You Join Section - Moved after events for better UX hierarchy */}
       <Box mt={5} mb={5} px={2}>
-        <Typography variant="h4" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
+        <Typography variant="h3" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
           Before You Join an Event
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mb: 4, maxWidth: '600px', mx: 'auto' }}>

@@ -164,7 +164,7 @@ function HackathonList({ compact = false }) {
       direction="column"
       textAlign="center"
     >
-      <SectionTitle variant="h2" component="h2">Upcoming and Current Events</SectionTitle>
+      <SectionTitle variant="h2" component="h2" id="upcoming-events-heading">Upcoming and Current Events</SectionTitle>
       
       <Typography variant="body1" color="textSecondary" sx={{ mb: 3, maxWidth: '800px' }}>
         Join our upcoming hackathons and make a difference! Work with nonprofits to solve real-world challenges using technology.
