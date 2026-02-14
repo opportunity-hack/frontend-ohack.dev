@@ -181,7 +181,8 @@ const ManageTeamComponent = () => {
 
 
   // Call the backend API /api/slack/users with active_days=30
-  const fetchActiveSlackUsers = async () => {
+  // Memoized to prevent stale closure issues with accessToken
+  const fetchActiveSlackUsers = useCallback(async () => {
     console.log("Fetching active Slack users...");
     try {
       const response = await axios.get(
@@ -198,8 +199,8 @@ const ManageTeamComponent = () => {
           id: user.id,
           name: user.name,
           real_name: user.real_name,
-          tz: user.tz,          
-        }        
+          tz: user.tz,
+        }
         ));
         console.log("Active Slack users:", activeUsers);
         setSlackUsers(activeUsers);
@@ -210,11 +211,11 @@ const ManageTeamComponent = () => {
       console.error("Error fetching active Slack users:", err);
       setError("Failed to fetch active Slack users. Please try again later.");
     }
-  };
+  }, [accessToken]);
 
   useEffect(() => {
-    fetchActiveSlackUsers();    
-  }, [event_id, accessToken]);
+    fetchActiveSlackUsers();
+  }, [event_id, fetchActiveSlackUsers]);
 
 
 
