@@ -206,13 +206,13 @@ const HackathonIndex = () => {
           <HackathonList />
         </Box>
         
-        <Divider sx={{ my: 5 }} />
-        <Box>
+        {/* Previous Events Section - Positioned right after Upcoming Events for better content grouping */}
+        <Box mb={5}>
           <PreviousHackathonList />
         </Box>
       </ProjectsContainer>
 
-      {/* Before You Join Section - Moved after events for better UX hierarchy */}
+      {/* Before You Join Section - Moved after all event content for better UX hierarchy */}
       <Box mt={5} mb={5} px={2}>
         <Typography variant="h3" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
           Before You Join an Event
