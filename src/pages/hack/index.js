@@ -71,12 +71,12 @@ const HackathonIndex = () => {
           component="h1"
           sx={{ fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" }, mb: 2 }}
         >
-          Join Our Global Hackathons
+          Code for Social Good at Our Global Hackathons
         </Typography>
 
         <Typography variant="body1" sx={{ fontSize: '18px', mb: 3, maxWidth: '800px', mx: 'auto' }}>
-          Build technology solutions for nonprofits at our hackathons worldwide. 
-          Connect with developers, designers, and nonprofits to create lasting social impact.
+          Join developers, designers, and nonprofits worldwide to build technology solutions that create lasting social impact. 
+          Since 2013, we've helped 100+ nonprofits serving underserved communities.
         </Typography>
 
         <Grid container spacing={2} sx={{ maxWidth: '600px', mx: 'auto', mb: 3 }}>
@@ -86,10 +86,10 @@ const HackathonIndex = () => {
               color="primary"
               size="large"
               fullWidth
-              href="/volunteer"
+              href="#upcoming-events"
               startIcon={<EventAvailable />}
             >
-              Find Your Role
+              View Upcoming Events
             </Button>
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -101,19 +101,15 @@ const HackathonIndex = () => {
               href="/signup"
               startIcon={<Group />}
             >
-              Join Community
+              Join Our Community
             </Button>
           </Grid>
         </Grid>
       </TitleContainer>
 
       <ProjectsContainer style={{ marginTop: 20, width: "100%" }}>
-        <Box mb={4}>
-          <HackathonList />
-        </Box>
-        
-        {/* Why Join Section with Image */}
-        <Paper sx={{ p: 4, my: 4, bgcolor: 'grey.50' }}>
+        {/* Why Join Section with Image - Moved to top for better UX flow */}
+        <Paper sx={{ p: 4, mb: 5, bgcolor: 'grey.50' }}>
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={6}>
               <Typography variant="h3" component="h2" gutterBottom>
@@ -196,35 +192,39 @@ const HackathonIndex = () => {
           </Grid>
         </Paper>
         
-        <Divider sx={{ my: 4 }} />
+        {/* Upcoming Events Section - Now positioned after "Why Join" */}
+        <Box id="upcoming-events" mb={5}>
+          <HackathonList />
+        </Box>
+        
+        <Divider sx={{ my: 5 }} />
         <Box>
           <PreviousHackathonList />
         </Box>
       </ProjectsContainer>
 
-
-      {/* Before You Join Section */}
-      <Box mt={4} mb={4}>
-        <Typography variant="h3" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+      {/* Before You Join Section - Moved after events for better UX hierarchy */}
+      <Box mt={5} mb={5} px={2}>
+        <Typography variant="h4" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
           Before You Join an Event
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mb: 4, maxWidth: '600px', mx: 'auto' }}>
-          A few quick reads to ensure everyone has a great and safe experience at our hackathons.
+          Quick reads to ensure everyone has a great and safe experience.
         </Typography>
         
-        <Grid container spacing={3} sx={{ maxWidth: '800px', mx: 'auto' }}>
+        <Grid container spacing={3} sx={{ maxWidth: '900px', mx: 'auto' }}>
           <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', textAlign: 'center' }}>
+            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <Policy color="primary" sx={{ fontSize: 40, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
                   Code of Conduct
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Our community guidelines for respectful collaboration
+                  Community guidelines for respectful collaboration
                 </Typography>
                 <Button 
-                  variant="contained" 
+                  variant="outlined" 
                   component={Link} 
                   href="/hack/code-of-conduct"
                   fullWidth
@@ -237,14 +237,14 @@ const HackathonIndex = () => {
           </Grid>
           
           <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', textAlign: 'center' }}>
+            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <Gavel color="action" sx={{ fontSize: 40, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
                   Liability Waiver
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Standard legal protection for in-person events
+                  Standard protection for in-person events
                 </Typography>
                 <Button 
                   variant="outlined" 
@@ -260,14 +260,14 @@ const HackathonIndex = () => {
           </Grid>
           
           <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', textAlign: 'center' }}>
+            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <CameraAlt color="action" sx={{ fontSize: 40, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
                   Photo Release
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Permission to share photos from our events
+                  Permission to share event photos
                 </Typography>
                 <Button 
                   variant="outlined" 
@@ -284,22 +284,21 @@ const HackathonIndex = () => {
         </Grid>
       </Box>
 
-      {/* Support Our Mission Section */}
-      <Paper sx={{ p: 4, mt: 4, bgcolor: 'primary.light', color: 'white', textAlign: 'center' }}>
-        <Business sx={{ fontSize: 48, mb: 2 }} />
-        <Typography variant="h4" gutterBottom>
+      {/* Support Our Mission Section - Appropriate for secondary audience */}
+      <Paper sx={{ p: 3, mt: 5, bgcolor: 'grey.100', color: 'text.primary', textAlign: 'center', borderTop: '3px solid', borderColor: 'primary.main' }}>
+        <Business color="primary" sx={{ fontSize: 40, mb: 1.5 }} />
+        <Typography variant="h5" gutterBottom>
           Support Our Mission
         </Typography>
-        <Typography variant="body1" sx={{ mb: 3, maxWidth: '600px', mx: 'auto' }}>
-          Help us continue organizing impactful hackathons by becoming a sponsor. 
-          Partner with us to support the next generation of social impact technologists.
+        <Typography variant="body2" sx={{ mb: 2.5, maxWidth: '600px', mx: 'auto' }}>
+          Help us continue organizing impactful hackathons. Partner with us to support the next generation of social impact technologists.
         </Typography>
         <Button 
           variant="contained" 
-          size="large"
+          size="medium"
           component={Link} 
           href="/sponsor"
-          sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+          sx={{ textTransform: 'none' }}
         >
           Become a Sponsor
         </Button>
