@@ -134,8 +134,8 @@ export default function Home() {
           <Grid container spacing={3} alignItems="stretch">
             {/* Hero section - left side on desktop, full width on mobile */}
             <Grid item xs={12} lg={5}>
-              <Box sx={{ 
-                display: 'flex', 
+              <Box sx={{
+                display: 'flex',
                 flexDirection: 'column',
                 height: '100%',
                 minHeight: { xs: 'auto', lg: '600px' },
@@ -146,7 +146,7 @@ export default function Home() {
                 <HeroBanner />
               </Box>
             </Grid>
-            
+
             {/* Events section - right side on desktop, below hero on mobile */}
             <Grid item xs={12} lg={7}>
               <Box sx={{ height: '100%' }}>
