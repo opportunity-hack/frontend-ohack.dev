@@ -169,14 +169,16 @@ const EventCountdown = ({ countdowns, eventId }) => {
     if (!countdowns?.length) return;
 
     const timer = setInterval(() => {
-      const now = Moment();
-      const sortedEvents = [...countdowns].sort((a, b) => Moment(a.time).diff(Moment(b.time)));
-      
+      const now = new Date();
+      const sortedEvents = [...countdowns].sort((a, b) =>
+        differenceInMilliseconds(new Date(a.time), new Date(b.time))
+      );
+
       // Find next upcoming event
-      const upcoming = sortedEvents.find(event => Moment(event.time).isAfter(now));
-      
+      const upcoming = sortedEvents.find(event => isAfter(new Date(event.time), now));
+
       setNextEvent(upcoming);
-      
+
       // Auto-expand next event
       if (upcoming) {
         setExpandedEvents(prev => {
@@ -185,22 +187,22 @@ const EventCountdown = ({ countdowns, eventId }) => {
           return newSet;
         });
       }
-      
+
       // Calculate overall progress - simple ratio of completed events
-      const completedEvents = sortedEvents.filter(event => Moment(event.time).isBefore(now)).length;
+      const completedEvents = sortedEvents.filter(event => isBefore(new Date(event.time), now)).length;
       const progressPercent = (completedEvents / sortedEvents.length) * 100;
       setProgress(progressPercent);
-      
+
       // Calculate countdown to next event
       if (upcoming) {
-        const eventTime = Moment(upcoming.time);
-        const duration = Moment.duration(eventTime.diff(now));
-        
+        const eventTime = new Date(upcoming.time);
+        const totalSeconds = differenceInSeconds(eventTime, now);
+
         setTimeLeft({
-          days: Math.floor(duration.asDays()),
-          hours: duration.hours(),
-          minutes: duration.minutes(),
-          seconds: duration.seconds(),
+          days: differenceInDays(eventTime, now),
+          hours: differenceInHours(eventTime, now) % 24,
+          minutes: differenceInMinutes(eventTime, now) % 60,
+          seconds: totalSeconds % 60,
         });
       } else {
         setTimeLeft(null);
@@ -251,7 +253,7 @@ const EventCountdown = ({ countdowns, eventId }) => {
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                 <AccessTimeIcon fontSize="small" />
-                {Moment(nextEvent.time).format('ddd, MMM Do [at] h:mm A')}
+                {format(new Date(nextEvent.time), 'EEE, MMM do \'at\' h:mm a')}
               </Typography>
             </Box>
             <CountdownGrid>
@@ -269,12 +271,12 @@ const EventCountdown = ({ countdowns, eventId }) => {
   };
 
   const getEventStatus = (event) => {
-    const now = Moment();
-    const eventTime = Moment(event.time);
-    
+    const now = new Date();
+    const eventTime = new Date(event.time);
+
     if (nextEvent && event.name === nextEvent.name) {
       return { status: 'next', icon: <PlayCircleOutlineIcon fontSize="small" />, label: 'Up Next', color: 'primary' };
-    } else if (eventTime.isBefore(now)) {
+    } else if (isBefore(eventTime, now)) {
       return { status: 'past', icon: <CheckCircleIcon fontSize="small" />, label: 'Completed', color: 'success' };
     } else {
       return { status: 'upcoming', icon: <PendingIcon fontSize="small" />, label: 'Upcoming', color: 'default' };
@@ -286,7 +288,7 @@ const EventCountdown = ({ countdowns, eventId }) => {
     const isPast = status === 'past';
     const isNext = status === 'next';
     const isExpanded = expandedEvents.has(event.name);
-    const eventTime = Moment(event.time);
+    const eventTime = new Date(event.time);
     
     return (
       <Fade in={true} timeout={300 + index * 100} key={event.name}>
@@ -314,13 +316,13 @@ const EventCountdown = ({ countdowns, eventId }) => {
                 >
                   {event.name}
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
                 >
                   <AccessTimeIcon fontSize="small" />
-                  {eventTime.format('ddd, MMM Do [at] h:mm A')}
+                  {format(eventTime, 'EEE, MMM do \'at\' h:mm a')}
                 </Typography>
               </Box>
               <Box display="flex" alignItems="center" gap={1}>
@@ -370,7 +372,9 @@ const EventCountdown = ({ countdowns, eventId }) => {
     );
   }
 
-  const sortedEvents = [...countdowns].sort((a, b) => Moment(a.time).diff(Moment(b.time)));
+  const sortedEvents = [...countdowns].sort((a, b) =>
+    differenceInMilliseconds(new Date(a.time), new Date(b.time))
+  );
 
   const handleViewAgenda = () => {
     if (eventId) {

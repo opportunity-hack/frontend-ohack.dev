@@ -122,13 +122,13 @@ export default function Countdown({ details })
             }
             {
                 isBefore(new Date(_time), new Date()) &&
-                <span style={{color: "gray"}}> 🏁 <Typography size="small" component="span">Completed {format(new Date(_time), 'eee MMM do, h:mm a')}</Typography></span>
+                <span style={{color: "gray"}}> 🏁 <Typography size="small" component="span">Completed {format(new Date(_time), 'EEE MMM do, h:mm a')}</Typography></span>
 
             }
             {
                 // Print time if it is not in the past
                 isAfter(new Date(_time), new Date()) &&
-                <span style={{color: "gray"}}> {format(new Date(_time), 'eee MMM do, h:mm a')}</span>
+                <span style={{color: "gray"}}> {format(new Date(_time), 'EEE MMM do, h:mm a')}</span>
 
             }
             </SectionTitle>        
