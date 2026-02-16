@@ -88,16 +88,39 @@ const LOCATIONS = {
       }
     ],
     video: "https://www.youtube.com/embed/a521Ch2N52c",
+    tourUrl: null,
   },
   "hayden-library": {
     name: "Hayden Library",
     address: "300 E Orange St., Tempe, AZ 85281",
-    description: "Hayden Library - a historic ASU landmark with collaborative study spaces",
+    description: "Hayden Library - a recently renovated ($90M) historic ASU landmark with collaborative study spaces, Makerspace, and nearly double the original student space",
     coordinates: { lat: 33.4242, lng: -111.9428 },
-    features: ["WiFi", "Power outlets", "Air conditioning", "Accessible entrance", "Study rooms"],
+    features: ["WiFi", "Power outlets", "Air conditioning", "Accessible entrance", "Study rooms", "Makerspace"],
     googleMapsUrl: "https://share.google/1aouzYHBuPe5OgnsQ",
-    gallery: [],
+    gallery: [
+      {
+        src: "https://tours.asu.edu/sites/g/files/litvpz1481/files/tours/tempe-hayden-hero.jpg",
+        caption: "Exterior view of Hayden Library - a historic ASU landmark named after Charles Trumbull Hayden, founder of Tempe",
+        alt: "Hayden Library exterior at ASU Tempe campus"
+      },
+      {
+        src: "https://tours.asu.edu/sites/g/files/litvpz1481/files/interior/tempe-hayden-interior-3.jpg",
+        caption: "Renovated interior of Hayden Library with modern collaborative study spaces",
+        alt: "Hayden Library interior collaborative study area"
+      },
+      {
+        src: "https://tours.asu.edu/sites/g/files/litvpz1481/files/interior/tempe-hayden-interior-5.jpg",
+        caption: "Open study areas inside the renovated Hayden Library",
+        alt: "Hayden Library open study spaces"
+      },
+      {
+        src: "https://tours.asu.edu/sites/g/files/litvpz1481/files/interior/tempe-hayden-interior-2.jpg",
+        caption: "Hayden Library interior spaces - modernized with enhanced facilities for students and visitors",
+        alt: "Hayden Library modernized interior"
+      },
+    ],
     video: null,
+    tourUrl: "https://tours.asu.edu/tempe/hayden-library",
   },
 };
 
@@ -629,6 +652,19 @@ const EventLocationPage = () => {
                     Share Address
                   </Button>
                 </Grid>
+                {activeLocation.tourUrl && (
+                  <Grid item>
+                    <Button
+                      variant="outlined"
+                      startIcon={<LinkRounded />}
+                      href={activeLocation.tourUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Virtual Tour
+                    </Button>
+                  </Grid>
+                )}
               </Grid>
             </CardContent>
           </Card>
