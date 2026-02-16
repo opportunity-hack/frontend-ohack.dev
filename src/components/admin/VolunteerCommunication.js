@@ -49,6 +49,7 @@ const VolunteerCommunication = ({
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customMessage, setCustomMessage] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const [placeholderValues, setPlaceholderValues] = useState({});
   const [detectedPlaceholders, setDetectedPlaceholders] = useState([]);
 
@@ -113,6 +114,40 @@ const VolunteerCommunication = ({
       enqueueSnackbar(error.response?.data?.message || "Failed to send message", { variant: "error" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!messageText.trim()) return;
+
+    setTestLoading(true);
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/email/send`,
+        {
+          email: 'questions@ohack.org',
+          message: messageText,
+          subject: `[TEST] ${selectedTemplate ? selectedTemplate.title : "Message from Opportunity Hack"}`,
+          recipient_type: volunteerType || volunteer?.type || 'volunteer',
+          name: 'Test Recipient'
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        enqueueSnackbar("Test email sent to questions@ohack.org", { variant: "success" });
+      }
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      enqueueSnackbar(error.response?.data?.message || "Failed to send test email", { variant: "error" });
+    } finally {
+      setTestLoading(false);
     }
   };
 
@@ -366,15 +401,26 @@ const VolunteerCommunication = ({
         <DialogActions>
           <Button onClick={handleCloseMessageDialog}>Cancel</Button>
           {(selectedTemplate || customMessage) && (
-            <Button
-              onClick={handleSendMessage}
-              variant="contained"
-              color="primary"
-              disabled={loading || !messageText.trim()}
-              startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
-            >
-              Send Message
-            </Button>
+            <>
+              <Button
+                onClick={handleSendTestEmail}
+                variant="outlined"
+                color="secondary"
+                disabled={testLoading || loading || !messageText.trim()}
+                startIcon={testLoading ? <CircularProgress size={16} /> : <FaCheck />}
+              >
+                Send Test to questions@ohack.org
+              </Button>
+              <Button
+                onClick={handleSendMessage}
+                variant="contained"
+                color="primary"
+                disabled={loading || testLoading || !messageText.trim()}
+                startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
+              >
+                Send Message
+              </Button>
+            </>
           )}
         </DialogActions>
       </Dialog>
@@ -588,15 +634,26 @@ const VolunteerCommunication = ({
         <DialogActions>
           <Button onClick={handleCloseMessageDialog}>Cancel</Button>
           {(selectedTemplate || customMessage) && (
-            <Button
-              onClick={handleSendMessage}
-              variant="contained"
-              color="primary"
-              disabled={loading || !messageText.trim()}
-              startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
-            >
-              Send Message
-            </Button>
+            <>
+              <Button
+                onClick={handleSendTestEmail}
+                variant="outlined"
+                color="secondary"
+                disabled={testLoading || loading || !messageText.trim()}
+                startIcon={testLoading ? <CircularProgress size={16} /> : <FaCheck />}
+              >
+                Send Test to questions@ohack.org
+              </Button>
+              <Button
+                onClick={handleSendMessage}
+                variant="contained"
+                color="primary"
+                disabled={loading || testLoading || !messageText.trim()}
+                startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
+              >
+                Send Message
+              </Button>
+            </>
           )}
         </DialogActions>
       </Dialog>

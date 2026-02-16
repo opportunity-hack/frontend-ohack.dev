@@ -16,6 +16,7 @@ import {
   Alert,
   Chip,
   LinearProgress,
+  CircularProgress,
   IconButton,
   Collapse,
   Card,
@@ -36,6 +37,8 @@ import {
 } from '@mui/icons-material';
 import { FaPaperPlane, FaEdit } from 'react-icons/fa';
 import { styled } from '@mui/system';
+import axios from 'axios';
+import { useSnackbar } from 'notistack';
 import BatchEmailService from '../../lib/batchEmailService';
 import {
   MESSAGE_TEMPLATES,
@@ -77,6 +80,7 @@ const BatchEmailDialog = ({
   onComplete,
   isSelectedUsers = true, // true for selected/approved users, false for not-selected/rejected users
 }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customMessage, setCustomMessage] = useState(false);
@@ -86,6 +90,7 @@ const BatchEmailDialog = ({
   const [progress, setProgress] = useState(null);
   const [results, setResults] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const [placeholderValues, setPlaceholderValues] = useState({});
   const [detectedPlaceholders, setDetectedPlaceholders] = useState([]);
 
@@ -190,6 +195,40 @@ const BatchEmailDialog = ({
       }
     }
     setMessageText(message);
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!messageText.trim()) return;
+
+    setTestLoading(true);
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/email/send`,
+        {
+          email: 'questions@ohack.org',
+          message: messageText,
+          subject: `[TEST] ${subject || "Message from Opportunity Hack"}`,
+          recipient_type: recipientType,
+          name: 'Test Recipient'
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        enqueueSnackbar("Test email sent to questions@ohack.org", { variant: "success" });
+      }
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      enqueueSnackbar(error.response?.data?.message || "Failed to send test email", { variant: "error" });
+    } finally {
+      setTestLoading(false);
+    }
   };
 
   const handleSendEmails = async () => {
@@ -625,18 +664,33 @@ const BatchEmailDialog = ({
         </Button>
         
         {currentStep === 1 && !results && eligibleUsers.length > 0 && (
-          <Button
-            onClick={handleSendEmails}
-            variant="contained"
-            disabled={
-              isScheduling || 
-              !!BatchEmailService.validateMessage(messageText) || 
-              !!BatchEmailService.validateSubject(subject)
-            }
-            startIcon={<FaPaperPlane />}
-          >
-            {isScheduling ? 'Sending...' : `Send to ${eligibleUsers.length} Users`}
-          </Button>
+          <>
+            <Button
+              onClick={handleSendTestEmail}
+              variant="outlined"
+              color="secondary"
+              disabled={
+                testLoading || isScheduling ||
+                !!BatchEmailService.validateMessage(messageText) ||
+                !!BatchEmailService.validateSubject(subject)
+              }
+              startIcon={testLoading ? <CircularProgress size={16} /> : <EmailIcon />}
+            >
+              Send Test to questions@ohack.org
+            </Button>
+            <Button
+              onClick={handleSendEmails}
+              variant="contained"
+              disabled={
+                isScheduling || testLoading ||
+                !!BatchEmailService.validateMessage(messageText) ||
+                !!BatchEmailService.validateSubject(subject)
+              }
+              startIcon={<FaPaperPlane />}
+            >
+              {isScheduling ? 'Sending...' : `Send to ${eligibleUsers.length} Users`}
+            </Button>
+          </>
         )}
       </DialogActions>
     </StyledDialog>
