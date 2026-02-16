@@ -7,6 +7,7 @@ import {
   Typography,
   Chip,
   Box,
+  Avatar,
   Paper,
   Link,
   Tooltip,
@@ -19,6 +20,7 @@ import {
   Divider,
   Collapse,
   Button,
+  IconButton,
 } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
@@ -148,48 +150,46 @@ const ArtifactListItem = styled(ListItem)({
   padding: "4px 0",
 });
 
-const VolunteerCard = styled(Card)(({ theme }) => ({
+// Card with avatar, name, key info visible at a glance; details expand below
+const PersonCard = styled(Box)(({ theme, isExpanded }) => ({
   display: "flex",
   flexDirection: "column",
+  borderRadius: theme.shape.borderRadius * 2,
+  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
+  transition: "border-color 0.2s, box-shadow 0.2s",
+  overflow: "hidden",
   height: "100%",
-  transition: "transform 0.3s ease-in-out",
   "&:hover": {
-    transform: "scale(1.03)",
+    borderColor: theme.palette.primary.light,
+    boxShadow: theme.shadows[2],
   },
+  ...(isExpanded && {
+    borderColor: theme.palette.primary.main,
+    boxShadow: theme.shadows[3],
+  }),
 }));
 
-const VolunteerMediaContainer = styled(Box)({
-  position: "relative",
-  width: "50%",
-  margin: "16px auto 0",
-});
-
-const VolunteerMedia = styled(CardMedia)({
-  paddingTop: "100%" // 1:1 Aspect Ratio
-});
-
-const InPersonBadge = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  bottom: 0,
-  right: 0,
-  backgroundColor: theme.palette.success.main,
-  color: theme.palette.success.contrastText,
-  padding: "4px 8px",
-  borderRadius: "12px",
-  fontSize: "0.75rem",
-  fontWeight: "bold",
+const CardTopSection = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  padding: theme.spacing(2, 1.5, 1),
+  cursor: "pointer",
+  textAlign: "center",
 }));
 
-const RemoteBadge = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  bottom: 0,
-  right: 0,
-  backgroundColor: theme.palette.info.main,
-  color: theme.palette.success.contrastText,
-  padding: "4px 8px",
-  borderRadius: "12px",
-  fontSize: "0.75rem",
-  fontWeight: "bold",
+const PersonAvatar = styled(Avatar)(({ theme }) => ({
+  width: 56,
+  height: 56,
+  marginBottom: theme.spacing(1),
+  border: `2px solid ${theme.palette.background.paper}`,
+  boxShadow: theme.shadows[2],
+}));
+
+const ExpandedContent = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(1, 1.5, 1.5),
+  borderTop: `1px solid ${theme.palette.divider}`,
 }));
 
 const HeadingContainer = styled(Box)({
@@ -207,10 +207,6 @@ const StyledLink = styled(Link)(({ theme }) => ({
     textDecoration: "underline",
   },
 }));
-
-const VolunteerContent = styled(CardContent)({
-  flexGrow: 1,
-});
 
 const ChipContainer = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -1307,16 +1303,16 @@ const VolunteerList = ({ event_id, type }) => {
     }
   };
 
-  const renderVolunteerCard = (volunteer) => {
-    // Check if volunteer exists
-    if (!volunteer) return null;
+  const [expandedCards, setExpandedCards] = React.useState({});
 
-    const isSelected = !!volunteer.isSelected;
+  const toggleCardExpanded = (volunteerName) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [volunteerName]: !prev[volunteerName]
+    }));
+  };
 
-    // Skip rendering if not selected
-    if (!isSelected) return null;
-
-    // Safely handle photo URL
+  const getVolunteerImage = (volunteer) => {
     let imageToDisplay =
       "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png";
     if (volunteer.photoUrl && typeof volunteer.photoUrl === "string") {
@@ -1325,76 +1321,155 @@ const VolunteerList = ({ event_id, type }) => {
         imageToDisplay = volunteer.photoUrl;
       }
     }
+    return imageToDisplay;
+  };
+
+  // Get a short subtitle for the compact card header
+  const getCompactSubtitle = (volunteer) => {
+    const parts = [];
+    const company = getFieldValue(volunteer, FIELD_CONFIG.company);
+    if (company) parts.push(company);
+    if (volunteer.title && !volunteer.experienceLevel) parts.push(volunteer.title);
+    if (volunteer.experienceLevel) parts.push(volunteer.experienceLevel);
+    const expertise = getFieldValue(volunteer, FIELD_CONFIG.expertise);
+    if (!parts.length && expertise) {
+      const short = Array.isArray(expertise) ? expertise.slice(0, 2).join(", ") : expertise.split(/[,;]/).slice(0, 2).join(", ");
+      parts.push(short);
+    }
+    return parts.join(" · ");
+  };
+
+  const renderVolunteerCard = (volunteer) => {
+    if (!volunteer) return null;
+    if (!volunteer.isSelected) return null;
+
+    const name = volunteer.name || "Volunteer";
+    const isExpanded = expandedCards[name] || false;
+    const imageUrl = getVolunteerImage(volunteer);
+    const subtitle = getCompactSubtitle(volunteer);
+    const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+
+    // Gather visible-at-a-glance chips (location, in-person badge, team status)
+    const hasLocation = shouldRenderField(volunteer, 'location', type);
+    const hasTeamStatus = shouldRenderField(volunteer, 'teamStatus', type);
 
     return (
       <Grid
-        item
-        xs={12}
-        sm={6}
-        md={4}
-        key={volunteer.name || `volunteer-${Math.random().toString(36)}`}
-        id={`mentor-${volunteer.name || "unknown"}`}
+        size={{ xs: 6, sm: 4, md: 3 }}
+        key={name}
+        id={`mentor-${name}`}
       >
-        <VolunteerCard>
-          <VolunteerMediaContainer>
-            <VolunteerMedia
-              image={imageToDisplay}
-              title={volunteer.name || "Volunteer"}
-            />
-            {volunteer.isInPerson !== undefined && (volunteer.isInPerson ? (
-              <InPersonBadge>In-Person</InPersonBadge>
-            ) : (
-              <RemoteBadge>Remote</RemoteBadge>
-            ))}
-          </VolunteerMediaContainer>
-          <VolunteerContent>
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              <Typography gutterBottom variant="h5" component="div">
-                {volunteer.name || "Volunteer"}
-                {volunteer.pronouns && (
-                  <Tooltip title="Pronouns">
-                    <Chip
-                      icon={<PersonIcon />}
-                      label={volunteer.pronouns}
-                      size="small"
-                      style={{ marginLeft: "8px" }}
-                    />
-                  </Tooltip>
-                )}
-              </Typography>
-              <ShareVolunteer volunteer={volunteer} type={type} />
+        <PersonCard isExpanded={isExpanded}>
+          {/* Always-visible top section: avatar, name, subtitle, key badges */}
+          <CardTopSection onClick={() => toggleCardExpanded(name)}>
+            <Box sx={{ position: "relative", display: "inline-flex" }}>
+              <PersonAvatar src={imageUrl} alt={name}>
+                {initials}
+              </PersonAvatar>
+              {volunteer.isInPerson !== undefined && (
+                <Tooltip title={volunteer.isInPerson ? "In-Person" : "Remote"}>
+                  <Chip
+                    label={volunteer.isInPerson ? "In-Person" : "Remote"}
+                    size="small"
+                    color={volunteer.isInPerson ? "success" : "info"}
+                    sx={{
+                      position: "absolute",
+                      bottom: -4,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      fontSize: "0.65rem",
+                      height: 18,
+                      "& .MuiChip-label": { px: 0.75 },
+                    }}
+                  />
+                </Tooltip>
+              )}
             </Box>
-            <Typography variant="subtitle1" color="text.secondary">
-              {getFieldValue(volunteer, FIELD_CONFIG.company) || ""}
-              {volunteer.title && !volunteer.experienceLevel &&
-                ` - ${volunteer.title}`}
-              {volunteer.experienceLevel &&
-                ` • ${volunteer.experienceLevel}`}
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 600,
+                lineHeight: 1.3,
+                mt: 0.5,
+                wordBreak: "break-word",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {name}
             </Typography>
-            <ChipContainer>
-              {renderField(volunteer, 'company', type)}
-              {renderField(volunteer, 'location', type)}
-              {renderField(volunteer, 'participationCount', type)}
-              {renderField(volunteer, 'teamStatus', type)}
-              {renderField(volunteer, 'linkedinProfile', type)}
-              {renderField(volunteer, 'github', type)}
-              {renderField(volunteer, 'portfolio', type)}
-            </ChipContainer>
-            {renderField(volunteer, 'bio', type)}
-            {renderField(volunteer, 'expertise', type)}
-            {renderField(volunteer, 'softwareSpecifics', type)}
-            {renderField(volunteer, 'whyJudge', type)}
-            {renderField(volunteer, 'primaryRoles', type)}
-            {renderField(volunteer, 'skills', type)}
-            {renderField(volunteer, 'socialCauses', type)}
-            {renderField(volunteer, 'availability', type)}
-            {renderField(volunteer, 'artifacts', type)}
-          </VolunteerContent>
-        </VolunteerCard>
+            {subtitle && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  lineHeight: 1.3,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  wordBreak: "break-word",
+                }}
+              >
+                {subtitle}
+              </Typography>
+            )}
+            {/* Quick-glance chips visible without expanding */}
+            {(hasLocation || hasTeamStatus) && (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.75, justifyContent: "center" }}>
+                {renderField(volunteer, 'location', type)}
+                {renderField(volunteer, 'teamStatus', type)}
+              </Box>
+            )}
+          </CardTopSection>
+
+          {/* Expand/collapse toggle */}
+          <Box
+            onClick={() => toggleCardExpanded(name)}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              py: 0.5,
+              cursor: "pointer",
+              color: "text.secondary",
+              "&:hover": { color: "primary.main" },
+            }}
+          >
+            {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+          </Box>
+
+          {/* Expanded detail section */}
+          <Collapse in={isExpanded}>
+            <ExpandedContent>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                  {volunteer.pronouns && (
+                    <Chip icon={<PersonIcon />} label={volunteer.pronouns} size="small" />
+                  )}
+                </Box>
+                <ShareVolunteer volunteer={volunteer} type={type} />
+              </Box>
+              <ChipContainer>
+                {renderField(volunteer, 'participationCount', type)}
+                {renderField(volunteer, 'linkedinProfile', type)}
+                {renderField(volunteer, 'github', type)}
+                {renderField(volunteer, 'portfolio', type)}
+              </ChipContainer>
+              {renderField(volunteer, 'bio', type)}
+              {renderField(volunteer, 'expertise', type)}
+              {renderField(volunteer, 'softwareSpecifics', type)}
+              {renderField(volunteer, 'whyJudge', type)}
+              {renderField(volunteer, 'primaryRoles', type)}
+              {renderField(volunteer, 'skills', type)}
+              {renderField(volunteer, 'socialCauses', type)}
+              {renderField(volunteer, 'availability', type)}
+              {renderField(volunteer, 'artifacts', type)}
+            </ExpandedContent>
+          </Collapse>
+        </PersonCard>
       </Grid>
     );
   };
@@ -1530,7 +1605,7 @@ const VolunteerList = ({ event_id, type }) => {
           </AvailableMentorsSection>
         )}
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         {Array.isArray(volunteers) &&
           volunteers.map((volunteer) => renderVolunteerCard(volunteer))}
       </Grid>

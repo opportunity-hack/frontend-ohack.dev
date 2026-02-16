@@ -34,6 +34,11 @@ import {
   CardActions,
   Stack,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -44,7 +49,8 @@ import {
   VolunteerActivism as VolunteerIcon,
   CheckCircle as CheckInIcon,
   Gavel as JudgingIcon,
-  Launch as LaunchIcon
+  Launch as LaunchIcon,
+  QuizOutlined as QuizIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider, DatePicker, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -149,6 +155,7 @@ const AdminHackathonPage = () => {
         max_people_per_team: 5,
         max_teams_per_problem: 10,
         min_people_per_team: 2,
+        hacker_required_questions: { questions: [] },
       },
       donation_current: {
         food: '0',
@@ -275,6 +282,50 @@ const AdminHackathonPage = () => {
     }));
   };
 
+  const handleAddRequiredQuestion = () => {
+    setEditingHackathon((prev) => {
+      const questions = prev.constraints?.hacker_required_questions?.questions || [];
+      return {
+        ...prev,
+        constraints: {
+          ...prev.constraints,
+          hacker_required_questions: {
+            questions: [...questions, { question: "", required_answer: true, error: "" }],
+          },
+        },
+      };
+    });
+  };
+
+  const handleUpdateRequiredQuestion = (index, field, value) => {
+    setEditingHackathon((prev) => {
+      const questions = [...(prev.constraints?.hacker_required_questions?.questions || [])];
+      questions[index] = { ...questions[index], [field]: value };
+      return {
+        ...prev,
+        constraints: {
+          ...prev.constraints,
+          hacker_required_questions: { questions },
+        },
+      };
+    });
+  };
+
+  const handleRemoveRequiredQuestion = (index) => {
+    setEditingHackathon((prev) => {
+      const questions = (prev.constraints?.hacker_required_questions?.questions || []).filter(
+        (_, i) => i !== index
+      );
+      return {
+        ...prev,
+        constraints: {
+          ...prev.constraints,
+          hacker_required_questions: { questions },
+        },
+      };
+    });
+  };
+
   const handleNonprofitUpdate = useCallback(() => {
     setSnackbar({
       open: true,
@@ -298,7 +349,7 @@ const AdminHackathonPage = () => {
         <RequiredAuthProvider
             authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
             displayIfLoggedOut={<RedirectToLogin
-      postLoginRedirectUrl={window.location.href}
+      postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''}
     />}
             >
 
@@ -314,7 +365,7 @@ const AdminHackathonPage = () => {
             authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
             displayIfLoggedOut={
                 <RedirectToLogin
-      postLoginRedirectUrl={window.location.href}
+      postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''}
     />
             }
             >
@@ -653,6 +704,71 @@ const AdminHackathonPage = () => {
                     fullWidth
                     margin="normal"
                   />
+
+                  <Box sx={{ mt: 3, mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                      <QuizIcon fontSize="small" /> Hacker Screening Questions
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Add eligibility questions that applicants must answer correctly to proceed with their hacker application.
+                      Use this for event-specific gates (e.g., "Are you a member of ASU WiCS?").
+                    </Typography>
+
+                    {(editingHackathon?.constraints?.hacker_required_questions?.questions || []).map((q, index) => (
+                      <Card key={index} variant="outlined" sx={{ mb: 2, p: 2 }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                            Question {index + 1}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleRemoveRequiredQuestion(index)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                        <TextField
+                          label="Question Text"
+                          fullWidth
+                          value={q.question || ""}
+                          onChange={(e) => handleUpdateRequiredQuestion(index, "question", e.target.value)}
+                          margin="dense"
+                          placeholder="e.g., Are you a current member of ASU WiCS?"
+                        />
+                        <FormControl fullWidth margin="dense">
+                          <InputLabel id={`required-answer-label-${index}`}>Required Answer</InputLabel>
+                          <Select
+                            labelId={`required-answer-label-${index}`}
+                            value={q.required_answer === true || q.required_answer === "true" ? "yes" : "no"}
+                            label="Required Answer"
+                            onChange={(e) => handleUpdateRequiredQuestion(index, "required_answer", e.target.value === "yes")}
+                          >
+                            <MenuItem value="yes">Yes (applicant must answer Yes)</MenuItem>
+                            <MenuItem value="no">No (applicant must answer No)</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <TextField
+                          label="Error Message"
+                          fullWidth
+                          value={q.error || ""}
+                          onChange={(e) => handleUpdateRequiredQuestion(index, "error", e.target.value)}
+                          margin="dense"
+                          placeholder="e.g., This hackathon is only open to ASU WiCS members."
+                          helperText="Shown when an applicant gives the wrong answer"
+                        />
+                      </Card>
+                    ))}
+
+                    <Button
+                      startIcon={<AddIcon />}
+                      onClick={handleAddRequiredQuestion}
+                      variant="outlined"
+                      size="small"
+                    >
+                      Add Question
+                    </Button>
+                  </Box>
                 </AccordionDetails>
               </Accordion>
 

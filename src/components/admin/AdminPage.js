@@ -2,7 +2,11 @@ import React from "react";
 import { Typography, Box, Snackbar, Alert, useTheme, useMediaQuery, Container } from "@mui/material";
 import Head from "next/head";
 import { styled } from "@mui/system";
-import AdminNavigation from "./AdminNavigation";
+import dynamic from "next/dynamic";
+
+const AdminNavigation = dynamic(() => import("./AdminNavigation"), {
+  ssr: false,
+});
 
 const AdminPageContainer = styled(Container)(({ theme }) => ({
   width: "100%",

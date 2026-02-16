@@ -246,7 +246,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
           
           <Grid container spacing={2}>
             {applicationTypes.map((app) => (
-              <Grid item xs={12} sm={6} key={app.type}>
+              <Grid size={{ xs: 12, sm: 6 }} key={app.type}>
                 <ApplicationButton
                   variant="contained"
                   color={app.color}
@@ -307,7 +307,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
         </Typography>
         <Grid container spacing={2}>
           {links.map((link, index) => (
-            <Grid item xs={12} key={index}>
+            <Grid size={12} key={index}>
               {renderButton(link)}
             </Grid>
           ))}
@@ -372,7 +372,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
         
         <Grid container spacing={2} mb={3}>
           {applicationTypes.map((app) => (
-            <Grid item xs={12} sm={6} key={app.type}>
+            <Grid size={{ xs: 12, sm: 6 }} key={app.type}>
               <ApplicationButton
                 variant="contained"
                 color={app.color}
@@ -414,7 +414,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
           </Typography>
           <Grid container spacing={2}>
             {links.map((link, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                 {renderButton(link)}
               </Grid>
             ))}

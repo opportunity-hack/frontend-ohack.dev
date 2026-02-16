@@ -115,7 +115,7 @@ const MyFeedbackPage = withRequiredAuthInfo(({ userClass }) => {
     }
   };
 
-  const feedbackUrl = profileId
+  const feedbackUrl = profileId && typeof window !== 'undefined'
     ? `${window.location.origin}/feedback/${profileId}`
     : "";
 

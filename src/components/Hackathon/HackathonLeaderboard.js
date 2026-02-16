@@ -350,7 +350,7 @@ const HackathonLeaderboard = ({
               </Typography>
               <Grid container spacing={2} sx={{ px: 1 }}>
                 {['Commits', 'Pull Requests', 'Hours Coded'].map((stat, idx) => (
-                  <Grid item xs={4} key={idx}>
+                  <Grid size={4} key={idx}>
                     <Skeleton variant="rounded" height={80} animation="wave" />
                   </Grid>
                 ))}
@@ -437,7 +437,7 @@ const HackathonLeaderboard = ({
           <AnimatedPulse sx={{ width: '100%' }}>
             <Grid container spacing={2} sx={{ px: 2 }}>
               {['GitHub Commits', 'Pull Requests', 'Lines of Code'].map((stat, idx) => (
-                <Grid item xs={4} key={idx}>
+                <Grid size={4} key={idx}>
                   <Box sx={{ 
                     bgcolor: 'background.paper', 
                     p: 2, 
@@ -534,11 +534,8 @@ const HackathonLeaderboard = ({
       <SectionHeader variant="h6">General Statistics</SectionHeader>
       <Grid container spacing={2}>
         {generalStats && generalStats.map((stat, index) => (
-          <Grid 
-            item 
-            xs={6} 
-            sm={4} 
-            md={index < 3 ? 4 : 6} 
+          <Grid
+            size={{ xs: 6, sm: 4, md: index < 3 ? 4 : 6 }}
             key={index}
             sx={{
               order: { 
@@ -622,7 +619,7 @@ const HackathonLeaderboard = ({
             const hasCommitLink = hasRepo && achievement.commitId;
             
             return (
-              <Grid item xs={12} md={12} key={index}>
+              <Grid size={12} key={index}>
                 <AchievementCard 
                   sx={{ 
                     flexDirection: { xs: 'row', md: 'row' }, 
@@ -762,7 +759,7 @@ const HackathonLeaderboard = ({
           })}
           
           {(!individualAchievements || individualAchievements.length === 0) && (
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Box p={3} textAlign="center" bgcolor="background.paper" borderRadius={1}>
                 <Typography color="textSecondary">No individual achievements to display</Typography>
               </Box>
@@ -778,7 +775,7 @@ const HackathonLeaderboard = ({
             const hasRepo = achievement.repo;
             
             return (
-              <Grid item xs={12} md={12} key={index}>
+              <Grid size={12} key={index}>
                 <AchievementCard 
                   sx={{ 
                     flexDirection: 'row', 
@@ -882,7 +879,7 @@ const HackathonLeaderboard = ({
             );
           })}
           {(!teamAchievements || teamAchievements.length === 0) && (
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Box p={3} textAlign="center" bgcolor="background.paper" borderRadius={1}>
                 <Typography color="textSecondary">No team achievements to display</Typography>
               </Box>

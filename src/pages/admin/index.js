@@ -134,7 +134,7 @@ const AdminDashboard = () => {
     return (
       <RequiredAuthProvider
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={window.location.href} />}
+        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
       >
         <AdminPage title="Admin Dashboard" isAdmin={false}>
           <Typography>You do not have permission to view this page.</Typography>
@@ -146,7 +146,7 @@ const AdminDashboard = () => {
   return (
     <RequiredAuthProvider
       authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={window.location.href} />}
+      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
     >
       <AdminPage title="Admin Dashboard" isAdmin={isAdmin}>
         <Paper 

@@ -85,7 +85,7 @@ const HackathonHeader = ({
       </EventTitle>
 
       <EventInfo container spacing={2} alignItems="center">
-        <Grid item>
+        <Grid>
           <EventChip
             icon={<CalendarTodayIcon />}
             label={
@@ -108,7 +108,7 @@ const HackathonHeader = ({
             aria-label={`Event dates: ${formatDate(startDate)} to ${formatDate(endDate)}`}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <EventChip
             icon={<LocationOnIcon />}
             label={<span itemProp="location">{location}</span>}

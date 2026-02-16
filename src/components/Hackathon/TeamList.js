@@ -75,7 +75,7 @@ const TeamMember = ({ user, isCurrentUser }) => {
   const firstLetter = displayName && displayName.length > 0 ? displayName[0] : '?';
   
   return (
-    <Grid item>
+    <Grid>
       <Tooltip
         title={
           <Box sx={{ fontSize: "12px" }}>
@@ -364,7 +364,7 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
 
           <Grid container spacing={2}>
             {checklistItems.map((item) => (
-              <Grid item xs={12} sm={4} key={item.key}>
+              <Grid size={{ xs: 12, sm: 4 }} key={item.key}>
                 <Card
                   sx={{
                     height: '100%',
@@ -584,7 +584,7 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUse
   };
   
   return (
-    <Grid item>
+    <Grid>
       <Tooltip
         title={
           <Box sx={{ fontSize: "12px" }}>
@@ -1519,7 +1519,7 @@ const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
 
       <Grid container spacing={2}>
         {teamData.map((team) => (
-          <Grid item xs={12} sm={6} md={4} key={team?.id}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={team?.id}>
             <TeamCard
               team={team}
               userProfile={userProfile}

@@ -563,8 +563,7 @@ export default function HackathonEvent({ eventData }) {
         <Grid container spacing={3}>
           {/* Applications section */}
           <Grid
-            item
-            xs={12}
+            size={12}
             component="section"
             aria-labelledby="applications-heading"
             id="applications"
@@ -592,8 +591,7 @@ export default function HackathonEvent({ eventData }) {
 
           {/* Nonprofit List */}
           <Grid
-            item
-            xs={12}
+            size={12}
             id="nonprofit"
             component="section"
             aria-labelledby="nonprofit-section-heading"
@@ -607,8 +605,7 @@ export default function HackathonEvent({ eventData }) {
 
           {/* Team List - Proper implementation with Grid item */}
           <Grid
-            item
-            xs={12}
+            size={12}
             component="section"
             aria-labelledby="teams-heading"
             id="teams"
@@ -645,7 +642,7 @@ export default function HackathonEvent({ eventData }) {
                   </Typography>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <Button
                         variant="contained"
                         color="primary"
@@ -691,7 +688,7 @@ export default function HackathonEvent({ eventData }) {
                       </Button>
                     </Grid>
 
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <Button
                         variant="outlined"
                         color="primary"
@@ -762,7 +759,6 @@ export default function HackathonEvent({ eventData }) {
           {/* Donation Progress and Event Links side by side on larger screens */}
           <Grid
             container
-            item
             spacing={3}
             component="section"
             aria-labelledby="event-info-heading"
@@ -785,20 +781,19 @@ export default function HackathonEvent({ eventData }) {
             >
               Event Information
             </Typography>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <DonationProgress
                 donationGoals={event.donation_goals}
                 donationCurrent={event.donation_current}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <EventLinks links={event.links} variant="event-links" constraints={event.constraints} />
             </Grid>
           </Grid>
           {/* Hackathon Stats and Countdown side by side */}
           <Grid
             container
-            item
             spacing={3}
             component="section"
             aria-labelledby="event-stats-heading"
@@ -822,10 +817,10 @@ export default function HackathonEvent({ eventData }) {
               Event Timeline and Stats
             </Typography>
             {/* Order matters on mobile: Countdown first, then Stats */}
-            <Grid item xs={12} md={6} id="countdown" order={{ xs: 1, md: 2 }}>
+            <Grid size={{ xs: 12, md: 6 }} id="countdown" order={{ xs: 1, md: 2 }}>
               <EventCountdown countdowns={event.countdowns} eventId={event_id} />
             </Grid>
-            <Grid item xs={12} md={6} id="stats" order={{ xs: 2, md: 1 }}>
+            <Grid size={{ xs: 12, md: 6 }} id="stats" order={{ xs: 2, md: 1 }}>
               {/* Set display to flex and min-height to ensure the component has proper space */}
               <Box
                 sx={{
@@ -847,8 +842,7 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
           {/* Event Constraints */}
           <Grid
-            item
-            xs={12}
+            size={12}
             component="section"
             aria-labelledby="constraints-heading"
           >
@@ -875,8 +869,7 @@ export default function HackathonEvent({ eventData }) {
 
           {/* Volunteer Lists */}
           <Grid
-            item
-            xs={12}
+            size={12}
             id="volunteer"
             component="section"
             aria-labelledby="volunteer-heading"
@@ -902,8 +895,7 @@ export default function HackathonEvent({ eventData }) {
             <VolunteerList event_id={event_id} type="volunteer" />
           </Grid>
           <Grid
-            item
-            xs={12}
+            size={12}
             id="mentor"
             component="section"
             aria-labelledby="mentor-heading"
@@ -929,8 +921,7 @@ export default function HackathonEvent({ eventData }) {
             <VolunteerList event_id={event_id} type="mentor" />
           </Grid>
           <Grid
-            item
-            xs={12}
+            size={12}
             id="judge"
             component="section"
             aria-labelledby="judge-heading"
@@ -956,8 +947,7 @@ export default function HackathonEvent({ eventData }) {
             <VolunteerList event_id={event_id} type="judge" />
           </Grid>
           <Grid
-            item
-            xs={12}
+            size={12}
             id="hacker"
             component="section"
             aria-labelledby="hacker-heading"
@@ -984,8 +974,7 @@ export default function HackathonEvent({ eventData }) {
           </Grid>
           {/* FAQ */}
           <Grid
-            item
-            xs={12}
+            size={12}
             id="faq"
             component="section"
             aria-labelledby="faq-heading"

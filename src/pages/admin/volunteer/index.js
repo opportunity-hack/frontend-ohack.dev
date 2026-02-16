@@ -521,7 +521,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   }, [selectedEventId, hackathons]);
 
   const generateShareLink = useCallback(() => {
-    if (!selectedEventId) return '';
+    if (!selectedEventId || typeof window === 'undefined') return '';
     const baseUrl = window.location.origin;
     return `${baseUrl}/admin/volunteer?event_id=${selectedEventId}&tab=${tabValue}`;
   }, [selectedEventId, tabValue]);

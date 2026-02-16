@@ -646,7 +646,7 @@ const MentorAvailability = ({ volunteers }) => {
                             
                             <Grid container spacing={1}>
                               {slotData.mentorList.map((mentor, idx) => (
-                                <Grid item xs={12} sm={6} md={4} key={`${mentor.id}-${idx}`}>
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`${mentor.id}-${idx}`}>
                                   {renderMentorCard(mentor)}
                                 </Grid>
                               ))}

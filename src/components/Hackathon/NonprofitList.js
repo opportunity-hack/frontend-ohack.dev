@@ -99,7 +99,7 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
       </Typography>
       <Grid container spacing={3}>
         {nonprofits.map((nonprofit) => (
-          <Grid item xs={12} sm={6} md={4} key={nonprofit.id}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={nonprofit.id}>
             <NonprofitCard>
               <ImageContainer>
                 {nonprofit.image ? (

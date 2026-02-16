@@ -162,7 +162,7 @@ const AdminTimeTrackingPage = () => {
     return (
       <RequiredAuthProvider
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={window.location.href} />}
+        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
       >
         <AdminPage title="Volunteer Time Tracking" isAdmin={false}>
           <Typography>You do not have permission to view this page.</Typography>
@@ -174,7 +174,7 @@ const AdminTimeTrackingPage = () => {
   return (
     <RequiredAuthProvider
       authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={window.location.href} />}
+      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
     >
       <AdminPage title="Volunteer Time Tracking" isAdmin={isAdmin}>
         <Paper sx={{ p: 3, mb: 3 }}>

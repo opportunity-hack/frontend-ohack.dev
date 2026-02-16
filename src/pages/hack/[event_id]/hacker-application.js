@@ -133,6 +133,7 @@ const HackerApplicationComponent = () => {
     country: "",
     state: "",
     additionalInfo: "",
+    requiredQuestionAnswers: [],
     event_id: event_id || "",
     isSelected: false,
   };
@@ -644,6 +645,10 @@ const HackerApplicationComponent = () => {
           "dddd, MMMM Do, YYYY [at] h:mm A [MST]",
         );
 
+        // Extract required questions from constraints
+        const requiredQuestions =
+          eventData.constraints?.hacker_required_questions?.questions || [];
+
         setEventData({
           name: eventData.title || `Opportunity Hack - ${event_id}`,
           description:
@@ -667,7 +672,16 @@ const HackerApplicationComponent = () => {
             0,
             applicationDeadline.diff(now, "hours"),
           ),
+          requiredQuestions,
         });
+
+        // Initialize requiredQuestionAnswers array to match questions
+        if (requiredQuestions.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            requiredQuestionAnswers: new Array(requiredQuestions.length).fill(null),
+          }));
+        }
 
         // If it's an online event, automatically set inPerson to "No"
         if (isOnlineEvent) {
@@ -848,6 +862,22 @@ const HackerApplicationComponent = () => {
   };
 
   const validateBasicInfo = () => {
+    // Validate required screening questions first
+    const questions = eventData?.requiredQuestions || [];
+    if (questions.length > 0) {
+      const answers = formData.requiredQuestionAnswers || [];
+      for (let i = 0; i < questions.length; i++) {
+        if (answers[i] === null || answers[i] === undefined) {
+          setErrorAndScroll(`Please answer the required question: "${questions[i].question}"`);
+          return false;
+        }
+        if (answers[i] !== questions[i].required_answer) {
+          setErrorAndScroll(questions[i].error || "You do not meet the eligibility requirements for this event.");
+          return false;
+        }
+      }
+    }
+
     const requiredFields = [
       "email",
       "name",
@@ -1171,6 +1201,8 @@ const HackerApplicationComponent = () => {
           formData.teamMatchingPreferences.preferredCauses.join(", "),
         teamMatchingPreferredSize:
           formData.teamMatchingPreferences.preferredSize,
+        // Add required question answers for server-side validation
+        requiredQuestionAnswers: formData.requiredQuestionAnswers || [],
         // Add reCAPTCHA token
         recaptchaToken,
         // Add type information
@@ -1254,9 +1286,60 @@ const HackerApplicationComponent = () => {
     "Review",
   ];
 
+  // Handler for required question answers
+  const handleRequiredQuestionAnswer = (index, value) => {
+    setFormData((prev) => {
+      const newAnswers = [...(prev.requiredQuestionAnswers || [])];
+      newAnswers[index] = value;
+      return { ...prev, requiredQuestionAnswers: newAnswers };
+    });
+  };
+
+  // Render required screening questions
+  const renderRequiredQuestions = () => {
+    const questions = eventData?.requiredQuestions || [];
+    if (questions.length === 0) return null;
+
+    return (
+      <Box sx={{ mb: 4 }}>
+        {questions.map((q, index) => {
+          const answer = formData.requiredQuestionAnswers?.[index];
+          const isWrongAnswer = answer !== null && answer !== undefined && answer !== q.required_answer;
+
+          return (
+            <Alert
+              key={index}
+              severity={isWrongAnswer ? "error" : "warning"}
+              variant="outlined"
+              sx={{ mb: 2, borderWidth: 2 }}
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
+                {q.question} <Box component="span" color="error.main">*</Box>
+              </Typography>
+              <RadioGroup
+                value={answer === true ? "yes" : answer === false ? "no" : ""}
+                onChange={(e) => handleRequiredQuestionAnswer(index, e.target.value === "yes")}
+              >
+                <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                <FormControlLabel value="no" control={<Radio />} label="No" />
+              </RadioGroup>
+              {isWrongAnswer && (
+                <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: "bold" }}>
+                  {q.error || "You do not meet the eligibility requirements for this event."}
+                </Typography>
+              )}
+            </Alert>
+          );
+        })}
+      </Box>
+    );
+  };
+
   // Render basic information form
   const renderBasicInfoForm = () => (
     <Box sx={{ mb: 4 }}>
+      {renderRequiredQuestions()}
+
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Basic Information
       </Typography>

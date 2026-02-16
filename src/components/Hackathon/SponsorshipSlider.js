@@ -32,7 +32,7 @@ const SponsorshipSlider = ({ sponsorLevels, setSelectedAmount }) => {
         Become a Sponsor
       </Typography>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Typography gutterBottom>Volunteer Hours: {hours}</Typography>
           <Slider
             value={hours}
@@ -44,7 +44,7 @@ const SponsorshipSlider = ({ sponsorLevels, setSelectedAmount }) => {
             max={200}
           />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Typography gutterBottom>Donation Amount: ${donation}</Typography>
           <Slider
             value={donation}

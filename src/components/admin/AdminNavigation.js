@@ -145,10 +145,8 @@ const adminPages = [
 ];
 
 const AdminNavigation = () => {
-  // MUI v5+ ListItem no longer accepts the button prop directly
-  // Instead, we need to use ListItemButton component or enhance with sx
   const router = useRouter();
-  const currentPath = router.pathname;
+  const currentPath = router.pathname || "";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = useState(false);
