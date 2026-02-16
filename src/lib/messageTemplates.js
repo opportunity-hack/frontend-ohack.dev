@@ -197,6 +197,37 @@ export const MESSAGE_TEMPLATES = {
 };
 
 /**
+ * Human-friendly labels and examples for template placeholders
+ */
+export const PLACEHOLDER_LABELS = {
+  LOCATION_NAME: { label: 'Location Name', example: 'e.g., Arizona State University in Tempe, Arizona' },
+  LOCATION_URL: { label: 'Location URL', example: 'e.g., https://ohack.dev/about/locations/asu-tempe-arizona' },
+  LINKEDIN_EVENT_URL: { label: 'LinkedIn Event URL', example: 'e.g., https://www.linkedin.com/events/...' },
+  RSVP_DEADLINE: { label: 'RSVP Deadline', example: 'e.g., August 28th at 5:00 PM PST' },
+  ACCESS_CODE: { label: 'Access Code', example: 'e.g., 2025' },
+  SLACK_CHANNEL: { label: 'Slack Channel', example: 'e.g., [#2026-spring-judging](https://opportunity-hack.slack.com/archives/XXXXX)' },
+};
+
+/**
+ * Placeholders that are automatically replaced and should not prompt the admin
+ */
+const AUTO_REPLACED_PLACEHOLDERS = ['EVENT_ID', 'VOLUNTEER_ID', 'VOLUNTEER_TYPE'];
+
+/**
+ * Detect unreplaced placeholders in a message that need manual input.
+ * Returns an array of unique placeholder names (without brackets).
+ *
+ * @param {string} message - The message text to scan
+ * @returns {string[]} Array of placeholder names needing manual input
+ */
+export const detectPlaceholders = (message) => {
+  if (!message) return [];
+  const matches = [...message.matchAll(/\[([A-Z_]+)\]/g)];
+  const unique = [...new Set(matches.map(m => m[1]))];
+  return unique.filter(name => !AUTO_REPLACED_PLACEHOLDERS.includes(name));
+};
+
+/**
  * Replace placeholders in message text with actual values
  *
  * Supported placeholders:

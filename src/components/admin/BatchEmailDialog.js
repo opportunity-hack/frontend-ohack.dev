@@ -40,7 +40,9 @@ import BatchEmailService from '../../lib/batchEmailService';
 import {
   MESSAGE_TEMPLATES,
   filterTemplatesByType,
-  prepareTemplateMessage
+  prepareTemplateMessage,
+  detectPlaceholders,
+  PLACEHOLDER_LABELS
 } from '../../lib/messageTemplates';
 
 const StyledDialog = styled(Dialog)(({ theme}) => ({
@@ -84,6 +86,8 @@ const BatchEmailDialog = ({
   const [progress, setProgress] = useState(null);
   const [results, setResults] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [placeholderValues, setPlaceholderValues] = useState({});
+  const [detectedPlaceholders, setDetectedPlaceholders] = useState([]);
 
   // Filter eligible users when volunteers change based on context
   const eligibleUsers = isSelectedUsers
@@ -108,6 +112,8 @@ const BatchEmailDialog = ({
       setProgress(null);
       setResults(null);
       setShowDetails(false);
+      setPlaceholderValues({});
+      setDetectedPlaceholders([]);
     } else if (!isSelectedUsers) {
       // Auto-suggest the appropriate denial template for not-selected users
       const templateId = volunteerType === 'judge' || volunteerType === 'judges'
@@ -124,6 +130,8 @@ const BatchEmailDialog = ({
         });
         setMessageText(message);
         setSubject(denialTemplate.title);
+        setDetectedPlaceholders(detectPlaceholders(message));
+        setPlaceholderValues({});
         setCurrentStep(1); // Skip template selection and go to review step
       }
     }
@@ -142,6 +150,8 @@ const BatchEmailDialog = ({
     setMessageText(message);
     setSubject(template.title);
     setCustomMessage(false);
+    setDetectedPlaceholders(detectPlaceholders(message));
+    setPlaceholderValues({});
     setCurrentStep(1);
   };
 
@@ -150,6 +160,8 @@ const BatchEmailDialog = ({
     setSelectedTemplate(null);
     setMessageText('');
     setSubject('Message from Opportunity Hack');
+    setDetectedPlaceholders([]);
+    setPlaceholderValues({});
     setCurrentStep(1);
   };
 
@@ -159,6 +171,25 @@ const BatchEmailDialog = ({
     setCustomMessage(false);
     setMessageText('');
     setSubject('');
+    setDetectedPlaceholders([]);
+    setPlaceholderValues({});
+  };
+
+  const handlePlaceholderChange = (placeholderName, value) => {
+    const newValues = { ...placeholderValues, [placeholderName]: value };
+    setPlaceholderValues(newValues);
+
+    // Rebuild message from template with all current placeholder values
+    let message = prepareTemplateMessage(selectedTemplate, {
+      eventId: eventId,
+      volunteerType: recipientType
+    });
+    for (const [name, val] of Object.entries(newValues)) {
+      if (val) {
+        message = message.replaceAll(`[${name}]`, val);
+      }
+    }
+    setMessageText(message);
   };
 
   const handleSendEmails = async () => {
@@ -389,7 +420,33 @@ const BatchEmailDialog = ({
                   helperText={BatchEmailService.validateSubject(subject) || 'Email subject line'}
                   sx={{ mb: 2 }}
                 />
-                
+
+                {selectedTemplate && detectedPlaceholders.length > 0 && (
+                  <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      This template requires event-specific details:
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {detectedPlaceholders.map((name) => {
+                        const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
+                        return (
+                          <Grid item xs={12} sm={6} key={name}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label={info.label}
+                              value={placeholderValues[name] || ''}
+                              onChange={(e) => handlePlaceholderChange(name, e.target.value)}
+                              helperText={info.example}
+                              variant="outlined"
+                            />
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Box>
+                )}
+
                 <TextField
                   fullWidth
                   multiline
