@@ -13,7 +13,7 @@ import {
 } from './styles';
 import { Chip, Box, Typography, Pagination, Grid } from '@mui/material';
 import Link from 'next/link';
-import Moment from 'moment';
+import { format } from 'date-fns';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ImpactMetrics from '../ImpactMetrics';
@@ -25,13 +25,13 @@ function PreviousHackathonList() {
   const eventsPerPage = 8;
 
   // Extract all unique years from hackathons for filter
-  const allYears = hackathons ? [...new Set(hackathons.map(event => 
-    Moment(event.start_date).format('YYYY')
+  const allYears = hackathons ? [...new Set(hackathons.map(event =>
+    format(new Date(event.start_date), 'yyyy')
   ))].sort((a, b) => b - a) : [];
-  
+
   // Filter hackathons by year if a filter is applied
-  const filteredHackathons = hackathons ? hackathons.filter(event => 
-    yearFilter === 'All' || Moment(event.start_date).format('YYYY') === yearFilter
+  const filteredHackathons = hackathons ? hackathons.filter(event =>
+    yearFilter === 'All' || format(new Date(event.start_date), 'yyyy') === yearFilter
   ) : [];
 
   // Calculate pagination
@@ -123,7 +123,7 @@ function PreviousHackathonList() {
                   >
                     <PastEventYear>
                       <CalendarTodayIcon fontSize="small" sx={{ mr: 1 }} />
-                      {Moment(event.start_date).format("YYYY")}
+                      {format(new Date(event.start_date), "yyyy")}
                     </PastEventYear>
 
                     <EventLink variant="h5">{event.title}</EventLink>

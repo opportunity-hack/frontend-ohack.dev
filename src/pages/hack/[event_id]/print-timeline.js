@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Moment from 'moment';
+import { format, differenceInMilliseconds, differenceInHours } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 
 const PrintTimelinePage = () => {
@@ -47,12 +47,14 @@ const PrintTimelinePage = () => {
   }
 
   const eventUrl = `https://www.ohack.dev/hack/${event_id}`;
-  const sortedEvents = eventData.countdowns ? 
-    [...eventData.countdowns].sort((a, b) => Moment(a.time).diff(Moment(b.time))) : [];
+  const sortedEvents = eventData.countdowns ?
+    [...eventData.countdowns].sort((a, b) =>
+      differenceInMilliseconds(new Date(a.time), new Date(b.time))
+    ) : [];
 
   // Calculate actual hackathon duration from first to last event
-  const hackathonDuration = sortedEvents.length > 0 ? 
-    Moment(sortedEvents[sortedEvents.length - 1].time).diff(Moment(sortedEvents[0].time), 'hours') : 0;
+  const hackathonDuration = sortedEvents.length > 0 ?
+    differenceInHours(new Date(sortedEvents[sortedEvents.length - 1].time), new Date(sortedEvents[0].time)) : 0;
 
   return (
     <>
@@ -226,9 +228,9 @@ const PrintTimelinePage = () => {
         <h1>{eventData.title}</h1>
         <h2>Event Timeline & Information</h2>
         <div className="event-info">
-          📅 {Moment(eventData.start_date).format('MMM DD')} - {Moment(eventData.end_date).format('MMM DD, YYYY')} | 
-          📍 {eventData.location || 'Location TBA'} | 
-          🆔 {event_id} | 
+          📅 {format(new Date(eventData.start_date), 'MMM dd')} - {format(new Date(eventData.end_date), 'MMM dd, yyyy')} |
+          📍 {eventData.location || 'Location TBA'} |
+          🆔 {event_id} |
           ⏱️ {hackathonDuration}h hackathon
         </div>
       </div>
@@ -239,14 +241,14 @@ const PrintTimelinePage = () => {
             <h3>📅 Event Timeline ({sortedEvents.length} events • {hackathonDuration}h total)</h3>
             <div className="timeline-grid">
               {sortedEvents.map((event, index) => {
-                const eventTime = Moment(event.time);
-                
+                const eventTime = new Date(event.time);
+
                 return (
                   <div key={event.name} className="event-item">
                     <div className="event-number">{index + 1}</div>
                     <div className="event-name">{event.name}</div>
                     <div className="event-time">
-                      {eventTime.format('MMM DD • ddd h:mm A')}
+                      {format(eventTime, 'MMM dd • EEE h:mm a')}
                     </div>
                     {event.description && (
                       <div style={{marginTop: '5px', fontSize: '9px', lineHeight: '1.2', color: '#555'}}>
@@ -322,7 +324,7 @@ const PrintTimelinePage = () => {
 
       <div className="footer">
         Generated from ohack.dev • For updates visit: {eventUrl}<br/>
-        Printed on {Moment().format('MMMM Do, YYYY [at] h:mm A')}
+        Printed on {format(new Date(), 'MMMM do, yyyy \'at\' h:mm a')}
       </div>
 
       <div className="qr-code no-print">

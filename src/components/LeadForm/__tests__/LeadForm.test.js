@@ -37,7 +37,7 @@ describe("LeadForm Bot Detection", () => {
     renderWithTheme(<LeadForm />);
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /subscribe to newsletter/i }),
+      screen.getByRole("button", { name: /^subscribe$/i }),
     ).toBeInTheDocument();
   });
 
@@ -53,7 +53,7 @@ describe("LeadForm Bot Detection", () => {
 
     const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole("button", {
-      name: /subscribe to newsletter/i,
+      name: /^subscribe$/i,
     });
 
     // Start interaction to set timing
@@ -76,7 +76,7 @@ describe("LeadForm Bot Detection", () => {
 
     const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole("button", {
-      name: /subscribe to newsletter/i,
+      name: /^subscribe$/i,
     });
 
     // Start interaction
@@ -101,7 +101,7 @@ describe("LeadForm Bot Detection", () => {
 
     const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole("button", {
-      name: /subscribe to newsletter/i,
+      name: /^subscribe$/i,
     });
 
     // Submit valid email to open dialog
@@ -138,7 +138,7 @@ describe("LeadForm Bot Detection", () => {
 
     const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole("button", {
-      name: /subscribe to newsletter/i,
+      name: /^subscribe$/i,
     });
 
     fireEvent.change(emailInput, { target: { value: "test@example.com" } });
@@ -170,7 +170,7 @@ describe("LeadForm Bot Detection", () => {
 
     const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole("button", {
-      name: /subscribe to newsletter/i,
+      name: /^subscribe$/i,
     });
 
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
@@ -214,7 +214,7 @@ describe("LeadForm Bot Detection", () => {
 
     // Try to submit immediately (this should trigger timing check in real usage)
     const submitButton = screen.getByRole("button", {
-      name: /subscribe to newsletter/i,
+      name: /^subscribe$/i,
     });
 
     // In the test environment, timing may not work perfectly,

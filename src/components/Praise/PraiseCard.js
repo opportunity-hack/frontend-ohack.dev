@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardMedia, Box, Typography, Avatar, Tooltip, IconButton, Stack, Chip } from '@mui/material';
 import { FavoriteRounded, StarRounded, ThumbUpRounded, EmojiEmotionsRounded } from '@mui/icons-material';
 import { styled, keyframes } from '@mui/material/styles';
-import moment from 'moment';
+import { format, differenceInHours, formatDistanceToNow, parseISO } from 'date-fns';
 
 // Helper function to get a user avatar URL from Slack
 const getSlackAvatarUrl = (userId) => {
@@ -143,9 +143,9 @@ const PraiseCard = ({ praise }) => {
   });
   const [userReactions, setUserReactions] = useState({});
 
-  // Format timestamp using moment
-  const formattedTime = moment(timestamp).format('MMM D, YYYY [at] h:mm A');
-  const isRecent = moment().diff(moment(timestamp), 'hours') < 24;
+  // Format timestamp using date-fns
+  const formattedTime = format(parseISO(timestamp), 'MMM d, yyyy \'at\' h:mm a');
+  const isRecent = differenceInHours(new Date(), parseISO(timestamp)) < 24;
 
   const handleReaction = (type) => {
     setUserReactions(prev => ({
@@ -262,7 +262,7 @@ const PraiseCard = ({ praise }) => {
           </Stack>
           
           <TimeStamp sx={{ fontSize: '0.7rem' }}>
-            {isRecent && '🆕 '}{moment(timestamp).fromNow()}
+            {isRecent && '🆕 '}{formatDistanceToNow(parseISO(timestamp), { addSuffix: true })}
           </TimeStamp>
         </ReactionsContainer>
       </StyledCardContent>

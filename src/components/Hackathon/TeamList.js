@@ -47,7 +47,7 @@ import {
 } from 'react-icons/fa';
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
-import moment from 'moment';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import { TEAM_STATUS_OPTIONS, getStatusOption, isJoiningDisabled } from '../../constants/teamStatus';
 
 // Helper function to check if team status prevents joining
@@ -881,7 +881,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <FaClock style={{ marginRight: 6, fontSize: '12px', color: '#666' }} />
           <Typography variant="caption" color="textSecondary">
-            Last commit: {moment(latestCommitTime).fromNow()}
+            Last commit: {formatDistanceToNow(parseISO(latestCommitTime), { addSuffix: true })}
           </Typography>
         </Box>
       )}

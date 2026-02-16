@@ -7,89 +7,90 @@ import {
   styled,  
 } from "@mui/material";
 
-// Button
-export const ButtonStyled = styled(Button)((props) => ({
+// Primary CTA — bold, filled, prominent
+export const ButtonPrimary = styled(Button)((props) => ({
   borderRadius: "2rem",
-  paddingLeft: "1.5rem",
-  paddingRight: "1.5rem",
-  fontWeight: 600,
-  fontSize: "15px",
+  paddingLeft: "2rem",
+  paddingRight: "2rem",
+  fontWeight: 700,
+  fontSize: "16px",
   textTransform: "unset !important",
-  backgroundColor: "#003486",
+  backgroundColor: "var(--color3)",
   color: "#ffffff",
-  minWidth: "auto",
-  minHeight: "44px",
+  minHeight: "48px",
   whiteSpace: "nowrap",
-  
+  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+  transition: "transform 0.2s, box-shadow 0.2s",
+  width: "100%",
+  maxWidth: "320px",
+  boxSizing: "border-box",
+
   [props.theme.breakpoints.down("md")]: {
-    minWidth: "25rem",
+    maxWidth: "100%",
   },
 
   "&:hover": {
-    backgroundColor: `var(--blue)`,
+    backgroundColor: "var(--color3)",
+    transform: "translateY(-1px)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
   },
 }));
 
-export const ButtonGoldStyle = styled(Button)((props) => ({
+// Secondary — outlined, medium emphasis
+export const ButtonSecondary = styled(Button)((props) => ({
   borderRadius: "2rem",
   paddingLeft: "1.5rem",
   paddingRight: "1.5rem",
   fontWeight: 600,
-  fontSize: "15px",
+  fontSize: "14px",
   textTransform: "unset !important",
-  backgroundColor: "#FFD700",
-  color: "#000000",
-  minWidth: "auto",
+  backgroundColor: "transparent",
+  color: "var(--color3)",
+  border: "2px solid var(--color3)",
   minHeight: "44px",
   whiteSpace: "nowrap",
-  
+  transition: "background-color 0.2s, color 0.2s",
+  boxSizing: "border-box",
+  flex: "1 1 auto",
+
   [props.theme.breakpoints.down("md")]: {
-    minWidth: "25rem",
+    width: "100%",
   },
 
   "&:hover": {
-    backgroundColor: `var(--blue)`,
+    backgroundColor: "var(--color3)",
+    color: "#ffffff",
+    border: "2px solid var(--color3)",
   },
 }));
 
-export const ButtonBasicStyle = styled(Button)((props) => ({
-  borderRadius: "2rem",
-  paddingLeft: "1.5rem",
-  paddingRight: "1.5rem",
-  fontWeight: 600,
-  fontSize: "15px",
+// Tertiary — text-like, subtle, small
+export const ButtonTertiary = styled(Button)((props) => ({
+  borderRadius: "1rem",
+  paddingLeft: "0.75rem",
+  paddingRight: "0.75rem",
+  fontWeight: 500,
+  fontSize: "13px",
   textTransform: "unset !important",
-  backgroundColor: "#E0E0E0",
-  color: "#000000",
-  minWidth: "auto",
-  minHeight: "44px",
+  backgroundColor: "transparent",
+  color: "#555555",
+  minHeight: "36px",
   whiteSpace: "nowrap",
-  
-  [props.theme.breakpoints.down("md")]: {
-    minWidth: "25rem",
-  },
+  transition: "color 0.2s, background-color 0.2s",
 
   "&:hover": {
-    backgroundColor: `var(--blue)`,
+    backgroundColor: "rgba(0,0,0,0.04)",
+    color: "var(--color3)",
   },
 }));
 
 // Grid
 export const GridStyled = styled(Grid)((props) => ({
-  padding: "1rem",
+  padding: "0.5rem 0",
   height: "100%",
   width: "100%",
   margin: "auto",
   justifyContent: "center",
-
-  [props.theme.breakpoints.down("lg")]: {
-    padding: "1rem 0rem 1rem 0rem",
-  },
-
-  [props.theme.breakpoints.down("md")]: {
-    width: "100%",
-    padding: "2rem",
-  },
 }));
 
 export const BlankContainer = styled(Grid)({
@@ -117,40 +118,52 @@ export const TitleContainer = styled(Grid)((props) => ({
 
 export const CaptionContainer = styled(Grid)((props) => ({
   color: "#425466",
-  maxWidth: "390px",
-  display : "flex",
-  flexDirection :  "column",
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-
-  [props.theme.breakpoints.down("md")]: {
-    display: "flex",
-    minWidth: "100%",
-    justifyContent: "center",
-    textAlign: "center",
-  },
 }));
 
-export const ButtonContainers = styled(Grid)((props) => ({
+export const ButtonContainers = styled("div")({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  width: "100%",
+  maxWidth: "480px",
+  margin: "0 auto",
+  gap: "0.625rem",
+});
+
+export const ButtonRow = styled("div")((props) => ({
   display: "flex",
   flexDirection: "row",
   flexWrap: "wrap",
-  width: "auto",
-  gap: "1rem",
+  gap: "0.5rem",
   justifyContent: "center",
-  
+  width: "100%",
+
   [props.theme.breakpoints.down("md")]: {
     flexDirection: "column",
-    alignItems: "center",
+    alignItems: "stretch",
   },
 }));
+
+// Row that stays horizontal on all screen sizes (for small text-like buttons)
+export const ButtonRowInline = styled("div")({
+  display: "flex",
+  flexDirection: "row",
+  flexWrap: "wrap",
+  gap: "0.25rem",
+  justifyContent: "center",
+});
 
 
 export const TitleStyled = styled(Typography)(({ theme }) => ({
   fontDisplay: "swap",
   fontSize: "clamp(17px, 2.5vw, 20px)",
   lineHeight: 1.15,
-  fontWeight: 250,
+  fontWeight: 300,
   color: "#333333",
   textShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
   letterSpacing: "-0.03em",

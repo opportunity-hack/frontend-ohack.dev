@@ -9,7 +9,7 @@ import {
   Skeleton,
   useTheme
 } from '@mui/material';
-import Moment from 'moment';
+import { isAfter, parseISO } from 'date-fns';
 import { useAuthInfo } from '@propelauth/react';
 
 const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }) => {
@@ -211,7 +211,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
   if (!event_id || !eventData) return null;
 
   // Don't show metrics for future events that haven't started yet
-  const eventStarted = eventData.start_date && Moment().isAfter(Moment(eventData.start_date));
+  const eventStarted = eventData.start_date && isAfter(new Date(), parseISO(eventData.start_date));
   const hasAnyMetrics = metrics.volunteers.total > 0 || 
                        metrics.teams.total > 0 || 
                        metrics.github.commits > 0 ||

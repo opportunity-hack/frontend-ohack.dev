@@ -114,7 +114,7 @@ const HackathonIndex = () => {
       <ProjectsContainer style={{ marginTop: 20, width: "100%" }}>
         {/* Why Join Section with Image - Moved to top for better UX flow */}
         <Paper sx={{ p: 4, mb: 5, bgcolor: 'grey.50' }}>
-          <Grid container spacing={4} alignItems="center">
+          <Grid container spacing={4} sx={{ alignItems: 'center' }}>
             <Grid item xs={12} md={6}>
               <Typography variant="h3" component="h2" gutterBottom>
                 Why Join Opportunity Hack?
@@ -175,22 +175,24 @@ const HackathonIndex = () => {
               </Grid>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Image
-                  src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
-                  alt="Developers collaborating at Opportunity Hack hackathon"
-                  width={500}
-                  height={350}
-                  style={{
-                    maxWidth: "100%",
-                    height: "auto",
-                    borderRadius: "12px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                  }}
-                />
-                <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
-                  Developers working together to create solutions for nonprofits
-                </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                <Box sx={{ textAlign: 'center', maxWidth: '100%' }}>
+                  <Image
+                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+                    alt="Developers collaborating at Opportunity Hack hackathon"
+                    width={500}
+                    height={350}
+                    style={{
+                      maxWidth: "100%",
+                      height: "auto",
+                      borderRadius: "12px",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    }}
+                  />
+                  <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+                    Developers working together to create solutions for nonprofits
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
           </Grid>
@@ -232,9 +234,9 @@ const HackathonIndex = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Community guidelines for respectful collaboration
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  component={Link} 
+                <Button
+                  variant="outlined"
+                  component={Link}
                   href="/hack/code-of-conduct"
                   fullWidth
                   size="small"
@@ -244,7 +246,7 @@ const HackathonIndex = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} md={4}>
             <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
@@ -255,9 +257,9 @@ const HackathonIndex = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Standard protection for in-person events
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  component={Link} 
+                <Button
+                  variant="outlined"
+                  component={Link}
                   href="/hack/liability-waiver"
                   fullWidth
                   size="small"
@@ -267,7 +269,7 @@ const HackathonIndex = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} md={4}>
             <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
@@ -278,9 +280,9 @@ const HackathonIndex = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Permission to share event photos
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  component={Link} 
+                <Button
+                  variant="outlined"
+                  component={Link}
                   href="/hack/photo-release"
                   fullWidth
                   size="small"
