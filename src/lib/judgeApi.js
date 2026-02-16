@@ -29,22 +29,9 @@ class JudgeApiService {
       return response.data;
     } catch (error) {
       console.error('Error fetching judge assignments:', error);
-      // Stub data for development
+      // Stub data for development - empty so it doesn't suggest a specific event
       return {
-        hackathons: [
-          {
-            event_id: '2025_summer',
-            title: '2025 Summer Global Hackathon',
-            start_date: '2025-06-15T00:00:00Z',
-            end_date: '2025-06-17T00:00:00Z',
-            round1_teams: 8,
-            round2_teams: 3,
-            judging_status: {
-              round1: { completed: 5, total: 8 },
-              round2: { completed: 0, total: 3 }
-            }
-          }
-        ]
+        hackathons: []
       };
     }
   }
