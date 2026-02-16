@@ -12,6 +12,7 @@ For OHack'22, ReactLovers greatly improved our UX by working on [#13 update our 
 - This code is the frontend [ohack.dev](https://www.ohack.dev) and makes calls to the backend [api.ohack.dev](https://api.ohack.dev)
 - Like most things we build, to keep it simple, this runs on [Vercel](https://vercel.com/).
 - We borrowed the code from [Auth0 here](https://github.com/auth0-developer-hub/spa_react_javascript_hello-world) to bootstrap our development (always a good practice) we've migrated over to use [PropelAuth](https://www.propelauth.com/) to keep our costs down.
+- **Authentication**: Users can log in with either Slack or Google accounts via PropelAuth. See [Google Login Setup Guide](./docs/GoogleLoginSetup.md) for configuration details.
 
 
 ## Quickstart

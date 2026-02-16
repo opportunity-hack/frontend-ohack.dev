@@ -27,7 +27,9 @@ import axios from 'axios';
 import {
   MESSAGE_TEMPLATES,
   filterTemplatesByType,
-  prepareTemplateMessage
+  prepareTemplateMessage,
+  detectPlaceholders,
+  PLACEHOLDER_LABELS
 } from '../../lib/messageTemplates';
 
 
@@ -47,6 +49,9 @@ const VolunteerCommunication = ({
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customMessage, setCustomMessage] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
+  const [placeholderValues, setPlaceholderValues] = useState({});
+  const [detectedPlaceholders, setDetectedPlaceholders] = useState([]);
 
   const handleSendMessage = async () => {
     if (!messageText.trim() || !volunteer) return;
@@ -112,6 +117,40 @@ const VolunteerCommunication = ({
     }
   };
 
+  const handleSendTestEmail = async () => {
+    if (!messageText.trim()) return;
+
+    setTestLoading(true);
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/email/send`,
+        {
+          email: 'questions@ohack.org',
+          message: messageText,
+          subject: `[TEST] ${selectedTemplate ? selectedTemplate.title : "Message from Opportunity Hack"}`,
+          recipient_type: volunteerType || volunteer?.type || 'volunteer',
+          name: 'Test Recipient'
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        enqueueSnackbar("Test email sent to questions@ohack.org", { variant: "success" });
+      }
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      enqueueSnackbar(error.response?.data?.message || "Failed to send test email", { variant: "error" });
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   const handleCloseMessageDialog = () => {
     setMessageDialogOpen(false);
     setMessageText("");
@@ -134,12 +173,37 @@ const VolunteerCommunication = ({
 
     setMessageText(message);
     setCustomMessage(false);
+
+    // Detect remaining placeholders that need manual input
+    const remaining = detectPlaceholders(message);
+    setDetectedPlaceholders(remaining);
+    setPlaceholderValues({});
   };
 
   const handleCustomMessageToggle = () => {
     setCustomMessage(true);
     setSelectedTemplate(null);
     setMessageText("");
+    setDetectedPlaceholders([]);
+    setPlaceholderValues({});
+  };
+
+  const handlePlaceholderChange = (placeholderName, value) => {
+    const newValues = { ...placeholderValues, [placeholderName]: value };
+    setPlaceholderValues(newValues);
+
+    // Rebuild message from template with all current placeholder values
+    let message = prepareTemplateMessage(selectedTemplate, {
+      eventId: eventId,
+      volunteerId: volunteer?.id,
+      volunteerType: volunteerType || volunteer?.type
+    });
+    for (const [name, val] of Object.entries(newValues)) {
+      if (val) {
+        message = message.replaceAll(`[${name}]`, val);
+      }
+    }
+    setMessageText(message);
   };
 
   // Use useEffect to sync external open state with internal state
@@ -277,12 +341,40 @@ const VolunteerCommunication = ({
                       setSelectedTemplate(null);
                       setCustomMessage(false);
                       setMessageText("");
+                      setDetectedPlaceholders([]);
+                      setPlaceholderValues({});
                     }}
                   >
                     Back to Templates
                   </Button>
                 </Box>
                 
+                {selectedTemplate && detectedPlaceholders.length > 0 && (
+                  <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      This template requires event-specific details:
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {detectedPlaceholders.map((name) => {
+                        const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
+                        return (
+                          <Grid item xs={12} sm={6} key={name}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label={info.label}
+                              value={placeholderValues[name] || ''}
+                              onChange={(e) => handlePlaceholderChange(name, e.target.value)}
+                              helperText={info.example}
+                              variant="outlined"
+                            />
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Box>
+                )}
+
                 <TextField
                   fullWidth
                   multiline
@@ -309,15 +401,26 @@ const VolunteerCommunication = ({
         <DialogActions>
           <Button onClick={handleCloseMessageDialog}>Cancel</Button>
           {(selectedTemplate || customMessage) && (
-            <Button
-              onClick={handleSendMessage}
-              variant="contained"
-              color="primary"
-              disabled={loading || !messageText.trim()}
-              startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
-            >
-              Send Message
-            </Button>
+            <>
+              <Button
+                onClick={handleSendTestEmail}
+                variant="outlined"
+                color="secondary"
+                disabled={testLoading || loading || !messageText.trim()}
+                startIcon={testLoading ? <CircularProgress size={16} /> : <FaCheck />}
+              >
+                Send Test to questions@ohack.org
+              </Button>
+              <Button
+                onClick={handleSendMessage}
+                variant="contained"
+                color="primary"
+                disabled={loading || testLoading || !messageText.trim()}
+                startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
+              >
+                Send Message
+              </Button>
+            </>
           )}
         </DialogActions>
       </Dialog>
@@ -471,12 +574,40 @@ const VolunteerCommunication = ({
                       setSelectedTemplate(null);
                       setCustomMessage(false);
                       setMessageText("");
+                      setDetectedPlaceholders([]);
+                      setPlaceholderValues({});
                     }}
                   >
                     Back to Templates
                   </Button>
                 </Box>
                 
+                {selectedTemplate && detectedPlaceholders.length > 0 && (
+                  <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      This template requires event-specific details:
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {detectedPlaceholders.map((name) => {
+                        const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
+                        return (
+                          <Grid item xs={12} sm={6} key={name}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label={info.label}
+                              value={placeholderValues[name] || ''}
+                              onChange={(e) => handlePlaceholderChange(name, e.target.value)}
+                              helperText={info.example}
+                              variant="outlined"
+                            />
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Box>
+                )}
+
                 <TextField
                   fullWidth
                   multiline
@@ -503,15 +634,26 @@ const VolunteerCommunication = ({
         <DialogActions>
           <Button onClick={handleCloseMessageDialog}>Cancel</Button>
           {(selectedTemplate || customMessage) && (
-            <Button
-              onClick={handleSendMessage}
-              variant="contained"
-              color="primary"
-              disabled={loading || !messageText.trim()}
-              startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
-            >
-              Send Message
-            </Button>
+            <>
+              <Button
+                onClick={handleSendTestEmail}
+                variant="outlined"
+                color="secondary"
+                disabled={testLoading || loading || !messageText.trim()}
+                startIcon={testLoading ? <CircularProgress size={16} /> : <FaCheck />}
+              >
+                Send Test to questions@ohack.org
+              </Button>
+              <Button
+                onClick={handleSendMessage}
+                variant="contained"
+                color="primary"
+                disabled={loading || testLoading || !messageText.trim()}
+                startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
+              >
+                Send Message
+              </Button>
+            </>
           )}
         </DialogActions>
       </Dialog>

@@ -29,7 +29,7 @@ import {
   Tooltip,
   useTheme
 } from "@mui/material";
-import Moment from 'moment';
+import { format, getYear } from 'date-fns';
 import Link from 'next/link';
 import { useAuthInfo } from '@propelauth/react';
 import ImpactMetrics from '../ImpactMetrics';
@@ -148,16 +148,16 @@ function EventFeature(props) {
           
           <div style={{ marginBottom: '16px' }}>
             {
-              Moment(new Date()).format("YYYY") === Moment(start_date).format('YYYY') && 
+              getYear(new Date()) === getYear(new Date(start_date)) &&
               <Typography variant="body1" sx={{ fontSize: '1rem', color: '#333', marginBottom: '8px' }}>
-                {Moment(start_date).format('MMM Do')} to {Moment(end_date).format('MMM Do YYYY')}
-              </Typography>      
+                {format(new Date(start_date), 'MMM do')} to {format(new Date(end_date), 'MMM do yyyy')}
+              </Typography>
             }
 
             {
-              Moment(new Date()).format("YYYY") !== Moment(start_date).format('YYYY') &&
+              getYear(new Date()) !== getYear(new Date(start_date)) &&
               <Typography variant="body1" sx={{ fontSize: '1rem', color: '#333', marginBottom: '8px' }}>
-                {Moment(start_date).format('MMM Do YYYY')} to {Moment(end_date).format('MMM Do YYYY')}
+                {format(new Date(start_date), 'MMM do yyyy')} to {format(new Date(end_date), 'MMM do yyyy')}
               </Typography>
             }
           </div>

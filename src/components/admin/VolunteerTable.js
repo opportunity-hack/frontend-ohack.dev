@@ -756,23 +756,23 @@ const VolunteerTable = ({
         if (!availability) return <Typography variant="caption" color="text.secondary">No slots</Typography>;
         
         // Simple slot parsing - just extract the essential info without complex time calculations
+        // Groups by day name + date (e.g., "Saturday, Oct 11") dynamically from the data
         const parseSlots = (availStr) => {
-          if (!availStr) return { saturday: [], sunday: [], total: 0 };
-          
+          if (!availStr) return { dayGroups: [], total: 0 };
+
           const slots = availStr.split(',').map(s => s.trim()).filter(s => s);
-          const saturday = [];
-          const sunday = [];
-          
+          const dayMap = new Map(); // key: "DayName, Date" -> array of slots
+
           slots.forEach(slot => {
-            // Extract day, session name, role, and time
-            const dayMatch = slot.match(/(Saturday|Sunday)[,\s]+(\w+\s+\d+)/);
+            // Extract day name and date (e.g., "Saturday" + "Oct 11")
+            const dayMatch = slot.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]+(\w+\s+\d+)/);
             const sessionMatch = slot.match(/:\s*([^-]+?)\s*-/); // Get session name
             const timeMatch = slot.match(/\(([^)]+)\)/); // Get time range
-            
+
             // Get role icon and name
             let roleIcon = '👥';
             let roleName = 'General';
-            
+
             if (slot.includes('📸') || slot.includes('Photography')) {
               roleIcon = '📸';
               roleName = 'Photography';
@@ -789,51 +789,55 @@ const VolunteerTable = ({
               roleIcon = '🔧';
               roleName = 'Setup';
             }
-            
+
             if (dayMatch) {
+              const dayLabel = `${dayMatch[1]}, ${dayMatch[2]}`; // e.g., "Saturday, Oct 11"
               const slotInfo = {
                 day: dayMatch[1],
+                date: dayMatch[2],
                 session: sessionMatch ? sessionMatch[1].trim() : 'Session',
                 time: timeMatch ? timeMatch[1] : '',
                 roleIcon,
                 roleName,
                 full: slot
               };
-              
-              if (dayMatch[1] === 'Saturday') {
-                saturday.push(slotInfo);
-              } else if (dayMatch[1] === 'Sunday') {
-                sunday.push(slotInfo);
+
+              if (!dayMap.has(dayLabel)) {
+                dayMap.set(dayLabel, []);
               }
+              dayMap.get(dayLabel).push(slotInfo);
             }
           });
-          
-          return { 
-            saturday, 
-            sunday, 
-            total: saturday.length + sunday.length 
-          };
+
+          // Convert to array sorted by date order (preserves insertion order from data)
+          const dayGroups = Array.from(dayMap.entries()).map(([label, slots]) => ({
+            label,
+            slots
+          }));
+          const total = dayGroups.reduce((sum, g) => sum + g.slots.length, 0);
+
+          return { dayGroups, total };
         };
         
         const slotData = parseSlots(availability);
         
         // Get unique roles for display
-        const allSlots = [...slotData.saturday, ...slotData.sunday];
+        const allSlots = slotData.dayGroups.flatMap(g => g.slots);
         const roleIcons = [...new Set(allSlots.map(s => s.roleIcon))];
-        
+
         // Create tooltip content
         const availabilityTooltipContent = (
           <Box sx={{ minWidth: 280 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
               Volunteer Schedule ({slotData.total} slots)
             </Typography>
-            
-            {slotData.saturday.length > 0 && (
-              <Box sx={{ mb: 1.5 }}>
+
+            {slotData.dayGroups.map((group, groupIdx) => (
+              <Box key={group.label} sx={{ mb: groupIdx < slotData.dayGroups.length - 1 ? 1.5 : 0 }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5, color: 'primary.main' }}>
-                  Saturday, Oct 11
+                  {group.label}
                 </Typography>
-                {slotData.saturday.map((slot, idx) => (
+                {group.slots.map((slot, idx) => (
                   <Box key={idx} sx={{ display: 'flex', alignItems: 'flex-start', mb: 0.5 }}>
                     <Typography variant="caption" sx={{ mr: 1, minWidth: 20 }}>
                       {slot.roleIcon}
@@ -849,33 +853,10 @@ const VolunteerTable = ({
                   </Box>
                 ))}
               </Box>
-            )}
-            
-            {slotData.sunday.length > 0 && (
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5, color: 'primary.main' }}>
-                  Sunday, Oct 12
-                </Typography>
-                {slotData.sunday.map((slot, idx) => (
-                  <Box key={idx} sx={{ display: 'flex', alignItems: 'flex-start', mb: 0.5 }}>
-                    <Typography variant="caption" sx={{ mr: 1, minWidth: 20 }}>
-                      {slot.roleIcon}
-                    </Typography>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="caption" sx={{ display: 'block', fontWeight: 500 }}>
-                        {slot.session}
-                      </Typography>
-                      <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.7rem' }}>
-                        {slot.time}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            )}
+            ))}
           </Box>
         );
-        
+
         // Simple table cell display
         return (
           <Tooltip 
@@ -923,22 +904,16 @@ const VolunteerTable = ({
               
               {/* Day indicators */}
               <Box sx={{ display: 'flex', gap: 0.25 }}>
-                {slotData.saturday.length > 0 && (
-                  <Chip 
-                    label="S" 
-                    size="small" 
+                {slotData.dayGroups.map((group) => (
+                  <Chip
+                    key={group.label}
+                    label={group.slots[0]?.day?.charAt(0) || '?'}
+                    size="small"
                     variant="outlined"
+                    title={group.label}
                     sx={{ fontSize: '0.65rem', height: 18, minWidth: 20 }}
                   />
-                )}
-                {slotData.sunday.length > 0 && (
-                  <Chip 
-                    label="S" 
-                    size="small" 
-                    variant="outlined"
-                    sx={{ fontSize: '0.65rem', height: 18, minWidth: 20 }}
-                  />
-                )}
+                ))}
               </Box>
             </Box>
           </Tooltip>
@@ -1196,12 +1171,14 @@ const VolunteerTable = ({
                       Availability:
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {volunteer.availability.includes('Saturday') && (
-                        <Chip label="Saturday" size="small" variant="outlined" color="primary" />
-                      )}
-                      {volunteer.availability.includes('Sunday') && (
-                        <Chip label="Sunday" size="small" variant="outlined" color="primary" />
-                      )}
+                      {/* Extract unique day+date labels from availability string */}
+                      {(() => {
+                        const dayMatches = [...(volunteer.availability || '').matchAll(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]+(\w+\s+\d+)/g)];
+                        const uniqueDays = [...new Set(dayMatches.map(m => `${m[1]}, ${m[2]}`))];
+                        return uniqueDays.map(dayLabel => (
+                          <Chip key={dayLabel} label={dayLabel} size="small" variant="outlined" color="primary" />
+                        ));
+                      })()}
                       {volunteer.experienceLevel && (
                         <Chip
                           label={volunteer.experienceLevel.includes('First time') ? 'First Timer' : 'Experienced'}

@@ -3,7 +3,7 @@ import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useAuthInfo } from "@propelauth/react";
 
-import { Skeleton, Box, Grid, Container } from "@mui/material";
+import { Skeleton, Box, Container } from "@mui/material";
 
 // Simplified loading placeholder - avoiding detailed skeletons to prevent layout shifts
 const SimplePlaceholder = () => (
@@ -50,6 +50,14 @@ const LeadForm = dynamic(() => import("../components/LeadForm/LeadForm"), {
   loading: () => <FormSkeleton />,
   ssr: true, // Enable SSR to reduce CLS
 });
+
+const HeartsLeaderboard = dynamic(
+  () => import("../components/Hearts/HeartsLeaderboard"),
+  {
+    loading: () => null,
+    ssr: false, // Not critical for first paint
+  }
+);
 
 // Lower priority component, can load client-side
 const BackgroundGrid = dynamic(
@@ -130,33 +138,26 @@ export default function Home() {
       
         {/* Optimized layout for better above-the-fold content */}
         <BackgroundGrid />
-        <Container maxWidth="xl" sx={{ mt: { xs: 8, sm: 9, md: 10 }, px: { xs: 2, sm: 3, md: 4 } }}>
-          <Grid container spacing={3} alignItems="stretch">
-            {/* Hero section - left side on desktop, full width on mobile */}
-            <Grid item xs={12} lg={5}>
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                height: '100%',
-                minHeight: { xs: 'auto', lg: '600px' },
-                justifyContent: 'center'
-              }}>
-                <Logo />
-                <TitleStyled />
-                <HeroBanner />
-              </Box>
-            </Grid>
-            
-            {/* Events section - right side on desktop, below hero on mobile */}
-            <Grid item xs={12} lg={7}>
-              <Box sx={{ height: '100%' }}>
-                <HackathonList compact={true} />
-              </Box>
-            </Grid>
-          </Grid>
-          
-          {/* Lead form positioned strategically */}
+        <Container maxWidth="xl" sx={{ mt: { xs: 9, md: 10 }, px: { xs: 1.5, sm: 3, md: 4 } }}>
+          {/* 1. Brand — attention */}
+          <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
+            <Logo />
+            <TitleStyled />
+          </Box>
+
+          {/* 2. Social proof — trust (Cialdini: people follow people) */}
+          <HeartsLeaderboard />
+
+          {/* 3. CTAs — action (visitor is now primed) */}
+          <Box sx={{ mb: { xs: 2, md: 3 } }}>
+            <HeroBanner />
+          </Box>
+
+          {/* 4. Newsletter — stay connected */}
           <LeadForm />
+
+          {/* 5. Events */}
+          <HackathonList compact={true} />
         </Container>      
     </Fragment>
   );

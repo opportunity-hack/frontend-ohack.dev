@@ -36,14 +36,14 @@ export const MESSAGE_TEMPLATES = {
         id: "judge_travel_confirmation",
         title: "Judge Application Approved - Please Confirm Travel",
         applicableRoles: ["judge", "judges"],
-        message: "⚖️ Congratulations! Your judge application has been approved!\n\nWe're excited to have you evaluate the innovative solutions our teams will create for nonprofits. However, we need your confirmation for an important detail:\n\n✈️ **All judging for Opportunity Hack 2025 Fall is done IN PERSON at Arizona State University in Tempe, Arizona.**\n\n📍 Location Details:\n• Event location: ASU Tempe campus\n• More info & hotel recommendations: https://ohack.dev/about/locations/asu-tempe-arizona\n• Full schedule of events: https://www.ohack.dev/hack/2025_fall#countdown\n• Add yourself to our LinkedIn event: https://www.linkedin.com/events/opportunityhack20257364157552420401152/\n\n⏰ **ACTION REQUIRED by August 28th at 5:00 PM PST:**\nPlease reply to this email at questions@ohack.org to confirm:\n✅ \"I confirm I can attend in person at ASU Tempe\" OR\n❌ \"I need to decline due to travel constraints\"\n\n✏️ **Need to edit your application?**\nGo to: https://www.ohack.dev/hack/2025_fall/judge-application\nUse code: \"2025\"\n\nWe understand travel requirements may not work for everyone. We just need to know by the deadline to finalize our judging panel.\n\nThank you for your interest in supporting nonprofit innovation! 🌟",
+        message: "⚖️ Congratulations! Your judge application has been approved!\n\nWe're excited to have you evaluate the innovative solutions our teams will create for nonprofits. However, we need your confirmation for an important detail:\n\n✈️ **All judging for Opportunity Hack is done IN PERSON at [LOCATION_NAME].**\n\n📍 Location Details:\n• Event location: [LOCATION_NAME]\n• More info & hotel recommendations: [LOCATION_URL]\n• Full schedule of events: https://www.ohack.dev/hack/[EVENT_ID]#countdown\n• Add yourself to our LinkedIn event: [LINKEDIN_EVENT_URL]\n\n⏰ **ACTION REQUIRED by [RSVP_DEADLINE]:**\nPlease reply to this email at questions@ohack.org to confirm:\n✅ \"I confirm I can attend in person at [LOCATION_NAME]\" OR\n❌ \"I need to decline due to travel constraints\"\n\n✏️ **Need to edit your application?**\nGo to: https://www.ohack.dev/hack/[EVENT_ID]/judge-application\nUse code: \"[ACCESS_CODE]\"\n\nWe understand travel requirements may not work for everyone. We just need to know by the deadline to finalize our judging panel.\n\nThank you for your interest in supporting nonprofit innovation! 🌟",
         icon: "✈️"
       },
       {
         id: "judge_approved",
         title: "Judge Application Approved",
         applicableRoles: ["judge", "judges"],
-        message: "⚖️ Welcome to our judging panel!\n\nThank you for being here! Having your talent and background to review these projects helps us to find the top teams who have solved problems for nonprofits this summer after spending about 3 months in all phases of software development.\n\n📋 Resources & Next Steps:\n1. Judging Intro [video](https://youtu.be/YM8j-2CA-mE?si=WNiRqI9Ww_Jd0yx0)\n2. When the projects have closed and we're ready to judge, you'll go [here](https://www.ohack.dev/judge)\n3. Judging criteria is [here](https://www.ohack.dev/about/judges)\n4. You can already start reviewing teams GitHub and DevPost now (knowing that they might land more changes before the end of the hack) all teams are listed [here](https://www.ohack.dev/hack/2025_summer#teams)\n5. All judges are listed [here](https://www.ohack.dev/hack/2025_summer#judge)\n6. Take time to say hi and introduce yourself to everyone, this is a great way to market amongst similar-minded, community focused people\n\n⏱️ Track your impact: https://www.ohack.dev/volunteer/track\n\nReady to discover amazing innovations! ✨",
+        message: "⚖️ Welcome to our judging panel!\n\nThank you for being here! Having your talent and background to review these projects helps us to find the top teams who have solved problems for nonprofits.\n\n📋 Resources & Next Steps:\n1. Judging Intro [video](https://youtu.be/YM8j-2CA-mE?si=WNiRqI9Ww_Jd0yx0)\n2. When the projects have closed and we're ready to judge, you'll go [here](https://www.ohack.dev/judge)\n3. Judging criteria is [here](https://www.ohack.dev/about/judges)\n4. You can already start reviewing teams GitHub and DevPost now (knowing that they might land more changes before the end of the hack) all teams are listed [here](https://www.ohack.dev/hack/[EVENT_ID]#teams)\n5. All judges are listed [here](https://www.ohack.dev/hack/[EVENT_ID]#judge)\n6. Take time to say hi and introduce yourself to everyone, this is a great way to market amongst similar-minded, community focused people\n\n⏱️ Track your impact: https://www.ohack.dev/volunteer/track\n\nReady to discover amazing innovations! ✨",
         icon: "⚖️"
       },
       {
@@ -142,7 +142,7 @@ export const MESSAGE_TEMPLATES = {
         id: "judge_info_sharing",
         title: "Judge Information & Resources",
         applicableRoles: ["judge", "judges"],
-        message: "Ready to spot game-changing solutions? ⚖️\n\nYour expertise helps identify innovations that will transform nonprofit work.\n\n📚 Resources:\n0. Dates and times are [here on the hackathon page](https://www.ohack.dev/hack/2025_summer#countdown)\n1. Judging Intro [video](https://youtu.be/YM8j-2CA-mE?si=WNiRqI9Ww_Jd0yx0)\n2. When the projects have closed and we're ready to judge, you'll go [here](https://www.ohack.dev/judge)\n3. Judging criteria is [here](https://www.ohack.dev/about/judges)\n4. You can already start reviewing teams GitHub and DevPost now (knowing that they might land more changes before the end of the hack) all teams are listed [here](https://www.ohack.dev/hack/2025_summer#teams)\n5. All judges are listed [here](https://www.ohack.dev/hack/2025_summer#judge)\n6. Take time to say hi and introduce yourself to everyone, this is a great way to market amongst similar-minded, community focused people, join our judges Slack channel: [#2025-summer-judging](https://opportunity-hack.slack.com/archives/C0987QH0R5K)\n\n⏱️ Track your volunteer hours: https://www.ohack.dev/volunteer/track\n\nGet excited to discover the next big breakthrough! 🎯",
+        message: "Ready to spot game-changing solutions? ⚖️\n\nYour expertise helps identify innovations that will transform nonprofit work.\n\n📚 Resources:\n0. Dates and times are [here on the hackathon page](https://www.ohack.dev/hack/[EVENT_ID]#countdown)\n1. Judging Intro [video](https://youtu.be/YM8j-2CA-mE?si=WNiRqI9Ww_Jd0yx0)\n2. When the projects have closed and we're ready to judge, you'll go [here](https://www.ohack.dev/judge)\n3. Judging criteria is [here](https://www.ohack.dev/about/judges)\n4. You can already start reviewing teams GitHub and DevPost now (knowing that they might land more changes before the end of the hack) all teams are listed [here](https://www.ohack.dev/hack/[EVENT_ID]#teams)\n5. All judges are listed [here](https://www.ohack.dev/hack/[EVENT_ID]#judge)\n6. Take time to say hi and introduce yourself to everyone, this is a great way to market amongst similar-minded, community focused people, join our judges Slack channel: [SLACK_CHANNEL]\n\n⏱️ Track your volunteer hours: https://www.ohack.dev/volunteer/track\n\nGet excited to discover the next big breakthrough! 🎯",
         icon: "📚"
       },
       {
@@ -197,36 +197,82 @@ export const MESSAGE_TEMPLATES = {
 };
 
 /**
+ * Human-friendly labels and examples for template placeholders
+ */
+export const PLACEHOLDER_LABELS = {
+  LOCATION_NAME: { label: 'Location Name', example: 'e.g., Arizona State University in Tempe, Arizona' },
+  LOCATION_URL: { label: 'Location URL', example: 'e.g., https://ohack.dev/about/locations/asu-tempe-arizona' },
+  LINKEDIN_EVENT_URL: { label: 'LinkedIn Event URL', example: 'e.g., https://www.linkedin.com/events/...' },
+  RSVP_DEADLINE: { label: 'RSVP Deadline', example: 'e.g., August 28th at 5:00 PM PST' },
+  ACCESS_CODE: { label: 'Access Code', example: 'e.g., 2025' },
+  SLACK_CHANNEL: { label: 'Slack Channel', example: 'e.g., [#2026-spring-judging](https://opportunity-hack.slack.com/archives/XXXXX)' },
+};
+
+/**
+ * Placeholders that are automatically replaced and should not prompt the admin
+ */
+const AUTO_REPLACED_PLACEHOLDERS = ['EVENT_ID', 'VOLUNTEER_ID', 'VOLUNTEER_TYPE'];
+
+/**
+ * Detect unreplaced placeholders in a message that need manual input.
+ * Returns an array of unique placeholder names (without brackets).
+ *
+ * @param {string} message - The message text to scan
+ * @returns {string[]} Array of placeholder names needing manual input
+ */
+export const detectPlaceholders = (message) => {
+  if (!message) return [];
+  const matches = [...message.matchAll(/\[([A-Z_]+)\]/g)];
+  const unique = [...new Set(matches.map(m => m[1]))];
+  return unique.filter(name => !AUTO_REPLACED_PLACEHOLDERS.includes(name));
+};
+
+/**
  * Replace placeholders in message text with actual values
  *
  * Supported placeholders:
  * - [EVENT_ID]: Event identifier
  * - [VOLUNTEER_ID]: Volunteer/user identifier
  * - [VOLUNTEER_TYPE]: Type of volunteer (hacker, mentor, judge, etc.)
+ * - [LOCATION_NAME]: Event venue name (e.g., "Arizona State University in Tempe, Arizona")
+ * - [LOCATION_URL]: URL to venue info page (e.g., "https://ohack.dev/about/locations/asu-tempe-arizona")
+ * - [LINKEDIN_EVENT_URL]: LinkedIn event URL for this hackathon
+ * - [RSVP_DEADLINE]: RSVP deadline text (e.g., "August 28th at 5:00 PM PST")
+ * - [ACCESS_CODE]: Application access code (e.g., "2025")
+ * - [SLACK_CHANNEL]: Slack channel link/name (e.g., "[#2026-spring-judging](https://opportunity-hack.slack.com/archives/XXXXX)")
  *
  * @param {string} message - The message text with placeholders
  * @param {Object} replacements - Object containing replacement values
  * @param {string} replacements.eventId - Event ID to replace [EVENT_ID]
  * @param {string} replacements.volunteerId - Volunteer ID to replace [VOLUNTEER_ID]
  * @param {string} replacements.volunteerType - Volunteer type to replace [VOLUNTEER_TYPE]
+ * @param {string} replacements.locationName - Venue name to replace [LOCATION_NAME]
+ * @param {string} replacements.locationUrl - Venue info URL to replace [LOCATION_URL]
+ * @param {string} replacements.linkedinEventUrl - LinkedIn event URL to replace [LINKEDIN_EVENT_URL]
+ * @param {string} replacements.rsvpDeadline - RSVP deadline text to replace [RSVP_DEADLINE]
+ * @param {string} replacements.accessCode - Access code to replace [ACCESS_CODE]
+ * @param {string} replacements.slackChannel - Slack channel link to replace [SLACK_CHANNEL]
  * @returns {string} Message with placeholders replaced
  */
-export const replacePlaceholders = (message, { eventId, volunteerId, volunteerType } = {}) => {
+export const replacePlaceholders = (message, { eventId, volunteerId, volunteerType, locationName, locationUrl, linkedinEventUrl, rsvpDeadline, accessCode, slackChannel } = {}) => {
   let result = message;
 
-  // Replace [EVENT_ID] placeholder if present
-  if (eventId && result.includes('[EVENT_ID]')) {
-    result = result.replace(/\[EVENT_ID\]/g, eventId);
-  }
+  const replacementMap = {
+    '[EVENT_ID]': eventId,
+    '[VOLUNTEER_ID]': volunteerId,
+    '[VOLUNTEER_TYPE]': volunteerType,
+    '[LOCATION_NAME]': locationName,
+    '[LOCATION_URL]': locationUrl,
+    '[LINKEDIN_EVENT_URL]': linkedinEventUrl,
+    '[RSVP_DEADLINE]': rsvpDeadline,
+    '[ACCESS_CODE]': accessCode,
+    '[SLACK_CHANNEL]': slackChannel,
+  };
 
-  // Replace [VOLUNTEER_ID] placeholder if present
-  if (volunteerId && result.includes('[VOLUNTEER_ID]')) {
-    result = result.replace(/\[VOLUNTEER_ID\]/g, volunteerId);
-  }
-
-  // Replace [VOLUNTEER_TYPE] placeholder if present
-  if (volunteerType && result.includes('[VOLUNTEER_TYPE]')) {
-    result = result.replace(/\[VOLUNTEER_TYPE\]/g, volunteerType);
+  for (const [placeholder, value] of Object.entries(replacementMap)) {
+    if (value && result.includes(placeholder)) {
+      result = result.replaceAll(placeholder, value);
+    }
   }
 
   return result;

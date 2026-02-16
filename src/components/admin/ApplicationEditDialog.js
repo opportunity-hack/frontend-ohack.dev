@@ -56,6 +56,8 @@ const ApplicationEditDialog = ({
   }, [application]);
 
   // Field configurations for different application types
+  // NOTE: Availability options below assume a typical Fri-Sun weekend hackathon format.
+  // For events with different schedules, update these options to match the event dates.
   const getFieldConfig = useCallback((type) => {
     const configs = {
       hacker: {

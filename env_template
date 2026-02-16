@@ -1,6 +1,13 @@
 # Backend API server
 NEXT_PUBLIC_API_SERVER_URL=<TODO>
 
+# Backend Node.js API server (usually same as above)
+NEXT_PUBLIC_API_NODEJS_SERVER_URL=<TODO>
+
+# PropelAuth authentication URL
+# This is required for login functionality (both Slack and Google)
+NEXT_PUBLIC_REACT_APP_AUTH_URL=<TODO>
+
 # Analytics
 NEXT_PUBLIC_GOOGLE_ANALYTICS=DISABLED
 NEXT_PUBLIC_FACEBOOK_PIXEL_ID=DISABLED
@@ -8,5 +15,8 @@ NEXT_PUBLIC_FACEBOOK_PIXEL_ID=DISABLED
 # reCAPTCHA v3 (get keys from https://www.google.com/recaptcha/admin)
 NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY=<TODO>
 
-# Signup with Slack
+# Signup with Slack (URL to join Slack workspace)
 NEXT_PUBLIC_SLACK_SIGNUP_LINK=<TODO>
+
+# Optional: Slack Team/Workspace ID (defaults to T1Q7936BH if not set)
+# NEXT_PUBLIC_SLACK_TEAM_ID=T1Q7936BH

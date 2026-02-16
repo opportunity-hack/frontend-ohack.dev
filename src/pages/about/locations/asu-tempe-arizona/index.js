@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import {
   Typography,
@@ -46,7 +47,90 @@ import {
   LocalGasStationRounded,
 } from '@mui/icons-material';
 
+const LOCATIONS = {
+  "engineering-center-g-wing": {
+    name: "Engineering Center G-Wing",
+    address: "501 E Tyler Mall, Tempe, AZ 85281",
+    description: "Main event venue - ECG Building, Room 101",
+    coordinates: { lat: 33.4255, lng: -111.9400 },
+    features: ["WiFi", "Power outlets", "Air conditioning", "Accessible entrance"],
+    googleMapsUrl: "https://maps.app.goo.gl/z9hD7YoFxfFFLstC8",
+    gallery: [
+      {
+        src: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp",
+        caption: "Hackers collaborating in ASU ECG 101 Generator lab during an Opportunity Hack event",
+        alt: "Hackathon participants working together in ECG 101 Generator lab"
+      },
+      {
+        src: "https://cdn.ohack.dev/ohack.dev/locations/asu_1.webp",
+        caption: "Exterior view of the Engineering Center G-Wing - our main event building",
+        alt: "ASU Engineering Center G-Wing exterior view"
+      },
+      {
+        src: "https://cdn.ohack.dev/ohack.dev/locations/asu_2.webp",
+        caption: "Inside the G-Wing Generator Lab - spacious collaborative workspace for hackathon teams",
+        alt: "Interior of G-Wing Generator Lab workspace"
+      },
+      {
+        src: "https://cdn.ohack.dev/ohack.dev/locations/asu_3.webp",
+        caption: "Volunteers and participants working together in the Generator Lab during a hackathon event",
+        alt: "Volunteers collaborating in the Generator Lab"
+      },
+      {
+        src: "https://cdn.ohack.dev/ohack.dev/locations/asu_4.webp",
+        caption: "Workshop room across the courtyard - additional meeting space for breakout sessions",
+        alt: "Workshop room across the courtyard from G-Wing"
+      },
+      {
+        src: "https://cdn.ohack.dev/ohack.dev/locations/asu_5.webp",
+        caption: "Food and refreshment station in the main Generator Lab - keeping hackers energized!",
+        alt: "Food table setup in the G-Wing Generator Lab"
+      }
+    ],
+    video: "https://www.youtube.com/embed/a521Ch2N52c",
+    tourUrl: null,
+  },
+  "hayden-library": {
+    name: "Hayden Library",
+    address: "300 E Orange St., Tempe, AZ 85281",
+    description: "Hayden Library - a recently renovated ($90M) historic ASU landmark with collaborative study spaces, Makerspace, and nearly double the original student space",
+    coordinates: { lat: 33.4242, lng: -111.9428 },
+    features: ["WiFi", "Power outlets", "Air conditioning", "Accessible entrance", "Study rooms", "Makerspace"],
+    googleMapsUrl: "https://share.google/1aouzYHBuPe5OgnsQ",
+    gallery: [
+      {
+        src: "https://tours.asu.edu/sites/g/files/litvpz1481/files/tours/tempe-hayden-hero.jpg",
+        caption: "Exterior view of Hayden Library - a historic ASU landmark named after Charles Trumbull Hayden, founder of Tempe",
+        alt: "Hayden Library exterior at ASU Tempe campus"
+      },
+      {
+        src: "https://tours.asu.edu/sites/g/files/litvpz1481/files/interior/tempe-hayden-interior-3.jpg",
+        caption: "Renovated interior of Hayden Library with modern collaborative study spaces",
+        alt: "Hayden Library interior collaborative study area"
+      },
+      {
+        src: "https://tours.asu.edu/sites/g/files/litvpz1481/files/interior/tempe-hayden-interior-5.jpg",
+        caption: "Open study areas inside the renovated Hayden Library",
+        alt: "Hayden Library open study spaces"
+      },
+      {
+        src: "https://tours.asu.edu/sites/g/files/litvpz1481/files/interior/tempe-hayden-interior-2.jpg",
+        caption: "Hayden Library interior spaces - modernized with enhanced facilities for students and visitors",
+        alt: "Hayden Library modernized interior"
+      },
+    ],
+    video: null,
+    tourUrl: "https://tours.asu.edu/tempe/hayden-library",
+  },
+};
+
+const DEFAULT_LOCATION = "engineering-center-g-wing";
+
 const EventLocationPage = () => {
+  const router = useRouter();
+  const locationSlug = LOCATIONS[router.query.location] ? router.query.location : DEFAULT_LOCATION;
+  const activeLocation = LOCATIONS[locationSlug];
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -127,16 +211,9 @@ const EventLocationPage = () => {
     setMapDialog({ open: true, title, src: embedSrc });
   };
 
-  const venues = [
-    {
-      name: "Engineering Center G-Wing",
-      address: "501 E Tyler Mall, Tempe, AZ 85281",
-      description: "Main event venue - ECG Building, Room 101",
-      coordinates: "33.4255, -111.9400",
-      features: ["WiFi", "Power outlets", "Air conditioning", "Accessible entrance"],
-      googleMapsUrl: "https://maps.app.goo.gl/z9hD7YoFxfFFLstC8" // ✅ Actual Google Maps link from PDF
-    }
-  ];
+  const handleLocationChange = (slug) => {
+    router.push({ pathname: router.pathname, query: { location: slug } }, undefined, { shallow: true });
+  };
 
   const parkingOptions = [
     {
@@ -260,14 +337,14 @@ const EventLocationPage = () => {
   return (
     <Container maxWidth="lg">
       <Head>
-        <title>ASU Tempe Arizona Event Location | Opportunity Hack</title>
-        <meta 
-          name="description" 
-          content="Complete guide to Opportunity Hack events at Arizona State University Tempe campus. Find venue details, parking information, nearby hotels, and transportation options for judges, mentors, volunteers, and hackers." 
+        <title>{activeLocation.name} - ASU Tempe Arizona Event Location | Opportunity Hack</title>
+        <meta
+          name="description"
+          content={`Complete guide to Opportunity Hack events at ${activeLocation.name}, Arizona State University Tempe campus. ${activeLocation.address}. Find venue details, parking information, nearby hotels, and transportation options.`}
         />
-        <meta 
-          name="keywords" 
-          content="ASU Tempe, Arizona State University, Opportunity Hack location, hackathon venue, parking, hotels near ASU, Tempe Arizona events, Engineering Center G-Wing"
+        <meta
+          name="keywords"
+          content={`ASU Tempe, Arizona State University, Opportunity Hack location, hackathon venue, parking, hotels near ASU, Tempe Arizona events, ${activeLocation.name}`}
         />
         <meta name="author" content="Opportunity Hack" />
         <meta name="robots" content="index, follow" />
@@ -275,17 +352,17 @@ const EventLocationPage = () => {
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="ASU Tempe Arizona Event Location | Opportunity Hack" />
-        <meta property="og:description" content="Complete guide to Opportunity Hack events at Arizona State University Tempe campus. Find venue details, parking, hotels, and transportation options." />
+        <meta property="og:title" content={`${activeLocation.name} - ASU Tempe Arizona Event Location | Opportunity Hack`} />
+        <meta property="og:description" content={`Complete guide to Opportunity Hack events at ${activeLocation.name}, ASU Tempe campus. Find venue details, parking, hotels, and transportation options.`} />
         <meta property="og:url" content="https://ohack.dev/about/locations/asu-tempe-arizona" />
         <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/locations/asu-tempe-venue.webp" />
-        <meta property="og:image:alt" content="ASU Tempe Engineering Center G-Wing - Opportunity Hack event venue" />
+        <meta property="og:image:alt" content={`ASU Tempe ${activeLocation.name} - Opportunity Hack event venue`} />
         <meta property="og:site_name" content="Opportunity Hack" />
-        
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="ASU Tempe Arizona Event Location | Opportunity Hack" />
-        <meta name="twitter:description" content="Complete guide to Opportunity Hack events at ASU Tempe campus. Venue, parking, hotels, and transportation info." />
+        <meta name="twitter:title" content={`${activeLocation.name} - ASU Tempe Arizona Event Location | Opportunity Hack`} />
+        <meta name="twitter:description" content={`Complete guide to Opportunity Hack events at ${activeLocation.name}, ASU Tempe campus. Venue, parking, hotels, and transportation info.`} />
         <meta name="twitter:image" content="https://cdn.ohack.dev/ohack.dev/locations/asu-tempe-venue.webp" />
         <meta name="twitter:creator" content="@opportunityhack" />
         
@@ -294,20 +371,20 @@ const EventLocationPage = () => {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Place",
-            "name": "Opportunity Hack at ASU Tempe",
-            "description": "Event venue for Opportunity Hack hackathons at Arizona State University Tempe campus",
+            "name": `Opportunity Hack at ASU Tempe - ${activeLocation.name}`,
+            "description": `Event venue for Opportunity Hack hackathons at ${activeLocation.name}, Arizona State University Tempe campus`,
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "501 E Tyler Mall",
-              "addressLocality": "Tempe", 
+              "streetAddress": activeLocation.address.split(",")[0],
+              "addressLocality": "Tempe",
               "addressRegion": "AZ",
               "postalCode": "85281",
               "addressCountry": "US"
             },
             "geo": {
               "@type": "GeoCoordinates",
-              "latitude": 33.4255,
-              "longitude": -111.9400
+              "latitude": activeLocation.coordinates.lat,
+              "longitude": activeLocation.coordinates.lng
             },
             "url": "https://ohack.dev/about/locations/asu-tempe-arizona",
             "sameAs": [
@@ -358,9 +435,70 @@ const EventLocationPage = () => {
             textAlign: "center"
           }}
         >
-          Welcome to one of our premier hackathon venues! Located in the heart of Tempe, just 10 minutes from Sky Harbor Airport, 
+          Welcome to one of our premier hackathon venues! Located in the heart of Tempe, just 10 minutes from Sky Harbor Airport,
           ASU provides the perfect environment for innovation and collaboration.
         </Typography>
+
+        {/* Venue Selector */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 4,
+            border: 2,
+            borderColor: "primary.main",
+            borderRadius: 2,
+            textAlign: "center",
+            maxWidth: "700px",
+            mx: "auto",
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+            <LocationOnRounded sx={{ verticalAlign: "middle", mr: 0.5 }} />
+            Select Your Venue ({Object.keys(LOCATIONS).length} locations)
+          </Typography>
+          <Grid container spacing={2} justifyContent="center">
+            {Object.entries(LOCATIONS).map(([slug, loc]) => {
+              const isActive = slug === locationSlug;
+              return (
+                <Grid item xs={12} sm={6} key={slug}>
+                  <Paper
+                    elevation={isActive ? 4 : 0}
+                    onClick={() => handleLocationChange(slug)}
+                    sx={{
+                      p: 2,
+                      cursor: "pointer",
+                      border: 2,
+                      borderColor: isActive ? "primary.main" : "grey.300",
+                      bgcolor: isActive ? "primary.main" : "background.paper",
+                      color: isActive ? "primary.contrastText" : "text.primary",
+                      borderRadius: 2,
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        transform: "translateY(-2px)",
+                        boxShadow: 3,
+                      },
+                    }}
+                  >
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      {loc.name}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: isActive ? "primary.contrastText" : "text.secondary",
+                        opacity: isActive ? 0.9 : 1,
+                      }}
+                    >
+                      {loc.address}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Paper>
 
         {/* Tax Deduction Information */}
         <Paper 
@@ -454,187 +592,169 @@ const EventLocationPage = () => {
             </Tooltip>
           </Box>
 
-          <Grid container spacing={4}>
-            {venues.map((venue, index) => (
-              <Grid item xs={12} key={index}>
-                <Card sx={{ p: 3 }}>
-                  <CardContent>
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
-                      <Box>
-                        <Typography variant="h5" gutterBottom>
-                          {venue.name}
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary" gutterBottom>
-                          {venue.description}
-                        </Typography>
-                      </Box>
-                      <LocationOnRounded color="primary" sx={{ fontSize: 32 }} />
-                    </Box>
-
-                    <Box 
-                      onClick={() => handleAddressClick(venue.address, venue.name, venue.googleMapsUrl)}
-                      sx={{ 
-                        cursor: "pointer", 
-                        p: 2, 
-                        bgcolor: "grey.50", 
-                        borderRadius: 1,
-                        mb: 2,
-                        '&:hover': { bgcolor: "grey.100" }
-                      }}
-                    >
-                      <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <NavigationRounded color="primary" />
-                        {venue.address}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Tap to open in maps app
-                      </Typography>
-                    </Box>
-
-                    <Typography variant="subtitle2" gutterBottom>Venue Features:</Typography>
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
-                      {venue.features.map((feature, i) => (
-                        <Chip key={i} label={feature} size="small" variant="outlined" />
-                      ))}
-                    </Box>
-
-                    <Grid container spacing={2}>
-                      <Grid item>
-                        <Button
-                          variant="contained"
-                          startIcon={<NavigationRounded />}
-                          onClick={() => handleAddressClick(venue.address, venue.name, venue.googleMapsUrl)}
-                        >
-                          Get Directions
-                        </Button>
-                      </Grid>
-                      <Grid item>
-                        <Button
-                          variant="outlined"
-                          startIcon={<ShareRounded />}
-                          onClick={() => copyToClipboard(venue.address, 'Address copied to clipboard!')}
-                        >
-                          Share Address
-                        </Button>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-
-          {/* Venue Gallery - Video & Photos */}
-          <Box sx={{ mt: 5 }}>
-            <Typography variant="h5" gutterBottom sx={{ textAlign: "center", mb: 3 }}>
-              Venue Gallery
-            </Typography>
-            
-            {/* Featured Video */}
-            <Box sx={{ mb: 4, textAlign: "center" }}>
-              <Box sx={{ 
-                position: 'relative', 
-                paddingBottom: '56.25%', 
-                height: 0, 
-                overflow: 'hidden',
-                maxWidth: '800px',
-                margin: '0 auto',
-                borderRadius: 2,
-                boxShadow: 3
-              }}>
-                <iframe
-                  src="https://www.youtube.com/embed/a521Ch2N52c"
-                  title="ASU Tempe Venue Tour - Opportunity Hack Location"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    border: 'none'
-                  }}
-                />
+          <Card sx={{ p: 3 }}>
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                <Box>
+                  <Typography variant="h5" gutterBottom>
+                    {activeLocation.name}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" gutterBottom>
+                    {activeLocation.description}
+                  </Typography>
+                </Box>
+                <LocationOnRounded color="primary" sx={{ fontSize: 32 }} />
               </Box>
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
-                sx={{ mt: 2, fontStyle: "italic" }}
-              >
-                Video tour of the ASU Engineering Center G-Wing venue
-              </Typography>
-            </Box>
 
-            {/* Photo Gallery */}
-            <Grid container spacing={3}>
-              {[
-                {
-                  src: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp",
-                  caption: "Hackers collaborating in ASU ECG 101 Generator lab during an Opportunity Hack event",
-                  alt: "Hackathon participants working together in ECG 101 Generator lab"
-                },
-                {
-                  src: "https://cdn.ohack.dev/ohack.dev/locations/asu_1.webp",
-                  caption: "Exterior view of the Engineering Center G-Wing - our main event building",
-                  alt: "ASU Engineering Center G-Wing exterior view"
-                },
-                {
-                  src: "https://cdn.ohack.dev/ohack.dev/locations/asu_2.webp",
-                  caption: "Inside the G-Wing Generator Lab - spacious collaborative workspace for hackathon teams",
-                  alt: "Interior of G-Wing Generator Lab workspace"
-                },
-                {
-                  src: "https://cdn.ohack.dev/ohack.dev/locations/asu_3.webp",
-                  caption: "Volunteers and participants working together in the Generator Lab during a hackathon event",
-                  alt: "Volunteers collaborating in the Generator Lab"
-                },
-                {
-                  src: "https://cdn.ohack.dev/ohack.dev/locations/asu_4.webp",
-                  caption: "Workshop room across the courtyard - additional meeting space for breakout sessions",
-                  alt: "Workshop room across the courtyard from G-Wing"
-                },
-                {
-                  src: "https://cdn.ohack.dev/ohack.dev/locations/asu_5.webp",
-                  caption: "Food and refreshment station in the main Generator Lab - keeping hackers energized!",
-                  alt: "Food table setup in the G-Wing Generator Lab"
-                }
-              ].map((photo, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Card 
-                    sx={{ 
-                      height: "100%", 
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: 6
-                      }
-                    }}
+              <Box
+                onClick={() => handleAddressClick(activeLocation.address, activeLocation.name, activeLocation.googleMapsUrl)}
+                sx={{
+                  cursor: "pointer",
+                  p: 2,
+                  bgcolor: "grey.50",
+                  borderRadius: 1,
+                  mb: 2,
+                  '&:hover': { bgcolor: "grey.100" }
+                }}
+              >
+                <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <NavigationRounded color="primary" />
+                  {activeLocation.address}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Tap to open in maps app
+                </Typography>
+              </Box>
+
+              <Typography variant="subtitle2" gutterBottom>Venue Features:</Typography>
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
+                {activeLocation.features.map((feature, i) => (
+                  <Chip key={i} label={feature} size="small" variant="outlined" />
+                ))}
+              </Box>
+
+              <Grid container spacing={2}>
+                <Grid item>
+                  <Button
+                    variant="contained"
+                    startIcon={<NavigationRounded />}
+                    onClick={() => handleAddressClick(activeLocation.address, activeLocation.name, activeLocation.googleMapsUrl)}
                   >
-                    <CardMedia
-                      component="img"
-                      height="240"
-                      image={photo.src}
-                      alt={photo.alt}
-                      sx={{ objectFit: "cover" }}
+                    Get Directions
+                  </Button>
+                </Grid>
+                <Grid item>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ShareRounded />}
+                    onClick={() => copyToClipboard(activeLocation.address, 'Address copied to clipboard!')}
+                  >
+                    Share Address
+                  </Button>
+                </Grid>
+                {activeLocation.tourUrl && (
+                  <Grid item>
+                    <Button
+                      variant="outlined"
+                      startIcon={<LinkRounded />}
+                      href={activeLocation.tourUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Virtual Tour
+                    </Button>
+                  </Grid>
+                )}
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Venue Gallery - Video & Photos (conditional) */}
+          {(activeLocation.video || activeLocation.gallery.length > 0) && (
+            <Box sx={{ mt: 5 }}>
+              <Typography variant="h5" gutterBottom sx={{ textAlign: "center", mb: 3 }}>
+                Venue Gallery
+              </Typography>
+
+              {/* Featured Video */}
+              {activeLocation.video && (
+                <Box sx={{ mb: 4, textAlign: "center" }}>
+                  <Box sx={{
+                    position: 'relative',
+                    paddingBottom: '56.25%',
+                    height: 0,
+                    overflow: 'hidden',
+                    maxWidth: '800px',
+                    margin: '0 auto',
+                    borderRadius: 2,
+                    boxShadow: 3
+                  }}>
+                    <iframe
+                      src={activeLocation.video}
+                      title={`${activeLocation.name} Venue Tour - Opportunity Hack Location`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 'none'
+                      }}
                     />
-                    <CardContent>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{ 
-                          lineHeight: 1.5,
-                          fontSize: "0.95rem"
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 2, fontStyle: "italic" }}
+                  >
+                    Video tour of the ASU {activeLocation.name} venue
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Photo Gallery */}
+              {activeLocation.gallery.length > 0 && (
+                <Grid container spacing={3}>
+                  {activeLocation.gallery.map((photo, index) => (
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                      <Card
+                        sx={{
+                          height: "100%",
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: 6
+                          }
                         }}
                       >
-                        {photo.caption}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                        <CardMedia
+                          component="img"
+                          height="240"
+                          image={photo.src}
+                          alt={photo.alt}
+                          sx={{ objectFit: "cover" }}
+                        />
+                        <CardContent>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              lineHeight: 1.5,
+                              fontSize: "0.95rem"
+                            }}
+                          >
+                            {photo.caption}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
                 </Grid>
-              ))}
-            </Grid>
-          </Box>
+              )}
+            </Box>
+          )}
         </Box>
 
         <Divider sx={{ my: 5 }} />

@@ -76,13 +76,14 @@ import UserSearchDialog from './UserSearchDialog';
 import { TEAM_STATUS_OPTIONS, getStatusOption } from '../../constants/teamStatus';
 
 // GitHub Issue Templates for different hackathon phases
-const GITHUB_ISSUE_TEMPLATES = {
+// Returns templates with event-specific URLs based on the provided eventId
+const getGithubIssueTemplates = (eventId = 'EVENT_ID') => ({
   PHASE_1: {
     title: "First Check-in",
-    body: `Hey there! It's only been a week, but based on our [timeline](https://www.ohack.dev/hack/2025_summer#countdown), we want to check-in with all teams.
+    body: `Hey there! It's only been a week, but based on our [timeline](https://www.ohack.dev/hack/${eventId}#countdown), we want to check-in with all teams.
 
 Here's what we're looking for:
-- [ ] Make sure your team members are all added [here](https://www.ohack.dev/hack/2025_summer#teams) - if there is anyone that shouldn't be on your team, either ask them to hit the Leave Team button, or add a note here in this task and we'll get to it
+- [ ] Make sure your team members are all added [here](https://www.ohack.dev/hack/${eventId}#teams) - if there is anyone that shouldn't be on your team, either ask them to hit the Leave Team button, or add a note here in this task and we'll get to it
 - [ ] Do you have questions about the problem? If you aren't sure about the specific details, please ask in the corresponding \`#npo-\` channel for your nonprofit.  We'll batch up questions and ask nonprofits if we're unable to answer your questions with our internal knowledge
 - [ ] Has your team met yet? Either synchronous or asynchronous, schedule time to understand the background of your team, how much time they can dedicate this summer, and look for something you all have in common (maybe the reason you're here this summer?)
 - [ ] Google around for similar solutions today to understand what the cost of current solutions are, how easy they are to use, and how easy/hard they are to use - also see if there is anything free and open-source on GitHub
@@ -96,7 +97,7 @@ Click all of the boxes as you go through these with your team, add comments to t
   },
   PHASE_2: {
     title: "Second Check-in",
-    body: `Hey teams! We're now a month into the summer program and it's time for our second major check-in. Based on our [timeline](https://www.ohack.dev/hack/2025_summer#countdown), you should be deep into development with a working prototype to show.
+    body: `Hey teams! We're now a month into the program and it's time for our second major check-in. Based on our [timeline](https://www.ohack.dev/hack/${eventId}#countdown), you should be deep into development with a working prototype to show.
 
 Here's what we're looking for:
 
@@ -108,7 +109,7 @@ Here's what we're looking for:
 - [ ] **Nonprofit Problem**: Are you stuck on any additional context for the problem?  Keep in mind that while the single nonprofit has this issue, you should consider the general solve for all of the other nonprofits that will have the same problem.  Start by solving for this specific nonprofit, but think about how this generalizes given that [Scope of Solution in the Judging Criteria](https://www.ohack.dev/about/judges) is 25% of your overall score.
 - [ ] **Team Velocity**: How is your team working together? Are you meeting your timeline goals or do you need to adjust (and cut down) scope?
 - [ ] **Demo Day Preparation**: Start thinking about how you'll present your final solution. What story will you tell about the impact you're creating?
-- [ ] **DevPost**: We'll be using this for judging and this will be how you show off your work for your portfolio [Start a Project on our DevPost here](https://opportunity-hack-summer-2025.devpost.com/) you can update and submit as many times as needed up until the final deadline.
+- [ ] **DevPost**: We'll be using this for judging and this will be how you show off your work for your portfolio. Start a project on our DevPost page - you can update and submit as many times as needed up until the final deadline.
 
 **Remember**: It's better to have a simple, working solution that solves a real problem than a complex, broken one. Focus on core value first, polish later.
 
@@ -158,7 +159,7 @@ Final submission checklist:
 This is your moment to shine. Check off these items, add final comments, and get ready to show the world the incredible solution you've created!`,
     phase: "Phase 4"
   }
-};
+});
 
 // Add message templates after TEAM_STATUS_OPTIONS
 const MESSAGE_TEMPLATES = {
@@ -2540,7 +2541,7 @@ const TeamManagement = ({ orgId }) => {
                 </Typography>
                 
                 <Grid container spacing={2}>
-                  {Object.entries(GITHUB_ISSUE_TEMPLATES).map(([templateKey, template]) => (
+                  {Object.entries(getGithubIssueTemplates(selectedHackathon)).map(([templateKey, template]) => (
                     <Grid item xs={12} sm={6} key={templateKey}>
                       <Card 
                         variant="outlined" 

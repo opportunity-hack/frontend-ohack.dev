@@ -1591,7 +1591,7 @@ const JudgeApplicationComponent = () => {
             Judging starts at 3:00 PM on the last day of the hackathon
             (typically Sunday). We expect to complete judging and announce the
             winning teams by 5:30 PM. Your presence during this entire timeframe
-            is crucial.
+            is crucial. Please plan to arrive 15 to 30 minutes early to ensure you can participate fully.
           </Typography>
         </Alert>
 
@@ -1687,14 +1687,68 @@ const JudgeApplicationComponent = () => {
               ? "Will you be participating online?"
               : `Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : " at the event location"}?`}
           </Typography>
+          
+          {/* Show preference indicator for in-person events */}
+          {eventData &&
+            !["Virtual", "Global", "Online"].some((term) =>
+              eventData.location?.toLowerCase().includes(term.toLowerCase()),
+            ) && (
+              <FormHelperText sx={{ mb: 2, color: "warning.main", fontWeight: "bold" }}>
+                ⭐ In-person participation is strongly preferred for judges
+              </FormHelperText>
+            )}
+
           <RadioGroup
             name="inPerson"
             value={formData.inPerson}
             onChange={handleChange}
           >
-            <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
-            <FormControlLabel value="No" control={<Radio />} label="No" />
+            {eventData &&
+            ["Virtual", "Global", "Online"].some((term) =>
+              eventData.location?.toLowerCase().includes(term.toLowerCase()),
+            ) ? (
+              <>
+                <FormControlLabel
+                  value="Yes"
+                  control={<Radio />}
+                  label="Yes, online"
+                />
+                <FormControlLabel
+                  value="No"
+                  control={<Radio />}
+                  label="No, I cannot participate"
+                />
+              </>
+            ) : (
+              <>
+                <FormControlLabel
+                  value="Yes"
+                  control={<Radio />}
+                  label="Yes, I'll be there in-person ✓"
+                />
+                <FormControlLabel
+                  value="No"
+                  control={<Radio />}
+                  label="No, I'll participate remotely"
+                />
+              </>
+            )}
           </RadioGroup>
+
+          {/* Additional context for remote judges at physical events */}
+          {formData.inPerson === "No" &&
+            eventData &&
+            !["Virtual", "Global", "Online"].some((term) =>
+              eventData.location?.toLowerCase().includes(term.toLowerCase()),
+            ) && (
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                <Typography variant="body2">
+                  Please note: Remote judging is possible but in-person judges
+                  are prioritized. If selected, we'll discuss remote judging
+                  logistics with you.
+                </Typography>
+              </Alert>
+            )}
         </FormControl>
       </Box>
     </Box>

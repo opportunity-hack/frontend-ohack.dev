@@ -16,6 +16,7 @@ import {
   Alert,
   Chip,
   LinearProgress,
+  CircularProgress,
   IconButton,
   Collapse,
   Card,
@@ -36,11 +37,15 @@ import {
 } from '@mui/icons-material';
 import { FaPaperPlane, FaEdit } from 'react-icons/fa';
 import { styled } from '@mui/system';
+import axios from 'axios';
+import { useSnackbar } from 'notistack';
 import BatchEmailService from '../../lib/batchEmailService';
 import {
   MESSAGE_TEMPLATES,
   filterTemplatesByType,
-  prepareTemplateMessage
+  prepareTemplateMessage,
+  detectPlaceholders,
+  PLACEHOLDER_LABELS
 } from '../../lib/messageTemplates';
 
 const StyledDialog = styled(Dialog)(({ theme}) => ({
@@ -75,6 +80,7 @@ const BatchEmailDialog = ({
   onComplete,
   isSelectedUsers = true, // true for selected/approved users, false for not-selected/rejected users
 }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customMessage, setCustomMessage] = useState(false);
@@ -84,6 +90,9 @@ const BatchEmailDialog = ({
   const [progress, setProgress] = useState(null);
   const [results, setResults] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
+  const [placeholderValues, setPlaceholderValues] = useState({});
+  const [detectedPlaceholders, setDetectedPlaceholders] = useState([]);
 
   // Filter eligible users when volunteers change based on context
   const eligibleUsers = isSelectedUsers
@@ -108,6 +117,8 @@ const BatchEmailDialog = ({
       setProgress(null);
       setResults(null);
       setShowDetails(false);
+      setPlaceholderValues({});
+      setDetectedPlaceholders([]);
     } else if (!isSelectedUsers) {
       // Auto-suggest the appropriate denial template for not-selected users
       const templateId = volunteerType === 'judge' || volunteerType === 'judges'
@@ -124,6 +135,8 @@ const BatchEmailDialog = ({
         });
         setMessageText(message);
         setSubject(denialTemplate.title);
+        setDetectedPlaceholders(detectPlaceholders(message));
+        setPlaceholderValues({});
         setCurrentStep(1); // Skip template selection and go to review step
       }
     }
@@ -142,6 +155,8 @@ const BatchEmailDialog = ({
     setMessageText(message);
     setSubject(template.title);
     setCustomMessage(false);
+    setDetectedPlaceholders(detectPlaceholders(message));
+    setPlaceholderValues({});
     setCurrentStep(1);
   };
 
@@ -150,6 +165,8 @@ const BatchEmailDialog = ({
     setSelectedTemplate(null);
     setMessageText('');
     setSubject('Message from Opportunity Hack');
+    setDetectedPlaceholders([]);
+    setPlaceholderValues({});
     setCurrentStep(1);
   };
 
@@ -159,6 +176,59 @@ const BatchEmailDialog = ({
     setCustomMessage(false);
     setMessageText('');
     setSubject('');
+    setDetectedPlaceholders([]);
+    setPlaceholderValues({});
+  };
+
+  const handlePlaceholderChange = (placeholderName, value) => {
+    const newValues = { ...placeholderValues, [placeholderName]: value };
+    setPlaceholderValues(newValues);
+
+    // Rebuild message from template with all current placeholder values
+    let message = prepareTemplateMessage(selectedTemplate, {
+      eventId: eventId,
+      volunteerType: recipientType
+    });
+    for (const [name, val] of Object.entries(newValues)) {
+      if (val) {
+        message = message.replaceAll(`[${name}]`, val);
+      }
+    }
+    setMessageText(message);
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!messageText.trim()) return;
+
+    setTestLoading(true);
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/email/send`,
+        {
+          email: 'questions@ohack.org',
+          message: messageText,
+          subject: `[TEST] ${subject || "Message from Opportunity Hack"}`,
+          recipient_type: recipientType,
+          name: 'Test Recipient'
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        enqueueSnackbar("Test email sent to questions@ohack.org", { variant: "success" });
+      }
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      enqueueSnackbar(error.response?.data?.message || "Failed to send test email", { variant: "error" });
+    } finally {
+      setTestLoading(false);
+    }
   };
 
   const handleSendEmails = async () => {
@@ -389,7 +459,33 @@ const BatchEmailDialog = ({
                   helperText={BatchEmailService.validateSubject(subject) || 'Email subject line'}
                   sx={{ mb: 2 }}
                 />
-                
+
+                {selectedTemplate && detectedPlaceholders.length > 0 && (
+                  <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      This template requires event-specific details:
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {detectedPlaceholders.map((name) => {
+                        const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
+                        return (
+                          <Grid item xs={12} sm={6} key={name}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label={info.label}
+                              value={placeholderValues[name] || ''}
+                              onChange={(e) => handlePlaceholderChange(name, e.target.value)}
+                              helperText={info.example}
+                              variant="outlined"
+                            />
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Box>
+                )}
+
                 <TextField
                   fullWidth
                   multiline
@@ -568,18 +664,33 @@ const BatchEmailDialog = ({
         </Button>
         
         {currentStep === 1 && !results && eligibleUsers.length > 0 && (
-          <Button
-            onClick={handleSendEmails}
-            variant="contained"
-            disabled={
-              isScheduling || 
-              !!BatchEmailService.validateMessage(messageText) || 
-              !!BatchEmailService.validateSubject(subject)
-            }
-            startIcon={<FaPaperPlane />}
-          >
-            {isScheduling ? 'Sending...' : `Send to ${eligibleUsers.length} Users`}
-          </Button>
+          <>
+            <Button
+              onClick={handleSendTestEmail}
+              variant="outlined"
+              color="secondary"
+              disabled={
+                testLoading || isScheduling ||
+                !!BatchEmailService.validateMessage(messageText) ||
+                !!BatchEmailService.validateSubject(subject)
+              }
+              startIcon={testLoading ? <CircularProgress size={16} /> : <EmailIcon />}
+            >
+              Send Test to questions@ohack.org
+            </Button>
+            <Button
+              onClick={handleSendEmails}
+              variant="contained"
+              disabled={
+                isScheduling || testLoading ||
+                !!BatchEmailService.validateMessage(messageText) ||
+                !!BatchEmailService.validateSubject(subject)
+              }
+              startIcon={<FaPaperPlane />}
+            >
+              {isScheduling ? 'Sending...' : `Send to ${eligibleUsers.length} Users`}
+            </Button>
+          </>
         )}
       </DialogActions>
     </StyledDialog>

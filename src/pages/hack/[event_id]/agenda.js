@@ -17,7 +17,7 @@ import {
   Link
 } from "@mui/material";
 import { styled } from '@mui/material/styles';
-import Moment from 'moment';
+import { format, differenceInMilliseconds, differenceInHours } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import PrintIcon from '@mui/icons-material/Print';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -103,13 +103,13 @@ const AgendaPage = ({ eventData }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { event_id } = router.query;
-  const [currentTime, setCurrentTime] = useState(Moment());
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const event = eventData;
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(Moment());
+      setCurrentTime(new Date());
     }, 60000); // Update every minute
 
     return () => clearInterval(timer);
@@ -158,19 +158,21 @@ const AgendaPage = ({ eventData }) => {
   // const eventSponsors = event.sponsors || [];
   // const eventOrganizers = event.organizers || [];
 
-  const eventStartDate = event.start_date ? Moment(event.start_date) : null;
-  const eventEndDate = event.end_date ? Moment(event.end_date) : null;
+  const eventStartDate = event.start_date ? new Date(event.start_date) : null;
+  const eventEndDate = event.end_date ? new Date(event.end_date) : null;
 
   // Format event schedule/countdowns
   const sortedEvents = event.countdowns
-    ? [...event.countdowns].sort((a, b) => Moment(a.time).diff(Moment(b.time)))
+    ? [...event.countdowns].sort((a, b) =>
+        differenceInMilliseconds(new Date(a.time), new Date(b.time))
+      )
     : [];
 
   // Determine event status
   const getEventStatus = (eventTime) => {
     const now = currentTime;
-    const eventMoment = Moment(eventTime);
-    const hoursDiff = eventMoment.diff(now, 'hours');
+    const eventDate = new Date(eventTime);
+    const hoursDiff = differenceInHours(eventDate, now);
 
     if (hoursDiff < -2) return { status: 'past', label: 'Completed', color: 'success' };
     if (hoursDiff <= 2 && hoursDiff >= -2) return { status: 'current', label: 'In Progress', color: 'primary' };
@@ -267,7 +269,7 @@ const AgendaPage = ({ eventData }) => {
               <Grid item>
                 <Chip
                   icon={<CalendarTodayIcon />}
-                  label={`${eventStartDate.format('MMM DD')}${eventEndDate ? ` - ${eventEndDate.format('MMM DD, YYYY')}` : ''}`}
+                  label={`${format(eventStartDate, 'MMM dd')}${eventEndDate ? ` - ${format(eventEndDate, 'MMM dd, yyyy')}` : ''}`}
                   sx={{
                     color: 'inherit',
                     borderColor: 'currentColor',
@@ -343,8 +345,8 @@ const AgendaPage = ({ eventData }) => {
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="subtitle2" color="text.secondary">Dates</Typography>
                   <Typography variant="body2">
-                    {eventStartDate.format('MMMM DD, YYYY')}
-                    {eventEndDate && ` - ${eventEndDate.format('MMMM DD, YYYY')}`}
+                    {format(eventStartDate, 'MMMM dd, yyyy')}
+                    {eventEndDate && ` - ${format(eventEndDate, 'MMMM dd, yyyy')}`}
                   </Typography>
                 </Box>
               )}
@@ -399,7 +401,7 @@ const AgendaPage = ({ eventData }) => {
               {sortedEvents.length > 0 ? (
                 <Box>
                   {sortedEvents.map((item, index) => {
-                    const eventTime = Moment(item.time);
+                    const eventTime = new Date(item.time);
                     const { status, label, color } = getEventStatus(item.time);
 
                     // Enhanced event data fields (see docs/agenda-data-structure.md):
@@ -441,7 +443,7 @@ const AgendaPage = ({ eventData }) => {
                                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
                               >
                                 <AccessTimeIcon fontSize="small" />
-                                {eventTime.format('dddd, MMMM Do [at] h:mm A')}
+                                {format(eventTime, 'EEEE, MMMM do \'at\' h:mm a')}
                               </Typography>
                             </Box>
                             <NoPrintSection>
@@ -495,7 +497,7 @@ const AgendaPage = ({ eventData }) => {
         {/* Footer for print */}
         <PrintOnlySection sx={{ mt: 4, textAlign: 'center', borderTop: '1px solid #ddd', pt: 2 }}>
           <Typography variant="caption" color="text.secondary">
-            Printed from {agendaUrl} • {currentTime.format('MMMM DD, YYYY [at] h:mm A')}
+            Printed from {agendaUrl} • {format(currentTime, 'MMMM dd, yyyy \'at\' h:mm a')}
           </Typography>
         </PrintOnlySection>
       </AgendaContainer>
