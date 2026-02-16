@@ -416,20 +416,66 @@ const EventLocationPage = () => {
           ASU provides the perfect environment for innovation and collaboration.
         </Typography>
 
-        {/* Venue Selector Chips */}
-        <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, flexWrap: "wrap", mb: 4 }}>
-          {Object.entries(LOCATIONS).map(([slug, loc]) => (
-            <Chip
-              key={slug}
-              label={loc.name}
-              color={slug === locationSlug ? "primary" : "default"}
-              variant={slug === locationSlug ? "filled" : "outlined"}
-              onClick={() => handleLocationChange(slug)}
-              icon={<LocationOnRounded />}
-              sx={{ fontSize: "0.95rem", py: 2.5, px: 1 }}
-            />
-          ))}
-        </Box>
+        {/* Venue Selector */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 4,
+            border: 2,
+            borderColor: "primary.main",
+            borderRadius: 2,
+            textAlign: "center",
+            maxWidth: "700px",
+            mx: "auto",
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+            <LocationOnRounded sx={{ verticalAlign: "middle", mr: 0.5 }} />
+            Select Your Venue ({Object.keys(LOCATIONS).length} locations)
+          </Typography>
+          <Grid container spacing={2} justifyContent="center">
+            {Object.entries(LOCATIONS).map(([slug, loc]) => {
+              const isActive = slug === locationSlug;
+              return (
+                <Grid item xs={12} sm={6} key={slug}>
+                  <Paper
+                    elevation={isActive ? 4 : 0}
+                    onClick={() => handleLocationChange(slug)}
+                    sx={{
+                      p: 2,
+                      cursor: "pointer",
+                      border: 2,
+                      borderColor: isActive ? "primary.main" : "grey.300",
+                      bgcolor: isActive ? "primary.main" : "background.paper",
+                      color: isActive ? "primary.contrastText" : "text.primary",
+                      borderRadius: 2,
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        transform: "translateY(-2px)",
+                        boxShadow: 3,
+                      },
+                    }}
+                  >
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      {loc.name}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: isActive ? "primary.contrastText" : "text.secondary",
+                        opacity: isActive ? 0.9 : 1,
+                      }}
+                    >
+                      {loc.address}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Paper>
 
         {/* Tax Deduction Information */}
         <Paper 
