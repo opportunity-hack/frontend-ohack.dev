@@ -39,6 +39,9 @@ import {
   Select,
   MenuItem,
   Alert,
+  Switch,
+  FormControlLabel,
+  Divider,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -51,6 +54,8 @@ import {
   Gavel as JudgingIcon,
   Launch as LaunchIcon,
   QuizOutlined as QuizIcon,
+  ToggleOn as ToggleIcon,
+  Groups as TeamSettingsIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider, DatePicker, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -278,7 +283,7 @@ const AdminHackathonPage = () => {
   const handleUpdateConstraint = (field, value) => {
     setEditingHackathon((prev) => ({
       ...prev,
-      constraints: { ...prev.constraints, [field]: parseInt(value, 10) },
+      constraints: { ...prev.constraints, [field]: value },
     }));
   };
 
@@ -684,7 +689,7 @@ const AdminHackathonPage = () => {
                     label="Max People Per Team"
                     type="number"
                     value={editingHackathon?.constraints.max_people_per_team || ""}
-                    onChange={(e) => handleUpdateConstraint("max_people_per_team", e.target.value)}
+                    onChange={(e) => handleUpdateConstraint("max_people_per_team", parseInt(e.target.value, 10))}
                     fullWidth
                     margin="normal"
                   />
@@ -692,7 +697,7 @@ const AdminHackathonPage = () => {
                     label="Max Teams Per Problem"
                     type="number"
                     value={editingHackathon?.constraints.max_teams_per_problem || ""}
-                    onChange={(e) => handleUpdateConstraint("max_teams_per_problem", e.target.value)}
+                    onChange={(e) => handleUpdateConstraint("max_teams_per_problem", parseInt(e.target.value, 10))}
                     fullWidth
                     margin="normal"
                   />
@@ -700,10 +705,111 @@ const AdminHackathonPage = () => {
                     label="Min People Per Team"
                     type="number"
                     value={editingHackathon?.constraints.min_people_per_team || ""}
-                    onChange={(e) => handleUpdateConstraint("min_people_per_team", e.target.value)}
+                    onChange={(e) => handleUpdateConstraint("min_people_per_team", parseInt(e.target.value, 10))}
                     fullWidth
                     margin="normal"
                   />
+
+                  <Divider sx={{ my: 3 }} />
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                      <ToggleIcon fontSize="small" /> Application Toggles
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, ml: 1 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_hacker_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_hacker_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Hacker Applications"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_mentor_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_mentor_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Mentor Applications"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_judge_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_judge_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Judge Applications"
+                      />
+                      <TextField
+                        label="Judge Access Code"
+                        value={editingHackathon?.constraints?.application_judge_enabled_code || ""}
+                        onChange={(e) => handleUpdateConstraint("application_judge_enabled_code", e.target.value)}
+                        fullWidth
+                        margin="dense"
+                        helperText="Judges enter this code to access the application, even when judge applications are disabled"
+                        sx={{ ml: 4, maxWidth: 400 }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_nonprofit_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_nonprofit_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Nonprofit Applications"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_sponsor_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_sponsor_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Sponsor Applications"
+                      />
+                    </Box>
+                  </Box>
+
+                  <Divider sx={{ my: 3 }} />
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                      <TeamSettingsIcon fontSize="small" /> Team Settings
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, ml: 1 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.team_creation_enabled}
+                            onChange={(e) => handleUpdateConstraint("team_creation_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Team Creation"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.team_join_enabled}
+                            onChange={(e) => handleUpdateConstraint("team_join_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Team Joining"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.team_find_a_team_enabled}
+                            onChange={(e) => handleUpdateConstraint("team_find_a_team_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Find a Team"
+                      />
+                    </Box>
+                  </Box>
 
                   <Box sx={{ mt: 3, mb: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
