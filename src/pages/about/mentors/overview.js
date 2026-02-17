@@ -69,7 +69,7 @@ const SectionHeader = memo(({ variant = "h3", component = "h2", children, sectio
 SectionHeader.displayName = 'SectionHeader';
 
 const VideoHighlightCard = memo(({ icon: Icon, title, description, chipLabel, chipColor }) => (
-  <Grid item xs={12} md={4}>
+  <Grid size={{ xs: 12, md: 4 }}>
     <Card sx={{
       height: "100%",
       display: 'flex',
@@ -104,7 +104,7 @@ const VideoHighlightCard = memo(({ icon: Icon, title, description, chipLabel, ch
 VideoHighlightCard.displayName = 'VideoHighlightCard';
 
 const ResourceButton = memo(({ href, icon: Icon, label, onClick, trackingLabel }) => (
-  <Grid item xs={12} sm={6} md={3}>
+  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
     <Button
       variant="outlined"
       fullWidth

@@ -175,7 +175,7 @@ const Mentorship = () => {
           spacing={2}
           sx={{ maxWidth: "600px", mx: "auto", mb: 4 }}
         >
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="contained"
               color="primary"
@@ -195,7 +195,7 @@ const Mentorship = () => {
               Find Events to Mentor
             </Button>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="outlined"
               color="primary"
@@ -306,7 +306,7 @@ const Mentorship = () => {
           ) : upcomingEvents && upcomingEvents.length > 0 ? (
             <Grid container spacing={3}>
               {upcomingEvents.map((event) => (
-                <Grid item xs={12} md={6} key={event.event_id}>
+                <Grid size={{ xs: 12, md: 6 }} key={event.event_id}>
                   <Card
                     sx={{
                       bgcolor: "white",
@@ -431,7 +431,7 @@ const Mentorship = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <FavoriteRounded color="primary" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>
@@ -443,7 +443,7 @@ const Mentorship = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <PersonRounded color="secondary" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>
@@ -455,7 +455,7 @@ const Mentorship = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <GroupsRounded color="success" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>
@@ -492,7 +492,7 @@ const Mentorship = () => {
 
           <Grid container spacing={3}>
             {mentorTypes.map((mentorType, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Card
                   sx={{
                     height: "100%",

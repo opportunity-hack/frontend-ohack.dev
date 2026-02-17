@@ -450,7 +450,7 @@ const VolunteerTrackingPage = withAuthInfo(
           <>
             <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 }, mb: 2 }}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormControl fullWidth error={isVolunteering && !commitmentHours}>
                     <InputLabel id="commitment-hours-label">Commitment Hours</InputLabel>
                     <Select
@@ -472,7 +472,7 @@ const VolunteerTrackingPage = withAuthInfo(
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormControl fullWidth error={isVolunteering && !reason}>
                     <InputLabel id="reason-label">Reason for Volunteering</InputLabel>
                     <Select
@@ -494,7 +494,7 @@ const VolunteerTrackingPage = withAuthInfo(
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Button
                     variant="contained"
                     color={isVolunteering ? "secondary" : "primary"}
@@ -552,7 +552,7 @@ const VolunteerTrackingPage = withAuthInfo(
 
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={5}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                     <DatePicker
                       label="Start Date"
                       value={startDate}
@@ -560,7 +560,7 @@ const VolunteerTrackingPage = withAuthInfo(
                       slotProps={{ textField: { fullWidth: true } }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={5}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                     <DatePicker
                       label="End Date"
                       value={endDate}
@@ -568,7 +568,7 @@ const VolunteerTrackingPage = withAuthInfo(
                       slotProps={{ textField: { fullWidth: true } }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={2}>
+                  <Grid size={{ xs: 12, sm: 2 }}>
                     <Button
                       variant="outlined"
                       onClick={fetchtotalActiveHours}

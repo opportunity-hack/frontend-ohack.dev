@@ -280,7 +280,7 @@ const VolunteerPage = () => {
         
         <Grid container spacing={3} sx={{ mb: 5 }}>
           {Object.entries(roleTypes).map(([key, roleType]) => (
-            <Grid item xs={12} md={3} key={key}>
+            <Grid size={{ xs: 12, md: 3 }} key={key}>
               <Card 
                 sx={{ 
                   height: '100%', 
@@ -336,7 +336,7 @@ const VolunteerPage = () => {
           ) : upcomingEvents && upcomingEvents.length > 0 ? (
             <Grid container spacing={2}>
               {upcomingEvents.map((event) => (
-                <Grid item xs={12} sm={6} md={4} key={event.event_id}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={event.event_id}>
                   <Card sx={{ bgcolor: 'white', color: 'text.primary' }}>
                     <CardContent>
                       <Typography variant="h6" sx={{ mb: 1 }}>
@@ -522,7 +522,7 @@ const VolunteerPage = () => {
             
             <Grid container spacing={3}>
               {roleType.roles.map((role, roleIndex) => (
-                <Grid item xs={12} sm={6} md={6} key={roleIndex}>
+                <Grid size={{ xs: 12, sm: 6, md: 6 }} key={roleIndex}>
                   <Card sx={{ height: '100%' }}>
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -562,7 +562,7 @@ const VolunteerPage = () => {
         </Typography>
         <Grid container spacing={3} sx={{ mb: 5 }}>
           {benefits.map((benefit, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
               <Card sx={{ textAlign: 'center', height: '100%' }}>
                 <CardContent>
                   <Box sx={{ mb: 2, color: 'primary.main' }}>
@@ -582,7 +582,7 @@ const VolunteerPage = () => {
           How to Get Started
         </Typography>
         <Grid container spacing={3} sx={{ mb: 5 }}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ textAlign: 'center', height: '100%' }}>
               <CardContent>
                 <Typography variant="h3" sx={{ fontSize: "3em", mb: 2, color: 'primary.main' }}>
@@ -597,7 +597,7 @@ const VolunteerPage = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ textAlign: 'center', height: '100%' }}>
               <CardContent>
                 <Typography variant="h3" sx={{ fontSize: "3em", mb: 2, color: 'secondary.main' }}>
@@ -612,7 +612,7 @@ const VolunteerPage = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ textAlign: 'center', height: '100%' }}>
               <CardContent>
                 <Typography variant="h3" sx={{ fontSize: "3em", mb: 2, color: 'success.main' }}>
@@ -627,7 +627,7 @@ const VolunteerPage = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item>
+          <Grid size="auto">
             <Button
               variant="contained"
               color="primary"
@@ -645,7 +645,7 @@ const VolunteerPage = () => {
             Additional Ways to Support Opportunity Hack
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Button 
                 variant="outlined" 
                 fullWidth
@@ -655,7 +655,7 @@ const VolunteerPage = () => {
                 Become a Judge
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Button 
                 variant="outlined" 
                 fullWidth
@@ -665,7 +665,7 @@ const VolunteerPage = () => {
                 Sponsor Us
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Button 
                 variant="outlined" 
                 fullWidth
@@ -675,7 +675,7 @@ const VolunteerPage = () => {
                 Success Stories
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Button 
                 variant="outlined" 
                 fullWidth

@@ -242,7 +242,7 @@ const AboutHackers = () => {
           spacing={2}
           sx={{ maxWidth: "600px", mx: "auto", mb: 4 }}
         >
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="contained"
               color="primary"
@@ -261,7 +261,7 @@ const AboutHackers = () => {
               Find Events to Join
             </Button>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="outlined"
               color="primary"
@@ -381,7 +381,7 @@ const AboutHackers = () => {
           ) : upcomingEvents && upcomingEvents.length > 0 ? (
             <Grid container spacing={3}>
               {upcomingEvents.map((event) => (
-                <Grid item xs={12} md={6} key={event.event_id}>
+                <Grid size={{ xs: 12, md: 6 }} key={event.event_id}>
                   <Card
                     sx={{
                       bgcolor: "white",
@@ -563,7 +563,7 @@ const AboutHackers = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <TipsAndUpdatesRounded color="primary" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>
@@ -575,7 +575,7 @@ const AboutHackers = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <BuildRounded color="secondary" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>
@@ -587,7 +587,7 @@ const AboutHackers = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <GroupsRounded color="success" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>
@@ -628,7 +628,7 @@ const AboutHackers = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <SchoolRounded color="primary" sx={{ mr: 2 }} />
@@ -645,7 +645,7 @@ const AboutHackers = () => {
                 />
               </Card>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <BusinessRounded color="secondary" sx={{ mr: 2 }} />
@@ -662,7 +662,7 @@ const AboutHackers = () => {
                 />
               </Card>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <PublicRounded color="success" sx={{ mr: 2 }} />
@@ -679,7 +679,7 @@ const AboutHackers = () => {
                 />
               </Card>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <PersonRounded color="warning" sx={{ mr: 2 }} />
@@ -762,7 +762,7 @@ const AboutHackers = () => {
           </Typography>
 
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ bgcolor: "rgba(255,255,255,0.95)", height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <TrendingUpRounded color="success" sx={{ mr: 2 }} />
@@ -776,7 +776,7 @@ const AboutHackers = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ bgcolor: "rgba(255,255,255,0.95)", height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <WorkspacesRounded color="primary" sx={{ mr: 2 }} />
@@ -790,7 +790,7 @@ const AboutHackers = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ bgcolor: "rgba(255,255,255,0.95)", height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <GroupsRounded color="secondary" sx={{ mr: 2 }} />
@@ -904,7 +904,7 @@ const AboutHackers = () => {
 
           <Grid container spacing={3}>
             {whatToBringItems.map((item, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Card sx={{ height: "100%", p: 3 }}>
                   <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
                     <Box sx={{ mr: 2, mt: 0.5 }}>
@@ -952,7 +952,7 @@ const AboutHackers = () => {
 
           <Grid container spacing={3}>
             {toolboxItems.map((tool, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Card sx={{ height: "100%", p: 3 }}>
                   <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
                     <Box sx={{ mr: 2, mt: 0.5 }}>

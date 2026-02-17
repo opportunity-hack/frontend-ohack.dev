@@ -183,7 +183,7 @@ const ProfessionalDevelopmentVolunteering = () => {
             {/* Hero Stats */}
             <Grid container spacing={2} sx={{ mt: 4, mb: 6 }}>
               {careerStats.map((stat, index) => (
-                <Grid item xs={6} md={3} key={index}>
+                <Grid size={{ xs: 6, md: 3 }} key={index}>
                   <Card 
                     sx={{ 
                       background: 'rgba(255,255,255,0.15)',
@@ -245,7 +245,7 @@ const ProfessionalDevelopmentVolunteering = () => {
 
             <Grid container spacing={3}>
               {softSkills.map((skill, index) => (
-                <Grid item xs={12} md={6} key={index}>
+                <Grid size={{ xs: 12, md: 6 }} key={index}>
                   <Card 
                     sx={{ 
                       height: '100%',
@@ -313,7 +313,7 @@ const ProfessionalDevelopmentVolunteering = () => {
 
             <Grid container spacing={3}>
               {volunteerSkills.map((category, index) => (
-                <Grid item xs={12} md={6} key={index}>
+                <Grid size={{ xs: 12, md: 6 }} key={index}>
                   <Card 
                     sx={{ 
                       height: '100%',
@@ -383,7 +383,7 @@ const ProfessionalDevelopmentVolunteering = () => {
             
             <Grid container spacing={3}>
               {certificationROI.map((cert, index) => (
-                <Grid item xs={12} md={4} key={index}>
+                <Grid size={{ xs: 12, md: 4 }} key={index}>
                   <Card
                     sx={{
                       background: 'rgba(255,255,255,0.15)',
@@ -441,7 +441,7 @@ const ProfessionalDevelopmentVolunteering = () => {
             </Typography>
 
             <Grid container spacing={4}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Avatar 
                     sx={{ 
@@ -464,7 +464,7 @@ const ProfessionalDevelopmentVolunteering = () => {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Avatar 
                     sx={{ 
@@ -487,7 +487,7 @@ const ProfessionalDevelopmentVolunteering = () => {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Avatar 
                     sx={{ 
@@ -526,7 +526,7 @@ const ProfessionalDevelopmentVolunteering = () => {
               </Typography>
               
               <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <Card sx={{ p: 3, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', textAlign: 'center' }}>
                     <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
                       94%
@@ -540,7 +540,7 @@ const ProfessionalDevelopmentVolunteering = () => {
                   </Card>
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f093fb, #f5576c)', color: 'white', textAlign: 'center' }}>
                     <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
                       $18K
@@ -554,7 +554,7 @@ const ProfessionalDevelopmentVolunteering = () => {
                   </Card>
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <Card sx={{ p: 3, background: 'linear-gradient(135deg, #4facfe, #00f2fe)', color: 'white', textAlign: 'center' }}>
                     <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
                       87%
@@ -595,7 +595,7 @@ const ProfessionalDevelopmentVolunteering = () => {
             </Typography>
             
             <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card sx={{ p: 3, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white' }}>
                   <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                     Alex, Project Manager
@@ -609,7 +609,7 @@ const ProfessionalDevelopmentVolunteering = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f093fb, #f5576c)', color: 'white' }}>
                   <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                     Maria, Business Analyst
@@ -623,7 +623,7 @@ const ProfessionalDevelopmentVolunteering = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card sx={{ p: 3, background: 'linear-gradient(135deg, #4facfe, #00f2fe)', color: 'white' }}>
                   <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                     David, Team Lead

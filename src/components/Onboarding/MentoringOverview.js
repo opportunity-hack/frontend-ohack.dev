@@ -159,7 +159,7 @@ const MentoringOverview = () => {
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {whyMentor.map((reason, index) => (
-          <Grid item xs={12} sm={6} key={index}>
+          <Grid size={{ xs: 12, sm: 6 }} key={index}>
             <Paper
               elevation={1}
               sx={{
@@ -191,7 +191,7 @@ const MentoringOverview = () => {
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {mentorTypes.map((type, index) => (
-          <Grid item xs={12} md={4} key={index}>
+          <Grid size={{ xs: 12, md: 4 }} key={index}>
             <MentorTypeCard>
               <CardContent>
                 <Box sx={{ textAlign: 'center', mb: 2 }}>
@@ -232,7 +232,7 @@ const MentoringOverview = () => {
         </Typography>
         <Grid container spacing={2}>
           {bestPractices.map((practice, index) => (
-            <Grid item xs={12} sm={6} key={index}>
+            <Grid size={{ xs: 12, sm: 6 }} key={index}>
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                 <CheckCircleIcon color="primary" sx={{ mt: 0.5, flexShrink: 0 }} />
                 <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
@@ -249,7 +249,7 @@ const MentoringOverview = () => {
         How Mentoring Works
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 3, height: '100%', borderLeft: 4, borderColor: 'primary.main' }}>
             <Typography variant="h5" gutterBottom sx={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
               Before the Hackathon
@@ -285,7 +285,7 @@ const MentoringOverview = () => {
             </List>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 3, height: '100%', borderLeft: 4, borderColor: 'secondary.main' }}>
             <Typography variant="h5" gutterBottom sx={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
               During the Hackathon
@@ -332,7 +332,7 @@ const MentoringOverview = () => {
           You can mentor teams in person at our hackathon locations or remotely via Slack. Both options are equally valuable:
         </Typography>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box>
               <Chip label="In-Person" color="primary" sx={{ mb: 2, fontSize: '1.1rem' }} />
               <Typography variant="body1" sx={{ fontSize: '1.15rem' }}>
@@ -341,7 +341,7 @@ const MentoringOverview = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box>
               <Chip label="Remote" color="secondary" sx={{ mb: 2, fontSize: '1.1rem' }} />
               <Typography variant="body1" sx={{ fontSize: '1.15rem' }}>

@@ -193,7 +193,7 @@ const SoftwareEngineeringCareerPath = () => {
             {/* Stats Grid */}
             <Grid container spacing={2} sx={{ mt: 4, mb: 6 }}>
               {techStats.map((stat, index) => (
-                <Grid item xs={6} md={3} key={index}>
+                <Grid size={{ xs: 6, md: 3 }} key={index}>
                   <Card 
                     sx={{ 
                       background: 'rgba(255,255,255,0.15)',
@@ -257,7 +257,7 @@ const SoftwareEngineeringCareerPath = () => {
 
             <Grid container spacing={4}>
               {aiProofSkills.map((skill, index) => (
-                <Grid item xs={12} md={6} key={index}>
+                <Grid size={{ xs: 12, md: 6 }} key={index}>
                   <Card 
                     sx={{ 
                       height: '100%',
@@ -338,7 +338,7 @@ const SoftwareEngineeringCareerPath = () => {
 
             <Grid container spacing={3}>
               {careerPaths.map((path, index) => (
-                <Grid item xs={12} md={6} key={index}>
+                <Grid size={{ xs: 12, md: 6 }} key={index}>
                   <Card 
                     sx={{ 
                       height: '100%',
@@ -439,7 +439,7 @@ const SoftwareEngineeringCareerPath = () => {
             
             <Grid container spacing={3}>
               {learningPath.map((phase, index) => (
-                <Grid item xs={12} md={6} key={index}>
+                <Grid size={{ xs: 12, md: 6 }} key={index}>
                   <Card
                     sx={{
                       background: 'rgba(255,255,255,0.15)',
@@ -526,7 +526,7 @@ const SoftwareEngineeringCareerPath = () => {
             </Typography>
 
             <Grid container spacing={4}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Avatar 
                     sx={{ 
@@ -549,7 +549,7 @@ const SoftwareEngineeringCareerPath = () => {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Avatar 
                     sx={{ 
@@ -572,7 +572,7 @@ const SoftwareEngineeringCareerPath = () => {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Avatar 
                     sx={{ 
@@ -611,7 +611,7 @@ const SoftwareEngineeringCareerPath = () => {
               </Typography>
               
               <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <Card sx={{ p: 3, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white' }}>
                     <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                       Sarah, Technical Product Manager
@@ -625,7 +625,7 @@ const SoftwareEngineeringCareerPath = () => {
                   </Card>
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f093fb, #f5576c)', color: 'white' }}>
                     <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                       Marcus, Solutions Architect
@@ -639,7 +639,7 @@ const SoftwareEngineeringCareerPath = () => {
                   </Card>
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <Card sx={{ p: 3, background: 'linear-gradient(135deg, #4facfe, #00f2fe)', color: 'white' }}>
                     <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                       Jessica, Engineering Lead
@@ -692,7 +692,7 @@ const SoftwareEngineeringCareerPath = () => {
             </Typography>
             
             <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card
                   sx={{
                     background: 'rgba(255,255,255,0.15)',
@@ -718,7 +718,7 @@ const SoftwareEngineeringCareerPath = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card
                   sx={{
                     background: 'rgba(255,255,255,0.15)',
@@ -744,7 +744,7 @@ const SoftwareEngineeringCareerPath = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card
                   sx={{
                     background: 'rgba(255,255,255,0.15)',
@@ -776,7 +776,7 @@ const SoftwareEngineeringCareerPath = () => {
                 🚀 Emerging High-Value Skills
               </Typography>
               <Grid container spacing={2} justifyContent="center">
-                <Grid item>
+                <Grid size="auto">
                   <Chip 
                     label="MLOps Engineering (9.8x growth)" 
                     sx={{ 
@@ -786,7 +786,7 @@ const SoftwareEngineeringCareerPath = () => {
                     }} 
                   />
                 </Grid>
-                <Grid item>
+                <Grid size="auto">
                   <Chip 
                     label="AI Workflow Design (+17.7% salary)" 
                     sx={{ 
@@ -796,7 +796,7 @@ const SoftwareEngineeringCareerPath = () => {
                     }} 
                   />
                 </Grid>
-                <Grid item>
+                <Grid size="auto">
                   <Chip 
                     label="Human-AI Collaboration" 
                     sx={{ 
