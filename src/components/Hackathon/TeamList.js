@@ -774,7 +774,9 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
         );
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Failed to fetch GitHub data`);
+          console.warn(`GitHub stats returned ${response.status} for ${parsedUrl.org}/${parsedUrl.repo}`);
+          setError(null);
+          return;
         }
 
         const data = await response.json();
