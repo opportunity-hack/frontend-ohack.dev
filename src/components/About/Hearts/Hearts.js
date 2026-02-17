@@ -54,7 +54,7 @@ const JudgeMentorHeartsCTA = () => {
         Did you know you can earn hearts by contributing as a judge or mentor? It's a great way to give back and boost your profile!
       </Typography>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <Box display="flex" alignItems="center" mb={2}>
             <FaGavel size={24} style={{ marginRight: '8px' }} />
             <Typography variant="body1">
@@ -75,7 +75,7 @@ const JudgeMentorHeartsCTA = () => {
             </Button>
           </Link>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <Box display="flex" alignItems="center" mb={2}>
             <FaChalkboardTeacher size={24} style={{ marginRight: '8px' }} />
             <Typography variant="body1">
@@ -195,19 +195,19 @@ const Hearts = () => {
         </Typography>
         
         <Grid container spacing={3}>            
-          <Grid item xs={12} sm={6} md={8}>
+          <Grid size={{ xs: 12, sm: 6, md: 8 }}>
             <StyledTypography paragraph>
               Welcome to the Opportunity Hack Hearts System! By contributing to open source projects for nonprofits, you can earn hearts and make a positive impact on the world. Whether you are a Software Engineer, Product Manager, UX Designer, or Project Manager, your skills are valuable in creating solutions that help nonprofits achieve their goals.
             </StyledTypography>
             <Grid container spacing={2}>
-              <Grid item>
+              <Grid size="auto">
                 <Button onClick={
                   () => trackOnClickButtonClickWithGoogleAndFacebook("original_rfc")
                 } variant="contained" color="primary" href="https://docs.google.com/document/d/1J-1o5YOpdt4slyd_PxitNN0gZe7UcI1GjyTbhTem2qU/edit?usp=sharing" target="_blank">
                   See the Original RFC
                 </Button>
               </Grid>
-              <Grid item>
+              <Grid size="auto">
                 <Button
                   onClick={
                     () => trackOnClickButtonClickWithGoogleAndFacebook("project_completion")
@@ -216,15 +216,15 @@ const Hearts = () => {
                   Project Completion
                 </Button>
               </Grid>
-              <Grid item>
+              <Grid size="auto">
                 <Button onClick={
                   () => trackOnClickButtonClickWithGoogleAndFacebook("github_issue_8")
-                } 
+                }
                 variant="outlined" color="primary" href="https://github.com/opportunity-hack/frontend-ohack.dev/issues/8" target="_blank">
                   GitHub Issue #8
                 </Button>
               </Grid>
-              <Grid item>
+              <Grid size="auto">
                 <Button onClick={
                   () => trackOnClickButtonClickWithGoogleAndFacebook("github_issue_7")
                 } variant="outlined" color="primary" href="https://github.com/opportunity-hack/frontend-ohack.dev/issues/7" target="_blank">
@@ -244,7 +244,7 @@ const Hearts = () => {
               </StyledTypography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>                
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>                
             <InstagramEmbed url="https://www.instagram.com/p/CoupvGxuiLX/" maxWidth={328} height={500} />
           </Grid>                                
         </Grid>

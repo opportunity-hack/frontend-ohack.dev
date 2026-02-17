@@ -122,7 +122,7 @@ const RewardStructure = () => {
         </Box>
       <Grid container spacing={3}>
         {rewardStructure.map((reward, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
             <StyledPaper elevation={3}>
               <Typography variant="h5" gutterBottom>
                 {reward.hearts} heart{reward.hearts !== 1 ? 's' : ''}
