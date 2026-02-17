@@ -31,6 +31,7 @@ import {
 } from "@mui/material";
 import { format, getYear } from 'date-fns';
 import Link from 'next/link';
+import { parseLocalDate } from '../../lib/dateUtils';
 import { useAuthInfo } from '@propelauth/react';
 import ImpactMetrics from '../ImpactMetrics';
 
@@ -148,16 +149,16 @@ function EventFeature(props) {
           
           <div style={{ marginBottom: '16px' }}>
             {
-              getYear(new Date()) === getYear(new Date(start_date)) &&
+              getYear(new Date()) === getYear(parseLocalDate(start_date)) &&
               <Typography variant="body1" sx={{ fontSize: '1rem', color: '#333', marginBottom: '8px' }}>
-                {format(new Date(start_date), 'MMM do')} to {format(new Date(end_date), 'MMM do yyyy')}
+                {format(parseLocalDate(start_date), 'MMM do')} to {format(parseLocalDate(end_date), 'MMM do yyyy')}
               </Typography>
             }
 
             {
-              getYear(new Date()) !== getYear(new Date(start_date)) &&
+              getYear(new Date()) !== getYear(parseLocalDate(start_date)) &&
               <Typography variant="body1" sx={{ fontSize: '1rem', color: '#333', marginBottom: '8px' }}>
-                {format(new Date(start_date), 'MMM do yyyy')} to {format(new Date(end_date), 'MMM do yyyy')}
+                {format(parseLocalDate(start_date), 'MMM do yyyy')} to {format(parseLocalDate(end_date), 'MMM do yyyy')}
               </Typography>
             }
           </div>

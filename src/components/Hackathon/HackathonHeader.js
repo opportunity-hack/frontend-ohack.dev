@@ -4,6 +4,7 @@ import { styled } from "@mui/material/styles";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ReactMarkdown from "react-markdown";
+import { parseLocalDate } from "../../lib/dateUtils";
 
 const HeaderContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -59,12 +60,15 @@ const HackathonHeader = ({
   description,
 }) => {
   const formatDate = (date) => {
-    const d = new Date(date);
+    const d = parseLocalDate(date);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
   const formatDateISO = (date) => {
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
+    const d = parseLocalDate(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   return (

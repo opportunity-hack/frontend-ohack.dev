@@ -6,6 +6,7 @@ import Link from "next/link";
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import Button from "@mui/material/Button";
 import { EventLink } from "../HackathonList/styles";
+import { parseLocalDate } from "../../lib/dateUtils";
 
 export default function Events({
   events,
@@ -62,7 +63,7 @@ export default function Events({
           <Typography variant="h5" style={{ color: isEventStartDateOlderThanToday(event) ? "#C0C0C0" : "#222222", marginBottom: "1rem" }}>
             {
               // Convert start_date to readible format
-              new Date(event.start_date).toLocaleDateString("en-US", {
+              parseLocalDate(event.start_date).toLocaleDateString("en-US", {
                 weekday: "short",
                 year: "numeric",
                 month: "long",
@@ -72,8 +73,8 @@ export default function Events({
             <ArrowForwardIosIcon style={{ color: "gray" }} />{" "}
 
             {
-              // Convert start_date to readible format
-              new Date(event.end_date).toLocaleDateString("en-US", {
+              // Convert end_date to readible format
+              parseLocalDate(event.end_date).toLocaleDateString("en-US", {
                 weekday: "short",
                 year: "numeric",
                 month: "long",
