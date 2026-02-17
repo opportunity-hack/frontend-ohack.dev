@@ -101,17 +101,23 @@ const SponsorMinimal = () => {
                   borderColor: level.color || '#e0e0e0',
                 }}
               >
-                <Image
-                  src={sponsor.logo}
-                  alt={sponsor.name}
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
-                  }}
-                  width={isMobile ? 40 : 60}
-                  height={isMobile ? 40 : 60}
-                />
+                {sponsor.logo ? (
+                  <Image
+                    src={sponsor.logo}
+                    alt={sponsor.name}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                    }}
+                    width={isMobile ? 40 : 60}
+                    height={isMobile ? 40 : 60}
+                  />
+                ) : (
+                  <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                    {sponsor.name.charAt(0)}
+                  </Typography>
+                )}
               </Box>
               <Typography
                 variant="caption"

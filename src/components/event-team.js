@@ -105,15 +105,13 @@ export default function EventTeam({ team, userDetails, _isOnTeam, _isOnAnyTeam, 
              direction="row" alignItems="center" spacing={1}
                 key={auser}
              >
-                { extendedDetails && <Image className="ohack-feature__icon"
-                    alt={extendedDetails.name}                    
-                    src={extendedDetails.profile_image}
-                    width={50}
-                    height={50} />
-                }
-
-                {
-                    !extendedDetails && <Puff stroke="#000000" fill="#000000" />
+                { extendedDetails && extendedDetails.profile_image
+                    ? <Image className="ohack-feature__icon"
+                        alt={extendedDetails.name}
+                        src={extendedDetails.profile_image}
+                        width={50}
+                        height={50} />
+                    : <Puff stroke="#000000" fill="#000000" />
                 }
 
                 <div>{extendedDetails?.name}</div>
