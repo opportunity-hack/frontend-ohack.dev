@@ -51,6 +51,7 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import RadioIcon from "@mui/material/Radio";
+import { getEventTimezone, getTimezoneAbbreviation } from "../../../lib/timezoneUtils";
 
 const MentorApplicationComponent = () => {
   const router = useRouter();
@@ -173,7 +174,8 @@ const MentorApplicationComponent = () => {
   ];
 
   // Function to generate time slots based on event dates - moved outside useEffect to avoid recreating on each render
-  const generateTimeSlots = (startDate, endDate) => {
+  const generateTimeSlots = (startDate, endDate, eventTimezone) => {
+    const tzAbbr = getTimezoneAbbreviation(new Date(startDate), eventTimezone);
     if (!startDate || !endDate) return [];
 
     // Parse dates more carefully to avoid timezone issues
@@ -240,7 +242,7 @@ const MentorApplicationComponent = () => {
           label: block.label,
           icon: block.icon,
           energy: block.energy,
-          displayText: `${dateString}: ${block.icon} ${block.label} (${block.time} PST)`,
+          displayText: `${dateString}: ${block.icon} ${block.label} (${block.time} ${tzAbbr})`,
         });
       });
 
@@ -342,12 +344,15 @@ const MentorApplicationComponent = () => {
             eventData.image_url ||
             "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
           isEventPast,
+          timezone: eventData.timezone,
         });
 
         // Generate time slots based on event dates
+        const eventTz = getEventTimezone(eventData);
         const slots = generateTimeSlots(
           eventData.start_date,
           eventData.end_date,
+          eventTz,
         );
         setAvailabilityOptions(slots);
 
@@ -1229,7 +1234,9 @@ const MentorApplicationComponent = () => {
       <Typography variant="body2" sx={{ mb: 2 }}>
         Select the dates you are available. For each date, pick the time slots
         you can mentor. For long hackathons, use the filter to quickly find your
-        dates.
+        dates. All times are in{" "}
+        {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))}{" "}
+        (event timezone).
       </Typography>
 
       {/* Conditionally show in-person attendance field only for physical events */}
@@ -1524,7 +1531,7 @@ const MentorApplicationComponent = () => {
                           {slot.icon} {slot.label}
                         </Typography>
                         <Typography variant="body2" sx={{ mb: 1 }}>
-                          {slot.time}
+                          {slot.time} {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))}
                         </Typography>
                         <Typography
                           variant="caption"

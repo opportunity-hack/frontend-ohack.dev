@@ -34,6 +34,7 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import ForumIcon from "@mui/icons-material/Forum";
 import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import Moment from "moment";
+import { getTimezoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from "../../lib/timezoneUtils";
 import NextLink from "next/link";
 import ShareVolunteer from "./ShareVolunteer";
 import { useEffect } from "react";
@@ -422,7 +423,8 @@ const shouldRenderField = (volunteer, fieldKey, type) => {
   return value != null && value !== '';
 };
 
-const VolunteerList = ({ event_id, type }) => {
+const VolunteerList = ({ event_id, type, eventTimezone }) => {
+  const volTz = eventTimezone || DEFAULT_EVENT_TIMEZONE;
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [volunteers, setVolunteers] = React.useState([]);
@@ -650,7 +652,7 @@ const VolunteerList = ({ event_id, type }) => {
   const isCurrentlyAvailable = (timeSpan) => {
     if (!timeSpan || typeof timeSpan !== "string") return false;
 
-    const now = Moment(new Date(), "America/Los_Angeles"); // Everything is going to be in PST - we don't want to get the user's local time
+    const now = Moment(new Date(), volTz); // Use event timezone to match stored availability slots
     const nowDay = now.format("dddd"); // Day of week: "Friday"
     const nowDate = now.date(); // Day of month: 10
 
@@ -692,8 +694,8 @@ const VolunteerList = ({ event_id, type }) => {
       const timeMatch = timeSpan.match(/\((.*?)\)/);
       if (!timeMatch || !timeMatch[1]) return false;
 
-      let timeRange = timeMatch[1]; // "7am - 9am PST"
-      timeRange = timeRange.replace(/PST/g, "").trim(); // "7am - 9am"
+      let timeRange = timeMatch[1]; // "7am - 9am PST" or other tz abbr
+      timeRange = timeRange.replace(/\s+[A-Z]{2,5}$/, "").trim(); // strip trailing tz abbreviation
 
       const timeParts = timeRange.split("-");
       if (timeParts.length !== 2) return false;
@@ -713,8 +715,8 @@ const VolunteerList = ({ event_id, type }) => {
         endTime = endTime.replace(/(\d+):(\d+)([ap]m)/, "$1:59$3");
       }
 
-      const startMoment = Moment(startTime, "h:mma", "America/Los_Angeles");
-      const endMoment = Moment(endTime, "h:mma", "America/Los_Angeles");
+      const startMoment = Moment(startTime, "h:mma", volTz);
+      const endMoment = Moment(endTime, "h:mma", volTz);
 
       if (!startMoment.isValid() || !endMoment.isValid()) {
         return false;
@@ -913,7 +915,7 @@ const VolunteerList = ({ event_id, type }) => {
             eventName: eventName.trim(),
             emoji,
             role: role.trim(),
-            timeRange: timeRange.replace(/\s*(am|pm)\s*-\s*/i, '$1 - ').replace(/PST/gi, '').trim(),
+            timeRange: timeRange.replace(/\s*(am|pm)\s*-\s*/i, '$1 - ').replace(/\s+[A-Za-z]{2,5}$/g, '').trim(),
             isCurrentlyAvailable: false, // Volunteers don't have "currently available" concept
             sortKey: dateStr + eventName
           };
@@ -1117,7 +1119,7 @@ const VolunteerList = ({ event_id, type }) => {
         const periodMatch = timePart?.match(/[\u{1F305}\u{2600}\u{1F3D9}\u{1F306}\u{1F303}\u{1F319}]\s+([^(]+)/u);
         
         const emoji = emojiMatch ? emojiMatch[1] : "";
-        const timeRange = timeRangeMatch ? timeRangeMatch[1].replace(' PST', '') : "";
+        const timeRange = timeRangeMatch ? timeRangeMatch[1].replace(/\s+[A-Z]{2,5}$/, '') : "";
         const period = periodMatch ? periodMatch[1].trim() : "";
         
         // Create short date format (e.g., "Oct 10" from "Friday Oct 10")
@@ -1208,7 +1210,7 @@ const VolunteerList = ({ event_id, type }) => {
             
             <Divider sx={{ my: 1.5 }} />
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
-              🟢 = Available Now • All times in PST • Click "Show More" to see all slots
+              🟢 = Available Now • All times in {getTimezoneAbbreviation(new Date(), volTz)} • Click "Show More" to see all slots
             </Typography>
           </AvailabilitySection>
         );

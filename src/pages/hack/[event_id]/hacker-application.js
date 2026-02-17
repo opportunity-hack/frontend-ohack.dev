@@ -50,6 +50,7 @@ import GiveButterWidget from "../../../components/GiveButterWidget";
 import UploadPhoto from "../../../components/UploadPhoto";
 import Moment from "moment";
 import "moment-timezone";
+import { getEventTimezone, getTimezoneAbbreviation, formatDualTimezone } from "../../../lib/timezoneUtils";
 
 const HackerApplicationComponent = () => {
   const router = useRouter();
@@ -614,12 +615,13 @@ const HackerApplicationComponent = () => {
         }
 
         // Format dates for display
-        const startDate = Moment.tz(eventData.start_date, "America/Phoenix");
-        const endDate = Moment.tz(eventData.end_date, "America/Phoenix");
+        const eventTz = getEventTimezone(eventData);
+        const startDate = Moment.tz(eventData.start_date, eventTz);
+        const endDate = Moment.tz(eventData.end_date, eventTz);
         const formattedStartDate = startDate.format("dddd, MMMM Do, YYYY");
         const formattedEndDate = endDate.format("dddd, MMMM Do, YYYY");
 
-        // Calculate application deadline: 3 days before start date at 8pm MST
+        // Calculate application deadline: 3 days before start date at 8pm event time
         const applicationDeadline = startDate
           .clone()
           .subtract(3, "days")
@@ -629,7 +631,7 @@ const HackerApplicationComponent = () => {
           .millisecond(0);
 
         // Check if event is in the past (with 1-day buffer for end date)
-        const now = Moment().tz("America/Phoenix");
+        const now = Moment().tz(eventTz);
         const isEventPast = endDate.clone().add(1, "day").isBefore(now);
 
         // Check if applications are closed (deadline has passed)
@@ -641,9 +643,10 @@ const HackerApplicationComponent = () => {
         );
 
         // Format application deadline for display
+        const tzAbbr = getTimezoneAbbreviation(applicationDeadline.toDate(), eventTz);
         const formattedApplicationDeadline = applicationDeadline.format(
-          "dddd, MMMM Do, YYYY [at] h:mm A [MST]",
-        );
+          "dddd, MMMM Do, YYYY [at] h:mm A",
+        ) + ` ${tzAbbr}`;
 
         // Extract required questions from constraints
         const requiredQuestions =

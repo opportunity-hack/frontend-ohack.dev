@@ -50,6 +50,7 @@ import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import UploadPhoto from "../../../components/UploadPhoto";
 import GiveButterWidget from "../../../components/GiveButterWidget";
+import { getEventTimezone, getTimezoneAbbreviation } from "../../../lib/timezoneUtils";
 
 const VolunteerApplicationComponent = () => {
   const router = useRouter();
@@ -319,7 +320,8 @@ const VolunteerApplicationComponent = () => {
   );
 
   // Function to generate time slots based on event dates
-  const generateTimeSlots = (startDate, endDate, slotCountsData = {}) => {
+  const generateTimeSlots = (startDate, endDate, slotCountsData = {}, eventTimezone) => {
+    const tzAbbr = eventTimezone ? getTimezoneAbbreviation(new Date(startDate), eventTimezone) : "";
     if (!startDate || !endDate) return [];
 
     const start = new Date(startDate + "T00:00:00");
@@ -675,7 +677,7 @@ const VolunteerApplicationComponent = () => {
           }
 
           const slotId = `${dateString}-${block.label}-${role.name}`;
-          const displayText = `${dateString}: ${block.label} - ${role.icon} ${role.name} (${block.time})`;
+          const displayText = `${dateString}: ${block.label} - ${role.icon} ${role.name} (${block.time}${tzAbbr ? ` ${tzAbbr}` : ""})`;
 
           console.log("Display Text:", displayText);
           console.log("Slot ID:", slotId);
@@ -794,13 +796,16 @@ const VolunteerApplicationComponent = () => {
             eventData.image_url ||
             "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
           isEventPast,
+          timezone: eventData.timezone,
         });
 
         // Generate time slots based on event dates with actual slot counts
+        const eventTz = getEventTimezone(eventData);
         const slots = generateTimeSlots(
           eventData.start_date,
           eventData.end_date,
           slotCountsData,
+          eventTz,
         );
         console.log("Availability Generated time slots:", slots);
         setAvailabilityOptions(slots);
@@ -1890,7 +1895,7 @@ const VolunteerApplicationComponent = () => {
                           {date}
                         </Typography>
                         <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                          Times shown in local timezone
+                          All times in {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))} (event timezone)
                         </Typography>
                       </Box>
 
@@ -1918,7 +1923,7 @@ const VolunteerApplicationComponent = () => {
                                   variant="subtitle1"
                                   sx={{ fontWeight: "bold", mb: 0.5 }}
                                 >
-                                  {timeBlockData.timeBlock.time} -{" "}
+                                  {timeBlockData.timeBlock.time} {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))} -{" "}
                                   {timeBlockData.timeBlock.label}
                                 </Typography>
                                 <Typography

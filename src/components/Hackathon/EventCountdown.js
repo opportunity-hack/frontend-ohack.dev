@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/router';
-import { isAfter, isBefore, format, differenceInMilliseconds, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
+import { isAfter, isBefore, differenceInMilliseconds, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -27,6 +27,7 @@ import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import PrintIcon from '@mui/icons-material/Print';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { formatDualTimezone, getEventTimezone, DEFAULT_EVENT_TIMEZONE } from '../../lib/timezoneUtils';
 
 const TimelineContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -156,7 +157,8 @@ const EventProgress = styled(LinearProgress)(({ theme }) => ({
   borderRadius: '3px 3px 0 0',
 }));
 
-const EventCountdown = ({ countdowns, eventId }) => {
+const EventCountdown = ({ countdowns, eventId, eventTimezone }) => {
+  const etz = eventTimezone || DEFAULT_EVENT_TIMEZONE;
   const [timeLeft, setTimeLeft] = useState(null);
   const [nextEvent, setNextEvent] = useState(null);
   const [expandedEvents, setExpandedEvents] = useState(new Set());
@@ -253,7 +255,12 @@ const EventCountdown = ({ countdowns, eventId }) => {
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                 <AccessTimeIcon fontSize="small" />
-                {format(new Date(nextEvent.time), 'EEE, MMM do \'at\' h:mm a')}
+                {(() => {
+                  const tz = formatDualTimezone(nextEvent.time, etz);
+                  return tz.isSameTimezone
+                    ? `${tz.eventTime} ${tz.eventAbbr}`
+                    : `${tz.eventTime} ${tz.eventAbbr} (${tz.userTime} ${tz.userAbbr} your time)`;
+                })()}
               </Typography>
             </Box>
             <CountdownGrid>
@@ -319,10 +326,15 @@ const EventCountdown = ({ countdowns, eventId }) => {
                 <Typography
                   variant="body2"
                   color="text.secondary"
-                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}
                 >
                   <AccessTimeIcon fontSize="small" />
-                  {format(eventTime, 'EEE, MMM do \'at\' h:mm a')}
+                  {(() => {
+                    const tz = formatDualTimezone(eventTime, etz);
+                    return tz.isSameTimezone
+                      ? `${tz.eventTime} ${tz.eventAbbr}`
+                      : `${tz.eventTime} ${tz.eventAbbr} (${tz.userTime} ${tz.userAbbr} your time)`;
+                  })()}
                 </Typography>
               </Box>
               <Box display="flex" alignItems="center" gap={1}>

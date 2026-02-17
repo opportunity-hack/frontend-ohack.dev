@@ -145,7 +145,7 @@ const RoleTable = ({ role, people, timeSlots, renderPersonInfo, isPersonAvailabl
                 <TableRow key={index}>
                   <TimeColumnHeader>
                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                      {timeSlot.replace(/[🌅☀️🏙️🌆🌃🌙]/g, '').replace(/PST/g, '').trim()}
+                      {timeSlot.replace(/[🌅☀️🏙️🌆🌃🌙]/g, '').replace(/\s*[A-Z]{2,5}\s*$/, '').trim()}
                     </Typography>
                   </TimeColumnHeader>
 
@@ -786,7 +786,7 @@ export default function CensusPage() {
                         }
                         label={
                           <Typography variant="caption">
-                            {timeSlot.replace(/[🌅☀️🏙️🌆🌃🌙]/g, '').replace(/PST/g, '').trim()}
+                            {timeSlot.replace(/[🌅☀️🏙️🌆🌃🌙]/g, '').replace(/\s*[A-Z]{2,5}\s*$/, '').trim()}
                           </Typography>
                         }
                       />

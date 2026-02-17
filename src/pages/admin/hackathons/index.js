@@ -66,6 +66,8 @@ import CountdownManagement from "../../../components/admin/CountdownManagement";
 import LinkManagement from "../../../components/admin/LinkManagement";
 import HackathonDuplicator from "../../../components/admin/HackathonDuplicator";
 import NonprofitManagement from "../../../components/admin/NonprofitManagement";
+import TimezoneSelect from "react-timezone-select";
+import { DEFAULT_EVENT_TIMEZONE } from "../../../lib/timezoneUtils";
 
 const AdminHackathonPage = () => {
   const router = useRouter();
@@ -613,6 +615,15 @@ const AdminHackathonPage = () => {
                 }}
                 margin="normal"
                 />
+              <Box sx={{ mt: 2, mb: 1 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Event Timezone
+                </Typography>
+                <TimezoneSelect
+                  value={{ value: editingHackathon?.timezone || DEFAULT_EVENT_TIMEZONE, label: editingHackathon?.timezone || DEFAULT_EVENT_TIMEZONE }}
+                  onChange={(tz) => handleInputChange("timezone", tz.value)}
+                />
+              </Box>
               <TextField
                 fullWidth
                 label="Event ID"
@@ -676,6 +687,7 @@ const AdminHackathonPage = () => {
                   <CountdownManagement
                     countdowns={editingHackathon?.countdowns || []}
                     onChange={handleCountdownsChange}
+                    eventTimezone={editingHackathon?.timezone || DEFAULT_EVENT_TIMEZONE}
                   />
                 </AccordionDetails>
               </Accordion>

@@ -819,7 +819,7 @@ export default function HackathonEvent({ eventData }) {
             </Typography>
             {/* Order matters on mobile: Countdown first, then Stats */}
             <Grid size={{ xs: 12, md: 6 }} id="countdown" order={{ xs: 1, md: 2 }}>
-              <EventCountdown countdowns={event.countdowns} eventId={event_id} />
+              <EventCountdown countdowns={event.countdowns} eventId={event_id} eventTimezone={event.timezone} />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }} id="stats" order={{ xs: 2, md: 1 }}>
               {/* Set display to flex and min-height to ensure the component has proper space */}
@@ -893,7 +893,7 @@ export default function HackathonEvent({ eventData }) {
             >
               Volunteers
             </Typography>
-            <VolunteerList event_id={event_id} type="volunteer" />
+            <VolunteerList event_id={event_id} type="volunteer" eventTimezone={event.timezone} />
           </Grid>
           <Grid
             size={12}
@@ -919,7 +919,7 @@ export default function HackathonEvent({ eventData }) {
             >
               Mentors
             </Typography>
-            <VolunteerList event_id={event_id} type="mentor" />
+            <VolunteerList event_id={event_id} type="mentor" eventTimezone={event.timezone} />
           </Grid>
           <Grid
             size={12}
@@ -945,7 +945,7 @@ export default function HackathonEvent({ eventData }) {
             >
               Judges
             </Typography>
-            <VolunteerList event_id={event_id} type="judge" />
+            <VolunteerList event_id={event_id} type="judge" eventTimezone={event.timezone} />
           </Grid>
           <Grid
             size={12}
@@ -971,7 +971,7 @@ export default function HackathonEvent({ eventData }) {
             >
               Hackers
             </Typography>
-            <VolunteerList event_id={event_id} type="hacker" />
+            <VolunteerList event_id={event_id} type="hacker" eventTimezone={event.timezone} />
           </Grid>
           {/* FAQ */}
           <Grid
