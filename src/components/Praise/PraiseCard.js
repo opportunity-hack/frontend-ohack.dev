@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardMedia, Box, Typography, Avatar, Tooltip, IconButton, Stack, Chip } from '@mui/material';
 import { FavoriteRounded, StarRounded, ThumbUpRounded, EmojiEmotionsRounded } from '@mui/icons-material';
 import { styled, keyframes } from '@mui/material/styles';
