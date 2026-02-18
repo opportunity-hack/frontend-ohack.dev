@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { TitleContainer, LayoutContainer, ProjectsContainer, LinkStyled} from './styles';
 import Head from 'next/head';
 import Image from 'next/image';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import { Typography, Grid, Card, CardContent } from '@mui/material';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
 import { useRouter } from 'next/router';
@@ -75,7 +76,7 @@ const CertInfoIndex = () => {
         <ProjectsContainer container style={{ marginTop: '2em'}}>                    
             <Grid item xs={12} sm={6} md={6} style={{margin: '0.5em'}}>                            
                     { certInfo && certInfo.certificate_url && <Link href={certInfo.certificate_url}><Image 
-                        src={certInfo.certificate_url}
+                        src={normalizeImageUrl(certInfo.certificate_url)}
                         width={1024/3}
                         height={1024/3}
                         alt="Your certificate"

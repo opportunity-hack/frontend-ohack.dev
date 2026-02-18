@@ -23,6 +23,7 @@ import { trackEvent, initFacebookPixel } from '../../lib/ga';
 import React from 'react';
 
 import Image from 'next/image'
+import { normalizeImageUrl } from '../../lib/imageUtils'
 
 import Link from 'next/link';
 
@@ -91,7 +92,7 @@ function SingleNews( {newsItem} ) {
             <Grid item xs={12} md={12} lg={12}>                          
               {newsItem?.image && (
               <Image
-                src={newsItem.image}
+                src={normalizeImageUrl(newsItem.image)}
                 alt={newsItem.title}
 
                 height={150}

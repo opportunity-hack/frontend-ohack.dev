@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Image from 'next/image';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 
 const ScrollContainer = styled(Box)({
   overflow: 'hidden',
@@ -117,10 +118,10 @@ const VolunteerAutoScroll = ({ event_id }) => {
         {volunteers.map((volunteer) => (
           <VolunteerTile key={`${volunteer.name}-${volunteer.role}`}>
             <Image
-              src={
+              src={normalizeImageUrl(
                 volunteer.photoUrl ||
                 "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Black.png"
-              }
+              )}
               alt={volunteer.name}
               layout="fill"
               objectFit="cover"

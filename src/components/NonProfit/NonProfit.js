@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import useNonprofit from '../../hooks/use-nonprofit';
 import Head from 'next/head';
 import Image from 'next/image';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import { useAuthInfo } from '@propelauth/react';
 import { Puff } from 'react-loading-icons';
 
@@ -124,7 +125,7 @@ const NonProfit = React.memo(function NonProfit(props) {
     </Suspense>
   );
   
-  const image = nonprofit.image || '/npo_placeholder.png';
+  const image = normalizeImageUrl(nonprofit.image) || '/npo_placeholder.png';
   const projectCount = nonprofit.problem_statements?.length || 0;
 
   // Preload the nonprofit image for better LCP

@@ -14,6 +14,7 @@ import { styled } from "@mui/material/styles";
 import Link from "next/link";
 import Image from "next/image";
 import AddIcon from "@mui/icons-material/Add";
+import { normalizeImageUrl } from "../../lib/imageUtils";
 
 const ListContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -104,7 +105,7 @@ const NonprofitList = ({ nonprofits, teams, eventId }) => {
               <ImageContainer>
                 {nonprofit.image ? (
                   <Image
-                    src={nonprofit.image || "/npo_placeholder.png"}
+                    src={normalizeImageUrl(nonprofit.image) || "/npo_placeholder.png"}
                     alt={`${nonprofit.name} logo or image`}
                     fill
                     sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"

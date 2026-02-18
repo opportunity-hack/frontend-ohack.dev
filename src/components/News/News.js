@@ -21,6 +21,7 @@ import {
 
 import { Divider } from "@mui/material";
 import Image from "next/image";
+import { normalizeImageUrl } from "../../lib/imageUtils";
 import Link from "next/link";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 
@@ -196,7 +197,7 @@ function News({ newsData, frontpage, loading }) {
                     }}
                   >
                     <Image
-                      src={newsItem.image}
+                      src={normalizeImageUrl(newsItem.image)}
                       alt={`Featured image for ${newsItem.title}`}
                       fill
                       style={{ objectFit: 'cover' }}
