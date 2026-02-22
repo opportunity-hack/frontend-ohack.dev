@@ -47,7 +47,8 @@ class BatchEmailService {
           message: processedMessage,
           subject: subject,
           recipient_type: recipientType,
-          name: user.name || user.email || 'Recipient'
+          name: user.name || user.email || 'Recipient',
+          volunteer_id: user.id || null
         };
       } else {
         // Use user ID endpoint for registered users
