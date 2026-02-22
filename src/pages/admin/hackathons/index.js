@@ -738,6 +738,21 @@ const AdminHackathonPage = () => {
                         }
                         label="Hacker Applications"
                       />
+                      {!!editingHackathon?.constraints?.application_hacker_enabled && (
+                        <TextField
+                          label="External Hacker Application URL"
+                          value={editingHackathon?.constraints?.application_hacker_external_url || ""}
+                          onChange={(e) => handleUpdateConstraint("application_hacker_external_url", e.target.value)}
+                          fullWidth
+                          margin="dense"
+                          helperText="Leave blank to use built-in form. Must start with http:// or https://"
+                          error={
+                            !!editingHackathon?.constraints?.application_hacker_external_url &&
+                            !editingHackathon.constraints.application_hacker_external_url.match(/^https?:\/\//)
+                          }
+                          sx={{ ml: 4, maxWidth: 500 }}
+                        />
+                      )}
                       <FormControlLabel
                         control={
                           <Switch
@@ -747,6 +762,21 @@ const AdminHackathonPage = () => {
                         }
                         label="Mentor Applications"
                       />
+                      {!!editingHackathon?.constraints?.application_mentor_enabled && (
+                        <TextField
+                          label="External Mentor Application URL"
+                          value={editingHackathon?.constraints?.application_mentor_external_url || ""}
+                          onChange={(e) => handleUpdateConstraint("application_mentor_external_url", e.target.value)}
+                          fullWidth
+                          margin="dense"
+                          helperText="Leave blank to use built-in form. Must start with http:// or https://"
+                          error={
+                            !!editingHackathon?.constraints?.application_mentor_external_url &&
+                            !editingHackathon.constraints.application_mentor_external_url.match(/^https?:\/\//)
+                          }
+                          sx={{ ml: 4, maxWidth: 500 }}
+                        />
+                      )}
                       <FormControlLabel
                         control={
                           <Switch
@@ -756,6 +786,21 @@ const AdminHackathonPage = () => {
                         }
                         label="Judge Applications"
                       />
+                      {!!editingHackathon?.constraints?.application_judge_enabled && (
+                        <TextField
+                          label="External Judge Application URL"
+                          value={editingHackathon?.constraints?.application_judge_external_url || ""}
+                          onChange={(e) => handleUpdateConstraint("application_judge_external_url", e.target.value)}
+                          fullWidth
+                          margin="dense"
+                          helperText="Leave blank to use built-in form. Must start with http:// or https://"
+                          error={
+                            !!editingHackathon?.constraints?.application_judge_external_url &&
+                            !editingHackathon.constraints.application_judge_external_url.match(/^https?:\/\//)
+                          }
+                          sx={{ ml: 4, maxWidth: 500 }}
+                        />
+                      )}
                       <TextField
                         label="Judge Access Code"
                         value={editingHackathon?.constraints?.application_judge_enabled_code || ""}
