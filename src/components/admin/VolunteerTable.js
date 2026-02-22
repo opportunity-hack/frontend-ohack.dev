@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -205,6 +205,8 @@ const VolunteerTable = ({
   const [copyFeedback, setCopyFeedback] = useState({ open: false, message: '' });
   const [resendStatuses, setResendStatuses] = useState({}); // { resend_id: { last_event, ... } }
   const [loadingResendStatus, setLoadingResendStatus] = useState({});
+  const [resendEmailsByRecipient, setResendEmailsByRecipient] = useState({}); // { email: [{id, subject, created_at, last_event}] }
+  const [resendListLoaded, setResendListLoaded] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -284,6 +286,48 @@ const VolunteerTable = ({
       });
     }
   }, [accessToken, orgId, resendStatuses, loadingResendStatus]);
+
+  // Fetch all sent emails from Resend list API, indexed by recipient
+  const fetchResendEmailList = useCallback(async () => {
+    if (!accessToken || !orgId || !volunteers?.length) return;
+
+    const uniqueEmails = [...new Set(
+      volunteers
+        .map(v => v.email)
+        .filter(e => e && e.includes('@'))
+    )];
+
+    if (uniqueEmails.length === 0) return;
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/emails/resend-list?emails=${encodeURIComponent(uniqueEmails.join(','))}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'X-Org-Id': orgId,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.emails_by_recipient) {
+          setResendEmailsByRecipient(data.emails_by_recipient);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch Resend email list:', err);
+    }
+  }, [accessToken, orgId, volunteers]);
+
+  // Fetch Resend email list once when volunteers load
+  useEffect(() => {
+    if (!resendListLoaded && volunteers?.length > 0 && accessToken && orgId) {
+      setResendListLoaded(true);
+      fetchResendEmailList();
+    }
+  }, [volunteers, accessToken, orgId, resendListLoaded, fetchResendEmailList]);
 
   // Helper to get sent emails from either new sent_emails or legacy messages_sent
   const getSentEmails = useCallback((volunteer) => {
@@ -571,7 +615,25 @@ const VolunteerTable = ({
         const sentEmails = getSentEmails(volunteer);
         const messageCount = sentEmails.length;
 
-        if (messageCount === 0) {
+        // Look up emails from Resend list API for this volunteer
+        const volunteerEmail = volunteer.email?.toLowerCase();
+        const resendListEmails = volunteerEmail ? (resendEmailsByRecipient[volunteerEmail] || []) : [];
+
+        // Delivery status chip rendering helper (shared by stored and list-based emails)
+        const eventMap = {
+          delivered: { label: 'Delivered', color: 'success' },
+          sent: { label: 'Sent', color: 'info' },
+          bounced: { label: 'Bounced', color: 'error' },
+          complained: { label: 'Complained', color: 'error' },
+          delivery_delayed: { label: 'Delayed', color: 'warning' },
+        };
+
+        const renderResendEventChip = (lastEvent) => {
+          const display = eventMap[lastEvent] || { label: lastEvent || 'Unknown', color: 'default' };
+          return <Chip label={display.label} size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color={display.color} />;
+        };
+
+        if (messageCount === 0 && resendListEmails.length === 0) {
           return (
             <Chip
               label="0"
@@ -582,24 +644,23 @@ const VolunteerTable = ({
           );
         }
 
-        // Delivery status chip for a single sent email
+        // Delivery status chip for a single sent email (stored records)
         const renderDeliveryStatus = (email) => {
-          // Check for Resend live status first
+          // Check for Resend live status first (from per-ID fetch)
           if (email.resend_id && resendStatuses[email.resend_id]) {
             const status = resendStatuses[email.resend_id];
-            const eventMap = {
-              delivered: { label: 'Delivered', color: 'success' },
-              sent: { label: 'Sent', color: 'info' },
-              bounced: { label: 'Bounced', color: 'error' },
-              complained: { label: 'Complained', color: 'error' },
-              delivery_delayed: { label: 'Delayed', color: 'warning' },
-            };
-            const display = eventMap[status.last_event] || { label: status.last_event || 'Unknown', color: 'default' };
-            return <Chip label={display.label} size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color={display.color} />;
+            return renderResendEventChip(status.last_event);
           }
           // Loading state
           if (email.resend_id && loadingResendStatus[email.resend_id]) {
             return <Chip label="Loading..." size="small" sx={{ fontSize: '0.6rem', height: '16px' }} variant="outlined" />;
+          }
+          // Try matching from Resend list data by subject when no resend_id
+          if (!email.resend_id && email.subject && resendListEmails.length > 0) {
+            const match = resendListEmails.find(re => re.subject === email.subject);
+            if (match) {
+              return renderResendEventChip(match.last_event);
+            }
           }
           // Legacy delivery_status fallback
           if (email._legacy_delivery_status) {
@@ -620,13 +681,18 @@ const VolunteerTable = ({
           return null;
         };
 
+        // Determine display count: stored messages + any additional from Resend list
+        const storedResendIds = new Set(sentEmails.filter(e => e.resend_id).map(e => e.resend_id));
+        const additionalResendEmails = resendListEmails.filter(re => !storedResendIds.has(re.id));
+        const totalDisplayCount = messageCount + additionalResendEmails.length;
+
         const messagesToolTipContent = (
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Recent Messages ({messageCount})
+              Recent Messages ({totalDisplayCount})
             </Typography>
             {sentEmails.slice(0, 5).map((email, idx) => (
-              <Box key={idx} sx={{ mb: 1, pb: 1, borderBottom: idx < Math.min(4, messageCount - 1) ? '1px solid rgba(255,255,255,0.2)' : 'none' }}>
+              <Box key={`stored-${idx}`} sx={{ mb: 1, pb: 1, borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
                 <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold' }}>
                   {new Date(email.timestamp).toLocaleString()}
                 </Typography>
@@ -643,15 +709,40 @@ const VolunteerTable = ({
                 </Box>
               </Box>
             ))}
+            {additionalResendEmails.length > 0 && (
+              <>
+                <Typography variant="caption" sx={{ display: 'block', fontStyle: 'italic', mb: 1, mt: 1, opacity: 0.8 }}>
+                  Via Resend
+                </Typography>
+                {additionalResendEmails.slice(0, 5).map((re, idx) => (
+                  <Box key={`resend-${idx}`} sx={{ mb: 1, pb: 1, borderBottom: idx < Math.min(4, additionalResendEmails.length - 1) ? '1px solid rgba(255,255,255,0.2)' : 'none' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold' }}>
+                      {new Date(re.created_at).toLocaleString()}
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+                      Subject: {re.subject}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                      {renderResendEventChip(re.last_event)}
+                    </Box>
+                  </Box>
+                ))}
+                {additionalResendEmails.length > 5 && (
+                  <Typography variant="caption" sx={{ fontStyle: 'italic' }}>
+                    ...and {additionalResendEmails.length - 5} more from Resend
+                  </Typography>
+                )}
+              </>
+            )}
             {messageCount > 5 && (
               <Typography variant="caption" sx={{ fontStyle: 'italic' }}>
-                ...and {messageCount - 5} more messages
+                ...and {messageCount - 5} more stored messages
               </Typography>
             )}
           </Box>
         );
 
-        // Fetch Resend statuses when the tooltip opens
+        // Fetch Resend statuses when the tooltip opens (supplementary per-ID fetch)
         const handleTooltipOpen = () => {
           const resendIds = sentEmails
             .filter(e => e.resend_id)
@@ -679,7 +770,7 @@ const VolunteerTable = ({
             }}
           >
             <Chip
-              label={messageCount}
+              label={totalDisplayCount}
               size="small"
               variant="outlined"
               color="primary"
