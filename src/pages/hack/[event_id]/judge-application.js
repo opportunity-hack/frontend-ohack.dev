@@ -334,6 +334,13 @@ const JudgeApplicationComponent = () => {
           throw new Error("Invalid event data received");
         }
 
+        // Redirect to external application URL if configured
+        const externalUrl = eventData.constraints?.application_judge_external_url;
+        if (externalUrl) {
+          window.location.href = externalUrl;
+          return;
+        }
+
         // Format dates for display
         const startDate = new Date(eventData.start_date);
         const endDate = new Date(eventData.end_date);

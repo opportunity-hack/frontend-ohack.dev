@@ -95,8 +95,9 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
       description: "Participate as a developer, designer, product or project manager",
       icon: <PersonIcon />,
       color: "primary",
-      link: `/hack/${event_id}/hacker-application`,
+      link: constraints.application_hacker_external_url || `/hack/${event_id}/hacker-application`,
       enabled: constraints.application_hacker_enabled !== false,
+      isExternal: !!constraints.application_hacker_external_url,
       roleType: "hackers",
       socialProof: socialProofConfig.hacker,
     },
@@ -106,8 +107,9 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
       description: "Guide teams with your technical expertise",
       icon: <VolunteerActivismIcon />,
       color: "secondary",
-      link: `/hack/${event_id}/mentor-application`,
+      link: constraints.application_mentor_external_url || `/hack/${event_id}/mentor-application`,
       enabled: constraints.application_mentor_enabled !== false,
+      isExternal: !!constraints.application_mentor_external_url,
       roleType: "mentors",
       socialProof: socialProofConfig.mentor,
     },
@@ -117,8 +119,9 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
       description: "Evaluate solutions and provide feedback",
       icon: <GavelIcon />,
       color: "success",
-      link: `/hack/${event_id}/judge-application`,
+      link: constraints.application_judge_external_url || `/hack/${event_id}/judge-application`,
       enabled: constraints.application_judge_enabled !== false,
+      isExternal: !!constraints.application_judge_external_url,
       roleType: "judges",
       socialProof: socialProofConfig.judge,
     },
@@ -255,6 +258,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                   href={app.enabled ? app.link : undefined}
                   disabled={!app.enabled}
                   component={app.enabled ? "a" : "button"}
+                  {...(app.enabled && app.isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   sx={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -274,6 +278,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                     <Typography variant="caption" component="span" align="left">
                       {app.description}
                       {!app.enabled && " (Closed)"}
+                      {app.enabled && app.isExternal && " (Opens in new tab)"}
                     </Typography>
 
                     {/* Social Proof Indicator */}
@@ -381,9 +386,10 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                 href={app.enabled ? app.link : undefined}
                 disabled={!app.enabled}
                 component={app.enabled ? "a" : "button"}
-                sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
+                {...(app.enabled && app.isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'flex-start',
                   height: '100%',
                   minHeight: '80px',
@@ -398,6 +404,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                   <Typography variant="caption" component="span" align="left">
                     {app.description}
                     {!app.enabled && " (Closed)"}
+                    {app.enabled && app.isExternal && " (Opens in new tab)"}
                   </Typography>
                 </Box>
               </ApplicationButton>

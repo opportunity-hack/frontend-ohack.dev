@@ -614,6 +614,13 @@ const HackerApplicationComponent = () => {
           throw new Error("Invalid event data received");
         }
 
+        // Redirect to external application URL if configured
+        const externalUrl = eventData.constraints?.application_hacker_external_url;
+        if (externalUrl) {
+          window.location.href = externalUrl;
+          return;
+        }
+
         // Format dates for display
         const eventTz = getEventTimezone(eventData);
         const startDate = Moment.tz(eventData.start_date, eventTz);
