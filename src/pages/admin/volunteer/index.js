@@ -190,6 +190,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const savedScrollPositionRef = useRef(0);
   const lastUrlRef = useRef('');
   const dataLoadedRef = useRef(false);
+  const initializedFromUrlRef = useRef(false);
 
   // Save scroll position when navigating away and restore when returning
   useEffect(() => {
@@ -269,9 +270,12 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   }
   
   // Handle URL parameters and set initial state with defensive checks
+  // Only runs for initialization — once event ID is set from URL, stops overriding user selections
   useEffect(() => {
     if (!router?.query) return;
-    
+    if (!Array.isArray(hackathons) || hackathons.length === 0) return;
+    if (initializedFromUrlRef.current) return;
+
     const {
       event_id,
       tab,
@@ -285,10 +289,10 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       volunteer_id,
       volunteer_type
     } = router.query;
-    
-    if (event_id && Array.isArray(hackathons) && hackathons.some(h => h?.event_id === event_id)) {
+
+    if (event_id && hackathons.some(h => h?.event_id === event_id)) {
       setSelectedEventId(event_id);
-    } else if (Array.isArray(hackathons) && hackathons.length > 0 && !selectedEventId) {
+    } else {
       // Sort hackathons by date (descending) and use the most recent one
       const sortedHackathons = [...hackathons]
         .filter(h => h?.start_date) // Filter out invalid entries
@@ -297,12 +301,14 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
           const dateB = new Date(b.start_date);
           return dateB - dateA; // Most recent first
         });
-      
+
       if (sortedHackathons.length > 0) {
         setSelectedEventId(sortedHackathons[0].event_id);
       }
     }
-    
+
+    initializedFromUrlRef.current = true;
+
     // Handle volunteer_type parameter to set correct tab
     if (volunteer_type && !tab) {
       const typeToTabMap = {
@@ -323,8 +329,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     }
 
     // Handle filter state restoration and volunteer_id filtering
-    const finalTabValue = volunteer_type && !tab ? 
-      ({ mentor: 0, judge: 1, volunteer: 2, hacker: 3, sponsor: 4 })[volunteer_type] || tabValue : 
+    const finalTabValue = volunteer_type && !tab ?
+      ({ mentor: 0, judge: 1, volunteer: 2, hacker: 3, sponsor: 4 })[volunteer_type] || tabValue :
       (tab !== undefined ? parseInt(tab, 10) : tabValue);
 
     if (finalTabValue >= 0 && finalTabValue <= 4) {
@@ -353,7 +359,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         }
       }
     }
-  }, [hackathons, selectedEventId, router?.query]);
+  }, [hackathons, router?.query]);
 
   // Update URL when selectedEventId, tabValue, or filter states change
   useEffect(() => {
@@ -1468,6 +1474,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 onBulkCertificate={handleBulkCertificate}
                 checkedInFilter={getCurrentFilterState().checkedInFilter}
                 onCheckedInFilterChange={(value) => updateFilterState('checkedInFilter', value)}
+                accessToken={accessToken}
+                orgId={orgId}
               />
               {sortedVolunteers.length === 0 && (
                 <Box sx={{ mt: 2, textAlign: "center" }}>

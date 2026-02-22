@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -198,8 +198,13 @@ const VolunteerTable = ({
   // Filter props
   checkedInFilter = 'all',
   onCheckedInFilterChange,
+  // Auth props for Resend status lookup
+  accessToken,
+  orgId,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState({ open: false, message: '' });
+  const [resendStatuses, setResendStatuses] = useState({}); // { resend_id: { last_event, ... } }
+  const [loadingResendStatus, setLoadingResendStatus] = useState({});
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -234,6 +239,70 @@ const VolunteerTable = ({
       });
     }
   };
+
+  // Fetch delivery status from Resend for a volunteer's sent emails
+  const fetchResendStatuses = useCallback(async (resendIds) => {
+    if (!resendIds?.length || !accessToken || !orgId) return;
+
+    // Filter out IDs we already have or are loading
+    const idsToFetch = resendIds.filter(id => id && !resendStatuses[id] && !loadingResendStatus[id]);
+    if (idsToFetch.length === 0) return;
+
+    setLoadingResendStatus(prev => {
+      const next = { ...prev };
+      idsToFetch.forEach(id => { next[id] = true; });
+      return next;
+    });
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/emails/resend-status`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Org-Id': orgId,
+          },
+          body: JSON.stringify({ email_ids: idsToFetch }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.statuses) {
+          setResendStatuses(prev => ({ ...prev, ...data.statuses }));
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch Resend statuses:', err);
+    } finally {
+      setLoadingResendStatus(prev => {
+        const next = { ...prev };
+        idsToFetch.forEach(id => { delete next[id]; });
+        return next;
+      });
+    }
+  }, [accessToken, orgId, resendStatuses, loadingResendStatus]);
+
+  // Helper to get sent emails from either new sent_emails or legacy messages_sent
+  const getSentEmails = useCallback((volunteer) => {
+    if (Array.isArray(volunteer.sent_emails) && volunteer.sent_emails.length > 0) {
+      return volunteer.sent_emails;
+    }
+    // Backward compatibility with old messages_sent format
+    if (Array.isArray(volunteer.messages_sent) && volunteer.messages_sent.length > 0) {
+      return volunteer.messages_sent.map(msg => ({
+        resend_id: null,
+        subject: msg.subject,
+        timestamp: msg.timestamp,
+        sent_by: msg.sent_by,
+        recipient_type: msg.recipient_type,
+        _legacy_delivery_status: msg.delivery_status,
+      }));
+    }
+    return [];
+  }, []);
 
   const handleCloseFeedback = () => {
     setCopyFeedback({ open: false, message: '' });
@@ -499,50 +568,78 @@ const VolunteerTable = ({
           />
         );
       case "messages_sent":
-        const messageCount = Array.isArray(volunteer.messages_sent) 
-          ? volunteer.messages_sent.length 
-          : 0;
-        
+        const sentEmails = getSentEmails(volunteer);
+        const messageCount = sentEmails.length;
+
         if (messageCount === 0) {
           return (
-            <Chip 
-              label="0" 
-              size="small" 
+            <Chip
+              label="0"
+              size="small"
               variant="outlined"
               sx={{ minWidth: 32, fontSize: '0.75rem' }}
             />
           );
         }
 
+        // Delivery status chip for a single sent email
+        const renderDeliveryStatus = (email) => {
+          // Check for Resend live status first
+          if (email.resend_id && resendStatuses[email.resend_id]) {
+            const status = resendStatuses[email.resend_id];
+            const eventMap = {
+              delivered: { label: 'Delivered', color: 'success' },
+              sent: { label: 'Sent', color: 'info' },
+              bounced: { label: 'Bounced', color: 'error' },
+              complained: { label: 'Complained', color: 'error' },
+              delivery_delayed: { label: 'Delayed', color: 'warning' },
+            };
+            const display = eventMap[status.last_event] || { label: status.last_event || 'Unknown', color: 'default' };
+            return <Chip label={display.label} size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color={display.color} />;
+          }
+          // Loading state
+          if (email.resend_id && loadingResendStatus[email.resend_id]) {
+            return <Chip label="Loading..." size="small" sx={{ fontSize: '0.6rem', height: '16px' }} variant="outlined" />;
+          }
+          // Legacy delivery_status fallback
+          if (email._legacy_delivery_status) {
+            const ds = email._legacy_delivery_status;
+            return (
+              <>
+                {ds.email_sent && <Chip label="Email ✓" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color="success" />}
+                {ds.slack_sent && <Chip label="Slack ✓" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color="info" />}
+                {ds.email_error && <Chip label="Email ✗" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color="error" />}
+                {ds.slack_error && <Chip label="Slack ✗" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color="error" />}
+              </>
+            );
+          }
+          // Has resend_id but not yet fetched
+          if (email.resend_id) {
+            return <Chip label="Click for status" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} variant="outlined" />;
+          }
+          return null;
+        };
+
         const messagesToolTipContent = (
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               Recent Messages ({messageCount})
             </Typography>
-            {volunteer.messages_sent.slice(0, 5).map((message, idx) => (
+            {sentEmails.slice(0, 5).map((email, idx) => (
               <Box key={idx} sx={{ mb: 1, pb: 1, borderBottom: idx < Math.min(4, messageCount - 1) ? '1px solid rgba(255,255,255,0.2)' : 'none' }}>
                 <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold' }}>
-                  {new Date(message.timestamp).toLocaleString()}
+                  {new Date(email.timestamp).toLocaleString()}
                 </Typography>
                 <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
-                  Subject: {message.subject}
+                  Subject: {email.subject}
                 </Typography>
-                <Typography variant="caption" sx={{ display: 'block' }}>
-                  Sent by: {message.sent_by}
-                </Typography>
+                {email.sent_by && (
+                  <Typography variant="caption" sx={{ display: 'block' }}>
+                    Sent by: {email.sent_by}
+                  </Typography>
+                )}
                 <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                  {message.delivery_status.email_sent && (
-                    <Chip label="Email ✓" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color="success" />
-                  )}
-                  {message.delivery_status.slack_sent && (
-                    <Chip label="Slack ✓" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color="info" />
-                  )}
-                  {message.delivery_status.email_error && (
-                    <Chip label="Email ✗" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color="error" />
-                  )}
-                  {message.delivery_status.slack_error && (
-                    <Chip label="Slack ✗" size="small" sx={{ fontSize: '0.6rem', height: '16px' }} color="error" />
-                  )}
+                  {renderDeliveryStatus(email)}
                 </Box>
               </Box>
             ))}
@@ -554,11 +651,22 @@ const VolunteerTable = ({
           </Box>
         );
 
+        // Fetch Resend statuses when the tooltip opens
+        const handleTooltipOpen = () => {
+          const resendIds = sentEmails
+            .filter(e => e.resend_id)
+            .map(e => e.resend_id);
+          if (resendIds.length > 0) {
+            fetchResendStatuses(resendIds);
+          }
+        };
+
         return (
-          <Tooltip 
-            title={messagesToolTipContent} 
-            arrow 
+          <Tooltip
+            title={messagesToolTipContent}
+            arrow
             placement="bottom-start"
+            onOpen={handleTooltipOpen}
             componentsProps={{
               tooltip: {
                 sx: {
@@ -570,9 +678,9 @@ const VolunteerTable = ({
               },
             }}
           >
-            <Chip 
-              label={messageCount} 
-              size="small" 
+            <Chip
+              label={messageCount}
+              size="small"
               variant="outlined"
               color="primary"
               sx={{ cursor: 'pointer', minWidth: 32, fontSize: '0.75rem' }}
@@ -1154,9 +1262,9 @@ const VolunteerTable = ({
                       sx={{ '& .MuiChip-icon': { mr: 0.5 } }}
                     />
                   )}
-                  {Array.isArray(volunteer.messages_sent) && volunteer.messages_sent.length > 0 && (
+                  {getSentEmails(volunteer).length > 0 && (
                     <Chip
-                      label={`${volunteer.messages_sent.length} msgs`}
+                      label={`${getSentEmails(volunteer).length} msgs`}
                       size="small"
                       variant="outlined"
                       color="primary"

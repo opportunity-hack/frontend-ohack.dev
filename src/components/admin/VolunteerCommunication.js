@@ -71,7 +71,8 @@ const VolunteerCommunication = ({
           message: messageText,
           subject: selectedTemplate ? selectedTemplate.title : "Message from Opportunity Hack",
           recipient_type: volunteer.type || 'volunteer',
-          name: volunteer.name || volunteer.email || 'Recipient'
+          name: volunteer.name || volunteer.email || 'Recipient',
+          volunteer_id: volunteer.id || null
         };
       } else {
         // Use user ID endpoint for registered users
