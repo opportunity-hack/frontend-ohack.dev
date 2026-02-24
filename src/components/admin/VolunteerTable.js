@@ -312,8 +312,9 @@ const VolunteerTable = ({
 
       if (response.ok) {
         const data = await response.json();
-        if (data.emails_by_recipient) {
-          setResendEmailsByRecipient(data.emails_by_recipient);
+        const emailsByRecipient = data?.data?.emails_by_recipient || data?.emails_by_recipient;
+        if (emailsByRecipient) {
+          setResendEmailsByRecipient(emailsByRecipient);
         }
       }
     } catch (err) {
