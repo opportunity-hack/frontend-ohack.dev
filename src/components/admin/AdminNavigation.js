@@ -39,6 +39,7 @@ import {
   Share as ShareIcon,
   Gavel as JudgingIcon,
   PostAdd as RequestIcon,
+  ContactMail as ContactMailIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -85,6 +86,11 @@ const adminPages = [
     path: "/admin/hackathon-requests",
     label: "Hackathon Requests",
     icon: <RequestIcon style={{ color: "#e91e63" }} />
+  },
+  {
+    path: "/admin/contact",
+    label: "Contact",
+    icon: <ContactMailIcon style={{ color: "#00897b" }} />
   },
   {
     path: "/admin/check-in",

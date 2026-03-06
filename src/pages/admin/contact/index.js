@@ -7,41 +7,37 @@ import {
   TextField,
   Button,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Chip,
 } from "@mui/material";
 import AdminPage from "../../../components/admin/AdminPage";
-import HackathonRequestTable from "../../../components/admin/HackathonRequestTable";
-import HackathonRequestDetailDialog from "../../../components/admin/HackathonRequestDetailDialog";
+import ContactSubmissionTable from "../../../components/admin/ContactSubmissionTable";
+import ContactSubmissionDetailDialog from "../../../components/admin/ContactSubmissionDetailDialog";
 
-const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
+const AdminContactPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
-  const [requests, setRequests] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-  const [orderBy, setOrderBy] = useState("created");
+  const [orderBy, setOrderBy] = useState("timestamp");
   const [order, setOrder] = useState("desc");
   const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
   const orgId = org.orgId;
 
-  const fetchRequests = async () => {
+  const fetchSubmissions = async () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/admin/hackathon-requests`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/contact/submissions`,
         {
           method: "GET",
           headers: {
@@ -54,14 +50,14 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setRequests(data.requests || []);
+        setSubmissions(data.submissions || []);
       } else {
-        throw new Error("Failed to fetch hackathon requests");
+        throw new Error("Failed to fetch contact submissions");
       }
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Failed to fetch hackathon requests. Please try again.",
+        message: "Failed to fetch contact submissions. Please try again.",
         severity: "error",
       });
     } finally {
@@ -71,7 +67,7 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
 
   useEffect(() => {
     if (isAdmin) {
-      fetchRequests();
+      fetchSubmissions();
     }
   }, [isAdmin, accessToken]);
 
@@ -81,16 +77,16 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
     setOrderBy(property);
   };
 
-  const handleViewRequest = (request) => {
-    setSelectedRequest(request);
+  const handleViewSubmission = (submission) => {
+    setSelectedSubmission(submission);
     setDetailDialogOpen(true);
   };
 
-  const handleSaveRequest = async (updatedData) => {
+  const handleSaveSubmission = async (updatedData) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/admin/hackathon-requests/${updatedData.id}`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/contact/submissions/${updatedData.id}`,
         {
           method: "PATCH",
           headers: {
@@ -108,17 +104,17 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
       if (response.ok) {
         setSnackbar({
           open: true,
-          message: "Hackathon request updated successfully",
+          message: "Contact submission updated successfully",
           severity: "success",
         });
-        fetchRequests();
+        fetchSubmissions();
       } else {
-        throw new Error("Failed to update hackathon request");
+        throw new Error("Failed to update contact submission");
       }
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Failed to update hackathon request. Please try again.",
+        message: "Failed to update contact submission. Please try again.",
         severity: "error",
       });
     } finally {
@@ -131,36 +127,51 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const sortedAndFilteredRequests = requests
-    .filter((req) => {
-      if (statusFilter !== "all" && req.status !== statusFilter) return false;
+  const getSortValue = (sub, key) => {
+    if (key === "name") {
+      return `${sub.firstName || ""} ${sub.lastName || ""}`.trim();
+    }
+    if (key === "emails") {
+      return (sub.sent_emails || []).length;
+    }
+    return sub[key] || "";
+  };
+
+  const sortedAndFilteredSubmissions = submissions
+    .filter((sub) => {
+      if (statusFilter !== "all" && (sub.status || "new") !== statusFilter) return false;
       if (!filter) return true;
       const searchValue = filter.toLowerCase();
+      const fullName = `${sub.firstName || ""} ${sub.lastName || ""}`.toLowerCase();
       return (
-        (req.companyName || "").toLowerCase().includes(searchValue) ||
-        (req.contactName || "").toLowerCase().includes(searchValue) ||
-        (req.contactEmail || "").toLowerCase().includes(searchValue) ||
-        (req.location || "").toLowerCase().includes(searchValue)
+        fullName.includes(searchValue) ||
+        (sub.email || "").toLowerCase().includes(searchValue) ||
+        (sub.organization || "").toLowerCase().includes(searchValue) ||
+        (sub.inquiryType || "").toLowerCase().includes(searchValue)
       );
     })
     .sort((a, b) => {
-      const valueA = a[orderBy] || "";
-      const valueB = b[orderBy] || "";
+      const valueA = getSortValue(a, orderBy);
+      const valueB = getSortValue(b, orderBy);
       if (valueA < valueB) return order === "asc" ? -1 : 1;
       if (valueA > valueB) return order === "asc" ? 1 : -1;
       return 0;
     });
 
-  // Count by status for summary chips
-  const statusCounts = requests.reduce((acc, req) => {
-    const s = req.status || "pending";
+  const statusCounts = submissions.reduce((acc, sub) => {
+    const s = sub.status || "new";
     acc[s] = (acc[s] || 0) + 1;
     return acc;
   }, {});
 
+  const statusColorMap = {
+    new: "warning",
+    responded: "success",
+  };
+
   if (!isAdmin) {
     return (
-      <AdminPage title="Hackathon Request Management" isAdmin={false}>
+      <AdminPage title="Contact Submissions" isAdmin={false}>
         <Typography>You do not have permission to view this page.</Typography>
       </AdminPage>
     );
@@ -168,7 +179,7 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
 
   return (
     <AdminPage
-      title="Hackathon Request Management"
+      title="Contact Submissions"
       snackbar={snackbar}
       onSnackbarClose={handleSnackbarClose}
       isAdmin={isAdmin}
@@ -176,25 +187,15 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
       {/* Summary chips */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         <Chip
-          label={`Total: ${requests.length}`}
+          label={`Total: ${submissions.length}`}
           variant={statusFilter === "all" ? "filled" : "outlined"}
           onClick={() => setStatusFilter("all")}
         />
         {Object.entries(statusCounts).map(([status, count]) => (
           <Chip
             key={status}
-            label={`${status.replace("-", " ")}: ${count}`}
-            color={
-              status === "pending"
-                ? "warning"
-                : status === "approved"
-                ? "success"
-                : status === "rejected"
-                ? "error"
-                : status === "in-progress"
-                ? "info"
-                : "default"
-            }
+            label={`${status}: ${count}`}
+            color={statusColorMap[status] || "default"}
             variant={statusFilter === status ? "filled" : "outlined"}
             onClick={() => setStatusFilter(statusFilter === status ? "all" : status)}
             sx={{ textTransform: "capitalize" }}
@@ -205,14 +206,14 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item>
-            <Button onClick={fetchRequests} variant="outlined">
+            <Button onClick={fetchSubmissions} variant="outlined">
               Refresh Data
             </Button>
           </Grid>
           <Grid item xs>
             <TextField
               fullWidth
-              label="Filter by Organization, Contact, Email, or Location"
+              label="Filter by Name, Email, Organization, or Inquiry Type"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
@@ -226,27 +227,27 @@ const AdminHackathonRequestsPage = withRequiredAuthInfo(({ userClass }) => {
         </Box>
       ) : (
         <Box sx={{ mt: 2 }}>
-          <HackathonRequestTable
-            requests={sortedAndFilteredRequests}
+          <ContactSubmissionTable
+            submissions={sortedAndFilteredSubmissions}
             orderBy={orderBy}
             order={order}
             onRequestSort={handleRequestSort}
-            onViewRequest={handleViewRequest}
+            onViewSubmission={handleViewSubmission}
           />
         </Box>
       )}
 
-      <HackathonRequestDetailDialog
+      <ContactSubmissionDetailDialog
         open={detailDialogOpen}
         onClose={() => setDetailDialogOpen(false)}
-        request={selectedRequest}
-        onSave={handleSaveRequest}
+        submission={selectedSubmission}
+        onSave={handleSaveSubmission}
         accessToken={accessToken}
         orgId={orgId}
-        onRefresh={fetchRequests}
+        onRefresh={fetchSubmissions}
       />
     </AdminPage>
   );
 });
 
-export default AdminHackathonRequestsPage;
+export default AdminContactPage;

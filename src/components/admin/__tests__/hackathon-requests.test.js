@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider, createTheme } from "@mui/material";
-import AdminHackathonRequestsPage from "../index";
+import AdminHackathonRequestsPage from "../../../pages/admin/hackathon-requests/index";
 
 const theme = createTheme();
 
