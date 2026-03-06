@@ -303,14 +303,15 @@ const VolunteerTable = ({
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/emails/resend-list?emails=${encodeURIComponent(
-          uniqueEmails.join(",")
-        )}`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/emails/resend-list`,
         {
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "X-Org-Id": orgId,
+            'Content-Type': 'application/json',
+            'X-Org-Id': orgId,
           },
+          body: JSON.stringify({ emails: uniqueEmails }),
         }
       );
 
@@ -329,16 +330,23 @@ const VolunteerTable = ({
           });
           setResendEmailsByRecipient(normalizedEmailsByRecipient);
         }
+        // Mark list as successfully loaded only after a successful fetch
+        setResendListLoaded(true);
       }
     } catch (err) {
       console.warn("Failed to fetch Resend email list:", err);
     }
   }, [accessToken, orgId, volunteers]);
 
+  // Reset resend list state when auth context changes so we can refetch
+  useEffect(() => {
+    setResendListLoaded(false);
+    setResendEmailsByRecipient({});
+  }, [orgId, accessToken]);
+
   // Fetch Resend email list once when volunteers load
   useEffect(() => {
     if (!resendListLoaded && volunteers?.length > 0 && accessToken && orgId) {
-      setResendListLoaded(true);
       fetchResendEmailList();
     }
   }, [volunteers, accessToken, orgId, resendListLoaded, fetchResendEmailList]);
@@ -695,9 +703,49 @@ const VolunteerTable = ({
           return null;
         };
 
+        // Build a normalized key for matching emails without relying solely on resend_id.
+        // We use a combination of lowercased subject and timestamp truncated to the minute,
+        // so legacy stored emails without resend_id can still be matched against Resend list entries.
+        const buildEmailKey = (subject, timestamp) => {
+          if (!subject || !timestamp) {
+            return null;
+          }
+          const normalizedSubject = String(subject).trim().toLowerCase();
+          const date = new Date(timestamp);
+          if (Number.isNaN(date.getTime())) {
+            return null;
+          }
+          // Truncate to minute precision to allow for small differences in seconds.
+          const isoMinute = date.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:MM'
+          return `${normalizedSubject}|${isoMinute}`;
+        };
+
+        // Collect keys for all stored emails (including legacy ones without resend_id).
+        const storedEmailKeys = new Set();
+        sentEmails.forEach((email) => {
+          const timestamp = email.timestamp || email.created_at;
+          const key = buildEmailKey(email.subject, timestamp);
+          if (key) {
+            storedEmailKeys.add(key);
+          }
+        });
+
         // Determine display count: stored messages + any additional from Resend list
         const storedResendIds = new Set(sentEmails.filter(e => e.resend_id).map(e => e.resend_id));
-        const additionalResendEmails = resendListEmails.filter(re => !storedResendIds.has(re.id));
+        const additionalResendEmails = resendListEmails.filter((re) => {
+          // First, exclude any entries whose id we already have stored.
+          if (storedResendIds.has(re.id)) {
+            return false;
+          }
+          // Then, exclude entries that match a stored email by our fallback key
+          // (subject + timestamp/window), to avoid duplicating legacy records.
+          const timestamp = re.timestamp || re.created_at;
+          const key = buildEmailKey(re.subject, timestamp);
+          if (key && storedEmailKeys.has(key)) {
+            return false;
+          }
+          return true;
+        });
         const totalDisplayCount = messageCount + additionalResendEmails.length;
 
         const messagesToolTipContent = (
