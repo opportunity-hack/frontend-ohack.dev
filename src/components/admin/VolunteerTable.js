@@ -291,34 +291,47 @@ const VolunteerTable = ({
   const fetchResendEmailList = useCallback(async () => {
     if (!accessToken || !orgId || !volunteers?.length) return;
 
-    const uniqueEmails = [...new Set(
-      volunteers
-        .map(v => v.email)
-        .filter(e => e && e.includes('@'))
-    )];
+    const uniqueEmails = [
+      ...new Set(
+        volunteers
+          .map(v => (v.email ? v.email.trim().toLowerCase() : null))
+          .filter(e => e && e.includes("@"))
+      ),
+    ];
 
     if (uniqueEmails.length === 0) return;
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/emails/resend-list?emails=${encodeURIComponent(uniqueEmails.join(','))}`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/emails/resend-list?emails=${encodeURIComponent(
+          uniqueEmails.join(",")
+        )}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'X-Org-Id': orgId,
+            "X-Org-Id": orgId,
           },
         }
       );
 
       if (response.ok) {
         const data = await response.json();
-        const emailsByRecipient = data?.data?.emails_by_recipient || data?.emails_by_recipient;
+        const emailsByRecipient =
+          data?.data?.emails_by_recipient || data?.emails_by_recipient;
         if (emailsByRecipient) {
-          setResendEmailsByRecipient(emailsByRecipient);
+          const normalizedEmailsByRecipient = {};
+          Object.entries(emailsByRecipient).forEach(([key, value]) => {
+            const normalizedKey =
+              typeof key === "string" ? key.trim().toLowerCase() : "";
+            if (normalizedKey) {
+              normalizedEmailsByRecipient[normalizedKey] = value;
+            }
+          });
+          setResendEmailsByRecipient(normalizedEmailsByRecipient);
         }
       }
     } catch (err) {
-      console.warn('Failed to fetch Resend email list:', err);
+      console.warn("Failed to fetch Resend email list:", err);
     }
   }, [accessToken, orgId, volunteers]);
 
