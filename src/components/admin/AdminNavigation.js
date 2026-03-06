@@ -37,8 +37,8 @@ import {
   ChevronLeft as ChevronLeftIcon,
   Dashboard as DashboardIcon,
   Share as ShareIcon,
-  Gavel as JudgingIcon,  
-
+  Gavel as JudgingIcon,
+  PostAdd as RequestIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -80,6 +80,11 @@ const adminPages = [
     path: "/admin/hackathons",
     label: "Hackathons",
     icon: <EventIcon color="error" />
+  },
+  {
+    path: "/admin/hackathon-requests",
+    label: "Hackathon Requests",
+    icon: <RequestIcon style={{ color: "#e91e63" }} />
   },
   {
     path: "/admin/check-in",
