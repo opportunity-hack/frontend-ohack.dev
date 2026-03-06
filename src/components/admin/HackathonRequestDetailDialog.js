@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import AdminEmailCompose from "./AdminEmailCompose";
 
 const statusOptions = [
   { value: "pending", label: "Pending", color: "warning" },
@@ -92,7 +93,7 @@ const Field = ({ label, value }) => (
   </Box>
 );
 
-const HackathonRequestDetailDialog = ({ open, onClose, request, onSave }) => {
+const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessToken, orgId, onRefresh }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
   const [status, setStatus] = useState("");
@@ -361,6 +362,18 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave }) => {
             </Typography>
           </Section>
         )}
+
+        {/* Email Correspondence */}
+        <AdminEmailCompose
+          recipientEmail={request.contactEmail}
+          recipientName={request.contactName}
+          collectionName="hackathon_requests"
+          documentId={request.id}
+          sentEmails={request.sent_emails || []}
+          accessToken={accessToken}
+          orgId={orgId}
+          onEmailSent={onRefresh}
+        />
 
         {/* Metadata */}
         <Divider sx={{ my: 2 }} />
