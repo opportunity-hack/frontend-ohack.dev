@@ -47,6 +47,7 @@ import {
   detectPlaceholders,
   PLACEHOLDER_LABELS
 } from '../../lib/messageTemplates';
+import useSavedPlaceholders from '../../hooks/use-saved-placeholders';
 
 const StyledDialog = styled(Dialog)(({ theme}) => ({
   '& .MuiDialog-paper': {
@@ -93,6 +94,9 @@ const BatchEmailDialog = ({
   const [testLoading, setTestLoading] = useState(false);
   const [placeholderValues, setPlaceholderValues] = useState({});
   const [detectedPlaceholders, setDetectedPlaceholders] = useState([]);
+  const [restoredFromSaved, setRestoredFromSaved] = useState(false);
+
+  const { savedValues, saveValues, clearValues, hasSavedValues } = useSavedPlaceholders(eventId, selectedTemplate?.id);
 
   // Filter eligible users when volunteers change based on context
   const eligibleUsers = isSelectedUsers
@@ -119,6 +123,7 @@ const BatchEmailDialog = ({
       setShowDetails(false);
       setPlaceholderValues({});
       setDetectedPlaceholders([]);
+      setRestoredFromSaved(false);
     } else if (!isSelectedUsers) {
       // Auto-suggest the appropriate denial template for not-selected users
       const templateId = volunteerType === 'judge' || volunteerType === 'judges'
@@ -129,14 +134,37 @@ const BatchEmailDialog = ({
         setSelectedTemplate(denialTemplate);
         // Use shared utility to prepare template message with placeholder replacements
         // Note: [VOLUNTEER_ID] and [VOLUNTEER_TYPE] will be replaced per-user when emails are sent
-        const message = prepareTemplateMessage(denialTemplate, {
+        let message = prepareTemplateMessage(denialTemplate, {
           eventId: eventId,
           volunteerType: recipientType
         });
-        setMessageText(message);
         setSubject(denialTemplate.title);
         setDetectedPlaceholders(detectPlaceholders(message));
-        setPlaceholderValues({});
+
+        // Check for saved placeholder values
+        const key = eventId && denialTemplate.id ? `ohack_placeholders_${eventId}_${denialTemplate.id}` : null;
+        let restored = null;
+        if (key) {
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw) restored = JSON.parse(raw);
+          } catch { /* ignore */ }
+        }
+
+        if (restored && typeof restored === 'object' && Object.keys(restored).length > 0) {
+          setPlaceholderValues(restored);
+          setRestoredFromSaved(true);
+          for (const [name, val] of Object.entries(restored)) {
+            if (val) {
+              message = message.replaceAll(`[${name}]`, val);
+            }
+          }
+        } else {
+          setPlaceholderValues({});
+          setRestoredFromSaved(false);
+        }
+
+        setMessageText(message);
         setCurrentStep(1); // Skip template selection and go to review step
       }
     }
@@ -147,16 +175,40 @@ const BatchEmailDialog = ({
 
     // Use shared utility to prepare template message with placeholder replacements
     // Note: [VOLUNTEER_ID] and [VOLUNTEER_TYPE] will be replaced per-user when emails are sent
-    const message = prepareTemplateMessage(template, {
+    let message = prepareTemplateMessage(template, {
       eventId: eventId,
       volunteerType: recipientType
     });
 
-    setMessageText(message);
     setSubject(template.title);
     setCustomMessage(false);
-    setDetectedPlaceholders(detectPlaceholders(message));
-    setPlaceholderValues({});
+    const remaining = detectPlaceholders(message);
+    setDetectedPlaceholders(remaining);
+
+    // Check for saved placeholder values
+    const key = eventId && template?.id ? `ohack_placeholders_${eventId}_${template.id}` : null;
+    let restored = null;
+    if (key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) restored = JSON.parse(raw);
+      } catch { /* ignore */ }
+    }
+
+    if (restored && typeof restored === 'object' && Object.keys(restored).length > 0) {
+      setPlaceholderValues(restored);
+      setRestoredFromSaved(true);
+      for (const [name, val] of Object.entries(restored)) {
+        if (val) {
+          message = message.replaceAll(`[${name}]`, val);
+        }
+      }
+    } else {
+      setPlaceholderValues({});
+      setRestoredFromSaved(false);
+    }
+
+    setMessageText(message);
     setCurrentStep(1);
   };
 
@@ -178,11 +230,14 @@ const BatchEmailDialog = ({
     setSubject('');
     setDetectedPlaceholders([]);
     setPlaceholderValues({});
+    setRestoredFromSaved(false);
   };
 
   const handlePlaceholderChange = (placeholderName, value) => {
     const newValues = { ...placeholderValues, [placeholderName]: value };
     setPlaceholderValues(newValues);
+    saveValues(newValues);
+    setRestoredFromSaved(false);
 
     // Rebuild message from template with all current placeholder values
     let message = prepareTemplateMessage(selectedTemplate, {
@@ -462,9 +517,35 @@ const BatchEmailDialog = ({
 
                 {selectedTemplate && detectedPlaceholders.length > 0 && (
                   <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      This template requires event-specific details:
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2">
+                          This template requires event-specific details:
+                        </Typography>
+                        {restoredFromSaved && (
+                          <Chip label="Restored from previous session" size="small" color="info" variant="outlined" />
+                        )}
+                      </Box>
+                      {hasSavedValues && (
+                        <Button
+                          size="small"
+                          variant="text"
+                          color="secondary"
+                          onClick={() => {
+                            clearValues();
+                            setPlaceholderValues({});
+                            setRestoredFromSaved(false);
+                            const message = prepareTemplateMessage(selectedTemplate, {
+                              eventId: eventId,
+                              volunteerType: recipientType
+                            });
+                            setMessageText(message);
+                          }}
+                        >
+                          Clear saved values
+                        </Button>
+                      )}
+                    </Box>
                     <Grid container spacing={2}>
                       {detectedPlaceholders.map((name) => {
                         const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
