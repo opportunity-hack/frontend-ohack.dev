@@ -217,7 +217,7 @@ const MilestoneProgress = ({ history }) => {
             const isCurrentTier = currentTier?.tier === tier;
 
             return (
-              <Grid item xs={12} sm={6} md={4} key={tier}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={tier}>
                 <Box
                   sx={{
                     p: 2,

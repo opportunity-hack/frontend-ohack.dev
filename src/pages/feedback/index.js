@@ -124,7 +124,7 @@ export default function FeedbackPage() {
               Accessing and Providing Feedback
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="h4" gutterBottom>
                   <Visibility sx={{ verticalAlign: "middle", mr: 1 }} />
                   View Your Feedback
@@ -137,7 +137,7 @@ export default function FeedbackPage() {
                   Your Feedback
                 </Button>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="h4" gutterBottom>
                   <Send sx={{ verticalAlign: "middle", mr: 1 }} />
                   Send Feedback

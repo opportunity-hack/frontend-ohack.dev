@@ -142,7 +142,7 @@ const ContactSubmissionDetailDialog = ({
             Admin Controls
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
@@ -154,7 +154,7 @@ const ContactSubmissionDetailDialog = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={8}>
+            <Grid size={{ xs: 12, sm: 8 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -171,16 +171,16 @@ const ContactSubmissionDetailDialog = ({
         {/* Contact Information */}
         <Section title="Contact Information">
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Name" value={fullName} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Email" value={submission.email} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Organization" value={submission.organization} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field
                 label="Inquiry Type"
                 value={
@@ -193,7 +193,7 @@ const ContactSubmissionDetailDialog = ({
                 }
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field
                 label="Wants Updates"
                 value={submission.receiveUpdates ? "Yes" : "No"}

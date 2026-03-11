@@ -288,7 +288,7 @@ export default function WhyIndex() {
         <ProjectsContainer>
           <Grid container spacing={4} mb={6}>
             {careerPathContent.map((content, index) => (
-              <Grid item xs={12} md={4} key={index}>
+              <Grid size={{ xs: 12, md: 4 }} key={index}>
                 <CareerPathCard {...content} />
               </Grid>
             ))}

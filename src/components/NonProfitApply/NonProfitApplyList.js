@@ -465,7 +465,7 @@ function NonProfitApplyList({ userClass }) {
                                             <Collapse in={expandedAppId === app.id} timeout="auto" unmountOnExit>
                                                 <Box sx={{ p: 2, backgroundColor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}>
                                                     <Grid container spacing={2} divider={<Divider orientation="vertical" flexItem />}>
-                                                        <Grid item xs={12} md={5} sx={{ p: 2 }}>
+                                                        <Grid size={{ xs: 12, md: 5 }} sx={{ p: 2 }}>
                                                             <Typography variant="h6" gutterBottom>Application Details</Typography>
                                                             <Typography variant="body2" mt={1}><strong>Contact Email:</strong> {app.email || 'Not Provided'}</Typography>
                                                             <Typography variant="subtitle2" sx={{ mt: 2, fontWeight: 'bold' }}>Problem Statement</Typography>
@@ -473,7 +473,7 @@ function NonProfitApplyList({ userClass }) {
                                                             <Typography variant="subtitle2" sx={{ mt: 2, fontWeight: 'bold' }}>Proposed Solution / Benefits</Typography>
                                                             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto', p:1, border: '1px solid', borderColor: 'grey.300', borderRadius: 1 }}>{app.solutionBenefits || 'Not Provided'}</Typography>
                                                         </Grid>
-                                                        <Grid item xs={12} md={4} sx={{ p: 2 }}>
+                                                        <Grid size={{ xs: 12, md: 4 }} sx={{ p: 2 }}>
                                                             <Typography variant="h6" gutterBottom>AI-Generated Summary</Typography>
                                                             
                                                             {isSummarizing ? (
@@ -515,7 +515,7 @@ function NonProfitApplyList({ userClass }) {
                                                                 </>
                                                             )}
                                                         </Grid>
-                                                        <Grid item xs={12} md={3} sx={{ p: 2 }}>
+                                                        <Grid size={{ xs: 12, md: 3 }} sx={{ p: 2 }}>
                                                             <Typography variant="h6" gutterBottom>Similar Projects</Typography>
                                                             {isSearching ? (
                                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}><CircularProgress size={24} /><Typography>Searching...</Typography></Box>

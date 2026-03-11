@@ -174,7 +174,7 @@ const PublicProfileDemo = () => {
 
       <Grid container spacing={4}>
         {/* Left Column */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           {/* Basic Information */}
           <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
             <CardContent sx={{ p: 3 }}>
@@ -185,7 +185,7 @@ const PublicProfileDemo = () => {
               
               <Grid container spacing={3}>
                 {/* GitHub Username */}
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     GitHub Profile
                   </Typography>
@@ -211,7 +211,7 @@ const PublicProfileDemo = () => {
                 </Grid>
 
                 {/* Company */}
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     Company
                   </Typography>
@@ -232,7 +232,7 @@ const PublicProfileDemo = () => {
                 </Grid>
 
                 {/* Why are you here */}
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     Why are they here with Opportunity Hack?
                   </Typography>
@@ -385,7 +385,7 @@ const PublicProfileDemo = () => {
         </Grid>
 
         {/* Right Column - Info & Actions */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper elevation={1} sx={{ p: 3, borderRadius: 2, position: "sticky", top: 24 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
               Connect & Engage

@@ -456,7 +456,7 @@ const AdminProblemsPage = () => {
       <AdminPage title="Problem Statement Management" isAdmin={isAdmin}>
         <Box sx={{ mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="Search Problem Statements"
@@ -467,7 +467,7 @@ const AdminProblemsPage = () => {
                 size="medium"
               />
             </Grid>
-            <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+            <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -1204,7 +1204,7 @@ const AdminProblemsPage = () => {
                     Link to New Event
                   </Typography>
                   <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={8}>
+                    <Grid size={{ xs: 12, md: 8 }}>
                       <FormControl fullWidth>
                         <InputLabel>Select Hackathon Event</InputLabel>
                         <Select
@@ -1227,7 +1227,7 @@ const AdminProblemsPage = () => {
                         </Select>
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                       <Button
                         onClick={handleAddHackathonEvent}
                         disabled={!selectedHackathonId}
@@ -1290,7 +1290,7 @@ const AdminProblemsPage = () => {
                   Associated Nonprofit
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <FormControl fullWidth>
                       <InputLabel id="nonprofit-select-label">Link to Nonprofit</InputLabel>
                       <Select
@@ -1316,7 +1316,7 @@ const AdminProblemsPage = () => {
                     </FormControl>
                   </Grid>
                   {nonprofits.length > 10 && (
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <TextField
                         label="Search Nonprofits"
                         variant="outlined"
@@ -1330,7 +1330,7 @@ const AdminProblemsPage = () => {
                   
                   {/* Display selected nonprofit details */}
                   {selectedNonprofitId && (
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Paper 
                         variant="outlined" 
                         sx={{ 

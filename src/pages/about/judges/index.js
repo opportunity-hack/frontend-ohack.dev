@@ -367,7 +367,7 @@ const AboutJudges = () => {
           spacing={2}
           sx={{ maxWidth: "600px", mx: "auto", mb: 4 }}
         >
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="contained"
               color="primary"
@@ -386,7 +386,7 @@ const AboutJudges = () => {
               Find Events to Judge
             </Button>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="outlined"
               color="primary"
@@ -485,7 +485,7 @@ const AboutJudges = () => {
           ) : upcomingEvents && upcomingEvents.length > 0 ? (
             <Grid container spacing={3}>
               {upcomingEvents.map((event) => (
-                <Grid item xs={12} md={6} key={event.event_id}>
+                <Grid size={{ xs: 12, md: 6 }} key={event.event_id}>
                   <Card
                     sx={{
                       bgcolor: "white",
@@ -604,7 +604,7 @@ const AboutJudges = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <BalanceRounded color="primary" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>
@@ -616,7 +616,7 @@ const AboutJudges = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <TrendingUpRounded
                   color="secondary"
@@ -631,7 +631,7 @@ const AboutJudges = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", height: "100%", p: 3 }}>
                 <GroupsRounded color="success" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>
@@ -745,7 +745,7 @@ const AboutJudges = () => {
           </Paper>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <MovieRounded color="primary" sx={{ mr: 2 }} />
@@ -764,7 +764,7 @@ const AboutJudges = () => {
                 />
               </Card>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: "100%", p: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <LiveTvRounded color="secondary" sx={{ mr: 2 }} />

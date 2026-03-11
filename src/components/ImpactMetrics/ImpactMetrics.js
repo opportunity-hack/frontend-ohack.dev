@@ -319,7 +319,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
 
       <Grid container spacing={compact ? 0.5 : 1.5}>
         {/* Volunteers Metric */}
-        <Grid item xs={6} sm={compact ? 6 : 3}>
+        <Grid size={{ xs: 6, sm: compact ? 6 : 3 }}>
           <MetricCard
             title="Volunteers"
             value={metrics.volunteers.total}
@@ -331,7 +331,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
         </Grid>
 
         {/* Teams Metric */}
-        <Grid item xs={6} sm={compact ? 6 : 3}>
+        <Grid size={{ xs: 6, sm: compact ? 6 : 3 }}>
           <MetricCard
             title="Teams"
             value={metrics.teams.active || metrics.teams.total}
@@ -345,7 +345,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
 
         {/* GitHub Activity Metric - Only show on larger screens or if not compact */}
         {!compact && (
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <MetricCard
               title="Commits"
               value={metrics.github.commits}
@@ -358,7 +358,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
         )}
 
         {/* Nonprofits Metric */}
-        <Grid item xs={6} sm={compact ? 6 : 3}>
+        <Grid size={{ xs: 6, sm: compact ? 6 : 3 }}>
           <MetricCard
             title="Nonprofits"
             value={metrics.nonprofits.total}
@@ -371,7 +371,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
 
         {/* Show commits in compact mode on a second row */}
         {compact && metrics.github.commits > 0 && (
-          <Grid item xs={6} sm={6}>
+          <Grid size={{ xs: 6, sm: 6 }}>
             <MetricCard
               title="Commits"
               value={metrics.github.commits}
@@ -387,7 +387,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
       {!compact && (metrics.github.issues > 0 || metrics.github.contributors > 0) && (
         <Grid container spacing={1.5} sx={{ mt: 1, display: { xs: 'none', md: 'flex' } }}>
           {metrics.github.issues > 0 && (
-            <Grid item md={4}>
+            <Grid size={{ md: 4 }}>
               <MetricCard
                 title="Issues"
                 value={metrics.github.issues}
@@ -399,7 +399,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
             </Grid>
           )}
           {metrics.github.contributors > 0 && (
-            <Grid item md={4}>
+            <Grid size={{ md: 4 }}>
               <MetricCard
                 title="Contributors"
                 value={metrics.github.contributors}
@@ -411,7 +411,7 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
             </Grid>
           )}
           {metrics.hackers.total > 0 && (
-            <Grid item md={4}>
+            <Grid size={{ md: 4 }}>
               <MetricCard
                 title="Hackers"
                 value={metrics.hackers.total}

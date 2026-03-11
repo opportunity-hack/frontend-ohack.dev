@@ -5,7 +5,7 @@ import { FaLinkedin } from 'react-icons/fa';
 
 export const ActionButtons = ({ gaButton }) => (
   <Grid container spacing={2}>
-    <Grid item>
+    <Grid>
       <Button 
         variant="contained" 
         onClick={() => gaButton('button_see_nonprofit_projects', 'see projects')} 
@@ -16,7 +16,7 @@ export const ActionButtons = ({ gaButton }) => (
         See Nonprofit Projects
       </Button>
     </Grid>
-    <Grid item>
+    <Grid>
       <Button 
         variant="contained" 
         onClick={() => gaButton('button_mentorship', 'Learn about mentorship')} 
@@ -27,7 +27,7 @@ export const ActionButtons = ({ gaButton }) => (
         Learn about Mentorship
       </Button>
     </Grid>
-    <Grid item>
+    <Grid>
       <Button 
         variant="contained" 
         onClick={() => gaButton('button_judging', 'Learn about judging')} 
@@ -38,7 +38,7 @@ export const ActionButtons = ({ gaButton }) => (
         Judging Information
       </Button>
     </Grid>
-    <Grid item>
+    <Grid>
       <Button 
         variant="contained" 
         onClick={() => gaButton('button_sponsorship', 'Learn about sponsorship')} 
@@ -49,7 +49,7 @@ export const ActionButtons = ({ gaButton }) => (
         Sponsor Opportunities
       </Button>
     </Grid>
-    <Grid item>
+    <Grid>
       <Button 
         variant="contained" 
         onClick={() => gaButton('button_ohack_org', 'Visit ohack.org')} 
@@ -72,7 +72,7 @@ export const FoundersSection = ({ cofounders }) => (
     </Typography>
     <Grid container spacing={2}>
       {cofounders.map((member, i) => (
-        <Grid item xs={12} sm={6} md={3} key={i}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
           <Card>
             <CardContent>
               <Typography variant="h5" component="h2">
@@ -96,7 +96,7 @@ export const BoardSection = ({ board_members }) => (
     </Typography>
     <Grid container spacing={2}>
       {board_members.map((member, i) => (
-        <Grid item xs={12} sm={6} md={4} key={i}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
           <Card>
             <CardContent>
               <Typography variant="h5" component="h2">

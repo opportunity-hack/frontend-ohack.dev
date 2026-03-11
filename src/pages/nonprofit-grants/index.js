@@ -102,7 +102,7 @@ const NonprofitGrants = () => {
                   </Typography>
                   
                   <Grid container spacing={3} sx={{ mt: 1 }}>
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                       <Card elevation={0} sx={{ bgcolor: 'primary.light', p: 2, height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                           <AttachMoneyIcon color="primary" sx={{ mr: 1 }} />
@@ -112,7 +112,7 @@ const NonprofitGrants = () => {
                       </Card>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                       <Card elevation={0} sx={{ bgcolor: 'success.light', p: 2, height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                           <MonetizationOnIcon color="success" sx={{ mr: 1 }} />
@@ -122,7 +122,7 @@ const NonprofitGrants = () => {
                       </Card>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                       <Card elevation={0} sx={{ bgcolor: 'info.light', p: 2, height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                           <VolunteerActivismIcon color="info" sx={{ mr: 1 }} />
@@ -132,7 +132,7 @@ const NonprofitGrants = () => {
                       </Card>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                       <Card elevation={0} sx={{ bgcolor: 'warning.light', p: 2, height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                           <EventAvailableIcon color="warning" sx={{ mr: 1 }} />
@@ -152,7 +152,7 @@ const NonprofitGrants = () => {
                   </Typography>
                   <Grid container spacing={2} sx={{ mt: 1 }}>
                     {topNonprofitSectors.map(({ sector, count }) => (
-                      <Grid item xs={6} md={2.4} key={sector}>
+                      <Grid size={{ xs: 6, md: 2.4 }} key={sector}>
                         <Box sx={{ textAlign: 'center', p: 1 }}>
                           <Typography variant="h4" color="primary">{count}</Typography>
                           <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>{sector}</Typography>
@@ -177,7 +177,7 @@ const NonprofitGrants = () => {
           </Box>
 
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 variant="outlined"
@@ -201,7 +201,7 @@ const NonprofitGrants = () => {
 
           <Grid container spacing={3}>
             {filteredGrants.map((grant, index) => (
-              <Grid item xs={12} key={index}>
+              <Grid size={{ xs: 12 }} key={index}>
                 <Card sx={{ 
                   height: '100%', 
                   display: 'flex', 
@@ -231,7 +231,7 @@ const NonprofitGrants = () => {
                     
                     <Grid container spacing={2}>
                       {grant.funding_amount && (
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <MonetizationOnIcon color="primary" sx={{ mr: 1 }} />
                             <Typography variant="body2">
@@ -243,7 +243,7 @@ const NonprofitGrants = () => {
                       )}
                       
                       {grant.deadline && (
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <CalendarTodayIcon color="primary" sx={{ mr: 1 }} />
                             <Typography variant="body2">
@@ -254,7 +254,7 @@ const NonprofitGrants = () => {
                       )}
                       
                       {grant.application_url && (
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <Button 
                             variant="outlined" 
                             color="primary" 

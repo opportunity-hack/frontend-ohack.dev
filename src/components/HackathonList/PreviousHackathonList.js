@@ -152,7 +152,7 @@ function PreviousHackathonList() {
 
                       <Grid container spacing={1} sx={{ mt: 2 }}>
                         {event.links && event.links.length > 0 && (
-                          <Grid item xs={12}>
+                          <Grid size={{ xs: 12 }}>
                             <ToggleButton
                               color="primary"
                               variant="outlined"

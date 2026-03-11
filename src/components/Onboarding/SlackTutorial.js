@@ -165,7 +165,7 @@ const SlackTutorial = () => {
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={7}>
+            <Grid size={{ xs: 12, md: 7 }}>
               <List>
                 <ListItem alignItems="flex-start">
                   <StepNumber>1</StepNumber>
@@ -222,7 +222,7 @@ const SlackTutorial = () => {
                 </ListItem>
               </List>
             </Grid>
-            <Grid item xs={12} md={5}>
+            <Grid size={{ xs: 12, md: 5 }}>
               <Card elevation={2}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem' }}>
@@ -306,7 +306,7 @@ const SlackTutorial = () => {
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Understanding Channels
               </Typography>
@@ -392,7 +392,7 @@ const SlackTutorial = () => {
               </List>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Direct Messages & Group DMs
               </Typography>
@@ -406,7 +406,7 @@ const SlackTutorial = () => {
                     When to use DMs vs. Channels:
                   </Typography>
                   <Grid container>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Typography sx={{ fontWeight: 'bold', fontSize: '1.3rem', mb: 1 }}>
                         Use DMs for:
                       </Typography>
@@ -429,7 +429,7 @@ const SlackTutorial = () => {
                         </Box>
                       </Box>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Typography sx={{ fontWeight: 'bold', fontSize: '1.3rem', mb: 1 }}>
                         Use Channels for:
                       </Typography>
@@ -504,7 +504,7 @@ const SlackTutorial = () => {
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Types of Mentions
               </Typography>
@@ -545,7 +545,7 @@ const SlackTutorial = () => {
               </Alert>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Configuring Notifications
               </Typography>
@@ -647,7 +647,7 @@ const SlackTutorial = () => {
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Communication Guidelines
               </Typography>
@@ -699,7 +699,7 @@ const SlackTutorial = () => {
                 </ListItem>
               </List>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ mb: 3 }}>
                 <CardContent>
                   <Typography variant="subtitle1" gutterBottom color="primary" sx={{ fontSize: '1.4rem' }}>
@@ -831,7 +831,7 @@ const SlackTutorial = () => {
               {praiseBotExpanded && (
                 <Box sx={{ mt: 3 }}>
                   <Grid container spacing={3}>
-                    <Grid item xs={12} md={8}>
+                    <Grid size={{ xs: 12, md: 8 }}>
                       <Typography variant="body2" paragraph sx={{ fontSize: '1.25rem' }}>
                         The Praise Bot helps you recognize and appreciate your fellow OHack community members. 
                         Use it to give public recognition for great work, helpful contributions, or just to spread positivity!
@@ -899,7 +899,7 @@ const SlackTutorial = () => {
                       </Alert>
                     </Grid>
                     
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                       <Card elevation={1}>
                         <CardContent>
                           <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem' }}>

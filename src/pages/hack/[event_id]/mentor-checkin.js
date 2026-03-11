@@ -862,7 +862,7 @@ const MentorCheckinPage = () => {
 
         <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
           <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h5" component="h3" gutterBottom>
                 Mentor Status
               </Typography>
@@ -936,7 +936,7 @@ const MentorCheckinPage = () => {
               {renderMentorProfile(mentorData)}
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h5" component="h3" gutterBottom>
                 Your Availability
               </Typography>
@@ -1150,7 +1150,7 @@ const MentorCheckinPage = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box>
                 <Typography variant="h6" gutterBottom>
                   Do:
@@ -1167,7 +1167,7 @@ const MentorCheckinPage = () => {
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box>
                 <Typography variant="h6" gutterBottom>
                   Don't:
@@ -1193,7 +1193,7 @@ const MentorCheckinPage = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Paper elevation={1} sx={{ p: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <SlackIcon />
@@ -1209,7 +1209,7 @@ const MentorCheckinPage = () => {
               </Paper>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Paper elevation={1} sx={{ p: 3, bgcolor: 'secondary.light', color: 'secondary.contrastText' }}>
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <InfoIcon />

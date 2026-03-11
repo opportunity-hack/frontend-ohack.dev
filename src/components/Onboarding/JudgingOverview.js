@@ -136,7 +136,7 @@ const JudgingOverview = () => {
           Judging at Opportunity Hack is a rewarding way to give back to the community while gaining valuable experience:
         </Typography>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
               <CheckCircleIcon color="primary" sx={{ mt: 0.5 }} />
               <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
@@ -144,7 +144,7 @@ const JudgingOverview = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
               <CheckCircleIcon color="primary" sx={{ mt: 0.5 }} />
               <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
@@ -152,7 +152,7 @@ const JudgingOverview = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
               <CheckCircleIcon color="primary" sx={{ mt: 0.5 }} />
               <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
@@ -160,7 +160,7 @@ const JudgingOverview = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
               <CheckCircleIcon color="primary" sx={{ mt: 0.5 }} />
               <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
@@ -177,7 +177,7 @@ const JudgingOverview = () => {
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {judgingStages.map((item, index) => (
-          <Grid item xs={12} md={6} key={index}>
+          <Grid size={{ xs: 12, md: 6 }} key={index}>
             <Paper
               elevation={2}
               sx={{
@@ -213,7 +213,7 @@ const JudgingOverview = () => {
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {judgingCriteria.map((criteria, index) => (
-          <Grid item xs={12} sm={6} key={index}>
+          <Grid size={{ xs: 12, sm: 6 }} key={index}>
             <CriteriaCard>
               <CardContent>
                 <Box sx={{ textAlign: 'center', mb: 2 }}>

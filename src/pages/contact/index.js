@@ -283,7 +283,7 @@ const ContactPage = () => {
           {/* Main content area */}
           <Grid container spacing={4} sx={{ mt: 4 }}>
             {/* Contact form */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Paper
                 elevation={3}
                 sx={{
@@ -336,7 +336,7 @@ const ContactPage = () => {
                 ) : (
                   <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           label="First Name"
                           name="firstName"
@@ -349,7 +349,7 @@ const ContactPage = () => {
                           disabled={isSubmitting}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           label="Last Name"
                           name="lastName"
@@ -359,7 +359,7 @@ const ContactPage = () => {
                           disabled={isSubmitting}
                         />
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           label="Email Address"
                           name="email"
@@ -380,7 +380,7 @@ const ContactPage = () => {
                           }}
                         />
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           label="Organization/Company (Optional)"
                           name="organization"
@@ -391,7 +391,7 @@ const ContactPage = () => {
                           disabled={isSubmitting}
                         />
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           select
                           label="What are you contacting us about?"
@@ -420,7 +420,7 @@ const ContactPage = () => {
 
                       {/* Conditional information based on inquiry type */}
                       {selectedInquiryType && selectedInquiryType.link && (
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <Alert
                             severity="info"
                             icon={false}
@@ -451,7 +451,7 @@ const ContactPage = () => {
                       {/* Special alert for reward claims */}
                       {selectedInquiryType &&
                         selectedInquiryType.value === "claim_reward" && (
-                          <Grid item xs={12}>
+                          <Grid size={{ xs: 12 }}>
                             <Alert
                               severity="success"
                               icon={<FaTrophy />}
@@ -485,7 +485,7 @@ const ContactPage = () => {
                           </Grid>
                         )}
 
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           label="Message"
                           name="message"
@@ -504,7 +504,7 @@ const ContactPage = () => {
                           placeholder="How can we help you?"
                         />
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <FormControlLabel
                           control={
                             <Checkbox
@@ -519,16 +519,16 @@ const ContactPage = () => {
                         />
                       </Grid>
                       {submitError && (
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <Alert severity="error">{submitError}</Alert>
                         </Grid>
                       )}
                       {recaptchaError && (
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <Alert severity="error">{recaptchaError}</Alert>
                         </Grid>
                       )}
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Box
                           sx={{ display: "flex", justifyContent: "flex-end" }}
                         >
@@ -557,7 +557,7 @@ const ContactPage = () => {
             </Grid>
 
             {/* Contact info sidebar */}
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ position: "sticky", top: 100 }}>
                 <Card elevation={2} sx={{ mb: 3, borderRadius: 2 }}>
                   <CardContent>

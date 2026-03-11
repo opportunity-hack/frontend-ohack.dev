@@ -198,12 +198,12 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
     >
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item>
+          <Grid>
             <Button onClick={fetchNonprofits} variant="outlined">
               Refresh Data
             </Button>
           </Grid>
-          <Grid item>
+          <Grid>
             <Button
               onClick={handleAddNonprofit}
               variant="contained"
@@ -212,7 +212,7 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
               Add Nonprofit
             </Button>
           </Grid>
-          <Grid item xs>
+          <Grid size={{ xs: true }}>
             <TextField
               fullWidth
               label="Filter by Name or Description"

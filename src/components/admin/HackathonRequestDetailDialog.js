@@ -169,7 +169,7 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
             Admin Controls
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
@@ -181,7 +181,7 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={8}>
+            <Grid size={{ xs: 12, sm: 8 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -211,10 +211,10 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
         {/* Contact Information */}
         <Section title="Contact Information">
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Field label="Organization" value={request.companyName} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Field
                 label="Organization Type"
                 value={
@@ -227,13 +227,13 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
                 }
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Contact Name" value={request.contactName} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Contact Email" value={request.contactEmail} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Contact Phone" value={request.contactPhone} />
             </Grid>
           </Grid>
@@ -242,10 +242,10 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
         {/* Event Details */}
         <Section title="Event Details">
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Expected Participants" value={request.employeeCount ? `~${request.employeeCount}` : "-"} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field
                 label="Event Format"
                 value={
@@ -258,25 +258,25 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
                 }
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Location" value={request.location} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Field label="Participant Types" value={participantTypes} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Field
                 label="Theme"
                 value={(request.hackathonTheme || "").replace(/-/g, " ") + (request.customTheme ? ` - ${request.customTheme}` : "")}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Hackathon Date" value={formatDate(request.expectedHackathonDate)} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Preferred Call Date" value={formatDate(request.preferredDate)} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Alternate Call Date" value={formatDate(request.alternateDate)} />
             </Grid>
           </Grid>
@@ -285,30 +285,30 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
         {/* Nonprofit Engagement */}
         <Section title="Nonprofit Engagement">
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field
                 label="Has Nonprofit List"
                 value={request.hasNonprofitList === "yes" ? "Yes" : request.hasNonprofitList === "partial" ? "Partial" : request.hasNonprofitList === "no" ? "No" : "-"}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field
                 label="Worked with Nonprofits Before"
                 value={request.hasWorkedWithNonprofitsBefore === "yes" ? "Yes" : request.hasWorkedWithNonprofitsBefore === "no" ? "No" : "-"}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field
                 label="Preferred Location"
                 value={(request.preferredNonprofitLocation || "").replace(/-/g, " ") + (request.specificRegion ? ` - ${request.specificRegion}` : "")}
               />
             </Grid>
             {request.nonprofitDetails && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Field label="Nonprofit Details" value={request.nonprofitDetails} />
               </Grid>
             )}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Field label="Nonprofit Sources" value={nonprofitSources} />
             </Grid>
           </Grid>
@@ -319,7 +319,7 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
           <Section title="Division of Responsibilities">
             <Grid container spacing={1}>
               {Object.entries(request.responsibilities).map(([key, value]) => (
-                <Grid item xs={12} sm={6} key={key}>
+                <Grid size={{ xs: 12, sm: 6 }} key={key}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
                     <Typography variant="body2" color="text.secondary">
                       {responsibilityLabels[key] || key}
@@ -335,13 +335,13 @@ const HackathonRequestDetailDialog = ({ open, onClose, request, onSave, accessTo
         {/* Budget */}
         <Section title="Budget & Support">
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Budget" value={request.budget ? `$${Number(request.budget).toLocaleString()}` : "-"} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Donation Percentage" value={request.donationPercentage != null ? `${request.donationPercentage}%` : "-"} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Field
                 label="Estimated Donation"
                 value={

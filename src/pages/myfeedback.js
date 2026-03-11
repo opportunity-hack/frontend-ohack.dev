@@ -38,7 +38,7 @@ const FeedbackCategory = ({ title, data, tooltips }) => (
     <AccordionDetails>
       <Grid container spacing={2}>
         {Object.entries(data).map(([key, value]) => (
-          <Grid item xs={12} sm={6} key={key}>
+          <Grid size={{ xs: 12, sm: 6 }} key={key}>
             <Box display="flex" alignItems="center">
               <Typography variant="subtitle1">{key}</Typography>
               <Tooltip

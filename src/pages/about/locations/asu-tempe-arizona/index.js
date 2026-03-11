@@ -461,7 +461,7 @@ const EventLocationPage = () => {
             {Object.entries(LOCATIONS).map(([slug, loc]) => {
               const isActive = slug === locationSlug;
               return (
-                <Grid item xs={12} sm={6} key={slug}>
+                <Grid size={{ xs: 12, sm: 6 }} key={slug}>
                   <Paper
                     elevation={isActive ? 4 : 0}
                     onClick={() => handleLocationChange(slug)}
@@ -547,28 +547,28 @@ const EventLocationPage = () => {
 
         {/* Quick Info Cards */}
         <Grid container spacing={3} sx={{ mb: 6 }}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ textAlign: "center", p: 2, height: "100%" }}>
               <FlightRounded color="primary" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h6" gutterBottom>Airport</Typography>
               <Typography variant="body2">10 min from PHX</Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ textAlign: "center", p: 2, height: "100%" }}>
               <LocalParkingRounded color="primary" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h6" gutterBottom>Parking</Typography>
               <Typography variant="body2">5 options available</Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ textAlign: "center", p: 2, height: "100%" }}>
               <HotelRounded color="primary" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h6" gutterBottom>Hotels</Typography>
               <Typography variant="body2">4+ nearby options</Typography>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ textAlign: "center", p: 2, height: "100%" }}>
               <AccessTimeRounded color="primary" sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h6" gutterBottom>Transit</Typography>
@@ -634,7 +634,7 @@ const EventLocationPage = () => {
               </Box>
 
               <Grid container spacing={2}>
-                <Grid item>
+                <Grid>
                   <Button
                     variant="contained"
                     startIcon={<NavigationRounded />}
@@ -643,7 +643,7 @@ const EventLocationPage = () => {
                     Get Directions
                   </Button>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Button
                     variant="outlined"
                     startIcon={<ShareRounded />}
@@ -653,7 +653,7 @@ const EventLocationPage = () => {
                   </Button>
                 </Grid>
                 {activeLocation.tourUrl && (
-                  <Grid item>
+                  <Grid>
                     <Button
                       variant="outlined"
                       startIcon={<LinkRounded />}
@@ -718,7 +718,7 @@ const EventLocationPage = () => {
               {activeLocation.gallery.length > 0 && (
                 <Grid container spacing={3}>
                   {activeLocation.gallery.map((photo, index) => (
-                    <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                       <Card
                         sx={{
                           height: "100%",
@@ -774,7 +774,7 @@ const EventLocationPage = () => {
 
           <Grid container spacing={4}>
             {transportationOptions.map((transport, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Card sx={{ height: "100%", p: 2 }}>
                   <CardContent>
                     <Typography variant="h5" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -818,7 +818,7 @@ const EventLocationPage = () => {
 
           <Grid container spacing={3}>
             {parkingOptions.map((parking, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Card 
                   sx={{ 
                     height: "100%", 
@@ -893,7 +893,7 @@ const EventLocationPage = () => {
 
           <Grid container spacing={3}>
             {hotels.map((hotel, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Card sx={{ height: "100%" }}>
                   <CardContent>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
@@ -942,7 +942,7 @@ const EventLocationPage = () => {
                     </Box>
 
                     <Grid container spacing={1}>
-                      <Grid item xs={6}>
+                      <Grid size={{ xs: 6 }}>
                         <Button
                           variant="outlined"
                           size="small"
@@ -953,7 +953,7 @@ const EventLocationPage = () => {
                           Directions
                         </Button>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid size={{ xs: 6 }}>
                         <Button
                           variant="outlined"
                           size="small"
@@ -988,7 +988,7 @@ const EventLocationPage = () => {
           </Box>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", p: 3, height: "100%" }}>
                 <RestaurantRounded color="primary" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>Dining Options</Typography>
@@ -997,7 +997,7 @@ const EventLocationPage = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", p: 3, height: "100%" }}>
                 <LocalGasStationRounded color="primary" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>Gas & Services</Typography>
@@ -1006,7 +1006,7 @@ const EventLocationPage = () => {
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ textAlign: "center", p: 3, height: "100%" }}>
                 <InfoRounded color="primary" sx={{ fontSize: 48, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>Campus Resources</Typography>
@@ -1027,7 +1027,7 @@ const EventLocationPage = () => {
             Join us at ASU Tempe for an amazing hackathon experience! Check out our upcoming events and get involved.
           </Typography>
           <Grid container spacing={2} justifyContent="center">
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 size="large"
@@ -1041,7 +1041,7 @@ const EventLocationPage = () => {
                 Find Events
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="outlined"
                 size="large"

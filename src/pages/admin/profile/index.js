@@ -285,7 +285,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
       {/* Header Stats */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Box sx={{ textAlign: "center" }}>
               <Typography variant="h3" color="primary">
                 {profiles.length}
@@ -295,7 +295,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Box sx={{ textAlign: "center" }}>
               <Typography variant="h3" color="success.main">
                 {profiles.filter((p) => calculateProfileCompleteness(p) >= 6).length}
@@ -305,7 +305,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Box sx={{ textAlign: "center" }}>
               <Typography variant="h3" color="info.main">
                 {profiles.filter((p) => Array.isArray(p.badges) && p.badges.length > 0).length}
@@ -315,7 +315,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Box sx={{ textAlign: "center" }}>
               <Typography variant="h3" color="secondary.main">
                 {profiles.filter((p) => Array.isArray(p.teams) && p.teams.length > 0).length}
@@ -331,7 +331,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
       {/* Filters and Controls */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               label="Search profiles"
@@ -346,7 +346,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Sort By</InputLabel>
               <Select
@@ -364,7 +364,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Order</InputLabel>
               <Select
@@ -378,7 +378,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={3} sx={{ display: "flex", gap: 1 }}>
+          <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex", gap: 1 }}>
             <Button
               onClick={fetchProfiles}
               variant="outlined"
@@ -442,7 +442,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             const teamCount = Array.isArray(profile.teams) ? profile.teams.length : 0;
 
             return (
-              <Grid item xs={12} sm={6} lg={4} key={profile.id || profile.email_address}>
+              <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={profile.id || profile.email_address}>
                 <StyledCard completeness={completeness}>
                   <CardActionArea onClick={() => handleProfileClick(profile.id)}>
                     <CardContent>

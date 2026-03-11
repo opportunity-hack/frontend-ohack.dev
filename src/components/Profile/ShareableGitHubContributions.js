@@ -97,28 +97,28 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
           <GitHub sx={{ mr: 1 }} />@{userName}'s GitHub Impact
         </Typography>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={3}>
+          <Grid size={{ xs: 3 }}>
             <Chip
               icon={<Code />}
               label={`${totalCommits} Commits`}
               color="primary"
             />
           </Grid>
-          <Grid item xs={3}>
+          <Grid size={{ xs: 3 }}>
             <Chip
               icon={<MergeType />}
               label={`${totalPRs} PRs`}
               color="secondary"
             />
           </Grid>
-          <Grid item xs={3}>
+          <Grid size={{ xs: 3 }}>
             <Chip
               icon={<BugReport />}
               label={`${totalIssues} Issues`}
               color="info"
             />
           </Grid>
-          <Grid item xs={3}>
+          <Grid size={{ xs: 3 }}>
             <Chip
               icon={<RateReview />}
               label={`${totalReviews} Reviews`}

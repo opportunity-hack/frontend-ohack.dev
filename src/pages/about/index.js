@@ -304,7 +304,7 @@ export default function AboutUsPage() {
           </Typography>
           <Grid container spacing={3}>
             {impactStats.map((stat, index) => (
-              <Grid item xs={6} md={3} key={index}>
+              <Grid size={{ xs: 6, md: 3 }} key={index}>
                 <Card sx={{ textAlign: "center", height: "100%", bgcolor: "white", color: "text.primary" }}>
                   <CardContent>
                     <Box sx={{ mb: 2, color: "primary.main" }}>
@@ -367,7 +367,7 @@ export default function AboutUsPage() {
 
           <Grid container spacing={3}>
             {whyChooseUs.map((reason, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Card 
                   sx={{ 
                     height: "100%", 
@@ -420,7 +420,7 @@ export default function AboutUsPage() {
           </Typography>
           
           <Grid container spacing={2} sx={{ maxWidth: "600px", mx: "auto" }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Button
                 variant="contained"
                 size="large"
@@ -440,7 +440,7 @@ export default function AboutUsPage() {
                 Get Involved
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Button
                 variant="outlined"
                 size="large"
@@ -556,7 +556,7 @@ const EnhancedFoundersSection = ({ cofounders }) => (
     </Typography>
     <Grid container spacing={4} justifyContent="center">
       {cofounders.map((member, i) => (
-        <Grid item xs={12} sm={6} lg={3} key={i}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={i}>
           <Card 
             sx={{ 
               textAlign: "center",
@@ -671,7 +671,7 @@ const EnhancedBoardSection = ({ board_members }) => (
         const isFounder = member.role.toLowerCase().includes('co-founder');
         
         return (
-          <Grid item xs={12} md={6} lg={4} key={i}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={i}>
             <Card 
               sx={{ 
                 height: "100%",
@@ -829,7 +829,7 @@ const EnhancedPledgeSection = ({ pledge }) => (
         const color = colors[i % colors.length];
         
         return (
-          <Grid item xs={12} md={6} key={i}>
+          <Grid size={{ xs: 12, md: 6 }} key={i}>
             <Card 
               sx={{ 
                 height: "100%",
@@ -945,7 +945,7 @@ const PayPalSocialProofSection = () => (
       </Typography>
       
       <Grid container spacing={4} alignItems="center">
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Box
             sx={{
               position: "relative",
@@ -973,7 +973,7 @@ const PayPalSocialProofSection = () => (
           </Box>
         </Grid>
         
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Box sx={{ textAlign: { xs: "center", md: "left" } }}>
             <Typography 
               variant="h5" 

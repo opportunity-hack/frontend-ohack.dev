@@ -835,7 +835,7 @@ const SponsorApplicationComponent = () => {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               label="Email Address"
               name="email"
@@ -848,7 +848,7 @@ const SponsorApplicationComponent = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               label="Phone Number (Optional)"
               name="phoneNumber"
@@ -871,7 +871,7 @@ const SponsorApplicationComponent = () => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Company Name"
               name="company"
@@ -883,7 +883,7 @@ const SponsorApplicationComponent = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               label="Your Name"
               name="name"
@@ -895,7 +895,7 @@ const SponsorApplicationComponent = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               label="Your Title"
               name="title"
@@ -906,7 +906,7 @@ const SponsorApplicationComponent = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Preferred Contact Method</InputLabel>
               <Select
@@ -921,7 +921,7 @@ const SponsorApplicationComponent = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               label="How did you hear about us?"
               name="howHeard"
@@ -932,7 +932,7 @@ const SponsorApplicationComponent = () => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Box sx={{ mt: 2, mb: 1 }}>
               <Typography variant="subtitle1" gutterBottom>
                 Company Logo (Optional)
@@ -1017,7 +1017,7 @@ const SponsorApplicationComponent = () => {
             const isCustom = tier.name === "Custom Sponsorship";
 
             return (
-              <Grid item xs={12} md={isCustom ? 12 : 6} key={tier.name}>
+              <Grid size={{ xs: 12, md: isCustom ? 12 : 6 }} key={tier.name}>
                 <Card
                   raised={isSelected}
                   sx={{
@@ -1323,7 +1323,7 @@ const SponsorApplicationComponent = () => {
         </Box>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="How many people do you expect to volunteer?"
               name="volunteerCount"
@@ -1347,7 +1347,7 @@ const SponsorApplicationComponent = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="How many hours total do you expect to volunteer?"
               name="volunteerHours"
@@ -1394,56 +1394,56 @@ const SponsorApplicationComponent = () => {
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 Company:
               </Typography>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Typography variant="body2">
                 {formData.company || "Not provided"}
               </Typography>
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 Contact:
               </Typography>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Typography variant="body2">
                 {formData.name || "Not provided"}
               </Typography>
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 Title:
               </Typography>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Typography variant="body2">
                 {formData.title || "Not provided"}
               </Typography>
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 Email:
               </Typography>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Typography variant="body2">
                 {formData.email || "Not provided"}
               </Typography>
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 Phone:
               </Typography>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Typography variant="body2">
                 {formData.phoneNumber || "Not provided"}
               </Typography>
@@ -1461,12 +1461,12 @@ const SponsorApplicationComponent = () => {
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 Sponsorship Tier:
               </Typography>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Typography variant="body2">
                 {formData.sponsorshipTier || "Not selected"}
               </Typography>
@@ -1474,12 +1474,12 @@ const SponsorApplicationComponent = () => {
 
             {formData.sponsorshipTier === "Custom Sponsorship" && (
               <>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="text.secondary">
                     Custom Details:
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body2">
                     {formData.customSponsorship || "Not provided"}
                   </Typography>
@@ -1489,12 +1489,12 @@ const SponsorApplicationComponent = () => {
 
             {formData.sponsorshipDetails && (
               <>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="text.secondary">
                     Additional Details:
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body2">
                     {formData.sponsorshipDetails}
                   </Typography>
@@ -1502,12 +1502,12 @@ const SponsorApplicationComponent = () => {
               </>
             )}
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 Logo Usage:
               </Typography>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Typography variant="body2">
                 {formData.useLogo || "Not specified"}
               </Typography>
@@ -1530,12 +1530,12 @@ const SponsorApplicationComponent = () => {
             <Grid container spacing={2}>
               {formData.volunteerRoles?.length > 0 && (
                 <>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 4 }}>
                     <Typography variant="body2" color="text.secondary">
                       Volunteer Roles:
                     </Typography>
                   </Grid>
-                  <Grid item xs={8}>
+                  <Grid size={{ xs: 8 }}>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                       {formData.volunteerRoles.map((role) => (
                         <Chip
@@ -1558,12 +1558,12 @@ const SponsorApplicationComponent = () => {
 
               {formData.volunteerCount && (
                 <>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 4 }}>
                     <Typography variant="body2" color="text.secondary">
                       Volunteer Count:
                     </Typography>
                   </Grid>
-                  <Grid item xs={8}>
+                  <Grid size={{ xs: 8 }}>
                     <Typography variant="body2">
                       {formData.volunteerCount} people
                     </Typography>
@@ -1573,12 +1573,12 @@ const SponsorApplicationComponent = () => {
 
               {formData.volunteerHours && (
                 <>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 4 }}>
                     <Typography variant="body2" color="text.secondary">
                       Volunteer Hours:
                     </Typography>
                   </Grid>
-                  <Grid item xs={8}>
+                  <Grid size={{ xs: 8 }}>
                     <Typography variant="body2">
                       {formData.volunteerHours} hours
                     </Typography>

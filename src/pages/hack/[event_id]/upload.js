@@ -137,7 +137,7 @@ export default function EventUpload() {
 
         <Grid container spacing={2}>
           {files.map((file) => (
-            <Grid item xs={12} sm={6} md={4} key={file.name}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={file.name}>
               <Paper elevation={2} sx={{ p: 2 }}>
                 <Typography variant="body2" noWrap>
                   {file.name}

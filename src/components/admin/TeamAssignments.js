@@ -508,7 +508,7 @@ const TeamAssignments = ({ orgId }) => {
 
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6">
               Assigned Teams ({teamsByAssignment.assigned.length})
@@ -616,7 +616,7 @@ const TeamAssignments = ({ orgId }) => {
           </TableContainer>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6">
               Unassigned Teams ({teamsByAssignment.unassigned.length})
@@ -763,7 +763,7 @@ const TeamAssignments = ({ orgId }) => {
     return (
       <Box sx={{ mb: 4 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={2} sx={{ height: '100%' }}>
               <CardHeader title="Nonprofit Assignment Status" />
               <Divider />
@@ -807,7 +807,7 @@ const TeamAssignments = ({ orgId }) => {
             </Card>
           </Grid>
           
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={2} sx={{ height: '100%' }}>
               <CardHeader title="Team Assignment Status" />
               <Divider />
@@ -850,7 +850,7 @@ const TeamAssignments = ({ orgId }) => {
             </Card>
           </Grid>
           
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={2} sx={{ height: '100%' }}>
               <CardHeader title="Assignment Suggestions" />
               <Divider />
@@ -929,7 +929,7 @@ const TeamAssignments = ({ orgId }) => {
 
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <InputLabel id="hackathon-select-label">
                 Select Hackathon
@@ -953,7 +953,7 @@ const TeamAssignments = ({ orgId }) => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <TextField
               fullWidth
               placeholder="Search nonprofits, teams, or descriptions..."
@@ -1029,7 +1029,7 @@ const TeamAssignments = ({ orgId }) => {
                 </Typography>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="body2" color="text.secondary">
                         Name:
                       </Typography>
@@ -1037,12 +1037,12 @@ const TeamAssignments = ({ orgId }) => {
                         {selectedNonprofit.name}
                       </Typography>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="body2" color="text.secondary">
                         Project Type:
                       </Typography>                      
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Typography variant="body2" color="text.secondary">
                         Description:
                       </Typography>

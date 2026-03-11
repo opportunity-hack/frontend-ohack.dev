@@ -346,7 +346,7 @@ export default function SuccessStories() {
 
         <Grid container spacing={4} marginTop={4}>
           {successStories.map((story, index) => (
-            <Grid item key={index} xs={12} sm={6} md={4} id={`${story.key}`}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} id={`${story.key}`}>
               <StyledCard>
                 <StyledCardMedia image={story.image} title={story.title} />
                 <StyledCardContent>
@@ -491,7 +491,7 @@ export default function SuccessStories() {
           </Typography>
           
           <Grid container spacing={3} justifyContent="center" marginTop={3}>
-            <Grid item>
+            <Grid>
               <Link href="/nonprofits/apply" passHref>
                 <Button 
                   variant="contained" 
@@ -518,14 +518,14 @@ export default function SuccessStories() {
         </Box>
 
         <Grid container spacing={4} justifyContent="center" marginTop={4}>
-          <Grid item>
+          <Grid>
             <Link href="/about/hackers" passHref>
               <Button variant="outlined" color="secondary" size="large">
                 Tech Volunteers: Apply Your Skills
               </Button>
             </Link>
           </Grid>
-          <Grid item>
+          <Grid>
             <Link href="/sponsor" passHref>
               <Button variant="outlined" color="info" size="large">
                 Sponsors: Empower Innovation

@@ -310,7 +310,7 @@ const ApplicationReviewList = ({
         </Typography>
         
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary">
                 {stats.total}
@@ -320,7 +320,7 @@ const ApplicationReviewList = ({
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main">
                 {stats.approved}
@@ -330,7 +330,7 @@ const ApplicationReviewList = ({
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main">
                 {stats.pending}
@@ -346,7 +346,7 @@ const ApplicationReviewList = ({
       {/* Filters and Controls */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Search applications"
@@ -358,7 +358,7 @@ const ApplicationReviewList = ({
             />
           </Grid>
           
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Status</InputLabel>
               <Select
@@ -382,7 +382,7 @@ const ApplicationReviewList = ({
           </Grid>
 
           {/* Checked In Filter - Show for all volunteer types */}
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Checked In</InputLabel>
               <Select
@@ -399,7 +399,7 @@ const ApplicationReviewList = ({
 
           {/* In Person Filter - Only show for judges */}
           {applicationType === 'judge' && (
-            <Grid item xs={12} sm={2}>
+            <Grid size={{ xs: 12, sm: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>In Person</InputLabel>
                 <Select
@@ -415,7 +415,7 @@ const ApplicationReviewList = ({
             </Grid>
           )}
 
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Sort by</InputLabel>
               <Select
@@ -431,7 +431,7 @@ const ApplicationReviewList = ({
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <ButtonGroup size="small" fullWidth>
               <Button
                 variant={currentSortOrder === 'asc' ? 'contained' : 'outlined'}
@@ -448,7 +448,7 @@ const ApplicationReviewList = ({
             </ButtonGroup>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <FormControlLabel
               control={
                 <Checkbox

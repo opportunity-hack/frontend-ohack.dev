@@ -384,7 +384,7 @@ const AdminHackathonPage = () => {
     >
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center" justifyContent="flex-end">
-          <Grid item>
+          <Grid>
             <Button
               onClick={handleAddHackathon}
               variant="contained"
@@ -402,7 +402,7 @@ const AdminHackathonPage = () => {
       ) : (
         <Grid container spacing={3}>
           {hackathons.map((hackathon) => (
-            <Grid item xs={12} lg={6} key={hackathon.id}>
+            <Grid size={{ xs: 12, lg: 6 }} key={hackathon.id}>
               <Card elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
                   {/* Header */}

@@ -201,7 +201,7 @@ export default function OpportunityHackProcess() {
               icon: <TimelineIcon fontSize="large" />,
             },
           ].map((section, index) => (
-            <Grid item xs={12} md={6} key={index}>
+            <Grid size={{ xs: 12, md: 6 }} key={index}>
               <StyledPaper>
                 <IconWrapper>
                   {section.icon}

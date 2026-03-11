@@ -121,7 +121,7 @@ const TimeTrackingDetailDialog = ({ open, onClose, userData }) => {
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1">
                 Email: {userData.email}
@@ -149,7 +149,7 @@ const TimeTrackingDetailDialog = ({ open, onClose, userData }) => {
             </Box>
           </Grid>
           
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Divider sx={{ mb: 3 }} />
             <Typography variant="h6" gutterBottom>
               Time Tracking History
@@ -157,7 +157,7 @@ const TimeTrackingDetailDialog = ({ open, onClose, userData }) => {
             
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <DatePicker
                     label="Start Date"
                     value={startDate}
@@ -165,7 +165,7 @@ const TimeTrackingDetailDialog = ({ open, onClose, userData }) => {
                     renderInput={(params) => <TextField {...params} fullWidth />}
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <DatePicker
                     label="End Date"
                     value={endDate}
@@ -173,7 +173,7 @@ const TimeTrackingDetailDialog = ({ open, onClose, userData }) => {
                     renderInput={(params) => <TextField {...params} fullWidth />}
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormControl fullWidth>
                     <InputLabel>Filter by Reason</InputLabel>
                     <Select

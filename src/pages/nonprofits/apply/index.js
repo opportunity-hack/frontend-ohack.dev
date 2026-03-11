@@ -578,7 +578,7 @@ export default function Apply({ title, description, openGraphData }) {
               { number: '$500K+', label: 'Value Delivered', icon: <MonetizationOnIcon fontSize="large" /> },
               { number: '10+', label: 'Years of Impact', icon: <TrendingUpIcon fontSize="large" /> },
             ].map((stat, index) => (
-              <Grid item xs={6} md={3} key={index}>
+              <Grid size={{ xs: 6, md: 3 }} key={index}>
                 <StatsCard elevation={2}>
                   <Box sx={{ color: 'primary.main', mb: 1 }}>{stat.icon}</Box>
                   <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
@@ -640,7 +640,7 @@ export default function Apply({ title, description, openGraphData }) {
                 color: '#fa709a'
               },
             ].map((benefit, index) => (
-              <Grid item xs={12} md={4} key={index}>
+              <Grid size={{ xs: 12, md: 4 }} key={index}>
                 <BenefitCard elevation={3}>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ color: benefit.color, mb: 2 }}>
@@ -665,7 +665,7 @@ export default function Apply({ title, description, openGraphData }) {
             Real Nonprofits, Real Results
           </Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TestimonialCard elevation={0}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                   <FormatQuoteIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
@@ -688,7 +688,7 @@ export default function Apply({ title, description, openGraphData }) {
                 </Box>
               </TestimonialCard>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TestimonialCard elevation={0}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                   <FormatQuoteIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
@@ -767,7 +767,7 @@ export default function Apply({ title, description, openGraphData }) {
                 icon: <TrendingUpIcon sx={{ fontSize: 40 }} />
               },
             ].map((process, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
                 <ProcessStep elevation={2}>
                   <Box sx={{ color: 'primary.main', mb: 2 }}>
                     {process.icon}
@@ -855,7 +855,7 @@ export default function Apply({ title, description, openGraphData }) {
               { icon: <SecurityIcon />, text: 'Secure & Confidential' },
               { icon: <StarIcon />, text: '10+ Years of Service' },
             ].map((trust, index) => (
-              <Grid item key={index}>
+              <Grid key={index}>
                 <Chip
                   icon={trust.icon}
                   label={trust.text}
@@ -911,7 +911,7 @@ export default function Apply({ title, description, openGraphData }) {
               )}
 
               <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label="Your Name *"
@@ -925,7 +925,7 @@ export default function Apply({ title, description, openGraphData }) {
                     onFocus={() => trackFormField('name', formData.name, 'focus')}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label="Email Address *"
@@ -940,7 +940,7 @@ export default function Apply({ title, description, openGraphData }) {
                     onFocus={() => trackFormField('email', formData.email, 'focus')}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label="Organization Name"
@@ -953,7 +953,7 @@ export default function Apply({ title, description, openGraphData }) {
                     onFocus={() => trackFormField('organization', formData.organization, 'focus')}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label="Your Project Idea or Problem to Solve *"
@@ -972,7 +972,7 @@ export default function Apply({ title, description, openGraphData }) {
                     onFocus={() => trackFormField('idea', formData.idea, 'focus')}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -985,7 +985,7 @@ export default function Apply({ title, description, openGraphData }) {
                     label="I represent a registered 501(c)(3) nonprofit organization (Optional - we accept all social good projects!)"
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <CTAButton
                     variant="contained"
                     color="primary"

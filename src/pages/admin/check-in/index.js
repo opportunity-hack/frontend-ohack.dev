@@ -459,7 +459,7 @@ const AdminCheckInPage = withRequiredAuthInfo(({ userClass }) => {
       {/* Event Selection and Check-in Counts */}
       <Box sx={{ mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <InputLabel id="hackathon-select-label">
                 Hackathon Event
@@ -499,7 +499,7 @@ const AdminCheckInPage = withRequiredAuthInfo(({ userClass }) => {
               </Typography>
             )}
           </Grid>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             {selectedEventId && (
               <Paper elevation={1} sx={{ p: 2, bgcolor: 'background.paper' }}>
                 <Typography variant="h6" gutterBottom>
@@ -513,7 +513,7 @@ const AdminCheckInPage = withRequiredAuthInfo(({ userClass }) => {
                     { key: 'hacker', label: 'Hackers', color: 'info' },
                     { key: 'sponsor', label: 'Sponsors', color: 'warning' }
                   ].map(({ key, label, color }) => (
-                    <Grid item xs={6} sm={4} md={2.4} key={key}>
+                    <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={key}>
                       <Card sx={{ textAlign: 'center', minHeight: 80 }}>
                         <CardContent sx={{ pb: 1, '&:last-child': { pb: 1 } }}>
                           <Typography variant="h4" color={`${color}.main`} fontWeight="bold">
@@ -538,7 +538,7 @@ const AdminCheckInPage = withRequiredAuthInfo(({ userClass }) => {
 
       <Grid container spacing={3}>
         {/* Scanner Section */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper elevation={2} sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <QrCodeScannerIcon sx={{ mr: 1 }} />
@@ -642,7 +642,7 @@ const AdminCheckInPage = withRequiredAuthInfo(({ userClass }) => {
         </Grid>
 
         {/* All Checked-In People */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper elevation={2} sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <PersonIcon sx={{ mr: 1 }} />

@@ -72,7 +72,7 @@ const ProfilePage = () => {
                         />
                     </Box>
                     <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <StyledPaper elevation={3}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     <SkeletonAvatar size={150} />
@@ -89,7 +89,7 @@ const ProfilePage = () => {
                                 </Box>
                             </StyledPaper>
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <StyledPaper elevation={3}>
                                 <SkeletonText 
                                     lines={3} 
@@ -98,7 +98,7 @@ const ProfilePage = () => {
                                 />
                             </StyledPaper>
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <StyledPaper elevation={3}>
                                 <SkeletonText 
                                     lines={0} 
@@ -107,7 +107,7 @@ const ProfilePage = () => {
                                 <SkeletonContent height={180} />
                             </StyledPaper>
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <StyledPaper elevation={3}>
                                 <SkeletonText 
                                     lines={0} 
@@ -126,7 +126,7 @@ const ProfilePage = () => {
         <ProfileContainer>
             <Container maxWidth="lg">
                 <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <StyledPaper elevation={3}>
                             <ProfileHeader name={mockData.name} bio={mockData.bio} avatarUrl={mockData.avatarUrl} />
                             <CenteredContent>
@@ -134,17 +134,17 @@ const ProfilePage = () => {
                             </CenteredContent>
                         </StyledPaper>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <StyledPaper elevation={3}>
                             <ProfileDetails details={mockData.details} />
                         </StyledPaper>
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <StyledPaper elevation={3}>
                             <ProjectList projects={mockData.projects} />
                         </StyledPaper>
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <StyledPaper elevation={3}>
                             <WeeklyStats stats={mockData.weeklyStats} />
                         </StyledPaper>
