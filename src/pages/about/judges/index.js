@@ -67,6 +67,16 @@ const SCORE_DESCRIPTIONS = {
 
 const FAQ_DATA = [
   {
+    id: "attendance",
+    question: "Do I need to be there the entire weekend?",
+    answer: "Nope! But here's the key detail: <strong>please arrive by 2pm on the final day</strong>. Judging starts promptly at 3pm, so arriving by 2pm gives you time to find parking, grab a coffee, meet the other judges, and get situated before things kick off. 🎯<br/><br/>Beyond that, you've got flexibility:<br/>• Check the hackathon schedule to understand the overall flow<br/>• Feel free to drop by earlier and chat with participants<br/>• Just keep individual team interactions to about 3 minutes max before judging - these hackers are in the zone!<br/><br/>One important note: unless your company is sponsoring, please don't recruit or ask for resumes during the event (save that for after!). ⏰"
+  },
+  {
+    id: "in-person-judging",
+    question: "Why do you require judges to be in-person for in-person hackathons?",
+    answer: "Great question! Here's why in-person judging matters so much to us: 🏛️<br/><br/><strong>Live demos tell the full story.</strong> Watching a team demo their product in real-time — with all the nerves, live debugging, and spontaneous pivots — reveals far more than a polished screen share ever could. You see the real product, not the highlight reel.<br/><br/><strong>You can feel the team dynamics.</strong> Being in the room lets you observe how teammates collaborate, support each other, and handle pressure. These soft skills matter enormously for social impact work.<br/><br/><strong>Conversations go deeper.</strong> Face-to-face Q&A creates natural back-and-forth dialogue. You can ask a team to pull up their code, test the app yourself, or dig into their architecture — all in real time.<br/><br/><strong>Fairness across all teams.</strong> When every judge evaluates every team under the same conditions — same room, same energy, same time constraints — the playing field is truly level.<br/><br/><strong>You become part of the experience.</strong> Judges who are physically present absorb the energy of the event. You see the sleep-deprived dedication, the last-minute breakthroughs, and the pride when teams present. That context makes your feedback more meaningful and your scores more informed.<br/><br/><strong>What about virtual hackathons?</strong> We typically run online-only hackathons during the summer, and virtual judging works great for those! But when teams have committed to building together in-person for an entire weekend, having judges physically present honors that commitment and ensures the most authentic evaluation possible. 💻🤝"
+  },
+  {
     id: "prepare",
     question: "What do judges need to do to prepare?",
     answer: "Great question! Here's your judge prep checklist: 📋<br/><br/>• Review this page thoroughly (you're already crushing it!)<br/>• Watch our orientation video and confirm you've watched it<br/>• If it's a weekend hackathon, you can start reviewing projects as early as Sunday morning on both DevPost and GitHub<br/>• Find the links for teams you'll be judging at the judge dashboard<br/><br/>Pro tip: Come caffeinated and ready to be amazed by what these teams build! ☕",
@@ -74,11 +84,6 @@ const FAQ_DATA = [
       text: "Go to Judge Dashboard",
       href: "/judge"
     }
-  },
-  {
-    id: "attendance",
-    question: "Do I need to be there the entire weekend?", 
-    answer: "Nope! You've got flexibility here. 🎯<br/><br/>• Check the hackathon schedule to understand the flow<br/>• Arrive whenever works for you<br/>• Feel free to chat with participants throughout the event<br/>• Just remember: judging officially starts at 3pm on the final day<br/><br/>One important note: unless your company is sponsoring, please don't recruit or ask for resumes (save that for after!), and keep individual team interactions to about 3 minutes max - these hackers are in the zone! ⏰"
   },
   {
     id: "travel",
@@ -576,6 +581,101 @@ const AboutJudges = () => {
           </Box>
         </Paper>
 
+        {/* FAQ Section */}
+        <Box sx={{ mb: 5 }} id="judge-faq">
+          <SectionHeader
+            variant="h3"
+            component="h2"
+            sectionId="judge-faq"
+            sx={{ textAlign: "center" }}
+          >
+            Frequently Asked Questions
+          </SectionHeader>
+
+          <Typography
+            variant="body1"
+            sx={{
+              textAlign: "center",
+              mb: 4,
+              maxWidth: "700px",
+              mx: "auto",
+              fontSize: "18px",
+              color: "text.secondary",
+            }}
+          >
+            Got questions? We've got answers! Here are the most common questions from our amazing judge community.
+          </Typography>
+
+          {FAQ_DATA.map((faq, index) => (
+            <Accordion
+              key={faq.id}
+              expanded={expandedFaq === faq.id}
+              onChange={() => handleFaqToggle(faq.id)}
+              sx={{ mb: 2 }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreRounded />}
+                id={`faq-${faq.id}-header`}
+                aria-controls={`faq-${faq.id}-content`}
+              >
+                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  {faq.question}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontSize: "16px",
+                    lineHeight: 1.6,
+                    "& a": {
+                      color: "primary.main",
+                      textDecoration: "underline"
+                    },
+                    "& br": {
+                      marginBottom: "0.5em"
+                    },
+                    mb: faq.actionButton ? 2 : 0
+                  }}
+                  dangerouslySetInnerHTML={{ __html: faq.answer }}
+                />
+                {faq.actionButton && (
+                  <Box sx={{ mt: 2 }}>
+                    <Link href={faq.actionButton.href} passHref>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        onClick={() =>
+                          trackOnClickButtonClickWithGoogleAndFacebook(`faq_${faq.id}_cta`)
+                        }
+                      >
+                        {faq.actionButton.text}
+                      </Button>
+                    </Link>
+                  </Box>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          ))}
+
+          <Box sx={{ mt: 4, textAlign: "center" }}>
+            <Typography variant="body1" sx={{ mb: 2, color: "text.secondary" }}>
+              Still have questions? We're here to help!
+            </Typography>
+            <Button
+              variant="outlined"
+              color="primary"
+              href="/contact"
+              onClick={() => trackOnClickButtonClickWithGoogleAndFacebook("faq_contact")}
+            >
+              Get in Touch
+            </Button>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 5 }} />
+
         {/* Why Judge Section */}
         <Box sx={{ mb: 5 }}>
           <SectionHeader 
@@ -1005,101 +1105,6 @@ const AboutJudges = () => {
             solutions
           </Typography>
         </Box>
-
-        {/* FAQ Section */}
-        <Box sx={{ mb: 5 }} id="judge-faq">
-          <SectionHeader 
-            variant="h3" 
-            component="h2" 
-            sectionId="judge-faq"
-            sx={{ textAlign: "center" }}
-          >
-            Frequently Asked Questions
-          </SectionHeader>
-          
-          <Typography
-            variant="body1"
-            sx={{
-              textAlign: "center",
-              mb: 4,
-              maxWidth: "700px",
-              mx: "auto",
-              fontSize: "18px",
-              color: "text.secondary",
-            }}
-          >
-            Got questions? We've got answers! Here are the most common questions from our amazing judge community.
-          </Typography>
-
-          {FAQ_DATA.map((faq, index) => (
-            <Accordion 
-              key={faq.id} 
-              expanded={expandedFaq === faq.id}
-              onChange={() => handleFaqToggle(faq.id)}
-              sx={{ mb: 2 }}
-            >
-              <AccordionSummary 
-                expandIcon={<ExpandMoreRounded />}
-                id={`faq-${faq.id}-header`}
-                aria-controls={`faq-${faq.id}-content`}
-              >
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                  {faq.question}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    fontSize: "16px", 
-                    lineHeight: 1.6,
-                    "& a": {
-                      color: "primary.main",
-                      textDecoration: "underline"
-                    },
-                    "& br": {
-                      marginBottom: "0.5em"
-                    },
-                    mb: faq.actionButton ? 2 : 0
-                  }}
-                  dangerouslySetInnerHTML={{ __html: faq.answer }}
-                />
-                {faq.actionButton && (
-                  <Box sx={{ mt: 2 }}>
-                    <Link href={faq.actionButton.href} passHref>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        onClick={() => 
-                          trackOnClickButtonClickWithGoogleAndFacebook(`faq_${faq.id}_cta`)
-                        }
-                      >
-                        {faq.actionButton.text}
-                      </Button>
-                    </Link>
-                  </Box>
-                )}
-              </AccordionDetails>
-            </Accordion>
-          ))}
-
-          <Box sx={{ mt: 4, textAlign: "center" }}>
-            <Typography variant="body1" sx={{ mb: 2, color: "text.secondary" }}>
-              Still have questions? We're here to help!
-            </Typography>
-            <Button
-              variant="outlined"
-              color="primary"
-              href="/contact"
-              onClick={() => trackOnClickButtonClickWithGoogleAndFacebook("faq_contact")}
-            >
-              Get in Touch
-            </Button>
-          </Box>
-        </Box>
-
-        <Divider sx={{ my: 5 }} />
 
         {/* Call to Action */}
         <Box sx={{ textAlign: "center", mb: 5 }}>
