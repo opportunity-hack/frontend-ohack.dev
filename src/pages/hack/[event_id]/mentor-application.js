@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -275,6 +276,7 @@ const MentorApplicationComponent = () => {
 
   // fetch event data from the backend API and initialize reCAPTCHA
   useEffect(() => {
+    initFacebookPixel();
     // Initialize reCAPTCHA when component mounts
     initializeRecaptcha();
 
@@ -673,6 +675,7 @@ const MentorApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
+      trackEvent({ action: 'mentor_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'mentor_application' } });
       // Scroll to top of form for better UX
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -685,6 +688,7 @@ const MentorApplicationComponent = () => {
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
+    trackEvent({ action: 'mentor_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'mentor_application' } });
     // Scroll to top of form for better UX
     if (formRef?.current) {
       formRef.current.scrollIntoView({
@@ -969,6 +973,7 @@ const MentorApplicationComponent = () => {
       }
 
       setSuccess(true);
+      trackEvent({ action: 'mentor_app_submit', params: { event_label: 'success', event_id, page: 'mentor_application' } });
       // Scroll to top of form to show "Application Submitted!" message
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -978,6 +983,7 @@ const MentorApplicationComponent = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
+      trackEvent({ action: 'mentor_app_submit_error', params: { event_label: err.message, event_id, page: 'mentor_application' } });
       setError(
         err.message || "Failed to submit your application. Please try again.",
       );

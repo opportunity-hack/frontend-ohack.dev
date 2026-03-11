@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
@@ -13,6 +13,7 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { initFacebookPixel, trackEvent, trackForm } from '../../lib/ga';
 
 // Utility functions for bot detection
 const isValidEmail = (email) => {
@@ -57,6 +58,8 @@ const isValidName = (name) => {
 
 const LeadForm = () => {
   const { executeRecaptcha } = useGoogleReCaptcha();
+
+  useEffect(() => { initFacebookPixel(); }, []);
   const [email, setEmail] = useState("");
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -79,6 +82,7 @@ const LeadForm = () => {
     // Start tracking interaction time when user first interacts
     if (!formStartTimeRef.current) {
       formStartTimeRef.current = Date.now();
+      trackForm('lead_form', 'start');
     }
   };
 
@@ -128,6 +132,7 @@ const LeadForm = () => {
     }
 
     // Open the dialog to collect the name
+    trackForm('lead_form', 'email_entered');
     setOpen(true);
   };
 
@@ -184,6 +189,7 @@ const LeadForm = () => {
       }
 
       setSubmitted(true);
+      trackEvent({ action: 'lead_form_submit', params: { event_label: 'success', page: 'home' } });
       // Reset form on success
       setEmail("");
       setName("");
@@ -192,6 +198,7 @@ const LeadForm = () => {
       console.error("Error:", error);
       setSubmitted(false);
       setError(error.message || "An error occurred. Please try again.");
+      trackEvent({ action: 'lead_form_error', params: { event_label: error.message, page: 'home' } });
     } finally {
       setIsLoading(false);
       setOpen(false);

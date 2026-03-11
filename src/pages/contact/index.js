@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import {
   Container,
   Typography,
@@ -134,6 +135,8 @@ const ContactPage = () => {
     error: recaptchaError,
   } = useRecaptcha();
 
+  useEffect(() => { initFacebookPixel(); }, []);
+
   // Form state
   const [formState, setFormState] = useState(initialFormState);
   const [formErrors, setFormErrors] = useState({});
@@ -240,11 +243,13 @@ const ContactPage = () => {
 
       // Set success state
       setSubmitSuccess(true);
+      trackEvent({ action: 'contact_form_submit', params: { event_label: formState.inquiryType, page: 'contact' } });
 
       // Reset form after submission
       setFormState(initialFormState);
     } catch (error) {
       console.error("Error submitting contact form:", error);
+      trackEvent({ action: 'contact_form_error', params: { event_label: error.message, page: 'contact' } });
       setSubmitError("Failed to submit your message. Please try again later.");
     } finally {
       setIsSubmitting(false);

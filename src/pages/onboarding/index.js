@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import Head from 'next/head';
 import { useCookies, CookiesProvider } from 'react-cookie';
 import {
@@ -92,6 +93,8 @@ function OnboardingComponent() {
   const [openCongratulatoryDialog, setOpenCongratulatoryDialog] = useState(false);
   const [cookies, setCookie] = useCookies(['onboarding_visited']);
   
+  useEffect(() => { initFacebookPixel(); }, []);
+
   useEffect(() => {
     const ONBOARDING_VISITED_COOKIE = "onboarding_visited";
 
@@ -183,6 +186,7 @@ function OnboardingComponent() {
       
       // Move to next step
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      trackEvent({ action: 'onboarding_step', params: { event_label: steps[activeStep + 1]?.label, step: activeStep + 2, page: 'onboarding' } });
       // Scroll to top of the page when navigating to next step
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -210,6 +214,7 @@ function OnboardingComponent() {
       // Mark onboarding as completed to prevent dialog from showing again
       localStorage.setItem('ohack_onboarding_completed', 'true');
       
+      trackEvent({ action: 'onboarding_complete', params: { event_label: 'all_steps', page: 'onboarding' } });
       setOpenCongratulatoryDialog(true); // Open the dialog
     } catch (err) {
       console.error('Error completing onboarding:', err);
