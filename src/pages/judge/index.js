@@ -29,6 +29,7 @@ import {
 import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
 import judgeApi from '../../lib/judgeApi';
+import { initFacebookPixel, trackEvent } from '../../lib/ga';
 
 const JudgeDashboard = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken, user } = useAuthInfo();
@@ -37,6 +38,8 @@ const JudgeDashboard = withRequiredAuthInfo(({ userClass }) => {
   
   const [loading, setLoading] = useState(true);
   const [assignments, setAssignments] = useState([]);
+
+  useEffect(() => { initFacebookPixel(); }, []);
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -226,7 +229,10 @@ const JudgeDashboard = withRequiredAuthInfo(({ userClass }) => {
                           </Box>
                           <Button
                             variant="contained"
-                            onClick={() => router.push(`/judge/${hackathon.event_id}`)}
+                            onClick={() => {
+                              trackEvent({ action: 'judge_dash_start', params: { event_label: hackathon.event_id, page: 'judge_dashboard' } });
+                              router.push(`/judge/${hackathon.event_id}`);
+                            }}
                             startIcon={<JudgeIcon />}
                           >
                             Start Judging

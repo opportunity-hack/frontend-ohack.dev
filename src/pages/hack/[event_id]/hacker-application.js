@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -449,6 +450,8 @@ const HackerApplicationComponent = () => {
   ];
 
   // Set up form with event_id
+  useEffect(() => { initFacebookPixel(); }, []);
+
   useEffect(() => {
     if (event_id && !formInitializedRef.current) {
       formInitializedRef.current = true;
@@ -1110,6 +1113,7 @@ const HackerApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
+      trackEvent({ action: 'hacker_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'hacker_application' } });
       // Scroll to top of form for better UX
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1122,6 +1126,7 @@ const HackerApplicationComponent = () => {
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
+    trackEvent({ action: 'hacker_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'hacker_application' } });
     // Save progress when moving between steps
     handleManualSave();
     // Scroll to top of form for better UX
@@ -1272,6 +1277,7 @@ const HackerApplicationComponent = () => {
       }
 
       setSuccess(true);
+      trackEvent({ action: 'hacker_app_submit', params: { event_label: 'success', event_id, page: 'hacker_application' } });
       // Scroll to top of form to show "Application Submitted!" message
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1281,6 +1287,7 @@ const HackerApplicationComponent = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
+      trackEvent({ action: 'hacker_app_submit_error', params: { event_label: err.message, event_id, page: 'hacker_application' } });
       setError("Failed to submit your application. Please try again.");
     } finally {
       setSubmitting(false);

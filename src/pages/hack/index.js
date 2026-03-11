@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { Typography, Box, Button, Grid, Container, Divider, Alert, Paper, Card, CardContent } from '@mui/material';
+import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import { TitleContainer, LayoutContainer, ProjectsContainer } from '../../styles/nonprofit/styles';
 import HackathonList from '../../components/HackathonList/HackathonList';
 import PreviousHackathonList from '../../components/HackathonList/PreviousHackathonList';
@@ -10,6 +11,12 @@ import { EventAvailable, Code, Group, EmojiEvents, Gavel, CameraAlt, Business, P
 
 const HackathonIndex = () => {
   const style = { fontSize: '15px' };
+
+  useEffect(() => { initFacebookPixel(); }, []);
+
+  const track = (action, label) => {
+    trackEvent({ action: `hack_${action}`, params: { event_label: label, page: 'hack' } });
+  };
 
   return (
     <LayoutContainer key="hackathons" container>
@@ -90,6 +97,7 @@ const HackathonIndex = () => {
               startIcon={<EventAvailable />}
               onClick={(e) => {
                 e.preventDefault();
+                track('cta_click', 'view_upcoming_events');
                 document.getElementById('upcoming-events')?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
@@ -104,6 +112,7 @@ const HackathonIndex = () => {
               fullWidth
               href="/signup"
               startIcon={<Group />}
+              onClick={() => track('cta_click', 'join_community')}
             >
               Join Our Community
             </Button>
@@ -240,6 +249,7 @@ const HackathonIndex = () => {
                   href="/hack/code-of-conduct"
                   fullWidth
                   size="small"
+                  onClick={() => track('cta_click', 'code_of_conduct')}
                 >
                   Read Guidelines
                 </Button>
@@ -263,6 +273,7 @@ const HackathonIndex = () => {
                   href="/hack/liability-waiver"
                   fullWidth
                   size="small"
+                  onClick={() => track('cta_click', 'liability_waiver')}
                 >
                   View Waiver
                 </Button>
@@ -286,6 +297,7 @@ const HackathonIndex = () => {
                   href="/hack/photo-release"
                   fullWidth
                   size="small"
+                  onClick={() => track('cta_click', 'photo_release')}
                 >
                   Photo Policy
                 </Button>
@@ -307,9 +319,10 @@ const HackathonIndex = () => {
         <Button 
           variant="contained" 
           size="medium"
-          component={Link} 
+          component={Link}
           href="/sponsor"
           sx={{ textTransform: 'none' }}
+          onClick={() => track('cta_click', 'become_sponsor')}
         >
           Become a Sponsor
         </Button>

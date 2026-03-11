@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { useRouter } from "next/router";
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -308,6 +309,7 @@ const JudgeApplicationComponent = () => {
 
   // fetch event data from the backend API
   useEffect(() => {
+    initFacebookPixel();
     // Initialize reCAPTCHA when component mounts
     initializeRecaptcha();
 
@@ -1071,6 +1073,7 @@ const JudgeApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
+      trackEvent({ action: 'judge_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'judge_application' } });
       // Scroll to top of form for better UX
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1083,6 +1086,7 @@ const JudgeApplicationComponent = () => {
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
+    trackEvent({ action: 'judge_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'judge_application' } });
     // Scroll to top of form for better UX
     if (formRef?.current) {
       formRef.current.scrollIntoView({
@@ -1287,6 +1291,7 @@ const JudgeApplicationComponent = () => {
       }
 
       setSuccess(true);
+      trackEvent({ action: 'judge_app_submit', params: { event_label: 'success', event_id, page: 'judge_application' } });
       // Scroll to top of form to show "Application Submitted!" message
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1296,6 +1301,7 @@ const JudgeApplicationComponent = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
+      trackEvent({ action: 'judge_app_submit_error', params: { event_label: err.message, event_id, page: 'judge_application' } });
       setError(
         `Failed to submit your application. ${err.message || "Please try again."}`,
       );

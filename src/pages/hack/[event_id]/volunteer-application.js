@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -246,6 +247,8 @@ const VolunteerApplicationComponent = () => {
   ];
 
   // Set up form with event_id
+  useEffect(() => { initFacebookPixel(); }, []);
+
   useEffect(() => {
     if (event_id && !formInitializedRef.current) {
       formInitializedRef.current = true;
@@ -1284,6 +1287,7 @@ const VolunteerApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
+      trackEvent({ action: 'volunteer_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'volunteer_application' } });
       // Scroll to top of form for better UX
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1296,6 +1300,7 @@ const VolunteerApplicationComponent = () => {
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
+    trackEvent({ action: 'volunteer_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'volunteer_application' } });
     // Save progress when moving between steps
     handleManualSave();
     // Scroll to top of form for better UX
@@ -1425,6 +1430,7 @@ const VolunteerApplicationComponent = () => {
       }
 
       setSuccess(true);
+      trackEvent({ action: 'volunteer_app_submit', params: { event_label: 'success', event_id, page: 'volunteer_application' } });
       // Scroll to top of form to show "Application Submitted!" message
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1434,6 +1440,7 @@ const VolunteerApplicationComponent = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
+      trackEvent({ action: 'volunteer_app_submit_error', params: { event_label: err.message, event_id, page: 'volunteer_application' } });
       setError("Failed to submit your application. Please try again.");
     } finally {
       setSubmitting(false);

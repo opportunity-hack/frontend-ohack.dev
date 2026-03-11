@@ -196,7 +196,9 @@ export default function Profile(props) {
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    
+    const tabNames = ['basic', 'impact', 'github', 'swag', 'volunteer', 'giveaways'];
+    trackEvent({ action: 'profile_tab_change', params: { event_label: tabNames[newValue], page: 'profile' } });
+
     // Update URL hash based on tab
     const tabHashMap = {
       0: 'basic',
