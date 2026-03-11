@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,6 +32,7 @@ import {
   detectPlaceholders,
   PLACEHOLDER_LABELS
 } from '../../lib/messageTemplates';
+import useSavedPlaceholders from '../../hooks/use-saved-placeholders';
 
 
 const VolunteerCommunication = ({ 
@@ -52,6 +54,9 @@ const VolunteerCommunication = ({
   const [testLoading, setTestLoading] = useState(false);
   const [placeholderValues, setPlaceholderValues] = useState({});
   const [detectedPlaceholders, setDetectedPlaceholders] = useState([]);
+  const [restoredFromSaved, setRestoredFromSaved] = useState(false);
+
+  const { savedValues, saveValues, clearValues, hasSavedValues } = useSavedPlaceholders(eventId, selectedTemplate?.id);
 
   const handleSendMessage = async () => {
     if (!messageText.trim() || !volunteer) return;
@@ -166,19 +171,44 @@ const VolunteerCommunication = ({
     setSelectedTemplate(template);
 
     // Use shared utility to prepare template message with placeholder replacements
-    const message = prepareTemplateMessage(template, {
+    let message = prepareTemplateMessage(template, {
       eventId: eventId,
       volunteerId: volunteer?.id,
       volunteerType: volunteerType || volunteer?.type
     });
 
-    setMessageText(message);
     setCustomMessage(false);
 
     // Detect remaining placeholders that need manual input
     const remaining = detectPlaceholders(message);
     setDetectedPlaceholders(remaining);
-    setPlaceholderValues({});
+
+    // Check for saved placeholder values (hook will re-derive on next render,
+    // but we need the current template's saved values now)
+    const key = eventId && template?.id ? `ohack_placeholders_${eventId}_${template.id}` : null;
+    let restored = null;
+    if (key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) restored = JSON.parse(raw);
+      } catch { /* ignore */ }
+    }
+
+    if (restored && typeof restored === 'object' && Object.keys(restored).length > 0) {
+      setPlaceholderValues(restored);
+      setRestoredFromSaved(true);
+      // Apply saved values to message
+      for (const [name, val] of Object.entries(restored)) {
+        if (val) {
+          message = message.replaceAll(`[${name}]`, val);
+        }
+      }
+    } else {
+      setPlaceholderValues({});
+      setRestoredFromSaved(false);
+    }
+
+    setMessageText(message);
   };
 
   const handleCustomMessageToggle = () => {
@@ -192,6 +222,8 @@ const VolunteerCommunication = ({
   const handlePlaceholderChange = (placeholderName, value) => {
     const newValues = { ...placeholderValues, [placeholderName]: value };
     setPlaceholderValues(newValues);
+    saveValues(newValues);
+    setRestoredFromSaved(false);
 
     // Rebuild message from template with all current placeholder values
     let message = prepareTemplateMessage(selectedTemplate, {
@@ -352,9 +384,37 @@ const VolunteerCommunication = ({
                 
                 {selectedTemplate && detectedPlaceholders.length > 0 && (
                   <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      This template requires event-specific details:
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2">
+                          This template requires event-specific details:
+                        </Typography>
+                        {restoredFromSaved && (
+                          <Chip label="Restored from previous session" size="small" color="info" variant="outlined" />
+                        )}
+                      </Box>
+                      {hasSavedValues && (
+                        <Button
+                          size="small"
+                          variant="text"
+                          color="secondary"
+                          onClick={() => {
+                            clearValues();
+                            setPlaceholderValues({});
+                            setRestoredFromSaved(false);
+                            // Rebuild message without placeholder values
+                            const message = prepareTemplateMessage(selectedTemplate, {
+                              eventId: eventId,
+                              volunteerId: volunteer?.id,
+                              volunteerType: volunteerType || volunteer?.type
+                            });
+                            setMessageText(message);
+                          }}
+                        >
+                          Clear saved values
+                        </Button>
+                      )}
+                    </Box>
                     <Grid container spacing={2}>
                       {detectedPlaceholders.map((name) => {
                         const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
@@ -585,9 +645,37 @@ const VolunteerCommunication = ({
                 
                 {selectedTemplate && detectedPlaceholders.length > 0 && (
                   <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      This template requires event-specific details:
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2">
+                          This template requires event-specific details:
+                        </Typography>
+                        {restoredFromSaved && (
+                          <Chip label="Restored from previous session" size="small" color="info" variant="outlined" />
+                        )}
+                      </Box>
+                      {hasSavedValues && (
+                        <Button
+                          size="small"
+                          variant="text"
+                          color="secondary"
+                          onClick={() => {
+                            clearValues();
+                            setPlaceholderValues({});
+                            setRestoredFromSaved(false);
+                            // Rebuild message without placeholder values
+                            const message = prepareTemplateMessage(selectedTemplate, {
+                              eventId: eventId,
+                              volunteerId: volunteer?.id,
+                              volunteerType: volunteerType || volunteer?.type
+                            });
+                            setMessageText(message);
+                          }}
+                        >
+                          Clear saved values
+                        </Button>
+                      )}
+                    </Box>
                     <Grid container spacing={2}>
                       {detectedPlaceholders.map((name) => {
                         const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
