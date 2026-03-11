@@ -42,7 +42,7 @@ const DonationManagement = ({ initialDonationData, onDonationDataChange }) => {
         Donation Management
       </Typography>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Typography variant="subtitle1" gutterBottom>
             Current Donations
           </Typography>
@@ -88,7 +88,7 @@ const DonationManagement = ({ initialDonationData, onDonationDataChange }) => {
             rows={2}
           />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Typography variant="subtitle1" gutterBottom>
             Donation Goals
           </Typography>

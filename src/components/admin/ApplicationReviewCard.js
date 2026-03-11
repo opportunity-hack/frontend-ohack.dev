@@ -360,7 +360,7 @@ const ApplicationReviewCard = ({
             if (!value) return null;
             
             return (
-              <Grid item xs={12} sm={6} key={field}>
+              <Grid size={{ xs: 12, sm: 6 }} key={field}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {field === 'email' && <EmailIcon fontSize="small" color="action" />}
                   {field === 'schoolOrganization' && <SchoolIcon fontSize="small" color="action" />}
@@ -399,7 +399,7 @@ const ApplicationReviewCard = ({
                 const isLink = ['linkedin', 'github', 'portfolio', 'website', 'linkedinProfile'].includes(field);
                 
                 return (
-                  <Grid item xs={12} sm={6} key={field}>
+                  <Grid size={{ xs: 12, sm: 6 }} key={field}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {(field === 'linkedin' || field === 'linkedinProfile') && <LinkedInIcon fontSize="small" color="action" />}
                       {field === 'country' && <LocationIcon fontSize="small" color="action" />}
@@ -450,7 +450,7 @@ const ApplicationReviewCard = ({
               if (!value) return null;
               
               return (
-                <Grid item xs={12} sm={6} key={field}>
+                <Grid size={{ xs: 12, sm: 6 }} key={field}>
                   <Typography variant="body2" color="text.secondary">
                     {getFieldLabel(field)}
                   </Typography>
@@ -487,7 +487,7 @@ const ApplicationReviewCard = ({
                 const isLink = ['linkedin', 'github', 'portfolio', 'website', 'linkedinProfile'].includes(field);
                 
                 return (
-                  <Grid item xs={12} key={field}>
+                  <Grid size={{ xs: 12 }} key={field}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                       {(field === 'linkedin' || field === 'linkedinProfile') && <LinkedInIcon fontSize="small" color="action" />}
                       {field === 'github' && <GitHubIcon fontSize="small" color="action" />}
@@ -809,7 +809,7 @@ const ApplicationReviewCard = ({
             </Typography>
             <Grid container spacing={2}>
               {application.timestamp && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     Submitted
                   </Typography>
@@ -820,7 +820,7 @@ const ApplicationReviewCard = ({
                 </Grid>
               )}
               {application.event_id && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     Event ID
                   </Typography>

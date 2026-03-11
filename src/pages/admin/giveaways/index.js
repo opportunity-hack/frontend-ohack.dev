@@ -187,12 +187,12 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
           Manage and conduct fair, transparent giveaway selections. The dramatic selection process shows exactly how winners are chosen using a seeded random number generator for full transparency.
         </Typography>
         <Grid container spacing={2} alignItems="center">
-          <Grid item>
+          <Grid>
             <Button onClick={fetchGiveaways} variant="outlined">
               Refresh Data
             </Button>
           </Grid>
-          <Grid item xs>
+          <Grid size={{ xs: true }}>
             <TextField
               fullWidth
               label="Filter by Name, Nickname, or GitHub"
@@ -205,7 +205,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
 
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -217,7 +217,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -229,7 +229,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -241,7 +241,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -263,7 +263,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
 
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               fullWidth
               label="Random Seed (for fair & transparent selection)"
@@ -274,7 +274,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
               placeholder="e.g., 12345"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Button
               variant="outlined"
               onClick={() => setRandomSeed(Date.now().toString())}
@@ -283,7 +283,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
               Generate Random Seed
             </Button>
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <DramaticGiveawaySelector
               giveaways={sortedGiveaways}
               randomSeed={randomSeed}

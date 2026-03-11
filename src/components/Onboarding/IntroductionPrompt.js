@@ -192,7 +192,7 @@ const IntroductionPrompt = () => {
           and creates opportunities for collaboration. A good introduction can help you:
         </Typography>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <IntroCard>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
@@ -204,7 +204,7 @@ const IntroductionPrompt = () => {
               </CardContent>
             </IntroCard>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <IntroCard>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
@@ -216,7 +216,7 @@ const IntroductionPrompt = () => {
               </CardContent>
             </IntroCard>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <IntroCard>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
@@ -228,7 +228,7 @@ const IntroductionPrompt = () => {
               </CardContent>
             </IntroCard>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <IntroCard>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
@@ -253,7 +253,7 @@ const IntroductionPrompt = () => {
 
       <Grid container spacing={3}>
         {/* Left side - form inputs */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Stack spacing={3}>
             <TextField
               label="Your Name"
@@ -337,7 +337,7 @@ const IntroductionPrompt = () => {
         </Grid>
 
         {/* Right side - Experience Level and Skills */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={3}>
                 {/* Experience Level */}
                 <Box>

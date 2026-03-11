@@ -379,7 +379,7 @@ const FeedbackSection = () => {
           <form onSubmit={handleSubmit}>
             <Grid container spacing={4}>
               {/* Overall rating */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <RatingContainer>
                   <Box sx={{ mr: 2 }}>
                     <Typography variant="h6" id="overall-rating-label" sx={{ fontSize: '1.4rem' }}>
@@ -407,7 +407,7 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Most useful topics */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem' }}>
                   Most Useful Content
                 </Typography>
@@ -432,7 +432,7 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Missing topics */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="What topics were missing or should be covered better?"
@@ -451,7 +451,7 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Ease of understanding */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormControl component="fieldset" error={!!errors.easeOfUnderstanding}>
                   <FormLabel component="legend">
                     <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem' }}>
@@ -467,7 +467,7 @@ const FeedbackSection = () => {
                     onChange={handleEaseChange}
                   >
                     <Grid container spacing={1}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel 
                           value="Very easy" 
                           control={<Radio />} 
@@ -475,7 +475,7 @@ const FeedbackSection = () => {
                           sx={{ '& .MuiFormControlLabel-label': { fontSize: '1.1rem' } }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel 
                           value="Mostly clear" 
                           control={<Radio />} 
@@ -483,7 +483,7 @@ const FeedbackSection = () => {
                           sx={{ '& .MuiFormControlLabel-label': { fontSize: '1.1rem' } }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel 
                           value="Somewhat confusing" 
                           control={<Radio />} 
@@ -491,7 +491,7 @@ const FeedbackSection = () => {
                           sx={{ '& .MuiFormControlLabel-label': { fontSize: '1.1rem' } }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel 
                           value="Very difficult" 
                           control={<Radio />} 
@@ -508,7 +508,7 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Suggestions for improvement */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="How could we improve the onboarding experience?"
@@ -529,7 +529,7 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Additional feedback */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="Additional Comments (Optional)"
@@ -548,7 +548,7 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Contact for follow-up */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -564,7 +564,7 @@ const FeedbackSection = () => {
                 {contactForFollowup && (
                   <Fade in={contactForFollowup}>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="First Name"
@@ -579,7 +579,7 @@ const FeedbackSection = () => {
                           }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="Email"
@@ -601,7 +601,7 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Submit button */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Button
                   type="submit"
                   variant="contained"
@@ -634,7 +634,7 @@ const FeedbackSection = () => {
           How We Use Your Feedback
         </Typography>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -649,7 +649,7 @@ const FeedbackSection = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -664,7 +664,7 @@ const FeedbackSection = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>

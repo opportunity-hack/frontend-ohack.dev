@@ -423,7 +423,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
         <Box sx={{ mt: 3 }}>
           <Typography variant="h6" gutterBottom>Hackathon Resources</Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <ResourceCard>
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
@@ -446,7 +446,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                 </CardContent>
               </ResourceCard>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <ResourceCard>
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
@@ -522,7 +522,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
           >
             <CardContent sx={{ pb: 2 }}>
               <Grid container alignItems="center" spacing={2}>
-                <Grid item>
+                <Grid>
                   <Avatar
                     sx={{
                       width: 56,
@@ -534,7 +534,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                     <GroupIcon fontSize="large" />
                   </Avatar>
                 </Grid>
-                <Grid item xs>
+                <Grid size={{ xs: true }}>
                   <Box display="flex" alignItems="center" flexWrap="wrap">
                     <Typography
                       variant="h5"
@@ -1350,7 +1350,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
 
           {/* Quick Action Buttons */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent>
                   <Typography variant="subtitle2" fontWeight="bold">
@@ -1373,7 +1373,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent>
                   <Typography variant="subtitle2" fontWeight="bold">
@@ -1396,7 +1396,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent>
                   <Typography variant="subtitle2" fontWeight="bold">
@@ -1419,7 +1419,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent>
                   <Typography variant="subtitle2" fontWeight="bold">

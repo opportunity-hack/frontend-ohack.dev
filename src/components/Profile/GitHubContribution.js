@@ -76,28 +76,28 @@ const GitHubContributions = ({ githubHistory }) => {
         GitHub Contributions for @<strong>{githubHistory[0].login}</strong>
       </Typography>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Chip
             icon={<Code />}
             label={`${totalCommits} Commits`}
             color="primary"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Chip
             icon={<MergeType />}
             label={`${totalPRs} Pull Requests`}
             color="secondary"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Chip
             icon={<BugReport />}
             label={`${totalIssues} Issues`}
             color="info"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Chip
             icon={<RateReview />}
             label={`${totalReviews} Reviews`}
@@ -111,13 +111,7 @@ const GitHubContributions = ({ githubHistory }) => {
       </Typography>
       <Grid container spacing={2}>
         {sortedRepos.map((repo) => (
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            md={4}
-            key={`${repo.org_name}/${repo.repo_name}`}
-          >
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`${repo.org_name}/${repo.repo_name}`}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom noWrap>

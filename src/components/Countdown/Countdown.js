@@ -48,7 +48,7 @@ export default function Countdown({ details })
 
     return(
     <Grid container direction="row" alignContent="center" alignItems="center" marginTop={"4px"}>
-        <Grid item xs={12} md={4} lg={3}>
+        <Grid size={{ xs: 12, md: 4, lg: 3 }}>
             <div style={{ display: 'flex', fontFamily: 'sans-serif', textAlign: 'center', paddingTop: '10px'}}>
                 <CountdownCircleTimer
                     {...timerProps}
@@ -114,7 +114,7 @@ export default function Countdown({ details })
             </div>          
         </Grid>
 
-        <Grid item xs={12} md={8} lg={9}>
+        <Grid size={{ xs: 12, md: 8, lg: 9 }}>
             <SectionTitle>{_name}
             {
                 isAfter(new Date(_time), new Date()) &&

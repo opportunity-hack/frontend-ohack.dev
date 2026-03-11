@@ -105,7 +105,7 @@ export default function Signup() {
       </Head>
       <StyledBox>
         <Grid container mt={10} spacing={4} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <StyledHeading variant="h2">Join Opportunity Hack</StyledHeading>
             <StyledSubheading variant="h2">
               Connect, Collaborate, and Code for Good
@@ -129,7 +129,7 @@ export default function Signup() {
               </Typography>
             )}
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 borderRadius: theme.shape.borderRadius,

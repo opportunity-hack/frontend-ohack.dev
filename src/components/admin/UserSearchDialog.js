@@ -445,25 +445,25 @@ const UserSearchDialog = ({
             </Typography>
             <Grid container spacing={2}>
               {selectedUser.role && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="text.secondary">Role:</Typography>
                   <Typography variant="body1">{selectedUser.role}</Typography>
                 </Grid>
               )}
               {selectedUser.company && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="text.secondary">Company:</Typography>
                   <Typography variant="body1">{selectedUser.company}</Typography>
                 </Grid>
               )}
               {selectedUser.education && (
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="text.secondary">Education:</Typography>
                   <Typography variant="body1">{selectedUser.education}</Typography>
                 </Grid>
               )}
               {selectedUser.expertise && selectedUser.expertise.length > 0 && (
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="body2" color="text.secondary">Expertise:</Typography>
                   {renderExpertiseChips(selectedUser.expertise)}
                 </Grid>

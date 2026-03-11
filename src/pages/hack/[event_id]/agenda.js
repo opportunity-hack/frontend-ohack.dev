@@ -253,7 +253,7 @@ const AgendaPage = ({ eventData }) => {
           </Typography>
 
           <Grid container spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-            <Grid item>
+            <Grid>
               <Chip
                 icon={<LocationOnIcon />}
                 label={eventLocation}
@@ -266,7 +266,7 @@ const AgendaPage = ({ eventData }) => {
               />
             </Grid>
             {eventStartDate && (
-              <Grid item>
+              <Grid>
                 <Chip
                   icon={<CalendarTodayIcon />}
                   label={`${format(eventStartDate, 'MMM dd')}${eventEndDate ? ` - ${format(eventEndDate, 'MMM dd, yyyy')}` : ''}`}
@@ -316,7 +316,7 @@ const AgendaPage = ({ eventData }) => {
 
         <Grid container spacing={3}>
           {/* Event Information */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{
               p: 2,
               height: 'fit-content',
@@ -384,7 +384,7 @@ const AgendaPage = ({ eventData }) => {
           </Grid>
 
           {/* Schedule/Timeline */}
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{
               p: 2,
               '@media print': {

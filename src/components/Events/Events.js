@@ -37,7 +37,7 @@ export default function Events({
       }
       
       return (
-        <Grid item key={event.id} style={{ marginTop: 10, padding: "2px" }}>
+        <Grid key={event.id} style={{ marginTop: 10, padding: "2px" }}>
 
           { isEventStartDateOlderThanToday(event) && 
             <Link href={`/hack/${event.event_id}`}>
@@ -91,7 +91,7 @@ export default function Events({
               <Grid container
               style={{ backgroundColor: "#f5f5f5" }} spacing={0} padding={1} direction="row" md={12} xs={12} marginTop={0.5} justifyContent="flex-start"  alignItems="center" alignContent="center" >
                 {
-                  <Grid item style={{  }}>
+                  <Grid style={{  }}>
                     {event.links.map((link) => {
                       return (
                        
@@ -114,7 +114,7 @@ export default function Events({
            {
             // Print constraints if they exist
             event.constraints && (
-              <Grid item direction="row" spacing={2} justifyContent="flex-start">
+              <Grid direction="row" spacing={2} justifyContent="flex-start">
                 {
                   // If constraints.max_teams_per_problem is not null, then display the max number of teams per problem
                   event.constraints.max_teams_per_problem && (

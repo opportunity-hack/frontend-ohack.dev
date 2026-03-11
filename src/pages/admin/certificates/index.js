@@ -532,7 +532,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
 
             <Box component="form" onSubmit={handleHeartsSubmit}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Autocomplete
                     multiple
                     fullWidth
@@ -587,7 +587,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
                     disabled={loadingSlackUsers}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth>
                     <InputLabel>Heart Types</InputLabel>
                     <Select
@@ -604,7 +604,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     type="number"
@@ -615,7 +615,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
                     required
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Button
                     type="submit"
                     variant="contained"
@@ -645,7 +645,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
                 {(selectedUsers.length > 0 ||
                   selectedHearts.length > 0 ||
                   heartCount !== 0.5) && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Alert severity="info" sx={{ mt: 2 }}>
                       <Typography variant="h6" gutterBottom>
                         Award Summary
@@ -712,7 +712,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
 
             <Box component="form" onSubmit={handleGitHubCertificateSubmit}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     label="GitHub Username"
@@ -723,7 +723,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
                     helperText="GitHub username (not email)"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     label="Repository URL"
@@ -734,7 +734,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
                     helperText="Full GitHub repository URL"
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Button
                     type="submit"
                     variant="contained"
@@ -773,7 +773,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
               }
             }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={8}>
+                <Grid size={{ xs: 12, sm: 8 }}>
                   <TextField
                     fullWidth
                     label="Slack Channel"
@@ -784,7 +784,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
                     helperText="Enter the Slack channel name (without #)"
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <Button
                     type="submit"
                     variant="contained"
@@ -818,7 +818,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
             📊 Hearts Leaderboard
           </Typography>
           <Grid container spacing={2} alignItems="center">
-            <Grid item>
+            <Grid>
               <Button
                 onClick={() => {
                   fetchUsersHearts();
@@ -830,7 +830,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
                 {loading || loadingSlackUsers ? "Refreshing..." : "Refresh Data"}
               </Button>
             </Grid>
-            <Grid item xs>
+            <Grid size={{ xs: true }}>
               <TextField
                 fullWidth
                 label="Filter by Slack Username"
@@ -937,7 +937,7 @@ const AdminCertificatesPage = withRequiredAuthInfo(({ userClass }) => {
             📜 Recent Certificates
           </Typography>
           <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
-            <Grid item>
+            <Grid>
               <Button
                 onClick={fetchRecentCertificates}
                 variant="outlined"

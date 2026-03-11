@@ -82,7 +82,7 @@ const NonprofitSelector = memo(({
             const isSelected = selectedNonprofits.some(np => np.id === nonprofit.id);
             
             return (
-              <Grid item xs={12} md={6} key={nonprofit.id}>
+              <Grid size={{ xs: 12, md: 6 }} key={nonprofit.id}>
                 <Card 
                   sx={{
                     mb: 2,

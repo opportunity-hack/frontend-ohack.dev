@@ -1275,7 +1275,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         ) : (
           // Desktop layout - horizontal
           <Grid container spacing={2} alignItems="center">
-            <Grid item>
+            <Grid>
               <Button
                 onClick={() => {
                   dataLoadedRef.current = false;
@@ -1287,7 +1287,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 Refresh Data
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 onClick={handleAddSingleVolunteer}
                 variant="outlined"
@@ -1296,7 +1296,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 Add Single Volunteer
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <ToggleButtonGroup
                 value={viewMode}
                 exclusive
@@ -1316,7 +1316,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 </ToggleButton>
               </ToggleButtonGroup>
             </Grid>
-            <Grid item xs={3}>
+            <Grid size={{ xs: 3 }}>
               <FormControl fullWidth>
                 <InputLabel id="hackathon-select-label">
                   Hackathon Event
@@ -1342,7 +1342,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item>
+            <Grid>
               <Tooltip title="Share link to this hackathon">
                 <IconButton
                   onClick={handleShareLink}
@@ -1354,7 +1354,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
               </Tooltip>
             </Grid>
             {viewMode === "table" && (
-              <Grid item xs>
+              <Grid size={{ xs: true }}>
                 <TextField
                   fullWidth
                   label={(() => {

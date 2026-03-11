@@ -380,7 +380,7 @@ const DramaticGiveawaySelector = ({
                 {/* Entry Pool Visualization */}
                 <Grid container spacing={1} sx={{ maxHeight: "300px", overflow: "auto" }}>
                   {entryPool.slice(0, 50).map((entry, index) => (
-                    <Grid item xs={6} sm={4} md={3} key={index}>
+                    <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
                       <EntryCard
                         isSelected={selectedIndex === index}
                         isShuffling={isShuffling}
@@ -401,7 +401,7 @@ const DramaticGiveawaySelector = ({
                     </Grid>
                   ))}
                   {entryPool.length > 50 && (
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Typography textAlign="center" sx={{ opacity: 0.7 }}>
                         ... and {entryPool.length - 50} more entries
                       </Typography>

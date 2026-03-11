@@ -80,7 +80,7 @@ const HackathonIndex = () => {
         </Typography>
 
         <Grid container spacing={2} sx={{ maxWidth: '600px', mx: 'auto', mb: 3 }}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="contained"
               color="primary"
@@ -96,7 +96,7 @@ const HackathonIndex = () => {
               View Upcoming Events
             </Button>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="outlined"
               color="primary"
@@ -115,12 +115,12 @@ const HackathonIndex = () => {
         {/* Why Join Section with Image - Moved to top for better UX flow */}
         <Paper sx={{ p: 4, mb: 5, bgcolor: 'grey.50' }}>
           <Grid container spacing={4} sx={{ alignItems: 'center' }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h3" component="h2" gutterBottom>
                 Why Join Opportunity Hack?
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <Code color="primary" sx={{ mr: 2, mt: 0.5 }} />
                     <Box>
@@ -133,7 +133,7 @@ const HackathonIndex = () => {
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <Group color="primary" sx={{ mr: 2, mt: 0.5 }} />
                     <Box>
@@ -146,7 +146,7 @@ const HackathonIndex = () => {
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <EmojiEvents color="primary" sx={{ mr: 2, mt: 0.5 }} />
                     <Box>
@@ -159,7 +159,7 @@ const HackathonIndex = () => {
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <EventAvailable color="primary" sx={{ mr: 2, mt: 0.5 }} />
                     <Box>
@@ -174,7 +174,7 @@ const HackathonIndex = () => {
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                 <Box sx={{ textAlign: 'center', maxWidth: '100%' }}>
                   <Image
@@ -224,7 +224,7 @@ const HackathonIndex = () => {
         </Typography>
         
         <Grid container spacing={3} sx={{ maxWidth: '900px', mx: 'auto' }}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <Policy color="primary" sx={{ fontSize: 40, mb: 2 }} />
@@ -247,7 +247,7 @@ const HackathonIndex = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <Gavel color="action" sx={{ fontSize: 40, mb: 2 }} />
@@ -270,7 +270,7 @@ const HackathonIndex = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <CameraAlt color="action" sx={{ fontSize: 40, mb: 2 }} />

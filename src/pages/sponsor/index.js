@@ -177,12 +177,12 @@ export default function SponsorIndexList() {
       <Grid container spacing={isMobile ? 2 : 3}>
         {levelSponsors.length > 0 ? (
           levelSponsors.map((sponsor) => (
-            <Grid item key={sponsor.name} xs={12}>
+            <Grid size={{ xs: 12 }} key={sponsor.name}>
               <SponsorCard sponsor={sponsor} level={level} />
             </Grid>
           ))
         ) : (
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Paper
               sx={{
                 p: 3,
@@ -250,7 +250,7 @@ export default function SponsorIndexList() {
           </Typography>
           <Grid container spacing={3}>
             {[1, 2].map((index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Skeleton variant="rectangular" height={200} />
               </Grid>
             ))}
@@ -320,7 +320,7 @@ export default function SponsorIndexList() {
             });
             
             return (
-              <Grid item xs={12} md={6} key={event.event_id}>
+              <Grid size={{ xs: 12, md: 6 }} key={event.event_id}>
                 <Card 
                   sx={{ 
                     height: '100%',
@@ -544,7 +544,7 @@ export default function SponsorIndexList() {
             About Opportunity Hack
           </Typography>
           <Grid container spacing={isMobile ? 2 : 3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="body1" paragraph style={style}>
                 Opportunity Hack is a premier hackathon that brings together
                 talented students and professionals to create innovative
@@ -572,7 +572,7 @@ export default function SponsorIndexList() {
                 </ul>
               </Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box
                 sx={{
                   position: "relative",
@@ -620,7 +620,7 @@ export default function SponsorIndexList() {
             mentors, including professionals from:
           </Typography>
           <Grid container spacing={isMobile ? 1 : 2}>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" style={style}>
@@ -632,7 +632,7 @@ export default function SponsorIndexList() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" style={style}>
@@ -644,7 +644,7 @@ export default function SponsorIndexList() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" style={style}>
@@ -686,7 +686,7 @@ export default function SponsorIndexList() {
         </Typography>
         <Grid container spacing={isMobile ? 2 : 3}>
           {sponsorLevels.map((level, index) => (
-            <Grid item xs={12} sm={6} md={3} key={level.name}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={level.name}>
               <Card sx={{ height: "100%", backgroundColor: level.color }}>
                 <CardContent>
                   <Typography
@@ -811,7 +811,7 @@ export default function SponsorIndexList() {
             Why Sponsor Opportunity Hack?
           </Typography>
           <Grid container spacing={isMobile ? 2 : 3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography
                 variant="h5"
                 component="h4"
@@ -825,7 +825,7 @@ export default function SponsorIndexList() {
                 faced by nonprofits, amplifying their impact in communities.
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography
                 variant="h5"
                 component="h4"
@@ -839,7 +839,7 @@ export default function SponsorIndexList() {
                 to using technology for social good.
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography
                 variant="h5"
                 component="h4"
@@ -853,7 +853,7 @@ export default function SponsorIndexList() {
                 technology-driven solutions for nonprofits.
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography
                 variant="h5"
                 component="h4"
@@ -884,7 +884,7 @@ export default function SponsorIndexList() {
             how your sponsorship can make a real difference:
           </Typography>
           <Grid container spacing={isMobile ? 2 : 3}>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography
@@ -911,7 +911,7 @@ export default function SponsorIndexList() {
                 </CardActions>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography
@@ -938,7 +938,7 @@ export default function SponsorIndexList() {
                 </CardActions>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography
@@ -1006,7 +1006,7 @@ export default function SponsorIndexList() {
                   "Create a custom challenge for participants using your technologies, with dedicated prizes for the best solutions.",
               },
             ].map((item, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                 <Card
                   sx={{
                     height: "100%",

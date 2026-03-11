@@ -325,7 +325,7 @@ const NonprofitManagement = memo(({
           Add Nonprofit to Hackathon
         </Typography>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={8}>
+          <Grid size={{ xs: 8 }}>
             <FormControl fullWidth>
               <InputLabel id="nonprofit-select-label">Select Nonprofit</InputLabel>
               <Select
@@ -345,7 +345,7 @@ const NonprofitManagement = memo(({
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={4}>
+          <Grid size={{ xs: 4 }}>
             <Button
               variant="contained"
               color="primary"

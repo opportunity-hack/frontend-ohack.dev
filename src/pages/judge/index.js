@@ -140,7 +140,7 @@ const JudgeDashboard = withRequiredAuthInfo(({ userClass }) => {
                 );
                 
                 return (
-                  <Grid item xs={12} md={6} key={hackathon.event_id}>
+                  <Grid size={{ xs: 12, md: 6 }} key={hackathon.event_id}>
                     <Card sx={{ height: '100%', position: 'relative' }}>
                       <CardContent sx={{ p: 3 }}>
                         {/* Hackathon Header */}

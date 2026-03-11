@@ -793,7 +793,7 @@ const FindTeamPage = () => {
       {!isCheckingApplication && myProfile?.application?.isSelected !== false && myProfile?.application && (
         <Grid container spacing={4}>
         {/* Left sidebar - Your profile */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <StyledPaper>
             <Typography variant="h5" gutterBottom>
               Your Profile
@@ -992,7 +992,7 @@ const FindTeamPage = () => {
         </Grid>
 
         {/* Right content area - Potential teammates */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <StyledPaper>
             <Tabs
               value={selectedTab}
@@ -1077,7 +1077,7 @@ const FindTeamPage = () => {
                 {currentList.map((teammate) => {
                   const matchScore = calculateMatchScore(teammate);
                   return (
-                    <Grid item xs={12} sm={6} key={teammate.user_id}>
+                    <Grid size={{ xs: 12, sm: 6 }} key={teammate.user_id}>
                       <ProfileCard>
                         <CardContent sx={{ position: 'relative', flexGrow: 1 }}>
                           <MatchScore score={matchScore}>

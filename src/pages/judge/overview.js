@@ -68,7 +68,7 @@ const SectionHeader = memo(({ variant = "h3", component = "h2", children, sectio
 SectionHeader.displayName = 'SectionHeader';
 
 const VideoHighlightCard = memo(({ icon: Icon, title, description, chipLabel, chipColor }) => (
-  <Grid item xs={12} md={4}>
+  <Grid size={{ xs: 12, md: 4 }}>
     <Card sx={{ 
       height: "100%", 
       display: 'flex',
@@ -103,7 +103,7 @@ const VideoHighlightCard = memo(({ icon: Icon, title, description, chipLabel, ch
 VideoHighlightCard.displayName = 'VideoHighlightCard';
 
 const ResourceButton = memo(({ href, icon: Icon, label, onClick, trackingLabel }) => (
-  <Grid item xs={12} sm={6} md={3}>
+  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
     <Button
       variant="outlined"
       fullWidth
@@ -507,7 +507,7 @@ const JudgeDashboardOverview = () => {
             Quick Reference: Judging Process
           </Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box>
                 <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <EventRounded sx={{ mr: 1, color: 'primary.main' }} />
@@ -518,7 +518,7 @@ const JudgeDashboardOverview = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box>
                 <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <GroupsRounded sx={{ mr: 1, color: 'secondary.main' }} />

@@ -205,12 +205,12 @@ const AdminContactPage = withRequiredAuthInfo(({ userClass }) => {
 
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item>
+          <Grid>
             <Button onClick={fetchSubmissions} variant="outlined">
               Refresh Data
             </Button>
           </Grid>
-          <Grid item xs>
+          <Grid size={{ xs: true }}>
             <TextField
               fullWidth
               label="Filter by Name, Email, Organization, or Inquiry Type"

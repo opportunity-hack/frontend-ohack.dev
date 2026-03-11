@@ -37,17 +37,17 @@ const ConfirmationSummary = memo(({
             <Typography variant="subtitle1" fontWeight="bold" color="primary">Team Information</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Typography variant="subtitle2" color="text.secondary">Team Name:</Typography>
                 <Typography>{teamName}</Typography>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Typography variant="subtitle2" color="text.secondary">Slack Channel:</Typography>
                 <Typography sx={{ display: 'flex', alignItems: 'center' }}>
                   <FaSlack style={{ marginRight: 8 }} /> #{slackChannel}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Typography variant="subtitle2" color="text.secondary">GitHub Username:</Typography>
                 <Typography sx={{ display: 'flex', alignItems: 'center' }}>
                   <FaGithub style={{ marginRight: 8 }} /> {githubUsername}

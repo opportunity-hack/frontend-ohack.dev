@@ -707,7 +707,7 @@ export default function Profile(props) {
                   </Typography>
                   
                   <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={56} />
                       ) : (
@@ -733,7 +733,7 @@ export default function Profile(props) {
                       )}
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <FormControl fullWidth>            
                           <TextField
@@ -756,7 +756,7 @@ export default function Profile(props) {
                       </Box>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={56} />
                       ) : (
@@ -772,7 +772,7 @@ export default function Profile(props) {
                       )}
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <FormControl fullWidth>            
                           <TextField
@@ -795,7 +795,7 @@ export default function Profile(props) {
                       </Box>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControl fullWidth>            
                         <TextField
                           id="linkedin"
@@ -809,7 +809,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControl fullWidth>            
                         <TextField
                           id="instagram"
@@ -823,7 +823,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                         <FormControl fullWidth>            
                           <TextField
@@ -850,7 +850,7 @@ export default function Profile(props) {
                       </Box>
                     </Grid>
                     
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={80} />
                       ) : (
@@ -876,14 +876,14 @@ export default function Profile(props) {
                   </Typography>
                   
                   <Grid container spacing={4}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={180} />
                       ) : (
                         <RaffleEntries profile={profile} githubHistory={githubHistory} />
                       )}
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       {isLoading || isGithubLoading ? (
                         <Skeleton variant="rectangular" height={180} />
                       ) : (
@@ -940,7 +940,7 @@ export default function Profile(props) {
                   </Typography>
                   
                   <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={56} />
                       ) : (
@@ -956,7 +956,7 @@ export default function Profile(props) {
                       )}
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControlLabel
                         control={
                           <Checkbox 
@@ -975,7 +975,7 @@ export default function Profile(props) {
                   </Typography>
                   
                   <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="street_address"
@@ -989,7 +989,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="street_address_2"
@@ -1003,7 +1003,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="city"
@@ -1017,7 +1017,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="state"
@@ -1031,7 +1031,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="postal_code"
@@ -1045,7 +1045,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <CustomSelect
                         label="Country"
                         value={country}

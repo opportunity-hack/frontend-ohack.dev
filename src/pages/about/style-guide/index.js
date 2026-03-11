@@ -112,7 +112,7 @@ export default function StyleGuide(){
           </Typography>
           <Grid container spacing={2}>
             {Object.entries(colors).map(([name, value]) => (
-              <Grid item key={name} xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }} key={name}>
                 <Box
                   sx={{
                     width: "100%",
@@ -171,17 +171,17 @@ export default function StyleGuide(){
             these consistently in your UX designs:
           </Typography>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button variant="contained" color="primary">
                 Primary Button
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button variant="contained" color="secondary">
                 Secondary Button
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button variant="outlined" color="primary">
                 Outlined Button
               </Button>
@@ -208,7 +208,7 @@ export default function StyleGuide(){
               <Typography variant="h4">{color.replace("_", " ")}</Typography>
               <Grid container spacing={2}>
                 {logoVariants.map((variant) => (
-                  <Grid item xs={12} sm={4} key={variant.name}>
+                  <Grid size={{ xs: 12, sm: 4 }} key={variant.name}>
                     <Box
                       sx={{
                         width: "100%",
@@ -272,7 +272,7 @@ export default function StyleGuide(){
 
           <Grid container spacing={2}>
             {twoLetterLogoColors.map((color) => (
-              <Grid item xs={12} sm={4} key={color}>
+              <Grid size={{ xs: 12, sm: 4 }} key={color}>
                 <Box
                   sx={{
                     width: 100,

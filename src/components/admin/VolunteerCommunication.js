@@ -256,7 +256,7 @@ const VolunteerCommunication = ({
                     </Typography>
                     <Grid container spacing={2}>
                       {category.templates.map((template) => (
-                        <Grid item xs={12} sm={6} key={template.id}>
+                        <Grid size={{ xs: 12, sm: 6 }} key={template.id}>
                           <Card 
                             variant="outlined" 
                             sx={{ 
@@ -359,7 +359,7 @@ const VolunteerCommunication = ({
                       {detectedPlaceholders.map((name) => {
                         const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
                         return (
-                          <Grid item xs={12} sm={6} key={name}>
+                          <Grid size={{ xs: 12, sm: 6 }} key={name}>
                             <TextField
                               fullWidth
                               size="small"
@@ -489,7 +489,7 @@ const VolunteerCommunication = ({
                     </Typography>
                     <Grid container spacing={2}>
                       {category.templates.map((template) => (
-                        <Grid item xs={12} sm={6} key={template.id}>
+                        <Grid size={{ xs: 12, sm: 6 }} key={template.id}>
                           <Card 
                             variant="outlined" 
                             sx={{ 
@@ -592,7 +592,7 @@ const VolunteerCommunication = ({
                       {detectedPlaceholders.map((name) => {
                         const info = PLACEHOLDER_LABELS[name] || { label: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), example: '' };
                         return (
-                          <Grid item xs={12} sm={6} key={name}>
+                          <Grid size={{ xs: 12, sm: 6 }} key={name}>
                             <TextField
                               fullWidth
                               size="small"

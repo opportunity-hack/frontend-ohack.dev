@@ -151,7 +151,7 @@ const NonProfit = React.memo(function NonProfit(props) {
     if (!nonprofit.problem_statements || nonprofit.problem_statements.length === 0) {      
       return (
         <Grid container>
-          <Grid item style={{ fontSize: "13px"}} xs={12}>
+          <Grid size={{ xs: 12 }} style={{ fontSize: "13px"}}>
             <Typography style={style}>{nonprofit_cta_text}</Typography>
             <br/>
           </Grid>
@@ -226,7 +226,7 @@ const NonProfit = React.memo(function NonProfit(props) {
       <TitleContainer container>
         {nonprofit.id ? (
           <>
-            <Grid item>
+            <Grid>
               <TitleChipContainer>
                 <TitleStyled variant='h2' style={{paddingBottom: "0"}}>
                   <Avatar
@@ -246,7 +246,7 @@ const NonProfit = React.memo(function NonProfit(props) {
               </TitleChipContainer>
             </Grid>
             
-            <Grid item>
+            <Grid>
               {description && (
                 <Typography style={{fontSize:"13px"}}>{description}</Typography>
               )}

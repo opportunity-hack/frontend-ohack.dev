@@ -972,7 +972,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     <Box>
       {/* Hackathon Selection */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <FormControl fullWidth>
             <InputLabel>Select Hackathon</InputLabel>
             <Select
@@ -988,7 +988,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Button
             variant="contained"
             startIcon={<ScheduleIcon />}
@@ -998,7 +998,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
             Configure Session Settings
           </Button>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Button
             variant="contained"
             color="success"
@@ -1018,7 +1018,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         <>
           {/* Summary Stats */}
           <Grid container spacing={2} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={3}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <Card>
                 <CardContent sx={{ textAlign: 'center' }}>
                   <PersonIcon color="primary" sx={{ fontSize: 40 }} />
@@ -1027,7 +1027,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <Card>
                 <CardContent sx={{ textAlign: 'center' }}>
                   <TrophyIcon color="warning" sx={{ fontSize: 40 }} />
@@ -1036,7 +1036,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <Card>
                 <CardContent sx={{ textAlign: 'center' }}>
                   <ScheduleIcon color="info" sx={{ fontSize: 40 }} />
@@ -1045,7 +1045,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <Card>
                 <CardContent sx={{ textAlign: 'center' }}>
                   <LocationIcon color="success" sx={{ fontSize: 40 }} />
@@ -1357,7 +1357,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
               {Object.keys(topTeamsByCategory).length > 0 ? (
                 <Grid container spacing={3}>
                   {Object.entries(topTeamsByCategory).map(([categoryName, teams]) => (
-                    <Grid item xs={12} md={6} key={categoryName}>
+                    <Grid size={{ xs: 12, md: 6 }} key={categoryName}>
                       <Card variant="outlined" sx={{ height: '100%' }}>
                         <CardContent>
                           <Typography variant="h6" gutterBottom sx={{ 
@@ -1511,7 +1511,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
 
                 <Grid container spacing={3}>
                   {Object.entries(topTeamsBySpecialCategory).map(([categoryName, teams]) => (
-                    <Grid item xs={12} key={categoryName}>
+                    <Grid size={{ xs: 12 }} key={categoryName}>
                       <Card variant="outlined">
                         <CardContent>
                           <Typography variant="h6" gutterBottom sx={{
@@ -1768,7 +1768,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         <DialogTitle>Round 2 Session Settings</DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Session Duration (minutes)"
                 type="number"
@@ -1783,7 +1783,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                 sx={{ mt: 1 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Break Duration (minutes)"
                 type="number"
@@ -1798,7 +1798,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                 sx={{ mt: 1 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Start Time"
                 type="time"
@@ -1812,7 +1812,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
               />
             </Grid>
             {isInPerson && (
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Room/Location"
                   fullWidth
@@ -1890,7 +1890,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                   Team Overview
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <Card variant="outlined">
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" color="primary">
@@ -1900,7 +1900,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                       </CardContent>
                     </Card>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <Card variant="outlined">
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" color="secondary">
@@ -1910,7 +1910,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                       </CardContent>
                     </Card>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <Card variant="outlined">
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" color="success.main">

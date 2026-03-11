@@ -89,7 +89,7 @@ function SingleNews( {newsItem} ) {
 
         <BlankContainer xs={12} md={12} lg={12}  key={newsItem.id}>
           <TitleContainer container>          
-            <Grid item xs={12} md={12} lg={12}>                          
+            <Grid size={{ xs: 12, md: 12, lg: 12 }}>                          
               {newsItem?.image && (
               <Image
                 src={normalizeImageUrl(newsItem.image)}
@@ -128,7 +128,7 @@ function SingleNews( {newsItem} ) {
               </TitleStyled>
               
             </Grid>
-            <Grid item xs={12} md={12} lg={12}>
+            <Grid size={{ xs: 12, md: 12, lg: 12 }}>
               <TextMuted>
                 <CalendarTodayIcon style={{ marginRight: '5px' }} />
                 {newsItem.slack_ts_human_readable}

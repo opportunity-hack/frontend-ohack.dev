@@ -323,7 +323,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
 
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Autocomplete
                 multiple
                 fullWidth
@@ -378,7 +378,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
                 disabled={loadingSlackUsers}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Heart Types</InputLabel>
                 <Select
@@ -395,7 +395,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -406,7 +406,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Button
                 type="submit"
                 variant="contained"
@@ -437,7 +437,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
             {(selectedUsers.length > 0 ||
               selectedHearts.length > 0 ||
               heartCount !== 0.5) && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Alert severity="info" sx={{ mt: 2 }}>
                   <Typography variant="h6" gutterBottom>
                     Award Summary
@@ -496,7 +496,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
           📊 Hearts Leaderboard
         </Typography>
         <Grid container spacing={2} alignItems="center">
-          <Grid item>
+          <Grid>
             <Button
               onClick={() => {
                 fetchUsersHearts();
@@ -508,7 +508,7 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
               {loading || loadingSlackUsers ? "Refreshing..." : "Refresh Data"}
             </Button>
           </Grid>
-          <Grid item xs>
+          <Grid size={{ xs: true }}>
             <TextField
               fullWidth
               label="Filter by Slack Username"

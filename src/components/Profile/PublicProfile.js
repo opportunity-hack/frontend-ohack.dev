@@ -198,7 +198,7 @@ const PublicProfile = () => {
 
       <Grid container spacing={4}>
         {/* Left Column */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           {/* Basic Information */}
           <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
             <CardContent sx={{ p: 3 }}>
@@ -218,7 +218,7 @@ const PublicProfile = () => {
 
               <Grid container spacing={3}>
                 {/* GitHub Username */}
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography
                     variant="subtitle2"
                     color="text.secondary"
@@ -255,7 +255,7 @@ const PublicProfile = () => {
                 </Grid>
 
                 {/* Company */}
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography
                     variant="subtitle2"
                     color="text.secondary"
@@ -285,7 +285,7 @@ const PublicProfile = () => {
                 </Grid>
 
                 {/* Why are you here */}
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Typography
                     variant="subtitle2"
                     color="text.secondary"
@@ -420,7 +420,7 @@ const PublicProfile = () => {
         </Grid>
 
         {/* Right Column - Info & Actions */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper
             elevation={1}
             sx={{ p: 3, borderRadius: 2, position: "sticky", top: 24 }}

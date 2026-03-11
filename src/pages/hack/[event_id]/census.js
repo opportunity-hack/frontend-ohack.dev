@@ -775,7 +775,7 @@ export default function CensusPage() {
               <FormGroup>
                 <Grid container spacing={1}>
                   {timeSlots.map((timeSlot) => (
-                    <Grid item xs={12} sm={6} md={4} key={timeSlot}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={timeSlot}>
                       <FormControlLabel
                         control={
                           <Checkbox
@@ -807,7 +807,7 @@ export default function CensusPage() {
         ) : (
           <Grid container spacing={3}>
             {/* Mentors Table */}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <RoleTable
                 role="mentors"
                 people={getFilteredData('mentors')}
@@ -820,7 +820,7 @@ export default function CensusPage() {
             </Grid>
 
             {/* Volunteers Table */}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <RoleTable
                 role="volunteers"
                 people={getFilteredData('volunteers')}
@@ -834,7 +834,7 @@ export default function CensusPage() {
 
             {/* Judges Table - Smart Visibility */}
             {getFilteredTimeSlots().some(slot => isJudgeTimeSlot(slot)) && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <RoleTable
                   role="judges"
                   people={getFilteredData('judges')}
@@ -849,7 +849,7 @@ export default function CensusPage() {
             )}
 
             {/* Hackers Table - Always Show */}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <GroupIcon sx={{ mr: 1, color: 'info.main' }} />

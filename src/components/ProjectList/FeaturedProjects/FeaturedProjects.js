@@ -67,7 +67,7 @@ export default function FeaturedProjects({ projects }) {
   return (
     <Grid container spacing={3}>
       {projects.map((project) => (
-        <Grid item xs={12} md={4} key={project.id}>
+        <Grid size={{ xs: 12, md: 4 }} key={project.id}>
           <Card
             sx={{
               height: "100%",

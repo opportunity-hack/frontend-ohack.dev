@@ -1282,7 +1282,7 @@ const TeamManagement = ({ orgId }) => {
 
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card elevation={1} sx={{ mb: 3, height: "100%" }}>
             <CardHeader title="Team Information" />
             <Divider />
@@ -1360,7 +1360,7 @@ const TeamManagement = ({ orgId }) => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card elevation={1} sx={{ mb: 3, height: "100%" }}>
             <CardHeader title="Additional Information" />
             <Divider />
@@ -1943,7 +1943,7 @@ const TeamManagement = ({ orgId }) => {
 
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <InputLabel id="hackathon-select-label">
                 Select Hackathon
@@ -1967,7 +1967,7 @@ const TeamManagement = ({ orgId }) => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <TextField
               fullWidth
               placeholder="Search teams, members, or slack channels..."
@@ -2284,7 +2284,7 @@ const TeamManagement = ({ orgId }) => {
                     </Typography>
                     <Grid container spacing={2}>
                       {category.templates.map((template) => (
-                        <Grid item xs={12} sm={6} key={template.id}>
+                        <Grid size={{ xs: 12, sm: 6 }} key={template.id}>
                           <Card 
                             variant="outlined" 
                             sx={{ 
@@ -2499,7 +2499,7 @@ const TeamManagement = ({ orgId }) => {
                 </Typography>
                 <Grid container spacing={2}>
                   {teamData.github_links.map((repo, index) => (
-                    <Grid item xs={12} sm={6} key={index}>
+                    <Grid size={{ xs: 12, sm: 6 }} key={index}>
                       <Card 
                         variant="outlined" 
                         sx={{ 
@@ -2542,7 +2542,7 @@ const TeamManagement = ({ orgId }) => {
                 
                 <Grid container spacing={2}>
                   {Object.entries(getGithubIssueTemplates(selectedHackathon)).map(([templateKey, template]) => (
-                    <Grid item xs={12} sm={6} key={templateKey}>
+                    <Grid size={{ xs: 12, sm: 6 }} key={templateKey}>
                       <Card 
                         variant="outlined" 
                         sx={{ 

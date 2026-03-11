@@ -494,7 +494,7 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
 
           <Grid container spacing={3}>
             {/* Team Information Panel Skeleton */}
-            <Grid item xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <Paper elevation={2} sx={{ p: 3 }}>
                 <Skeleton variant="text" width="70%" height={32} sx={{ mb: 2 }} />
                 
@@ -557,7 +557,7 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
             </Grid>
 
             {/* Scoring Panel Skeleton */}
-            <Grid item xs={12} lg={8}>
+            <Grid size={{ xs: 12, lg: 8 }}>
               <Skeleton variant="text" width="40%" height={40} sx={{ mb: 1 }} />
               <Skeleton variant="text" width="80%" height={20} sx={{ mb: 3 }} />
 
@@ -664,7 +664,7 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
 
           <Grid container spacing={3}>
             {/* Team Information Panel */}
-            <Grid item xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <Paper elevation={2} sx={{ p: 3, position: 'sticky', top: 20 }}>
                 <Typography variant="h6" gutterBottom>
                   Team Information
@@ -906,7 +906,7 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
             </Grid>
 
             {/* Scoring Panel */}
-            <Grid item xs={12} lg={8}>
+            <Grid size={{ xs: 12, lg: 8 }}>
               <Typography variant="h5" gutterBottom>
                 Scoring Criteria
               </Typography>

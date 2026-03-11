@@ -155,7 +155,7 @@ const MissionOverview = () => {
       {/* Impact numbers */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {impactNumbers.map((item, index) => (
-          <Grid item xs={6} sm={3} key={index}>
+          <Grid size={{ xs: 6, sm: 3 }} key={index}>
             <Paper elevation={0} sx={{ 
               p: 3, 
               textAlign: 'center',
@@ -181,7 +181,7 @@ const MissionOverview = () => {
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {coreValues.map((value, index) => (
-          <Grid item xs={12} sm={6} key={index}>
+          <Grid size={{ xs: 12, sm: 6 }} key={index}>
             <ValueCard>
               <CardContent>
                 <StyledAvatar>{value.title.charAt(0)}</StyledAvatar>

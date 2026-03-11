@@ -180,7 +180,7 @@ const AdminTimeTrackingPage = () => {
         <Paper sx={{ p: 3, mb: 3 }}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <DatePicker
                   label="Start Date"
                   value={startDate}
@@ -188,7 +188,7 @@ const AdminTimeTrackingPage = () => {
                   renderInput={(params) => <TextField {...params} fullWidth />}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <DatePicker
                   label="End Date"
                   value={endDate}
@@ -196,7 +196,7 @@ const AdminTimeTrackingPage = () => {
                   renderInput={(params) => <TextField {...params} fullWidth />}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <FormControl fullWidth>
                   <InputLabel>Filter by Reason</InputLabel>
                   <Select
@@ -213,7 +213,7 @@ const AdminTimeTrackingPage = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Button
                   variant="contained"
                   onClick={fetchTimeTrackingData}
@@ -223,7 +223,7 @@ const AdminTimeTrackingPage = () => {
                   {loading ? <CircularProgress size={24} /> : "Fetch Data"}
                 </Button>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="Search by Name or Email"

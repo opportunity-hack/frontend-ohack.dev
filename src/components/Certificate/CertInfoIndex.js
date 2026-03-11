@@ -63,7 +63,7 @@ const CertInfoIndex = () => {
             </Typography>
                     
             <Grid container spacing={0} margin={0}>        
-                <Grid item xs={12} sm={12} md={12} padding={0} margin={0}>
+                <Grid size={{ xs: 12, sm: 12, md: 12 }} padding={0} margin={0}>
                     <Typography style={style} marginTop={1}>
                         Congratulations <b>{certInfo.author_name}</b>! You've earned a certificate for your contributions. 
                         <br/>
@@ -74,7 +74,7 @@ const CertInfoIndex = () => {
         </TitleContainer>
                 
         <ProjectsContainer container style={{ marginTop: '2em'}}>                    
-            <Grid item xs={12} sm={6} md={6} style={{margin: '0.5em'}}>                            
+            <Grid size={{ xs: 12, sm: 6, md: 6 }} style={{margin: '0.5em'}}>                            
                     { certInfo && certInfo.certificate_url && <Link href={certInfo.certificate_url}><Image 
                         src={normalizeImageUrl(certInfo.certificate_url)}
                         width={1024/3}
@@ -86,7 +86,7 @@ const CertInfoIndex = () => {
             </Grid>  
             
             { certInfo && certInfo.stats && 
-            <Grid item xs={12} sm={6} md={6}>
+            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                 <Card style={{ border: '1px solid lightblue', marginBottom: '10px' }}>
                     <CardContent>
                         <Typography variant="h5" component="h3" gutterBottom>
@@ -116,7 +116,7 @@ const CertInfoIndex = () => {
             </Grid>                                
         }          
         
-        <Grid item xs={12} sm={12} md={12} style={{margin: '0.5em'}}>
+        <Grid size={{ xs: 12, sm: 12, md: 12 }} style={{margin: '0.5em'}}>
             <LoginOrRegister introText="Ready to join us?" previousPage={"/about/hearts"} />
         </Grid>
         </ProjectsContainer>

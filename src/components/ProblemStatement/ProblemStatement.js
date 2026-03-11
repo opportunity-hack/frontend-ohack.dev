@@ -836,7 +836,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           <CardContent sx={{ p: 4 }}>
             {/* Engagement Metrics */}
             <Grid container spacing={isMobile ? 2 : 3} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Zoom in timeout={600} style={{ transitionDelay: '200ms' }}>
                   <MetricCard>
                     <Stack alignItems="center" spacing={1}>
@@ -853,7 +853,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
                   </MetricCard>
                 </Zoom>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Zoom in timeout={600} style={{ transitionDelay: '400ms' }}>
                   <MetricCard>
                     <Stack alignItems="center" spacing={1}>
@@ -870,7 +870,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
                   </MetricCard>
                 </Zoom>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Zoom in timeout={600} style={{ transitionDelay: '600ms' }}>
                   <MetricCard>
                     <Stack alignItems="center" spacing={1}>
@@ -1029,7 +1029,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
                     <Box id="github-content" sx={{ p: 3 }}>
                       <Grid container spacing={2}>
                         {problem_statement.github.map((repo, index) => (
-                          <Grid item xs={12} sm={6} key={index}>
+                          <Grid size={{ xs: 12, sm: 6 }} key={index}>
                             <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                                 {repo.name}

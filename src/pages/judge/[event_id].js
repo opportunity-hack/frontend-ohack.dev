@@ -102,7 +102,7 @@ const HackathonJudgePage = withRequiredAuthInfo(({ userClass }) => {
   };
 
   const TeamCard = ({ team, round, showDemoTime = false }) => (
-    <Grid item xs={12} md={6} key={`${round}_${team.id}`}>
+    <Grid size={{ xs: 12, md: 6 }} key={`${round}_${team.id}`}>
       <Card sx={{ 
         height: '100%',
         border: team.judged ? '2px solid' : '1px solid',
@@ -403,7 +403,7 @@ const HackathonJudgePage = withRequiredAuthInfo(({ userClass }) => {
           {/* Summary Stats */}
           <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" color="primary">
                     {round1Teams.length}
@@ -413,7 +413,7 @@ const HackathonJudgePage = withRequiredAuthInfo(({ userClass }) => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" color="secondary">
                     {round2Teams.length}
@@ -423,7 +423,7 @@ const HackathonJudgePage = withRequiredAuthInfo(({ userClass }) => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" color="success.main">
                     {round1Completed + round2Completed}

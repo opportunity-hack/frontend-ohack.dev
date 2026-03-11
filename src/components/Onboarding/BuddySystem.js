@@ -130,7 +130,7 @@ const BuddySystem = () => {
           provide guidance, and help you navigate our community. Your buddy can:
         </Typography>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Chip size="medium" label="1" color="primary" sx={{ width: 36, height: 36, fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '50%', p: 0 }} />
@@ -152,7 +152,7 @@ const BuddySystem = () => {
               </Box>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Chip size="medium" label="4" color="primary" sx={{ width: 36, height: 36, fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '50%', p: 0 }} />
@@ -190,7 +190,7 @@ const BuddySystem = () => {
           
           <Grid container spacing={3}>
             {/* Buddy profile */}
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ textAlign: 'center', mb: 2 }}>
                 <BuddyAvatar>
                   {selectedBuddy.name.charAt(0)}
@@ -244,7 +244,7 @@ const BuddySystem = () => {
             </Grid>
             
             {/* Buddy details and request form */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   Skills
@@ -315,7 +315,7 @@ const BuddySystem = () => {
           {/* Search and filter section */}
           <Box sx={{ mb: 3 }}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={8}>
+              <Grid size={{ xs: 12, sm: 8 }}>
                 <TextField
                   fullWidth
                   label={<span style={{ fontSize: '1.4rem'}}>Search Buddies</span>}
@@ -333,7 +333,7 @@ const BuddySystem = () => {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Button
                   fullWidth
                   variant="outlined"
@@ -357,7 +357,7 @@ const BuddySystem = () => {
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <FormControl fullWidth>
                       <InputLabel sx={{ fontSize: '1.2rem' }}>Skills</InputLabel>
                       <Select
@@ -372,7 +372,7 @@ const BuddySystem = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <FormControl fullWidth>
                       <InputLabel sx={{ fontSize: '1.2rem' }}>Interests</InputLabel>
                       <Select
@@ -387,7 +387,7 @@ const BuddySystem = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <FormControl fullWidth>
                       <InputLabel sx={{ fontSize: '1.2rem' }}>Availability</InputLabel>
                       <Select
@@ -426,7 +426,7 @@ const BuddySystem = () => {
           How the Buddy System Works
         </Typography>
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Paper sx={{ p: 2, height: '100%' }}>
               <Typography variant="h6" sx={{ fontSize: '1.3rem', fontWeight: 'bold', mb: 1 }}>
                 For New Members
@@ -440,7 +440,7 @@ const BuddySystem = () => {
               </Typography>
             </Paper>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Paper sx={{ p: 2, height: '100%' }}>
               <Typography variant="h6" sx={{ fontSize: '1.3rem', fontWeight: 'bold', mb: 1 }}>
                 Buddy Expectations

@@ -173,7 +173,7 @@ const AdminDashboard = () => {
 
         <Grid container spacing={isMobile ? 2 : 3}>
           {adminPages.map((page) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={page.path}>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={page.path}>
               <NextLink href={page.path} passHref legacyBehavior>
                 <Box component="a" sx={{ textDecoration: "none", display: "block" }}>
                   <StyledCard>

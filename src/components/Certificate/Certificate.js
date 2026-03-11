@@ -13,7 +13,7 @@ const CertInfoIndex = ( {
 
     return (                                
              
-            <Grid item xs={5} sm={4} md={4} spacing={0.5}>
+            <Grid size={{ xs: 5, sm: 4, md: 4 }} spacing={0.5}>
                 { certInfo && certInfo.stats && <Card>
                     <CardContent>
                     { certInfo && certInfo.certificate_url && <Link href={`https://ohack.dev/cert/${certInfo.file_id}`} passHref><Image 

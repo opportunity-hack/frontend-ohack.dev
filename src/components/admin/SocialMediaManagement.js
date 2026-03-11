@@ -537,7 +537,7 @@ const SocialMediaManagement = ({ onSnackbar }) => {
         
         <Grid container spacing={2}>
           {Object.entries(platformStatus).map(([platform, status]) => (
-            <Grid item xs={12} sm={6} md={4} key={platform}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={platform}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -672,7 +672,7 @@ const SocialMediaManagement = ({ onSnackbar }) => {
         ) : (
           <Grid container spacing={2}>
             {newsItems.map((item) => (
-              <Grid item xs={12} md={6} key={item.id}>
+              <Grid size={{ xs: 12, md: 6 }} key={item.id}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>
@@ -1056,7 +1056,7 @@ const SocialMediaManagement = ({ onSnackbar }) => {
 
           <Grid container spacing={2}>
             {/* Email Input Section */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" gutterBottom>
                 Copy/Paste Emails
               </Typography>
@@ -1077,7 +1077,7 @@ user@domain.org; admin@site.net"
             </Grid>
 
             {/* CSV Upload Section */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" gutterBottom>
                 Upload CSV File
               </Typography>
@@ -1159,7 +1159,7 @@ user@domain.org; admin@site.net"
               <Box sx={{ maxHeight: '200px', overflow: 'auto' }}>
                 <Grid container spacing={1}>
                   {additionalEmails.map((user, index) => (
-                    <Grid item key={user.id}>
+                    <Grid key={user.id}>
                       <Chip
                         label={user.email}
                         size="small"

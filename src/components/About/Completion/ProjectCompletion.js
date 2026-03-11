@@ -50,7 +50,7 @@ const ProjectCompletion = () => {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Typography variant="body1" style={style} paragraph>
               In software engineering, the definition of done is a checklist of
               requirements that need to be met before a project can be
@@ -88,7 +88,7 @@ const ProjectCompletion = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <InstagramEmbed
               url="https://www.instagram.com/p/CoBFS8hvcnB/"
               maxWidth={328}
@@ -104,7 +104,7 @@ const ProjectCompletion = () => {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -119,7 +119,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -147,7 +147,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -161,7 +161,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -175,7 +175,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -189,7 +189,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -204,7 +204,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -226,7 +226,7 @@ const ProjectCompletion = () => {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -241,7 +241,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -256,7 +256,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
@@ -271,7 +271,7 @@ const ProjectCompletion = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ mb: 2, height: "100%" }}>
               <CardContent>
                 <Typography variant="h5" component="h3" gutterBottom>
