@@ -77,6 +77,8 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
           display="flex"
           justifyContent="space-between"
           alignItems="center"
+          flexWrap="wrap"
+          gap={1}
           mb={2}
         >
           <img
@@ -84,7 +86,7 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
             alt="Opportunity Hack Logo"
             style={{ height: "40px" }}
           />
-          <Typography variant="h6" color="primary">
+          <Typography variant="h6" color="primary" sx={{ fontSize: { xs: '0.9rem', sm: '1.25rem' } }}>
             My Opportunity Hack Contributions
           </Typography>
         </Box>
@@ -93,32 +95,33 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
           gutterBottom
           display="flex"
           alignItems="center"
+          sx={{ fontSize: { xs: '1.1rem', sm: '1.5rem' }, wordBreak: 'break-word' }}
         >
-          <GitHub sx={{ mr: 1 }} />@{userName}'s GitHub Impact
+          <GitHub sx={{ mr: 1, flexShrink: 0 }} />@{userName}'s GitHub Impact
         </Typography>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={{ xs: 3 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Chip
               icon={<Code />}
               label={`${totalCommits} Commits`}
               color="primary"
             />
           </Grid>
-          <Grid size={{ xs: 3 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Chip
               icon={<MergeType />}
               label={`${totalPRs} PRs`}
               color="secondary"
             />
           </Grid>
-          <Grid size={{ xs: 3 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Chip
               icon={<BugReport />}
               label={`${totalIssues} Issues`}
               color="info"
             />
           </Grid>
-          <Grid size={{ xs: 3 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Chip
               icon={<RateReview />}
               label={`${totalReviews} Reviews`}

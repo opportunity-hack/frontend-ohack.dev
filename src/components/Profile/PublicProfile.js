@@ -16,6 +16,7 @@ import {
   Chip,
   Alert,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -36,6 +37,7 @@ import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 const PublicProfile = () => {
   const router = useRouter();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { userid } = router.query;
 
   const {
@@ -125,12 +127,12 @@ const PublicProfile = () => {
         </title>
       </Head>
 
-      <Box sx={{ mt: 4, mb: 4 }}>
+      <Box sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
         <Typography
           variant="h3"
           component="h1"
           gutterBottom
-          sx={{ fontWeight: 600 }}
+          sx={{ fontWeight: 600, fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3rem" } }}
         >
           Public Profile
         </Typography>
@@ -142,40 +144,70 @@ const PublicProfile = () => {
 
       {/* Basic Profile Header */}
       <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "center", sm: "flex-start" },
+              textAlign: { xs: "center", sm: "left" },
+              mb: 3,
+              gap: { xs: 2, sm: 0 },
+            }}
+          >
             <Avatar
               src={profile?.profile_image || "https://i.imgur.com/RdOsE7s.png"}
               alt={profile?.name}
-              sx={{ width: 120, height: 120, mr: 3 }}
+              sx={{
+                width: { xs: 90, sm: 120 },
+                height: { xs: 90, sm: 120 },
+                mr: { xs: 0, sm: 3 },
+                flexShrink: 0,
+              }}
             />
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: { xs: "center", sm: "flex-start" },
+                  mb: 1,
+                  flexWrap: "wrap",
+                  gap: 0.5,
+                }}
+              >
                 <Typography
                   variant="h4"
                   component="h2"
-                  sx={{ fontWeight: 500 }}
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: { xs: "1.4rem", sm: "1.75rem", md: "2.125rem" },
+                    wordBreak: "break-word",
+                  }}
                 >
                   {profile?.name || "Anonymous User"}
                 </Typography>
                 <VerifiedUserIcon
                   color="success"
                   fontSize="medium"
-                  sx={{ ml: 1 }}
+                  sx={{ ml: 0.5 }}
                 />
               </Box>
-              <Typography variant="h6" color="textSecondary" gutterBottom>
+              <Typography variant="h6" color="textSecondary" gutterBottom
+                sx={{ fontSize: { xs: "1rem", sm: "1.25rem" } }}
+              >
                 {profile?.nickname || "Community Member"}
               </Typography>
 
               {/* Public Role Display */}
               {profile?.role && isPublic("role") && (
-                <Box sx={{ mt: 2 }}>
+                <Box sx={{ mt: 1 }}>
                   <Chip
                     icon={<PersonIcon />}
                     label={roleLabels[profile.role] || profile.role}
                     color="primary"
                     variant="outlined"
+                    size={isMobile ? "small" : "medium"}
                   />
                 </Box>
               )}
@@ -185,18 +217,20 @@ const PublicProfile = () => {
           <Button
             variant="contained"
             color="primary"
-            size="large"
+            size={isMobile ? "medium" : "large"}
             startIcon={<FeedbackIcon />}
             component={Link}
             href={feedbackUrl}
-            sx={{ mt: 2 }}
+            sx={{ mt: 1, width: { xs: "100%", sm: "auto" } }}
           >
-            Send Feedback to {profile?.name || "User"}
+            {isMobile
+              ? `Send Feedback`
+              : `Send Feedback to ${profile?.name || "User"}`}
           </Button>
         </CardContent>
       </Paper>
 
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
         {/* Left Column */}
         <Grid size={{ xs: 12, md: 8 }}>
           {/* Basic Information */}
@@ -423,7 +457,12 @@ const PublicProfile = () => {
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper
             elevation={1}
-            sx={{ p: 3, borderRadius: 2, position: "sticky", top: 24 }}
+            sx={{
+              p: { xs: 2, sm: 3 },
+              borderRadius: 2,
+              position: { xs: "static", md: "sticky" },
+              top: { md: 24 },
+            }}
           >
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
               Connect & Engage

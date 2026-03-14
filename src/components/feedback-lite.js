@@ -84,7 +84,7 @@ export default function FeedbackLite ( {feedback_url, history} ){
         <p className="indent">
           <TextField
             onClick={handleClick}
-            sx={{ width: 350 }}
+            sx={{ width: '100%', maxWidth: 350 }}
             id="outlined-basic"
             label="Your feedback link"
             defaultValue="..."
@@ -101,14 +101,14 @@ export default function FeedbackLite ( {feedback_url, history} ){
             message="Copied link to clipboard"
           />
         </p>
-        <Stack spacing={2} direction="row" sx={{ mb: 2 }}>
+        <Stack spacing={2} direction={{ xs: "column", sm: "row" }} sx={{ mb: 2 }}>
           <Link href="/cert">
-            <Button style={{ marginTop: "10px" }} variant="contained">
+            <Button variant="contained">
               See all certificates
             </Button>
           </Link>
           <Link href="/about/hearts">
-            <Button style={{ marginTop: "10px" }} variant="contained">
+            <Button variant="contained">
               Why we give out hearts
             </Button>
           </Link>

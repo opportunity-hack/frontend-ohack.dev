@@ -1,11 +1,14 @@
 import { Grid, Typography } from "@mui/material";
 import { styled as styling } from "@mui/material";
 
-export const LayoutContainer = styling(Grid) ({
+export const LayoutContainer = styling(Grid)(({ theme }) => ({
     justifyContent: "center",
     alignItems: "center",
     paddingTop: "6rem",
-});
+    [theme.breakpoints.down("sm")]: {
+        paddingTop: "2rem",
+    },
+}));
 
 export const InnerContainer = styling(Grid) ({
     width: "95%"
@@ -16,12 +19,16 @@ export const ProfileAvatar = styling("img")({
   borderRadius: "10rem",
 });
 
-export const ProfileContainer = styling(Grid) ({
+export const ProfileContainer = styling(Grid)(({ theme }) => ({
   padding: "1rem",
-})
+  [theme.breakpoints.down("sm")]: {
+    padding: "0.5rem",
+  },
+}))
 
 export const ProfileHeader = styling(Grid) ({
   gap: "1.5rem",
+  flexWrap: "wrap",
 })
 
 export const ProfileHeadline = styling(Grid) ({
