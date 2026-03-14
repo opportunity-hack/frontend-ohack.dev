@@ -544,13 +544,13 @@ export default function Profile(props) {
 
   return (
     <LayoutContainer container>
-      <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}>
+      <InnerContainer container>
         <Head>
           <title>Profile - Opportunity Hack Developer Portal</title>
         </Head>
         
         {isLoggedIn ? (
-          <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: { xs: 1, sm: 2, md: 4 }, boxSizing: 'border-box' }}>
+          <ProfileContainer sx={{ width: '100%', px: { xs: 1, sm: 2, md: 4 } }}>
             {/* Header Section */}
             <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 2 }}>
               {isLoading ? (
