@@ -109,27 +109,28 @@ const MilestoneProgress = ({ history }) => {
     <Paper
       elevation={2}
       sx={{
-        p: 3,
+        p: { xs: 2, sm: 3 },
         borderRadius: 2,
         background: `linear-gradient(135deg, ${theme.palette.primary.light}15 0%, ${theme.palette.secondary.light}15 100%)`,
         border: `1px solid ${theme.palette.divider}`,
         width: "100%",
         maxWidth: "600px",
+        boxSizing: "border-box",
       }}
     >
       {/* Header with current hearts */}
-      <Box sx={{ textAlign: "center", mb: 3 }}>
+      <Box sx={{ textAlign: "center", mb: { xs: 2, sm: 3 } }}>
         <Typography
           variant="h4"
           gutterBottom
-          sx={{ fontWeight: 600, color: theme.palette.primary.main }}
+          sx={{ fontWeight: 600, color: theme.palette.primary.main, fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
         >
           <FaHeart color="red" style={{ marginRight: "8px" }} />
           Heart Progress
         </Typography>
         <Typography
           variant="h2"
-          sx={{ fontWeight: 700, color: theme.palette.text.primary }}
+          sx={{ fontWeight: 700, color: theme.palette.text.primary, fontSize: { xs: '2.5rem', sm: '3.75rem' } }}
         >
           {hearts}
         </Typography>
@@ -217,10 +218,10 @@ const MilestoneProgress = ({ history }) => {
             const isCurrentTier = currentTier?.tier === tier;
 
             return (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={tier}>
+              <Grid size={{ xs: 6, sm: 6, md: 4 }} key={tier}>
                 <Box
                   sx={{
-                    p: 2,
+                    p: { xs: 1.5, sm: 2 },
                     borderRadius: 1,
                     border: `2px solid ${isCurrentTier ? tierColor : theme.palette.grey[300]}`,
                     backgroundColor: isAchieved
@@ -229,6 +230,8 @@ const MilestoneProgress = ({ history }) => {
                     position: "relative",
                     opacity: isAchieved || isCurrentTier ? 1 : 0.7,
                     transition: "all 0.3s ease",
+                    height: "100%",
+                    boxSizing: "border-box",
                   }}
                 >
                   {isAchieved && (
@@ -291,16 +294,17 @@ const MilestoneProgress = ({ history }) => {
             <Button
               variant="contained"
               color="primary"
-              size="large"
+              size={isMobile ? "medium" : "large"}
               startIcon={<FaGift />}
               href={`/contact?type=claim_reward&hearts=${hearts}`}
               sx={{
                 fontWeight: "bold",
-                px: 4,
+                px: { xs: 3, sm: 4 },
                 py: 1.5,
                 borderRadius: 2,
                 textTransform: "none",
-                fontSize: "1.1rem",
+                fontSize: { xs: "0.95rem", sm: "1.1rem" },
+                width: { xs: "100%", sm: "auto" },
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                 "&:hover": {
                   background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
