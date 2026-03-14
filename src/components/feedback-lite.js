@@ -6,7 +6,8 @@ import Rating from '@mui/material/Rating';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 import TextField from '@mui/material/TextField';
 import Link from 'next/link'
@@ -22,61 +23,88 @@ import PrivacyToggle from './PrivacyToggle/PrivacyToggle';
 import usePrivacySettings from '../hooks/use-privacy-settings';
 
 
-const StyledRating = styled(Rating)(({ theme }) => ({
+const HEART_COLOR = '#ff6d75';
+
+const StyledRating = styled(Rating)({
     '& .MuiRating-iconFilled': {
-        color: '#ff6d75',
+        color: HEART_COLOR,
     },
     '& .MuiRating-iconHover': {
         color: '#ff3d47',
     },
-    flexWrap: 'wrap',
-    [theme.breakpoints.down('sm')]: {
-        '& .MuiRating-icon': {
-            fontSize: '1.2rem',
-        },
-    },
-}));
+});
 
 function RatingItem({ label, description, value, maxHearts }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    // On mobile: show 5 larger hearts (scale value from 0-10 to 0-5)
+    // On desktop: show all 10 hearts at normal size
+    const displayMax = isMobile ? 5 : maxHearts;
+    const displayValue = isMobile && maxHearts > 0 ? (value / maxHearts) * 5 : value;
+
     return (
         <Box sx={{
-            py: { xs: 1, sm: 1.5 },
+            py: { xs: 1.5, sm: 1.5 },
             '&:not(:last-child)': {
                 borderBottom: '1px solid',
                 borderColor: 'divider',
             },
         }}>
-            <Typography
-                variant="body2"
-                component="div"
-                sx={{
-                    fontWeight: 'bold',
-                    mb: 0.25,
-                    wordBreak: 'break-word',
-                }}
-            >
-                {label}
-            </Typography>
-            {description && (
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 1,
+            }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                        variant="body2"
+                        component="div"
+                        sx={{
+                            fontWeight: 'bold',
+                            wordBreak: 'break-word',
+                        }}
+                    >
+                        {label}
+                    </Typography>
+                    {description && (
+                        <Typography
+                            variant="caption"
+                            component="div"
+                            color="text.secondary"
+                            sx={{ wordBreak: 'break-word' }}
+                        >
+                            {description}
+                        </Typography>
+                    )}
+                </Box>
                 <Typography
-                    variant="caption"
+                    variant="body2"
                     component="div"
-                    color="text.secondary"
-                    sx={{ mb: 0.5, wordBreak: 'break-word' }}
+                    sx={{
+                        fontWeight: 'bold',
+                        color: value > 0 ? HEART_COLOR : 'text.disabled',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        pt: 0.25,
+                    }}
                 >
-                    {description}
+                    {value}/{maxHearts}
                 </Typography>
-            )}
-            <StyledRating
-                readOnly
-                name="customized-color"
-                defaultValue={value}
-                getLabelText={(v) => `${v} Heart${v !== 1 ? "s" : ""}`}
-                precision={0.5}
-                max={maxHearts}
-                icon={<FavoriteIcon fontSize="inherit" />}
-                emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-            />
+            </Box>
+            <Box sx={{ mt: 0.5 }}>
+                <StyledRating
+                    readOnly
+                    name="customized-color"
+                    defaultValue={displayValue}
+                    getLabelText={(v) => `${v} Heart${v !== 1 ? "s" : ""}`}
+                    precision={0.5}
+                    max={displayMax}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />
+            </Box>
         </Box>
     );
 }
