@@ -23,6 +23,7 @@ import { trackEvent } from '../../lib/ga';
 const STORAGE_KEY_DISMISSED = 'ohack_profile_prompt_dismissed';
 const STORAGE_KEY_REMIND_LATER = 'ohack_profile_prompt_remind_later';
 const REMIND_LATER_COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+const PROGRESS_WARNING_THRESHOLD = 50;
 
 // Core fields that define a "complete" profile
 const CORE_FIELDS = [
@@ -236,7 +237,7 @@ const ProfileCompletionPrompt = () => {
           <StyledLinearProgress
             variant="determinate"
             value={completeness.percentage}
-            color={completeness.percentage < 50 ? 'warning' : 'primary'}
+            color={completeness.percentage < PROGRESS_WARNING_THRESHOLD ? 'warning' : 'primary'}
           />
         </Paper>
 
