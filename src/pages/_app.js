@@ -38,6 +38,10 @@ const OnboardingDialog = dynamic(() => import('../components/Onboarding/Onboardi
   ssr: false
 });
 
+const ProfileCompletionPrompt = dynamic(() => import('../components/ProfileCompletionPrompt/ProfileCompletionPrompt'), {
+  ssr: false
+});
+
 // This default export is required in a new `pages/_app.js` file.
 export default function MyApp({ Component, pageProps }) {
   const { openGraphData = [] } = pageProps;
@@ -71,6 +75,7 @@ export default function MyApp({ Component, pageProps }) {
                 </Box>
               </CssBaseline>
               <OnboardingDialog />
+              <ProfileCompletionPrompt />
             </ThemeProvider>
           </AxiosWrapper>
         </GoogleReCaptchaProvider>
