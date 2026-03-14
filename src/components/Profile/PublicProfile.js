@@ -250,7 +250,7 @@ const PublicProfile = () => {
                 Basic Information
               </Typography>
 
-              <Grid container spacing={3}>
+              <Grid container spacing={{ xs: 2, sm: 3 }}>
                 {/* GitHub Username */}
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography

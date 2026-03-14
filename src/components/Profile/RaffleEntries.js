@@ -128,7 +128,7 @@ const RaffleEntries = ({ profile, githubHistory }) => {
   const mostRecentEntry = giveawayEntries[0];
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mt: 3, mb: 3 }}>
+    <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mt: 3, mb: 3 }}>
       <Typography variant="h5" gutterBottom display="flex" alignItems="center">
         <EmojiEvents sx={{ mr: 1 }} color="primary" />
         Giveaway Entries

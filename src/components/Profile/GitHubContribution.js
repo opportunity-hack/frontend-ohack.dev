@@ -70,34 +70,34 @@ const GitHubContributions = ({ githubHistory }) => {
   });
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mt: 3, mb: 3 }}>
-      <Typography variant="h5" gutterBottom display="flex" alignItems="center">
-        <GitHub sx={{ mr: 1 }} />
+    <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mt: 3, mb: 3 }}>
+      <Typography variant="h5" gutterBottom display="flex" alignItems="center" sx={{ wordBreak: 'break-word', fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
+        <GitHub sx={{ mr: 1, flexShrink: 0 }} />
         GitHub Contributions for @<strong>{githubHistory[0].login}</strong>
       </Typography>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Chip
             icon={<Code />}
             label={`${totalCommits} Commits`}
             color="primary"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Chip
             icon={<MergeType />}
             label={`${totalPRs} Pull Requests`}
             color="secondary"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Chip
             icon={<BugReport />}
             label={`${totalIssues} Issues`}
             color="info"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Chip
             icon={<RateReview />}
             label={`${totalReviews} Reviews`}

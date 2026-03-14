@@ -70,7 +70,7 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
     <Box sx={{ mt: 3, mb: 3 }}>
       <Paper
         elevation={3}
-        sx={{ p: 3, backgroundColor: "#f5f5f5" }}
+        sx={{ p: { xs: 2, sm: 3 }, backgroundColor: "#f5f5f5" }}
         ref={shareableRef}
       >
         <Box
@@ -133,7 +133,7 @@ const ShareableGitHubContributions = ({ githubHistory, userName }) => {
           <AlertTitle>
             Repositories Contributed To ({uniqueRepos.length})
           </AlertTitle>
-          <Typography variant="body2">{uniqueRepos.join(", ")}</Typography>
+          <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{uniqueRepos.join(", ")}</Typography>
         </Alert>
       </Paper>
       <Box display="flex" justifyContent="center" mt={2}>
