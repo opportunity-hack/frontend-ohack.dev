@@ -31,7 +31,7 @@ export default function PublicProfilePage() {
             <CssBaseline>
                 <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                     <NavBarPlaceholder />
-                    <Box sx={{ flex: 1, p: 2 }}>
+                    <Box sx={{ flex: 1, p: { xs: 1, sm: 2 } }}>
                         <PublicProfileComponent />
                     </Box>
                     <FooterPlaceholder />

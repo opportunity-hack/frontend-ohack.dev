@@ -552,7 +552,7 @@ export default function Profile(props) {
         {isLoggedIn ? (
           <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: isMobile ? 2 : 4 }}>
             {/* Header Section */}
-            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+            <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 2 }}>
               {isLoading ? (
                 <>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -566,35 +566,52 @@ export default function Profile(props) {
                 </>
               ) : (
                 <>
-                  <ProfileHeader container>
+                  <ProfileHeader container
+                    sx={{
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'center', sm: 'flex-start' },
+                      textAlign: { xs: 'center', sm: 'left' },
+                    }}
+                  >
                     <ProfileAvatar
                       src={user?.pictureUrl}
                       alt="Profile"
-                      width={80}
-                      height={80}
+                      width={isMobile ? 64 : 80}
+                      height={isMobile ? 64 : 80}
                     />
                     <ProfileHeadline>
                       <Typography
                         variant="h2"
                         sx={{
                           fontWeight: 600,
-                          fontSize: isMobile ? "2rem" : "3rem",
+                          fontSize: isMobile ? "1.6rem" : "3rem",
                           marginBottom: "0.5rem",
+                          wordBreak: 'break-word',
                         }}
                       >
                         {user?.firstName} {user?.lastName}{" "}
-                        <VerifiedUserIcon color="success" fontSize="large" />
+                        <VerifiedUserIcon color="success" fontSize={isMobile ? "medium" : "large"} />
                       </Typography>
-                      <ProfileDetailText>{user?.email}</ProfileDetailText>
-                      <ProfileDetailText>
+                      <ProfileDetailText sx={{ fontSize: isMobile ? "0.9rem" : "1.4rem" }}>
+                        {user?.email}
+                      </ProfileDetailText>
+                      <ProfileDetailText sx={{ fontSize: isMobile ? "0.9rem" : "1.4rem" }}>
                         Member since: <Moment fromNow>{user?.createdAt * 1000}</Moment>
                       </ProfileDetailText>
                     </ProfileHeadline>
                   </ProfileHeader>
                   
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                  <Box sx={{
+                    mt: 2,
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    flexWrap: 'wrap',
+                    gap: 2
+                  }}>
                     <Link href={profile.profile_url} style={{ textDecoration: 'none' }}>
-                      <Button variant="contained" color="primary">
+                      <Button variant="contained" color="primary" fullWidth={isMobile}>
                         See Your Public Profile
                       </Button>
                     </Link>
@@ -611,8 +628,8 @@ export default function Profile(props) {
                 <Tabs 
                   value={activeTab} 
                   onChange={handleTabChange} 
-                  variant={isMobile ? "scrollable" : "fullWidth"}
-                  scrollButtons={isMobile ? "auto" : false}
+                  variant="scrollable"
+                  scrollButtons="auto"
                   allowScrollButtonsMobile
                   aria-label="profile tabs"
                   sx={{ 
@@ -621,6 +638,8 @@ export default function Profile(props) {
                     '& .MuiTab-root': {
                       color: theme.palette.common.white,
                       opacity: 0.7,
+                      minWidth: { xs: 60, sm: 90 },
+                      px: { xs: 1, sm: 2 },
                       '&.Mui-selected': {
                         color: theme.palette.common.white,
                         opacity: 1,
@@ -631,77 +650,47 @@ export default function Profile(props) {
                 >
                   <Tab 
                     icon={<PersonIcon />} 
-                    label="Basic Info" 
+                    label={isMobile ? undefined : "Basic Info"}
+                    title="Basic Info"
                     {...a11yProps(0)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<EmojiEventsIcon />} 
-                    label="Impact" 
+                    label={isMobile ? undefined : "Impact"}
+                    title="Impact"
                     {...a11yProps(1)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<GitHubIcon />} 
-                    label="GitHub" 
+                    label={isMobile ? undefined : "GitHub"}
+                    title="GitHub"
                     {...a11yProps(2)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<LocalShippingIcon />} 
-                    label="Swag & Shipping" 
+                    label={isMobile ? undefined : "Swag & Shipping"}
+                    title="Swag & Shipping"
                     {...a11yProps(3)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<VolunteerActivismIcon />} 
-                    label="Volunteer History" 
+                    label={isMobile ? undefined : "Volunteer History"}
+                    title="Volunteer History"
                     {...a11yProps(4)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<CardGiftcardIcon />} 
-                    label="Giveaway Entries" 
+                    label={isMobile ? undefined : "Giveaway Entries"}
+                    title="Giveaway Entries"
                     {...a11yProps(5)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                 </Tabs>
               </Box>
               
-              <Box sx={{ p: 3 }}>
+              <Box sx={{ p: { xs: 2, sm: 3 } }}>
                 {/* Basic Information Tab */}
                 <TabPanel value={activeTab} index={0}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Basic Information
                   </Typography>
                   <Typography variant="body1" sx={{ mb: 3 }}>
@@ -873,7 +862,7 @@ export default function Profile(props) {
 
                 {/* Impact Tab */}
                 <TabPanel value={activeTab} index={1}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Your Impact & Achievements
                   </Typography>
                   
@@ -897,7 +886,7 @@ export default function Profile(props) {
 
                 {/* GitHub Contributions Tab */}
                 <TabPanel value={activeTab} index={2}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     GitHub Contributions
                   </Typography>
                   
@@ -934,7 +923,7 @@ export default function Profile(props) {
 
                 {/* Swag & Shipping Tab */}
                 <TabPanel value={activeTab} index={3}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Swag & Shipping Information
                   </Typography>
                   <Typography variant="body1" sx={{ mb: 3 }}>
@@ -1061,7 +1050,7 @@ export default function Profile(props) {
 
                 {/* Volunteer History Tab */}
                 <TabPanel value={activeTab} index={4}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Your Volunteer History
                   </Typography>
                   
@@ -1159,7 +1148,7 @@ export default function Profile(props) {
 
                 {/* Giveaway Entries Tab */}
                 <TabPanel value={activeTab} index={5}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Giveaway Entries
                   </Typography>
                   
