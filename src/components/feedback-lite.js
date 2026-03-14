@@ -236,11 +236,11 @@ export default function FeedbackLite ( {feedback_url, history} ){
               maxHearts={MAX_HEARTS}
             />
             <RatingItem
-              label={<>Observability</>}
+              label="Observability"
               description={<>You added monitoring capabilities to your software{" "}
                 <a
                   href="https://orangematter.solarwinds.com/2017/10/05/monitoring-and-observability-with-use-and-red/"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
                   target="_blank"
                 >
                   like USE and RED.
@@ -306,7 +306,7 @@ export default function FeedbackLite ( {feedback_url, history} ){
               label={<>
                 <a
                   href="https://www.linkedin.com/pulse/cdi-customer-driven-innovation-fredrik-haren/"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
                   style={{ color: "inherit" }}
                   target="_blank"
                 >
@@ -315,7 +315,7 @@ export default function FeedbackLite ( {feedback_url, history} ){
                 and{" "}
                 <a
                   href="https://designthinking.ideo.com/"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
                   style={{ color: "inherit" }}
                   target="_blank"
                 >
