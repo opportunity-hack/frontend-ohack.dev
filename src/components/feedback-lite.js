@@ -6,7 +6,8 @@ import Rating from '@mui/material/Rating';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 import TextField from '@mui/material/TextField';
 import Link from 'next/link'
@@ -24,22 +25,24 @@ import usePrivacySettings from '../hooks/use-privacy-settings';
 
 const HEART_COLOR = '#ff6d75';
 
-const StyledRating = styled(Rating)(({ theme }) => ({
+const StyledRating = styled(Rating)({
     '& .MuiRating-iconFilled': {
         color: HEART_COLOR,
     },
     '& .MuiRating-iconHover': {
         color: '#ff3d47',
     },
-    flexWrap: 'wrap',
-    [theme.breakpoints.down('sm')]: {
-        '& .MuiRating-icon': {
-            fontSize: '1.4rem',
-        },
-    },
-}));
+});
 
 function RatingItem({ label, description, value, maxHearts }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    // On mobile: show 5 larger hearts (scale value from 0-10 to 0-5)
+    // On desktop: show all 10 hearts at normal size
+    const displayMax = isMobile ? 5 : maxHearts;
+    const displayValue = isMobile && maxHearts > 0 ? (value / maxHearts) * 5 : value;
+
     return (
         <Box sx={{
             py: { xs: 1.5, sm: 1.5 },
@@ -94,10 +97,10 @@ function RatingItem({ label, description, value, maxHearts }) {
                 <StyledRating
                     readOnly
                     name="customized-color"
-                    defaultValue={value}
+                    value={displayValue}
                     getLabelText={(v) => `${v} Heart${v !== 1 ? "s" : ""}`}
                     precision={0.5}
-                    max={maxHearts}
+                    max={displayMax}
                     icon={<FavoriteIcon fontSize="inherit" />}
                     emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
                 />
@@ -168,10 +171,9 @@ export default function FeedbackLite ( {feedback_url, history} ){
             sx={{ width: '100%', maxWidth: { xs: '100%', sm: 350 } }}
             id="outlined-basic"
             label="Your feedback link"
-            defaultValue="..."
             size="small"
             variant="outlined"
-            value={feedback_url}
+            value={feedback_url || "..."}
           />
           <CopyAllIcon onClick={handleClick} sx={{ cursor: 'pointer', flexShrink: 0 }} />
 
