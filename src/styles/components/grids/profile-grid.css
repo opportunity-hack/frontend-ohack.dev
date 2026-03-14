@@ -73,5 +73,8 @@
 
   .profile__details {
     margin-top: 1.6rem;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 }

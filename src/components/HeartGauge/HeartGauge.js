@@ -129,7 +129,7 @@ const HeartGauge = ({ history }) => {
           justifyContent: "flex-start",
           p: isMobile ? 1 : 2,
           width: "100%",
-          maxWidth: "50%",
+          maxWidth: isMobile ? "100%" : "50%",
           boxSizing: "border-box",
         }}
       >

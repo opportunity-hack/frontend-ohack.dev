@@ -909,12 +909,12 @@ export default function Profile(props) {
                   ) : (
                     <>
                       <Box sx={{ mb: 4 }}>
-                        <Typography variant="h5" sx={{ mb: 2 }}>Your Contribution Graph</Typography>
+                        <Typography variant="h5" sx={{ mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Your Contribution Graph</Typography>
                         <GitHubContributions githubHistory={githubHistory} />
                       </Box>
                       
                       <Box>
-                        <Typography variant="h5" sx={{ mb: 2 }}>Shareable Card</Typography>
+                        <Typography variant="h5" sx={{ mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Shareable Card</Typography>
                         <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
                       </Box>
                     </>
@@ -961,7 +961,7 @@ export default function Profile(props) {
                     </Grid>
                   </Grid>
                   
-                  <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+                  <Typography variant="h5" sx={{ mt: 4, mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
                     Shipping Address
                   </Typography>
                   
@@ -1055,8 +1055,8 @@ export default function Profile(props) {
                   </Typography>
                   
                   <Box sx={{ mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="h5">Badges</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="h5" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Badges</Typography>
                       <PrivacyToggle
                         field="badges"
                         isPrivate={privacySettings.badges !== 'public'}
@@ -1079,7 +1079,7 @@ export default function Profile(props) {
                             border: '1px solid',
                             borderColor: 'divider'
                           }}>
-                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
                               <EmojiEventsIcon fontSize="small" color="primary" />
                               <strong>Congratulations on your achievement!</strong> 
                               If you've reached a milestone and are eligible for a prize, please{' '}
@@ -1095,8 +1095,8 @@ export default function Profile(props) {
                   </Box>
                   
                   <Box sx={{ mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="h5">Hackathons</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="h5" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Hackathons</Typography>
                       <PrivacyToggle
                         field="hackathons"
                         isPrivate={privacySettings.hackathons !== 'public'}
@@ -1117,8 +1117,8 @@ export default function Profile(props) {
                   </Box>
                   
                   <Box sx={{ mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="h5">Feedback Exchange</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="h5" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Feedback Exchange</Typography>
                       <PrivacyToggle
                         field="feedback"
                         isPrivate={privacySettings.feedback !== 'public'}
@@ -1134,7 +1134,7 @@ export default function Profile(props) {
                   </Box>
                   
                   <Box>
-                    <Typography variant="h5" sx={{ mb: 2 }}>Summer Internships</Typography>
+                    <Typography variant="h5" sx={{ mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Summer Internships</Typography>
                     <Typography variant="body2">
                       These are distinctly different than hackathons as they span over a
                       couple months.
@@ -1152,8 +1152,8 @@ export default function Profile(props) {
                     Giveaway Entries
                   </Typography>
                   
-                  <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2, bgcolor: theme.palette.primary.light + '10' }}>
-                    <Typography variant="h5" sx={{ mb: 2, color: theme.palette.primary.main }}>
+                  <Paper elevation={1} sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderRadius: 2, bgcolor: theme.palette.primary.light + '10' }}>
+                    <Typography variant="h5" sx={{ mb: 2, color: theme.palette.primary.main, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
                       Your Entries
                     </Typography>
                     
@@ -1164,7 +1164,7 @@ export default function Profile(props) {
                     )}
                   </Paper>
                   
-                  <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+                  <Typography variant="h5" sx={{ mt: 4, mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
                     How to Earn More Entries
                   </Typography>
                   

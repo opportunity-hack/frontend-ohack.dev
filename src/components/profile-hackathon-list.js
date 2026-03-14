@@ -87,7 +87,8 @@ export default function ProfileHackathonList ({hackathons}){
     return(
         <div>  
          {hackathonInfo({hackathons})}             
-        <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table {...getTableProps()} style={{ border: 'solid 1px blue', minWidth: '500px', width: '100%' }}>
             <thead>
                 {headerGroups.map(headerGroup => (
                     <tr key={
@@ -102,6 +103,8 @@ export default function ProfileHackathonList ({hackathons}){
                                     background: 'aliceblue',
                                     color: 'black',
                                     fontWeight: 'bold',
+                                    padding: '8px',
+                                    fontSize: '0.875rem',
                                 }}
                             >
                                 {column.render('Header')}
@@ -123,9 +126,10 @@ export default function ProfileHackathonList ({hackathons}){
                                         key={cell.column.id}
                                         {...cell.getCellProps()}
                                         style={{
-                                            padding: '10px',
+                                            padding: '8px',
                                             border: 'solid 1px gray',
                                             background: 'papayawhip',
+                                            fontSize: '0.875rem',
                                         }}
                                     >
                                         {cell.render('Cell')}
@@ -137,6 +141,7 @@ export default function ProfileHackathonList ({hackathons}){
                 })}
             </tbody>
         </table>
+        </div>
         </div> 
     );
     };
