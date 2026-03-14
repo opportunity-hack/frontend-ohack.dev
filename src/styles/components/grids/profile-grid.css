@@ -74,6 +74,7 @@
   .profile__details {
     margin-top: 1.6rem;
     overflow-x: hidden;
+    max-width: 100%;
     word-wrap: break-word;
     overflow-wrap: break-word;
   }

@@ -544,13 +544,13 @@ export default function Profile(props) {
 
   return (
     <LayoutContainer container>
-      <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
+      <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}>
         <Head>
           <title>Profile - Opportunity Hack Developer Portal</title>
         </Head>
         
         {isLoggedIn ? (
-          <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: isMobile ? 2 : 4 }}>
+          <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: { xs: 1, sm: 2, md: 4 }, boxSizing: 'border-box' }}>
             {/* Header Section */}
             <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 2 }}>
               {isLoading ? (
@@ -687,7 +687,7 @@ export default function Profile(props) {
                 </Tabs>
               </Box>
               
-              <Box sx={{ p: { xs: 2, sm: 3 } }}>
+              <Box sx={{ p: { xs: 1, sm: 3 }, overflow: 'hidden' }}>
                 {/* Basic Information Tab */}
                 <TabPanel value={activeTab} index={0}>
                   <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
@@ -697,7 +697,7 @@ export default function Profile(props) {
                     Tell us more about yourself and why you're here with Opportunity Hack.
                   </Typography>
                   
-                  <Grid container spacing={3}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={56} />
@@ -866,7 +866,7 @@ export default function Profile(props) {
                     Your Impact & Achievements
                   </Typography>
                   
-                  <Grid container spacing={4}>
+                  <Grid container spacing={{ xs: 2, sm: 4 }}>
                     <Grid size={{ xs: 12, md: 6 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={180} />
@@ -930,7 +930,7 @@ export default function Profile(props) {
                     We occasionally send swag to our active members. Please provide your shipping details if you'd like to receive some OHack goodies!
                   </Typography>
                   
-                  <Grid container spacing={3}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={56} />
@@ -965,7 +965,7 @@ export default function Profile(props) {
                     Shipping Address
                   </Typography>
                   
-                  <Grid container spacing={3}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
                     <Grid size={{ xs: 12 }}>
                       <FormControl fullWidth>
                         <TextField

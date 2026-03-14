@@ -5,15 +5,22 @@ export const LayoutContainer = styling(Grid)(({ theme }) => ({
     justifyContent: "center",
     alignItems: "center",
     paddingTop: "6rem",
+    overflowX: "hidden",
+    maxWidth: "100%",
     [theme.breakpoints.down("sm")]: {
         paddingTop: "2rem",
     },
 }));
 
-export const InnerContainer = styling(Grid) ({
-    width: "95%"
-
-})
+export const InnerContainer = styling(Grid)(({ theme }) => ({
+    width: "95%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    overflowX: "hidden",
+    [theme.breakpoints.down("sm")]: {
+        width: "100%",
+    },
+}))
 
 export const ProfileAvatar = styling("img")({
   borderRadius: "10rem",
@@ -21,6 +28,8 @@ export const ProfileAvatar = styling("img")({
 
 export const ProfileContainer = styling(Grid)(({ theme }) => ({
   padding: "1rem",
+  boxSizing: "border-box",
+  maxWidth: "100%",
   [theme.breakpoints.down("sm")]: {
     padding: "0.5rem",
   },

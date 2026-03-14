@@ -57,14 +57,20 @@ export default function FeedbackLite ( {feedback_url, history} ){
 
     const MAX_HEARTS = 10;
 
-    const StyledRating = styled(Rating)({
+    const StyledRating = styled(Rating)(({ theme }) => ({
         '& .MuiRating-iconFilled': {
             color: '#ff6d75',
         },
         '& .MuiRating-iconHover': {
             color: '#ff3d47',
         },
-    });
+        flexWrap: 'wrap',
+        [theme.breakpoints.down('sm')]: {
+            '& .MuiRating-icon': {
+                fontSize: '1.2rem',
+            },
+        },
+    }));
 
     /*
     This is meant to be embedded on other pages which is why it's called "Lite"
