@@ -31,10 +31,9 @@ const StyledRating = styled(Rating)(({ theme }) => ({
     '& .MuiRating-iconHover': {
         color: '#ff3d47',
     },
-    flexWrap: 'wrap',
     [theme.breakpoints.down('sm')]: {
         '& .MuiRating-icon': {
-            fontSize: '1.4rem',
+            fontSize: '1.2rem',
         },
     },
 }));
@@ -94,7 +93,7 @@ function RatingItem({ label, description, value, maxHearts }) {
                 <StyledRating
                     readOnly
                     name="customized-color"
-                    defaultValue={value}
+                    value={value}
                     getLabelText={(v) => `${v} Heart${v !== 1 ? "s" : ""}`}
                     precision={0.5}
                     max={maxHearts}
@@ -168,10 +167,9 @@ export default function FeedbackLite ( {feedback_url, history} ){
             sx={{ width: '100%', maxWidth: { xs: '100%', sm: 350 } }}
             id="outlined-basic"
             label="Your feedback link"
-            defaultValue="..."
             size="small"
             variant="outlined"
-            value={feedback_url}
+            value={feedback_url || "..."}
           />
           <CopyAllIcon onClick={handleClick} sx={{ cursor: 'pointer', flexShrink: 0 }} />
 
