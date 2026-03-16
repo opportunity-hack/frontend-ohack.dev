@@ -24,6 +24,8 @@ import {
   LinearProgress,
   Divider,
   Badge as MuiBadge,
+  ToggleButton,
+  ToggleButtonGroup,
   useTheme,
   useMediaQuery,
   alpha,
@@ -42,6 +44,10 @@ import {
   CheckCircle as VerifiedIcon,
   Search as SearchIcon,
   Refresh as RefreshIcon,
+  LinkedIn as LinkedInIcon,
+  Instagram as InstagramIcon,
+  ViewModule as ViewModuleIcon,
+  ViewList as ViewListIcon,
 } from "@mui/icons-material";
 import { styled } from "@mui/system";
 import AdminPage from "../../../components/admin/AdminPage";
@@ -88,6 +94,34 @@ const StatBox = styled(Box)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
 }));
 
+const SocialIconButton = styled(IconButton)(({ theme }) => ({
+  padding: theme.spacing(0.75),
+  minWidth: 36,
+  minHeight: 36,
+  "&:hover": {
+    transform: "scale(1.15)",
+  },
+  transition: "transform 0.2s ease",
+}));
+
+const CompactRow = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing(1.5),
+  padding: theme.spacing(1, 2),
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  transition: "background-color 0.15s ease",
+  cursor: "pointer",
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+  },
+  [theme.breakpoints.down("sm")]: {
+    gap: theme.spacing(1),
+    padding: theme.spacing(1, 1.5),
+    flexWrap: "wrap",
+  },
+}));
+
 const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
   const router = useRouter();
@@ -105,6 +139,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   const [filter, setFilter] = useState("");
   const [sortBy, setSortBy] = useState("last_login");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [viewMode, setViewMode] = useState("card");
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("profile.admin");
@@ -214,7 +249,9 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             )) ||
           profile.shirt_size?.toLowerCase().includes(searchLower) ||
           profile.why?.toLowerCase().includes(searchLower) ||
-          profile.id?.toLowerCase().includes(searchLower)
+          profile.id?.toLowerCase().includes(searchLower) ||
+          profile.linkedin_url?.toLowerCase().includes(searchLower) ||
+          profile.instagram_url?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -378,7 +415,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             </FormControl>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex", gap: 1 }}>
+          <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
             <Button
               onClick={fetchProfiles}
               variant="outlined"
@@ -388,6 +425,24 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             >
               Refresh
             </Button>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(e, val) => val && setViewMode(val)}
+              size="small"
+              aria-label="View mode"
+            >
+              <ToggleButton value="card" aria-label="Card view">
+                <Tooltip title="Card view">
+                  <ViewModuleIcon fontSize="small" />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="compact" aria-label="Compact view">
+                <Tooltip title="Compact view">
+                  <ViewListIcon fontSize="small" />
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Grid>
         </Grid>
 
@@ -433,6 +488,175 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
               Clear Search
             </Button>
           )}
+        </Paper>
+      ) : viewMode === "compact" ? (
+        <Paper sx={{ overflow: "hidden" }}>
+          {/* Compact header */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              px: 2,
+              py: 1,
+              backgroundColor: "action.hover",
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography variant="caption" sx={{ width: 40, fontWeight: 600 }} />
+            <Typography variant="caption" sx={{ flex: 1, minWidth: 100, fontWeight: 600 }}>Name</Typography>
+            {!isMobile && (
+              <Typography variant="caption" sx={{ flex: 1, minWidth: 120, fontWeight: 600 }}>Email</Typography>
+            )}
+            <Typography variant="caption" sx={{ width: isMobile ? 60 : 80, fontWeight: 600, textAlign: "center" }}>Social</Typography>
+            {!isMobile && (
+              <Typography variant="caption" sx={{ width: 90, fontWeight: 600 }}>Last Login</Typography>
+            )}
+            <Typography variant="caption" sx={{ width: isMobile ? 50 : 80, fontWeight: 600, textAlign: "center" }}>Profile</Typography>
+          </Box>
+          {processedProfiles.map((profile) => {
+            const completeness = calculateProfileCompleteness(profile);
+            const completenessPercent = Math.round((completeness / 7) * 100);
+            return (
+              <CompactRow
+                key={profile.id || profile.email_address}
+                onClick={() => handleProfileClick(profile.id)}
+              >
+                <Avatar
+                  src={profile.profile_image}
+                  alt={profile.name || profile.nickname}
+                  sx={{ width: 32, height: 32, fontSize: "0.85rem" }}
+                >
+                  {(profile.name || profile.nickname || "?").charAt(0).toUpperCase()}
+                </Avatar>
+
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {profile.name || profile.nickname || "Unknown"}
+                    {completeness >= 6 && (
+                      <VerifiedIcon color="success" sx={{ fontSize: 14, ml: 0.5, verticalAlign: "text-bottom" }} />
+                    )}
+                  </Typography>
+                  {isMobile && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        display: "block",
+                      }}
+                    >
+                      {profile.email_address}
+                    </Typography>
+                  )}
+                </Box>
+
+                {!isMobile && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                      "&:hover": { color: "primary.main" },
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(profile.email_address);
+                      setSnackbar({
+                        open: true,
+                        message: "Email copied to clipboard",
+                        severity: "success",
+                      });
+                    }}
+                  >
+                    {profile.email_address}
+                  </Typography>
+                )}
+
+                {/* Social Links */}
+                <Stack direction="row" spacing={0} sx={{ width: isMobile ? 60 : 80, justifyContent: "center" }}>
+                  {profile.github && (
+                    <Tooltip title={`GitHub: ${profile.github}`}>
+                      <SocialIconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(`https://github.com/${profile.github}`, "_blank", "noopener,noreferrer");
+                        }}
+                        sx={{ color: "#333" }}
+                      >
+                        <GitHubIcon sx={{ fontSize: 18 }} />
+                      </SocialIconButton>
+                    </Tooltip>
+                  )}
+                  {profile.linkedin_url && (
+                    <Tooltip title="LinkedIn">
+                      <SocialIconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(profile.linkedin_url, "_blank", "noopener,noreferrer");
+                        }}
+                        sx={{ color: "#0A66C2" }}
+                      >
+                        <LinkedInIcon sx={{ fontSize: 18 }} />
+                      </SocialIconButton>
+                    </Tooltip>
+                  )}
+                  {profile.instagram_url && (
+                    <Tooltip title="Instagram">
+                      <SocialIconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(profile.instagram_url, "_blank", "noopener,noreferrer");
+                        }}
+                        sx={{ color: "#E4405F" }}
+                      >
+                        <InstagramIcon sx={{ fontSize: 18 }} />
+                      </SocialIconButton>
+                    </Tooltip>
+                  )}
+                </Stack>
+
+                {!isMobile && (
+                  <Typography variant="caption" color="text.secondary" sx={{ width: 90 }}>
+                    {formatLastLogin(profile.last_login)}
+                  </Typography>
+                )}
+
+                <Box sx={{ width: isMobile ? 50 : 80, textAlign: "center" }}>
+                  <Tooltip title={`${completeness}/7 fields complete`}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 600,
+                        color: completeness >= 6 ? "success.main" : completeness >= 4 ? "warning.main" : "error.main",
+                      }}
+                    >
+                      {completenessPercent}%
+                    </Typography>
+                  </Tooltip>
+                </Box>
+              </CompactRow>
+            );
+          })}
         </Paper>
       ) : (
         <Grid container spacing={2}>
@@ -489,7 +713,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                               color="text.secondary"
                               sx={{ display: "block" }}
                             >
-                              "{profile.nickname}"
+                              &quot;{profile.nickname}&quot;
                             </Typography>
                           )}
 
@@ -561,6 +785,54 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                         />
                       </Box>
 
+                      {/* Social Links */}
+                      {(profile.github || profile.linkedin_url || profile.instagram_url) && (
+                        <Stack direction="row" spacing={0.5} sx={{ mb: 1.5 }}>
+                          {profile.github && (
+                            <Tooltip title={`GitHub: ${profile.github}`}>
+                              <SocialIconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(`https://github.com/${profile.github}`, "_blank", "noopener,noreferrer");
+                                }}
+                                sx={{ color: "#333" }}
+                              >
+                                <GitHubIcon sx={{ fontSize: 20 }} />
+                              </SocialIconButton>
+                            </Tooltip>
+                          )}
+                          {profile.linkedin_url && (
+                            <Tooltip title="LinkedIn Profile">
+                              <SocialIconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(profile.linkedin_url, "_blank", "noopener,noreferrer");
+                                }}
+                                sx={{ color: "#0A66C2" }}
+                              >
+                                <LinkedInIcon sx={{ fontSize: 20 }} />
+                              </SocialIconButton>
+                            </Tooltip>
+                          )}
+                          {profile.instagram_url && (
+                            <Tooltip title="Instagram Profile">
+                              <SocialIconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(profile.instagram_url, "_blank", "noopener,noreferrer");
+                                }}
+                                sx={{ color: "#E4405F" }}
+                              >
+                                <InstagramIcon sx={{ fontSize: 20 }} />
+                              </SocialIconButton>
+                            </Tooltip>
+                          )}
+                        </Stack>
+                      )}
+
                       {/* Profile Details */}
                       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                         {profile.role && (
@@ -592,22 +864,6 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                               label={profile.education}
                               size="small"
                               variant="outlined"
-                            />
-                          </Tooltip>
-                        )}
-
-                        {profile.github && (
-                          <Tooltip title="GitHub">
-                            <InfoChip
-                              icon={<GitHubIcon fontSize="small" />}
-                              label={profile.github}
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(`https://github.com/${profile.github}`, "_blank");
-                              }}
                             />
                           </Tooltip>
                         )}
