@@ -25,6 +25,7 @@ export default function CartPage() {
 
   useEffect(() => {
     initFacebookPixel();
+    // Track cart view on page load; items/total are hydrated from localStorage before first render
     trackEvent({
       action: "store_view_cart",
       params: {
@@ -34,7 +35,6 @@ export default function CartPage() {
         currency: "USD",
       },
     });
-    // Only track on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
