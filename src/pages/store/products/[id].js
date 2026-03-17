@@ -45,7 +45,7 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ pt: "9rem", pb: 4 }}>
         <Typography variant="h5">Product not found</Typography>
         <Link href="/store" passHref legacyBehavior>
           <Button startIcon={<ArrowBackIcon />} sx={{ mt: 2 }}>
@@ -88,7 +88,7 @@ export default function ProductDetailPage() {
         <meta property="og:description" content={product.description} />
       </Head>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ pt: "9rem", pb: 4 }}>
         <Breadcrumbs sx={{ mb: 3 }}>
           <Link href="/store" passHref legacyBehavior>
             <Typography

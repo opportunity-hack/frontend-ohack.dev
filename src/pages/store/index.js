@@ -62,7 +62,7 @@ export default function StorePage() {
         <meta property="og:type" content="website" />
       </Head>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ pt: "9rem", pb: 4 }}>
         {/* Header */}
         <Box
           sx={{

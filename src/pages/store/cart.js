@@ -71,7 +71,7 @@ export default function CartPage() {
         <meta name="description" content="Review your cart and checkout." />
       </Head>
 
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="md" sx={{ pt: "9rem", pb: 4 }}>
         <Box
           sx={{
             display: "flex",

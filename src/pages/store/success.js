@@ -36,7 +36,7 @@ export default function SuccessPage() {
         />
       </Head>
 
-      <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Container maxWidth="sm" sx={{ pt: "9rem", pb: 8 }}>
         <Paper sx={{ p: 4, textAlign: "center" }}>
           <CheckCircleOutlineIcon
             sx={{ fontSize: 80, color: "success.main", mb: 2 }}
