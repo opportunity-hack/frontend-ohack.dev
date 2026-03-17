@@ -20,3 +20,8 @@ NEXT_PUBLIC_SLACK_SIGNUP_LINK=<TODO>
 
 # Optional: Slack Team/Workspace ID (defaults to T1Q7936BH if not set)
 # NEXT_PUBLIC_SLACK_TEAM_ID=T1Q7936BH
+
+# Store / Stripe integration (for /store checkout)
+# Get keys from https://dashboard.stripe.com/apikeys
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<TODO>
+STRIPE_SECRET_KEY=<TODO>
