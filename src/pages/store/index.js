@@ -86,6 +86,11 @@ export default function StorePage() {
                   <ShoppingCartIcon />
                 </Badge>
               }
+              aria-label={
+                itemCount > 0
+                  ? `View cart with ${itemCount} ${itemCount === 1 ? "item" : "items"}`
+                  : "View cart"
+              }
               sx={{ whiteSpace: "nowrap" }}
             >
               View Cart

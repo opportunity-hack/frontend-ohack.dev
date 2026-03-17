@@ -1,7 +1,6 @@
 import React from "react";
 import { Fab, Badge, Zoom, Typography, Box } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import Link from "next/link";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
 
 export default function FloatingCartButton() {
@@ -9,26 +8,32 @@ export default function FloatingCartButton() {
 
   return (
     <Zoom in>
-      <Link href="/store/cart" passHref legacyBehavior>
-        <Fab
-          variant="extended"
-          color="primary"
-          aria-label="View shopping cart"
-          sx={{
-            position: "fixed",
-            bottom: { xs: 24, sm: 32 },
-            right: { xs: 16, sm: 32 },
-            zIndex: 1100,
-            px: 2.5,
-            py: 1,
-            gap: 1,
-            boxShadow: 6,
-            textTransform: "none",
-            "&:hover": {
-              boxShadow: 10,
-            },
-          }}
-        >
+      <Fab
+        variant="extended"
+        color="primary"
+        component="a"
+        href="/store/cart"
+        aria-label={
+          itemCount > 0
+            ? `View shopping cart with ${itemCount} ${itemCount === 1 ? "item" : "items"} totaling $${total.toFixed(2)}`
+            : "View shopping cart"
+        }
+        sx={{
+          position: "fixed",
+          bottom: { xs: 24, sm: 32 },
+          right: { xs: 16, sm: 32 },
+          zIndex: 1100,
+          px: 2.5,
+          py: 1,
+          gap: 1,
+          boxShadow: 6,
+          textTransform: "none",
+          textDecoration: "none",
+          "&:hover": {
+            boxShadow: 10,
+          },
+        }}
+      >
           <Badge badgeContent={itemCount} color="error">
             <ShoppingCartIcon />
           </Badge>
@@ -52,7 +57,6 @@ export default function FloatingCartButton() {
             </Typography>
           )}
         </Fab>
-      </Link>
     </Zoom>
   );
 }
