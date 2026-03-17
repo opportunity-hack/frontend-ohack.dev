@@ -8,6 +8,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import theme from "../assets/theme";
+import { ShoppingCartProvider } from "../context/ShoppingCartContext";
 
 // Simple placeholder components to reduce CLS
 const NavBarPlaceholder = () => <Box sx={{ height: '64px', width: '100%' }} />;
@@ -67,6 +68,7 @@ export default function MyApp({ Component, pageProps }) {
         <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY}>
           <AxiosWrapper>
             <ThemeProvider theme={theme}>
+              <ShoppingCartProvider>
               <CssBaseline>
                 <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                   {!isPrintTimelinePage && <NavBar />}
@@ -76,6 +78,7 @@ export default function MyApp({ Component, pageProps }) {
               </CssBaseline>
               <OnboardingDialog />
               <ProfileCompletionPrompt />
+              </ShoppingCartProvider>
             </ThemeProvider>
           </AxiosWrapper>
         </GoogleReCaptchaProvider>

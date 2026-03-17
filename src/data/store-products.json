@@ -1,0 +1,67 @@
+[
+  {
+    "id": "ohack-tshirt-classic",
+    "name": "Opportunity Hack Classic T-Shirt",
+    "description": "Show your support for Opportunity Hack with our classic logo t-shirt. Made from 100% ring-spun cotton for a soft, comfortable fit. Perfect for hackathons, meetups, or everyday wear.",
+    "price": 25.00,
+    "image": "/images/store/ohack-tshirt.png",
+    "category": "apparel",
+    "variations": {
+      "Size": ["S", "M", "L", "XL", "2XL"],
+      "Color": ["Black", "Navy", "Heather Gray"]
+    }
+  },
+  {
+    "id": "ohack-hoodie",
+    "name": "Opportunity Hack Hoodie",
+    "description": "Stay warm while making a difference. This premium hoodie features the Opportunity Hack logo embroidered on the chest. 80/20 cotton-poly blend with a kangaroo pocket.",
+    "price": 45.00,
+    "image": "/images/store/ohack-hoodie.png",
+    "category": "apparel",
+    "variations": {
+      "Size": ["S", "M", "L", "XL", "2XL"],
+      "Color": ["Black", "Navy"]
+    }
+  },
+  {
+    "id": "ohack-sticker-pack",
+    "name": "Opportunity Hack Sticker Pack",
+    "description": "A pack of 5 high-quality vinyl stickers featuring Opportunity Hack designs. Waterproof and UV-resistant, perfect for laptops, water bottles, and more.",
+    "price": 8.00,
+    "image": "/images/store/ohack-stickers.png",
+    "category": "accessories"
+  },
+  {
+    "id": "ohack-mug",
+    "name": "Opportunity Hack Coffee Mug",
+    "description": "Start your morning with purpose. This 11oz ceramic mug features the Opportunity Hack logo and our motto: 'Code for Good'. Dishwasher and microwave safe.",
+    "price": 15.00,
+    "image": "/images/store/ohack-mug.png",
+    "category": "accessories",
+    "variations": {
+      "Color": ["White", "Black"]
+    }
+  },
+  {
+    "id": "ohack-cap",
+    "name": "Opportunity Hack Baseball Cap",
+    "description": "A structured six-panel cap with the Opportunity Hack logo embroidered on the front. Adjustable snapback closure fits most sizes.",
+    "price": 20.00,
+    "image": "/images/store/ohack-cap.png",
+    "category": "apparel",
+    "variations": {
+      "Color": ["Black", "Navy", "White"]
+    }
+  },
+  {
+    "id": "ohack-water-bottle",
+    "name": "Opportunity Hack Water Bottle",
+    "description": "Stay hydrated while hacking for good. This 24oz insulated stainless steel water bottle keeps drinks cold for 24 hours or hot for 12 hours.",
+    "price": 22.00,
+    "image": "/images/store/ohack-water-bottle.png",
+    "category": "accessories",
+    "variations": {
+      "Color": ["Black", "White", "Blue"]
+    }
+  }
+]

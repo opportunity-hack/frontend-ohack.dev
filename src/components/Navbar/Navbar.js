@@ -31,6 +31,7 @@ const pages = [
   ["Hackathons", "/hack"],
   ["Projects", "/projects"],
   ["Nonprofits", "/nonprofits"],
+  ["Store", "/store"],
   ["Sponsors", "/sponsor"],
 ];
 
