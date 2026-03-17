@@ -24,6 +24,7 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Link from "next/link";
 import { useShoppingCart } from "../../../context/ShoppingCartContext";
+import FloatingCartButton from "../../../components/Store/FloatingCartButton";
 import products from "../../../data/store-products.json";
 
 export default function ProductDetailPage() {
@@ -252,6 +253,8 @@ export default function ProductDetailPage() {
           </Link>
         </Alert>
       </Snackbar>
+
+      <FloatingCartButton />
     </>
   );
 }

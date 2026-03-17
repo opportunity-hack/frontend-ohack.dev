@@ -7,11 +7,8 @@ import {
   Box,
   TextField,
   InputAdornment,
-  ToggleButton,
-  ToggleButtonGroup,
+  Button,
   Badge,
-  IconButton,
-  Tooltip,
   Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -20,6 +17,7 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import Link from "next/link";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 import ProductCard from "../../components/Store/ProductCard";
+import FloatingCartButton from "../../components/Store/FloatingCartButton";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
 import products from "../../data/store-products.json";
 
@@ -81,13 +79,18 @@ export default function StorePage() {
             </Typography>
           </Box>
           <Link href="/store/cart" passHref legacyBehavior>
-            <Tooltip title="View Cart">
-              <IconButton color="primary" size="large">
+            <Button
+              variant="contained"
+              startIcon={
                 <Badge badgeContent={itemCount} color="error">
                   <ShoppingCartIcon />
                 </Badge>
-              </IconButton>
-            </Tooltip>
+              }
+              sx={{ whiteSpace: "nowrap" }}
+            >
+              View Cart
+              {itemCount > 0 && ` (${itemCount})`}
+            </Button>
           </Link>
         </Box>
 
@@ -152,6 +155,8 @@ export default function StorePage() {
           </Box>
         )}
       </Container>
+
+      <FloatingCartButton />
     </>
   );
 }
