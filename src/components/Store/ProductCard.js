@@ -11,10 +11,25 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import { trackEvent } from "../../lib/ga";
 
 export default function ProductCard({ product }) {
   const hasVariations =
     product.variations && Object.keys(product.variations).length > 0;
+
+  const handleProductClick = () => {
+    trackEvent({
+      action: "store_product_click",
+      params: {
+        page: "store",
+        product_id: product.id,
+        product_name: product.name,
+        product_category: product.category,
+        price: product.price,
+        currency: "USD",
+      },
+    });
+  };
 
   return (
     <Card
@@ -87,6 +102,7 @@ export default function ProductCard({ product }) {
             variant="contained"
             fullWidth
             startIcon={<ShoppingCartIcon />}
+            onClick={handleProductClick}
           >
             {hasVariations ? "Select Options" : "View Details"}
           </Button>

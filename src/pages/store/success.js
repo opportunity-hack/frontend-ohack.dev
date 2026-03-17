@@ -11,16 +11,20 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import Link from "next/link";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
-import { trackEvent } from "../../lib/ga";
+import { trackEvent, initFacebookPixel } from "../../lib/ga";
 
 export default function SuccessPage() {
   const { clearCart } = useShoppingCart();
 
   useEffect(() => {
+    initFacebookPixel();
     clearCart();
     trackEvent({
-      action: "purchase",
-      params: { page: "store_success" },
+      action: "store_purchase_complete",
+      params: {
+        page: "store_success",
+        currency: "USD",
+      },
     });
     // Only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -29,11 +33,24 @@ export default function SuccessPage() {
   return (
     <>
       <Head>
-        <title>Order Confirmed - Opportunity Hack Store</title>
+        <title>Order Confirmed — Opportunity Hack Store</title>
         <meta
           name="description"
-          content="Thank you for your purchase! Your order has been confirmed."
+          content="Thank you for your purchase! Your order has been confirmed. All proceeds support nonprofits through technology at Opportunity Hack."
         />
+        <meta name="robots" content="noindex, nofollow" />
+
+        {/* Open Graph */}
+        <meta
+          property="og:title"
+          content="Order Confirmed — Opportunity Hack Store"
+        />
+        <meta
+          property="og:description"
+          content="Thank you for supporting nonprofits through technology!"
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Opportunity Hack" />
       </Head>
 
       <Container maxWidth="sm" sx={{ pt: "9rem", pb: 8 }}>

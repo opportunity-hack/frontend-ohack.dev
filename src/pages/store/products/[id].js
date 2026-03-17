@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import {
@@ -24,6 +24,7 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Link from "next/link";
 import { useShoppingCart } from "../../../context/ShoppingCartContext";
+import { trackEvent, initFacebookPixel } from "../../../lib/ga";
 import FloatingCartButton from "../../../components/Store/FloatingCartButton";
 import products from "../../../data/store-products.json";
 
@@ -40,6 +41,23 @@ export default function ProductDetailPage() {
   const [selectedVariations, setSelectedVariations] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [snackOpen, setSnackOpen] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      initFacebookPixel();
+      trackEvent({
+        action: "store_view_item",
+        params: {
+          page: "store_product",
+          product_id: product.id,
+          product_name: product.name,
+          product_category: product.category,
+          price: product.price,
+          currency: "USD",
+        },
+      });
+    }
+  }, [product]);
 
   if (!id) return null;
 
@@ -64,6 +82,23 @@ export default function ProductDetailPage() {
       )
     : true;
 
+  const handleVariationChange = (variationName, value) => {
+    setSelectedVariations((prev) => ({
+      ...prev,
+      [variationName]: value,
+    }));
+    trackEvent({
+      action: "store_select_variation",
+      params: {
+        page: "store_product",
+        product_id: product.id,
+        product_name: product.name,
+        variation_type: variationName,
+        variation_value: value,
+      },
+    });
+  };
+
   const handleAddToCart = () => {
     addItem({
       id: product.id,
@@ -74,18 +109,129 @@ export default function ProductDetailPage() {
       selectedVariations: hasVariations ? selectedVariations : undefined,
     });
     setSnackOpen(true);
+    trackEvent({
+      action: "store_add_to_cart",
+      params: {
+        page: "store_product",
+        product_id: product.id,
+        product_name: product.name,
+        product_category: product.category,
+        price: product.price,
+        quantity,
+        value: product.price * quantity,
+        currency: "USD",
+        ...(hasVariations ? { variations: JSON.stringify(selectedVariations) } : {}),
+      },
+    });
+  };
+
+  const productUrl = `https://ohack.dev/store/products/${product.id}`;
+  const productImage = product.image
+    ? `https://ohack.dev${product.image}`
+    : "https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp";
+
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    image: productImage,
+    url: productUrl,
+    brand: {
+      "@type": "Organization",
+      name: "Opportunity Hack",
+      url: "https://ohack.dev",
+    },
+    offers: {
+      "@type": "Offer",
+      price: product.price.toFixed(2),
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+      url: productUrl,
+      seller: {
+        "@type": "Organization",
+        name: "Opportunity Hack",
+      },
+    },
+    ...(product.category && { category: product.category }),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://ohack.dev",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Store",
+        item: "https://ohack.dev/store",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.name,
+        item: productUrl,
+      },
+    ],
   };
 
   return (
     <>
       <Head>
-        <title>{product.name} - Opportunity Hack Store</title>
+        <title>
+          {product.name} — Opportunity Hack Store | Support Nonprofits
+        </title>
         <meta name="description" content={product.description} />
         <meta
+          name="keywords"
+          content={`${product.name}, Opportunity Hack, ${product.category || "merchandise"}, nonprofit store, tech for good, hackathon gear`}
+        />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href={productUrl} />
+
+        {/* Open Graph */}
+        <meta
           property="og:title"
-          content={`${product.name} - Opportunity Hack Store`}
+          content={`${product.name} — $${product.price.toFixed(2)} | Opportunity Hack Store`}
         />
         <meta property="og:description" content={product.description} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={productUrl} />
+        <meta property="og:image" content={productImage} />
+        <meta property="og:image:alt" content={product.name} />
+        <meta property="og:site_name" content="Opportunity Hack" />
+        <meta property="og:locale" content="en_US" />
+        <meta
+          property="product:price:amount"
+          content={product.price.toFixed(2)}
+        />
+        <meta property="product:price:currency" content="USD" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={`${product.name} — $${product.price.toFixed(2)} | Opportunity Hack Store`}
+        />
+        <meta name="twitter:description" content={product.description} />
+        <meta name="twitter:image" content={productImage} />
+        <meta name="twitter:site" content="@opportunityhack" />
+
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
       </Head>
 
       <Container maxWidth="lg" sx={{ pt: "9rem", pb: 4 }}>
@@ -171,10 +317,7 @@ export default function ProductDetailPage() {
                         value={selectedVariations[variationName] || ""}
                         label={variationName}
                         onChange={(e) =>
-                          setSelectedVariations((prev) => ({
-                            ...prev,
-                            [variationName]: e.target.value,
-                          }))
+                          handleVariationChange(variationName, e.target.value)
                         }
                       >
                         {options.map((option) => (

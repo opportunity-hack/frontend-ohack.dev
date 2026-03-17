@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import {
   Container,
@@ -14,6 +14,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
+import { trackEvent, initFacebookPixel } from "../../lib/ga";
 import CartItemList from "../../components/Store/CartItemList";
 
 export default function CartPage() {
@@ -21,6 +22,53 @@ export default function CartPage() {
     useShoppingCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    initFacebookPixel();
+    trackEvent({
+      action: "store_view_cart",
+      params: {
+        page: "store_cart",
+        items_count: items.length,
+        cart_total: total,
+        currency: "USD",
+      },
+    });
+    // Only track on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleRemoveItem = (cartKey) => {
+    const item = items.find((i) => i.cartKey === cartKey);
+    if (item) {
+      trackEvent({
+        action: "store_remove_from_cart",
+        params: {
+          page: "store_cart",
+          product_id: item.id,
+          product_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          value: item.price * item.quantity,
+          currency: "USD",
+        },
+      });
+    }
+    removeItem(cartKey);
+  };
+
+  const handleClearCart = () => {
+    trackEvent({
+      action: "store_clear_cart",
+      params: {
+        page: "store_cart",
+        items_count: items.length,
+        cart_total: total,
+        currency: "USD",
+      },
+    });
+    clearCart();
+  };
 
   const handleCheckout = async () => {
     const stripePublishableKey =
@@ -35,6 +83,24 @@ export default function CartPage() {
 
     setLoading(true);
     setError("");
+
+    trackEvent({
+      action: "store_begin_checkout",
+      params: {
+        page: "store_cart",
+        items_count: items.length,
+        cart_total: total,
+        currency: "USD",
+        items: JSON.stringify(
+          items.map((i) => ({
+            id: i.id,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+          }))
+        ),
+      },
+    });
 
     try {
       const response = await fetch("/api/store/create-checkout-session", {
@@ -59,6 +125,15 @@ export default function CartPage() {
       }
     } catch (err) {
       setError(err.message);
+      trackEvent({
+        action: "store_checkout_error",
+        params: {
+          page: "store_cart",
+          error_message: err.message,
+          items_count: items.length,
+          cart_total: total,
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -68,7 +143,25 @@ export default function CartPage() {
     <>
       <Head>
         <title>Shopping Cart - Opportunity Hack Store</title>
-        <meta name="description" content="Review your cart and checkout." />
+        <meta
+          name="description"
+          content="Review your Opportunity Hack merchandise cart and proceed to checkout. All proceeds support nonprofits through technology."
+        />
+        <meta name="robots" content="noindex, follow" />
+        <link rel="canonical" href="https://ohack.dev/store/cart" />
+
+        {/* Open Graph */}
+        <meta
+          property="og:title"
+          content="Shopping Cart - Opportunity Hack Store"
+        />
+        <meta
+          property="og:description"
+          content="Review your cart and checkout. All proceeds support nonprofits through technology."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ohack.dev/store/cart" />
+        <meta property="og:site_name" content="Opportunity Hack" />
       </Head>
 
       <Container maxWidth="md" sx={{ pt: "9rem", pb: 4 }}>
@@ -98,7 +191,7 @@ export default function CartPage() {
           items={items}
           total={total}
           onUpdateQuantity={updateQuantity}
-          onRemoveItem={removeItem}
+          onRemoveItem={handleRemoveItem}
         />
 
         {items.length > 0 && (
@@ -115,7 +208,7 @@ export default function CartPage() {
               <Button
                 variant="outlined"
                 color="error"
-                onClick={clearCart}
+                onClick={handleClearCart}
                 disabled={loading}
               >
                 Clear Cart

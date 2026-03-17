@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import {
   Container,
@@ -21,6 +21,9 @@ import FloatingCartButton from "../../components/Store/FloatingCartButton";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
 import products from "../../data/store-products.json";
 
+const STORE_DESCRIPTION =
+  "Shop Opportunity Hack merchandise — t-shirts, hoodies, stickers, mugs, and more. All proceeds support nonprofits through technology.";
+
 export default function StorePage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -28,13 +31,51 @@ export default function StorePage() {
 
   useEffect(() => {
     initFacebookPixel();
-    trackEvent({ action: "page_view", params: { page: "store" } });
+    trackEvent({
+      action: "store_page_view",
+      params: {
+        page: "store",
+        product_count: products.length,
+      },
+    });
   }, []);
 
   const categories = [
     "all",
     ...new Set(products.map((p) => p.category).filter(Boolean)),
   ];
+
+  const handleSearch = useCallback(
+    (value) => {
+      setSearch(value);
+      if (value.length >= 3) {
+        trackEvent({
+          action: "store_search",
+          params: {
+            page: "store",
+            search_term: value,
+            results_count: products.filter(
+              (p) =>
+                p.name.toLowerCase().includes(value.toLowerCase()) ||
+                p.description.toLowerCase().includes(value.toLowerCase())
+            ).length,
+          },
+        });
+      }
+    },
+    []
+  );
+
+  const handleCategoryFilter = useCallback((cat) => {
+    setCategory(cat);
+    trackEvent({
+      action: "store_category_filter",
+      params: {
+        page: "store",
+        category: cat,
+      },
+    });
+  }, []);
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -46,20 +87,122 @@ export default function StorePage() {
     return matchesSearch && matchesCategory;
   });
 
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Opportunity Hack Store",
+    description: STORE_DESCRIPTION,
+    url: "https://ohack.dev/store",
+    numberOfItems: products.length,
+    itemListElement: products.map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Product",
+        name: product.name,
+        description: product.description,
+        image: `https://ohack.dev${product.image}`,
+        url: `https://ohack.dev/store/products/${product.id}`,
+        offers: {
+          "@type": "Offer",
+          price: product.price.toFixed(2),
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          seller: {
+            "@type": "Organization",
+            name: "Opportunity Hack",
+          },
+        },
+      },
+    })),
+  };
+
+  const storeSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Opportunity Hack Store",
+    description: STORE_DESCRIPTION,
+    url: "https://ohack.dev/store",
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://ohack.dev",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Store",
+          item: "https://ohack.dev/store",
+        },
+      ],
+    },
+    isPartOf: {
+      "@type": "WebSite",
+      name: "Opportunity Hack",
+      url: "https://ohack.dev",
+    },
+  };
+
   return (
     <>
       <Head>
-        <title>Store - Opportunity Hack</title>
+        <title>
+          Opportunity Hack Store | Merchandise for Social Good — T-Shirts,
+          Hoodies &amp; More
+        </title>
+        <meta name="description" content={STORE_DESCRIPTION} />
         <meta
-          name="description"
-          content="Support Opportunity Hack by purchasing merchandise. All proceeds go towards supporting nonprofits through technology."
+          name="keywords"
+          content="Opportunity Hack store, nonprofit merchandise, tech for good apparel, hackathon t-shirt, coding for good, social impact gifts, charity store"
         />
-        <meta property="og:title" content="Opportunity Hack Store" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://ohack.dev/store" />
+
+        {/* Open Graph */}
         <meta
-          property="og:description"
-          content="Support Opportunity Hack by purchasing merchandise. All proceeds go towards supporting nonprofits through technology."
+          property="og:title"
+          content="Opportunity Hack Store | Merchandise for Social Good"
         />
+        <meta property="og:description" content={STORE_DESCRIPTION} />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ohack.dev/store" />
+        <meta
+          property="og:image"
+          content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp"
+        />
+        <meta
+          property="og:image:alt"
+          content="Opportunity Hack merchandise store"
+        />
+        <meta property="og:site_name" content="Opportunity Hack" />
+        <meta property="og:locale" content="en_US" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="Opportunity Hack Store | Merchandise for Social Good"
+        />
+        <meta name="twitter:description" content={STORE_DESCRIPTION} />
+        <meta
+          name="twitter:image"
+          content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp"
+        />
+        <meta name="twitter:site" content="@opportunityhack" />
+
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(storeSchema) }}
+        />
       </Head>
 
       <Container maxWidth="lg" sx={{ pt: "9rem", pb: 4 }}>
@@ -118,7 +261,7 @@ export default function StorePage() {
             size="small"
             placeholder="Search products..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             slotProps={{
               input: {
                 startAdornment: (
@@ -135,7 +278,7 @@ export default function StorePage() {
               <Chip
                 key={cat}
                 label={cat.charAt(0).toUpperCase() + cat.slice(1)}
-                onClick={() => setCategory(cat)}
+                onClick={() => handleCategoryFilter(cat)}
                 color={category === cat ? "primary" : "default"}
                 variant={category === cat ? "filled" : "outlined"}
               />
