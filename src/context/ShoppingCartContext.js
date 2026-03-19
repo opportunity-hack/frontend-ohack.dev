@@ -131,7 +131,14 @@ export function ShoppingCartProvider({ children }) {
       type: "UPDATE_QUANTITY",
       payload: { id, selectedVariations, quantity },
     });
-  const clearCart = () => dispatch({ type: "CLEAR_CART" });
+  const clearCart = () => {
+    dispatch({ type: "CLEAR_CART" });
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
 
   const itemCount = state.items.reduce((sum, item) => sum + item.quantity, 0);
 
