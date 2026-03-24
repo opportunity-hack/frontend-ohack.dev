@@ -12,7 +12,6 @@ import {
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Link from "next/link";
-import { loadStripe } from "@stripe/stripe-js";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
 import { trackEvent, initFacebookPixel } from "../../lib/ga";
 import CartItemList from "../../components/Store/CartItemList";
@@ -115,13 +114,10 @@ export default function CartPage() {
         throw new Error(data.error || "Failed to create checkout session");
       }
 
-      const stripe = await loadStripe(stripePublishableKey);
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId: data.sessionId,
-      });
-
-      if (stripeError) {
-        throw new Error(stripeError.message);
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned from Stripe");
       }
     } catch (err) {
       setError(err.message);

@@ -40,6 +40,7 @@ import {
   Gavel as JudgingIcon,
   PostAdd as RequestIcon,
   ContactMail as ContactMailIcon,
+  Storefront as StorefrontIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -153,6 +154,11 @@ const adminPages = [
     label: "Social Media",
     icon: <ShareIcon style={{ color: "#1DA1F2" }} />
   },
+  // {
+  //   path: "/admin/store",
+  //   label: "Store Orders",
+  //   icon: <StorefrontIcon style={{ color: "#4caf50" }} />
+  // },
 ];
 
 const AdminNavigation = () => {
