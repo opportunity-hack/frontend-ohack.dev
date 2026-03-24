@@ -5,21 +5,13 @@ import { useAuthInfo } from '@propelauth/react';
 
 export default function useHackathonEvents( currentOnly ){
 
-    const { isLoggedIn, user, accessToken } = useAuthInfo();
+    const { user } = useAuthInfo();
     const { apiServerUrl } = useEnv();
     const [hackathons, setHackathons] = useState([]);
 
 
     const makeRequest = useCallback(async (options) => {
         try {
-            if (options.authenticated) {                
-
-                options.config.headers = {
-                    ...options.config.headers,
-                    Authorization: `Bearer ${accessToken}`,
-                };
-            }
-
             const response = await axios(options.config);
             const { data } = response;
 
@@ -32,7 +24,7 @@ export default function useHackathonEvents( currentOnly ){
 
             return error.message;
         }
-    }, [accessToken]);
+    }, []);
 
 
     const handle_get_hackathon = async (event_id, onComplete) => {        
