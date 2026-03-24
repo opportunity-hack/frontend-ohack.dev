@@ -1105,11 +1105,37 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       return [];
     }
 
+    // Count availability slots by splitting on day-name boundaries
+    const countSlots = (availStr) => {
+      if (!availStr) return 0;
+      return availStr.split(/,\s*(?=(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday))/).filter(s => s.trim()).length;
+    };
+
+    // Extract numeric year from participationCount (e.g., "This is my third year" -> 3)
+    const parseParticipationYear = (val) => {
+      if (!val) return 0;
+      const wordMap = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5 };
+      const match = val.match(/(first|second|third|fourth|fifth|\d+)/i);
+      if (!match) return 0;
+      return wordMap[match[1].toLowerCase()] || parseInt(match[1], 10) || 0;
+    };
+
     return currentVolunteers
       .filter(volunteer => volunteer != null) // Remove null/undefined entries
       .sort((a, b) => {
-        const valueA = (a?.[orderBy] || "").toString().toLowerCase();
-        const valueB = (b?.[orderBy] || "").toString().toLowerCase();
+        let valueA, valueB;
+
+        if (orderBy === "availability") {
+          valueA = countSlots(a?.availability);
+          valueB = countSlots(b?.availability);
+        } else if (orderBy === "participationCount") {
+          valueA = parseParticipationYear(a?.participationCount);
+          valueB = parseParticipationYear(b?.participationCount);
+        } else {
+          valueA = (a?.[orderBy] || "").toString().toLowerCase();
+          valueB = (b?.[orderBy] || "").toString().toLowerCase();
+        }
+
         if (valueA < valueB) {
           return order === "asc" ? -1 : 1;
         }

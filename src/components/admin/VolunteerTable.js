@@ -40,7 +40,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
 import { Email as EmailIcon, VolunteerActivism as CertificateIcon } from '@mui/icons-material';
-import { FaPaperPlane, FaSlack } from 'react-icons/fa';
+import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
@@ -393,6 +393,9 @@ const VolunteerTable = ({
       return [
         ...baseColumns,
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
+        { id: "availability", label: "Slots", minWidth: 100, priority: 2 },
+        { id: "participationCount", label: "Experience", minWidth: 90, priority: 2 },
+        { id: "linkedin", label: "LinkedIn", minWidth: 50, priority: 3 },
         { id: "expertise", label: "Expertise", minWidth: 120, priority: 2 }, // Reduced from 150
         { id: "country", label: "Country", minWidth: 70, priority: 3 }, // Reduced from 100
         { id: "state", label: "State", minWidth: 60, priority: 3 }, // Reduced from 100
@@ -1021,7 +1024,8 @@ const VolunteerTable = ({
         const parseSlots = (availStr) => {
           if (!availStr) return { dayGroups: [], total: 0 };
 
-          const slots = availStr.split(',').map(s => s.trim()).filter(s => s);
+          // Split on ", " followed by a day name — avoids breaking "Saturday, Mar 28" on its internal comma
+          const slots = availStr.split(/,\s*(?=(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday))/).map(s => s.trim()).filter(s => s);
           const dayMap = new Map(); // key: "DayName, Date" -> array of slots
 
           slots.forEach(slot => {
@@ -1034,7 +1038,25 @@ const VolunteerTable = ({
             let roleIcon = '👥';
             let roleName = 'General';
 
-            if (slot.includes('📸') || slot.includes('Photography')) {
+            if (slot.includes('🌅') || slot.includes('Early Morning')) {
+              roleIcon = '🌅';
+              roleName = 'Early Morning';
+            } else if (slot.includes('☀️') || slot.includes('Morning')) {
+              roleIcon = '☀️';
+              roleName = 'Morning';
+            } else if (slot.includes('🏙️') || slot.includes('🌤️') || slot.includes('Afternoon')) {
+              roleIcon = '🏙️';
+              roleName = 'Afternoon';
+            } else if (slot.includes('🌆') || slot.includes('Evening')) {
+              roleIcon = '🌆';
+              roleName = 'Evening';
+            } else if (slot.includes('🌙') || slot.includes('Late Night')) {
+              roleIcon = '🌙';
+              roleName = 'Late Night';
+            } else if (slot.includes('🌃') || slot.includes('Night')) {
+              roleIcon = '🌃';
+              roleName = 'Night';
+            } else if (slot.includes('📸') || slot.includes('Photography')) {
               roleIcon = '📸';
               roleName = 'Photography';
             } else if (slot.includes('🧹') || slot.includes('Cleanup')) {
@@ -1090,7 +1112,7 @@ const VolunteerTable = ({
         const availabilityTooltipContent = (
           <Box sx={{ minWidth: 280 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-              Volunteer Schedule ({slotData.total} slots)
+              Availability ({slotData.total} slots)
             </Typography>
 
             {slotData.dayGroups.map((group, groupIdx) => (
@@ -1281,6 +1303,45 @@ const VolunteerTable = ({
             >
               {jobTitle}
             </Typography>
+          </Tooltip>
+        );
+      case "linkedin":
+        const linkedinUrl = volunteer.linkedin || volunteer.linkedinProfile || "";
+        if (!linkedinUrl) return <Typography variant="caption" color="text.secondary">—</Typography>;
+        const fullLinkedinUrl = linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`;
+        return (
+          <Tooltip title={linkedinUrl}>
+            <IconButton
+              size="small"
+              component="a"
+              href={fullLinkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ color: '#0077B5' }}
+            >
+              <FaLinkedin size={16} />
+            </IconButton>
+          </Tooltip>
+        );
+      case "participationCount":
+        const participation = volunteer.participationCount || "";
+        if (!participation) return <Typography variant="caption" color="text.secondary">—</Typography>;
+        const isFirstYear = participation.toLowerCase().includes('first');
+        // Extract a short label like "1st", "2nd", "3rd", "4th" from the text
+        const yearMatch = participation.match(/(first|second|third|fourth|fifth|\d+)/i);
+        const yearMap = { first: "1st", second: "2nd", third: "3rd", fourth: "4th", fifth: "5th" };
+        const shortLabel = yearMatch
+          ? (yearMap[yearMatch[1].toLowerCase()] || `${yearMatch[1]}th`)
+          : participation;
+        return (
+          <Tooltip title={participation}>
+            <Chip
+              label={shortLabel}
+              size="small"
+              variant={isFirstYear ? "outlined" : "filled"}
+              color={isFirstYear ? "default" : "success"}
+              sx={{ fontSize: '0.7rem', height: 22 }}
+            />
           </Tooltip>
         );
       default:
