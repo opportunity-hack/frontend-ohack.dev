@@ -213,10 +213,10 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const { handle_get_hackathon_id } = useHackathonEvents();
   const { handle_join_team, handle_unjoin_a_team } = useTeams();
 
-  // Resolve parent nonprofit when npo_id is not provided (direct project page visit)
-  const { nonprofit: resolvedNonprofit } = useProjectNonprofit(problem_statement_id, npo_id);
-  const effectiveNpoId = npo_id || resolvedNonprofit?.id;
-  const nonprofitName = resolvedNonprofit?.name;
+  // Resolve parent nonprofit(s) when npo_id is not provided (direct project page visit)
+  // A project can belong to multiple nonprofits
+  const { nonprofits: resolvedNonprofits } = useProjectNonprofit(problem_statement_id, npo_id);
+  const effectiveNpoId = npo_id || resolvedNonprofits[0]?.id;
   
   // States
   const [hackathonEvents, setHackathonEvents] = useState([]);  
@@ -832,21 +832,25 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
               </Typography>
 
               {/* Nonprofit attribution - only show on direct project page visits */}
-              {!npo_id && resolvedNonprofit && (
-                <Chip
-                  component={Link}
-                  href={`/nonprofit/${resolvedNonprofit.id}`}
-                  label={`Project by ${resolvedNonprofit.name}`}
-                  clickable
-                  size="small"
-                  sx={{
-                    mb: 2,
-                    bgcolor: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
-                    fontWeight: 600,
-                  }}
-                />
+              {!npo_id && resolvedNonprofits.length > 0 && (
+                <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
+                  {resolvedNonprofits.map((npo) => (
+                    <Chip
+                      key={npo.id}
+                      component={Link}
+                      href={`/nonprofit/${npo.id}`}
+                      label={`Project by ${npo.name}`}
+                      clickable
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(255,255,255,0.2)',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
+                        fontWeight: 600,
+                      }}
+                    />
+                  ))}
+                </Stack>
               )}
 
               <SkillSet Skills={problem_statement.skills} />

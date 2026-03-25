@@ -82,6 +82,7 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
   const [projectsLoading, setProjectsLoading] = useState(false);
 
   // Collect all problem statement IDs from nonprofits, with nonprofit context
+  // Map project IDs to their parent nonprofit(s) — a project can belong to multiple nonprofits
   const projectIdMap = useMemo(() => {
     const map = {};
     if (!nonprofits) return map;
@@ -89,7 +90,10 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
       (npo.problem_statements || []).forEach((psId) => {
         // If visibleProblemStatements is set, filter by it
         if (!visibleProblemStatements || visibleProblemStatements.includes(psId)) {
-          map[psId] = { nonprofitId: npo.id, nonprofitName: npo.name };
+          if (!map[psId]) {
+            map[psId] = [];
+          }
+          map[psId].push({ nonprofitId: npo.id, nonprofitName: npo.name });
         }
       });
     });
@@ -245,7 +249,7 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
     return (
       <Grid container spacing={3}>
         {projects.map((project) => {
-          const npoInfo = projectIdMap[project.id];
+          const npoInfoList = projectIdMap[project.id] || [];
           return (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={project.id}>
               <ProjectCard>
@@ -256,8 +260,9 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
                       size="small"
                       color={STATUS_COLORS[project.status] || "default"}
                     />
-                    {npoInfo?.nonprofitName && (
+                    {npoInfoList.map((npoInfo) => (
                       <Chip
+                        key={npoInfo.nonprofitId}
                         component={Link}
                         href={`/nonprofit/${npoInfo.nonprofitId}`}
                         label={npoInfo.nonprofitName}
@@ -265,7 +270,7 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
                         variant="outlined"
                         clickable
                       />
-                    )}
+                    ))}
                   </Box>
                   <Typography
                     gutterBottom
