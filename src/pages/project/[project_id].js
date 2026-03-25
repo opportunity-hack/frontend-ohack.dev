@@ -34,8 +34,24 @@ export async function getStaticProps({ params = {} } = {}) {
   );
   const ps = await res.json();
 
-  var title = "Project: " + ps.title;
-  var metaDescription = ps.status + ": " + ps.description + " ";
+  // Fetch parent nonprofit for SEO context
+  let nonprofitName = "";
+  try {
+    const npoRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${params.project_id}/nonprofit`
+    );
+    const npoData = await npoRes.json();
+    if (npoData?.nonprofits?.length > 0) {
+      nonprofitName = npoData.nonprofits[0].name || "";
+    }
+  } catch (e) {
+    // Non-critical — continue without nonprofit name
+  }
+
+  var title = nonprofitName
+    ? `Project: ${ps.title} — ${nonprofitName}`
+    : "Project: " + ps.title;
+  var metaDescription = (nonprofitName ? `For ${nonprofitName}. ` : "") + ps.status + ": " + ps.description + " ";
   var countOfhelpingMentors = 0;
   var countOfhelpingHackers = 0;
 

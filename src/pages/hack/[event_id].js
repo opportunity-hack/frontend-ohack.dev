@@ -601,6 +601,7 @@ export default function HackathonEvent({ eventData }) {
               nonprofits={event.nonprofits}
               teams={event.teams}
               eventId={event_id}
+              visibleProblemStatements={event.visible_problem_statements}
             />
           </Grid>
 
