@@ -752,6 +752,7 @@ export default function HackathonEvent({ eventData }) {
                   event_id={event_id}
                   id={event.id}
                   endDate={event.end_date}
+                  eventTimezone={event.timezone}
                   constraints={event.constraints}
                 />
               </Box>
