@@ -182,18 +182,25 @@ const LoadingIndicator = ({ message }) => (
 );
 
 // Utility function to check if hackathon has ended
-const isHackathonExpired = (endDate) => {  
+// Compares "now" to end-of-day in the hackathon's own timezone so viewers in
+// other timezones don't see a premature "Hackathon Ended" badge.
+const isHackathonExpired = (endDate, eventTimezone) => {
   if (!endDate) return false;
-  const now = new Date();
-  const hackathonEnd = new Date(endDate);
-  
-  // Set the end time to 11:59:59 PM of the end date to allow participation until the last minute
-  hackathonEnd.setHours(23, 59, 59, 999);
 
-  console.log("Hackathon Current time:", now);
-  console.log("Hackathon end time:", hackathonEnd);
-  
-  return now > hackathonEnd;
+  const tz = eventTimezone || 'America/Phoenix';
+
+  // Get the current date/time as it appears in the event timezone
+  const nowInTz = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+
+  // Build end-of-day for the end date in the event timezone
+  // endDate is "YYYY-MM-DD"; parse parts to avoid UTC-midnight pitfall
+  const [year, month, day] = endDate.split('-').map(Number);
+  const endInTz = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+  console.log("Hackathon current time in", tz, ":", nowInTz);
+  console.log("Hackathon end time in", tz, ":", endInTz);
+
+  return nowInTz > endInTz;
 };
 
 // Utility function to render team status chip
@@ -1194,7 +1201,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   );
 };
 
-const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
+const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {} }) => {
   const [teamData, setTeamData] = useState(teams);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
@@ -1529,7 +1536,7 @@ const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
               onJoin={handleJoinTeam}
               onLeave={handleUnjoinTeam}
               loadingTeamId={loadingTeamId}
-              isHackathonExpired={isHackathonExpired(endDate)}
+              isHackathonExpired={isHackathonExpired(endDate, eventTimezone)}
               teamJoinEnabled={teamJoinEnabled}
               nonprofitMap={nonprofitMap}
               accessToken={accessToken}
