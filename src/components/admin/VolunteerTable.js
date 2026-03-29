@@ -39,7 +39,14 @@ import { styled } from "@mui/system";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
-import { Email as EmailIcon, VolunteerActivism as CertificateIcon, OpenInNew as OpenInNewIcon, PlayCircleFilled as PlayCircleIcon } from '@mui/icons-material';
+import {
+  Email as EmailIcon,
+  VolunteerActivism as CertificateIcon,
+  OpenInNew as OpenInNewIcon,
+  PlayCircleFilled as PlayCircleIcon,
+  GetApp as DownloadIcon,
+  Print as PrintIcon,
+} from '@mui/icons-material';
 import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
 import NextLink from 'next/link';
 import HackerDepositChip from "./HackerDepositChip";
@@ -98,6 +105,20 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
     minWidth: 800, // Minimum width to force horizontal scroll when needed
     tableLayout: "auto", // Allow flexible column sizing
     whiteSpace: "nowrap", // Prevent text wrapping in cells
+  },
+  // Print-friendly styles
+  "@media print": {
+    overflow: "visible",
+    maxWidth: "none",
+    "& .MuiTable-root": {
+      minWidth: "auto",
+      fontSize: "10px",
+    },
+    "& .MuiTableCell-root": {
+      padding: "4px 6px",
+      fontSize: "10px",
+      border: "1px solid #ccc",
+    },
   },
   // Better mobile scrolling
   WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
@@ -445,6 +466,94 @@ const VolunteerTable = ({
     setCopyFeedback({ open: false, message: '' });
   };
 
+  // Extract plain text value from a volunteer for a given column (used for CSV export)
+  const getPlainCellValue = useCallback((volunteer, columnId) => {
+    switch (columnId) {
+      case "id":
+        return volunteer.id || "";
+      case "name":
+        return volunteer.name || "";
+      case "email":
+        return volunteer.email || "";
+      case "pronouns":
+        return volunteer.pronouns || "";
+      case "company":
+        return volunteer.company || "";
+      case "isInPerson":
+        return volunteer.isInPerson ? "Yes" : "No";
+      case "isSelected":
+        return volunteer.isSelected ? "Yes" : "No";
+      case "checkedIn":
+        return volunteer.checkedIn === true ? "Yes" : volunteer.checkedIn === false ? "No" : "Not set";
+      case "slack_user_id":
+        return volunteer.slack_user_id || "";
+      case "status":
+        return volunteer.status || "pending";
+      case "title":
+        return volunteer.title || "";
+      case "background":
+        return volunteer.background || "";
+      case "availability":
+        return volunteer.availability || "";
+      case "participationCount":
+        return volunteer.participationCount != null ? String(volunteer.participationCount) : "";
+      case "linkedin":
+        return volunteer.linkedin || "";
+      case "expertise":
+        return volunteer.expertise || "";
+      case "country":
+        return volunteer.country || "";
+      case "state":
+        return volunteer.state || "";
+      case "teamCode":
+        return volunteer.teamCode || "";
+      case "participantType":
+        return volunteer.participantType || "";
+      case "experienceLevel":
+        return volunteer.experienceLevel || "";
+      case "teamStatus":
+        return volunteer.teamStatus || "";
+      case "primaryRoles":
+        return Array.isArray(volunteer.primaryRoles) ? volunteer.primaryRoles.join("; ") : (volunteer.primaryRoles || "");
+      case "availableDays":
+        return Array.isArray(volunteer.availableDays) ? volunteer.availableDays.join("; ") : "";
+      case "socialCauses":
+        return volunteer.socialCauses || volunteer.otherSocialCause || "";
+      case "artifacts":
+        return Array.isArray(volunteer.artifacts) ? volunteer.artifacts.map(a => a.label).join("; ") : "";
+      case "messages_sent":
+        const emails = getSentEmails(volunteer);
+        return String(emails.length);
+      case "created_timestamp":
+        return volunteer.created_timestamp ? new Date(volunteer.created_timestamp).toLocaleDateString() : "";
+      case "sponsorshipTypes":
+        return volunteer.sponsorshipTypes || volunteer.sponsorshipTier || volunteer.sponsorshipLevel || "";
+      case "phoneNumber":
+        return volunteer.phoneNumber || "";
+      case "preferredContact":
+        return volunteer.preferredContact || "";
+      case "useLogo":
+        return volunteer.useLogo || "";
+      case "volunteerType":
+        return volunteer.volunteerType || "";
+      case "volunteerCount":
+        return volunteer.volunteerCount || "0";
+      case "volunteerHours":
+        return volunteer.volunteerHours || "0";
+      default:
+        return volunteer[columnId] != null ? String(volunteer[columnId]) : "";
+    }
+  }, [getSentEmails]);
+
+  // Escape a value for CSV (handle commas, quotes, newlines)
+  const escapeCsvValue = (value) => {
+    const str = String(value);
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
   const columns = useMemo(() => {
     const baseColumns = [
       { id: "id", label: "ID", minWidth: 50 },
@@ -581,6 +690,42 @@ const VolunteerTable = ({
 
     return filtered;
   }, [volunteers, checkedInFilter]);
+
+  // Export filtered volunteers to CSV
+  const exportToCsv = useCallback(() => {
+    if (filteredVolunteers.length === 0) {
+      setCopyFeedback({ open: true, message: 'No data to export' });
+      return;
+    }
+
+    const headers = columns.map(col => col.label);
+    const rows = filteredVolunteers.map(volunteer =>
+      columns.map(col => escapeCsvValue(getPlainCellValue(volunteer, col.id)))
+    );
+
+    const csvContent = [
+      headers.map(escapeCsvValue).join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${type}-export.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setCopyFeedback({ open: true, message: `Exported ${filteredVolunteers.length} ${type} to CSV` });
+  }, [filteredVolunteers, columns, type, getPlainCellValue]);
+
+  // Print the current table
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
@@ -1539,7 +1684,7 @@ const VolunteerTable = ({
           </Tooltip>
         );
       case "participationCount":
-        const participation = volunteer.participationCount || "";
+        const participation = String(volunteer.participationCount || "");
         if (!participation) return <Typography variant="caption" color="text.secondary">—</Typography>;
         const isFirstYear = participation.toLowerCase().includes('first');
         // Extract a short label like "1st", "2nd", "3rd", "4th" from the text
@@ -1959,6 +2104,30 @@ const VolunteerTable = ({
               </Button>
             </Tooltip>
           )}
+          <Tooltip title={`Export ${filteredVolunteers.length} ${type} to CSV`}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={exportToCsv}
+              disabled={filteredVolunteers.length === 0}
+              sx={{ minWidth: 'auto', px: 1 }}
+              startIcon={<DownloadIcon fontSize="small" />}
+            >
+              {!isMobile && <Typography variant="caption">CSV</Typography>}
+            </Button>
+          </Tooltip>
+          <Tooltip title={`Print ${type} table`}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handlePrint}
+              disabled={filteredVolunteers.length === 0}
+              sx={{ minWidth: 'auto', px: 1 }}
+              startIcon={<PrintIcon fontSize="small" />}
+            >
+              {!isMobile && <Typography variant="caption">Print</Typography>}
+            </Button>
+          </Tooltip>
         </Box>
       </Box>
 
