@@ -36,6 +36,8 @@ import {
   Save as SaveIcon,
   Search as SearchIcon,
   Edit as EditIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
 import axios from "axios";
 import ProblemStatementManagement from "./ProblemStatementManagement";
@@ -56,7 +58,10 @@ const NonprofitManagement = memo(({
   const [selectedNonprofitId, setSelectedNonprofitId] = useState("");
   const [problemStatementDialogOpen, setProblemStatementDialogOpen] = useState(false);
   const [selectedNonprofit, setSelectedNonprofit] = useState(null);
-  
+  const [visiblePsIds, setVisiblePsIds] = useState(hackathon?.visible_problem_statements || null);
+  const [visibilityDirty, setVisibilityDirty] = useState(false);
+  const [savingVisibility, setSavingVisibility] = useState(false);
+
   // Use refs to keep track of loading state and current hackathon ID to prevent race conditions
   const isLoadingRef = useRef(false);
   const hackathonIdRef = useRef(hackathon?.id);
@@ -284,6 +289,69 @@ const NonprofitManagement = memo(({
     }
   };
 
+  // Toggle visibility of a problem statement in the hackathon
+  const togglePsVisibility = (psId) => {
+    setVisiblePsIds((prev) => {
+      // If null (no visibility list yet), build one with all PS IDs minus the toggled one
+      if (prev === null) {
+        const allPsIds = getAllProblemStatementIds();
+        return allPsIds.filter((id) => id !== psId);
+      }
+      if (prev.includes(psId)) {
+        return prev.filter((id) => id !== psId);
+      }
+      return [...prev, psId];
+    });
+    setVisibilityDirty(true);
+  };
+
+  const isPsVisible = (psId) => {
+    // If no visibility list, all are visible
+    if (visiblePsIds === null) return true;
+    return visiblePsIds.includes(psId);
+  };
+
+  const getAllProblemStatementIds = () => {
+    const ids = [];
+    hackathonNonprofits.forEach((npoOrId) => {
+      const npo = getNonprofit(npoOrId);
+      if (npo?.problem_statements) {
+        npo.problem_statements.forEach((psId) => {
+          if (!ids.includes(psId)) ids.push(psId);
+        });
+      }
+    });
+    return ids;
+  };
+
+  const saveVisibility = async () => {
+    if (!hackathon?.id) return;
+    setSavingVisibility(true);
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/problem_statements`,
+        {
+          hackathonId: hackathon.id,
+          problemStatementIds: visiblePsIds || getAllProblemStatementIds(),
+        },
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            "content-type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+      setVisibilityDirty(false);
+      onUpdate();
+    } catch (error) {
+      console.error("Error saving visibility:", error);
+      onError("Failed to save project visibility settings");
+    } finally {
+      setSavingVisibility(false);
+    }
+  };
+
   // Filter out nonprofits that are already added to this hackathon
   const availableNonprofits = nonprofits.filter(
     nonprofit => !hackathonNonprofits.some(hn => hn.id === nonprofit.id)
@@ -375,11 +443,41 @@ const NonprofitManagement = memo(({
         </Box>
       </Paper>
 
+      {/* Project visibility save bar */}
+      {visibilityDirty && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={savingVisibility ? <CircularProgress size={16} /> : <SaveIcon />}
+              onClick={saveVisibility}
+              disabled={savingVisibility}
+            >
+              Save Visibility
+            </Button>
+          }
+        >
+          You have unsaved project visibility changes.
+        </Alert>
+      )}
+
       {/* Currently assigned nonprofits */}
       <Paper sx={{ p: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Nonprofits in this Hackathon
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+          <Typography variant="subtitle1">
+            Nonprofits in this Hackathon
+          </Typography>
+          {hackathonNonprofits.length > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              {visiblePsIds === null
+                ? `All projects visible`
+                : `${visiblePsIds.length} of ${getAllProblemStatementIds().length} projects visible`}
+            </Typography>
+          )}
+        </Box>
         
         {loading && hackathonNonprofits.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -444,28 +542,36 @@ const NonprofitManagement = memo(({
                       </Box>
 
                       {nonprofitProblemStatements.length > 0 ? (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: 1,
-                            mb: 2,
-                          }}
-                        >
-                          {nonprofitProblemStatements.map((psId) => {
-                            const ps = problemStatements.find(
-                              (p) => p.id === psId
-                            );
-                            return ps ? (
-                              <Chip
-                                key={ps.id}
-                                label={ps.title}
-                                size="small"
-                                color="primary"
-                                variant="outlined"
-                              />
-                            ) : null;
-                          })}
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                            Toggle visibility to control which projects appear on the hackathon page:
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: 1,
+                            }}
+                          >
+                            {nonprofitProblemStatements.map((psId) => {
+                              const ps = problemStatements.find(
+                                (p) => p.id === psId
+                              );
+                              const visible = isPsVisible(psId);
+                              return ps ? (
+                                <Chip
+                                  key={ps.id}
+                                  icon={visible ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                                  label={ps.title}
+                                  size="small"
+                                  color={visible ? "primary" : "default"}
+                                  variant={visible ? "filled" : "outlined"}
+                                  onClick={() => togglePsVisibility(ps.id)}
+                                  sx={{ cursor: "pointer" }}
+                                />
+                              ) : null;
+                            })}
+                          </Box>
                         </Box>
                       ) : (
                         <Typography variant="body2" color="text.secondary">

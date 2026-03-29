@@ -53,6 +53,7 @@ import SkillSet from "../skill-set";
 import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 import useProblemstatements from "../../hooks/use-problem-statements";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
+import useProjectNonprofit from "../../hooks/use-project-nonprofit";
 import {useRedirectFunctions} from "@propelauth/react";
 import { trackEvent, initFacebookPixel } from '../../lib/ga';
 import { 
@@ -211,6 +212,11 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
   const { handle_join_team, handle_unjoin_a_team } = useTeams();
+
+  // Resolve parent nonprofit(s) when npo_id is not provided (direct project page visit)
+  // A project can belong to multiple nonprofits
+  const { nonprofits: resolvedNonprofits } = useProjectNonprofit(problem_statement_id, npo_id);
+  const effectiveNpoId = npo_id || resolvedNonprofits[0]?.id;
   
   // States
   const [hackathonEvents, setHackathonEvents] = useState([]);  
@@ -424,12 +430,12 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     const params = {
       action_name: isExpanded ? "open" : "close",
       panel_id: panel,
-      npo_id: npo_id,
+      npo_id: effectiveNpoId,
       problem_statement_id: problem_statement?.id,
       problem_statement_title: problem_statement?.title,
       user_id: user?.userId
     };
-    
+
     trackEvent({
       action: "problem_statement_accordion",
       params: params
@@ -446,7 +452,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         params: {
           problem_statement_id: problem_statement?.id,
           problem_statement_title: problem_statement?.title,
-          npo_id: npo_id,
+          npo_id: effectiveNpoId,
           user_id: user?.userId
         }
       });
@@ -457,8 +463,8 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         params: {
           problem_statement_id: problem_statement?.id,
           problem_statement_title: problem_statement?.title,
-          npo_id: npo_id,
-          user_id: user?.userId 
+          npo_id: effectiveNpoId,
+          user_id: user?.userId
         }
       });
     }
@@ -500,7 +506,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         label: "Helping",
         problem_statement_id: problem_statement?.id,
         problem_statement_title: problem_statement?.title,
-        npo_id: npo_id,
+        npo_id: effectiveNpoId,
         user_id: user?.userId,
         mentor_or_hacker: helperType
       }
@@ -514,7 +520,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       "helping",
       problem_statement.id,
       helperType,
-      npo_id
+      effectiveNpoId
     );
   };
 
@@ -526,7 +532,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         label: "Helping",
         problem_statement_id: problem_statement?.id,
         problem_statement_title: problem_statement?.title,
-        npo_id: npo_id,
+        npo_id: effectiveNpoId,
         user_id: user?.userId
       }
     });
@@ -544,7 +550,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         label: "Helping",
         problem_statement_id: problem_statement?.id,
         problem_statement_title: problem_statement?.title,
-        npo_id: npo_id,
+        npo_id: effectiveNpoId,
         user_id: user?.userId
       }
     });
@@ -553,7 +559,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     setHelpedChecked("");
     setHelpingType("");
     // FIXED: Use correct parameter order
-    handle_help_toggle("not_helping", problem_statement.id, "", npo_id);
+    handle_help_toggle("not_helping", problem_statement.id, "", effectiveNpoId);
   };
 
   const handleCloseUnhelpCancel = () => {
@@ -726,7 +732,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mt: 3 }}>
           <ActionButton
             component={Link}
-            href={`/signup?previousPage=/nonprofit/${npo_id}`}
+            href={`/signup?previousPage=/nonprofit/${effectiveNpoId}`}
             variant="contained"
             size="large"
             fullWidth={isMobile}
@@ -824,7 +830,29 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
               >
                 {problem_statement.title}
               </Typography>
-              
+
+              {/* Nonprofit attribution - only show on direct project page visits */}
+              {!npo_id && resolvedNonprofits.length > 0 && (
+                <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
+                  {resolvedNonprofits.map((npo) => (
+                    <Chip
+                      key={npo.id}
+                      component={Link}
+                      href={`/nonprofit/${npo.id}`}
+                      label={`Project by ${npo.name}`}
+                      clickable
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(255,255,255,0.2)',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
+                        fontWeight: 600,
+                      }}
+                    />
+                  ))}
+                </Stack>
+              )}
+
               <SkillSet Skills={problem_statement.skills} />
               
               <Box sx={{ mt: 3 }}>
