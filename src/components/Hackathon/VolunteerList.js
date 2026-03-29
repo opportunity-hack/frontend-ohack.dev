@@ -1,14 +1,10 @@
 import React from "react";
 import {
   Grid,
-  Card,
-  CardContent,
-  CardMedia,
   Typography,
   Chip,
   Box,
   Avatar,
-  Paper,
   Link,
   Tooltip,
   List,
@@ -20,7 +16,14 @@ import {
   Divider,
   Collapse,
   Button,
-  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
@@ -46,6 +49,8 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 import LaunchIcon from "@mui/icons-material/Launch";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import TableRowsIcon from "@mui/icons-material/TableRows";
 
 // Field configuration for data-driven rendering
 const FIELD_CONFIG = {
@@ -141,6 +146,13 @@ const FIELD_CONFIG = {
     type: 'artifacts',
     requiredType: 'volunteer'
   }
+};
+
+const TYPE_CONFIG = {
+  mentor:    { label: "Mentors",    learnMoreHref: "/about/mentors" },
+  judge:     { label: "Judges",     learnMoreHref: "/about/judges" },
+  hacker:    { label: "Hackers",    learnMoreHref: "/hack" },
+  volunteer: { label: "Volunteers", learnMoreHref: "/volunteer" },
 };
 
 const ArtifactList = styled(List)({
@@ -431,6 +443,7 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
   const [availableMentors, setAvailableMentors] = React.useState([]);
   const [expandedAvailability, setExpandedAvailability] = React.useState({});
   const [expandedBios, setExpandedBios] = React.useState({});
+  const [viewMode, setViewMode] = React.useState("cards");
 
   // Field rendering functions
   const renderFieldChip = (value, fieldConfig) => {
@@ -845,9 +858,7 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
   // Helper function to detect if availability is volunteer format vs mentor format
   const detectAvailabilityFormat = (availability) => {
     if (!availability || typeof availability !== "string") return 'unknown';
-    
-    console.log('Detecting format for:', availability); // Debug log
-    
+
     // Volunteer format has dash separator and tends to have event names
     // Example: "Friday, Oct 10: Doors Open & Registration - 🍕 Food Service (8:00am - 11:00am)"
     const volunteerPattern = /\w+,\s+\w+\s+\d+:\s+[^-]+-\s+[🍕🧹📸🎤🎯🔧💻📋🎨🔒🎵🏃‍♂️🛠️📊🎪🎭🎬🎮🎲]/;
@@ -858,27 +869,17 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
     
     // Additional check: volunteer format often contains dash separators
     const hasDashSeparator = availability.includes(' - ');
-    
-    console.log('Has dash separator:', hasDashSeparator);
-    console.log('Volunteer pattern match:', volunteerPattern.test(availability));
-    console.log('Mentor pattern match:', mentorPattern.test(availability));
-    
+
     if (hasDashSeparator && volunteerPattern.test(availability)) {
-      console.log('Detected as volunteer format');
       return 'volunteer';
     } else if (mentorPattern.test(availability)) {
-      console.log('Detected as mentor format');
       return 'mentor';
     }
-    
-    // If it contains dash separators but doesn't match volunteer pattern, still try volunteer
+
     if (hasDashSeparator) {
-      console.log('Has dash, defaulting to volunteer format');
       return 'volunteer';
     }
-    
-    // Default to mentor format for backwards compatibility
-    console.log('Defaulting to mentor format');
+
     return 'mentor';
   };
 
@@ -889,20 +890,14 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
       // Example input: "Friday, Oct 10: Doors Open & Registration - 🍕 Food Service (8:00am - 11:00am), Friday, Oct 10: Nonprofit Pitches - 🧹 Cleanup Crew (10:00am - 12:00pm)"
       const parts = availability.split(/,\s+(?=\w+,\s+\w+\s+\d+:)/);
       
-      console.log('Volunteer availability parts:', parts); // Debug log
-      
       return parts.map((slot, index) => {
-        console.log(`Processing slot ${index}:`, slot); // Debug log
-        
         // Parse format: "Friday, Oct 10: Doors Open & Registration - 🍕 Food Service (8:00am - 11:00am)"
         // More flexible regex to capture various emoji patterns
         const match = slot.match(/^(\w+,\s+\w+\s+\d+):\s+([^-]+?)\s*-\s*([🍕🧹📸🎤🎯🔧💻📋🎨🔒🎵🏃‍♂️🛠️📊🎪🎭🎬🎮🎲])\s+([^(]+?)\s*\(([^)]+)\)/);
         
         if (match) {
           const [, dateStr, eventName, emoji, role, timeRange] = match;
-          
-          console.log('Matched:', { dateStr, eventName, emoji, role, timeRange }); // Debug log
-          
+
           // Create short date format (e.g., "Oct 10" from "Friday, Oct 10")
           const shortDate = dateStr.split(',')[1]?.trim() || dateStr; // "Oct 10"
           const dayName = dateStr.split(',')[0]?.trim() || ''; // "Friday"
@@ -920,8 +915,6 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
             sortKey: dateStr + eventName
           };
         }
-        
-        console.log('No match for slot:', slot); // Debug log
         
         // Fallback parsing if regex doesn't match - try to extract basic info
         const basicMatch = slot.match(/^([^:]+):\s*(.+)/);
@@ -963,11 +956,8 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
   // Helper function to render volunteer availability
   const renderVolunteerAvailability = (availability, volunteerName) => {
     const slots = parseVolunteerAvailability(availability);
-    
-    console.log('Parsed volunteer slots:', slots); // Debug log
-    
+
     if (slots.length === 0) {
-      console.log('No slots parsed, rendering fallback');
       // Fallback: show the raw availability string if parsing fails
       return (
         <AvailabilitySection>
@@ -1476,6 +1466,221 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
     );
   };
 
+  const renderTableView = () => {
+    const selected = Array.isArray(volunteers)
+      ? volunteers.filter((v) => v && v.isSelected)
+      : [];
+
+    if (selected.length === 0) return null;
+
+    const showTeamStatus = type === "hacker";
+
+    return (
+      <TableContainer
+        sx={{
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "auto",
+        }}
+      >
+        <Table size="small" sx={{ minWidth: 600 }}>
+          <TableHead>
+            <TableRow sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}>
+              <TableCell>Name</TableCell>
+              <TableCell>Organization</TableCell>
+              <TableCell>Expertise</TableCell>
+              <TableCell>Location</TableCell>
+              <TableCell>Format</TableCell>
+              {showTeamStatus && <TableCell>Team Status</TableCell>}
+              <TableCell>Links</TableCell>
+              <TableCell sx={{ width: 40 }} />
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {selected.map((volunteer) => {
+              const name = volunteer.name || "Volunteer";
+              const isExpanded = expandedCards[name] || false;
+              const imageUrl = getVolunteerImage(volunteer);
+              const initials = name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
+              const company = getFieldValue(volunteer, FIELD_CONFIG.company);
+              const expertise = getFieldValue(volunteer, FIELD_CONFIG.expertise);
+              const expertiseDisplay = expertise
+                ? Array.isArray(expertise)
+                  ? expertise.slice(0, 2).join(", ")
+                  : expertise.split(/[,;]/).slice(0, 2).join(", ")
+                : null;
+              const location = getFieldValue(volunteer, FIELD_CONFIG.location);
+              const teamStatus = getFieldValue(volunteer, FIELD_CONFIG.teamStatus);
+
+              const getTeamLabel = (status) => {
+                switch (status) {
+                  case "I have a team": return "Has Team";
+                  case "I'm looking for team members": return "Seeking Members";
+                  case "I'd like to be matched with a team": return "Looking for Team";
+                  default: return "Solo";
+                }
+              };
+
+              return (
+                <React.Fragment key={name}>
+                  <TableRow
+                    hover
+                    onClick={() => toggleCardExpanded(name)}
+                    sx={{
+                      cursor: "pointer",
+                      "& td": { borderBottom: isExpanded ? "none" : undefined },
+                    }}
+                  >
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Avatar
+                          src={imageUrl}
+                          alt={name}
+                          sx={{ width: 32, height: 32, fontSize: "0.8rem" }}
+                        >
+                          {initials}
+                        </Avatar>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {name}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {company || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {expertiseDisplay || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {location ? (
+                        <Chip
+                          icon={<LocationOnIcon />}
+                          label={location}
+                          size="small"
+                        />
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {volunteer.isInPerson !== undefined && (
+                        <Chip
+                          label={volunteer.isInPerson ? "In-Person" : "Remote"}
+                          size="small"
+                          color={volunteer.isInPerson ? "success" : "info"}
+                        />
+                      )}
+                    </TableCell>
+                    {showTeamStatus && (
+                      <TableCell>
+                        {teamStatus ? (
+                          <Chip
+                            icon={<GroupIcon />}
+                            label={getTeamLabel(teamStatus)}
+                            size="small"
+                            color={teamStatus === "I have a team" ? "success" : "primary"}
+                          />
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                    )}
+                    <TableCell>
+                      <Box sx={{ display: "flex", gap: 0.5 }}>
+                        {getFieldValue(volunteer, FIELD_CONFIG.linkedinProfile) && (
+                          <Tooltip title="LinkedIn">
+                            <Link
+                              href={getFieldValue(volunteer, FIELD_CONFIG.linkedinProfile)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <LinkedInIcon fontSize="small" />
+                            </Link>
+                          </Tooltip>
+                        )}
+                        {getFieldValue(volunteer, FIELD_CONFIG.github) && (
+                          <Tooltip title="GitHub">
+                            <Link
+                              href={getFieldValue(volunteer, FIELD_CONFIG.github)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <GitHubIcon fontSize="small" />
+                            </Link>
+                          </Tooltip>
+                        )}
+                        {getFieldValue(volunteer, FIELD_CONFIG.portfolio) && (
+                          <Tooltip title="Portfolio">
+                            <Link
+                              href={getFieldValue(volunteer, FIELD_CONFIG.portfolio)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <LaunchIcon fontSize="small" />
+                            </Link>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      {isExpanded ? (
+                        <ExpandLessIcon fontSize="small" color="action" />
+                      ) : (
+                        <ExpandMoreIcon fontSize="small" color="action" />
+                      )}
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Expanded detail row */}
+                  <TableRow>
+                    <TableCell
+                      colSpan={showTeamStatus ? 8 : 7}
+                      sx={{ py: 0, borderBottom: isExpanded ? undefined : "none" }}
+                    >
+                      <Collapse in={isExpanded}>
+                        <Box sx={{ py: 2, px: 1 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+                            {volunteer.pronouns && (
+                              <Chip icon={<PersonIcon />} label={volunteer.pronouns} size="small" />
+                            )}
+                            {renderField(volunteer, "participationCount", type)}
+                            <ShareVolunteer volunteer={volunteer} type={type} />
+                          </Box>
+                          {renderField(volunteer, "bio", type)}
+                          {renderField(volunteer, "expertise", type)}
+                          {renderField(volunteer, "softwareSpecifics", type)}
+                          {renderField(volunteer, "whyJudge", type)}
+                          {renderField(volunteer, "primaryRoles", type)}
+                          {renderField(volunteer, "skills", type)}
+                          {renderField(volunteer, "socialCauses", type)}
+                          {renderField(volunteer, "availability", type)}
+                          {renderField(volunteer, "artifacts", type)}
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
   const scrollToMentor = (mentorName) => {
     const element = document.getElementById(`mentor-${mentorName}`);
     if (element) {
@@ -1487,47 +1692,39 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
     return <Skeleton marginTop={5} variant="rect" width={210} height={300} />;
   }
 
+  const { label: sectionLabel, learnMoreHref } = TYPE_CONFIG[type] || TYPE_CONFIG.volunteer;
+
   return (
     <Box sx={{ mt: 4 }}>
-      <HeadingContainer>
-        <Typography variant="h4">          
-          {type === "mentor"
-            ? "Mentors"
-            : type === "judge"
-              ? "Judges"
-              : type === "hacker"
-                ? "Hackers"
-                : "Volunteers"}
-        </Typography>
-        <NextLink
-          href={
-            type === "mentor"
-              ? "/about/mentors"
-              : type === "judge"
-                ? "/about/judges"
-                : type === "hacker"
-                  ? "/hack"
-                  : "/volunteer"
-          }
-          passHref
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, flexWrap: "wrap", gap: 1 }}>
+        <HeadingContainer sx={{ mb: 0 }}>
+          <Typography variant="h4">{sectionLabel}</Typography>
+          <NextLink href={learnMoreHref} passHref>
+            <StyledLink color="secondary" component="a" href={learnMoreHref}>
+              (Learn more)
+            </StyledLink>
+          </NextLink>
+        </HeadingContainer>
+
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={(_, v) => { if (v) setViewMode(v); }}
+          size="small"
+          aria-label="View mode"
         >
-          <StyledLink 
-            color="secondary" 
-            component="a"
-            href={
-              type === "mentor"
-                ? "/about/mentors"
-                : type === "judge"
-                  ? "/about/judges"
-                  : type === "hacker"
-                    ? "/hack"
-                    : "/volunteer"
-            }
-          >
-            (Learn more)
-          </StyledLink>
-        </NextLink>
-      </HeadingContainer>
+          <ToggleButton value="cards" aria-label="Card view">
+            <Tooltip title="Card view">
+              <ViewModuleIcon fontSize="small" />
+            </Tooltip>
+          </ToggleButton>
+          <ToggleButton value="table" aria-label="Table view">
+            <Tooltip title="Table view">
+              <TableRowsIcon fontSize="small" />
+            </Tooltip>
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
 
       {type === "mentor" && <MentorAvailability volunteers={volunteers} />}
 
@@ -1607,10 +1804,14 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
           </AvailableMentorsSection>
         )}
 
-      <Grid container spacing={2}>
-        {Array.isArray(volunteers) &&
-          volunteers.map((volunteer) => renderVolunteerCard(volunteer))}
-      </Grid>
+      {viewMode === "cards" ? (
+        <Grid container spacing={2}>
+          {Array.isArray(volunteers) &&
+            volunteers.map((volunteer) => renderVolunteerCard(volunteer))}
+        </Grid>
+      ) : (
+        renderTableView()
+      )}
     </Box>
   );
 };
