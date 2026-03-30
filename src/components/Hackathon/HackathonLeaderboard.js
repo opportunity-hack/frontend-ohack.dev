@@ -22,6 +22,7 @@ import WeekendIcon from '@mui/icons-material/Weekend';
 import ExploreIcon from '@mui/icons-material/Explore';
 import StarIcon from '@mui/icons-material/Star';
 import CommitIcon from '@mui/icons-material/CommitRounded';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 
 const LeaderboardContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -172,7 +173,8 @@ const getIconComponent = (iconName, props = {}) => {
     trophy: <EmojiEventsIcon {...defaultProps} />,
     explore: <ExploreIcon {...defaultProps} />,
     launch: <LaunchIcon {...defaultProps} />,
-    link: <LinkIcon {...defaultProps} />
+    link: <LinkIcon {...defaultProps} />,
+    rocket_launch: <RocketLaunchIcon {...defaultProps} />
   };
 
   if (iconMap[iconName]) {
@@ -218,6 +220,7 @@ const HackathonLeaderboard = ({
   const [generalStats, setGeneralStats] = useState(initialGeneralStats || []);
   const [individualAchievements, setIndividualAchievements] = useState(initialIndividualAchievements || []);
   const [teamAchievements, setTeamAchievements] = useState(initialTeamAchievements || []);
+  const [mentorOpportunities, setMentorOpportunities] = useState([]);
   const [orgName, setOrgName] = useState(githubOrg || '');
   const [hackathonName, setHackathonName] = useState(eventName || '');
   const [loading, setLoading] = useState(!initialGeneralStats);
@@ -262,6 +265,7 @@ const HackathonLeaderboard = ({
       setGeneralStats(data.generalStats || []);
       setIndividualAchievements(data.individualAchievements || []);
       setTeamAchievements(data.teamAchievements || []);
+      setMentorOpportunities(data.mentorOpportunities || []);
       setOrgName(data.githubOrg || '');
       setHackathonName(data.eventName || '');
 
@@ -737,27 +741,37 @@ const HackathonLeaderboard = ({
                     </Box>
                   </FlexContent>
                   
-                  <Box sx={{ 
-                    ml: { xs: 0.5, md: 1 }, 
-                    flexShrink: 0, 
-                    minWidth: { xs: '70px', md: '90px' }, 
+                  <Box sx={{
+                    ml: { xs: 0.5, md: 1 },
+                    flexShrink: 0,
+                    minWidth: { xs: '70px', md: '90px' },
                     textAlign: 'right'
                   }}>
-                    <Typography 
-                      variant="h6" 
-                      fontWeight="bold" 
-                      color="primary" 
+                    <Typography
+                      variant="h6"
+                      fontWeight="bold"
+                      color="primary"
                       noWrap
                       sx={{ fontSize: { xs: '1rem', md: '1.15rem' } }}
                     >
                       {achievement.value}
                     </Typography>
+                    {achievement.description && (
+                      <Typography
+                        variant="caption"
+                        color="textSecondary"
+                        noWrap
+                        sx={{ fontSize: '0.65rem', display: 'block' }}
+                      >
+                        {achievement.description}
+                      </Typography>
+                    )}
                   </Box>
                 </AchievementCard>
               </Grid>
             );
           })}
-          
+
           {(!individualAchievements || individualAchievements.length === 0) && (
             <Grid size={12}>
               <Box p={3} textAlign="center" bgcolor="background.paper" borderRadius={1}>
@@ -858,21 +872,31 @@ const HackathonLeaderboard = ({
                     </Box>
                   </FlexContent>
                   
-                  <Box sx={{ 
-                    ml: { xs: 0.5, md: 1 }, 
-                    flexShrink: 0, 
-                    minWidth: { xs: '70px', md: '90px' }, 
-                    textAlign: 'right' 
+                  <Box sx={{
+                    ml: { xs: 0.5, md: 1 },
+                    flexShrink: 0,
+                    minWidth: { xs: '70px', md: '90px' },
+                    textAlign: 'right'
                   }}>
-                    <Typography 
-                      variant="h6" 
-                      fontWeight="bold" 
-                      color="primary" 
+                    <Typography
+                      variant="h6"
+                      fontWeight="bold"
+                      color="primary"
                       noWrap
                       sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}
                     >
                       {achievement.value}
                     </Typography>
+                    {achievement.description && (
+                      <Typography
+                        variant="caption"
+                        color="textSecondary"
+                        noWrap
+                        sx={{ fontSize: '0.65rem', display: 'block' }}
+                      >
+                        {achievement.description}
+                      </Typography>
+                    )}
                   </Box>
                 </AchievementCard>
               </Grid>
@@ -887,6 +911,83 @@ const HackathonLeaderboard = ({
           )}
         </Grid>
       </Box>
+      {mentorOpportunities && mentorOpportunities.length > 0 && (
+        <Box sx={{ display: { xs: 'block', sm: 'none', md: 'block' } }}>
+          <SectionHeader variant="h6">
+            <RocketLaunchIcon sx={{ mr: 1, verticalAlign: 'middle', color: 'warning.main' }} />
+            Teams Ready for a Boost
+          </SectionHeader>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            These teams could benefit from some mentor support to help them get rolling!
+          </Typography>
+          <Grid container spacing={2}>
+            {mentorOpportunities.map((opportunity, index) => {
+              const hasTeamPage = opportunity.teamPage;
+
+              return (
+                <Grid size={{ xs: 12, md: 6 }} key={index}>
+                  <AchievementCard
+                    sx={{
+                      flexDirection: 'row',
+                      p: { xs: 1.5, md: 2 },
+                      alignItems: 'center',
+                      borderLeft: '4px solid',
+                      borderLeftColor: 'warning.main',
+                      cursor: hasTeamPage ? 'pointer' : 'default',
+                      '&:hover': {
+                        transform: hasTeamPage ? 'scale(1.02)' : 'none',
+                        boxShadow: hasTeamPage ? 3 : 1,
+                      },
+                    }}
+                    component={hasTeamPage ? Link : Box}
+                    href={hasTeamPage ? getGitHubTeamUrl(opportunity.teamPage) : undefined}
+                    target={hasTeamPage ? "_blank" : undefined}
+                    rel="noopener"
+                    underline="none"
+                  >
+                    <StyledBadge
+                      badgeContent={opportunity.members}
+                      color="primary"
+                      overlap="circular"
+                      sx={{ '& .MuiBadge-badge': { fontSize: '0.7rem', height: '18px', minWidth: '18px' } }}
+                    >
+                      <Avatar
+                        sx={{
+                          width: { xs: 40, md: 48 },
+                          height: { xs: 40, md: 48 },
+                          mr: { xs: 1.5, md: 2 },
+                          bgcolor: 'warning.main',
+                          flexShrink: 0
+                        }}
+                      >
+                        {renderIcon(opportunity.icon || 'rocket_launch', { color: "inherit" })}
+                      </Avatar>
+                    </StyledBadge>
+
+                    <FlexContent flexGrow={1}>
+                      <TruncatedText
+                        variant="subtitle1"
+                        fontWeight="bold"
+                        title={opportunity.team}
+                        sx={{ fontSize: { xs: '0.95rem', md: '1rem' } }}
+                      >
+                        {opportunity.team}
+                      </TruncatedText>
+                      <TruncatedText
+                        variant="body2"
+                        color="textSecondary"
+                        sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }}
+                      >
+                        {opportunity.value} • {opportunity.members} members
+                      </TruncatedText>
+                    </FlexContent>
+                  </AchievementCard>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Box>
+      )}
       <Box textAlign="center" mt={4} pt={1} borderTop={1} borderColor="divider">
         <Button
           variant="outlined"
