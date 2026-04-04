@@ -100,59 +100,58 @@ export default function CommunityChampions() {
         </Head>
       )}
 
-      <Box sx={{ maxWidth: 960, mx: "auto", px: { xs: 2, md: 3 }, py: { xs: 3, md: 5 } }}>
-        {/* Hero image + Header — fixed height, isolated from content reflows */}
+      {/* Hero image — outside content container to avoid scrollbar reflow */}
+      <Box
+        sx={{
+          position: "relative",
+          height: { xs: 180, sm: 240, md: 300 },
+          width: "100%",
+          overflow: "hidden",
+          mb: { xs: 3, md: 4 },
+        }}
+      >
+        <Image
+          src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"
+          fill
+          sizes="100vw"
+          alt="Opportunity Hack volunteers collaborating at a hackathon for nonprofits"
+          style={{ objectFit: "cover" }}
+          priority
+        />
         <Box
           sx={{
-            position: "relative",
-            borderRadius: 4,
-            overflow: "hidden",
-            mb: { xs: 3, md: 4 },
-            height: { xs: 180, sm: 240, md: 300 },
-            flexShrink: 0,
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.6) 100%)",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            p: { xs: 2.5, md: 4 },
+            textAlign: "center",
           }}
         >
-          <Image
-            src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"
-            fill
-            sizes="(max-width: 960px) 100vw, 960px"
-            alt="Opportunity Hack volunteers collaborating at a hackathon for nonprofits"
-            style={{ objectFit: "cover" }}
-            priority
-          />
-          <Box
+          <EmojiEventsIcon sx={{ fontSize: 40, color: "#FFD700", mb: 0.5 }} />
+          <Typography
+            variant="h3"
+            component="h1"
             sx={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.6) 100%)",
-            }}
-          />
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              p: { xs: 2.5, md: 4 },
-              textAlign: "center",
+              fontWeight: 800,
+              fontSize: { xs: "1.75rem", md: "2.5rem" },
+              color: "#fff",
+              textShadow: "0 2px 8px rgba(0,0,0,0.3)",
             }}
           >
-            <EmojiEventsIcon sx={{ fontSize: 40, color: "#FFD700", mb: 0.5 }} />
-            <Typography
-              variant="h3"
-              component="h1"
-              sx={{
-                fontWeight: 800,
-                fontSize: { xs: "1.75rem", md: "2.5rem" },
-                color: "#fff",
-                textShadow: "0 2px 8px rgba(0,0,0,0.3)",
-              }}
-            >
-              Community Champions
-            </Typography>
-          </Box>
+            Community Champions
+          </Typography>
         </Box>
+      </Box>
 
+      <Box sx={{ maxWidth: 960, mx: "auto", px: { xs: 2, md: 3 }, pb: { xs: 3, md: 5 } }}>
         <Box sx={{ textAlign: "center", mb: { xs: 3, md: 4 } }}>
           <Typography
             variant="body1"
