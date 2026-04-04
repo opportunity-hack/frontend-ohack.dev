@@ -11,19 +11,10 @@ import {
 } from "@mui/material";
 import { FaHeart, FaInfoCircle, FaChartPie, FaListUl } from "react-icons/fa";
 import MilestoneProgress from "./MilestoneProgress";
+import { ALL_REWARDS as rewards } from "../../lib/heartTiers";
 
 const COLORS = ["#0088FE", "#f3f3f3"];
 const MAX_HEARTS = 48;
-
-const rewards = [
-  { hearts: 2, reward: "Certificate" },
-  { hearts: 4, reward: "IG/FB Shoutout" },
-  { hearts: 5, reward: "LinkedIn Recommendation" },
-  { hearts: 6, reward: "Interview prep & resume review" },
-  { hearts: 10, reward: "Reference for job application" },
-  { hearts: 24, reward: "Opportunity Hack swag" },
-  { hearts: 48, reward: "Sponsor-provided tech award" },
-];
 
 const countHearts = (h) => {
   var total = 0;

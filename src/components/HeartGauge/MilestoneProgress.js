@@ -20,41 +20,7 @@ import {
   FaStar,
   FaGift,
 } from "react-icons/fa";
-
-const rewards = [
-  { hearts: 2, reward: "Certificate", tier: "Bronze", color: "#CD7F32" },
-  { hearts: 4, reward: "IG/FB Shoutout", tier: "Bronze", color: "#CD7F32" },
-  {
-    hearts: 5,
-    reward: "LinkedIn Recommendation",
-    tier: "Silver",
-    color: "#C0C0C0",
-  },
-  {
-    hearts: 6,
-    reward: "Interview prep & resume review",
-    tier: "Silver",
-    color: "#C0C0C0",
-  },
-  {
-    hearts: 10,
-    reward: "Reference for job application",
-    tier: "Gold",
-    color: "#FFD700",
-  },
-  {
-    hearts: 24,
-    reward: "Opportunity Hack swag",
-    tier: "Platinum",
-    color: "#E5E4E2",
-  },
-  {
-    hearts: 48,
-    reward: "Sponsor-provided tech award",
-    tier: "Diamond",
-    color: "#B9F2FF",
-  },
-];
+import { ALL_REWARDS as rewards, TIER_ORDER as tierOrder, TIERS } from "../../lib/heartTiers";
 
 const countHearts = (h) => {
   var total = 0;
@@ -103,7 +69,7 @@ const MilestoneProgress = ({ history }) => {
     return acc;
   }, {});
 
-  const tierOrder = ["Bronze", "Silver", "Gold", "Platinum", "Diamond"];
+  // tierOrder imported from shared heartTiers module
 
   return (
     <Paper
