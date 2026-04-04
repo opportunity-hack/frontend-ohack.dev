@@ -101,31 +101,32 @@ export default function CommunityChampions() {
       )}
 
       <Box sx={{ maxWidth: 960, mx: "auto", px: { xs: 2, md: 3 }, py: { xs: 3, md: 5 } }}>
-        {/* Hero image + Header */}
+        {/* Hero image + Header — fixed height, isolated from content reflows */}
         <Box
           sx={{
             position: "relative",
             borderRadius: 4,
             overflow: "hidden",
             mb: { xs: 3, md: 4 },
+            height: { xs: 180, sm: 240, md: 300 },
+            flexShrink: 0,
           }}
         >
-          <Box sx={{ position: "relative", height: { xs: 180, sm: 240, md: 300 } }}>
-            <Image
-              src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"
-              fill
-              alt="Opportunity Hack volunteers collaborating at a hackathon for nonprofits"
-              style={{ objectFit: "cover" }}
-              priority
-            />
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.6) 100%)",
-              }}
-            />
-          </Box>
+          <Image
+            src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"
+            fill
+            sizes="(max-width: 960px) 100vw, 960px"
+            alt="Opportunity Hack volunteers collaborating at a hackathon for nonprofits"
+            style={{ objectFit: "cover" }}
+            priority
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.6) 100%)",
+            }}
+          />
           <Box
             sx={{
               position: "absolute",
