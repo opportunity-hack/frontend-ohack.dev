@@ -451,8 +451,8 @@ const PublicProfile = () => {
             </Paper>
           )}
 
-          {/* Community Feedback — only show when public */}
-          {isPublic("feedback") && (
+          {/* Community Feedback — show if what or how is public */}
+          {(isPublic("what") || isPublic("how")) && (
             <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography
@@ -472,6 +472,7 @@ const PublicProfile = () => {
                   feedbackUrl={feedbackUrl}
                   history={profile?.history}
                   userName={profile?.name}
+                  privacySettings={privacySettings}
                 />
               </CardContent>
             </Paper>
