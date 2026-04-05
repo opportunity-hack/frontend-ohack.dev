@@ -24,9 +24,12 @@ import FeedbackIcon from "@mui/icons-material/Feedback";
 import PersonIcon from "@mui/icons-material/Person";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import BusinessIcon from "@mui/icons-material/Business";
+import SchoolIcon from "@mui/icons-material/School";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import HistoryIcon from "@mui/icons-material/History";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import InstagramIcon from "@mui/icons-material/Instagram";
+import BuildIcon from "@mui/icons-material/Build";
 
 import usePublicProfile from "../../hooks/use-public-profile";
 import PublicBadgeList from "./PublicBadgeList";
@@ -86,26 +89,13 @@ const PublicProfile = () => {
     return privacySettings?.[field] === "public";
   };
 
-  // Helper component for private content placeholder
-  const PrivateContentPlaceholder = ({ icon: Icon, label }) => (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1,
-        color: "text.secondary",
-        fontStyle: "italic",
-        p: 2,
-        bgcolor: "action.hover",
-        borderRadius: 1,
-        border: "1px solid",
-        borderColor: "divider",
-      }}
-    >
-      <VisibilityOffIcon fontSize="small" />
-      <Typography variant="body2">{label} is private</Typography>
-    </Box>
-  );
+  const educationLabels = {
+    in_college: "In College",
+    bootcamp: "Bootcamp",
+    post_college: "Post-College",
+    in_high_school: "In High School",
+    in_middle_school: "In Middle School",
+  };
 
   const roleLabels = {
     hacker_in_school: "Hacker (In School)",
@@ -233,36 +223,19 @@ const PublicProfile = () => {
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
         {/* Left Column */}
         <Grid size={{ xs: 12, md: 8 }}>
-          {/* Basic Information */}
-          <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography
-                variant="h5"
-                sx={{
-                  mb: 3,
-                  fontWeight: 500,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                <PersonIcon />
-                Basic Information
-              </Typography>
+          {/* Basic Information — only render if at least one field is public and has data */}
+          {(() => {
+            const publicFields = [];
 
-              <Grid container spacing={{ xs: 2, sm: 3 }}>
-                {/* GitHub Username */}
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    GitHub Profile
-                  </Typography>
-                  {isPublic("github") && profile?.github ? (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <GitHubIcon fontSize="small" />
+            if (isPublic("github") && profile?.github) {
+              publicFields.push(
+                <Grid size={{ xs: 12, sm: 6 }} key="github">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <GitHubIcon fontSize="small" color="action" />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        GitHub
+                      </Typography>
                       <Link
                         href={`https://github.com/${profile.github}`}
                         target="_blank"
@@ -272,95 +245,166 @@ const PublicProfile = () => {
                         {profile.github}
                       </Link>
                     </Box>
-                  ) : !isPublic("github") ? (
-                    <PrivateContentPlaceholder
-                      icon={GitHubIcon}
-                      label="GitHub profile"
-                    />
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontStyle: "italic" }}
-                    >
-                      Not provided
-                    </Typography>
-                  )}
+                  </Box>
                 </Grid>
+              );
+            }
 
-                {/* Company */}
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Company
-                  </Typography>
-                  {isPublic("company") && profile?.company ? (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <BusinessIcon fontSize="small" />
+            if (isPublic("company") && profile?.company) {
+              publicFields.push(
+                <Grid size={{ xs: 12, sm: 6 }} key="company">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <BusinessIcon fontSize="small" color="action" />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Company
+                      </Typography>
                       <Typography variant="body1">{profile.company}</Typography>
                     </Box>
-                  ) : !isPublic("company") ? (
-                    <PrivateContentPlaceholder
-                      icon={BusinessIcon}
-                      label="Company information"
-                    />
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontStyle: "italic" }}
-                    >
-                      Not provided
-                    </Typography>
-                  )}
+                  </Box>
                 </Grid>
+              );
+            }
 
-                {/* Why are you here */}
-                <Grid size={{ xs: 12 }}>
+            if (isPublic("education") && profile?.education) {
+              publicFields.push(
+                <Grid size={{ xs: 12, sm: 6 }} key="education">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <SchoolIcon fontSize="small" color="action" />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Education
+                      </Typography>
+                      <Typography variant="body1">
+                        {educationLabels[profile.education] || profile.education}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              );
+            }
+
+            if (isPublic("linkedin_url") && profile?.linkedin_url) {
+              publicFields.push(
+                <Grid size={{ xs: 12, sm: 6 }} key="linkedin">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <LinkedInIcon fontSize="small" color="action" />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        LinkedIn
+                      </Typography>
+                      <Link
+                        href={profile.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        underline="hover"
+                      >
+                        View Profile
+                      </Link>
+                    </Box>
+                  </Box>
+                </Grid>
+              );
+            }
+
+            if (isPublic("instagram_url") && profile?.instagram_url) {
+              publicFields.push(
+                <Grid size={{ xs: 12, sm: 6 }} key="instagram">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <InstagramIcon fontSize="small" color="action" />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Instagram
+                      </Typography>
+                      <Link
+                        href={profile.instagram_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        underline="hover"
+                      >
+                        View Profile
+                      </Link>
+                    </Box>
+                  </Box>
+                </Grid>
+              );
+            }
+
+            if (isPublic("expertise") && profile?.expertise?.length > 0) {
+              publicFields.push(
+                <Grid size={{ xs: 12 }} key="expertise">
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                    <BuildIcon fontSize="small" color="action" sx={{ mt: 0.5 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Areas of Expertise
+                      </Typography>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                        {profile.expertise.map((skill) => (
+                          <Chip key={skill} label={skill} size="small" variant="outlined" />
+                        ))}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Grid>
+              );
+            }
+
+            if (isPublic("why") && profile?.why) {
+              publicFields.push(
+                <Grid size={{ xs: 12 }} key="why">
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                    <VolunteerActivismIcon fontSize="small" color="action" sx={{ mt: 0.5 }} />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Why they&apos;re here with Opportunity Hack
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          bgcolor: "action.hover",
+                          p: 2,
+                          borderRadius: 1,
+                          border: "1px solid",
+                          borderColor: "divider",
+                        }}
+                      >
+                        {profile.why}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              );
+            }
+
+            if (publicFields.length === 0) return null;
+
+            return (
+              <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
+                <CardContent sx={{ p: 3 }}>
                   <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
+                    variant="h5"
+                    sx={{
+                      mb: 3,
+                      fontWeight: 500,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
                   >
-                    Why are they here with Opportunity Hack?
+                    <PersonIcon />
+                    About
                   </Typography>
-                  {isPublic("why") && profile?.why ? (
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        bgcolor: "action.hover",
-                        p: 2,
-                        borderRadius: 1,
-                        border: "1px solid",
-                        borderColor: "divider",
-                      }}
-                    >
-                      {profile.why}
-                    </Typography>
-                  ) : !isPublic("why") ? (
-                    <PrivateContentPlaceholder
-                      icon={VolunteerActivismIcon}
-                      label="Personal motivation"
-                    />
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontStyle: "italic" }}
-                    >
-                      Not provided
-                    </Typography>
-                  )}
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Paper>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
+                    {publicFields}
+                  </Grid>
+                </CardContent>
+              </Paper>
+            );
+          })()}
 
-          {/* Badges Section */}
-          {(isPublic("badges") || badges?.length > 0) && (
+          {/* Badges Section — only show when public */}
+          {isPublic("badges") && badges?.length > 0 && (
             <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography
@@ -376,21 +420,13 @@ const PublicProfile = () => {
                   <EmojiEventsIcon />
                   Achievements & Badges
                 </Typography>
-
-                {isPublic("badges") ? (
-                  <PublicBadgeList badges={badges} />
-                ) : (
-                  <PrivateContentPlaceholder
-                    icon={EmojiEventsIcon}
-                    label="Achievements and badges"
-                  />
-                )}
+                <PublicBadgeList badges={badges} />
               </CardContent>
             </Paper>
           )}
 
-          {/* Hackathon History */}
-          {(isPublic("hackathon_history") || hackathons?.length > 0) && (
+          {/* Hackathon History — only show when public */}
+          {isPublic("hackathon_history") && hackathons?.length > 0 && (
             <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography
@@ -406,26 +442,16 @@ const PublicProfile = () => {
                   <HistoryIcon />
                   Hackathon History
                 </Typography>
-
-                {isPublic("hackathon_history") ? (
-                  <>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                      Track record of participation, mentoring, and judging at
-                      Opportunity Hack events.
-                    </Typography>
-                    <PublicHackathonList hackathons={hackathons} />
-                  </>
-                ) : (
-                  <PrivateContentPlaceholder
-                    icon={HistoryIcon}
-                    label="Hackathon participation history"
-                  />
-                )}
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  Track record of participation, mentoring, and judging at
+                  Opportunity Hack events.
+                </Typography>
+                <PublicHackathonList hackathons={hackathons} />
               </CardContent>
             </Paper>
           )}
 
-          {/* Community Feedback Section */}
+          {/* Community Feedback — only show when public */}
           {isPublic("feedback") && (
             <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
@@ -442,10 +468,9 @@ const PublicProfile = () => {
                   <FeedbackIcon />
                   Community Feedback
                 </Typography>
-
-                <PublicFeedback 
-                  feedbackUrl={feedbackUrl} 
-                  history={profile?.history} 
+                <PublicFeedback
+                  feedbackUrl={feedbackUrl}
+                  history={profile?.history}
                   userName={profile?.name}
                 />
               </CardContent>
