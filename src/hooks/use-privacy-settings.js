@@ -3,9 +3,13 @@ import { useAuthInfo } from '@propelauth/react';
 
 const DEFAULT_PRIVACY_SETTINGS = {
   github: "private",
-  role: "private", 
+  role: "private",
   company: "private",
   why_are_you_here: "private",
+  education: "private",
+  expertise: "private",
+  linkedin_url: "private",
+  instagram_url: "private",
   badges: "private",
   feedback: "private",
   what: "private",

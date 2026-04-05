@@ -703,15 +703,14 @@ export default function Profile(props) {
                         <Skeleton variant="rectangular" height={56} />
                       ) : (
                         <LoadingOverlay isLoading={isLoading} field="role">
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <CustomSelect
-                              label="What hat are you currently wearing?"
-                              value={role}
-                              onChange={onRoleChange}
-                              options={roleOptions}
-                              id="role-select"
-                              sx={{ flex: 1 }}
-                            />
+                          <CustomSelect
+                            label="What hat are you currently wearing?"
+                            value={role}
+                            onChange={onRoleChange}
+                            options={roleOptions}
+                            id="role-select"
+                          />
+                          <Box sx={{ mt: 0.75 }}>
                             <PrivacyToggle
                               field="role"
                               isPrivate={privacySettings.role !== 'public'}
@@ -725,18 +724,18 @@ export default function Profile(props) {
                     </Grid>
                     
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <FormControl fullWidth>            
-                          <TextField
-                            id="github"
-                            onChange={handleGithubChange}
-                            label="GitHub username (not email)"
-                            value={github || ""}
-                            fullWidth
-                            variant="outlined"
-                            InputLabelProps={{ shrink: Boolean(github) }}
-                          />
-                        </FormControl>
+                      <FormControl fullWidth>
+                        <TextField
+                          id="github"
+                          onChange={handleGithubChange}
+                          label="GitHub username (not email)"
+                          value={github || ""}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(github) }}
+                        />
+                      </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
                         <PrivacyToggle
                           field="github"
                           isPrivate={privacySettings.github !== 'public'}
@@ -759,23 +758,32 @@ export default function Profile(props) {
                             options={educationOptions}
                             id="education-select"
                           />
+                          <Box sx={{ mt: 0.75 }}>
+                            <PrivacyToggle
+                              field="education"
+                              isPrivate={privacySettings.education !== 'public'}
+                              onToggle={togglePrivacySetting}
+                              size="small"
+                              disabled={privacyLoading}
+                            />
+                          </Box>
                         </LoadingOverlay>
                       )}
                     </Grid>
                     
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <FormControl fullWidth>            
-                          <TextField
-                            id="company"
-                            onChange={handleCompanyChange}
-                            label="Company (if working)"
-                            value={company || ""}
-                            fullWidth
-                            variant="outlined"
-                            InputLabelProps={{ shrink: Boolean(company) }}
-                          />
-                        </FormControl>
+                      <FormControl fullWidth>
+                        <TextField
+                          id="company"
+                          onChange={handleCompanyChange}
+                          label="Company (if working)"
+                          value={company || ""}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(company) }}
+                        />
+                      </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
                         <PrivacyToggle
                           field="company"
                           isPrivate={privacySettings.company !== 'public'}
@@ -787,7 +795,7 @@ export default function Profile(props) {
                     </Grid>
                     
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                      <FormControl fullWidth>            
+                      <FormControl fullWidth>
                         <TextField
                           id="linkedin"
                           onChange={handleLinkedInChange}
@@ -796,12 +804,21 @@ export default function Profile(props) {
                           fullWidth
                           variant="outlined"
                           InputLabelProps={{ shrink: Boolean(linkedInUrl) }}
-                        />            
+                        />
                       </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
+                        <PrivacyToggle
+                          field="linkedin_url"
+                          isPrivate={privacySettings.linkedin_url !== 'public'}
+                          onToggle={togglePrivacySetting}
+                          size="small"
+                          disabled={privacyLoading}
+                        />
+                      </Box>
                     </Grid>
-                    
+
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                      <FormControl fullWidth>            
+                      <FormControl fullWidth>
                         <TextField
                           id="instagram"
                           onChange={handleInstagramChange}
@@ -812,32 +829,39 @@ export default function Profile(props) {
                           InputLabelProps={{ shrink: Boolean(instagramUrl) }}
                         />
                       </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
+                        <PrivacyToggle
+                          field="instagram_url"
+                          isPrivate={privacySettings.instagram_url !== 'public'}
+                          onToggle={togglePrivacySetting}
+                          size="small"
+                          disabled={privacyLoading}
+                        />
+                      </Box>
                     </Grid>
                     
                     <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                        <FormControl fullWidth>            
-                          <TextField
-                            id="why"
-                            onChange={handleWhyChange}
-                            label="Why are you here with us at OHack?"
-                            value={why || ""}
-                            multiline
-                            rows={2}
-                            fullWidth
-                            variant="outlined"
-                            InputLabelProps={{ shrink: Boolean(why) }}
-                          />
-                        </FormControl>
-                        <Box sx={{ mt: 1 }}>
-                          <PrivacyToggle
-                            field="why"
-                            isPrivate={privacySettings.why !== 'public'}
-                            onToggle={togglePrivacySetting}
-                            size="small"
-                            disabled={privacyLoading}
-                          />
-                        </Box>
+                      <FormControl fullWidth>
+                        <TextField
+                          id="why"
+                          onChange={handleWhyChange}
+                          label="Why are you here with us at OHack?"
+                          value={why || ""}
+                          multiline
+                          rows={2}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: Boolean(why) }}
+                        />
+                      </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
+                        <PrivacyToggle
+                          field="why"
+                          isPrivate={privacySettings.why !== 'public'}
+                          onToggle={togglePrivacySetting}
+                          size="small"
+                          disabled={privacyLoading}
+                        />
                       </Box>
                     </Grid>
                     
@@ -854,6 +878,15 @@ export default function Profile(props) {
                             id="expertise-select"
                             multiple
                           />
+                          <Box sx={{ mt: 0.75 }}>
+                            <PrivacyToggle
+                              field="expertise"
+                              isPrivate={privacySettings.expertise !== 'public'}
+                              onToggle={togglePrivacySetting}
+                              size="small"
+                              disabled={privacyLoading}
+                            />
+                          </Box>
                         </LoadingOverlay>
                       )}
                     </Grid>
