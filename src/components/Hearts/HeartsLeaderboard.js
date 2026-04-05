@@ -45,18 +45,24 @@ const HeartsLeaderboard = () => {
         border: "1px solid rgba(0,0,0,0.06)",
       }}
     >
-      <Typography
-        variant="subtitle2"
-        sx={{
-          textAlign: "center",
-          fontWeight: 700,
-          mb: { xs: 1, md: 1.5 },
-          color: "#333",
-          fontSize: { xs: "0.85rem", md: "1rem" },
-        }}
-      >
-        Community Champions
-      </Typography>
+      <Link href="/community-champions" passHref legacyBehavior>
+        <Typography
+          component="a"
+          variant="subtitle2"
+          sx={{
+            textAlign: "center",
+            fontWeight: 700,
+            mb: { xs: 1, md: 1.5 },
+            color: "#333",
+            fontSize: { xs: "0.85rem", md: "1rem" },
+            display: "block",
+            textDecoration: "none",
+            "&:hover": { color: "#1976d2", textDecoration: "underline" },
+          }}
+        >
+          Community Champions
+        </Typography>
+      </Link>
 
       <Box
         sx={{
