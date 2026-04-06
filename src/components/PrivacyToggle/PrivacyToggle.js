@@ -14,7 +14,7 @@ const FIELD_LABELS = {
   linkedin_url: 'LinkedIn',
   instagram_url: 'Instagram',
   badges: 'Badges',
-  hackathons: 'Hackathons',
+  hackathon_history: 'Hackathons',
   feedback: 'Feedback',
   what: 'What (completed work)',
   how: 'How (approach)',

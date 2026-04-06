@@ -1131,8 +1131,8 @@ export default function Profile(props) {
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
                       <Typography variant="h5" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Hackathons</Typography>
                       <PrivacyToggle
-                        field="hackathons"
-                        isPrivate={privacySettings.hackathons !== 'public'}
+                        field="hackathon_history"
+                        isPrivate={privacySettings.hackathon_history !== 'public'}
                         onToggle={togglePrivacySetting}
                         size="small"
                         disabled={privacyLoading}
