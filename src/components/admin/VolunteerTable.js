@@ -376,12 +376,12 @@ const VolunteerTable = ({
 
   const columns = useMemo(() => {
     const baseColumns = [
-      { id: "id", label: "ID", minWidth: 60 }, // Reduced from 100
-      { id: "name", label: "Name", minWidth: 100 }, // Reduced from 120
-      // created_timestamp
-        { id: "created_timestamp", label: "Created", minWidth: 50 }, // Reduced from 120, shorter label
-      { id: "messages_sent", label: "Msgs", minWidth: 20 }, // Reduced from 120, shorter label
-      { id: "email", label: "Email", minWidth: 140, priority: 2 }, // Increased from 100 to prevent overlap
+      { id: "id", label: "ID", minWidth: 50 },
+      { id: "name", label: "Name", minWidth: 100 },
+      { id: "created_timestamp", label: "Created", minWidth: 50 },
+      { id: "messages_sent", label: "Msgs", minWidth: 20 },
+      { id: "certificates", label: "Certs", minWidth: 20 },
+      { id: "email", label: "Email", minWidth: 140, priority: 2 },
       { id: "pronouns", label: "Pronouns", minWidth: 80, priority: 3 }, // Increased from 70 for better spacing
       { id: "company", label: "Company", minWidth: 90, priority: 2 }, // Reduced from 120
       { id: "isInPerson", label: "In Person", minWidth: 70 }, // Reduced from 100
@@ -410,9 +410,10 @@ const VolunteerTable = ({
       ];
     } else if (type === "volunteers") {
       return [
-        { id: "id", label: "ID", minWidth: 50, priority: 3 },
+        { id: "id", label: "ID", minWidth: 40, priority: 3 },
         { id: "name", label: "Name", minWidth: 100 },
         { id: "messages_sent", label: "Msgs", minWidth: 20, priority: 3 },
+        { id: "certificates", label: "Certs", minWidth: 20, priority: 3 },
         { id: "email", label: "Email", minWidth: 120, priority: 2 },
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
         { id: "availableDays", label: "Time Slots", minWidth: 100, priority: 3 },
@@ -508,13 +509,14 @@ const VolunteerTable = ({
     switch (column.id) {
       case "id":
         const id = volunteer.id || "N/A";
+        const truncatedId = id.length > 8 ? `${id.slice(0, 8)}...` : id;
         return (
-          <Tooltip title="Click to copy ID">
+          <Tooltip title={`${id} (click to copy)`}>
             <ClickableCell
               variant="caption"
               onClick={() => handleCopyToClipboard(id, 'ID')}
             >
-              {id}
+              {truncatedId}
             </ClickableCell>
           </Tooltip>
         );
@@ -839,6 +841,91 @@ const VolunteerTable = ({
               size="small"
               variant="outlined"
               color="primary"
+              sx={{ cursor: 'pointer', minWidth: 32, fontSize: '0.75rem' }}
+            />
+          </Tooltip>
+        );
+      case "certificates":
+        const certs = volunteer.certificates || [];
+        const certCount = certs.length;
+
+        if (certCount === 0) {
+          return (
+            <Chip
+              label="0"
+              size="small"
+              variant="outlined"
+              sx={{ minWidth: 32, fontSize: '0.75rem' }}
+            />
+          );
+        }
+
+        const certsTooltipContent = (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              Certificates ({certCount})
+            </Typography>
+            {certs.map((cert, idx) => {
+              // Handle both old format (string) and new format (object with filename)
+              const certFilename = typeof cert === 'string' ? cert : cert.filename;
+              const hasMetadata = typeof cert === 'object' && cert.filename;
+              return (
+                <Box key={idx} sx={{ mb: hasMetadata ? 1 : 0.5, pb: hasMetadata ? 0.5 : 0, borderBottom: hasMetadata && idx < certs.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+                  {hasMetadata && cert.reasons && (
+                    <Typography variant="caption" sx={{ display: 'block', color: '#fff', fontWeight: 600, mb: 0.25 }}>
+                      {cert.hearts && `${cert.hearts} heart${cert.hearts !== 1 ? 's' : ''} - `}{cert.reasons.join(', ')}
+                    </Typography>
+                  )}
+                  {hasMetadata && cert.timestamp && (
+                    <Typography variant="caption" sx={{ display: 'block', color: 'rgba(255,255,255,0.6)', fontSize: '0.65rem', mb: 0.25 }}>
+                      {new Date(cert.timestamp).toLocaleString()}
+                    </Typography>
+                  )}
+                  <Typography
+                    variant="caption"
+                    component="a"
+                    href={`https://cdn.ohack.dev/certificates/${certFilename}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: '#90caf9',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      display: 'block',
+                      fontSize: '0.65rem',
+                      '&:hover': { color: '#fff' },
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {certFilename}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        );
+
+        return (
+          <Tooltip
+            title={certsTooltipContent}
+            arrow
+            placement="bottom-start"
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  maxWidth: 400,
+                  '& .MuiTooltip-arrow': {
+                    color: 'rgba(97, 97, 97, 0.9)',
+                  },
+                },
+              },
+            }}
+          >
+            <Chip
+              label={certCount}
+              size="small"
+              variant="outlined"
+              color="success"
               sx={{ cursor: 'pointer', minWidth: 32, fontSize: '0.75rem' }}
             />
           </Tooltip>

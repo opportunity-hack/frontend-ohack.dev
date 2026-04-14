@@ -48,7 +48,40 @@ import {
   Instagram as InstagramIcon,
   ViewModule as ViewModuleIcon,
   ViewList as ViewListIcon,
+  Chat as SlackIcon,
+  Google as GoogleIcon,
+  VolunteerActivism as VolunteerIcon,
+  Event as HackathonIcon,
+  LinkOff as LinkOffIcon,
 } from "@mui/icons-material";
+
+// --- Auth provider / Slack helpers ---
+const SLACK_PATTERN = /^oauth2\|slack\|([^-]+)-(.+)$/;
+
+function getAuthProvider(userId) {
+  if (!userId) return null;
+  if (userId.startsWith("oauth2|slack|")) return "slack";
+  if (userId.startsWith("oauth2|google-oauth2|")) return "google";
+  if (userId.startsWith("oauth2|github|")) return "github";
+  if (userId.startsWith("oauth2|")) return "oauth";
+  return "propelauth";
+}
+
+function extractSlackUserId(userId) {
+  if (!userId) return null;
+  const match = SLACK_PATTERN.exec(userId);
+  return match ? match[2] : null;
+}
+
+function getVolunteeringHours(profile) {
+  if (!Array.isArray(profile.volunteering)) return 0;
+  return profile.volunteering.reduce((sum, v) => sum + (v.hours || 0), 0);
+}
+
+function getHackathonCount(profile) {
+  if (Array.isArray(profile.hackathons)) return profile.hackathons.length;
+  return 0;
+}
 import { styled } from "@mui/system";
 import AdminPage from "../../../components/admin/AdminPage";
 
@@ -251,7 +284,9 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
           profile.why?.toLowerCase().includes(searchLower) ||
           profile.id?.toLowerCase().includes(searchLower) ||
           profile.linkedin_url?.toLowerCase().includes(searchLower) ||
-          profile.instagram_url?.toLowerCase().includes(searchLower)
+          profile.instagram_url?.toLowerCase().includes(searchLower) ||
+          (extractSlackUserId(profile.user_id) || "").toLowerCase().includes(searchLower) ||
+          (getAuthProvider(profile.user_id) || "").toLowerCase().includes(searchLower)
       );
     }
 
@@ -283,6 +318,14 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
         case "teams":
           aValue = Array.isArray(a.teams) ? a.teams.length : 0;
           bValue = Array.isArray(b.teams) ? b.teams.length : 0;
+          break;
+        case "hackathons":
+          aValue = getHackathonCount(a);
+          bValue = getHackathonCount(b);
+          break;
+        case "volunteering":
+          aValue = getVolunteeringHours(a);
+          bValue = getVolunteeringHours(b);
           break;
         default:
           return 0;
@@ -363,6 +406,51 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             </Box>
           </Grid>
         </Grid>
+
+        {/* Secondary stats row */}
+        <Divider sx={{ my: 2 }} />
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h3" sx={{ color: "#4A154B" }}>
+                {profiles.filter((p) => getAuthProvider(p.user_id) === "slack").length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Slack Connected
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h3" sx={{ color: "#DB4437" }}>
+                {profiles.filter((p) => getAuthProvider(p.user_id) === "google").length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Google Sign-In
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h3" color="warning.main">
+                {profiles.filter((p) => getHackathonCount(p) > 0).length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Hackathon Participants
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h3" color="text.secondary">
+                {profiles.filter((p) => getVolunteeringHours(p) > 0).length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                With Volunteer Hours
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       </Paper>
 
       {/* Filters and Controls */}
@@ -397,6 +485,8 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                 <MenuItem value="completeness">Profile Completeness</MenuItem>
                 <MenuItem value="badges">Badge Count</MenuItem>
                 <MenuItem value="teams">Team Count</MenuItem>
+                <MenuItem value="hackathons">Hackathon Count</MenuItem>
+                <MenuItem value="volunteering">Volunteer Hours</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -509,6 +599,9 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             {!isMobile && (
               <Typography variant="caption" sx={{ flex: 1, minWidth: 120, fontWeight: 600 }}>Email</Typography>
             )}
+            {!isMobile && (
+              <Typography variant="caption" sx={{ width: 40, fontWeight: 600, textAlign: "center" }}>Auth</Typography>
+            )}
             <Typography variant="caption" sx={{ width: isMobile ? 60 : 80, fontWeight: 600, textAlign: "center" }}>Social</Typography>
             {!isMobile && (
               <Typography variant="caption" sx={{ width: 90, fontWeight: 600 }}>Last Login</Typography>
@@ -589,6 +682,31 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                   </Typography>
                 )}
 
+                {/* Auth Provider */}
+                {!isMobile && (
+                  <Box sx={{ width: 40, textAlign: "center" }}>
+                    {(() => {
+                      const provider = getAuthProvider(profile.user_id);
+                      const sid = extractSlackUserId(profile.user_id);
+                      if (provider === "slack") return (
+                        <Tooltip title={`Slack: ${sid}`}>
+                          <SlackIcon sx={{ fontSize: 18, color: "#4A154B" }} />
+                        </Tooltip>
+                      );
+                      if (provider === "google") return (
+                        <Tooltip title="Google">
+                          <GoogleIcon sx={{ fontSize: 18, color: "#DB4437" }} />
+                        </Tooltip>
+                      );
+                      return (
+                        <Tooltip title="Other auth">
+                          <LinkOffIcon sx={{ fontSize: 16, color: "text.disabled" }} />
+                        </Tooltip>
+                      );
+                    })()}
+                  </Box>
+                )}
+
                 {/* Social Links */}
                 <Stack direction="row" spacing={0} sx={{ width: isMobile ? 60 : 80, justifyContent: "center" }}>
                   {profile.github && (
@@ -664,6 +782,10 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
             const completeness = calculateProfileCompleteness(profile);
             const badgeCount = Array.isArray(profile.badges) ? profile.badges.length : 0;
             const teamCount = Array.isArray(profile.teams) ? profile.teams.length : 0;
+            const authProvider = getAuthProvider(profile.user_id);
+            const slackId = extractSlackUserId(profile.user_id);
+            const hackathonCount = getHackathonCount(profile);
+            const volunteerHours = getVolunteeringHours(profile);
 
             return (
               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={profile.id || profile.email_address}>
@@ -703,6 +825,16 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                             {completeness >= 6 && (
                               <Tooltip title="Complete Profile">
                                 <VerifiedIcon color="success" fontSize="small" />
+                              </Tooltip>
+                            )}
+                            {authProvider === "slack" && (
+                              <Tooltip title={`Slack: ${slackId}`}>
+                                <SlackIcon sx={{ fontSize: 18, color: "#4A154B" }} />
+                              </Tooltip>
+                            )}
+                            {authProvider === "google" && (
+                              <Tooltip title="Signed in with Google">
+                                <GoogleIcon sx={{ fontSize: 18, color: "#DB4437" }} />
                               </Tooltip>
                             )}
                           </Box>
@@ -761,6 +893,28 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                               <TeamIcon fontSize="small" color="secondary" />
                               <Typography variant="caption" sx={{ fontWeight: 600 }}>
                                 {teamCount}
+                              </Typography>
+                            </StatBox>
+                          </Tooltip>
+                        )}
+
+                        {hackathonCount > 0 && (
+                          <Tooltip title={`${hackathonCount} hackathon${hackathonCount !== 1 ? 's' : ''}`}>
+                            <StatBox>
+                              <HackathonIcon fontSize="small" color="warning" />
+                              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                {hackathonCount}
+                              </Typography>
+                            </StatBox>
+                          </Tooltip>
+                        )}
+
+                        {volunteerHours > 0 && (
+                          <Tooltip title={`${volunteerHours} volunteer hour${volunteerHours !== 1 ? 's' : ''}`}>
+                            <StatBox>
+                              <VolunteerIcon fontSize="small" sx={{ color: "#e91e63" }} />
+                              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                {volunteerHours}h
                               </Typography>
                             </StatBox>
                           </Tooltip>
@@ -831,6 +985,35 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
                             </Tooltip>
                           )}
                         </Stack>
+                      )}
+
+                      {/* Slack / Auth Info */}
+                      {slackId && (
+                        <Tooltip title="Click to copy Slack ID">
+                          <Chip
+                            icon={<SlackIcon sx={{ fontSize: 16 }} />}
+                            label={slackId}
+                            size="small"
+                            sx={{
+                              mb: 1.5,
+                              backgroundColor: alpha("#4A154B", 0.08),
+                              color: "#4A154B",
+                              fontWeight: 500,
+                              fontSize: "0.75rem",
+                              cursor: "pointer",
+                              "&:hover": { backgroundColor: alpha("#4A154B", 0.16) },
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(slackId);
+                              setSnackbar({
+                                open: true,
+                                message: "Slack ID copied to clipboard",
+                                severity: "success",
+                              });
+                            }}
+                          />
+                        </Tooltip>
                       )}
 
                       {/* Profile Details */}
