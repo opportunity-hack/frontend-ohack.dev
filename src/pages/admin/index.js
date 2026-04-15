@@ -22,7 +22,7 @@ import {
   Business as BusinessIcon,
   Assignment as AssignmentIcon,
   CardGiftcard as GiftIcon,
-  Favorite as HeartIcon,
+  WorkspacePremium as CertificateIcon,
   Person as ProfileIcon,
   AccessTime as TimeIcon,
   Group as TeamsIcon,
@@ -33,10 +33,16 @@ import HandshakeIcon from '@mui/icons-material/Handshake';
 
 const adminPages = [
   { 
-    path: "/admin/hearts", 
-    label: "Hearts", 
-    description: "Manage heart allocation and reports",
-    icon: <HeartIcon fontSize="large" color="secondary" />
+    path: "/admin/check-in", 
+    label: "Check In", 
+    description: "Manage check-in process",
+    icon: <HandshakeIcon fontSize="large" color="primary" />
+  },
+  { 
+    path: "/admin/certificates", 
+    label: "Certificates", 
+    description: "Generate hearts and GitHub certificates",
+    icon: <CertificateIcon fontSize="large" color="secondary" />
   },
   { 
     path: "/admin/nonprofit", 
@@ -128,7 +134,7 @@ const AdminDashboard = () => {
     return (
       <RequiredAuthProvider
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={window.location.href} />}
+        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
       >
         <AdminPage title="Admin Dashboard" isAdmin={false}>
           <Typography>You do not have permission to view this page.</Typography>
@@ -140,7 +146,7 @@ const AdminDashboard = () => {
   return (
     <RequiredAuthProvider
       authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={window.location.href} />}
+      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
     >
       <AdminPage title="Admin Dashboard" isAdmin={isAdmin}>
         <Paper 
@@ -167,7 +173,7 @@ const AdminDashboard = () => {
 
         <Grid container spacing={isMobile ? 2 : 3}>
           {adminPages.map((page) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={page.path}>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={page.path}>
               <NextLink href={page.path} passHref legacyBehavior>
                 <Box component="a" sx={{ textDecoration: "none", display: "block" }}>
                   <StyledCard>

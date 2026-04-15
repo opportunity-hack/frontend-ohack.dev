@@ -162,25 +162,31 @@ const ManageTeamComponent = () => {
   const [isSlackValid, setIsSlackValid] = useState(null);
   const [slackError, setSlackError] = useState("");
 
+  // State for hacker application validation
+  const [hackerApplication, setHackerApplication] = useState(null);
+  const [isLoadingApplication, setIsLoadingApplication] = useState(true);
+
   // Extract event_id from the URL path parameter
   const router = useRouter();
   const { event_id } = router.query;
 
 
   useEffect(() => {
-    if (event_id) {
+    if (event_id && accessToken) {
       fetchHackathonEvent();
       fetchMyTeams();
+      fetchHackerApplication();
     }
-  }, [event_id]);
+  }, [event_id, accessToken]);
 
 
   // Call the backend API /api/slack/users with active_days=30
-  const fetchActiveSlackUsers = async () => {
+  // Memoized to prevent stale closure issues with accessToken
+  const fetchActiveSlackUsers = useCallback(async () => {
     console.log("Fetching active Slack users...");
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/slack/users/active?active_days=30`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/slack/users/active?active_days=10000`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -193,8 +199,8 @@ const ManageTeamComponent = () => {
           id: user.id,
           name: user.name,
           real_name: user.real_name,
-          tz: user.tz,          
-        }        
+          tz: user.tz,
+        }
         ));
         console.log("Active Slack users:", activeUsers);
         setSlackUsers(activeUsers);
@@ -205,11 +211,11 @@ const ManageTeamComponent = () => {
       console.error("Error fetching active Slack users:", err);
       setError("Failed to fetch active Slack users. Please try again later.");
     }
-  };
+  }, [accessToken]);
 
   useEffect(() => {
-    fetchActiveSlackUsers();    
-  }, [event_id, accessToken]);
+    fetchActiveSlackUsers();
+  }, [event_id, fetchActiveSlackUsers]);
 
 
 
@@ -221,12 +227,12 @@ const ManageTeamComponent = () => {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",            
+            "Content-Type": "application/json",
           },
         }
       );
       if (response && response.data) {
-        console.log("Team details:", response.data.teams);        
+        console.log("Team details:", response.data.teams);
         setMyTeams(response.data.teams);
       } else {
         setError("Failed to fetch team details. Please try again later.");
@@ -238,6 +244,36 @@ const ManageTeamComponent = () => {
       setMyTeams([]); // Set to empty array on error
     } finally {
       setIsLoadingTeams(false);
+    }
+  };
+
+  const fetchHackerApplication = async () => {
+    setIsLoadingApplication(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/application/${event_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": authInfo?.userClass?.getOrgByName("Opportunity Hack Org")?.orgId,
+          },
+        }
+      );
+
+      if (response.data && response.data.data) {
+        const appData = response.data.data;
+        console.log("Hacker application data:", appData);
+        console.log("isSelected:", appData.isSelected);
+        setHackerApplication(appData);
+      } else {
+        setHackerApplication(null);
+      }
+    } catch (err) {
+      console.error("Error fetching hacker application:", err);
+      setHackerApplication(null);
+    } finally {
+      setIsLoadingApplication(false);
     }
   };
 
@@ -332,7 +368,7 @@ const ManageTeamComponent = () => {
     }
   };
 
-  // Get my proifile information and if user.github is set, set it to githubUsername
+  // Get my profile information and if user.github is set, set it to githubUsername
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -522,7 +558,7 @@ const ManageTeamComponent = () => {
       } finally {
         setIsValidatingGithub(false);
       }
-    }, 800),
+    }, 400),
     []
   );
 
@@ -565,7 +601,7 @@ const ManageTeamComponent = () => {
       } finally {
         setIsValidatingSlack(false);
       }
-    }, 800),
+    }, 400),
     []
   );
 
@@ -931,10 +967,158 @@ const ManageTeamComponent = () => {
           error={error}
           nonprofits={nonprofits}
           event={event}
+          accessToken={accessToken}
         />
 
-        {/* Team Creation Disabled Message */}
-        {!teamCreationEnabled && (
+        {/* Show loading state while checking application */}
+        {isLoadingApplication && (
+          <Box sx={{ mt: 4, mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Paper
+              sx={{
+                p: 4,
+                maxWidth: 500,
+                textAlign: 'center',
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+                border: '1px solid #90caf9',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                <CircularProgress size={60} thickness={4} />
+                <Box>
+                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                    Checking Your Application
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    Verifying your participation status for {event?.title || 'this hackathon'}...
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Box>
+        )}
+
+        {/* Show message for non-selected users or users without applications */}
+        {!isLoadingApplication && (hackerApplication?.isSelected === false || !hackerApplication) && (
+          <Box sx={{ mt: 4, mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Paper
+              sx={{
+                p: 4,
+                maxWidth: 700,
+                textAlign: 'center',
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%)',
+                border: '1px solid #ffab91',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}
+            >
+              <Box sx={{ mb: 3 }}>
+                <Box
+                  component="span"
+                  sx={{
+                    fontSize: '4rem',
+                    display: 'block',
+                    lineHeight: 1,
+                    mb: 2
+                  }}
+                >
+                  🚫
+                </Box>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#d84315' }}>
+                  {!hackerApplication ? 'Application Required' : 'Access Not Available'}
+                </Typography>
+              </Box>
+
+              <Typography variant="h6" paragraph sx={{ mb: 3, color: '#5d4037' }}>
+                {!hackerApplication
+                  ? `To access team management for ${event?.title || 'this hackathon'}, you need to submit a hacker application.`
+                  : `Your application for ${event?.title || 'this hackathon'} was not selected.`
+                }
+              </Typography>
+
+              <Typography variant="body1" paragraph sx={{ mb: 3, lineHeight: 1.6 }}>
+                {!hackerApplication
+                  ? "Team management is only available to participants who have applied and been selected for the hackathon."
+                  : "Team management is only available to participants who have been selected for the hackathon. We appreciate your interest and encourage you to:"
+                }
+              </Typography>
+
+              {!hackerApplication ? (
+                <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    href={`/hack/${event_id}/hacker-application`}
+                    sx={{ flex: 1 }}
+                  >
+                    Submit Hacker Application
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="large"
+                    href={`/hack/${event_id}`}
+                    sx={{ flex: 1 }}
+                  >
+                    Back to Hackathon
+                  </Button>
+                </Box>
+              ) : (
+                <>
+                  <Box sx={{ textAlign: 'left', mb: 3, mx: 2 }}>
+                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🎯</Box>
+                      Apply for future Opportunity Hack events
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>💻</Box>
+                      Contribute to open-source nonprofit projects year-round
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🤝</Box>
+                      Join our community on Slack for networking opportunities
+                    </Typography>
+                    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🔔</Box>
+                      Stay connected for updates on upcoming hackathons
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="large"
+                      href="https://opportunity-hack.slack.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ flex: 1 }}
+                    >
+                      Join Our Community
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="large"
+                      href="/hackathons"
+                      sx={{ flex: 1 }}
+                    >
+                      View Upcoming Events
+                    </Button>
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Box>
+        )}
+
+        {/* Team Creation Content - Only show for selected users with applications */}
+        {(!isLoadingApplication && hackerApplication?.isSelected !== false && hackerApplication) && (
+          <>
+            {/* Team Creation Disabled Message */}
+            {!teamCreationEnabled && (
           <Box sx={{ mt: 6, mb: 4 }}>
             <Alert 
               severity="warning" 
@@ -1064,7 +1248,7 @@ const ManageTeamComponent = () => {
                         transition: 'transform 0.2s, box-shadow 0.2s'
                       }}
                     >
-                      {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Disabled)'}
+                      {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Closed)'}
                     </Button>
                   </Box>
                 </Box>
@@ -1130,7 +1314,7 @@ const ManageTeamComponent = () => {
                   transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
               >
-                {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Disabled)'}
+                {teamFindingEnabled ? 'Find Teammates' : 'Find Teammates (Closed)'}
               </Button>
             </Box>
           </Box>
@@ -1439,6 +1623,8 @@ const ManageTeamComponent = () => {
         )}
           </StyledPaper>
         </Box>
+        )}
+          </>
         )}
       </Box>
     </Container>

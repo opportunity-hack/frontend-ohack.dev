@@ -3,8 +3,8 @@ import { Typography, Paper, Grid, Chip, Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import Moment from "moment";
 import ReactMarkdown from "react-markdown";
+import { parseLocalDate } from "../../lib/dateUtils";
 
 const HeaderContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -59,33 +59,75 @@ const HackathonHeader = ({
   location,
   description,
 }) => {
-  const formatDate = (date) => Moment(date).format("MMM Do YYYY");
+  const formatDate = (date) => {
+    const d = parseLocalDate(date);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  const formatDateISO = (date) => {
+    const d = parseLocalDate(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   return (
-    <HeaderContainer elevation={3} component="header">
-      <EventTitle variant="h2" component="h1" mt={5}>
+    <HeaderContainer 
+      elevation={3} 
+      component="header" 
+      role="banner"
+      itemScope
+      itemType="https://schema.org/Event"
+    >
+      <EventTitle 
+        variant="h2" 
+        component="h1" 
+        mt={5}
+        itemProp="name"
+      >
         {title}
       </EventTitle>
 
       <EventInfo container spacing={2} alignItems="center">
-        <Grid item>
+        <Grid>
           <EventChip
             icon={<CalendarTodayIcon />}
-            label={`${formatDate(startDate)} - ${formatDate(endDate)}`}
+            label={
+              <span>
+                <time 
+                  dateTime={formatDateISO(startDate)} 
+                  itemProp="startDate"
+                >
+                  {formatDate(startDate)}
+                </time>
+                {" - "}
+                <time 
+                  dateTime={formatDateISO(endDate)} 
+                  itemProp="endDate"
+                >
+                  {formatDate(endDate)}
+                </time>
+              </span>
+            }
             aria-label={`Event dates: ${formatDate(startDate)} to ${formatDate(endDate)}`}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <EventChip
             icon={<LocationOnIcon />}
-            label={location}
+            label={<span itemProp="location">{location}</span>}
             aria-label={`Event location: ${location}`}
           />
         </Grid>
       </EventInfo>
 
-      <DescriptionContainer>
-        <Typography component="div" className="event-description">
+      <DescriptionContainer itemProp="description">
+        <Typography 
+          component="div" 
+          className="event-description"
+          role="article"
+          aria-label="Event description"
+        >
           <ReactMarkdown>{description}</ReactMarkdown>
         </Typography>
       </DescriptionContainer>

@@ -442,7 +442,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
             </Typography>
             
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -456,7 +456,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 />
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormControl fullWidth margin="normal">
                   <FormLabel id="organization-type-label">Organization Type</FormLabel>
                   <RadioGroup
@@ -500,7 +500,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -514,7 +514,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -529,7 +529,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 />
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -554,7 +554,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
             </Typography>
             
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth margin="normal">
                   <InputLabel id="employee-count-label">Expected Participant Count</InputLabel>
                   <Select
@@ -581,7 +581,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormControl component="fieldset" fullWidth margin="normal" error={!!errors.participantType}>
                   <FormLabel component="legend">Who will participate in your hackathon?</FormLabel>
                   <Typography variant="body1" color="textSecondary" sx={{ mb: 2, fontWeight: 500 }}>
@@ -659,7 +659,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth margin="normal">
                   <FormLabel id="event-format-label">Event Format</FormLabel>
                   <RadioGroup
@@ -700,7 +700,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormControl fullWidth component="fieldset" margin="normal">
                   <FormLabel component="legend">What theme or focus would you like for your hackathon?</FormLabel>
                   <RadioGroup
@@ -779,7 +779,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 )}
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>When would you like to host your hackathon?</Typography>
                 <Alert severity="info" sx={{ mb: 3 }}>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -806,7 +806,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </LocalizationProvider>
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Schedule a Planning Call</Typography>
                 <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.light', borderRadius: 2, border: '1px solid', borderColor: 'primary.main' }}>
                   <Typography variant="body1" sx={{ fontWeight: 500, color: 'primary.contrastText' }}>
@@ -815,7 +815,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </Box>
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DatePicker
                     label="Preferred Call Date (Friday)"
@@ -837,7 +837,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </LocalizationProvider>
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DatePicker
                     label="Alternate Call Date (Friday)"
@@ -858,7 +858,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </LocalizationProvider>
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -1148,7 +1148,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Paper elevation={0} sx={{ p: 2, bgcolor: '#f5f9ff' }}>
                   <Typography variant="subtitle1" component="h3" gutterBottom fontWeight={600}>
                     Event Logistics
@@ -1198,7 +1198,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </Paper>
               </Grid>
               
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Paper elevation={0} sx={{ p: 2, bgcolor: '#f7f7ff' }}>
                   <Typography variant="subtitle1" component="h3" gutterBottom fontWeight={600}>
                     Event Personnel
@@ -1248,14 +1248,14 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </Paper>
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Paper elevation={0} sx={{ p: 2, bgcolor: '#f5fff5' }}>
                   <Typography variant="subtitle1" component="h3" gutterBottom fontWeight={600}>
                     Participant & Nonprofit Management
                   </Typography>
                   
                   <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Box sx={{ mb: { xs: 2, md: 0 } }}>
                         <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Nonprofit Recruitment & Onboarding</Typography>
                         <RadioGroup
@@ -1271,7 +1271,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                       </Box>
                     </Grid>
                     
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Box>
                         <Typography variant="body1" sx={{ mb: 1, fontWeight: 600 }}>Participant Recruitment</Typography>
                         <RadioGroup
@@ -1290,7 +1290,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </Paper>
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Paper elevation={0} sx={{ p: 2, bgcolor: '#fff5f5' }}>
                   <Typography variant="subtitle1" component="h3" gutterBottom fontWeight={600}>
                     Post-Event Support
@@ -1483,7 +1483,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </Typography>
                 
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Box sx={{ display: 'flex', mb: 1 }}>
                       <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
                       <Typography variant="body2">Organizer travel to your location (if needed)</Typography>
@@ -1493,7 +1493,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                       <Typography variant="body2">Event coordination and planning assistance</Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Box sx={{ display: 'flex', mb: 1 }}>
                       <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
                       <Typography variant="body2">Marketing support for your event</Typography>

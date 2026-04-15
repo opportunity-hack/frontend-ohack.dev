@@ -74,7 +74,7 @@ const EventConstraints = ({ constraints }) => {
         {constraintItems.map(
           (item) =>
             constraints[item.key] != null && (
-              <Grid item key={item.key} xs={12} sm={4}>
+              <Grid key={item.key} size={{ xs: 12, sm: 4 }}>
                 <ConstraintItem>
                   <ConstraintIcon>{item.icon}</ConstraintIcon>
                   <Typography variant="body1">

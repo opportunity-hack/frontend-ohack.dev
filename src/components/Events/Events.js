@@ -6,6 +6,7 @@ import Link from "next/link";
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import Button from "@mui/material/Button";
 import { EventLink } from "../HackathonList/styles";
+import { parseLocalDate } from "../../lib/dateUtils";
 
 export default function Events({
   events,
@@ -36,7 +37,7 @@ export default function Events({
       }
       
       return (
-        <Grid item key={event.id} style={{ marginTop: 10, padding: "2px" }}>
+        <Grid key={event.id} style={{ marginTop: 10, padding: "2px" }}>
 
           { isEventStartDateOlderThanToday(event) && 
             <Link href={`/hack/${event.event_id}`}>
@@ -62,7 +63,7 @@ export default function Events({
           <Typography variant="h5" style={{ color: isEventStartDateOlderThanToday(event) ? "#C0C0C0" : "#222222", marginBottom: "1rem" }}>
             {
               // Convert start_date to readible format
-              new Date(event.start_date).toLocaleDateString("en-US", {
+              parseLocalDate(event.start_date).toLocaleDateString("en-US", {
                 weekday: "short",
                 year: "numeric",
                 month: "long",
@@ -72,8 +73,8 @@ export default function Events({
             <ArrowForwardIosIcon style={{ color: "gray" }} />{" "}
 
             {
-              // Convert start_date to readible format
-              new Date(event.end_date).toLocaleDateString("en-US", {
+              // Convert end_date to readible format
+              parseLocalDate(event.end_date).toLocaleDateString("en-US", {
                 weekday: "short",
                 year: "numeric",
                 month: "long",
@@ -90,7 +91,7 @@ export default function Events({
               <Grid container
               style={{ backgroundColor: "#f5f5f5" }} spacing={0} padding={1} direction="row" md={12} xs={12} marginTop={0.5} justifyContent="flex-start"  alignItems="center" alignContent="center" >
                 {
-                  <Grid item style={{  }}>
+                  <Grid style={{  }}>
                     {event.links.map((link) => {
                       return (
                        
@@ -113,7 +114,7 @@ export default function Events({
            {
             // Print constraints if they exist
             event.constraints && (
-              <Grid item direction="row" spacing={2} justifyContent="flex-start">
+              <Grid direction="row" spacing={2} justifyContent="flex-start">
                 {
                   // If constraints.max_teams_per_problem is not null, then display the max number of teams per problem
                   event.constraints.max_teams_per_problem && (

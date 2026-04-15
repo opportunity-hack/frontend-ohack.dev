@@ -38,7 +38,7 @@ const FeedbackCategory = ({ title, data, tooltips }) => (
     <AccordionDetails>
       <Grid container spacing={2}>
         {Object.entries(data).map(([key, value]) => (
-          <Grid item xs={12} sm={6} key={key}>
+          <Grid size={{ xs: 12, sm: 6 }} key={key}>
             <Box display="flex" alignItems="center">
               <Typography variant="subtitle1">{key}</Typography>
               <Tooltip
@@ -115,7 +115,7 @@ const MyFeedbackPage = withRequiredAuthInfo(({ userClass }) => {
     }
   };
 
-  const feedbackUrl = profileId
+  const feedbackUrl = profileId && typeof window !== 'undefined'
     ? `${window.location.origin}/feedback/${profileId}`
     : "";
 
@@ -222,7 +222,32 @@ const MyFeedbackPage = withRequiredAuthInfo(({ userClass }) => {
   return (
     <div className="content-layout">
       <Head>
-        <title>Your Feedback - Opportunity Hack Developer Portal</title>
+        <title>Developer Feedback Dashboard - Opportunity Hack</title>
+        <meta name="description" content="View your personalized developer feedback, performance metrics, and skill assessments from Opportunity Hack projects. Track your growth in software development and nonprofit tech contributions." />
+        <meta name="keywords" content="developer feedback, coding assessment, software development feedback, tech skills evaluation, developer performance, coding portfolio feedback" />
+        <link rel="canonical" href="https://ohack.dev/myfeedback" />
+        <meta property="og:title" content="Developer Feedback Dashboard - Opportunity Hack" />
+        <meta property="og:description" content="View your personalized developer feedback, performance metrics, and skill assessments from Opportunity Hack projects." />
+        <meta property="og:url" content="https://ohack.dev/myfeedback" />
+        <meta property="og:type" content="website" />
+        <meta name="robots" content="index, follow" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Developer Feedback Dashboard",
+              "description": "View your personalized developer feedback, performance metrics, and skill assessments from Opportunity Hack projects.",
+              "url": "https://ohack.dev/myfeedback",
+              "applicationCategory": "DeveloperTools",
+              "provider": {
+                "@type": "Organization",
+                "name": "Opportunity Hack"
+              }
+            })
+          }}
+        />
       </Head>
       <Box sx={{ maxWidth: 800, margin: "auto", padding: 3 }}>
         <Typography variant="h4" gutterBottom>
@@ -294,7 +319,7 @@ const MyFeedbackPage = withRequiredAuthInfo(({ userClass }) => {
             title={`${role} Skills`}
             data={data}
             tooltips={Object.fromEntries(
-              feedbackAreas[role].map((area) => [area.name, area.tooltip])
+              (feedbackAreas[role] || []).map((area) => [area.name, area.tooltip])
             )}
           />
         ))}
@@ -303,7 +328,7 @@ const MyFeedbackPage = withRequiredAuthInfo(({ userClass }) => {
           title="General Skills"
           data={aggregatedFeedback.general}
           tooltips={Object.fromEntries(
-            generalFeedbackAreas.map((area) => [area.name, area.tooltip])
+            (generalFeedbackAreas || []).map((area) => [area.name, area.tooltip])
           )}
         />
 

@@ -30,13 +30,17 @@ import {
   Business as BusinessIcon,
   Assignment as AssignmentIcon,
   CardGiftcard as GiftIcon,
-  Favorite as HeartIcon,
+  WorkspacePremium as CertificateIcon,
   Person as ProfileIcon,
   AccessTime as TimeIcon,
   Group as TeamsIcon,
   ChevronLeft as ChevronLeftIcon,
   Dashboard as DashboardIcon,
-  Share as ShareIcon
+  Share as ShareIcon,
+  Gavel as JudgingIcon,
+  PostAdd as RequestIcon,
+  ContactMail as ContactMailIcon,
+  Storefront as StorefrontIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -69,73 +73,97 @@ const DrawerHeader = styled(Box)(({ theme }) => ({
 }));
 
 const adminPages = [
-  { 
-    path: "/admin", 
-    label: "Dashboard", 
+  {
+    path: "/admin",
+    label: "Dashboard",
     icon: <DashboardIcon color="primary" />
   },
-  { 
-    path: "/admin/hearts", 
-    label: "Hearts", 
-    icon: <HeartIcon color="secondary" />
-  },
-  { 
-    path: "/admin/nonprofit", 
-    label: "Nonprofit", 
-    icon: <BusinessIcon color="primary" />
-  },
-  { 
-    path: "/admin/problems", 
-    label: "Problems", 
-    icon: <AssignmentIcon color="success" />
-  },
-  { 
-    path: "/admin/nonprofit/application", 
-    label: "Nonprofit Applications", 
-    icon: <BusinessIcon style={{ color: "#f57c00" }} />
-  },
-  { 
-    path: "/admin/profile", 
-    label: "Profile", 
-    icon: <ProfileIcon color="primary" />
-  },
-  { 
-    path: "/admin/volunteer", 
-    label: "Volunteer", 
-    icon: <HandshakeIcon color="secondary" />
-  },
-  { 
-    path: "/admin/teams", 
-    label: "Teams", 
-    icon: <TeamsIcon color="info" />
-  },
-  { 
-    path: "/admin/time-tracking", 
-    label: "Time Tracking", 
-    icon: <TimeIcon style={{ color: "#9c27b0" }} />
-  },
-  { 
-    path: "/admin/hackathons", 
-    label: "Hackathons", 
+  {
+    path: "/admin/hackathons",
+    label: "Hackathons",
     icon: <EventIcon color="error" />
   },
-  { 
-    path: "/admin/giveaways", 
-    label: "Giveaways", 
+  {
+    path: "/admin/hackathon-requests",
+    label: "Hackathon Requests",
+    icon: <RequestIcon style={{ color: "#e91e63" }} />
+  },
+  {
+    path: "/admin/contact",
+    label: "Contact",
+    icon: <ContactMailIcon style={{ color: "#00897b" }} />
+  },
+  {
+    path: "/admin/check-in",
+    label: "Check In",
+    icon: <HandshakeIcon color="primary" />
+  },  
+  {
+    path: "/admin/volunteer",
+    label: "Volunteer",
+    icon: <HandshakeIcon color="secondary" />
+  },
+  {
+    path: "/admin/teams",
+    label: "Teams",
+    icon: <TeamsIcon color="info" />
+  },
+  {
+    path: "/admin/judging",
+    label: "Judging",
+    icon: <JudgingIcon style={{ color: "#673ab7" }} />
+  },
+  {
+    path: "/admin/giveaways",
+    label: "Giveaways",
     icon: <GiftIcon style={{ color: "#ff9800" }} />
   },
-  { 
-    path: "/admin/social-media", 
-    label: "Social Media", 
+  {
+    path: "/admin/profile",
+    label: "Profile",
+    icon: <ProfileIcon color="primary" />
+  },
+  {
+    path: "/admin/certificates",
+    label: "Certificates",
+    icon: <CertificateIcon color="secondary" />
+  },
+  {
+    path: "/admin/nonprofit",
+    label: "Nonprofit",
+    icon: <BusinessIcon color="primary" />
+  },
+  {
+    path: "/admin/problems",
+    label: "Problems",
+    icon: <AssignmentIcon color="success" />
+  },
+  {
+    path: "/admin/nonprofit/application",
+    label: "Nonprofit Applications",
+    icon: <BusinessIcon style={{ color: "#f57c00" }} />
+  },
+  
+  {
+    path: "/admin/time-tracking",
+    label: "Time Tracking",
+    icon: <TimeIcon style={{ color: "#9c27b0" }} />
+  },  
+  {
+    path: "/admin/social-media",
+    label: "Social Media",
     icon: <ShareIcon style={{ color: "#1DA1F2" }} />
   },
+  // {
+  //   path: "/admin/store",
+  //   label: "Store Orders",
+  //   icon: <StorefrontIcon style={{ color: "#4caf50" }} />
+  // },
 ];
 
 const AdminNavigation = () => {
-  // MUI v5+ ListItem no longer accepts the button prop directly
-  // Instead, we need to use ListItemButton component or enhance with sx
   const router = useRouter();
-  const currentPath = router.pathname;
+  const currentPath = router.pathname || "";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = useState(false);

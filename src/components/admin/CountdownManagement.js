@@ -25,10 +25,10 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import ReactMarkdown from "react-markdown";
 import TimezoneSelect from "react-timezone-select";
 
-const CountdownManagement = ({ countdowns, onChange }) => {
+const CountdownManagement = ({ countdowns, onChange, eventTimezone = "America/Phoenix" }) => {
   const [editingCountdown, setEditingCountdown] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTimezone, setSelectedTimezone] = useState("America/Phoenix");
+  const [selectedTimezone, setSelectedTimezone] = useState(eventTimezone);
 
   const formatDateForDisplay = (dateString, timezone) => {
     const date = new Date(dateString);
@@ -111,7 +111,7 @@ const CountdownManagement = ({ countdowns, onChange }) => {
       index,
       time: new Date(countdown.time),
     });
-    setSelectedTimezone(countdown.timezone || "America/Phoenix");
+    setSelectedTimezone(countdown.timezone || eventTimezone);
     setDialogOpen(true);
   };
 
@@ -173,7 +173,7 @@ const CountdownManagement = ({ countdowns, onChange }) => {
               primary={countdown.name}
               secondary={formatDateForDisplay(
                 countdown.time,
-                "America/Phoenix"
+                eventTimezone
               )}
             />
             <ListItemSecondaryAction>

@@ -5,8 +5,8 @@ import { useState, useEffect, useCallback } from "react";
 
 
 export default function useNonprofit( nonprofit_id ){
-    
-    const { isLoggedIn, user, accessToken } = useAuthInfo();
+
+    const { user } = useAuthInfo();
     const { apiServerUrl, apiNodeJsServerUrl } = useEnv();
     const [nonprofitApplications, setNonprofitApplications] = useState([]); // This is for /nonprofits/apply/list
 
@@ -20,14 +20,6 @@ export default function useNonprofit( nonprofit_id ){
 
     const makeRequest = useCallback(async (options) => {
         try {
-            if (options.authenticated) {                
-
-                options.config.headers = {
-                    ...options.config.headers,
-                    Authorization: `Bearer ${accessToken}`,
-                };
-            }
-
             const response = await axios(options.config);
             const { data } = response;
 
@@ -36,10 +28,10 @@ export default function useNonprofit( nonprofit_id ){
             console.error(error);
             return { error: error.message,
                     status: error.response?.status,
-                    statusText: error.response?.statusText                
-             };            
+                    statusText: error.response?.statusText
+             };
         }
-    }, [accessToken]);
+    }, []);
 
 
     const handle_npo_form_submission = async (formData, onComplete) => {     
@@ -128,9 +120,6 @@ export default function useNonprofit( nonprofit_id ){
 
         // Publically available, so authenticated: false here
         const data = await makeRequest({ config, authenticated: false });
-        console.log("User: ", user);
-        console.log("isLoggedin: ", isLoggedIn);
-        
         // If no data, set to empty array
         if( !data )
         {
@@ -188,8 +177,6 @@ export default function useNonprofit( nonprofit_id ){
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Bearer": accessToken
-
             },
             data: {
                 id: id,               

@@ -66,7 +66,7 @@ const InternshipContent = () => (
 
     <Grid container spacing={4} sx={{ my: 4 }}>
       {benefitCards.map((benefit, index) => (
-        <Grid item xs={12} sm={6} key={index}>
+        <Grid size={{ xs: 12, sm: 6 }} key={index}>
           <BenefitCard {...benefit} />
         </Grid>
       ))}

@@ -34,8 +34,24 @@ export async function getStaticProps({ params = {} } = {}) {
   );
   const ps = await res.json();
 
-  var title = "Project: " + ps.title;
-  var metaDescription = ps.status + ": " + ps.description + " ";
+  // Fetch parent nonprofit(s) for SEO context — a project can belong to multiple nonprofits
+  let nonprofitNames = "";
+  try {
+    const npoRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${params.project_id}/nonprofit`
+    );
+    const npoData = await npoRes.json();
+    if (npoData?.nonprofits?.length > 0) {
+      nonprofitNames = npoData.nonprofits.map((n) => n.name).filter(Boolean).join(", ");
+    }
+  } catch (e) {
+    // Non-critical — continue without nonprofit names
+  }
+
+  var title = nonprofitNames
+    ? `Project: ${ps.title} — ${nonprofitNames}`
+    : "Project: " + ps.title;
+  var metaDescription = (nonprofitNames ? `For ${nonprofitNames}. ` : "") + ps.status + ": " + ps.description + " ";
   var countOfhelpingMentors = 0;
   var countOfhelpingHackers = 0;
 

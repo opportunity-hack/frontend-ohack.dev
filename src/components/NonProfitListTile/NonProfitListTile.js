@@ -210,7 +210,7 @@ export default function NonProfitListTile({
           >
             <Grid container spacing={2} marginLeft='0px' marginTop='5px'>
               <Grid container direction='row' spacing={1.5}>
-                <Grid item>
+                <Grid>
                   <Chip
                     icon={<AddAlertIcon color='warning' fontSize='medium' />}
                     color={
@@ -223,7 +223,7 @@ export default function NonProfitListTile({
                     style={{ fontSize: '1.5rem' }}
                   />
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Chip
                     icon={
                       <WorkspacePremiumIcon color='success' fontSize='medium' />
@@ -238,7 +238,7 @@ export default function NonProfitListTile({
                     style={{ fontSize: '1.5rem' }}
                   />
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Chip
                     icon={<DeveloperModeIcon color='info' fontSize='medium' />}
                     color='info'
@@ -250,7 +250,7 @@ export default function NonProfitListTile({
                     style={{ fontSize: '1.5rem' }}
                   />
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Chip
                     icon={<SupportIcon color='info' fontSize='medium' />}
                     color='info'
@@ -263,7 +263,7 @@ export default function NonProfitListTile({
                   />
                 </Grid>
               </Grid>
-              {/* <Grid item xs={6}>
+              {/* <Grid size={{ xs: 6 }}>
                 <Badge
                   showZero
                   anchorOrigin={{
@@ -276,7 +276,7 @@ export default function NonProfitListTile({
                   <AddAlertIcon color='error' fontSize='large' />
                 </Badge> 
               </Grid> */}
-              {/* <Grid item xs={6}>
+              {/* <Grid size={{ xs: 6 }}>
                 <Badge
                   showZero
                   anchorOrigin={{
@@ -290,7 +290,7 @@ export default function NonProfitListTile({
                 </Badge>
                 Hackers
               </Grid> */}
-              {/* <Grid item xs={7}>
+              {/* <Grid size={{ xs: 7 }}>
                 <Badge
                   showZero
                   anchorOrigin={{
@@ -304,7 +304,7 @@ export default function NonProfitListTile({
                 </Badge>
                 Live
               </Grid> */}
-              {/* <Grid item xs={5}>
+              {/* <Grid size={{ xs: 5 }}>
                 <Badge
                   showZero
                   anchorOrigin={{

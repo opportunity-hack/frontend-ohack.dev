@@ -5,20 +5,12 @@ import { useState, useEffect, useCallback } from "react";
 
 
 export default function useAdmin() {
-  const { user, accessToken } = useAuthInfo();
+  const { user } = useAuthInfo();
     const { apiServerUrl } = useEnv();
     const [isAdmin, setIsAdmin ] = useState(false);
 
     const fetchUser = useCallback(async (options) => {
         try {
-            if (options.authenticated) {                
-
-                options.config.headers = {
-                    ...options.config.headers,
-                    Authorization: `Bearer ${accessToken}`,
-                };
-            }
-
             const response = await axios(options.config);
             const { data } = response;
 
@@ -31,7 +23,7 @@ export default function useAdmin() {
 
             return error.message;
         }
-    }, [accessToken]);
+    }, []);
 
   
 

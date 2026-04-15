@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -59,6 +59,19 @@ const experienceLevels = [
 const IntroductionPrompt = () => {
   const { user } = useAuthInfo();
   const { slackSignupUrl } = useEnv();
+
+  // Load from localStorage if available
+  useEffect(() => {
+    const savedFormData = localStorage.getItem('ohack_intro_formData');
+    const savedExperience = localStorage.getItem('ohack_intro_experience');
+    if (savedFormData) {
+      setFormData(JSON.parse(savedFormData));
+    }
+    if (savedExperience) {
+      setSelectedExperience(savedExperience);
+    }
+  }, []);
+
   const [formData, setFormData] = useState({
     name: user?.firstName ? `${user.firstName} ${user.lastName || ''}` : '',
     role: '',
@@ -72,6 +85,14 @@ const IntroductionPrompt = () => {
   });
   const [selectedExperience, setSelectedExperience] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Persist formData and selectedExperience to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('ohack_intro_formData', JSON.stringify(formData));
+  }, [formData]);
+  useEffect(() => {
+    localStorage.setItem('ohack_intro_experience', selectedExperience);
+  }, [selectedExperience]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -171,7 +192,7 @@ const IntroductionPrompt = () => {
           and creates opportunities for collaboration. A good introduction can help you:
         </Typography>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <IntroCard>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
@@ -183,7 +204,7 @@ const IntroductionPrompt = () => {
               </CardContent>
             </IntroCard>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <IntroCard>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
@@ -195,7 +216,7 @@ const IntroductionPrompt = () => {
               </CardContent>
             </IntroCard>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <IntroCard>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
@@ -207,7 +228,7 @@ const IntroductionPrompt = () => {
               </CardContent>
             </IntroCard>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <IntroCard>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
@@ -232,7 +253,7 @@ const IntroductionPrompt = () => {
 
       <Grid container spacing={3}>
         {/* Left side - form inputs */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Stack spacing={3}>
             <TextField
               label="Your Name"
@@ -316,7 +337,7 @@ const IntroductionPrompt = () => {
         </Grid>
 
         {/* Right side - Experience Level and Skills */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={3}>
                 {/* Experience Level */}
                 <Box>

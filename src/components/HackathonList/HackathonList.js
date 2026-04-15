@@ -13,7 +13,7 @@ const News = dynamic(() => import("../../components/News/News"), {
   ssr: true,
 });
 
-function HackathonList() {
+function HackathonList({ compact = false }) {
   const router = useRouter();
   const { hackathons, loading: hackathonsLoading } =
     useHackathonEvents("current");
@@ -53,6 +53,110 @@ function HackathonList() {
     />
   );    
 
+  // Compact mode for side-by-side layout, regular mode for standalone
+  if (compact) {
+    return (
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Typography 
+          variant="h6" 
+          component="h2" 
+          sx={{ 
+            mt: 2,
+            mb: 1.5, 
+            fontWeight: 500,
+            color: 'text.primary',
+            fontSize: { xs: '1.1rem', md: '1.25rem' }
+          }}
+        >
+          Upcoming Events
+        </Typography>
+        
+        {hackathonsLoading ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {Array(2).fill(0).map((_, index) => (
+              <Skeleton
+                key={`compact-skeleton-${index}`}
+                variant="rectangular"
+                width="100%"
+                height={150}
+                sx={{ borderRadius: 2 }}
+              />
+            ))}
+          </Box>
+        ) : hackathons && hackathons.length > 0 ? (
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: 2,
+            overflowY: 'auto',
+            maxHeight: { xs: 'none', lg: '550px' },
+            pr: { lg: 1 }
+          }}>
+            {hackathons.map((event) => (
+              <EventFeature
+                id={event?.id}
+                title={event?.title}
+                event_id={event?.event_id}
+                description={event?.description}
+                key={event?.title || event?.event_id}
+                type={event?.type}
+                nonprofits={event?.nonprofits}
+                start_date={event?.start_date}
+                end_date={event?.end_date}
+                location={event?.location}
+                devpostUrl={event?.devpost_url}
+                rawEventLinks={event?.links}
+                icon={event?.image_url}
+                donationUrl={event?.donation_url}
+                donationGoals={event?.donation_goals}
+                donationCurrent={event?.donation_current}
+                compact={true}
+              />
+            ))}
+          </Box>
+        ) : (
+          <Box sx={{ py: 3, textAlign: 'center', bgcolor: 'grey.50', borderRadius: 2 }}>
+            <Typography variant="body1" color="textSecondary">
+              No upcoming events at the moment
+            </Typography>
+            <Link prefetch={false} href="/hack">
+              <MoreNewsStyle sx={{ mt: 2 }}>
+                View all events
+                <ArrowForwardIcon sx={{ ml: 1, fontSize: 16 }} />
+              </MoreNewsStyle>
+            </Link>
+          </Box>
+        )}
+        
+        {/* Compact news section */}
+        <Box sx={{ 
+          mt: 3, 
+          pt: 3, 
+          borderTop: '1px solid',
+          borderColor: 'divider'
+        }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              mb: 0.5, 
+              fontWeight: 500,
+              color: 'text.primary',
+              fontSize: { xs: '1.1rem', md: '1.25rem' }
+            }}
+          >
+            Latest News
+          </Typography>
+          {newsLoading ? (
+            <Skeleton variant="rectangular" width="100%" height={100} />
+          ) : (
+            <News newsData={newsData?.slice(0, 2) || []} frontpage="true" loading={false} compact={true} />
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
+  // Original full-width layout
   return (
     <OuterGrid
       container
@@ -60,7 +164,7 @@ function HackathonList() {
       direction="column"
       textAlign="center"
     >
-      <SectionTitle variant="h2" component="h2">Upcoming and Current Events</SectionTitle>
+      <SectionTitle variant="h2" component="h2" id="upcoming-events-heading">Upcoming and Current Events</SectionTitle>
       
       <Typography variant="body1" color="textSecondary" sx={{ mb: 3, maxWidth: '800px' }}>
         Join our upcoming hackathons and make a difference! Work with nonprofits to solve real-world challenges using technology.
@@ -79,6 +183,7 @@ function HackathonList() {
           <HackathonGrid>
             {hackathons.map((event) => (
               <EventFeature
+                id={event?.id}
                 title={event?.title}
                 event_id={event?.event_id}
                 description={event?.description}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import useNonprofit from '../../hooks/use-nonprofit';
 import Head from 'next/head';
 import Image from 'next/image';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import { useAuthInfo } from '@propelauth/react';
 import { Puff } from 'react-loading-icons';
 
@@ -19,7 +20,6 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 // Analytics
 import { trackEvent, initFacebookPixel } from '../../lib/ga';
-import { useFeatureValue } from "@growthbook/growthbook-react";
 
 import {
   ChannelChip,
@@ -50,7 +50,7 @@ const LoadingPlaceholder = () => (
 );
 
 const NonProfit = React.memo(function NonProfit(props) {
-  const nonprofit_cta_text = useFeatureValue("nonprofit_page_cta_text", "Hey there, it looks like there are no active projects with this organization. Let us know how we can help:");
+  const nonprofit_cta_text = "Hey there, it looks like there are no active projects with this organization.";
   const { nonprofit_id } = props;
   const { user } = useAuthInfo();
   
@@ -125,7 +125,7 @@ const NonProfit = React.memo(function NonProfit(props) {
     </Suspense>
   );
   
-  const image = nonprofit.image || '/npo_placeholder.png';
+  const image = normalizeImageUrl(nonprofit.image) || '/npo_placeholder.png';
   const projectCount = nonprofit.problem_statements?.length || 0;
 
   // Preload the nonprofit image for better LCP
@@ -151,7 +151,7 @@ const NonProfit = React.memo(function NonProfit(props) {
     if (!nonprofit.problem_statements || nonprofit.problem_statements.length === 0) {      
       return (
         <Grid container>
-          <Grid item style={{ fontSize: "13px"}} xs={12}>
+          <Grid size={{ xs: 12 }} style={{ fontSize: "13px"}}>
             <Typography style={style}>{nonprofit_cta_text}</Typography>
             <br/>
           </Grid>
@@ -226,7 +226,7 @@ const NonProfit = React.memo(function NonProfit(props) {
       <TitleContainer container>
         {nonprofit.id ? (
           <>
-            <Grid item>
+            <Grid>
               <TitleChipContainer>
                 <TitleStyled variant='h2' style={{paddingBottom: "0"}}>
                   <Avatar
@@ -246,7 +246,7 @@ const NonProfit = React.memo(function NonProfit(props) {
               </TitleChipContainer>
             </Grid>
             
-            <Grid item>
+            <Grid>
               {description && (
                 <Typography style={{fontSize:"13px"}}>{description}</Typography>
               )}

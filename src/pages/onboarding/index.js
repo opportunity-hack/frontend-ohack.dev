@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import Head from 'next/head';
+import { useCookies, CookiesProvider } from 'react-cookie';
 import {
   Container,
   Typography,
@@ -15,18 +17,23 @@ import {
   Alert,
   Chip,
   StepButton,
-  LinearProgress
+  LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useAuthInfo } from '@propelauth/react';
-import ExploreIcon from '@mui/icons-material/Explore';
 
 // Components
 import WelcomeSection from '../../components/Onboarding/WelcomeSection';
 import MissionOverview from '../../components/Onboarding/MissionOverview';
 import IntroductionPrompt from '../../components/Onboarding/IntroductionPrompt';
 import SlackTutorial from '../../components/Onboarding/SlackTutorial';
-import BuddySystem from '../../components/Onboarding/BuddySystem';
+import JudgingOverview from '../../components/Onboarding/JudgingOverview';
+import MentoringOverview from '../../components/Onboarding/MentoringOverview';
 import OnboardingFAQ from '../../components/Onboarding/OnboardingFAQ';
 import FeedbackSection from '../../components/Onboarding/FeedbackSection';
 import JourneyTracker, { JourneyTypes } from '../../components/JourneyTracker';
@@ -53,7 +60,8 @@ const steps = [
   'Our Mission',
   'Introduce Yourself',
   'Slack Tutorial',
-  'Find a Buddy',
+  'Judging Overview',
+  'Mentoring',
   'FAQs',
   'Feedback'
 ];
@@ -66,14 +74,15 @@ const OnboardingJourney = {
     VIEW_MISSION: 'view_mission',
     COMPLETE_INTRODUCTION: 'complete_introduction',
     COMPLETE_TUTORIAL: 'complete_tutorial',
-    FIND_BUDDY: 'find_buddy',
+    VIEW_JUDGING: 'view_judging',
+    VIEW_MENTORING: 'view_mentoring',
     READ_FAQ: 'read_faq',
     PROVIDE_FEEDBACK: 'provide_feedback',
     COMPLETE_ONBOARDING: 'complete_onboarding'
   }
 };
 
-export default function Onboarding() {
+function OnboardingComponent() {
   const { user, isLoading: authLoading } = useAuthInfo();
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
@@ -81,7 +90,26 @@ export default function Onboarding() {
   const [highestStepReached, setHighestStepReached] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [openCongratulatoryDialog, setOpenCongratulatoryDialog] = useState(false);
+  const [cookies, setCookie] = useCookies(['onboarding_visited']);
   
+  useEffect(() => { initFacebookPixel(); }, []);
+
+  useEffect(() => {
+    const ONBOARDING_VISITED_COOKIE = "onboarding_visited";
+
+    if (!cookies[ONBOARDING_VISITED_COOKIE]) {
+        setCookie(ONBOARDING_VISITED_COOKIE, 'true', { path: '/', maxAge: 31536000 });
+      
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'onboarding_first_visit', {
+          'event_category': 'Onboarding',
+          'event_label': 'First Visit'
+        });
+      }
+    }
+  }, [cookies, setCookie]);
+
   // Track onboarding progress and save to localStorage
   useEffect(() => {
     const savedProgress = localStorage.getItem('ohack_onboarding_progress');
@@ -140,7 +168,7 @@ export default function Onboarding() {
       // Use JourneyTracker to track progress
       // This will be rendered but doesn't add anything to the DOM
     }
-  }, [activeStep, completed, user]);
+  }, [activeStep, completed, user, highestStepReached]);
 
   // Calculate completion percentage
   const completedCount = Object.values(completed).filter(Boolean).length;
@@ -158,6 +186,7 @@ export default function Onboarding() {
       
       // Move to next step
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      trackEvent({ action: 'onboarding_step', params: { event_label: steps[activeStep + 1]?.label, step: activeStep + 2, page: 'onboarding' } });
       // Scroll to top of the page when navigating to next step
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -165,6 +194,8 @@ export default function Onboarding() {
 
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    // Scroll to top of the page when navigating back
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleComplete = async () => {
@@ -180,10 +211,11 @@ export default function Onboarding() {
       
       setCompleted(allCompleted);
       
-      // Show success message and redirect after a delay
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      // Mark onboarding as completed to prevent dialog from showing again
+      localStorage.setItem('ohack_onboarding_completed', 'true');
+      
+      trackEvent({ action: 'onboarding_complete', params: { event_label: 'all_steps', page: 'onboarding' } });
+      setOpenCongratulatoryDialog(true); // Open the dialog
     } catch (err) {
       console.error('Error completing onboarding:', err);
       setError('There was an error completing the onboarding process. Please try again.');
@@ -204,10 +236,12 @@ export default function Onboarding() {
       case 3:
         return <SlackTutorial />;
       case 4:
-        return <BuddySystem />;
+        return <JudgingOverview />;
       case 5:
-        return <OnboardingFAQ />;
+        return <MentoringOverview />;
       case 6:
+        return <OnboardingFAQ />;
+      case 7:
         return <FeedbackSection />;
       default:
         return 'Unknown step';
@@ -244,19 +278,6 @@ export default function Onboarding() {
           Member Onboarding
         </Typography>
 
-        {/* Website Tour Link */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <Button
-            component={Link}
-            href="/onboarding/website-tour"
-            variant="outlined"
-            color="primary"
-            startIcon={<ExploreIcon />}
-            sx={{ borderRadius: 4 }}
-          >
-            Take a Website Tour
-          </Button>
-        </Box>
 
         <StyledPaper>
           {/* Stepper */}
@@ -418,6 +439,43 @@ export default function Onboarding() {
           </Box>
         </Box>
       </Box>
+
+      {/* Congratulatory Dialog */}
+      <Dialog
+        open={openCongratulatoryDialog}
+        onClose={() => router.push('/')}
+        aria-labelledby="congratulations-dialog-title"
+        aria-describedby="congratulations-dialog-description"
+      >
+        <DialogTitle id="congratulations-dialog-title">
+          <Typography variant="h4" component="span" color="primary" fontWeight="bold" sx={{ fontSize: '2.5rem' }}>Congratulations!</Typography>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="congratulations-dialog-description" sx={{ fontSize: '1.3rem' }}>
+            You have successfully completed the Opportunity Hack member onboarding process!
+            Welcome to the community! You're all set to start contributing.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+          <Button 
+            onClick={() => router.push('/')}
+            variant="contained"
+            color="primary"
+            autoFocus
+            sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
+          >
+            Go to Home Page
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
+  );
+}
+
+export default function Onboarding() {
+  return (
+    <CookiesProvider>
+      <OnboardingComponent />
+    </CookiesProvider>
   );
 }

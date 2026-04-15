@@ -47,7 +47,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 
 const StyledCardMedia = styled(CardMedia)({
-  paddingTop: "56.25%", // 16:9 aspect ratio
+  paddingTop: "56.25%" // 16:9 aspect ratio
 });
 
 const StyledCardContent = styled(CardContent)({
@@ -346,7 +346,7 @@ export default function SuccessStories() {
 
         <Grid container spacing={4} marginTop={4}>
           {successStories.map((story, index) => (
-            <Grid item key={index} xs={12} sm={6} md={4} id={`${story.key}`}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} id={`${story.key}`}>
               <StyledCard>
                 <StyledCardMedia image={story.image} title={story.title} />
                 <StyledCardContent>
@@ -446,24 +446,88 @@ export default function SuccessStories() {
         <Typography variant="h2" align="center" marginTop={8} gutterBottom>
           Join the Opportunity Hack Movement
         </Typography>
-        <Grid container spacing={4} justifyContent="center" marginTop={2}>
-          <Grid item>
-            <Link href="/nonprofits/apply" passHref>
-              <Button variant="contained" color="primary" size="large">
-                Nonprofits: Submit Your Challenge
-              </Button>
-            </Link>
+        
+        <Box sx={{ textAlign: 'center', marginTop: 4, marginBottom: 6 }}>
+          <Typography variant="h5" gutterBottom>
+            See How We Transform Nonprofits Through Technology
+          </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            Watch this video to understand how Opportunity Hack supports nonprofits.
+          </Typography>
+          <Box sx={{ 
+            position: 'relative', 
+            paddingBottom: '56.25%', 
+            height: 0, 
+            overflow: 'hidden',
+            maxWidth: '800px',
+            margin: '0 auto',
+            borderRadius: 2,
+            boxShadow: 3
+          }}>
+            <iframe
+              src="https://www.youtube.com/embed/_hpam2meMWY?si=XQfQ74uF21gwwWUM"
+              title="Opportunity Hack: Transforming Nonprofits Through Technology"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none'
+              }}
+            />
+          </Box>
+        </Box>
+
+        <Box sx={{ textAlign: 'center', marginTop: 6, marginBottom: 4 }}>
+          <Typography variant="h4" gutterBottom>
+            Ready to Transform Your Nonprofit?
+          </Typography>
+          <Typography variant="h6" color="text.secondary" paragraph sx={{ maxWidth: '600px', margin: '0 auto' }}>
+            Join hundreds of nonprofits who have already benefited from innovative tech solutions. 
+            Submit your challenge and let our skilled volunteers help you achieve your mission.
+          </Typography>
+          
+          <Grid container spacing={3} justifyContent="center" marginTop={3}>
+            <Grid>
+              <Link href="/nonprofits/apply" passHref>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  size="large"
+                  sx={{ 
+                    fontSize: '1.2rem',
+                    padding: '12px 32px',
+                    boxShadow: 3,
+                    '&:hover': {
+                      boxShadow: 6,
+                    }
+                  }}
+                >
+                  Submit Your Nonprofit's Challenge
+                </Button>
+              </Link>
+            </Grid>
           </Grid>
-          <Grid item>
-            <Link href="/hackers/join" passHref>
-              <Button variant="contained" color="secondary" size="large">
+          
+          <Typography variant="body2" color="text.secondary" sx={{ marginTop: 2 }}>
+            Applications are reviewed regularly • Free for qualifying nonprofits
+          </Typography>
+        </Box>
+
+        <Grid container spacing={4} justifyContent="center" marginTop={4}>
+          <Grid>
+            <Link href="/about/hackers" passHref>
+              <Button variant="outlined" color="secondary" size="large">
                 Tech Volunteers: Apply Your Skills
               </Button>
             </Link>
           </Grid>
-          <Grid item>
+          <Grid>
             <Link href="/sponsor" passHref>
-              <Button variant="contained" color="info" size="large">
+              <Button variant="outlined" color="info" size="large">
                 Sponsors: Empower Innovation
               </Button>
             </Link>

@@ -40,7 +40,7 @@ import {
   Autocomplete,
   OutlinedInput,
 } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon, Delete as DeleteIcon, Event as EventIcon, Close as CloseIcon } from "@mui/icons-material";
+import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon, Delete as DeleteIcon, Event as EventIcon, Close as CloseIcon, GitHub as GitHubIcon, People as PeopleIcon, Description as DescriptionIcon, Chat as ChatIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
 import LinkManagement from "../../../components/admin/LinkManagement";
 import useNonprofit from "../../../hooks/use-nonprofit";
@@ -203,6 +203,7 @@ const AdminProblemsPage = () => {
     const adaptedProblem = {
       ...problem,
       references: adaptReferencesToLinkFormat(problem.references),
+      github: adaptGithubToLinkFormat(problem.github),
       events: problem.events || [],
       skills: problem.skills || [],
     };
@@ -384,22 +385,61 @@ const AdminProblemsPage = () => {
     }));
   };
 
-  const adaptReferencesToLinkFormat = (references) => {
-    return (references || []).map(ref => ({
-      name: ref.name || '',
-      link: ref.link || '',
-      color: 'primary',
-      size: 'medium',
-      variant: 'text',
-      open_new: 'True'
+  const handleGithubChange = (newGithubLinks) => {
+    setEditingProblem((prev) => ({
+      ...prev,
+      github: newGithubLinks.map(github => ({
+        name: github.name,
+        link: github.link
+      }))
     }));
+  };
+
+  const adaptReferencesToLinkFormat = (references) => {
+    // Handle various data types: null, undefined, empty array, or non-array
+    if (!references) return [];
+    if (!Array.isArray(references)) return [];
+
+    return references.map(ref => {
+      // Handle case where ref might be null or not an object
+      if (!ref || typeof ref !== 'object') return null;
+
+      return {
+        name: ref.name || '',
+        link: ref.link || '',
+        color: 'primary',
+        size: 'medium',
+        variant: 'text',
+        open_new: 'True'
+      };
+    }).filter(Boolean); // Remove any null entries
+  };
+
+  const adaptGithubToLinkFormat = (github) => {
+    // Handle various data types: null, undefined, empty array, or non-array
+    if (!github) return [];
+    if (!Array.isArray(github)) return [];
+
+    return github.map(repo => {
+      // Handle case where repo might be null or not an object
+      if (!repo || typeof repo !== 'object') return null;
+
+      return {
+        name: repo.name || '',
+        link: repo.link || '',
+        color: 'primary',
+        size: 'medium',
+        variant: 'contained',
+        open_new: 'True'
+      };
+    }).filter(Boolean); // Remove any null entries
   };
 
   if (!isAdmin) {
     return (
       <RequiredAuthProvider
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={window.location.href} />}
+        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
       >
         <AdminPage title="Problem Statement Management" isAdmin={false}>
           <Typography>You do not have permission to view this page.</Typography>
@@ -411,12 +451,12 @@ const AdminProblemsPage = () => {
   return (
     <RequiredAuthProvider
       authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={window.location.href} />}
+      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
     >
       <AdminPage title="Problem Statement Management" isAdmin={isAdmin}>
         <Box sx={{ mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="Search Problem Statements"
@@ -427,7 +467,7 @@ const AdminProblemsPage = () => {
                 size="medium"
               />
             </Grid>
-            <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+            <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -634,16 +674,7 @@ const AdminProblemsPage = () => {
                       </>
                     )}
                   </CardContent>
-                  <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
-                    <Button 
-                      size="small" 
-                      startIcon={<EditIcon />} 
-                      onClick={() => handleEditProblem(problem)}
-                      color="primary"
-                    >
-                      Edit
-                    </Button>
-                  </CardActions>
+                  
                 </Card>
               ))
             )}
@@ -654,16 +685,19 @@ const AdminProblemsPage = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
+                  <TableCell sx={{ minWidth: '80px' }}>
+                    Actions
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '200px' }}>                    
                     <TableSortLabel
                       active={orderBy === "title"}
                       direction={orderBy === "title" ? order : "asc"}
                       onClick={() => handleSort("title")}
                     >
-                      Title
+                      Problem Statement
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ minWidth: '120px' }}>
                     <TableSortLabel
                       active={orderBy === "status"}
                       direction={orderBy === "status" ? order : "asc"}
@@ -672,29 +706,25 @@ const AdminProblemsPage = () => {
                       Status
                     </TableSortLabel>
                   </TableCell>
-                  {!isTablet && (
-                    <TableCell>
-                      <TableSortLabel
-                        active={orderBy === "rank"}
-                        direction={orderBy === "rank" ? order : "asc"}
-                        onClick={() => handleSort("rank")}
-                      >
-                        Rank
-                      </TableSortLabel>
-                    </TableCell>
-                  )}
-                  {!isTablet && (
-                    <TableCell>
-                      <TableSortLabel
-                        active={orderBy === "first_thought_of"}
-                        direction={orderBy === "first_thought_of" ? order : "asc"}
-                        onClick={() => handleSort("first_thought_of")}
-                      >
-                        First Thought Of
-                      </TableSortLabel>
-                    </TableCell>
-                  )}
-                  <TableCell>
+                  <TableCell sx={{ minWidth: '80px' }}>
+                    <TableSortLabel
+                      active={orderBy === "rank"}
+                      direction={orderBy === "rank" ? order : "asc"}
+                      onClick={() => handleSort("rank")}
+                    >
+                      Rank
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '100px' }}>
+                    <TableSortLabel
+                      active={orderBy === "first_thought_of"}
+                      direction={orderBy === "first_thought_of" ? order : "asc"}
+                      onClick={() => handleSort("first_thought_of")}
+                    >
+                      Year
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '160px' }}>
                     <TableSortLabel
                       active={orderBy === "nonprofit_id"}
                       direction={orderBy === "nonprofit_id" ? order : "asc"}
@@ -703,7 +733,10 @@ const AdminProblemsPage = () => {
                       Nonprofit
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ minWidth: '120px' }}>
+                    Resources
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '140px' }}>
                     <TableSortLabel
                       active={orderBy === "skills"}
                       direction={orderBy === "skills" ? order : "asc"}
@@ -712,14 +745,18 @@ const AdminProblemsPage = () => {
                       Skills
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell>Events</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell sx={{ minWidth: '100px' }}>
+                    Events
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '90px' }}>
+                    Community
+                  </TableCell>                  
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredAndSortedProblems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isTablet ? 6 : 8} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
                       <Typography variant="body1" color="text.secondary">
                         No problem statements found.
                       </Typography>
@@ -727,23 +764,81 @@ const AdminProblemsPage = () => {
                   </TableRow>
                 ) : (
                   filteredAndSortedProblems.map((problem) => (
-                    <TableRow key={problem.id}>
-                      <TableCell>{problem.title}</TableCell>
+                    <TableRow key={problem.id} hover>
+                      {/* Problem Statement Title + Description Preview */}
+                      <TableCell sx={{ maxWidth: '300px' }}>
+                        <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+                    <Button 
+                      size="small" 
+                      startIcon={<EditIcon />} 
+                      onClick={() => handleEditProblem(problem)}
+                      color="primary"
+                    >
+                      Edit
+                    </Button>
+                  </CardActions>
+                        <Box>                          
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, lineHeight: 1.2 }}>
+                            {problem.title}
+                          </Typography>
+                          {problem.description && (
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{
+                                fontSize: '0.75rem',
+                                lineHeight: 1.3,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden'
+                              }}
+                            >
+                              {problem.description.length > 100
+                                ? `${problem.description.substring(0, 100)}...`
+                                : problem.description}
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+
+                      {/* Status */}
                       <TableCell>
                         <Chip
                           label={problem.status}
                           color={
                             problem.status === "production"
                               ? "success"
+                              : problem.status === "hackathon"
+                              ? "info"
+                              : problem.status === "post-hackathon"
+                              ? "warning"
                               : problem.status === "active"
                               ? "primary"
                               : "default"
                           }
                           size="small"
+                          sx={{ fontWeight: 'medium' }}
                         />
                       </TableCell>
-                      {!isTablet && (<TableCell>{problem.rank}</TableCell>)}
-                      {!isTablet && (<TableCell>{problem.first_thought_of}</TableCell>)}
+
+                      {/* Rank */}
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: problem.rank ? 'primary.main' : 'text.secondary' }}>
+                            {problem.rank || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+
+                      {/* Year */}
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                          {problem.first_thought_of || 'N/A'}
+                        </Typography>
+                      </TableCell>
+
+                      {/* Nonprofit */}
                       <TableCell>
                         {problem.nonprofit_id ? (
                           <Chip
@@ -752,13 +847,12 @@ const AdminProblemsPage = () => {
                             size="small"
                             color="primary"
                             variant="outlined"
-                            sx={{ mr: 0.5 }}
                           />
                         ) : (
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {nonprofitProblemStatementsMap[problem.id]?.length > 0 ? (
                               <>
-                                {nonprofitProblemStatementsMap[problem.id].map((nonprofit, i) => (
+                                {nonprofitProblemStatementsMap[problem.id].slice(0, 2).map((nonprofit, i) => (
                                   <Chip
                                     key={nonprofit.id}
                                     icon={<LinkIcon />}
@@ -766,28 +860,62 @@ const AdminProblemsPage = () => {
                                     size="small"
                                     color="success"
                                     variant="outlined"
-                                    sx={{ 
-                                      fontSize: '0.7rem', 
-                                      height: '24px',
-                                      '& .MuiChip-icon': { fontSize: '0.7rem' },
-                                      mb: 0.5 
-                                    }}
+                                    sx={{ fontSize: '0.7rem', height: '24px' }}
                                     title={`This problem statement is linked to ${nonprofit.name}`}
                                   />
                                 ))}
+                                {nonprofitProblemStatementsMap[problem.id].length > 2 && (
+                                  <Chip
+                                    label={`+${nonprofitProblemStatementsMap[problem.id].length - 2}`}
+                                    size="small"
+                                    color="success"
+                                    variant="filled"
+                                    sx={{ fontSize: '0.65rem', height: '20px' }}
+                                  />
+                                )}
                               </>
                             ) : (
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
                                 Not linked
                               </Typography>
                             )}
                           </Box>
                         )}
                       </TableCell>
+
+                      {/* Resources (GitHub + References) */}
                       <TableCell>
-                        {problem.skills && problem.skills.length > 0 ? (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxWidth: '200px' }}>
-                            {problem.skills.slice(0, 3).map((skill, index) => (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          {Array.isArray(problem.github) && problem.github.length > 0 && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <GitHubIcon sx={{ fontSize: '0.9rem', color: 'text.secondary' }} />
+                              <Typography variant="body2" color="primary" sx={{ fontWeight: 'medium' }}>
+                                {problem.github.length} repo{problem.github.length > 1 ? 's' : ''}
+                              </Typography>
+                            </Box>
+                          )}
+                          {Array.isArray(problem.references) && problem.references.length > 0 && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <DescriptionIcon sx={{ fontSize: '0.9rem', color: 'text.secondary' }} />
+                              <Typography variant="body2" color="info.main" sx={{ fontWeight: 'medium' }}>
+                                {problem.references.length} ref{problem.references.length > 1 ? 's' : ''}
+                              </Typography>
+                            </Box>
+                          )}
+                          {(!Array.isArray(problem.github) || problem.github.length === 0) &&
+                           (!Array.isArray(problem.references) || problem.references.length === 0) && (
+                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
+                              No resources
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+
+                      {/* Skills */}
+                      <TableCell>
+                        {Array.isArray(problem.skills) && problem.skills.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {problem.skills.slice(0, 2).map((skill, index) => (
                               <Chip
                                 key={index}
                                 label={skill}
@@ -797,46 +925,84 @@ const AdminProblemsPage = () => {
                                 sx={{ fontSize: '0.7rem', height: '20px' }}
                               />
                             ))}
-                            {problem.skills.length > 3 && (
+                            {problem.skills.length > 2 && (
                               <Chip
-                                label={`+${problem.skills.length - 3} more`}
+                                label={`+${problem.skills.length - 2}`}
                                 size="small"
                                 color="secondary"
                                 variant="filled"
                                 sx={{ fontSize: '0.65rem', height: '20px' }}
-                                title={problem.skills.slice(3).join(', ')}
+                                title={problem.skills.slice(2).join(', ')}
                               />
                             )}
                           </Box>
                         ) : (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
                             No skills
                           </Typography>
                         )}
                       </TableCell>
+
+                      {/* Events */}
                       <TableCell>
-                        {problem.events && problem.events.length > 0 ? (
+                        {Array.isArray(problem.events) && problem.events.length > 0 ? (
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {problem.events.map((event, index) => (
-                              <Chip
-                                key={index}
-                                icon={<EventIcon />}
-                                label={event.title || event.event_id}
-                                size="small"
-                                color="info"
-                                variant="outlined"
-                                sx={{ fontSize: '0.7rem', height: '24px' }}
-                              />
-                            ))}
+                            <Chip
+                              icon={<EventIcon />}
+                              label={`${problem.events.length} event${problem.events.length > 1 ? 's' : ''}`}
+                              size="small"
+                              color="info"
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem' }}
+                            />
                           </Box>
                         ) : (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
                             No events
                           </Typography>
                         )}
                       </TableCell>
+
+                      {/* Community (Slack + Helping) */}
                       <TableCell>
-                        <IconButton onClick={() => handleEditProblem(problem)}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          {problem.slack_channel && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <ChatIcon sx={{ fontSize: '0.9rem', color: 'text.secondary' }} />
+                              <Typography variant="body2" color="success.main" sx={{ fontSize: '0.75rem' }}>
+                                #{problem.slack_channel}
+                              </Typography>
+                            </Box>
+                          )}
+                          {Array.isArray(problem.helping) && problem.helping.length > 0 && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <PeopleIcon sx={{ fontSize: '0.9rem', color: 'text.secondary' }} />
+                              <Typography variant="body2" color="primary" sx={{ fontWeight: 'medium', fontSize: '0.75rem' }}>
+                                {problem.helping.length} helping
+                              </Typography>
+                            </Box>
+                          )}
+                          {!problem.slack_channel && (!Array.isArray(problem.helping) || problem.helping.length === 0) && (
+                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
+                              No community
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell>
+                        <IconButton
+                          onClick={() => handleEditProblem(problem)}
+                          color="primary"
+                          size="small"
+                          sx={{
+                            '&:hover': {
+                              backgroundColor: 'primary.light',
+                              color: 'white'
+                            }
+                          }}
+                        >
                           <EditIcon />
                         </IconButton>
                       </TableCell>
@@ -1038,7 +1204,7 @@ const AdminProblemsPage = () => {
                     Link to New Event
                   </Typography>
                   <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={8}>
+                    <Grid size={{ xs: 12, md: 8 }}>
                       <FormControl fullWidth>
                         <InputLabel>Select Hackathon Event</InputLabel>
                         <Select
@@ -1061,7 +1227,7 @@ const AdminProblemsPage = () => {
                         </Select>
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                       <Button
                         onClick={handleAddHackathonEvent}
                         disabled={!selectedHackathonId}
@@ -1124,7 +1290,7 @@ const AdminProblemsPage = () => {
                   Associated Nonprofit
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <FormControl fullWidth>
                       <InputLabel id="nonprofit-select-label">Link to Nonprofit</InputLabel>
                       <Select
@@ -1150,7 +1316,7 @@ const AdminProblemsPage = () => {
                     </FormControl>
                   </Grid>
                   {nonprofits.length > 10 && (
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <TextField
                         label="Search Nonprofits"
                         variant="outlined"
@@ -1164,7 +1330,7 @@ const AdminProblemsPage = () => {
                   
                   {/* Display selected nonprofit details */}
                   {selectedNonprofitId && (
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Paper 
                         variant="outlined" 
                         sx={{ 
@@ -1234,9 +1400,25 @@ const AdminProblemsPage = () => {
                 </Grid>
 
                 <Divider sx={{ my: 3 }} />
-                
+
+                <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                  GitHub Repositories
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Add GitHub repository links for this problem statement's solutions
+                </Typography>
+                <LinkManagement
+                  links={adaptGithubToLinkFormat(editingProblem?.github)}
+                  onChange={handleGithubChange}
+                />
+
+                <Divider sx={{ my: 3 }} />
+
                 <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
                   References
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Add reference links such as documentation, presentations, or related resources
                 </Typography>
                 <LinkManagement
                   links={adaptReferencesToLinkFormat(editingProblem?.references)}

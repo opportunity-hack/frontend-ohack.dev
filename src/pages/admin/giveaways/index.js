@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import {
   Typography,
@@ -20,9 +20,13 @@ import {
   DialogContent,
   DialogActions,
   Avatar,
+  Card,
+  CardContent,
+  Chip,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import AdminPage from "../../../components/admin/AdminPage";
+import DramaticGiveawaySelector from "../../../components/admin/DramaticGiveawaySelector";
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
@@ -75,7 +79,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
   const orgId = org.orgId;
   const isAdmin = org.hasPermission("volunteer.admin");
 
-  const fetchGiveaways = async () => {
+  const fetchGiveaways = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(
@@ -106,13 +110,13 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessToken, orgId]);
 
   useEffect(() => {
     if (isAdmin) {
       fetchGiveaways();
     }
-  }, [isAdmin]);
+  }, [isAdmin, fetchGiveaways]);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -147,31 +151,18 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const selectRandomWinner = () => {
-    if (sortedGiveaways.length === 0 || !randomSeed) return;
-
-    console.log("Random seed:", randomSeed);
-    console.log("Sorted giveaways:", sortedGiveaways);
-
-    const seed = parseInt(randomSeed, 10);
-    let random = seed;
-
-    // Create a pool of entries where each user appears as many times as their entry count
-    const entryPool = sortedGiveaways.flatMap((giveaway) =>
-      Array(giveaway.entries).fill(giveaway)
-    );
-
-    // Use the Fisher-Yates shuffle algorithm with our seeded random number generator
-    for (let i = entryPool.length - 1; i > 0; i--) {
-      random = (random * 1103515245 + 12345) & 0x7fffffff; // Linear congruential generator
-      const j = random % (i + 1);
-      [entryPool[i], entryPool[j]] = [entryPool[j], entryPool[i]];
-    }
-
-    // Select the first entry after shuffling
-    setSelectedWinner(entryPool[0]);
-    setWinnerDialogOpen(true);
+  const handleWinnerSelected = (winner) => {
+    setSelectedWinner(winner);
+    // Keep the simple dialog as a backup/alternative view
+    // setWinnerDialogOpen(true);
   };
+
+  // Calculate statistics
+  const totalParticipants = sortedGiveaways.length;
+  const totalEntries = sortedGiveaways.reduce((sum, g) => sum + g.entries, 0);
+  const avgEntriesPerParticipant = totalParticipants > 0 ? (totalEntries / totalParticipants).toFixed(1) : 0;
+  const maxEntries = Math.max(...sortedGiveaways.map(g => g.entries), 0);
+  const topParticipant = sortedGiveaways.find(g => g.entries === maxEntries);
 
   if (!isAdmin) {
     return (
@@ -189,16 +180,19 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
       onSnackbarClose={handleSnackbarClose}
     >
       <Box sx={{ mb: 3, width: "100%" }}>
-        <Typography variant="h5" gutterBottom>
-          Giveaway Entries
+        <Typography variant="h5" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          🎁 Giveaway Entries
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 2, color: "text.secondary" }}>
+          Manage and conduct fair, transparent giveaway selections. The dramatic selection process shows exactly how winners are chosen using a seeded random number generator for full transparency.
         </Typography>
         <Grid container spacing={2} alignItems="center">
-          <Grid item>
+          <Grid>
             <Button onClick={fetchGiveaways} variant="outlined">
               Refresh Data
             </Button>
           </Grid>
-          <Grid item xs>
+          <Grid size={{ xs: true }}>
             <TextField
               fullWidth
               label="Filter by Name, Nickname, or GitHub"
@@ -209,26 +203,92 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
         </Grid>
       </Box>
 
+      {/* Statistics Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Total Participants
+              </Typography>
+              <Typography variant="h4" component="div">
+                {totalParticipants}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Total Entries
+              </Typography>
+              <Typography variant="h4" component="div">
+                {totalEntries}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Avg. Entries/Person
+              </Typography>
+              <Typography variant="h4" component="div">
+                {avgEntriesPerParticipant}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Top Contributor
+              </Typography>
+              <Typography variant="h6" component="div" noWrap>
+                {topParticipant ? topParticipant.user.name : 'N/A'}
+              </Typography>
+              <Chip 
+                label={`${maxEntries} entries`} 
+                size="small" 
+                color="primary"
+                sx={{ mt: 1 }}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               fullWidth
-              label="Random Seed"
+              label="Random Seed (for fair & transparent selection)"
               value={randomSeed}
               onChange={(e) => setRandomSeed(e.target.value)}
               type="number"
+              helperText="Enter any number for reproducible random selection"
+              placeholder="e.g., 12345"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Button
-              variant="contained"
-              color="primary"
-              onClick={selectRandomWinner}
-              disabled={!randomSeed || sortedGiveaways.length === 0}
+              variant="outlined"
+              onClick={() => setRandomSeed(Date.now().toString())}
+              sx={{ height: '56px' }}
             >
-              Select Random Winner
+              Generate Random Seed
             </Button>
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <DramaticGiveawaySelector
+              giveaways={sortedGiveaways}
+              randomSeed={randomSeed}
+              onWinnerSelected={handleWinnerSelected}
+            />
           </Grid>
         </Grid>
       </Box>

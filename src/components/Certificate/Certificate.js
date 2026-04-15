@@ -1,6 +1,7 @@
 import React from 'react';
 import { ProjectsContainer, LinkStyled} from './styles';
 import Image from 'next/image';
+import { normalizeImageUrl } from '../../lib/imageUtils';
 import { Typography, Grid, Card, CardContent } from '@mui/material';
 
 import Link from 'next/link';
@@ -12,11 +13,11 @@ const CertInfoIndex = ( {
 
     return (                                
              
-            <Grid item xs={5} sm={4} md={4} spacing={0.5}>
+            <Grid size={{ xs: 5, sm: 4, md: 4 }} spacing={0.5}>
                 { certInfo && certInfo.stats && <Card>
                     <CardContent>
                     { certInfo && certInfo.certificate_url && <Link href={`https://ohack.dev/cert/${certInfo.file_id}`} passHref><Image 
-                        src={certInfo.certificate_url}
+                        src={normalizeImageUrl(certInfo.certificate_url)}
                         width={1024/4}
                         height={1024/4}
                         alt="Your certificate"

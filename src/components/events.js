@@ -15,7 +15,7 @@ export default function Events({ events, user, problemStatementId, onTeamCreate,
                     direction="column"
                     alignItems="flex-start"
                     spacing={2}>
-                    <a href={event.devpost_url}><button className="button button--primary button--compact">
+                    <a href={event?.devpost_url}><button className="button button--primary button--compact">
                         Register on DevPost
                     </button></a>
                     

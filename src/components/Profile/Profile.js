@@ -25,9 +25,11 @@ import {
   Tab
 } from "@mui/material";
 import useProfileApi from "../../hooks/use-profile-api.js";
+import usePrivacySettings from "../../hooks/use-privacy-settings.js";
 import BadgeList from "../../components/badge-list";
 import ProfileHackathonList from "../../components/profile-hackathon-list";
 import FeedbackLite from "../../components/feedback-lite";
+import PrivacyToggle from "../../components/PrivacyToggle/PrivacyToggle";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister2';
 import HeartGauge from '../HeartGauge/HeartGauge';
@@ -93,6 +95,7 @@ export default function Profile(props) {
   const { isLoggedIn, user } = useAuthInfo();
   const { badges, hackathons, profile, feedback_url, update_profile_metadata, isLoading } =
     useProfileApi({});
+  const { privacySettings, togglePrivacySetting, isLoading: privacyLoading } = usePrivacySettings();
   const theme = useTheme();
   const [githubHistory, setGithubHistory] = useState([]);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
@@ -193,7 +196,9 @@ export default function Profile(props) {
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    
+    const tabNames = ['basic', 'impact', 'github', 'swag', 'volunteer', 'giveaways'];
+    trackEvent({ action: 'profile_tab_change', params: { event_label: tabNames[newValue], page: 'profile' } });
+
     // Update URL hash based on tab
     const tabHashMap = {
       0: 'basic',
@@ -539,15 +544,15 @@ export default function Profile(props) {
 
   return (
     <LayoutContainer container>
-      <InnerContainer container sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
+      <InnerContainer container>
         <Head>
           <title>Profile - Opportunity Hack Developer Portal</title>
         </Head>
         
         {isLoggedIn ? (
-          <ProfileContainer sx={{ width: '100%', maxWidth: '100%', px: isMobile ? 2 : 4 }}>
+          <ProfileContainer sx={{ width: '100%', px: { xs: 1, sm: 2, md: 4 } }}>
             {/* Header Section */}
-            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+            <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 2 }}>
               {isLoading ? (
                 <>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -561,35 +566,52 @@ export default function Profile(props) {
                 </>
               ) : (
                 <>
-                  <ProfileHeader container>
+                  <ProfileHeader container
+                    sx={{
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'center', sm: 'flex-start' },
+                      textAlign: { xs: 'center', sm: 'left' },
+                    }}
+                  >
                     <ProfileAvatar
                       src={user?.pictureUrl}
                       alt="Profile"
-                      width={80}
-                      height={80}
+                      width={isMobile ? 64 : 80}
+                      height={isMobile ? 64 : 80}
                     />
                     <ProfileHeadline>
                       <Typography
                         variant="h2"
                         sx={{
                           fontWeight: 600,
-                          fontSize: isMobile ? "2rem" : "3rem",
+                          fontSize: isMobile ? "1.6rem" : "3rem",
                           marginBottom: "0.5rem",
+                          wordBreak: 'break-word',
                         }}
                       >
                         {user?.firstName} {user?.lastName}{" "}
-                        <VerifiedUserIcon color="success" fontSize="large" />
+                        <VerifiedUserIcon color="success" fontSize={isMobile ? "medium" : "large"} />
                       </Typography>
-                      <ProfileDetailText>{user?.email}</ProfileDetailText>
-                      <ProfileDetailText>
+                      <ProfileDetailText sx={{ fontSize: isMobile ? "0.9rem" : "1.4rem" }}>
+                        {user?.email}
+                      </ProfileDetailText>
+                      <ProfileDetailText sx={{ fontSize: isMobile ? "0.9rem" : "1.4rem" }}>
                         Member since: <Moment fromNow>{user?.createdAt * 1000}</Moment>
                       </ProfileDetailText>
                     </ProfileHeadline>
                   </ProfileHeader>
                   
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                  <Box sx={{
+                    mt: 2,
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    flexWrap: 'wrap',
+                    gap: 2
+                  }}>
                     <Link href={profile.profile_url} style={{ textDecoration: 'none' }}>
-                      <Button variant="contained" color="primary">
+                      <Button variant="contained" color="primary" fullWidth={isMobile}>
                         See Your Public Profile
                       </Button>
                     </Link>
@@ -606,8 +628,8 @@ export default function Profile(props) {
                 <Tabs 
                   value={activeTab} 
                   onChange={handleTabChange} 
-                  variant={isMobile ? "scrollable" : "fullWidth"}
-                  scrollButtons={isMobile ? "auto" : false}
+                  variant="scrollable"
+                  scrollButtons="auto"
                   allowScrollButtonsMobile
                   aria-label="profile tabs"
                   sx={{ 
@@ -616,6 +638,8 @@ export default function Profile(props) {
                     '& .MuiTab-root': {
                       color: theme.palette.common.white,
                       opacity: 0.7,
+                      minWidth: { xs: 60, sm: 90 },
+                      px: { xs: 1, sm: 2 },
                       '&.Mui-selected': {
                         color: theme.palette.common.white,
                         opacity: 1,
@@ -626,85 +650,55 @@ export default function Profile(props) {
                 >
                   <Tab 
                     icon={<PersonIcon />} 
-                    label="Basic Info" 
+                    label={isMobile ? undefined : "Basic Info"}
+                    title="Basic Info"
                     {...a11yProps(0)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<EmojiEventsIcon />} 
-                    label="Impact" 
+                    label={isMobile ? undefined : "Impact"}
+                    title="Impact"
                     {...a11yProps(1)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<GitHubIcon />} 
-                    label="GitHub" 
+                    label={isMobile ? undefined : "GitHub"}
+                    title="GitHub"
                     {...a11yProps(2)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<LocalShippingIcon />} 
-                    label="Swag & Shipping" 
+                    label={isMobile ? undefined : "Swag & Shipping"}
+                    title="Swag & Shipping"
                     {...a11yProps(3)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<VolunteerActivismIcon />} 
-                    label="Volunteer History" 
+                    label={isMobile ? undefined : "Volunteer History"}
+                    title="Volunteer History"
                     {...a11yProps(4)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                   <Tab 
                     icon={<CardGiftcardIcon />} 
-                    label="Giveaway Entries" 
+                    label={isMobile ? undefined : "Giveaway Entries"}
+                    title="Giveaway Entries"
                     {...a11yProps(5)} 
-                    sx={{ 
-                      display: 'flex', 
-                      flexDirection: isMobile ? 'row' : 'column',
-                      alignItems: 'center', 
-                      gap: 1 
-                    }} 
                   />
                 </Tabs>
               </Box>
               
-              <Box sx={{ p: 3 }}>
+              <Box sx={{ p: { xs: 1, sm: 3 }, overflow: 'hidden' }}>
                 {/* Basic Information Tab */}
                 <TabPanel value={activeTab} index={0}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Basic Information
                   </Typography>
                   <Typography variant="body1" sx={{ mb: 3 }}>
                     Tell us more about yourself and why you're here with Opportunity Hack.
                   </Typography>
                   
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6} md={4}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={56} />
                       ) : (
@@ -716,12 +710,21 @@ export default function Profile(props) {
                             options={roleOptions}
                             id="role-select"
                           />
+                          <Box sx={{ mt: 0.75 }}>
+                            <PrivacyToggle
+                              field="role"
+                              isPrivate={privacySettings.role !== 'public'}
+                              onToggle={togglePrivacySetting}
+                              size="small"
+                              disabled={privacyLoading}
+                            />
+                          </Box>
                         </LoadingOverlay>
                       )}
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl fullWidth>            
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <FormControl fullWidth>
                         <TextField
                           id="github"
                           onChange={handleGithubChange}
@@ -732,9 +735,18 @@ export default function Profile(props) {
                           InputLabelProps={{ shrink: Boolean(github) }}
                         />
                       </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
+                        <PrivacyToggle
+                          field="github"
+                          isPrivate={privacySettings.github !== 'public'}
+                          onToggle={togglePrivacySetting}
+                          size="small"
+                          disabled={privacyLoading}
+                        />
+                      </Box>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={56} />
                       ) : (
@@ -746,12 +758,21 @@ export default function Profile(props) {
                             options={educationOptions}
                             id="education-select"
                           />
+                          <Box sx={{ mt: 0.75 }}>
+                            <PrivacyToggle
+                              field="education"
+                              isPrivate={privacySettings.education !== 'public'}
+                              onToggle={togglePrivacySetting}
+                              size="small"
+                              disabled={privacyLoading}
+                            />
+                          </Box>
                         </LoadingOverlay>
                       )}
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl fullWidth>            
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <FormControl fullWidth>
                         <TextField
                           id="company"
                           onChange={handleCompanyChange}
@@ -762,10 +783,19 @@ export default function Profile(props) {
                           InputLabelProps={{ shrink: Boolean(company) }}
                         />
                       </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
+                        <PrivacyToggle
+                          field="company"
+                          isPrivate={privacySettings.company !== 'public'}
+                          onToggle={togglePrivacySetting}
+                          size="small"
+                          disabled={privacyLoading}
+                        />
+                      </Box>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl fullWidth>            
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <FormControl fullWidth>
                         <TextField
                           id="linkedin"
                           onChange={handleLinkedInChange}
@@ -774,12 +804,21 @@ export default function Profile(props) {
                           fullWidth
                           variant="outlined"
                           InputLabelProps={{ shrink: Boolean(linkedInUrl) }}
-                        />            
+                        />
                       </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
+                        <PrivacyToggle
+                          field="linkedin_url"
+                          isPrivate={privacySettings.linkedin_url !== 'public'}
+                          onToggle={togglePrivacySetting}
+                          size="small"
+                          disabled={privacyLoading}
+                        />
+                      </Box>
                     </Grid>
-                    
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl fullWidth>            
+
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <FormControl fullWidth>
                         <TextField
                           id="instagram"
                           onChange={handleInstagramChange}
@@ -790,10 +829,19 @@ export default function Profile(props) {
                           InputLabelProps={{ shrink: Boolean(instagramUrl) }}
                         />
                       </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
+                        <PrivacyToggle
+                          field="instagram_url"
+                          isPrivate={privacySettings.instagram_url !== 'public'}
+                          onToggle={togglePrivacySetting}
+                          size="small"
+                          disabled={privacyLoading}
+                        />
+                      </Box>
                     </Grid>
                     
-                    <Grid item xs={12}>
-                      <FormControl fullWidth>            
+                    <Grid size={{ xs: 12 }}>
+                      <FormControl fullWidth>
                         <TextField
                           id="why"
                           onChange={handleWhyChange}
@@ -806,9 +854,18 @@ export default function Profile(props) {
                           InputLabelProps={{ shrink: Boolean(why) }}
                         />
                       </FormControl>
+                      <Box sx={{ mt: 0.75 }}>
+                        <PrivacyToggle
+                          field="why"
+                          isPrivate={privacySettings.why !== 'public'}
+                          onToggle={togglePrivacySetting}
+                          size="small"
+                          disabled={privacyLoading}
+                        />
+                      </Box>
                     </Grid>
                     
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={80} />
                       ) : (
@@ -821,6 +878,15 @@ export default function Profile(props) {
                             id="expertise-select"
                             multiple
                           />
+                          <Box sx={{ mt: 0.75 }}>
+                            <PrivacyToggle
+                              field="expertise"
+                              isPrivate={privacySettings.expertise !== 'public'}
+                              onToggle={togglePrivacySetting}
+                              size="small"
+                              disabled={privacyLoading}
+                            />
+                          </Box>
                         </LoadingOverlay>
                       )}
                     </Grid>
@@ -829,19 +895,19 @@ export default function Profile(props) {
 
                 {/* Impact Tab */}
                 <TabPanel value={activeTab} index={1}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Your Impact & Achievements
                   </Typography>
                   
-                  <Grid container spacing={4}>
-                    <Grid item xs={12} md={6}>
+                  <Grid container spacing={{ xs: 2, sm: 4 }}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={180} />
                       ) : (
                         <RaffleEntries profile={profile} githubHistory={githubHistory} />
                       )}
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       {isLoading || isGithubLoading ? (
                         <Skeleton variant="rectangular" height={180} />
                       ) : (
@@ -853,7 +919,7 @@ export default function Profile(props) {
 
                 {/* GitHub Contributions Tab */}
                 <TabPanel value={activeTab} index={2}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     GitHub Contributions
                   </Typography>
                   
@@ -876,12 +942,12 @@ export default function Profile(props) {
                   ) : (
                     <>
                       <Box sx={{ mb: 4 }}>
-                        <Typography variant="h5" sx={{ mb: 2 }}>Your Contribution Graph</Typography>
+                        <Typography variant="h5" sx={{ mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Your Contribution Graph</Typography>
                         <GitHubContributions githubHistory={githubHistory} />
                       </Box>
                       
                       <Box>
-                        <Typography variant="h5" sx={{ mb: 2 }}>Shareable Card</Typography>
+                        <Typography variant="h5" sx={{ mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Shareable Card</Typography>
                         <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
                       </Box>
                     </>
@@ -890,15 +956,15 @@ export default function Profile(props) {
 
                 {/* Swag & Shipping Tab */}
                 <TabPanel value={activeTab} index={3}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Swag & Shipping Information
                   </Typography>
                   <Typography variant="body1" sx={{ mb: 3 }}>
                     We occasionally send swag to our active members. Please provide your shipping details if you'd like to receive some OHack goodies!
                   </Typography>
                   
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6} md={4}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       {isLoading ? (
                         <Skeleton variant="rectangular" height={56} />
                       ) : (
@@ -914,7 +980,7 @@ export default function Profile(props) {
                       )}
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControlLabel
                         control={
                           <Checkbox 
@@ -928,12 +994,12 @@ export default function Profile(props) {
                     </Grid>
                   </Grid>
                   
-                  <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+                  <Typography variant="h5" sx={{ mt: 4, mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
                     Shipping Address
                   </Typography>
                   
-                  <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
+                    <Grid size={{ xs: 12 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="street_address"
@@ -947,7 +1013,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="street_address_2"
@@ -961,7 +1027,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="city"
@@ -975,7 +1041,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="state"
@@ -989,7 +1055,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <FormControl fullWidth>
                         <TextField
                           id="postal_code"
@@ -1003,7 +1069,7 @@ export default function Profile(props) {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <CustomSelect
                         label="Country"
                         value={country}
@@ -1017,21 +1083,61 @@ export default function Profile(props) {
 
                 {/* Volunteer History Tab */}
                 <TabPanel value={activeTab} index={4}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Your Volunteer History
                   </Typography>
                   
                   <Box sx={{ mb: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 2 }}>Badges</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="h5" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Badges</Typography>
+                      <PrivacyToggle
+                        field="badges"
+                        isPrivate={privacySettings.badges !== 'public'}
+                        onToggle={togglePrivacySetting}
+                        size="small"
+                        disabled={privacyLoading}
+                      />
+                    </Box>
                     {isLoading ? (
                       <Skeleton variant="rectangular" height={100} />
                     ) : (
-                      <BadgeList badges={badges} />
+                      <>
+                        <BadgeList badges={badges} />
+                        {badges && badges.length > 0 && (
+                          <Box sx={{ 
+                            mt: 2, 
+                            p: 2, 
+                            backgroundColor: 'action.hover', 
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'divider'
+                          }}>
+                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
+                              <EmojiEventsIcon fontSize="small" color="primary" />
+                              <strong>Congratulations on your achievement!</strong> 
+                              If you've reached a milestone and are eligible for a prize, please{' '}
+                              <Link href="/contact?type=prize" underline="hover" color="primary">
+                                contact us
+                              </Link>
+                              {' '}to claim it.
+                            </Typography>
+                          </Box>
+                        )}
+                      </>
                     )}
                   </Box>
                   
                   <Box sx={{ mb: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 2 }}>Hackathons</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="h5" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Hackathons</Typography>
+                      <PrivacyToggle
+                        field="hackathon_history"
+                        isPrivate={privacySettings.hackathon_history !== 'public'}
+                        onToggle={togglePrivacySetting}
+                        size="small"
+                        disabled={privacyLoading}
+                      />
+                    </Box>
                     <Typography variant="body2" sx={{ mb: 2 }}>
                       We've tried our best to keep track of each time you've volunteered,
                       mentored, or judged a hackathon. If anything is missing, please let us know on Slack!
@@ -1044,7 +1150,16 @@ export default function Profile(props) {
                   </Box>
                   
                   <Box sx={{ mb: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 2 }}>Feedback Exchange</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="h5" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Feedback Exchange</Typography>
+                      <PrivacyToggle
+                        field="feedback"
+                        isPrivate={privacySettings.feedback !== 'public'}
+                        onToggle={togglePrivacySetting}
+                        size="small"
+                        disabled={privacyLoading}
+                      />
+                    </Box>
                     <Typography variant="body2" sx={{ mb: 2 }}>
                       Feedback you've given and received from the community.
                     </Typography>
@@ -1052,7 +1167,7 @@ export default function Profile(props) {
                   </Box>
                   
                   <Box>
-                    <Typography variant="h5" sx={{ mb: 2 }}>Summer Internships</Typography>
+                    <Typography variant="h5" sx={{ mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Summer Internships</Typography>
                     <Typography variant="body2">
                       These are distinctly different than hackathons as they span over a
                       couple months.
@@ -1066,12 +1181,12 @@ export default function Profile(props) {
 
                 {/* Giveaway Entries Tab */}
                 <TabPanel value={activeTab} index={5}>
-                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500 }}>
+                  <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Giveaway Entries
                   </Typography>
                   
-                  <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2, bgcolor: theme.palette.primary.light + '10' }}>
-                    <Typography variant="h5" sx={{ mb: 2, color: theme.palette.primary.main }}>
+                  <Paper elevation={1} sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderRadius: 2, bgcolor: theme.palette.primary.light + '10' }}>
+                    <Typography variant="h5" sx={{ mb: 2, color: theme.palette.primary.main, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
                       Your Entries
                     </Typography>
                     
@@ -1082,7 +1197,7 @@ export default function Profile(props) {
                     )}
                   </Paper>
                   
-                  <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+                  <Typography variant="h5" sx={{ mt: 4, mb: 2, fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
                     How to Earn More Entries
                   </Typography>
                   

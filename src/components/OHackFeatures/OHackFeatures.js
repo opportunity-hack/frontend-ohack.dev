@@ -89,10 +89,12 @@ const OHackFeatures = () => {
 		setValue(newValue);
 	};
 
-	const [width, setWidth] = useState(window.screen.width);
+	const [width, setWidth] = useState(typeof window !== 'undefined' ? window.screen.width : 1024);
 	const functionName = () => {
 		setInterval(() => {
-			setWidth(window.screen.width);
+			if (typeof window !== 'undefined') {
+				setWidth(window.screen.width);
+			}
 		}, 500);
 	};
 

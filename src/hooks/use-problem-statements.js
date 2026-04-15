@@ -17,19 +17,11 @@ export default function useProblemstatements(problem_statement_id){
     const { apiServerUrl } = useEnv();
     const [problem_statements, setProblemStatements] = useState([]);
     const [problem_statement, setProblemStatement] = useState(default_problem_statement);
-    const { user, accessToken } = useAuthInfo();
+    const { user } = useAuthInfo();
 
 
     const fetchProblemStatements = useCallback(async (options) => {
         try {
-            if (options.authenticated) {                
-
-                options.config.headers = {
-                    ...options.config.headers,
-                    Authorization: `Bearer ${accessToken}`,
-                };
-            }
-
             const response = await axios(options.config);
             const { data } = response;
 
@@ -40,7 +32,7 @@ export default function useProblemstatements(problem_statement_id){
             }
             return error.message;
         }
-    }, [accessToken]);
+    }, []);
 
 
 

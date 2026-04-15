@@ -47,13 +47,23 @@ export const EmptyGrid = styled(Grid)({
 export const HackathonGrid = styled(Grid)({
   width: '100%',
   display: 'grid',
-  gridTemplateColumns: 'repeat(2, 450px)', // Fixed width columns
+  gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 450px))', // Auto-fit centers single items
   gap: '20px',
   marginBottom: '40px',
   justifyContent: 'center', // Center the grid itself
+  maxWidth: '960px', // Limit max width to prevent overstretching
+  margin: '0 auto 40px auto', // Center the entire grid container
   
   '@media (max-width: 960px)': {
-    gridTemplateColumns: 'minmax(300px, 450px)', // Single column for mobile
+    gridTemplateColumns: 'minmax(320px, 1fr)', // Single responsive column for mobile/tablet
+    maxWidth: '500px',
+  },
+  
+  '@media (max-width: 480px)': {
+    gridTemplateColumns: '1fr', // Full width on very small screens
+    gap: '16px',
+    maxWidth: '100%',
+    padding: '0 10px',
   },
 });
 
@@ -161,14 +171,16 @@ export const NewsContainer = styled(Grid)({
 });
 
 export const EventCards = styled(Grid)((props) => ({
-  height: '500px', // Set a fixed height to prevent layout shifts
-  padding: '15px',
+  minHeight: '460px', // Minimum height to prevent layout shifts, but allow growth
+  padding: '20px',
   width: '100%',
   backgroundColor: '#e6f7ff',
   borderRadius: '15px',
   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  overflow: 'auto', // Add scrolling for overflow content
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden', // Hide overflow instead of scrolling
   
   '&:hover': {
     transform: 'translateY(-2px)',
@@ -176,8 +188,13 @@ export const EventCards = styled(Grid)((props) => ({
   },
 
   [props.theme.breakpoints.down('md')]: {
-    padding: '15px',
-    height: '450px', // Slightly taller on mobile
+    padding: '16px',
+    minHeight: '420px',
+  },
+  
+  [props.theme.breakpoints.down('sm')]: {
+    padding: '14px',
+    minHeight: '380px',
   },
 }));
 
@@ -203,18 +220,39 @@ export const ButtonContainer = styled(Grid)({
 });
 
 export const ProgressContainer = styled(Grid)({
-  margin: "5% 0%",
+  margin: "16px 0",
+  flex: '1', // Take available space
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
 });
 
 export const ProgressBarHolder = styled(Grid)({
-  width: "20%",
-  height: "20%",
+  width: "100px",
+  minWidth: "90px",
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '6px',
+  textAlign: 'center',
+  
+  '@media (max-width: 600px)': {
+    width: "85px",
+    minWidth: "80px",
+  },
+  
+  '@media (max-width: 480px)': {
+    width: '100%',
+    maxWidth: '80px',
+    margin: '0 auto',
+  },
 });
 
 export const BlankContainer = styled(Grid)({});
 
 export const ThankYouContainer = styled(Grid)({
-  marginTop: "5%",
+  marginTop: "12px",
+  textAlign: 'center',
 });
 
 // Text
@@ -243,23 +281,41 @@ export const EventLink = styled(Typography)({
 });
 
 export const EventText = styled(Typography)({
-  fontSize: '1.2rem',
+  fontSize: '1.1rem',
   textTransform: 'none',
   display: '-webkit-box',
-  WebkitLineClamp: 3,
+  WebkitLineClamp: 2, // Reduced to 2 lines to save space
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-  lineHeight: '1.5',
-  maxHeight: '5.4rem', // 3 lines × 1.2rem font × 1.5 line height
-  margin: 0,
+  lineHeight: '1.4',
+  maxHeight: '3.08rem', // 2 lines × 1.1rem font × 1.4 line height
+  margin: '0 0 12px 0',
   wordBreak: 'break-word',
+  
+  '@media (max-width: 600px)': {
+    fontSize: '1rem',
+    lineHeight: '1.3',
+    maxHeight: '2.6rem',
+  },
 });
 
 export const EventGreyText = styled(Typography)({
   color: "#666666",
-  fontSize: "1.5rem",
+  fontSize: "1.2rem",
   textTransform: "none",
+  marginBottom: "16px",
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  lineHeight: '1.3',
+  
+  '@media (max-width: 600px)': {
+    fontSize: '1rem',
+    marginBottom: '12px',
+  },
 });
 
 export const TypographyStyled = styled(Typography)({

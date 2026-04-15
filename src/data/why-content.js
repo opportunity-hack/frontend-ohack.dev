@@ -353,31 +353,39 @@ export const whyPages = {
   "coding-for-good-how-to-use-your-programming-skills-to-make-a-difference-in-the-world":
     {
       title:
-        "Coding for Good: How to Use Your Programming Skills to Make a Difference",
+        "Coding for Nonprofits: How to Use Your Programming Skills to Make a Difference",
       subtitle:
-        "Learn how to leverage your technical skills to create positive social impact through coding",
+        "Learn how coding nonprofits can amplify your impact while building an impressive developer portfolio through meaningful projects",
       Content: CodingForGoodContent,
       description:
-        "Discover how to use your programming skills to address social issues and make a meaningful impact in your community through technology.",
+        "Discover how coding for nonprofits transforms communities while advancing your career. Join developers using programming skills to help nonprofit organizations build technology solutions that matter.",
       image: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp",
       keywords: [
+        "coding nonprofits",
+        "nonprofit coding projects",
+        "coding for nonprofits",
+        "nonprofit software development",
+        "volunteer coding",
+        "tech for nonprofits",
         "social impact coding",
-        "tech for good",
-        "nonprofit technology",
-        "coding skills",
-        "social change",
-        "technical volunteering",
-        "community impact",
-        "software for nonprofits",
+        "nonprofit technology solutions",
+        "coding for social good",
+        "nonprofit programming",
+        "volunteer software engineering",
+        "nonprofit tech volunteers",
+        "community coding projects",
+        "social good programming",
+        "nonprofit development",
+        "coding charity projects",
       ],
       relatedLinks: [
         {
           slug: "open-source-contribution",
-          title: "Contribute to Open Source Projects",
+          title: "Contribute to Open Source Nonprofit Projects",
         },
         {
           slug: "team-leadership-nonprofit-projects",
-          title: "Lead Technical Teams",
+          title: "Lead Technical Teams for Nonprofits",
         },
       ],
       slug: "coding-for-good-how-to-use-your-programming-skills-to-make-a-difference-in-the-world",
@@ -389,17 +397,20 @@ export const whyPages = {
         "@context": "https://schema.org",
         "@type": "Article",
         headline:
-          "Coding for Good: How to Use Your Programming Skills to Make a Difference",
+          "Coding for Nonprofits: How to Use Your Programming Skills to Make a Difference",
         description:
-          "Discover how to use your programming skills to address social issues and make a meaningful impact in your community through technology.",
+          "Discover how coding for nonprofits transforms communities while advancing your career. Join developers using programming skills to help nonprofit organizations build technology solutions that matter.",
         image: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp",
         author: { "@type": "Organization", name: "Opportunity Hack" },
+        publisher: { "@type": "Organization", name: "Opportunity Hack" },
+        keywords:
+          "coding nonprofits, nonprofit coding projects, coding for nonprofits, nonprofit software development",
       },
       highlights: [
-        "Create social impact",
-        "Address community needs",
-        "Build meaningful solutions",
-        "Drive positive change",
+        "Code for meaningful nonprofit projects",
+        "Build an impressive developer portfolio",
+        "Connect with nonprofit organizations",
+        "Create lasting community impact",
       ],
     },
   "how-to-find-and-work-on-nonprofit-projects-that-match-your-coding-interests-and-expertise":
@@ -505,5 +516,4 @@ export const whyPages = {
         "Make meaningful impact",
       ],
     },
-
 };

@@ -148,7 +148,7 @@ const PraiseStats = ({ praises }) => {
 
   return (
     <Grid container spacing={3} sx={{ mb: 6, mt: 1 }}>
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StyledPaper gradient="linear-gradient(135deg, #4ecdc4 0%, #20bf6b 100%)">
           {stats.isGrowing && (
             <TrendingChip 
@@ -165,7 +165,7 @@ const PraiseStats = ({ praises }) => {
         </StyledPaper>
       </Grid>
       
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StyledPaper gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
           <StatIcon>
             <People fontSize="large" />
@@ -175,7 +175,7 @@ const PraiseStats = ({ praises }) => {
         </StyledPaper>
       </Grid>
       
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StyledPaper gradient="linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)">
           <StatIcon>
             <Favorite fontSize="large" />
@@ -185,7 +185,7 @@ const PraiseStats = ({ praises }) => {
         </StyledPaper>
       </Grid>
       
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StyledPaper gradient="linear-gradient(135deg, #ffa726 0%, #fb8c00 100%)">
           <StatIcon>
             <EmojiEvents fontSize="large" />

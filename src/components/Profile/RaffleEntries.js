@@ -128,7 +128,7 @@ const RaffleEntries = ({ profile, githubHistory }) => {
   const mostRecentEntry = giveawayEntries[0];
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mt: 3, mb: 3 }}>
+    <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mt: 3, mb: 3 }}>
       <Typography variant="h5" gutterBottom display="flex" alignItems="center">
         <EmojiEvents sx={{ mr: 1 }} color="primary" />
         Giveaway Entries
@@ -149,7 +149,7 @@ const RaffleEntries = ({ profile, githubHistory }) => {
         <ListItem>
           <ListItemText
             primary={
-              <Typography variant="h6" display="flex" alignItems="center">
+              <Typography variant="h6" display="flex" alignItems="center" sx={{ flexWrap: 'wrap', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                 <Person sx={{ mr: 1 }} />
                 OHack.dev Profile Completeness
               </Typography>
@@ -161,7 +161,7 @@ const RaffleEntries = ({ profile, githubHistory }) => {
         <ListItem>
           <ListItemText
             primary={
-              <Typography variant="h6" display="flex" alignItems="center">
+              <Typography variant="h6" display="flex" alignItems="center" sx={{ flexWrap: 'wrap', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                 <GitHub sx={{ mr: 1 }} />
                 {githubHistory[0]?.login}'s GitHub Contributions
               </Typography>
@@ -204,7 +204,7 @@ const RaffleEntries = ({ profile, githubHistory }) => {
           <Typography variant="body2" color="primary" mt={1}>
             Note: Your most recent entry will be used for the giveaway.
           </Typography>
-          <TableContainer component={Paper} sx={{ mt: 2 }}>
+          <TableContainer component={Paper} sx={{ mt: 2, overflowX: 'auto' }}>
             <Table size="small">
               <TableHead>
                 <TableRow>

@@ -23,6 +23,7 @@ import { trackEvent, initFacebookPixel } from '../../lib/ga';
 import React from 'react';
 
 import Image from 'next/image'
+import { normalizeImageUrl } from '../../lib/imageUtils'
 
 import Link from 'next/link';
 
@@ -88,10 +89,10 @@ function SingleNews( {newsItem} ) {
 
         <BlankContainer xs={12} md={12} lg={12}  key={newsItem.id}>
           <TitleContainer container>          
-            <Grid item xs={12} md={12} lg={12}>                          
+            <Grid size={{ xs: 12, md: 12, lg: 12 }}>                          
               {newsItem?.image && (
               <Image
-                src={newsItem.image}
+                src={normalizeImageUrl(newsItem.image)}
                 alt={newsItem.title}
 
                 height={150}
@@ -127,7 +128,7 @@ function SingleNews( {newsItem} ) {
               </TitleStyled>
               
             </Grid>
-            <Grid item xs={12} md={12} lg={12}>
+            <Grid size={{ xs: 12, md: 12, lg: 12 }}>
               <TextMuted>
                 <CalendarTodayIcon style={{ marginRight: '5px' }} />
                 {newsItem.slack_ts_human_readable}

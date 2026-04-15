@@ -55,7 +55,7 @@ const NonprofitApplicationEditDialog = ({
       <DialogContent>
         <Grid container spacing={2}>
           {fields.map((field) => (
-            <Grid item xs={12} key={field.name}>
+            <Grid size={{ xs: 12 }} key={field.name}>
               {field.type === "checkbox" ? (
                 <FormControlLabel
                   control={

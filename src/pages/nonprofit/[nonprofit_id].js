@@ -1,8 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 
-import { GrowthBookProvider } from "@growthbook/growthbook-react";
-import { GrowthBook } from "@growthbook/growthbook-react";
 
 import ga from '../../lib/ga';
 
@@ -16,41 +14,13 @@ const NonProfit = dynamic(() => import('../../components/NonProfit/NonProfit'), 
 export default function NonProfitProfile() {
     const router = useRouter();
     const { nonprofit_id } = router.query;
+      
+
   
-    const growthbook = new GrowthBook({
-    apiHost: "https://cdn.growthbook.io",
-    clientKey: "sdk-09TvTBUc2phrLe",
-    enableDevMode: true,
-    trackingCallback: (experiment, result) => {
-        // TODO: Use your real analytics tracking system
-        console.log("Viewed Experiment", {
-        experimentId: experiment.key,
-        variationId: result.key      
-        });
-
-        ga.event({
-            action: "experiment_viewed",
-            params: {
-            experiment_id: experiment.key,
-            variation_id: result.key          
-            }
-        });   
-    }
-    });
-
-    var experimentUserId = Math.random().toString(36).substring(7);   
-    growthbook.setAttributes({
-        "id":  experimentUserId
-    });
-
-    growthbook.init({ streaming: true });
-
-    return (
-        <GrowthBookProvider growthbook={growthbook}>
-            <NonProfit
-            nonprofit_id={nonprofit_id}
-            />
-        </GrowthBookProvider>
+    return (  
+        <NonProfit
+        nonprofit_id={nonprofit_id}
+        />
     );
 }
 

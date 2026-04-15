@@ -70,7 +70,7 @@ export default function SavingOneLifeSuccessStory() {
 
         <StyledPaper>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h2" gutterBottom>
                 Project Overview
               </Typography>
@@ -88,7 +88,7 @@ export default function SavingOneLifeSuccessStory() {
                 <CodeIcon /> <strong>Technologies Used:</strong> Python, Flask, MongoDB, Machine Learning algorithms, Social Media APIs, Data Analysis tools
               </Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h2" gutterBottom>
                 The Challenge
               </Typography>
@@ -165,21 +165,21 @@ export default function SavingOneLifeSuccessStory() {
         </StyledPaper>
 
         <Grid container spacing={4} justifyContent="center" marginTop={4} marginBottom={4}>
-          <Grid item>
+          <Grid>
             <Link href="/nonprofits/apply" passHref>
               <Button variant="contained" color="primary" size="large">
                 Nonprofits: Submit Your Challenge
               </Button>
             </Link>
           </Grid>
-          <Grid item>
+          <Grid>
             <Link href="/hack" passHref>
               <Button variant="contained" color="secondary" size="large">
                 Tech Volunteers: Apply Your Skills
               </Button>
             </Link>
           </Grid>
-          <Grid item>
+          <Grid>
             <Link href="/sponsor" passHref>
               <Button variant="contained" color="info" size="large">
                 Sponsors: Empower Innovation

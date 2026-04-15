@@ -1,4 +1,4 @@
-import Moment from 'moment';
+import { isAfter, isBefore, format, parseISO } from 'date-fns';
 import { CountdownCircleTimer } from 'react-countdown-circle-timer'
 import {  
   SectionTitle,  
@@ -42,13 +42,13 @@ export default function Countdown({ details })
 
     const startTime = Date.now() / 1000; // use UNIX timestamp in seconds
 
-    const remainingTime = Moment(_time) /1000- startTime;
+    const remainingTime = new Date(_time).getTime() / 1000 - startTime;
     const days = Math.ceil(remainingTime / daySeconds);
     const daysDuration = days * daySeconds;
 
     return(
     <Grid container direction="row" alignContent="center" alignItems="center" marginTop={"4px"}>
-        <Grid item xs={12} md={4} lg={3}>
+        <Grid size={{ xs: 12, md: 4, lg: 3 }}>
             <div style={{ display: 'flex', fontFamily: 'sans-serif', textAlign: 'center', paddingTop: '10px'}}>
                 <CountdownCircleTimer
                     {...timerProps}
@@ -114,21 +114,21 @@ export default function Countdown({ details })
             </div>          
         </Grid>
 
-        <Grid item xs={12} md={8} lg={9}>
-            <SectionTitle>{_name} 
+        <Grid size={{ xs: 12, md: 8, lg: 9 }}>
+            <SectionTitle>{_name}
             {
-                Moment(_time).isAfter(Moment()) && 
+                isAfter(new Date(_time), new Date()) &&
                 <span> 🟢 </span>
             }
             {
-                Moment(_time).isBefore(Moment()) &&           
-                <span style={{color: "gray"}}> 🏁 <Typography size="small" component="span">Completed {Moment(_time).format('ddd MMM Do, h:mm a')}</Typography></span>          
-                
+                isBefore(new Date(_time), new Date()) &&
+                <span style={{color: "gray"}}> 🏁 <Typography size="small" component="span">Completed {format(new Date(_time), 'EEE MMM do, h:mm a')}</Typography></span>
+
             }
             {
                 // Print time if it is not in the past
-                Moment(_time).isAfter(Moment()) &&
-                <span style={{color: "gray"}}> {Moment(_time).format('ddd MMM Do, h:mm a')}</span>
+                isAfter(new Date(_time), new Date()) &&
+                <span style={{color: "gray"}}> {format(new Date(_time), 'EEE MMM do, h:mm a')}</span>
 
             }
             </SectionTitle>        

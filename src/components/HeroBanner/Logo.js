@@ -4,13 +4,21 @@ import Box from '@mui/material/Box';
 
 const Logo = () => {
   return (
-    <Box mt={1}>
+    <Box 
+      sx={{ 
+        maxWidth: { xs: '280px', sm: '320px', md: '380px', lg: '420px' },
+        height: 'auto',
+        margin: '0 auto',
+        mb: 1
+      }}
+    >
       <svg
         width="100%"
         height="100%"
         viewBox="0 0 2048 978"
         xmlns="http://www.w3.org/2000/svg"
         aria-labelledby="logoTitle"
+        style={{ maxHeight: '120px' }}
       >
         <title id="logoTitle">Opportunity Hack Logo</title>
         <g stroke="#003087" fill="none">

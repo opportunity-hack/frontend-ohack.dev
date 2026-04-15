@@ -1,5 +1,6 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import { 
   Typography, 
   Box, 
@@ -10,7 +11,11 @@ import {
   Paper, 
   Button,
   Chip,
-  Divider
+  Divider,
+  Avatar,
+  Stack,
+  Badge,
+  CardActionArea
 } from '@mui/material';
 import { 
   CodeRounded,
@@ -21,7 +26,11 @@ import {
   VolunteerActivismRounded,
   TrendingUpRounded,
   GroupsRounded,
-  BusinessRounded
+  BusinessRounded,
+  LinkedIn,
+  CalendarMonth,
+  Star,
+  Verified
 } from '@mui/icons-material';
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 import { cofounders, board_members, pledge } from '../../components/About/about-data';
@@ -55,7 +64,7 @@ const organizationSchema = {
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer service",
-    email: "board@ohack.dev",
+    email: "board@ohack.org",
   },
   founder: [
     {
@@ -295,7 +304,7 @@ export default function AboutUsPage() {
           </Typography>
           <Grid container spacing={3}>
             {impactStats.map((stat, index) => (
-              <Grid item xs={6} md={3} key={index}>
+              <Grid size={{ xs: 6, md: 3 }} key={index}>
                 <Card sx={{ textAlign: "center", height: "100%", bgcolor: "white", color: "text.primary" }}>
                   <CardContent>
                     <Box sx={{ mb: 2, color: "primary.main" }}>
@@ -358,7 +367,7 @@ export default function AboutUsPage() {
 
           <Grid container spacing={3}>
             {whyChooseUs.map((reason, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
                 <Card 
                   sx={{ 
                     height: "100%", 
@@ -411,7 +420,7 @@ export default function AboutUsPage() {
           </Typography>
           
           <Grid container spacing={2} sx={{ maxWidth: "600px", mx: "auto" }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Button
                 variant="contained"
                 size="large"
@@ -431,7 +440,7 @@ export default function AboutUsPage() {
                 Get Involved
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Button
                 variant="outlined"
                 size="large"
@@ -453,11 +462,18 @@ export default function AboutUsPage() {
           </Grid>
         </Paper>
 
-        {/* Team Sections */}
-        <Suspense fallback={<div>Loading team information...</div>}>
-          <FoundersSection cofounders={cofounders} />
-          <BoardSection board_members={board_members} />
-          <PledgeSection pledge={pledge} />
+        {/* Enhanced Team Sections */}
+        <Suspense fallback={
+          <Box sx={{ textAlign: "center", p: 4 }}>
+            <Typography variant="h6" color="text.secondary">
+              Loading our amazing team...
+            </Typography>
+          </Box>
+        }>
+          <EnhancedFoundersSection cofounders={cofounders} />
+          <PayPalSocialProofSection />
+          <EnhancedBoardSection board_members={board_members} />
+          <EnhancedPledgeSection pledge={pledge} />
         </Suspense>
 
         <Divider sx={{ my: 5 }} />
@@ -505,6 +521,539 @@ export default function AboutUsPage() {
     </Container>
   );
 }
+
+// Enhanced Components with Better UX
+const EnhancedFoundersSection = ({ cofounders }) => (
+  <Box sx={{ mb: 6 }}>
+    <Typography 
+      variant="h3" 
+      component="h2"
+      gutterBottom
+      sx={{ 
+        textAlign: "center", 
+        mb: 4,
+        fontWeight: 700,
+        background: "linear-gradient(45deg, #2196F3, #21CBF3)",
+        backgroundClip: "text",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent"
+      }}
+    >
+      Meet Our Co-Founders
+    </Typography>
+    <Typography
+      variant="subtitle1"
+      sx={{
+        textAlign: "center",
+        mb: 4,
+        color: "text.secondary",
+        maxWidth: "600px",
+        mx: "auto",
+        fontSize: "1.1rem"
+      }}
+    >
+      Visionary leaders who started this journey to harness technology for social good
+    </Typography>
+    <Grid container spacing={4} justifyContent="center">
+      {cofounders.map((member, i) => (
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={i}>
+          <Card 
+            sx={{ 
+              textAlign: "center",
+              height: "100%",
+              borderRadius: 3,
+              transition: "all 0.3s ease",
+              "&:hover": {
+                transform: "translateY(-8px)",
+                boxShadow: 8
+              },
+              background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+              position: "relative",
+              overflow: "hidden",
+              minHeight: "320px"
+            }}
+          >
+            <CardActionArea 
+              href={member.linkedin} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}
+            >
+              <Box>
+                <Avatar
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    mx: "auto",
+                    mb: 2,
+                    bgcolor: "primary.main",
+                    fontSize: "2rem",
+                    fontWeight: "bold"
+                  }}
+                >
+                  {member.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                </Avatar>
+                <Typography 
+                  variant="h6" 
+                  component="h3"
+                  gutterBottom
+                  sx={{ fontWeight: 600, lineHeight: 1.3, mb: 1 }}
+                >
+                  {member.name}
+                </Typography>
+                <Chip
+                  label="Co-Founder"
+                  size="small"
+                  sx={{
+                    bgcolor: "primary.main",
+                    color: "white",
+                    fontWeight: 600,
+                    mb: 2
+                  }}
+                />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: "text.secondary",
+                    lineHeight: 1.4,
+                    fontSize: "0.85rem",
+                    mb: 2
+                  }}
+                >
+                  {member.title}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <LinkedIn sx={{ color: "#0077B5", fontSize: "2rem" }} />
+              </Box>
+            </CardActionArea>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  </Box>
+);
+
+const EnhancedBoardSection = ({ board_members }) => (
+  <Box sx={{ mb: 6 }}>
+    <Typography 
+      variant="h3" 
+      component="h2"
+      gutterBottom
+      sx={{ 
+        textAlign: "center", 
+        mb: 4,
+        fontWeight: 700,
+        background: "linear-gradient(45deg, #FF6B6B, #FF8E53)",
+        backgroundClip: "text",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent"
+      }}
+    >
+      Leadership Board
+    </Typography>
+    <Typography
+      variant="subtitle1"
+      sx={{
+        textAlign: "center",
+        mb: 4,
+        color: "text.secondary",
+        maxWidth: "700px",
+        mx: "auto",
+        fontSize: "1.1rem"
+      }}
+    >
+      Experienced professionals guiding our mission and strategic direction
+    </Typography>
+    <Grid container spacing={3}>
+      {board_members.map((member, i) => {
+        const isPresident = member.role.toLowerCase().includes('president');
+        const isFounder = member.role.toLowerCase().includes('co-founder');
+        
+        return (
+          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={i}>
+            <Card 
+              sx={{ 
+                height: "100%",
+                borderRadius: 3,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: 6
+                },
+                border: isPresident ? "2px solid" : "1px solid",
+                borderColor: isPresident ? "warning.main" : "divider",
+                position: "relative"
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                {/* Header with chip */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    {/* Spacer for chip */}
+                  </Box>
+                  {isPresident && (
+                    <Chip
+                      label="President"
+                      icon={<Star />}
+                      size="small"
+                      sx={{
+                        bgcolor: "warning.main",
+                        color: "white",
+                        fontWeight: 600,
+                        flexShrink: 0
+                      }}
+                    />
+                  )}
+                  {isFounder && !isPresident && (
+                    <Chip
+                      label="Co-Founder"
+                      size="small"
+                      sx={{
+                        bgcolor: "primary.main",
+                        color: "white",
+                        fontWeight: 600,
+                        flexShrink: 0
+                      }}
+                    />
+                  )}
+                </Box>
+
+                {/* Main content */}
+                <Box sx={{ display: "flex", alignItems: "flex-start" }}>
+                  <Avatar
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      mr: 2,
+                      bgcolor: isPresident ? "warning.main" : "secondary.main",
+                      fontSize: "1.25rem",
+                      fontWeight: "bold",
+                      flexShrink: 0
+                    }}
+                  >
+                    {member.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                      <Typography 
+                        variant="h6" 
+                        component="h3"
+                        sx={{ 
+                          fontWeight: 600,
+                          lineHeight: 1.3,
+                          wordBreak: "break-word",
+                          flex: 1
+                        }}
+                      >
+                        {member.name}
+                      </Typography>
+                      {member.linkedin && (
+                        <CardActionArea
+                          component="a"
+                          href={member.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            "&:hover": {
+                              backgroundColor: "rgba(0, 119, 181, 0.1)"
+                            }
+                          }}
+                        >
+                          <LinkedIn sx={{ color: "#0077B5", fontSize: "1.5rem" }} />
+                        </CardActionArea>
+                      )}
+                    </Box>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: "text.secondary",
+                        lineHeight: 1.4
+                      }}
+                    >
+                      {member.role}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      })}
+    </Grid>
+  </Box>
+);
+
+const EnhancedPledgeSection = ({ pledge }) => (
+  <Box sx={{ mb: 6 }}>
+    <Typography 
+      variant="h3" 
+      component="h2"
+      gutterBottom
+      sx={{ 
+        textAlign: "center", 
+        mb: 2,
+        fontWeight: 700,
+        background: "linear-gradient(45deg, #4CAF50, #8BC34A)",
+        backgroundClip: "text",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent"
+      }}
+    >
+      Our Community Pledge
+    </Typography>
+    <Typography
+      variant="subtitle1"
+      sx={{
+        textAlign: "center",
+        mb: 4,
+        color: "text.secondary",
+        maxWidth: "800px",
+        mx: "auto",
+        fontSize: "1.1rem"
+      }}
+    >
+      The principles that guide our community and drive our mission forward
+    </Typography>
+    
+    <Grid container spacing={3} sx={{ mb: 4 }}>
+      {pledge.map((pledgeItem, i) => {
+        const [title, description] = pledgeItem.split(':');
+        const colors = ['primary', 'secondary', 'success', 'warning', 'info', 'error'];
+        const color = colors[i % colors.length];
+        
+        return (
+          <Grid size={{ xs: 12, md: 6 }} key={i}>
+            <Card 
+              sx={{ 
+                height: "100%",
+                borderRadius: 3,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: 6
+                },
+                border: `2px solid`,
+                borderColor: `${color}.main`,
+                position: "relative"
+              }}
+            >
+              <CardContent sx={{ p: 4 }}>
+                <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: "50%",
+                      bgcolor: `${color}.main`,
+                      color: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mr: 2,
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                      flexShrink: 0
+                    }}
+                  >
+                    {i + 1}
+                  </Box>
+                  <Box>
+                    <Typography 
+                      variant="h6" 
+                      component="h3"
+                      gutterBottom
+                      sx={{ 
+                        fontWeight: 600,
+                        lineHeight: 1.3,
+                        color: `${color}.main`
+                      }}
+                    >
+                      {title.trim()}
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        lineHeight: 1.6,
+                        color: "text.secondary"
+                      }}
+                    >
+                      {description.trim()}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      })}
+    </Grid>
+    
+    <Paper 
+      sx={{ 
+        p: 4, 
+        textAlign: "center",
+        bgcolor: "success.light",
+        color: "white",
+        borderRadius: 3
+      }}
+    >
+      <Typography 
+        variant="h5" 
+        sx={{ 
+          fontWeight: 600,
+          fontStyle: "italic",
+          lineHeight: 1.5
+        }}
+      >
+        "Together, we are Opportunity Hack. Together, we code for social good, for change."
+      </Typography>
+    </Paper>
+  </Box>
+);
+
+const PayPalSocialProofSection = () => (
+  <Box sx={{ mb: 6 }}>
+    <Paper 
+      sx={{ 
+        p: 4,
+        bgcolor: "primary.light",
+        color: "white",
+        borderRadius: 3,
+        position: "relative",
+        overflow: "hidden"
+      }}
+    >
+      <Typography 
+        variant="h4" 
+        component="h2"
+        gutterBottom
+        sx={{ 
+          textAlign: "center", 
+          mb: 3,
+          fontWeight: 700,
+          color: "white"
+        }}
+      >
+        Trusted by Industry Leaders
+      </Typography>
+      
+      <Grid container spacing={4} alignItems="center">
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Box
+            sx={{
+              position: "relative",
+              width: "100%",
+              maxWidth: "500px",
+              mx: "auto",
+              borderRadius: 3,
+              overflow: "hidden",
+              boxShadow: 4
+            }}
+          >
+            <Image
+              src="https://cdn.ohack.dev/ohack.dev/paypal_opportunity_hack.jpg"
+              alt="PayPal CEO Dan Schulman and CTO Sri Shivananda at Opportunity Hack event in San Jose"
+              width={500}
+              height={375}
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block"
+              }}
+              priority={false}
+              loading="lazy"
+            />
+          </Box>
+        </Grid>
+        
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Box sx={{ textAlign: { xs: "center", md: "left" } }}>
+            <Typography 
+              variant="h5" 
+              component="h3"
+              gutterBottom
+              sx={{ 
+                fontWeight: 600,
+                mb: 2,
+                color: "white"
+              }}
+            >
+              PayPal Partnership Legacy
+            </Typography>
+            
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                fontSize: "1.1rem",
+                lineHeight: 1.6,
+                mb: 3,
+                color: "rgba(255,255,255,0.95)"
+              }}
+            >
+              Founded as part of eBay/PayPal Inc. in 2013, Opportunity Hack has the distinguished 
+              honor of hosting PayPal's CEO Dan Schulman and CTO Sri Shivananda at our San Jose events, 
+              demonstrating corporate leadership's commitment to technology for social good.
+            </Typography>
+            
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+              <BusinessRounded sx={{ color: "white", fontSize: "1.5rem" }} />
+              <Typography variant="body1" sx={{ color: "white", fontWeight: 500 }}>
+                Enterprise-level mentorship and guidance
+              </Typography>
+            </Box>
+            
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+              <Verified sx={{ color: "white", fontSize: "1.5rem" }} />
+              <Typography variant="body1" sx={{ color: "white", fontWeight: 500 }}>
+                Proven track record with Fortune 500 companies
+              </Typography>
+            </Box>
+            
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <GroupsRounded sx={{ color: "white", fontSize: "1.5rem" }} />
+              <Typography variant="body1" sx={{ color: "white", fontWeight: 500 }}>
+                Executive leadership involvement in our mission
+              </Typography>
+            </Box>
+          </Box>
+        </Grid>
+      </Grid>
+      
+      {/* Decorative elements */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: -20,
+          right: -20,
+          width: 100,
+          height: 100,
+          borderRadius: "50%",
+          bgcolor: "rgba(255,255,255,0.1)",
+          zIndex: 0
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: -30,
+          left: -30,
+          width: 150,
+          height: 150,
+          borderRadius: "50%",
+          bgcolor: "rgba(255,255,255,0.05)",
+          zIndex: 0
+        }}
+      />
+    </Paper>
+  </Box>
+);
 
 export const getStaticProps = async () => {    
     const title = "About Opportunity Hack - Coding for Social Good Since 2013 | Opportunity Hack";
@@ -633,7 +1182,7 @@ export const getStaticProps = async () => {
                         "contactPoint": {
                             "@type": "ContactPoint",
                             "contactType": "customer service",
-                            "email": "board@ohack.dev"
+                            "email": "board@ohack.org"
                         },
                         "founder": [
                             {

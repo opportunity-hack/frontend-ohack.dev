@@ -201,7 +201,7 @@ const ProblemStatementManagement = ({
           Add Problem Statement to Nonprofit
         </Typography>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={8}>
+          <Grid size={{ xs: 8 }}>
             <FormControl fullWidth>
               <InputLabel id="problem-statement-select-label">Select Problem Statement</InputLabel>
               <Select
@@ -221,7 +221,7 @@ const ProblemStatementManagement = ({
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={4}>
+          <Grid size={{ xs: 4 }}>
             <Button
               variant="contained"
               color="primary"

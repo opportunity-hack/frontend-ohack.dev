@@ -1,6 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/router';
-import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from '@propelauth/react';
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/router";
+import { initFacebookPixel, trackEvent } from '../../../lib/ga';
+import {
+  useAuthInfo,
+  RequiredAuthProvider,
+  RedirectToLogin,
+} from "@propelauth/react";
 import {
   Typography,
   Container,
@@ -27,24 +32,27 @@ import {
   StepLabel,
   useTheme,
   useMediaQuery,
-  RadioGroup,  
+  RadioGroup,
 } from "@mui/material";
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import Head from 'next/head';
-import Script from 'next/script';
-import { useEnv } from '../../../context/env.context';
-import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister2';
-import ApplicationNav from '../../../components/ApplicationNav/ApplicationNav';
-import Breadcrumbs from '../../../components/Breadcrumbs/Breadcrumbs';
-import InfoIcon from '@mui/icons-material/Info';
-import FormPersistenceControls from '../../../components/FormPersistenceControls';
-import { useFormPersistence } from '../../../hooks/use-form-persistence';
-import { useRecaptcha } from '../../../hooks/use-recaptcha';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import RadioIcon from '@mui/material/Radio';
+import Head from "next/head";
+import Script from "next/script";
+import { useEnv } from "../../../context/env.context";
+import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
+import LoginOrRegister from "../../../components/LoginOrRegister/LoginOrRegister2";
+import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
+import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
+import InfoIcon from "@mui/icons-material/Info";
+import FormPersistenceControls from "../../../components/FormPersistenceControls";
+import { useFormPersistence } from "../../../hooks/use-form-persistence";
+import { useRecaptcha } from "../../../hooks/use-recaptcha";
+import GiveButterWidget from "../../../components/GiveButterWidget";
+import UploadPhoto from "../../../components/UploadPhoto";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import RadioIcon from "@mui/material/Radio";
+import { getEventTimezone, getTimezoneAbbreviation } from "../../../lib/timezoneUtils";
 
 const MentorApplicationComponent = () => {
   const router = useRouter();
@@ -52,61 +60,63 @@ const MentorApplicationComponent = () => {
   const { isLoggedIn, user, accessToken } = useAuthInfo();
   const { apiServerUrl } = useEnv();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   // reCAPTCHA integration
-  const { 
-    initializeRecaptcha, 
-    getRecaptchaToken, 
-    isLoading: recaptchaLoading, 
+  const {
+    initializeRecaptcha,
+    getRecaptchaToken,
+    isLoading: recaptchaLoading,
     error: recaptchaError,
-    setError: setRecaptchaError 
+    setError: setRecaptchaError,
   } = useRecaptcha();
-  
-  // Photo upload state
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  
+
+  // Use ref to store uploaded photo URL to avoid race conditions
+  const uploadedPhotoUrlRef = useRef("");
+
   // Prevent duplicate confirmation dialogs
   const confirmationShownRef = useRef(false);
-  
+
   // Form navigation state
   const [activeStep, setActiveStep] = useState(0);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [eventData, setEventData] = useState(null);
   // Add missing submitting state
   const [submitting, setSubmitting] = useState(false);
-  
+  // Store volunteer ID for QR code generation
+  const [volunteerId, setVolunteerId] = useState(null);
+  const [isSelected, setIsSelected] = useState(false);
+
   // Initial form state
   const initialFormData = {
     timestamp: new Date().toISOString(),
-    email: '',
-    name: '',
-    pronouns: '',
-    company: '',
-    bio: '',
-    picture: '',
-    linkedin: '',
-    inPerson: '',
+    email: "",
+    name: "",
+    pronouns: "",
+    company: "",
+    bio: "",
+    picture: "",
+    linkedin: "",
+    inPerson: "",
     expertise: [], // Changed from string to array
-    otherExpertise: '', // New field for "Other" option
-    participationCount: '',
+    otherExpertise: "", // New field for "Other" option
+    participationCount: "",
     engineeringSpecifics: [],
     availableDays: [],
-    country: '',
-    state: '',
+    country: "",
+    state: "",
     codeOfConduct: false,
-    comments: '',
-    shirtSize: '',
+    comments: "",
+    shirtSize: "",
     agreedToCodeOfConduct: false,
-    linkedinProfile: '',
-    shortBio: '',
-    photoUrl: '',
-    event_id: '',
-    isSelected: false
+    linkedinProfile: "",
+    shortBio: "",
+    photoUrl: "",
+    event_id: "",
+    isSelected: false,
   };
-  
+
   // Use form persistence hook
   const {
     formData,
@@ -123,38 +133,37 @@ const MentorApplicationComponent = () => {
     notification,
     closeNotification,
     isLoading,
-    setIsLoading
+    setIsLoading,
   } = useFormPersistence({
-    formType: 'mentor',
+    formType: "mentor",
     eventId: event_id,
     userId: user?.userId,
     initialFormData,
     apiServerUrl,
-    accessToken
+    accessToken,
   });
-  
+
   // Available engineering specifics options
   const engineeringOptions = [
-    'Front-end (CSS/JS, Node, Angular, React, etc)',
-    'Back-end (Java, Python, Ruby, etc)',
-    'AWS',
-    'Google Cloud',
-    'Heroku',
-    'Data Science & Machine Learning',
-    'Data Analysis',
-    'Mobile (iOS, Android)',
-    'GitHub ninja'
+    "Front-end (CSS/JS, Node, Angular, React, etc)",
+    "Back-end (Java, Python, Ruby, etc)",
+    "AWS",
+    "Google Cloud",
+    "Heroku",
+    "Data Science & Machine Learning",
+    "Data Analysis",
+    "Mobile (iOS, Android)",
+    "GitHub ninja",
   ];
-  
+
   // Common expertise areas for mentors
   const expertiseOptions = [
-    "Software Development",
-    "Product Management",
+    "Software Engineering",
+    "Product Management (vPM)",
     "UX/UI Design",
     "Data Science & Analytics",
     "Cloud Architecture",
     "DevOps",
-    "Mobile Development",
     "Nonprofit Technology",
     "Entrepreneurship",
     "Digital Marketing",
@@ -162,41 +171,71 @@ const MentorApplicationComponent = () => {
     "Business Strategy",
     "Cybersecurity",
     "Database Management",
-    "AI/Machine Learning",
-    "Other" // Option to specify custom expertise
+    "Other", // Option to specify custom expertise
   ];
-  
+
   // Function to generate time slots based on event dates - moved outside useEffect to avoid recreating on each render
-  const generateTimeSlots = (startDate, endDate) => {
+  const generateTimeSlots = (startDate, endDate, eventTimezone) => {
+    const tzAbbr = getTimezoneAbbreviation(new Date(startDate), eventTimezone);
     if (!startDate || !endDate) return [];
-    
+
     // Parse dates more carefully to avoid timezone issues
-    const start = new Date(startDate + 'T00:00:00');
-    const end = new Date(endDate + 'T15:59:59');
-    
+    const start = new Date(startDate + "T00:00:00");
+    const end = new Date(endDate + "T15:59:59");
+
     // Time blocks with icons and descriptions
     const timeBlocks = [
-      { time: '7am - 9am', label: 'Early Morning', icon: '🌅', energy: 'Fresh minds ready to help!' },
-      { time: '9am - 12pm', label: 'Morning', icon: '☀️', energy: 'Peak productivity time!' },
-      { time: '1pm - 3pm', label: 'Afternoon', icon: '🏙️', energy: 'Post-lunch problem solving' },
-      { time: '4pm - 7pm', label: 'Evening', icon: '🌆', energy: 'Steady focus time' },
-      { time: '8pm - 11pm', label: 'Night', icon: '🌃', energy: 'Late night debugging sessions' },
-      { time: '11pm - 2am', label: 'Late Night', icon: '🌙', energy: 'For the night owls!' }
+      {
+        time: "7am - 9am",
+        label: "Early Morning",
+        icon: "🌅",
+        energy: "Fresh minds ready to help!",
+      },
+      {
+        time: "9am - 12pm",
+        label: "Morning",
+        icon: "☀️",
+        energy: "Peak productivity time!",
+      },
+      {
+        time: "1pm - 3pm",
+        label: "Afternoon",
+        icon: "🏙️",
+        energy: "Post-lunch problem solving",
+      },
+      {
+        time: "4pm - 7pm",
+        label: "Evening",
+        icon: "🌆",
+        energy: "Steady focus time",
+      },
+      {
+        time: "8pm - 11pm",
+        label: "Night",
+        icon: "🌃",
+        energy: "Late night debugging sessions",
+      },
+      {
+        time: "11pm - 2am",
+        label: "Late Night",
+        icon: "🌙",
+        energy: "For the night owls!",
+      },
     ];
-    
+
     const slots = [];
-    
+
     // Loop through each day between start and end dates (inclusive)
     for (let day = new Date(start); day <= end; ) {
       const dayDate = new Date(day);
-      const dateString = dayDate.toLocaleDateString('en-US', { 
-        weekday: 'long',
-        month: 'short', 
-        day: 'numeric'
+      const dateString = dayDate.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
       });
-      
+
       // Add each time block for this day
-      timeBlocks.forEach(block => {
+      timeBlocks.forEach((block) => {
         slots.push({
           id: `${dateString}-${block.label}`,
           date: dateString,
@@ -204,10 +243,10 @@ const MentorApplicationComponent = () => {
           label: block.label,
           icon: block.icon,
           energy: block.energy,
-          displayText: `${dateString}: ${block.icon} ${block.label} (${block.time} PST)`
+          displayText: `${dateString}: ${block.icon} ${block.label} (${block.time} ${tzAbbr})`,
         });
       });
-      
+
       // Move to next day
       day.setDate(day.getDate() + 1);
     }
@@ -217,10 +256,10 @@ const MentorApplicationComponent = () => {
     if (slots.length > 3) {
       slots.splice(-3, 3);
     }
-    
+
     return slots;
   };
-  
+
   // Available time slots (will be populated from event data)
   const [availabilityOptions, setAvailabilityOptions] = useState([]);
   // State for organizing time slots by date and month
@@ -237,66 +276,95 @@ const MentorApplicationComponent = () => {
 
   // fetch event data from the backend API and initialize reCAPTCHA
   useEffect(() => {
+    initFacebookPixel();
     // Initialize reCAPTCHA when component mounts
     initializeRecaptcha();
-    
+
     if (!event_id || !apiServerUrl) return;
 
     const fetchEventData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch event data from the actual API
-        const response = await fetch(`${apiServerUrl}/api/messages/hackathon/${event_id}`);
-        
+        const response = await fetch(
+          `${apiServerUrl}/api/messages/hackathon/${event_id}`,
+        );
+
         if (!response.ok) {
-          throw new Error(`Failed to fetch event data: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch event data: ${response.status} ${response.statusText}`,
+          );
         }
-        
+
         const eventData = await response.json();
-        
+
         if (!eventData || !eventData.start_date || !eventData.end_date) {
-          throw new Error('Invalid event data received');
+          throw new Error("Invalid event data received");
         }
-        
+
+        // Redirect to external application URL if configured
+        const externalUrl = eventData.constraints?.application_mentor_external_url;
+        if (externalUrl) {
+          window.location.href = externalUrl;
+          return;
+        }
+
         // Format dates for display
         const startDate = new Date(eventData.start_date);
         const endDate = new Date(eventData.end_date);
-        const formattedStartDate = startDate.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+
+        // Use UTC methods to avoid timezone conversion issues
+        const formattedStartDate = new Date(
+          eventData.start_date + "T00:00:00Z",
+        ).toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          timeZone: "UTC",
         });
-        const formattedEndDate = endDate.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+        const formattedEndDate = new Date(
+          eventData.end_date + "T00:00:00Z",
+        ).toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          timeZone: "UTC",
         });
-        
+
         // Check if event is in the past (with 1-day buffer)
         const now = new Date();
         const oneDayBuffer = 24 * 60 * 60 * 1000; // 1 day in milliseconds
         const isEventPast = new Date(endDate.getTime() + oneDayBuffer) < now;
-        
+
         setEventData({
           name: eventData.title || `Opportunity Hack - ${event_id}`,
-          description: eventData.description || "Annual hackathon for nonprofits",
+          description:
+            eventData.description || "Annual hackathon for nonprofits",
           date: new Date(eventData.start_date).getFullYear().toString(),
           startDate: eventData.start_date,
           endDate: eventData.end_date,
           formattedStartDate,
           formattedEndDate,
           location: eventData.location || "Tempe, Arizona",
-          image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
-          isEventPast
+          image:
+            eventData.image_url ||
+            "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
+          isEventPast,
+          timezone: eventData.timezone,
         });
-        
+
         // Generate time slots based on event dates
-        const slots = generateTimeSlots(eventData.start_date, eventData.end_date);
+        const eventTz = getEventTimezone(eventData);
+        const slots = generateTimeSlots(
+          eventData.start_date,
+          eventData.end_date,
+          eventTz,
+        );
         setAvailabilityOptions(slots);
-        
+
         // Organize time slots by date
         const slotsByDate = slots.reduce((grouped, slot) => {
           if (!grouped[slot.date]) {
@@ -306,14 +374,14 @@ const MentorApplicationComponent = () => {
           return grouped;
         }, {});
         setAvailabilityByDate(slotsByDate);
-        
+
         // Organize slots by month
         const slotsByMonth = {};
         Object.entries(slotsByDate).forEach(([date, slots]) => {
           // Extract month from date string (e.g. "Monday, Jan 1" → "Jan")
           const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
           if (monthMatch) {
-            const monthPart = monthMatch[0].split(' ')[0]; // Get "Jan" from "Jan 1"
+            const monthPart = monthMatch[0].split(" ")[0]; // Get "Jan" from "Jan 1"
             if (!slotsByMonth[monthPart]) {
               slotsByMonth[monthPart] = {};
             }
@@ -321,7 +389,7 @@ const MentorApplicationComponent = () => {
           }
         });
         setAvailabilityByMonth(slotsByMonth);
-        
+
         // Set initial view mode based on number of days
         const dayCount = Object.keys(slotsByDate).length;
         if (dayCount > 14) {
@@ -331,28 +399,34 @@ const MentorApplicationComponent = () => {
         } else {
           setViewMode("date");
         }
-        
-        
-        
+
         // Initialize formData with user information and event ID
         if (user) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
-            email: user.email || '',
-            name: user.firstName && user.lastName 
-              ? `${user.firstName} ${user.lastName}` 
-              : user.username || '',
-            event_id: event_id
+            email: user.email || "",
+            name:
+              user.firstName && user.lastName
+                ? `${user.firstName} ${user.lastName}`
+                : user.username || "",
+            event_id: event_id,
           }));
-          
+
           // Check for previous submission
           const prevData = await loadPreviousSubmission();
           if (prevData && !confirmationShownRef.current) {
             confirmationShownRef.current = true;
-            // If the user has submitted before, ask if they want to load it
+
+            // Set volunteer ID if we have previous submission data
+            setVolunteerId(
+              prevData.volunteer_id || prevData.id || user?.userId,
+            );
+            setIsSelected(prevData.isSelected || false);
+
+            // If the user has submitted before, ask if they want to load it for editing?
             if (
               window.confirm(
-                "We found a previous application. Would you like to load it for editing?"
+                "We found a previous application. Would you like to load it for editing?",
               )
             ) {
               // Transform API data to match our form structure
@@ -394,7 +468,7 @@ const MentorApplicationComponent = () => {
               setFormData(transformedData);
             }
 
-            // Initialize selected dates based on previously selected slots            
+            // Initialize selected dates based on previously selected slots
             const availabilityText = prevData.availability || "";
             const matchedSlotIds = slots
               .filter((slot) => availabilityText.includes(slot.displayText))
@@ -408,7 +482,7 @@ const MentorApplicationComponent = () => {
                     const slot = slots.find((s) => s.id === id);
                     return slot ? slot.date : null;
                   })
-                  .filter(Boolean)
+                  .filter(Boolean),
               ),
             ];
 
@@ -422,160 +496,164 @@ const MentorApplicationComponent = () => {
                     const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
                     return monthMatch ? monthMatch[0].split(" ")[0] : null;
                   })
-                  .filter(Boolean)
+                  .filter(Boolean),
               ),
             ];
 
             setSelectedMonths(matchedMonths);
-          
           } else {
             // If no previous submission, try to load from localStorage
             loadFromLocalStorage();
           }
         } else {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
-            event_id: event_id
+            event_id: event_id,
           }));
-          
+
           // Try loading from localStorage for non-logged-in users
           loadFromLocalStorage();
         }
-        
+
         setIsLoading(false);
       } catch (err) {
-        console.error('Error fetching event data:', err);
-        setError('Failed to load event data. Please try again later.');
+        console.error("Error fetching event data:", err);
+        setError("Failed to load event data. Please try again later.");
         setIsLoading(false);
       }
     };
 
     fetchEventData();
-  }, [event_id, user, apiServerUrl, loadPreviousSubmission, loadFromLocalStorage, setFormData, initializeRecaptcha]);
-  
+  }, [
+    event_id,
+    user,
+    apiServerUrl,
+    loadPreviousSubmission,
+    loadFromLocalStorage,
+    setFormData,
+    initializeRecaptcha,
+  ]);
+
   // Now define the custom implementation that uses handleMultiSelectChange
   const customHandleMultiSelectChange = (event, fieldName) => {
     handleMultiSelectChange(event, fieldName);
-    
+
     // Clear otherExpertise when Other is removed from expertise
-    if (fieldName === 'expertise' && !event.target.value.includes('Other')) {
-      setFormData(prev => ({
+    if (fieldName === "expertise" && !event.target.value.includes("Other")) {
+      setFormData((prev) => ({
         ...prev,
-        otherExpertise: ''
+        otherExpertise: "",
       }));
     }
   };
-  
+
   // Handle file selection for photo upload
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Check file size (limit to 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image file is too large. Please choose an image under 5MB.');
-      return;
-    }
-    
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Selected file is not an image. Please select an image file.');
-      return;
-    }
-    
-    setPhotoFile(file);
-    setError(''); // Clear any previous errors
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPhotoPreview(reader.result);
-      // Update the form data with the image data URL
-      setFormData(prev => ({
-        ...prev,
-        picture: reader.result
-      }));
-    };
-    reader.onerror = () => {
-      setError('Failed to read the selected file. Please try again.');
-    };
-    reader.readAsDataURL(file);
+  const handlePhotoUpload = (photoUrl) => {
+    // Store URL in both ref (for submission) and state (for form persistence)
+    uploadedPhotoUrlRef.current = photoUrl;
+    setFormData((prev) => ({
+      ...prev,
+      picture: photoUrl,
+      photoUrl: photoUrl,
+    }));
+    console.log("Photo URL saved to form and ref:", photoUrl);
+  };
+
+  const handlePhotoError = (errorMessage) => {
+    setError(errorMessage);
+    // Clear the URLs on error
+    uploadedPhotoUrlRef.current = "";
+    setFormData((prev) => ({
+      ...prev,
+      picture: "",
+      photoUrl: "",
+    }));
   };
 
   // Extend handleFormChange to handle otherExpertise field
   const handleChange = (e) => {
     handleFormChange(e);
-    
+
     // Clear otherExpertise when expertise doesn't include "Other"
     const { name, value } = e.target;
-    if (name === 'expertise' && !value.includes('Other')) {
-      setFormData(prev => ({
+    if (name === "expertise" && !value.includes("Other")) {
+      setFormData((prev) => ({
         ...prev,
-        otherExpertise: ''
+        otherExpertise: "",
       }));
     }
   };
-  
+
   const validateBasicInfo = () => {
-    const requiredFields = ['email', 'name', 'company'];
-    
+    const requiredFields = ["email", "name", "company"];
+
     for (const field of requiredFields) {
       if (!formData[field]) {
-        setError(`Please fill out the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field`);
+        setError(
+          `Please fill out the ${field.replace(/([A-Z])/g, " $1").toLowerCase()} field`,
+        );
         return false;
       }
     }
-    
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return false;
     }
-    
-    setError('');
+
+    setError("");
     return true;
   };
-  
+
   const validateSkillsAndExperience = () => {
     // Validate expertise field
     if (!formData.expertise || formData.expertise.length === 0) {
-      setError('Please select at least one area of expertise');
+      setError("Please select at least one area of expertise");
       return false;
     }
-    
+
     // Validate otherExpertise if "Other" is selected
-    if (formData.expertise.includes('Other') && !formData.otherExpertise) {
-      setError('Please specify your custom area of expertise');
+    if (formData.expertise.includes("Other") && !formData.otherExpertise) {
+      setError("Please specify your custom area of expertise");
       return false;
     }
-    
-    // Validate array fields
-    if (!formData.engineeringSpecifics || formData.engineeringSpecifics.length === 0) {
-      setError('Please select at least one engineering specific');
+
+    // Only validate engineering specifics if Software Development is selected
+    if (
+      formData.expertise.includes("Software Development") &&
+      (!formData.engineeringSpecifics ||
+        formData.engineeringSpecifics.length === 0)
+    ) {
+      setError(
+        "Please select at least one software engineering specific since you selected Software Development",
+      );
       return false;
     }
-    
-    setError('');
+
+    setError("");
     return true;
   };
-  
+
   const validateAvailability = () => {
-    const requiredFields = ['participationCount', 'country', 'state'];
-    
+    const requiredFields = ["participationCount", "country", "state"];
+
     for (const field of requiredFields) {
       if (!formData[field]) {
-        setError(`Please fill out the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field`);
+        setError(
+          `Please fill out the ${field.replace(/([A-Z])/g, " $1").toLowerCase()} field`,
+        );
         return false;
       }
     }
-    
+
     if (!formData.availableDays || formData.availableDays.length === 0) {
-      setError('Please select at least one available time slot');
+      setError("Please select at least one available time slot");
       return false;
     }
-    
-    setError('');
+
+    setError("");
     return true;
   };
 
@@ -592,194 +670,216 @@ const MentorApplicationComponent = () => {
     if (activeStep === 0 && !validateBasicInfo()) return;
     if (activeStep === 1 && !validateSkillsAndExperience()) return;
     if (activeStep === 2 && !validateAvailability()) return;
-    
+
     if (activeStep === steps.length - 1) {
       handleSubmit();
     } else {
-      setActiveStep(prev => prev + 1);
+      setActiveStep((prev) => prev + 1);
+      trackEvent({ action: 'mentor_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'mentor_application' } });
+      // Scroll to top of form for better UX
+      if (formRef?.current) {
+        formRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
     }
   };
 
   const handleBack = () => {
-    setActiveStep(prev => prev - 1);
+    setActiveStep((prev) => prev - 1);
+    trackEvent({ action: 'mentor_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'mentor_application' } });
+    // Scroll to top of form for better UX
+    if (formRef?.current) {
+      formRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   };
 
   // Toggle between month view and date view
   const toggleViewMode = () => {
-    setViewMode(prev => prev === "month" ? "date" : "month");
+    setViewMode((prev) => (prev === "month" ? "date" : "month"));
   };
-  
+
   // Handle month selection
   const handleMonthToggle = (month) => {
     if (selectedMonths.includes(month)) {
       // If month is already selected, remove it
-      setSelectedMonths(prev => prev.filter(m => m !== month));
-      
+      setSelectedMonths((prev) => prev.filter((m) => m !== month));
+
       // Remove all dates from this month from selected dates
       const datesInMonth = Object.keys(availabilityByMonth[month] || {});
-      setSelectedDates(prev => prev.filter(date => !datesInMonth.includes(date)));
-      
+      setSelectedDates((prev) =>
+        prev.filter((date) => !datesInMonth.includes(date)),
+      );
+
       // Remove all time slots for this month from form data
       const slotIdsToRemove = [];
-      datesInMonth.forEach(date => {
+      datesInMonth.forEach((date) => {
         const slotsForDate = availabilityByDate[date] || [];
-        slotIdsToRemove.push(...slotsForDate.map(slot => slot.id));
+        slotIdsToRemove.push(...slotsForDate.map((slot) => slot.id));
       });
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
-        availableDays: prev.availableDays.filter(id => !slotIdsToRemove.includes(id))
+        availableDays: prev.availableDays.filter(
+          (id) => !slotIdsToRemove.includes(id),
+        ),
       }));
     } else {
       // Add the month to selected months
-      setSelectedMonths(prev => [...prev, month]);
-      
+      setSelectedMonths((prev) => [...prev, month]);
+
       // Add all dates from this month to selected dates
       const datesInMonth = Object.keys(availabilityByMonth[month] || {});
-      setSelectedDates(prev => [...new Set([...prev, ...datesInMonth])]);
+      setSelectedDates((prev) => [...new Set([...prev, ...datesInMonth])]);
     }
   };
-  
+
   // Handle date filter change
   const handleDateFilterChange = (e) => {
     setDateFilter(e.target.value.toLowerCase());
   };
-  
+
   // Filter dates based on search term
   const getFilteredDates = () => {
     if (!dateFilter) {
       return Object.keys(availabilityByDate);
     }
-    return Object.keys(availabilityByDate).filter(
-      date => date.toLowerCase().includes(dateFilter)
+    return Object.keys(availabilityByDate).filter((date) =>
+      date.toLowerCase().includes(dateFilter),
     );
   };
-  
+
   // Handle quick filters
   const applyQuickFilter = (filterType) => {
     const allDates = Object.keys(availabilityByDate);
     let filteredDates = [];
-    
+
     switch (filterType) {
-      case 'weekdays':
-        filteredDates = allDates.filter(date => 
-          !date.includes('Saturday') && !date.includes('Sunday')
+      case "weekdays":
+        filteredDates = allDates.filter(
+          (date) => !date.includes("Saturday") && !date.includes("Sunday"),
         );
         break;
-      case 'weekends':
-        filteredDates = allDates.filter(date => 
-          date.includes('Saturday') || date.includes('Sunday')
+      case "weekends":
+        filteredDates = allDates.filter(
+          (date) => date.includes("Saturday") || date.includes("Sunday"),
         );
         break;
-      case 'all':
+      case "all":
         filteredDates = allDates;
         break;
-      case 'none':
+      case "none":
         filteredDates = [];
         break;
       default:
         return;
     }
-    
+
     setSelectedDates(filteredDates);
   };
-  
+
   // Handle date selection for time slots
   const handleDateToggle = (date) => {
     if (selectedDates.includes(date)) {
       // If date is already selected, remove it and also remove all time slots for this date
       const slotsForDate = availabilityByDate[date] || [];
-      const slotIdsToRemove = slotsForDate.map(slot => slot.id);
-      
-      setSelectedDates(prev => prev.filter(d => d !== date));
-      setFormData(prev => ({
+      const slotIdsToRemove = slotsForDate.map((slot) => slot.id);
+
+      setSelectedDates((prev) => prev.filter((d) => d !== date));
+      setFormData((prev) => ({
         ...prev,
-        availableDays: prev.availableDays.filter(id => !slotIdsToRemove.includes(id))
+        availableDays: prev.availableDays.filter(
+          (id) => !slotIdsToRemove.includes(id),
+        ),
       }));
-      
+
       // Check if we need to update selectedMonths
       const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
       if (monthMatch) {
-        const month = monthMatch[0].split(' ')[0];
+        const month = monthMatch[0].split(" ")[0];
         const datesInMonth = Object.keys(availabilityByMonth[month] || {});
         const noMoreSelectedDatesInMonth = !datesInMonth.some(
-          d => d !== date && selectedDates.includes(d)
+          (d) => d !== date && selectedDates.includes(d),
         );
-        
+
         if (noMoreSelectedDatesInMonth) {
-          setSelectedMonths(prev => prev.filter(m => m !== month));
+          setSelectedMonths((prev) => prev.filter((m) => m !== month));
         }
       }
     } else {
       // Add the date to selected dates
-      setSelectedDates(prev => [...prev, date]);
-      
+      setSelectedDates((prev) => [...prev, date]);
+
       // Make sure the month is selected as well
       const monthMatch = date.match(/[A-Z][a-z]{2}\s\d+/);
       if (monthMatch) {
-        const month = monthMatch[0].split(' ')[0];
+        const month = monthMatch[0].split(" ")[0];
         if (!selectedMonths.includes(month)) {
-          setSelectedMonths(prev => [...prev, month]);
+          setSelectedMonths((prev) => [...prev, month]);
         }
       }
     }
   };
-  
+
   // Handle selecting all time slots for a specific date
   const handleSelectAllSlotsForDate = (date) => {
     const slotsForDate = availabilityByDate[date] || [];
-    const slotIds = slotsForDate.map(slot => slot.id);
-    
+    const slotIds = slotsForDate.map((slot) => slot.id);
+
     // Add all slot IDs for this date to the availableDays array, avoiding duplicates
-    setFormData(prev => {
+    setFormData((prev) => {
       const existingIds = new Set(prev.availableDays);
-      const newIds = slotIds.filter(id => !existingIds.has(id));
+      const newIds = slotIds.filter((id) => !existingIds.has(id));
       return {
         ...prev,
-        availableDays: [...prev.availableDays, ...newIds]
+        availableDays: [...prev.availableDays, ...newIds],
       };
     });
   };
-  
+
   // Handle selecting all time slots for a specific month
   const handleSelectAllSlotsForMonth = (month) => {
     const datesInMonth = Object.keys(availabilityByMonth[month] || {});
     let allSlotIds = [];
-    
-    datesInMonth.forEach(date => {
+
+    datesInMonth.forEach((date) => {
       const slotsForDate = availabilityByDate[date] || [];
-      allSlotIds.push(...slotsForDate.map(slot => slot.id));
+      allSlotIds.push(...slotsForDate.map((slot) => slot.id));
     });
-    
+
     // Add all slot IDs for this month to the availableDays array, avoiding duplicates
-    setFormData(prev => {
+    setFormData((prev) => {
       const existingIds = new Set(prev.availableDays);
-      const newIds = allSlotIds.filter(id => !existingIds.has(id));
+      const newIds = allSlotIds.filter((id) => !existingIds.has(id));
       return {
         ...prev,
-        availableDays: [...prev.availableDays, ...newIds]
+        availableDays: [...prev.availableDays, ...newIds],
       };
     });
-    
+
     // Make sure all dates in this month are selected
-    setSelectedDates(prev => [...new Set([...prev, ...datesInMonth])]);
+    setSelectedDates((prev) => [...new Set([...prev, ...datesInMonth])]);
   };
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    
+
     if (!formData.codeOfConduct) {
-      setError('You must agree to the code of conduct');
+      setError("You must agree to the code of conduct");
       return;
     }
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setSubmitting(true);
-    setError('');
-    
+    setError("");
+
     try {
       // Get reCAPTCHA token
       const recaptchaToken = await getRecaptchaToken();
@@ -787,7 +887,7 @@ const MentorApplicationComponent = () => {
       // If we couldn't get a token and we're in production, show error
       if (!recaptchaToken && process.env.NODE_ENV === "production") {
         setError(
-          "Failed to verify you are human. Please refresh the page and try again."
+          "Failed to verify you are human. Please refresh the page and try again.",
         );
         return;
       }
@@ -810,7 +910,7 @@ const MentorApplicationComponent = () => {
           .map(
             (dayId) =>
               availabilityOptions.find((option) => option.id === dayId)
-                ?.displayText || dayId
+                ?.displayText || dayId,
           )
           .join(", "),
         isInPerson: formData.inPerson === "Yes!",
@@ -844,15 +944,26 @@ const MentorApplicationComponent = () => {
           const errorData = await response.json().catch(() => null);
           if (errorData?.error?.includes("recaptcha")) {
             throw new Error(
-              "reCAPTCHA verification failed. Please refresh the page and try again."
+              "reCAPTCHA verification failed. Please refresh the page and try again.",
             );
           }
           throw new Error(`Failed to submit application: ${response.status}`);
+        }
+
+        // Extract volunteer ID from response for QR code generation
+        const responseData = await response.json().catch(() => null);
+        if (responseData?.volunteer_id || responseData?.id) {
+          setVolunteerId(responseData.volunteer_id || responseData.id);
+        } else {
+          // Fallback: use user ID if no specific volunteer ID is returned
+          setVolunteerId(user?.userId);
         }
       } else {
         // In a test environment, log the data and simulate API delay
         console.log("Submitting mentor application:", submissionData);
         await new Promise((resolve) => setTimeout(resolve, 1500));
+        // In test environment, use user ID as volunteer ID
+        setVolunteerId(user?.userId);
       }
 
       // Clear saved form data after successful submission only if they are logged in
@@ -862,28 +973,39 @@ const MentorApplicationComponent = () => {
       }
 
       setSuccess(true);
+      trackEvent({ action: 'mentor_app_submit', params: { event_label: 'success', event_id, page: 'mentor_application' } });
+      // Scroll to top of form to show "Application Submitted!" message
+      if (formRef?.current) {
+        formRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
     } catch (err) {
-      console.error('Error submitting application:', err);
-      setError(err.message || 'Failed to submit your application. Please try again.');
+      console.error("Error submitting application:", err);
+      trackEvent({ action: 'mentor_app_submit_error', params: { event_label: err.message, event_id, page: 'mentor_application' } });
+      setError(
+        err.message || "Failed to submit your application. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
-  
+
   // SEO metadata and descriptions
-  const pageTitle = eventData 
+  const pageTitle = eventData
     ? `Mentor at ${eventData.name} | Guide Tech for Good Developers in ${eventData.location}`
     : "Mentor at Opportunity Hack | Guide Tech for Good Developers";
   const pageDescription = eventData
     ? `Mentor developers at ${eventData.name} in ${eventData.location} from ${eventData.formattedStartDate} to ${eventData.formattedEndDate}. Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship.`
     : "Mentor developers at Opportunity Hack hackathon! Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship and tech for good.";
   const canonicalUrl = `https://ohack.dev/hack/${event_id}/mentor-application`;
-  
+
   const seoImageUrl = "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp";
 
   // Define steps for stepper (moved up before the conditional content render)
-  const steps = ['Basic Info', 'Skills & Experience', 'Availability', 'Finish'];
-  
+  const steps = ["Basic Info", "Skills & Experience", "Availability", "Finish"];
+
   // Accordion change handler (moved up from inside renderAvailabilityForm)
   const handleAccordionChange = (date) => (event, isExpanded) => {
     setExpandedDate(isExpanded ? date : null);
@@ -893,10 +1015,12 @@ const MentorApplicationComponent = () => {
   const isVirtualEvent = () => {
     if (!eventData?.location) return false;
     const location = eventData.location.toLowerCase();
-    return location.includes('global') || 
-           location.includes('virtual') || 
-           location.includes('online') ||
-           location.includes('remote');
+    return (
+      location.includes("global") ||
+      location.includes("virtual") ||
+      location.includes("online") ||
+      location.includes("remote")
+    );
   };
 
   // Render basic information form
@@ -905,7 +1029,7 @@ const MentorApplicationComponent = () => {
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Basic Information
       </Typography>
-      
+
       <Box sx={{ mb: 3 }}>
         <TextField
           label="Email Address"
@@ -917,7 +1041,7 @@ const MentorApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
         />
-        
+
         <TextField
           label="Your Name"
           name="name"
@@ -927,7 +1051,7 @@ const MentorApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
         />
-        
+
         <TextField
           label="Your Pronouns (Optional)"
           name="pronouns"
@@ -936,7 +1060,7 @@ const MentorApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
         />
-        
+
         <TextField
           label="What company are you working for?"
           name="company"
@@ -946,7 +1070,7 @@ const MentorApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
         />
-        
+
         <TextField
           label="Short bio (Optional)"
           name="bio"
@@ -961,47 +1085,29 @@ const MentorApplicationComponent = () => {
       </Box>
     </Box>
   );
-  
+
   // Render skills and experience form
   const renderSkillsAndExperienceForm = () => (
     <Box sx={{ mb: 4 }}>
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Profile & Experience
       </Typography>
-      
+
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ mb: 3 }}>
-          <InputLabel htmlFor="photo-upload" sx={{ mb: 1 }}>
-            A photo of you we can use on the website (Optional)
-          </InputLabel>
-          <Button
-            component="label"
-            variant="outlined"
-            startIcon={<CloudUploadIcon />}
-            sx={{ mb: 1 }}
-          >
-            Upload Photo
-            <input
-              id="photo-upload"
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={handleFileChange}
-            />
-          </Button>
-          <FormHelperText>Please upload a professional photo of yourself</FormHelperText>
-          
-          {photoPreview && (
-            <Box sx={{ mt: 2, maxWidth: 200 }}>
-              <img 
-                src={photoPreview} 
-                alt="Preview" 
-                style={{ width: '100%', borderRadius: '4px' }} 
-              />
-            </Box>
-          )}
-        </Box>
-        
+        <UploadPhoto
+          value={formData.picture || formData.photoUrl || ""}
+          onChange={handlePhotoUpload}
+          onError={handlePhotoError}
+          label="A photo of you we can use on the website (Optional)"
+          helperText="Please upload a professional photo of yourself"
+          directory="mentors"
+          apiServerUrl={apiServerUrl}
+          accessToken={accessToken}
+          orgId={user?.orgId}
+          userId={user?.userId}
+          sx={{ mb: 3 }}
+        />
+
         <TextField
           label="LinkedIn Profile (Optional)"
           name="linkedin"
@@ -1011,18 +1117,26 @@ const MentorApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
         />
-        
-        <FormControl fullWidth required sx={{ mb: formData.expertise.includes('Other') ? 1 : 3 }}>
-          <InputLabel id="expertise-label">What kind of brain power can you help supply us with?</InputLabel>
+
+        <FormControl
+          fullWidth
+          required
+          sx={{ mb: formData.expertise.includes("Other") ? 1 : 3 }}
+        >
+          <InputLabel id="expertise-label">
+            What kind of brain power can you help supply us with?
+          </InputLabel>
           <Select
             labelId="expertise-label"
             id="expertise"
             multiple
             value={formData.expertise}
-            onChange={(e) => customHandleMultiSelectChange(e, 'expertise')}
-            input={<OutlinedInput label="What kind of brain power can you help supply us with?" />}
+            onChange={(e) => customHandleMultiSelectChange(e, "expertise")}
+            input={
+              <OutlinedInput label="What kind of brain power can you help supply us with?" />
+            }
             renderValue={(selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {selected.map((value) => (
                   <Chip key={value} label={value} />
                 ))}
@@ -1036,11 +1150,13 @@ const MentorApplicationComponent = () => {
               </MenuItem>
             ))}
           </Select>
-          <FormHelperText>Select all areas where you can mentor teams (select at least one)</FormHelperText>
+          <FormHelperText>
+            Select all areas where you can mentor teams (select at least one)
+          </FormHelperText>
         </FormControl>
-        
+
         {/* Conditional text field that appears when "Other" is selected */}
-        {formData.expertise.includes('Other') && (
+        {formData.expertise.includes("Other") && (
           <TextField
             label="Please specify your expertise"
             name="otherExpertise"
@@ -1052,36 +1168,49 @@ const MentorApplicationComponent = () => {
             sx={{ mb: 3 }}
           />
         )}
-        
+
+        {/* Conditional Software Engineering Specifics field that appears when "Software Development" is selected */}
+        {formData.expertise.includes("Software Development") && (
+          <FormControl fullWidth required sx={{ mb: 3 }}>
+            <InputLabel id="engineering-specifics-label">
+              Software Engineering Specifics
+            </InputLabel>
+            <Select
+              labelId="engineering-specifics-label"
+              id="engineering-specifics"
+              multiple
+              value={formData.engineeringSpecifics}
+              onChange={(e) =>
+                customHandleMultiSelectChange(e, "engineeringSpecifics")
+              }
+              input={<OutlinedInput label="Software Engineering Specifics" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+            >
+              {engineeringOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  <Checkbox
+                    checked={formData.engineeringSpecifics.indexOf(option) > -1}
+                  />
+                  <ListItemText primary={option} />
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>
+              Select the technologies and areas you can mentor in
+            </FormHelperText>
+          </FormControl>
+        )}
+
         <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="engineering-specifics-label">Software Engineering Specifics</InputLabel>
-          <Select
-            labelId="engineering-specifics-label"
-            id="engineering-specifics"
-            multiple
-            value={formData.engineeringSpecifics}
-            onChange={(e) => customHandleMultiSelectChange(e, 'engineeringSpecifics')}
-            input={<OutlinedInput label="Software Engineering Specifics" />}
-            renderValue={(selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {selected.map((value) => (
-                  <Chip key={value} label={value} />
-                ))}
-              </Box>
-            )}
-          >
-            {engineeringOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                <Checkbox checked={formData.engineeringSpecifics.indexOf(option) > -1} />
-                <ListItemText primary={option} />
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>Select the technologies and areas you can mentor in</FormHelperText>
-        </FormControl>
-        
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="participation-count-label">How many times have you participated in Opportunity Hack?</InputLabel>
+          <InputLabel id="participation-count-label">
+            How many times have you participated in Opportunity Hack?
+          </InputLabel>
           <Select
             labelId="participation-count-label"
             id="participation-count"
@@ -1090,16 +1219,24 @@ const MentorApplicationComponent = () => {
             onChange={handleChange}
             label="How many times have you participated in Opportunity Hack?"
           >
-            <MenuItem value="This is my first year! 👆">This is my first year! 👆</MenuItem>
-            <MenuItem value="This will be the 2nd time ✌️">This will be the 2nd time ✌️</MenuItem>
-            <MenuItem value="This will be the 3rd time ☘️">This will be the 3rd time ☘️</MenuItem>
-            <MenuItem value="I've been here 4+ times 🔥">I've been here 4+ times 🔥</MenuItem>
+            <MenuItem value="This is my first year! 👆">
+              This is my first year! 👆
+            </MenuItem>
+            <MenuItem value="This will be the 2nd time ✌️">
+              This will be the 2nd time ✌️
+            </MenuItem>
+            <MenuItem value="This will be the 3rd time ☘️">
+              This will be the 3rd time ☘️
+            </MenuItem>
+            <MenuItem value="I've been here 4+ times 🔥">
+              I've been here 4+ times 🔥
+            </MenuItem>
           </Select>
         </FormControl>
       </Box>
     </Box>
   );
-  
+
   // --- Availability Step: Date & Slot Selection Refactor ---
   // Render availability form (replace the old date/slot selection section)
   const renderAvailabilityForm = () => (
@@ -1110,14 +1247,17 @@ const MentorApplicationComponent = () => {
       <Typography variant="body2" sx={{ mb: 2 }}>
         Select the dates you are available. For each date, pick the time slots
         you can mentor. For long hackathons, use the filter to quickly find your
-        dates.
+        dates. All times are in{" "}
+        {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))}{" "}
+        (event timezone).
       </Typography>
 
       {/* Conditionally show in-person attendance field only for physical events */}
       {!isVirtualEvent() && (
         <FormControl required component="fieldset" sx={{ mb: 3 }}>
           <Typography variant="subtitle1" gutterBottom>
-            Will you be attending in person at {eventData?.location || 'the event location'}?
+            Will you be attending in person at{" "}
+            {eventData?.location || "the event location"}?
           </Typography>
           <RadioGroup
             name="inPerson"
@@ -1141,8 +1281,11 @@ const MentorApplicationComponent = () => {
       {/* Location fields - conditional labels and requirements */}
       <FormControl fullWidth required sx={{ mb: 3 }}>
         <InputLabel id="country-label">
-          {isVirtualEvent() ? "Which country will you be mentoring from?" : 
-           (formData.inPerson === "Yes!" ? "Which country are you traveling from?" : "Which country will you be mentoring from?")}
+          {isVirtualEvent()
+            ? "Which country will you be mentoring from?"
+            : formData.inPerson === "Yes!"
+              ? "Which country are you traveling from?"
+              : "Which country will you be mentoring from?"}
         </InputLabel>
         <Select
           labelId="country-label"
@@ -1150,8 +1293,13 @@ const MentorApplicationComponent = () => {
           name="country"
           value={formData.country}
           onChange={handleChange}
-          label={isVirtualEvent() ? "Which country will you be mentoring from?" : 
-                 (formData.inPerson === "Yes!" ? "Which country are you traveling from?" : "Which country will you be mentoring from?")}
+          label={
+            isVirtualEvent()
+              ? "Which country will you be mentoring from?"
+              : formData.inPerson === "Yes!"
+                ? "Which country are you traveling from?"
+                : "Which country will you be mentoring from?"
+          }
         >
           <MenuItem value="United States">United States</MenuItem>
           <MenuItem value="Canada">Canada</MenuItem>
@@ -1170,8 +1318,11 @@ const MentorApplicationComponent = () => {
       {formData.country === "United States" && (
         <FormControl fullWidth required sx={{ mb: 3 }}>
           <InputLabel id="state-label">
-            {isVirtualEvent() ? "Which state will you be mentoring from?" : 
-             (formData.inPerson === "Yes!" ? "Which state are you traveling from?" : "Which state will you be mentoring from?")}
+            {isVirtualEvent()
+              ? "Which state will you be mentoring from?"
+              : formData.inPerson === "Yes!"
+                ? "Which state are you traveling from?"
+                : "Which state will you be mentoring from?"}
           </InputLabel>
           <Select
             labelId="state-label"
@@ -1179,8 +1330,13 @@ const MentorApplicationComponent = () => {
             name="state"
             value={formData.state}
             onChange={handleChange}
-            label={isVirtualEvent() ? "Which state will you be mentoring from?" : 
-                   (formData.inPerson === "Yes!" ? "Which state are you traveling from?" : "Which state will you be mentoring from?")}
+            label={
+              isVirtualEvent()
+                ? "Which state will you be mentoring from?"
+                : formData.inPerson === "Yes!"
+                  ? "Which state are you traveling from?"
+                  : "Which state will you be mentoring from?"
+            }
           >
             <MenuItem value="Alabama">Alabama</MenuItem>
             <MenuItem value="Alaska">Alaska</MenuItem>
@@ -1239,8 +1395,13 @@ const MentorApplicationComponent = () => {
       {/* If country is not US, show a simple text field for state/region */}
       {formData.country && formData.country !== "United States" && (
         <TextField
-          label={isVirtualEvent() ? "State/Province/Region (where you'll be mentoring from)" : 
-                 (formData.inPerson === "Yes!" ? "State/Province/Region (where you're traveling from)" : "State/Province/Region (where you'll be mentoring from)")}
+          label={
+            isVirtualEvent()
+              ? "State/Province/Region (where you'll be mentoring from)"
+              : formData.inPerson === "Yes!"
+                ? "State/Province/Region (where you're traveling from)"
+                : "State/Province/Region (where you'll be mentoring from)"
+          }
           name="state"
           required
           fullWidth
@@ -1357,10 +1518,10 @@ const MentorApplicationComponent = () => {
                       }}
                       onClick={() => {
                         const newAvailability = formData.availableDays.includes(
-                          slot.id
+                          slot.id,
                         )
                           ? formData.availableDays.filter(
-                              (id) => id !== slot.id
+                              (id) => id !== slot.id,
                             )
                           : [...formData.availableDays, slot.id];
                         setFormData((prev) => ({
@@ -1383,7 +1544,7 @@ const MentorApplicationComponent = () => {
                           {slot.icon} {slot.label}
                         </Typography>
                         <Typography variant="body2" sx={{ mb: 1 }}>
-                          {slot.time}
+                          {slot.time} {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))}
                         </Typography>
                         <Typography
                           variant="caption"
@@ -1444,7 +1605,7 @@ const MentorApplicationComponent = () => {
                   setFormData((prev) => ({
                     ...prev,
                     availableDays: prev.availableDays.filter(
-                      (id) => id !== slotId
+                      (id) => id !== slotId,
                     ),
                   }));
                 }}
@@ -1477,14 +1638,14 @@ const MentorApplicationComponent = () => {
       )}
     </Box>
   );
-  
+
   // Render review form
   const renderReviewForm = () => (
     <Box sx={{ mb: 4 }}>
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Review & Submit
       </Typography>
-      
+
       <TextField
         label="Any questions or comments for us?"
         name="comments"
@@ -1495,7 +1656,7 @@ const MentorApplicationComponent = () => {
         onChange={handleChange}
         sx={{ mb: 4 }}
       />
-      
+
       <FormControlLabel
         control={
           <Checkbox
@@ -1520,16 +1681,17 @@ const MentorApplicationComponent = () => {
         }
         sx={{ mb: 2 }}
       />
-      
+
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2">
-          By submitting this form, you're expressing interest in mentoring at Opportunity Hack. 
-          Our team will review your application and reach out to match you with teams based on your expertise and availability.
+          By submitting this form, you're expressing interest in mentoring at
+          Opportunity Hack. Our team will review your application and reach out
+          to match you with teams based on your expertise and availability.
         </Typography>
       </Alert>
     </Box>
   );
-  
+
   // Function to render the current step form
   const getStepContent = (step) => {
     switch (step) {
@@ -1542,7 +1704,7 @@ const MentorApplicationComponent = () => {
       case 3:
         return renderReviewForm();
       default:
-        return 'Unknown step';
+        return "Unknown step";
     }
   };
 
@@ -1555,16 +1717,35 @@ const MentorApplicationComponent = () => {
           <meta name="description" content={pageDescription} />
           <link rel="canonical" href={canonicalUrl} />
         </Head>
-        
+
         <Box my={8} textAlign="center">
-          <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4, mt: 12 }}>
+          <Typography
+            variant="h1"
+            component="h1"
+            sx={{ fontSize: "2.5rem", mb: 4, mt: 12 }}
+          >
             Application Submitted!
           </Typography>
-          
-          <Alert severity="success" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
-            Thank you for applying to be a mentor at Opportunity Hack. We'll review your application and contact you soon.
+
+          <Alert severity="success" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
+            Thank you for applying to be a mentor at Opportunity Hack. We'll
+            review your application and contact you soon.
           </Alert>
-          
+
+          <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+            <GiveButterWidget
+              context="success"
+              userId={user?.userId}
+              applicationType="mentor"
+              size="large"
+              onDonationEvent={(eventData) => {
+                // Track mentor application donations
+                console.log("Mentor donation event:", eventData);
+                // You can add additional tracking here
+              }}
+            />
+          </Box>
+
           <Button
             variant="contained"
             color="primary"
@@ -1577,59 +1758,61 @@ const MentorApplicationComponent = () => {
       </Container>
     );
   };
-  
+
   // Structured data for mentor application
-  const structuredData = eventData ? {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": pageTitle,
-    "description": pageDescription,
-    "url": canonicalUrl,
-    "mainEntity": {
-      "@type": "Event",
-      "name": eventData.name,
-      "startDate": eventData.startDate,
-      "endDate": eventData.endDate,
-      "location": {
-        "@type": "Place",
-        "name": eventData.location
-      },
-      "organizer": {
-        "@type": "Organization",
-        "name": "Opportunity Hack",
-        "url": "https://ohack.dev"
+  const structuredData = eventData
+    ? {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: pageTitle,
+        description: pageDescription,
+        url: canonicalUrl,
+        mainEntity: {
+          "@type": "Event",
+          name: eventData.name,
+          startDate: eventData.startDate,
+          endDate: eventData.endDate,
+          location: {
+            "@type": "Place",
+            name: eventData.location,
+          },
+          organizer: {
+            "@type": "Organization",
+            name: "Opportunity Hack",
+            url: "https://ohack.dev",
+          },
+        },
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://ohack.dev/",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Hackathons",
+              item: "https://ohack.dev/hack",
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: eventData.name,
+              item: `https://ohack.dev/hack/${event_id}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 4,
+              name: "Mentor Application",
+              item: canonicalUrl,
+            },
+          ],
+        },
       }
-    },
-    "breadcrumb": {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://ohack.dev/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Hackathons",
-          "item": "https://ohack.dev/hack"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": eventData.name,
-          "item": `https://ohack.dev/hack/${event_id}`
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Mentor Application",
-          "item": canonicalUrl
-        }
-      ]
-    }
-  } : null;
+    : null;
 
   const renderApplicationForm = () => {
     return (
@@ -1637,14 +1820,20 @@ const MentorApplicationComponent = () => {
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
           <meta charSet="UTF-8" />
           <meta
             name="keywords"
-            content={`hackathon mentor, mentor application, tech for good, nonprofit hackathon, opportunity hack, mentorship, volunteer, tech mentoring, ${eventData?.name || 'hackathon'}, ${eventData?.location || 'tech event'}, industry expert, developer guidance`}
+            content={`hackathon mentor, mentor application, tech for good, nonprofit hackathon, opportunity hack, mentorship, volunteer, tech mentoring, ${eventData?.name || "hackathon"}, ${eventData?.location || "tech event"}, industry expert, developer guidance`}
           />
           <meta name="author" content="Opportunity Hack" />
-          <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+          <meta
+            name="robots"
+            content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+          />
           <link rel="canonical" href={canonicalUrl} />
 
           {/* Open Graph tags */}
@@ -1653,7 +1842,10 @@ const MentorApplicationComponent = () => {
           <meta property="og:type" content="website" />
           <meta property="og:url" content={canonicalUrl} />
           <meta property="og:image" content={seoImageUrl} />
-          <meta property="og:image:alt" content="Mentors guiding developers at Opportunity Hack hackathon" />
+          <meta
+            property="og:image:alt"
+            content="Mentors guiding developers at Opportunity Hack hackathon"
+          />
           <meta property="og:site_name" content="Opportunity Hack" />
           <meta property="og:locale" content="en_US" />
 
@@ -1664,15 +1856,22 @@ const MentorApplicationComponent = () => {
           <meta name="twitter:title" content={pageTitle} />
           <meta name="twitter:description" content={pageDescription} />
           <meta name="twitter:image" content={seoImageUrl} />
-          <meta name="twitter:image:alt" content="Mentors guiding developers at Opportunity Hack hackathon" />
+          <meta
+            name="twitter:image:alt"
+            content="Mentors guiding developers at Opportunity Hack hackathon"
+          />
 
           {/* Additional SEO tags */}
           <meta name="application-name" content="Opportunity Hack" />
           <meta name="theme-color" content="#3f51b5" />
           <meta name="format-detection" content="telephone=no" />
-          
+
           {/* Preconnect to optimize loading */}
-          <link rel="preconnect" href="https://cdn.ohack.dev" crossOrigin="anonymous" />
+          <link
+            rel="preconnect"
+            href="https://cdn.ohack.dev"
+            crossOrigin="anonymous"
+          />
           <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
         </Head>
 
@@ -1693,7 +1892,7 @@ const MentorApplicationComponent = () => {
           onCloseNotification={closeNotification}
         />
 
-        <Box ref={formRef}>                    
+        <Box ref={formRef}>
           <Typography
             variant="h1"
             component="h1"
@@ -1702,6 +1901,18 @@ const MentorApplicationComponent = () => {
             Mentor Application
           </Typography>
 
+          {/* QR Code for Check-in */}
+          <VolunteerCheckInQR
+            eventId={event_id}
+            volunteerId={volunteerId}
+            isSelected={isSelected}
+            volunteerType="mentor"
+            name={formData.name}
+            isSubmitted={true}
+            qrSize={200}
+            sx={{ mx: "auto", maxWidth: 500 }}
+          />
+
           {isLoading ? (
             <Box display="flex" justifyContent="center" my={4}>
               <CircularProgress />
@@ -1709,13 +1920,15 @@ const MentorApplicationComponent = () => {
           ) : (
             <Box>
               {/* Header section with responsive layout */}
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: { xs: 'column', md: 'row' },
-                alignItems: { xs: 'flex-start', md: 'flex-start' },
-                gap: 2,
-                mb: 3
-              }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
+                  alignItems: { xs: "flex-start", md: "flex-start" },
+                  gap: 2,
+                  mb: 3,
+                }}
+              >
                 {/* Event info */}
                 <Box sx={{ flex: 1 }}>
                   {eventData && (
@@ -1727,36 +1940,48 @@ const MentorApplicationComponent = () => {
                       >
                         {eventData.name}
                       </Typography>
-                      
-                      <Typography 
-                        variant="h3" 
-                        component="h3" 
-                        sx={{ 
-                          fontSize: "1.25rem", 
+
+                      <Typography
+                        variant="h3"
+                        component="h3"
+                        sx={{
+                          fontSize: "1.25rem",
                           mb: 1,
-                          color: "text.secondary" 
+                          color: "text.secondary",
                         }}
                       >
                         {eventData.location}
                       </Typography>
-                      
-                      <Typography 
-                        variant="subtitle1" 
-                        sx={{ 
+
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
                           mb: 1,
                           color: "text.secondary",
                           display: "flex",
                           alignItems: "center",
-                          gap: 1
+                          gap: 1,
                         }}
                       >
-                        <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+                        <Box
+                          component="span"
+                          sx={{ display: "inline-flex", alignItems: "center" }}
+                        >
                           📆 {eventData.formattedStartDate}
                         </Box>
-                        {eventData.formattedStartDate !== eventData.formattedEndDate && (
+                        {eventData.formattedStartDate !==
+                          eventData.formattedEndDate && (
                           <>
-                            <Box component="span" sx={{ mx: 0.5 }}>to</Box>
-                            <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+                            <Box component="span" sx={{ mx: 0.5 }}>
+                              to
+                            </Box>
+                            <Box
+                              component="span"
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                              }}
+                            >
                               {eventData.formattedEndDate}
                             </Box>
                           </>
@@ -1767,27 +1992,27 @@ const MentorApplicationComponent = () => {
                 </Box>
 
                 {/* Social proof image */}
-                <Box 
-                  sx={{ 
-                    width: { xs: '100%', sm: '180px', md: '220px' },
-                    height: { xs: '140px', sm: '120px', md: '150px' },
+                <Box
+                  sx={{
+                    width: { xs: "100%", sm: "180px", md: "220px" },
+                    height: { xs: "140px", sm: "120px", md: "150px" },
                     borderRadius: 2,
-                    overflow: 'hidden',
+                    overflow: "hidden",
                     boxShadow: 2,
                     flexShrink: 0,
-                    alignSelf: { xs: 'center', md: 'flex-start' },
-                    maxWidth: '100%',
-                    mt: { xs: 0, md: 1 }
+                    alignSelf: { xs: "center", md: "flex-start" },
+                    maxWidth: "100%",
+                    mt: { xs: 0, md: 1 },
                   }}
                 >
-                  <img 
-                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp" 
-                    alt="Mentors guiding teams at Opportunity Hack" 
-                    style={{ 
-                      width: '100%',
-                      height: '100%',
-                      display: 'block',
-                      objectFit: 'cover'
+                  <img
+                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp"
+                    alt="Mentors guiding teams at Opportunity Hack"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "block",
+                      objectFit: "cover",
                     }}
                   />
                 </Box>
@@ -1804,15 +2029,30 @@ const MentorApplicationComponent = () => {
                         This event has already ended
                       </Typography>
                       <Typography variant="body1">
-                        Applications are no longer being accepted for mentors as this hackathon has already concluded.
-                        Please check our upcoming events for future mentoring opportunities.
+                        Applications are no longer being accepted for mentors as
+                        this hackathon has already concluded. Please check our
+                        upcoming events for future mentoring opportunities.
                       </Typography>
                     </Alert>
+
+                    <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+                      <GiveButterWidget
+                        context="event-ended"
+                        userId={user?.userId}
+                        applicationType="mentor"
+                        size="large"
+                        onDonationEvent={(eventData) => {
+                          // Track mentor application donations when event ended
+                          console.log("Event ended mentor donation event:", eventData);
+                        }}
+                      />
+                    </Box>
+
                     <Box textAlign="center">
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={() => router.push('/hack')}
+                        onClick={() => router.push("/hack")}
                         sx={{ mt: 2 }}
                       >
                         View Upcoming Events
@@ -1825,81 +2065,101 @@ const MentorApplicationComponent = () => {
                       activeStep={activeStep}
                       alternativeLabel={!isMobile}
                       orientation={isMobile ? "horizontal" : "horizontal"}
-                      sx={{ 
+                      sx={{
                         mb: 4,
                         ...(isMobile && {
-                          '& .MuiStepLabel-root': {
-                            padding: '0 4px', // Reduce padding on mobile
+                          "& .MuiStepLabel-root": {
+                            padding: "0 4px", // Reduce padding on mobile
                           },
-                          '& .MuiStepLabel-labelContainer': {
-                            width: 'auto', // Let the label container be as small as possible
+                          "& .MuiStepLabel-labelContainer": {
+                            width: "auto", // Let the label container be as small as possible
                           },
-                          '& .MuiStepLabel-label': {
-                            fontSize: '0.7rem', // Smaller text on mobile
-                            whiteSpace: 'nowrap', // Prevent text wrapping
+                          "& .MuiStepLabel-label": {
+                            fontSize: "0.7rem", // Smaller text on mobile
+                            whiteSpace: "nowrap", // Prevent text wrapping
                           },
-                          '& .MuiSvgIcon-root': {
+                          "& .MuiSvgIcon-root": {
                             width: 20, // Smaller icons
                             height: 20,
                           },
-                          overflowX: 'auto', // Allow horizontal scrolling if needed
-                          '&::-webkit-scrollbar': {
-                            display: 'none' // Hide scrollbar on webkit browsers
+                          overflowX: "auto", // Allow horizontal scrolling if needed
+                          "&::-webkit-scrollbar": {
+                            display: "none", // Hide scrollbar on webkit browsers
                           },
-                          scrollbarWidth: 'none', // Hide scrollbar on Firefox
-                        })
+                          scrollbarWidth: "none", // Hide scrollbar on Firefox
+                        }),
                       }}
                     >
                       {steps.map((label) => (
                         <Step key={label}>
-                          <StepLabel>{isMobile ? (
-                            // On mobile, show abbreviated labels or just the step number
-                            activeStep === steps.indexOf(label) ? label : (steps.indexOf(label) + 1)
-                          ) : (
-                            // On desktop, show full labels
-                            label
-                          )}</StepLabel>
+                          <StepLabel>
+                            {isMobile
+                              ? // On mobile, show abbreviated labels or just the step number
+                                activeStep === steps.indexOf(label)
+                                ? label
+                                : steps.indexOf(label) + 1
+                              : // On desktop, show full labels
+                                label}
+                          </StepLabel>
                         </Step>
                       ))}
                     </Stepper>
 
                     <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
                       <Typography variant="body1" paragraph>
-                        Thank you for your interest in mentoring at Opportunity Hack! Mentors play a crucial role in guiding teams
-                        and helping them create impactful solutions for nonprofits.
+                        Thank you for your interest in mentoring at Opportunity
+                        Hack! Mentors play a crucial role in guiding teams and
+                        helping them create impactful solutions for nonprofits.
                       </Typography>
-                      
+
                       {eventData && eventData.description && (
                         <Typography variant="body1" sx={{ mb: 3 }}>
-                          <strong>About this event:</strong> {eventData.description}
+                          <strong>About this event:</strong>{" "}
+                          {eventData.description}
                         </Typography>
                       )}
-                      
+
                       <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
                         <Typography variant="body1" paragraph>
-                          <strong>Want to learn more about mentoring at Opportunity Hack?</strong> Check out our{' '}
-                          <Link 
-                            href="/about/mentors" 
-                            target="_blank" 
+                          <strong>
+                            Want to learn more about mentoring at Opportunity
+                            Hack?
+                          </strong>{" "}
+                          Check out our{" "}
+                          <Link
+                            href="/about/mentors"
+                            target="_blank"
                             rel="noopener noreferrer"
-                            sx={{ fontWeight: 'bold' }}
+                            sx={{ fontWeight: "bold" }}
                           >
                             Mentors Guide
-                          </Link>{' '}
-                          to understand the role, expectations, and impact you'll make.
+                          </Link>{" "}
+                          to understand the role, expectations, and impact
+                          you'll make.
                         </Typography>
                       </Alert>
-                      
+
                       {(error || recaptchaError) && (
                         <Alert severity="error" sx={{ mb: 4 }}>
                           {error || recaptchaError}
                         </Alert>
                       )}
 
-                      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSubmit();
+                        }}
+                      >
                         {getStepContent(activeStep)}
-                        
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            mt: 4,
+                          }}
+                        >
                           <Button
                             disabled={activeStep === 0 || submitting}
                             onClick={handleBack}
@@ -1907,7 +2167,7 @@ const MentorApplicationComponent = () => {
                           >
                             Back
                           </Button>
-                          
+
                           <Button
                             variant="contained"
                             color="primary"
@@ -1915,9 +2175,13 @@ const MentorApplicationComponent = () => {
                             disabled={submitting || recaptchaLoading}
                           >
                             {activeStep === steps.length - 1 ? (
-                              submitting || recaptchaLoading ? <CircularProgress size={24} /> : 'Submit Application'
+                              submitting || recaptchaLoading ? (
+                                <CircularProgress size={24} />
+                              ) : (
+                                "Submit Application"
+                              )
                             ) : (
-                              'Next'
+                              "Next"
                             )}
                           </Button>
                         </Box>
@@ -1938,27 +2202,205 @@ const MentorApplicationComponent = () => {
 };
 
 // Create a new component that uses RequiredAuthProvider
-const MentorApplicationPage = () => {
+const MentorApplicationPage = ({ seoMetadata }) => {
   const router = useRouter();
   const { event_id } = router.query;
 
   // Create the current URL for redirection
-  const currentUrl = typeof window !== 'undefined' && event_id
-    ? `${window.location.origin}/hack/${event_id}/mentor-application`
-    : null;
+  const currentUrl =
+    typeof window !== "undefined" && event_id
+      ? `${window.location.origin}/hack/${event_id}/mentor-application`
+      : null;
 
   return (
-    <RequiredAuthProvider
-      authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-      displayIfLoggedOut={
-        <RedirectToLogin
-          postLoginRedirectUrl={currentUrl || window.location.href}
+    <>
+      {/* SEO metadata available to crawlers before authentication */}
+      <Head>
+        <title>{seoMetadata.title}</title>
+        <meta name="description" content={seoMetadata.description} />
+        <meta
+          name="keywords"
+          content="hackathon mentor, mentor application, tech for good, nonprofit hackathon, opportunity hack, mentoring, guidance, leadership"
         />
-      }
-    >
-      <MentorApplicationComponent />
-    </RequiredAuthProvider>
+        <link rel="canonical" href={seoMetadata.canonicalUrl} />
+
+        {/* Open Graph tags */}
+        <meta property="og:title" content={seoMetadata.title} />
+        <meta property="og:description" content={seoMetadata.description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={seoMetadata.canonicalUrl} />
+        <meta property="og:image" content={seoMetadata.imageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta
+          property="og:image:alt"
+          content="Mentors guiding teams at Opportunity Hack"
+        />
+        <meta property="og:site_name" content="Opportunity Hack" />
+
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoMetadata.title} />
+        <meta name="twitter:description" content={seoMetadata.description} />
+        <meta name="twitter:image" content={seoMetadata.imageUrl} />
+        <meta
+          name="twitter:image:alt"
+          content="Mentors guiding teams at Opportunity Hack"
+        />
+
+        {/* Additional SEO meta tags */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="Opportunity Hack" />
+        <meta name="theme-color" content="#1976d2" />
+      </Head>
+
+      {/* Structured Data for SEO */}
+      <Script
+        id="mentor-application-structured-data-seo"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: seoMetadata.title,
+            description: seoMetadata.description,
+            url: seoMetadata.canonicalUrl,
+            isPartOf: {
+              "@type": "WebSite",
+              name: "Opportunity Hack",
+              url: "https://ohack.dev",
+            },
+            breadcrumb: {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                {
+                  "@type": "ListItem",
+                  position: 1,
+                  name: "Home",
+                  item: "https://ohack.dev/",
+                },
+                {
+                  "@type": "ListItem",
+                  position: 2,
+                  name: "Hackathons",
+                  item: "https://ohack.dev/hack",
+                },
+                {
+                  "@type": "ListItem",
+                  position: 3,
+                  name: seoMetadata.eventName,
+                  item: `https://ohack.dev/hack/${event_id}`,
+                },
+                {
+                  "@type": "ListItem",
+                  position: 4,
+                  name: "Mentor Application",
+                  item: seoMetadata.canonicalUrl,
+                },
+              ],
+            },
+            mainEntity: {
+              "@type": "JobPosting",
+              title: `Mentor for ${seoMetadata.eventName}`,
+              description:
+                "Guide and support teams building tech solutions for nonprofits during our hackathon event",
+              hiringOrganization: {
+                "@type": "Organization",
+                name: "Opportunity Hack",
+              },
+              jobLocation: {
+                "@type": "Place",
+                address: {
+                  "@type": "PostalAddress",
+                  addressLocality:
+                    seoMetadata.location.split(",")[0] || "Tempe",
+                  addressRegion: "Arizona",
+                  addressCountry: "US",
+                },
+              },
+              employmentType: "VOLUNTEER",
+              industry: "Technology for Social Good",
+              responsibilities: [
+                "Guide teams in technical decision-making",
+                "Provide expertise in software development best practices",
+                "Support teams in project scoping and execution",
+                "Help troubleshoot technical challenges",
+              ],
+              qualifications: [
+                "Professional experience in technology or related fields",
+                "Strong communication and mentoring skills",
+                "Passion for social impact and nonprofit work",
+                "Ability to guide teams under time constraints",
+              ],
+            },
+          }),
+        }}
+      />
+
+      <RequiredAuthProvider
+        authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
+        displayIfLoggedOut={
+          <RedirectToLogin
+            postLoginRedirectUrl={currentUrl || window.location.href}
+          />
+        }
+      >
+        <MentorApplicationComponent />
+      </RequiredAuthProvider>
+    </>
   );
 };
+
+// Server-side props for SEO metadata (available to crawlers before auth)
+export async function getServerSideProps(context) {
+  const { event_id } = context.params;
+
+  // Default metadata for SEO
+  let seoMetadata = {
+    title: "Mentor at Opportunity Hack | Guide Tech for Good Teams",
+    description:
+      "Apply to mentor teams at our hackathon. Guide developers building tech solutions for nonprofits and help create meaningful social impact.",
+    eventName: "Opportunity Hack",
+    location: "Tempe, Arizona",
+    canonicalUrl: `https://ohack.dev/hack/${event_id}/mentor-application`,
+    imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
+  };
+
+  // Try to fetch event data for better SEO
+  try {
+    const apiServerUrl = process.env.NEXT_PUBLIC_REACT_APP_API_SERVER_URL;
+    if (apiServerUrl) {
+      const response = await fetch(
+        `${apiServerUrl}/api/messages/hackathon/${event_id}`,
+      );
+
+      if (response.ok) {
+        const eventData = await response.json();
+
+        if (eventData && eventData.title) {
+          seoMetadata = {
+            title: `Mentor at ${eventData.title} | Guide Tech for Good Teams`,
+            description: `Apply to mentor teams at ${eventData.title} in ${eventData.location || "Tempe, Arizona"}. Guide developers building innovative tech solutions for nonprofits.`,
+            eventName: eventData.title,
+            location: eventData.location || "Tempe, Arizona",
+            canonicalUrl: `https://ohack.dev/hack/${event_id}/mentor-application`,
+            imageUrl:
+              eventData.image_url ||
+              "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to fetch event data for SEO:", error);
+    // Continue with default metadata
+  }
+
+  return {
+    props: {
+      seoMetadata,
+    },
+  };
+}
 
 export default MentorApplicationPage;

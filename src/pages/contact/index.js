@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import {
   Container,
   Typography,
@@ -22,61 +23,85 @@ import {
   IconButton,
   Chip,
   useTheme,
-  useMediaQuery
-} from '@mui/material';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import { useRecaptcha } from '../../hooks/use-recaptcha';
-import axios from 'axios';
-import { useEnv } from '../../context/env.context';
-import { FaCheck, FaPaperPlane, FaExternalLinkAlt, FaEnvelope } from 'react-icons/fa';
+  useMediaQuery,
+} from "@mui/material";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { useRecaptcha } from "../../hooks/use-recaptcha";
+import axios from "axios";
+import { useEnv } from "../../context/env.context";
+import {
+  FaCheck,
+  FaPaperPlane,
+  FaExternalLinkAlt,
+  FaEnvelope,
+  FaTrophy,
+} from "react-icons/fa";
 
 // Inquiry types with associated links and content
 const INQUIRY_TYPES = [
-  { 
-    value: 'general', 
-    label: 'General Question',
-    description: 'For general inquiries about Opportunity Hack'
+  {
+    value: "general",
+    label: "General Question",
+    description: "For general inquiries about Opportunity Hack",
+  },
+  {
+    value: "claim_reward",
+    label: "Claim Reward",
+    description: "Request to claim rewards for hearts milestones achieved",
+    icon: "🎁",
+  },
+  {
+    value: "hackathon",
+    label: "Hackathon Information",
+    description: "Questions about upcoming or past hackathons",
+    link: "/hack",
+    linkText: "View Current Hackathons",
+  },
+  {
+    value: "mentor",
+    label: "Mentor Opportunities",
+    description: "Information about becoming a mentor",
+    link: "/hack",
+    linkText: "Apply to Mentor",
+  },
+  {
+    value: "judge",
+    label: "Judge Opportunities",
+    description: "Information about becoming a judge",
+    link: "/hack",
+    linkText: "Apply to Judge",
+  },
+  {
+    value: "sponsor",
+    label: "Sponsorship Opportunities",
+    description: "Information about sponsoring Opportunity Hack",
+    link: "/sponsor",
+    linkText: "Sponsorship Details",
+  },
+  {
+    value: "nonprofit",
+    label: "Nonprofit Information",
+    description: "Information for nonprofits interested in participating",
+    link: "/nonprofits",
+    linkText: "Nonprofit Details",
+  },
+  {
+    value: "technical",
+    label: "Technical Support",
+    description: "Help with website issues or technical problems",
+  },
+  {
+    value: "other",
+    label: "Other",
+    description: "Any other inquiries not covered above",
   },
   { 
-    value: 'hackathon', 
-    label: 'Hackathon Information',
-    description: 'Questions about upcoming or past hackathons',
-    link: '/hack',
-    linkText: 'View Current Hackathons'
-  },
-  { 
-    value: 'mentor', 
-    label: 'Mentor Opportunities',
-    description: 'Information about becoming a mentor',
-    link: '/hack',
-    linkText: 'Apply to Mentor'
-  },
-  { 
-    value: 'judge', 
-    label: 'Judge Opportunities',
-    description: 'Information about becoming a judge',
-    link: '/hack',
-    linkText: 'Apply to Judge'
-  },
-  { 
-    value: 'sponsor', 
-    label: 'Sponsorship Opportunities',
-    description: 'Information about sponsoring Opportunity Hack',
-    link: '/sponsor',
-    linkText: 'Sponsorship Details'
-  },
-  { 
-    value: 'nonprofit', 
-    label: 'Nonprofit Information',
-    description: 'Information for nonprofits interested in participating',
-    link: '/nonprofits',
-    linkText: 'Nonprofit Details'
-  },
-  { 
-    value: 'technical', 
-    label: 'Technical Support',
-    description: 'Help with website issues or technical problems'
+    value: 'prize', 
+    label: 'Prize Claim',
+    description: 'Request to claim your prize after reaching a milestone or achievement',
+    link: '/profile',
+    linkText: 'View Your Badges'
   },
   { 
     value: 'other', 
@@ -87,13 +112,13 @@ const INQUIRY_TYPES = [
 
 // Initial form state
 const initialFormState = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  organization: '',
-  inquiryType: '',
-  message: '',
-  receiveUpdates: false
+  firstName: "",
+  lastName: "",
+  email: "",
+  organization: "",
+  inquiryType: "",
+  message: "",
+  receiveUpdates: false,
 };
 
 /**
@@ -101,24 +126,44 @@ const initialFormState = {
  */
 const ContactPage = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
   const { apiServerUrl } = useEnv();
-  const { getRecaptchaToken, isLoading: recaptchaLoading, error: recaptchaError } = useRecaptcha();
-  
+  const {
+    getRecaptchaToken,
+    isLoading: recaptchaLoading,
+    error: recaptchaError,
+  } = useRecaptcha();
+
+  useEffect(() => { initFacebookPixel(); }, []);
+
   // Form state
   const [formState, setFormState] = useState(initialFormState);
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  
+  const [submitError, setSubmitError] = useState("");
+
   // Get inquiry type from URL query if available
   useEffect(() => {
-    if (router.query.type && INQUIRY_TYPES.some(type => type.value === router.query.type)) {
-      setFormState(prev => ({
+    if (
+      router.query.type &&
+      INQUIRY_TYPES.some((type) => type.value === router.query.type)
+    ) {
+      const inquiryType = router.query.type;
+      const hearts = router.query.hearts;
+
+      let message = "";
+
+      // Pre-populate message for reward claims
+      if (inquiryType === "claim_reward" && hearts) {
+        message = `Hello! I have earned ${hearts} hearts and would like to claim my milestone rewards. Please let me know what steps I need to take to receive my earned rewards.\n\nThank you!`;
+      }
+
+      setFormState((prev) => ({
         ...prev,
-        inquiryType: router.query.type
+        inquiryType,
+        ...(message && { message }),
       }));
     }
   }, [router.query]);
@@ -126,18 +171,18 @@ const ContactPage = () => {
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
-    const newValue = e.target.type === 'checkbox' ? checked : value;
-    
-    setFormState(prev => ({
+    const newValue = e.target.type === "checkbox" ? checked : value;
+
+    setFormState((prev) => ({
       ...prev,
-      [name]: newValue
+      [name]: newValue,
     }));
-    
+
     // Clear field error when user types
     if (formErrors[name]) {
-      setFormErrors(prev => ({
+      setFormErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -145,27 +190,27 @@ const ContactPage = () => {
   // Validate form
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formState.firstName.trim()) {
-      errors.firstName = 'First name is required';
+      errors.firstName = "First name is required";
     }
-    
+
     if (!formState.email.trim()) {
-      errors.email = 'Email is required';
+      errors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email.trim())) {
-      errors.email = 'Please enter a valid email address';
+      errors.email = "Please enter a valid email address";
     }
-    
+
     if (!formState.inquiryType) {
-      errors.inquiryType = 'Please select an inquiry type';
+      errors.inquiryType = "Please select an inquiry type";
     }
-    
+
     if (!formState.message.trim()) {
-      errors.message = 'Message is required';
+      errors.message = "Message is required";
     } else if (formState.message.trim().length < 10) {
-      errors.message = 'Message is too short (minimum 10 characters)';
+      errors.message = "Message is too short (minimum 10 characters)";
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -173,94 +218,99 @@ const ContactPage = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    setSubmitError('');
-    
+    setSubmitError("");
+
     try {
       // Get reCAPTCHA token
       const recaptchaToken = await getRecaptchaToken();
-      if (!recaptchaToken && process.env.NODE_ENV !== 'development') {
-        setSubmitError('Failed to verify you are human. Please try again.');
+      if (!recaptchaToken && process.env.NODE_ENV !== "development") {
+        setSubmitError("Failed to verify you are human. Please try again.");
         setIsSubmitting(false);
         return;
       }
-      
+
       // Mock API call - replace with actual API endpoint when available
-      const response = await axios.post(
-        `${apiServerUrl}/api/contact`,
-        {
-          ...formState,
-          recaptchaToken
-        }
-      );
-      
-      
+      const response = await axios.post(`${apiServerUrl}/api/contact`, {
+        ...formState,
+        recaptchaToken,
+      });
+
       // Set success state
       setSubmitSuccess(true);
-      
+      trackEvent({ action: 'contact_form_submit', params: { event_label: formState.inquiryType, page: 'contact' } });
+
       // Reset form after submission
       setFormState(initialFormState);
     } catch (error) {
-      console.error('Error submitting contact form:', error);
-      setSubmitError('Failed to submit your message. Please try again later.');
+      console.error("Error submitting contact form:", error);
+      trackEvent({ action: 'contact_form_error', params: { event_label: error.message, page: 'contact' } });
+      setSubmitError("Failed to submit your message. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // Get selected inquiry type info
-  const selectedInquiryType = INQUIRY_TYPES.find(type => type.value === formState.inquiryType);
+  const selectedInquiryType = INQUIRY_TYPES.find(
+    (type) => type.value === formState.inquiryType,
+  );
 
   return (
     <>
       <Head>
         <title>Contact Us - Opportunity Hack</title>
-        <meta 
-          name="description" 
-          content="Contact Opportunity Hack for questions about hackathons, mentorship, sponsorship, or general inquiries. We're here to help!" 
+        <meta
+          name="description"
+          content="Contact Opportunity Hack for questions about hackathons, mentorship, sponsorship, or general inquiries. We're here to help!"
         />
       </Head>
-      
+
       <Container maxWidth="lg">
         <Box sx={{ mt: 12, mb: 8 }}>
           <Typography variant="h2" component="h1" align="center" gutterBottom>
             Contact Us
           </Typography>
-          <Typography variant="h5" align="center" color="text.secondary" paragraph>
+          <Typography
+            variant="h5"
+            align="center"
+            color="text.secondary"
+            paragraph
+          >
             We'd love to hear from you. How can we help?
           </Typography>
-          
+
           {/* Main content area */}
           <Grid container spacing={4} sx={{ mt: 4 }}>
             {/* Contact form */}
-            <Grid item xs={12} md={8}>
-              <Paper 
-                elevation={3} 
-                sx={{ 
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Paper
+                elevation={3}
+                sx={{
                   p: { xs: 3, md: 4 },
                   borderRadius: 2,
-                  position: 'relative',
-                  overflow: 'hidden'
+                  position: "relative",
+                  overflow: "hidden",
                 }}
               >
                 {submitSuccess ? (
-                  <Box sx={{ py: 6, textAlign: 'center' }}>
-                    <Box 
-                      sx={{ 
-                        width: 80, 
-                        height: 80, 
-                        borderRadius: '50%', 
-                        bgcolor: 'success.main',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mx: 'auto',
-                        mb: 3
+                  <Box sx={{ py: 6, textAlign: "center" }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: "50%",
+                        bgcolor: "success.main",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mx: "auto",
+                        mb: 3,
                       }}
                     >
                       <FaCheck size={36} color="white" />
@@ -268,12 +318,17 @@ const ContactPage = () => {
                     <Typography variant="h4" gutterBottom>
                       Message Sent!
                     </Typography>
-                    <Typography variant="body1" paragraph color="text.secondary">
-                      Thank you for reaching out. We've received your message and will get back to you soon.
+                    <Typography
+                      variant="body1"
+                      paragraph
+                      color="text.secondary"
+                    >
+                      Thank you for reaching out. We've received your message
+                      and will get back to you soon.
                     </Typography>
-                    <Button 
-                      variant="outlined" 
-                      color="primary" 
+                    <Button
+                      variant="outlined"
+                      color="primary"
                       onClick={() => {
                         setSubmitSuccess(false);
                         window.scrollTo(0, 0);
@@ -286,7 +341,7 @@ const ContactPage = () => {
                 ) : (
                   <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           label="First Name"
                           name="firstName"
@@ -299,7 +354,7 @@ const ContactPage = () => {
                           disabled={isSubmitting}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           label="Last Name"
                           name="lastName"
@@ -309,7 +364,7 @@ const ContactPage = () => {
                           disabled={isSubmitting}
                         />
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           label="Email Address"
                           name="email"
@@ -322,11 +377,15 @@ const ContactPage = () => {
                           helperText={formErrors.email}
                           disabled={isSubmitting}
                           InputProps={{
-                            startAdornment: <FaEnvelope style={{ marginRight: 8, opacity: 0.6 }} />,
+                            startAdornment: (
+                              <FaEnvelope
+                                style={{ marginRight: 8, opacity: 0.6 }}
+                              />
+                            ),
                           }}
                         />
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           label="Organization/Company (Optional)"
                           name="organization"
@@ -337,7 +396,7 @@ const ContactPage = () => {
                           disabled={isSubmitting}
                         />
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           select
                           label="What are you contacting us about?"
@@ -347,50 +406,91 @@ const ContactPage = () => {
                           fullWidth
                           required
                           error={!!formErrors.inquiryType}
-                          helperText={formErrors.inquiryType || "Select the option that best matches your inquiry"}
+                          helperText={
+                            formErrors.inquiryType ||
+                            "Select the option that best matches your inquiry"
+                          }
                           disabled={isSubmitting}
                         >
                           <MenuItem value="" disabled>
                             <em>Select an option</em>
                           </MenuItem>
-                          {INQUIRY_TYPES.map(option => (
+                          {INQUIRY_TYPES.map((option) => (
                             <MenuItem key={option.value} value={option.value}>
                               {option.label}
                             </MenuItem>
                           ))}
                         </TextField>
                       </Grid>
-                      
+
                       {/* Conditional information based on inquiry type */}
                       {selectedInquiryType && selectedInquiryType.link && (
-                        <Grid item xs={12}>
-                          <Alert 
-                            severity="info" 
+                        <Grid size={{ xs: 12 }}>
+                          <Alert
+                            severity="info"
                             icon={false}
-                            sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'space-between'
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
                             }}
                           >
                             <Typography variant="body2">
-                              Looking for information about {selectedInquiryType.label.toLowerCase()}? 
-                              Check out our dedicated page.
+                              Looking for information about{" "}
+                              {selectedInquiryType.label.toLowerCase()}? Check
+                              out our dedicated page.
                             </Typography>
                             <Button
                               variant="outlined"
                               size="small"
                               href={selectedInquiryType.link}
                               endIcon={<FaExternalLinkAlt />}
-                              sx={{ ml: 2, whiteSpace: 'nowrap' }}
+                              sx={{ ml: 2, whiteSpace: "nowrap" }}
                             >
                               {selectedInquiryType.linkText}
                             </Button>
                           </Alert>
                         </Grid>
                       )}
-                      
-                      <Grid item xs={12}>
+
+                      {/* Special alert for reward claims */}
+                      {selectedInquiryType &&
+                        selectedInquiryType.value === "claim_reward" && (
+                          <Grid size={{ xs: 12 }}>
+                            <Alert
+                              severity="success"
+                              icon={<FaTrophy />}
+                              sx={{
+                                border: `2px solid ${theme.palette.success.main}`,
+                                borderRadius: 2,
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
+                                sx={{ fontWeight: "medium", mb: 1 }}
+                              >
+                                Congratulations on reaching your heart
+                                milestones! 🎉
+                              </Typography>
+                              <Typography variant="body2">
+                                Please provide your current heart count and any
+                                specific rewards you'd like to claim. Our team
+                                will review your achievements and guide you
+                                through the claiming process.
+                              </Typography>
+                              {router.query.hearts && (
+                                <Typography
+                                  variant="body2"
+                                  sx={{ mt: 1, fontStyle: "italic" }}
+                                >
+                                  Current Hearts: {router.query.hearts} ❤️
+                                </Typography>
+                              )}
+                            </Alert>
+                          </Grid>
+                        )}
+
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           label="Message"
                           name="message"
@@ -401,16 +501,19 @@ const ContactPage = () => {
                           fullWidth
                           required
                           error={!!formErrors.message}
-                          helperText={formErrors.message || "Please provide details about your inquiry"}
+                          helperText={
+                            formErrors.message ||
+                            "Please provide details about your inquiry"
+                          }
                           disabled={isSubmitting}
                           placeholder="How can we help you?"
                         />
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <FormControlLabel
                           control={
-                            <Checkbox 
-                              checked={formState.receiveUpdates} 
+                            <Checkbox
+                              checked={formState.receiveUpdates}
                               onChange={handleChange}
                               name="receiveUpdates"
                               color="primary"
@@ -421,26 +524,34 @@ const ContactPage = () => {
                         />
                       </Grid>
                       {submitError && (
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <Alert severity="error">{submitError}</Alert>
                         </Grid>
                       )}
                       {recaptchaError && (
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <Alert severity="error">{recaptchaError}</Alert>
                         </Grid>
                       )}
-                      <Grid item xs={12}>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Grid size={{ xs: 12 }}>
+                        <Box
+                          sx={{ display: "flex", justifyContent: "flex-end" }}
+                        >
                           <Button
                             type="submit"
                             variant="contained"
                             color="primary"
                             size="large"
                             disabled={isSubmitting || recaptchaLoading}
-                            startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <FaPaperPlane />}
+                            startIcon={
+                              isSubmitting ? (
+                                <CircularProgress size={20} color="inherit" />
+                              ) : (
+                                <FaPaperPlane />
+                              )
+                            }
                           >
-                            {isSubmitting ? 'Sending...' : 'Send Message'}
+                            {isSubmitting ? "Sending..." : "Send Message"}
                           </Button>
                         </Box>
                       </Grid>
@@ -449,17 +560,23 @@ const ContactPage = () => {
                 )}
               </Paper>
             </Grid>
-            
+
             {/* Contact info sidebar */}
-            <Grid item xs={12} md={4}>
-              <Box sx={{ position: 'sticky', top: 100 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box sx={{ position: "sticky", top: 100 }}>
                 <Card elevation={2} sx={{ mb: 3, borderRadius: 2 }}>
                   <CardContent>
                     <Typography variant="h6" component="h2" gutterBottom>
                       Quick Links
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1.5,
+                      }}
+                    >
                       <Link href="/hack" underline="hover">
                         Current Hackathons
                       </Link>
@@ -478,27 +595,31 @@ const ContactPage = () => {
                     </Box>
                   </CardContent>
                 </Card>
-                
+
                 <Card elevation={2} sx={{ mb: 3, borderRadius: 2 }}>
                   <CardContent>
                     <Typography variant="h6" component="h2" gutterBottom>
                       Common Inquiries
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {INQUIRY_TYPES.slice(0, 6).map(type => (
-                        <Chip 
-                          key={type.value} 
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      {INQUIRY_TYPES.slice(0, 6).map((type) => (
+                        <Chip
+                          key={type.value}
                           label={type.label}
                           onClick={() => {
-                            setFormState(prev => ({
+                            setFormState((prev) => ({
                               ...prev,
-                              inquiryType: type.value
+                              inquiryType: type.value,
                             }));
                             // Scroll to form on mobile
                             if (isMobile) {
-                              const formElement = document.querySelector('form');
-                              if (formElement) formElement.scrollIntoView({ behavior: 'smooth' });
+                              const formElement =
+                                document.querySelector("form");
+                              if (formElement)
+                                formElement.scrollIntoView({
+                                  behavior: "smooth",
+                                });
                             }
                           }}
                           clickable
@@ -508,7 +629,7 @@ const ContactPage = () => {
                     </Box>
                   </CardContent>
                 </Card>
-                
+
                 <Card elevation={2} sx={{ borderRadius: 2 }}>
                   <CardContent>
                     <Typography variant="h6" component="h2" gutterBottom>
@@ -516,10 +637,13 @@ const ContactPage = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                     <Typography variant="body2" paragraph>
-                      We do our best to respond to all inquiries within 48 hours. For urgent matters, please indicate this in your message.
+                      We do our best to respond to all inquiries within 48
+                      hours. For urgent matters, please indicate this in your
+                      message.
                     </Typography>
                     <Typography variant="body2">
-                      Please note that response times may be longer during hackathon events.
+                      Please note that response times may be longer during
+                      hackathon events.
                     </Typography>
                   </CardContent>
                 </Card>

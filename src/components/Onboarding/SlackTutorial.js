@@ -27,8 +27,11 @@ import SearchIcon from '@mui/icons-material/Search';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AppsIcon from '@mui/icons-material/Apps';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useEnv } from '../../context/env.context';
 
 // Styled components
@@ -92,10 +95,15 @@ function TabPanel(props) {
  */
 const SlackTutorial = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [praiseBotExpanded, setPraiseBotExpanded] = useState(false);
   const { slackSignupUrl } = useEnv();
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+  };
+
+  const handlePraiseBotToggle = () => {
+    setPraiseBotExpanded(!praiseBotExpanded);
   };
 
   return (
@@ -146,6 +154,7 @@ const SlackTutorial = () => {
             <Tab label="Channels & DMs" icon={<ForumIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
             <Tab label="Mentions & Notifications" icon={<NotificationsIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
             <Tab label="Etiquette & Best Practices" icon={<EmojiEmotionsIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
+            <Tab label="Slack Apps" icon={<AppsIcon />} iconPosition="start" sx={{ fontSize: '1.3rem' }} />
           </Tabs>
         </Box>
 
@@ -156,7 +165,7 @@ const SlackTutorial = () => {
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={7}>
+            <Grid size={{ xs: 12, md: 7 }}>
               <List>
                 <ListItem alignItems="flex-start">
                   <StepNumber>1</StepNumber>
@@ -213,7 +222,7 @@ const SlackTutorial = () => {
                 </ListItem>
               </List>
             </Grid>
-            <Grid item xs={12} md={5}>
+            <Grid size={{ xs: 12, md: 5 }}>
               <Card elevation={2}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem' }}>
@@ -297,7 +306,7 @@ const SlackTutorial = () => {
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Understanding Channels
               </Typography>
@@ -383,7 +392,7 @@ const SlackTutorial = () => {
               </List>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Direct Messages & Group DMs
               </Typography>
@@ -397,7 +406,7 @@ const SlackTutorial = () => {
                     When to use DMs vs. Channels:
                   </Typography>
                   <Grid container>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Typography sx={{ fontWeight: 'bold', fontSize: '1.3rem', mb: 1 }}>
                         Use DMs for:
                       </Typography>
@@ -420,7 +429,7 @@ const SlackTutorial = () => {
                         </Box>
                       </Box>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Typography sx={{ fontWeight: 'bold', fontSize: '1.3rem', mb: 1 }}>
                         Use Channels for:
                       </Typography>
@@ -495,7 +504,7 @@ const SlackTutorial = () => {
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Types of Mentions
               </Typography>
@@ -536,7 +545,7 @@ const SlackTutorial = () => {
               </Alert>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Configuring Notifications
               </Typography>
@@ -638,7 +647,7 @@ const SlackTutorial = () => {
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
                 Communication Guidelines
               </Typography>
@@ -690,7 +699,7 @@ const SlackTutorial = () => {
                 </ListItem>
               </List>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ mb: 3 }}>
                 <CardContent>
                   <Typography variant="subtitle1" gutterBottom color="primary" sx={{ fontSize: '1.4rem' }}>
@@ -788,6 +797,182 @@ const SlackTutorial = () => {
               Remember: our Code of Conduct applies to all communication on Slack. Be respectful, inclusive, and constructive in all your interactions.
             </Typography>
           </Alert>
+        </TabPanel>
+
+        {/* Slack Apps */}
+        <TabPanel value={activeTab} index={4}>
+          <Typography variant="h5" gutterBottom sx={{ fontSize: '2rem' }}>
+            Slack Apps
+          </Typography>
+          <Typography variant="body1" paragraph sx={{ fontSize: '1.3rem' }}>
+            Our Slack workspace includes several custom-built apps to enhance your experience and help you connect with the community. 
+            These tools make it easier to give feedback, share praise, and participate in community activities.
+          </Typography>
+          
+          {/* Praise Bot Section */}
+          <Card elevation={2} sx={{ mb: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box 
+                display="flex" 
+                alignItems="center" 
+                justifyContent="space-between"
+                sx={{ cursor: 'pointer' }}
+                onClick={handlePraiseBotToggle}
+              >
+                <Typography variant="h6" sx={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+                  Praise Bot
+                </Typography>
+                {praiseBotExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </Box>
+              <Typography variant="body2" sx={{ fontSize: '1.25rem', mt: 1, mb: 0, color: 'text.secondary' }}>
+                Recognize and appreciate your fellow OHack community members
+              </Typography>
+              
+              {praiseBotExpanded && (
+                <Box sx={{ mt: 3 }}>
+                  <Grid container spacing={3}>
+                    <Grid size={{ xs: 12, md: 8 }}>
+                      <Typography variant="body2" paragraph sx={{ fontSize: '1.25rem' }}>
+                        The Praise Bot helps you recognize and appreciate your fellow OHack community members. 
+                        Use it to give public recognition for great work, helpful contributions, or just to spread positivity!
+                      </Typography>
+                      
+                      <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem' }}>
+                        How to Use the Praise Bot:
+                      </Typography>
+                      <List>
+                        <ListItem alignItems="flex-start">
+                          <StepNumber>1</StepNumber>
+                          <ListItemText 
+                            primary="Trigger the bot" 
+                            secondary="Type /praise in any Slack channel to open the praise form"
+                            primaryTypographyProps={{ fontSize: '1.3rem' }}
+                            secondaryTypographyProps={{ fontSize: '1.15rem' }}
+                          />
+                        </ListItem>
+                        <ListItem alignItems="flex-start">
+                          <StepNumber>2</StepNumber>
+                          <ListItemText 
+                            primary="Select the recipient" 
+                            secondary="Choose 'Whose deeds are deemed worthy of a praise?' from the dropdown menu"
+                            primaryTypographyProps={{ fontSize: '1.3rem' }}
+                            secondaryTypographyProps={{ fontSize: '1.15rem' }}
+                          />
+                        </ListItem>
+                        <ListItem alignItems="flex-start">
+                          <StepNumber>3</StepNumber>
+                          <ListItemText 
+                            primary="Write your praise" 
+                            secondary="Fill in the 'What would you like to say?' textbox with your message of appreciation"
+                            primaryTypographyProps={{ fontSize: '1.3rem' }}
+                            secondaryTypographyProps={{ fontSize: '1.15rem' }}
+                          />
+                        </ListItem>
+                        <ListItem alignItems="flex-start">
+                          <StepNumber>4</StepNumber>
+                          <ListItemText 
+                            primary="Choose where to share" 
+                            secondary="Select a channel under 'Which channel do you want to share this in?' dropdown. If no channel is selected, the bot will send a direct message to the recipient"
+                            primaryTypographyProps={{ fontSize: '1.3rem' }}
+                            secondaryTypographyProps={{ fontSize: '1.15rem' }}
+                          />
+                        </ListItem>
+                        <ListItem alignItems="flex-start">
+                          <StepNumber>5</StepNumber>
+                          <ListItemText 
+                            primary="Submit your praise" 
+                            secondary="Click the green Submit button to send your praise"
+                            primaryTypographyProps={{ fontSize: '1.3rem' }}
+                            secondaryTypographyProps={{ fontSize: '1.15rem' }}
+                          />
+                        </ListItem>
+                      </List>
+                      
+                      <Alert severity="success" sx={{ mt: 2 }}>
+                        <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
+                          <strong>Result:</strong> Your praise will be posted on the praise board at{' '}
+                          <Link href="https://ohack.dev/praise" target="_blank" rel="noopener noreferrer">
+                            ohack.dev/praise
+                          </Link>
+                          {' '}and your message will be posted in the channel of your choice (or sent as a DM if no channel was selected).
+                        </Typography>
+                      </Alert>
+                    </Grid>
+                    
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Card elevation={1}>
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem' }}>
+                            Praise Bot Benefits
+                          </Typography>
+                          <List dense>
+                            <ListItem>
+                              <ListItemIcon>
+                                <CheckCircleIcon color="success" />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary="Public recognition" 
+                                secondary="Showcase great work to the entire community"
+                                primaryTypographyProps={{ fontSize: '1.2rem' }}
+                                secondaryTypographyProps={{ fontSize: '1.1rem' }}
+                              />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                <CheckCircleIcon color="success" />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary="Builds community" 
+                                secondary="Fosters a positive and supportive environment"
+                                primaryTypographyProps={{ fontSize: '1.2rem' }}
+                                secondaryTypographyProps={{ fontSize: '1.1rem' }}
+                              />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                <CheckCircleIcon color="success" />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary="Easy to use" 
+                                secondary="Simple slash command interface"
+                                primaryTypographyProps={{ fontSize: '1.2rem' }}
+                                secondaryTypographyProps={{ fontSize: '1.1rem' }}
+                              />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                <CheckCircleIcon color="success" />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary="Flexible sharing" 
+                                secondary="Choose where to post or send privately"
+                                primaryTypographyProps={{ fontSize: '1.2rem' }}
+                                secondaryTypographyProps={{ fontSize: '1.1rem' }}
+                              />
+                            </ListItem>
+                          </List>
+                        </CardContent>
+                      </Card>
+                      
+                      <Box sx={{ mt: 3 }}>
+                        <Card>
+                          <CardContent>
+                            <Typography variant="h6" gutterBottom color="primary" sx={{ fontSize: '1.3rem' }}>
+                              Pro Tip
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontSize: '1.1rem' }}>
+                              Use the Praise Bot regularly to recognize helpful contributions, great ideas, or just to spread positivity. 
+                              A little recognition goes a long way in building a strong community!
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
         </TabPanel>
       </Box>
 

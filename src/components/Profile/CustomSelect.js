@@ -11,8 +11,8 @@ import { styled } from "@mui/material/styles";
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   margin: theme.spacing(1),
-  minWidth: 280,
-  width: "300px"
+  minWidth: 0,
+  width: "100%",
 }));
 
 const StyledInputLabel = styled(InputLabel)(({ theme }) => ({

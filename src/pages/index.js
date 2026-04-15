@@ -2,18 +2,8 @@ import React, { Fragment, Suspense } from "react";
 import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useAuthInfo } from "@propelauth/react";
-// Separate GrowthBook initialization
-import { initGrowthBook } from "../lib/growthbook";
-import { Skeleton, Box, Grid, Container } from "@mui/material";
 
-// Dynamically import GrowthBook components
-const GrowthBookProvider = dynamic(
-  () =>
-    import("@growthbook/growthbook-react").then(
-      (mod) => mod.GrowthBookProvider
-    ),
-  { ssr: false }
-);
+import { Skeleton, Box, Container } from "@mui/material";
 
 // Simplified loading placeholder - avoiding detailed skeletons to prevent layout shifts
 const SimplePlaceholder = () => (
@@ -61,6 +51,14 @@ const LeadForm = dynamic(() => import("../components/LeadForm/LeadForm"), {
   ssr: true, // Enable SSR to reduce CLS
 });
 
+const HeartsLeaderboard = dynamic(
+  () => import("../components/Hearts/HeartsLeaderboard"),
+  {
+    loading: () => null,
+    ssr: false, // Not critical for first paint
+  }
+);
+
 // Lower priority component, can load client-side
 const BackgroundGrid = dynamic(
   () => import("../components/HeroBanner/BackgroundGridComponent"),
@@ -101,15 +99,10 @@ const PageSkeleton = () => (
 // Main Home component
 export default function Home() {
   const { user } = useAuthInfo();
-  const growthbook = React.useMemo(() => initGrowthBook(user?.userId), [user]);
-  const [isLoading, setIsLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    growthbook.init({ streaming: true });
-    
-    // Don't delay rendering to improve FCP
-    setIsLoading(false);
-  }, [growthbook]);
+  const [isLoading, setIsLoading] = React.useState(false);
+
+
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -126,8 +119,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
         
-        {/* Performance optimizations */}
-        <link rel="preconnect" href="https://cdn.growthbook.io" />
+        {/* Performance optimizations */}        
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
@@ -143,15 +135,30 @@ export default function Home() {
         {/* For better caching */}
         <meta httpEquiv="Cache-Control" content="max-age=86400" />
       </Head>
-      <GrowthBookProvider growthbook={growthbook}>
-        {/* Eliminate Suspense outer wrapper - rely on SSR instead */}
+      
+        {/* Optimized layout for better above-the-fold content */}
         <BackgroundGrid />
-        <LeadForm />
-        <Logo />
-        <TitleStyled />
-        <HeroBanner />
-      </GrowthBookProvider>
-      <HackathonList />
+        <Container maxWidth="xl" sx={{ mt: { xs: 9, md: 10 }, px: { xs: 1.5, sm: 3, md: 4 } }}>
+          {/* 1. Brand — attention */}
+          <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
+            <Logo />
+            <TitleStyled />
+          </Box>
+
+          {/* 2. Social proof — trust (Cialdini: people follow people) */}
+          <HeartsLeaderboard />
+
+          {/* 3. CTAs — action (visitor is now primed) */}
+          <Box sx={{ mb: { xs: 2, md: 3 } }}>
+            <HeroBanner />
+          </Box>
+
+          {/* 4. Newsletter — stay connected */}
+          <LeadForm />
+
+          {/* 5. Events */}
+          <HackathonList compact={true} />
+        </Container>      
     </Fragment>
   );
 }

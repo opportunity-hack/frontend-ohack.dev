@@ -56,6 +56,8 @@ const ApplicationEditDialog = ({
   }, [application]);
 
   // Field configurations for different application types
+  // NOTE: Availability options below assume a typical Fri-Sun weekend hackathon format.
+  // For events with different schedules, update these options to match the event dates.
   const getFieldConfig = useCallback((type) => {
     const configs = {
       hacker: {
@@ -643,7 +645,7 @@ const ApplicationEditDialog = ({
           
           <Grid container spacing={2}>
             {currentStepFields.map((field) => (
-              <Grid item xs={12} sm={field.type === 'textarea' ? 12 : 6} key={field.name}>
+              <Grid size={{ xs: 12, sm: field.type === 'textarea' ? 12 : 6 }} key={field.name}>
                 {renderField(field)}
               </Grid>
             ))}
@@ -657,12 +659,12 @@ const ApplicationEditDialog = ({
             Application Metadata
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="body2" color="text.secondary">
                 Submitted: {formData.timestamp ? new Date(formData.timestamp).toLocaleString() : 'Unknown'}
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="body2" color="text.secondary">
                 Status: {formData.isSelected ? 'Approved' : 'Pending'}
               </Typography>

@@ -17,19 +17,23 @@ const TeamAdminPage = withRequiredAuthInfo(({ userClass }) => {
   const [loading, setLoading] = useState(true);
   const [hackathons, setHackathons] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedHackathon, setSelectedHackathon] = useState(""); // Add this state
+  const [selectedHackathon, setSelectedHackathon] = useState("");
   
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const orgId = org.orgId;
   const isAdmin = org.hasPermission("volunteer.admin");
 
-  // Set active tab from URL query params
+  // Set active tab and hackathon from URL query params
   useEffect(() => {
     if (router.query.tab) {
       const tabIndex = parseInt(router.query.tab);
       if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex <= 2) {
         setActiveTab(tabIndex);
       }
+    }
+    
+    if (router.query.event_id) {
+      setSelectedHackathon(router.query.event_id);
     }
   }, [router.query]);
 
@@ -67,9 +71,14 @@ const TeamAdminPage = withRequiredAuthInfo(({ userClass }) => {
   // Handle tab change and update URL
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+    const query = { ...router.query, tab: newValue };
+    // Keep event_id in URL if it exists
+    if (selectedHackathon) {
+      query.event_id = selectedHackathon;
+    }
     router.push({
       pathname: router.pathname,
-      query: { ...router.query, tab: newValue },
+      query,
     }, undefined, { shallow: true });
   };
 
@@ -107,18 +116,12 @@ const TeamAdminPage = withRequiredAuthInfo(({ userClass }) => {
 
         {activeTab === 0 && (
           <TeamManagement 
-            orgId={orgId} 
-            hackathons={hackathons} 
-            selectedHackathon={selectedHackathon}
-            setSelectedHackathon={setSelectedHackathon}
+            orgId={orgId}
           />
         )}
         {activeTab === 1 && (
           <TeamAssignments 
-            orgId={orgId} 
-            hackathons={hackathons}
-            selectedHackathon={selectedHackathon}
-            setSelectedHackathon={setSelectedHackathon} 
+            orgId={orgId}
           />
         )}
         {activeTab === 2 && (

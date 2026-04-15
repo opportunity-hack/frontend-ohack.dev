@@ -231,7 +231,7 @@ const BlogPage = ({ posts }) => {
             </SearchContainer>
 
             <Grid container spacing={3}>
-                <Grid item xs={12} md={8}>
+                <Grid size={{ xs: 12, md: 8 }}>
                     <Typography variant="h4" component="h2" gutterBottom>
                         {selectedTag ? `Posts tagged with #${selectedTag}` : 
                          searchTerm ? `Search results for "${searchTerm}"` : 
@@ -260,7 +260,7 @@ const BlogPage = ({ posts }) => {
                     <News newsData={filteredData} loading={loading} />
                 </Grid>
                 
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                     <Box position="sticky" top={20}>
                         <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
                             <Typography variant="h5" component="h3" gutterBottom>

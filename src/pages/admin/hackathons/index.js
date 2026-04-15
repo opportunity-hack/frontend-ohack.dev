@@ -29,19 +29,48 @@ import {
   ListItemSecondaryAction,
   Tabs,
   Tab,
+  Card,
+  CardContent,
+  CardActions,
+  Stack,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
+  Switch,
+  FormControlLabel,
+  Divider,
 } from "@mui/material";
-import { Edit as EditIcon, Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import {
+  Edit as EditIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  ExpandMore as ExpandMoreIcon,
+  Group as TeamsIcon,
+  VolunteerActivism as VolunteerIcon,
+  CheckCircle as CheckInIcon,
+  Gavel as JudgingIcon,
+  Launch as LaunchIcon,
+  QuizOutlined as QuizIcon,
+  ToggleOn as ToggleIcon,
+  Groups as TeamSettingsIcon,
+} from "@mui/icons-material";
 import { LocalizationProvider, DatePicker, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { useRouter } from "next/router";
 import AdminPage from "../../../components/admin/AdminPage";
 import DonationManagement from "../../../components/admin/DonationManagement";
 import CountdownManagement from "../../../components/admin/CountdownManagement";
 import LinkManagement from "../../../components/admin/LinkManagement";
 import HackathonDuplicator from "../../../components/admin/HackathonDuplicator";
 import NonprofitManagement from "../../../components/admin/NonprofitManagement";
+import TimezoneSelect from "react-timezone-select";
+import { DEFAULT_EVENT_TIMEZONE } from "../../../lib/timezoneUtils";
 
 const AdminHackathonPage = () => {
-
+  const router = useRouter();
   const { accessToken, userClass } = useAuthInfo();
   const [hackathons, setHackathons] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -133,6 +162,7 @@ const AdminHackathonPage = () => {
         max_people_per_team: 5,
         max_teams_per_problem: 10,
         min_people_per_team: 2,
+        hacker_required_questions: { questions: [] },
       },
       donation_current: {
         food: '0',
@@ -255,8 +285,52 @@ const AdminHackathonPage = () => {
   const handleUpdateConstraint = (field, value) => {
     setEditingHackathon((prev) => ({
       ...prev,
-      constraints: { ...prev.constraints, [field]: parseInt(value, 10) },
+      constraints: { ...prev.constraints, [field]: value },
     }));
+  };
+
+  const handleAddRequiredQuestion = () => {
+    setEditingHackathon((prev) => {
+      const questions = prev.constraints?.hacker_required_questions?.questions || [];
+      return {
+        ...prev,
+        constraints: {
+          ...prev.constraints,
+          hacker_required_questions: {
+            questions: [...questions, { question: "", required_answer: true, error: "" }],
+          },
+        },
+      };
+    });
+  };
+
+  const handleUpdateRequiredQuestion = (index, field, value) => {
+    setEditingHackathon((prev) => {
+      const questions = [...(prev.constraints?.hacker_required_questions?.questions || [])];
+      questions[index] = { ...questions[index], [field]: value };
+      return {
+        ...prev,
+        constraints: {
+          ...prev.constraints,
+          hacker_required_questions: { questions },
+        },
+      };
+    });
+  };
+
+  const handleRemoveRequiredQuestion = (index) => {
+    setEditingHackathon((prev) => {
+      const questions = (prev.constraints?.hacker_required_questions?.questions || []).filter(
+        (_, i) => i !== index
+      );
+      return {
+        ...prev,
+        constraints: {
+          ...prev.constraints,
+          hacker_required_questions: { questions },
+        },
+      };
+    });
   };
 
   const handleNonprofitUpdate = useCallback(() => {
@@ -282,7 +356,7 @@ const AdminHackathonPage = () => {
         <RequiredAuthProvider
             authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
             displayIfLoggedOut={<RedirectToLogin
-      postLoginRedirectUrl={window.location.href}
+      postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''}
     />}
             >
 
@@ -298,7 +372,7 @@ const AdminHackathonPage = () => {
             authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
             displayIfLoggedOut={
                 <RedirectToLogin
-      postLoginRedirectUrl={window.location.href}
+      postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''}
     />
             }
             >
@@ -310,7 +384,7 @@ const AdminHackathonPage = () => {
     >
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center" justifyContent="flex-end">
-          <Grid item>
+          <Grid>
             <Button
               onClick={handleAddHackathon}
               variant="contained"
@@ -326,49 +400,163 @@ const AdminHackathonPage = () => {
       {loading ? (
         <CircularProgress />
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Title</TableCell>
-                <TableCell>Event ID</TableCell>
-                <TableCell>Start Date (Newest First)</TableCell>
-                <TableCell>End Date</TableCell>
-                <TableCell>Location</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {hackathons.map((hackathon) => (
-                <TableRow key={hackathon.id}>
-                  <TableCell>{hackathon.title}</TableCell>
-                  <TableCell>{hackathon.event_id}</TableCell>
-                  <TableCell>{hackathon.start_date}</TableCell>
-                  <TableCell>{hackathon.end_date}</TableCell>
-                  <TableCell>{hackathon.location}</TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleEditHackathon(hackathon)}>
-                      <EditIcon />
-                    </IconButton>
-                    <HackathonDuplicator
-                      hackathon={hackathon}
-                      onDuplicate={(newHackathon) => {
-                        fetchHackathons(); // Refresh the list after duplication
-                        setSnackbar({
-                          open: true,
-                          message: "Hackathon duplicated successfully",
-                          severity: "success",
-                        });
-                      }}
-                      accessToken={accessToken}
-                      orgId={orgId}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Grid container spacing={3}>
+          {hackathons.map((hackathon) => (
+            <Grid size={{ xs: 12, lg: 6 }} key={hackathon.id}>
+              <Card elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  {/* Header */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        {hackathon.title}
+                      </Typography>
+                      <Chip
+                        label={hackathon.event_id}
+                        color="primary"
+                        size="small"
+                        sx={{ mb: 1 }}
+                      />
+                    </Box>
+                    <Box>
+                      <IconButton onClick={() => handleEditHackathon(hackathon)} size="small">
+                        <EditIcon />
+                      </IconButton>
+                      <HackathonDuplicator
+                        hackathon={hackathon}
+                        onDuplicate={(newHackathon) => {
+                          fetchHackathons();
+                          setSnackbar({
+                            open: true,
+                            message: "Hackathon duplicated successfully",
+                            severity: "success",
+                          });
+                        }}
+                        accessToken={accessToken}
+                        orgId={orgId}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Event Details */}
+                  <Stack spacing={1} sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      📅 {hackathon.start_date} to {hackathon.end_date}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      📍 {hackathon.location}
+                    </Typography>
+                    {hackathon.description && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        {hackathon.description.length > 100
+                          ? `${hackathon.description.substring(0, 100)}...`
+                          : hackathon.description
+                        }
+                      </Typography>
+                    )}
+                  </Stack>
+                </CardContent>
+
+                <CardActions sx={{ p: 1.5, pt: 0, flexDirection: 'column', alignItems: 'stretch' }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 'bold', textAlign: 'left' }}>
+                    Admin Tools:
+                  </Typography>
+
+                  {/* Admin Tool Buttons - Compact Stack Layout */}
+                  <Stack spacing={1} sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        startIcon={<TeamsIcon />}
+                        variant="outlined"
+                        onClick={() => router.push(`/admin/teams?event_id=${hackathon.event_id}`)}
+                        sx={{
+                          flex: 1,
+                          textTransform: 'none',
+                          fontSize: '0.7rem',
+                          minHeight: 32,
+                          px: 0.5,
+                          '& .MuiButton-startIcon': {
+                            mr: 0.5
+                          }
+                        }}
+                      >
+                        Teams
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<VolunteerIcon />}
+                        variant="outlined"
+                        onClick={() => router.push(`/admin/volunteer?event_id=${hackathon.event_id}`)}
+                        sx={{
+                          flex: 1,
+                          textTransform: 'none',
+                          fontSize: '0.7rem',
+                          minHeight: 32,
+                          px: 0.5,
+                          '& .MuiButton-startIcon': {
+                            mr: 0.5
+                          }
+                        }}
+                      >
+                        Volunteer
+                      </Button>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        startIcon={<CheckInIcon />}
+                        variant="outlined"
+                        onClick={() => router.push(`/admin/check-in?event_id=${hackathon.event_id}`)}
+                        sx={{
+                          flex: 1,
+                          textTransform: 'none',
+                          fontSize: '0.7rem',
+                          minHeight: 32,
+                          px: 0.5,
+                          '& .MuiButton-startIcon': {
+                            mr: 0.5
+                          }
+                        }}
+                      >
+                        Check-in
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<JudgingIcon />}
+                        variant="outlined"
+                        onClick={() => router.push(`/admin/judging?event_id=${hackathon.event_id}`)}
+                        sx={{
+                          flex: 1,
+                          textTransform: 'none',
+                          fontSize: '0.7rem',
+                          minHeight: 32,
+                          px: 0.5,
+                          '& .MuiButton-startIcon': {
+                            mr: 0.5
+                          }
+                        }}
+                      >
+                        Judging
+                      </Button>
+                    </Box>
+                  </Stack>
+
+                  {/* View Event Link */}
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<LaunchIcon />}
+                    onClick={() => window.open(`/hack/${hackathon.event_id}`, '_blank')}
+                    sx={{ textTransform: 'none', minHeight: 36 }}
+                  >
+                    View Event Page
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       )}
 
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
@@ -427,6 +615,15 @@ const AdminHackathonPage = () => {
                 }}
                 margin="normal"
                 />
+              <Box sx={{ mt: 2, mb: 1 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Event Timezone
+                </Typography>
+                <TimezoneSelect
+                  value={{ value: editingHackathon?.timezone || DEFAULT_EVENT_TIMEZONE, label: editingHackathon?.timezone || DEFAULT_EVENT_TIMEZONE }}
+                  onChange={(tz) => handleInputChange("timezone", tz.value)}
+                />
+              </Box>
               <TextField
                 fullWidth
                 label="Event ID"
@@ -490,6 +687,7 @@ const AdminHackathonPage = () => {
                   <CountdownManagement
                     countdowns={editingHackathon?.countdowns || []}
                     onChange={handleCountdownsChange}
+                    eventTimezone={editingHackathon?.timezone || DEFAULT_EVENT_TIMEZONE}
                   />
                 </AccordionDetails>
               </Accordion>
@@ -503,7 +701,7 @@ const AdminHackathonPage = () => {
                     label="Max People Per Team"
                     type="number"
                     value={editingHackathon?.constraints.max_people_per_team || ""}
-                    onChange={(e) => handleUpdateConstraint("max_people_per_team", e.target.value)}
+                    onChange={(e) => handleUpdateConstraint("max_people_per_team", parseInt(e.target.value, 10))}
                     fullWidth
                     margin="normal"
                   />
@@ -511,7 +709,7 @@ const AdminHackathonPage = () => {
                     label="Max Teams Per Problem"
                     type="number"
                     value={editingHackathon?.constraints.max_teams_per_problem || ""}
-                    onChange={(e) => handleUpdateConstraint("max_teams_per_problem", e.target.value)}
+                    onChange={(e) => handleUpdateConstraint("max_teams_per_problem", parseInt(e.target.value, 10))}
                     fullWidth
                     margin="normal"
                   />
@@ -519,10 +717,221 @@ const AdminHackathonPage = () => {
                     label="Min People Per Team"
                     type="number"
                     value={editingHackathon?.constraints.min_people_per_team || ""}
-                    onChange={(e) => handleUpdateConstraint("min_people_per_team", e.target.value)}
+                    onChange={(e) => handleUpdateConstraint("min_people_per_team", parseInt(e.target.value, 10))}
                     fullWidth
                     margin="normal"
                   />
+
+                  <Divider sx={{ my: 3 }} />
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                      <ToggleIcon fontSize="small" /> Application Toggles
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, ml: 1 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_hacker_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_hacker_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Hacker Applications"
+                      />
+                      {!!editingHackathon?.constraints?.application_hacker_enabled && (
+                        <TextField
+                          label="External Hacker Application URL"
+                          value={editingHackathon?.constraints?.application_hacker_external_url || ""}
+                          onChange={(e) => handleUpdateConstraint("application_hacker_external_url", e.target.value)}
+                          fullWidth
+                          margin="dense"
+                          helperText="Leave blank to use built-in form. Must start with http:// or https://"
+                          error={
+                            !!editingHackathon?.constraints?.application_hacker_external_url &&
+                            !editingHackathon.constraints.application_hacker_external_url.match(/^https?:\/\//)
+                          }
+                          sx={{ ml: 4, maxWidth: 500 }}
+                        />
+                      )}
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_mentor_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_mentor_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Mentor Applications"
+                      />
+                      {!!editingHackathon?.constraints?.application_mentor_enabled && (
+                        <TextField
+                          label="External Mentor Application URL"
+                          value={editingHackathon?.constraints?.application_mentor_external_url || ""}
+                          onChange={(e) => handleUpdateConstraint("application_mentor_external_url", e.target.value)}
+                          fullWidth
+                          margin="dense"
+                          helperText="Leave blank to use built-in form. Must start with http:// or https://"
+                          error={
+                            !!editingHackathon?.constraints?.application_mentor_external_url &&
+                            !editingHackathon.constraints.application_mentor_external_url.match(/^https?:\/\//)
+                          }
+                          sx={{ ml: 4, maxWidth: 500 }}
+                        />
+                      )}
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_judge_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_judge_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Judge Applications"
+                      />
+                      {!!editingHackathon?.constraints?.application_judge_enabled && (
+                        <TextField
+                          label="External Judge Application URL"
+                          value={editingHackathon?.constraints?.application_judge_external_url || ""}
+                          onChange={(e) => handleUpdateConstraint("application_judge_external_url", e.target.value)}
+                          fullWidth
+                          margin="dense"
+                          helperText="Leave blank to use built-in form. Must start with http:// or https://"
+                          error={
+                            !!editingHackathon?.constraints?.application_judge_external_url &&
+                            !editingHackathon.constraints.application_judge_external_url.match(/^https?:\/\//)
+                          }
+                          sx={{ ml: 4, maxWidth: 500 }}
+                        />
+                      )}
+                      <TextField
+                        label="Judge Access Code"
+                        value={editingHackathon?.constraints?.application_judge_enabled_code || ""}
+                        onChange={(e) => handleUpdateConstraint("application_judge_enabled_code", e.target.value)}
+                        fullWidth
+                        margin="dense"
+                        helperText="Judges enter this code to access the application, even when judge applications are disabled"
+                        sx={{ ml: 4, maxWidth: 400 }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_nonprofit_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_nonprofit_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Nonprofit Applications"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.application_sponsor_enabled}
+                            onChange={(e) => handleUpdateConstraint("application_sponsor_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Sponsor Applications"
+                      />
+                    </Box>
+                  </Box>
+
+                  <Divider sx={{ my: 3 }} />
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                      <TeamSettingsIcon fontSize="small" /> Team Settings
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, ml: 1 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.team_creation_enabled}
+                            onChange={(e) => handleUpdateConstraint("team_creation_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Team Creation"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.team_join_enabled}
+                            onChange={(e) => handleUpdateConstraint("team_join_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Team Joining"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!editingHackathon?.constraints?.team_find_a_team_enabled}
+                            onChange={(e) => handleUpdateConstraint("team_find_a_team_enabled", e.target.checked)}
+                          />
+                        }
+                        label="Find a Team"
+                      />
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ mt: 3, mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                      <QuizIcon fontSize="small" /> Hacker Screening Questions
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Add eligibility questions that applicants must answer correctly to proceed with their hacker application.
+                      Use this for event-specific gates (e.g., "Are you a member of ASU WiCS?").
+                    </Typography>
+
+                    {(editingHackathon?.constraints?.hacker_required_questions?.questions || []).map((q, index) => (
+                      <Card key={index} variant="outlined" sx={{ mb: 2, p: 2 }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                            Question {index + 1}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleRemoveRequiredQuestion(index)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                        <TextField
+                          label="Question Text"
+                          fullWidth
+                          value={q.question || ""}
+                          onChange={(e) => handleUpdateRequiredQuestion(index, "question", e.target.value)}
+                          margin="dense"
+                          placeholder="e.g., Are you a current member of ASU WiCS?"
+                        />
+                        <FormControl fullWidth margin="dense">
+                          <InputLabel id={`required-answer-label-${index}`}>Required Answer</InputLabel>
+                          <Select
+                            labelId={`required-answer-label-${index}`}
+                            value={q.required_answer === true || q.required_answer === "true" ? "yes" : "no"}
+                            label="Required Answer"
+                            onChange={(e) => handleUpdateRequiredQuestion(index, "required_answer", e.target.value === "yes")}
+                          >
+                            <MenuItem value="yes">Yes (applicant must answer Yes)</MenuItem>
+                            <MenuItem value="no">No (applicant must answer No)</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <TextField
+                          label="Error Message"
+                          fullWidth
+                          value={q.error || ""}
+                          onChange={(e) => handleUpdateRequiredQuestion(index, "error", e.target.value)}
+                          margin="dense"
+                          placeholder="e.g., This hackathon is only open to ASU WiCS members."
+                          helperText="Shown when an applicant gives the wrong answer"
+                        />
+                      </Card>
+                    ))}
+
+                    <Button
+                      startIcon={<AddIcon />}
+                      onClick={handleAddRequiredQuestion}
+                      variant="outlined"
+                      size="small"
+                    >
+                      Add Question
+                    </Button>
+                  </Box>
                 </AccordionDetails>
               </Accordion>
 

@@ -34,14 +34,100 @@ const ApplicationReviewList = ({
   onBatchApprove,
   onBatchReject,
   isLoading = false,
-  eventId
+  eventId,
+  // Filter state props
+  filter,
+  statusFilter,
+  inPersonFilter,
+  checkedInFilter,
+  sortBy,
+  sortOrder,
+  showBatchActions,
+  // Filter change callbacks
+  onFilterChange,
+  onStatusFilterChange,
+  onInPersonFilterChange,
+  onCheckedInFilterChange,
+  onSortByChange,
+  onSortOrderChange,
+  onShowBatchActionsChange
 }) => {
-  const [filter, setFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('timestamp');
-  const [sortOrder, setSortOrder] = useState('desc');
   const [selectedApplications, setSelectedApplications] = useState(new Set());
-  const [showBatchActions, setShowBatchActions] = useState(false);
+  
+  // Use controlled props if provided, otherwise fall back to local state
+  const [localFilter, setLocalFilter] = useState('');
+  const [localStatusFilter, setLocalStatusFilter] = useState('all');
+  const [localInPersonFilter, setLocalInPersonFilter] = useState('all');
+  const [localCheckedInFilter, setLocalCheckedInFilter] = useState('all');
+  const [localSortBy, setLocalSortBy] = useState('timestamp');
+  const [localSortOrder, setLocalSortOrder] = useState('desc');
+  const [localShowBatchActions, setLocalShowBatchActions] = useState(false);
+
+  // Use controlled values if provided, otherwise use local state
+  const currentFilter = filter !== undefined ? filter : localFilter;
+  const currentStatusFilter = statusFilter !== undefined ? statusFilter : localStatusFilter;
+  const currentInPersonFilter = inPersonFilter !== undefined ? inPersonFilter : localInPersonFilter;
+  const currentCheckedInFilter = checkedInFilter !== undefined ? checkedInFilter : localCheckedInFilter;
+  const currentSortBy = sortBy !== undefined ? sortBy : localSortBy;
+  const currentSortOrder = sortOrder !== undefined ? sortOrder : localSortOrder;
+  const currentShowBatchActions = showBatchActions !== undefined ? showBatchActions : localShowBatchActions;
+  
+  // Handlers that call parent callbacks or use local state
+  const handleFilterChange = (value) => {
+    if (onFilterChange) {
+      onFilterChange(value);
+    } else {
+      setLocalFilter(value);
+    }
+  };
+  
+  const handleStatusFilterChange = (value) => {
+    if (onStatusFilterChange) {
+      onStatusFilterChange(value);
+    } else {
+      setLocalStatusFilter(value);
+    }
+  };
+  
+  const handleInPersonFilterChange = (value) => {
+    if (onInPersonFilterChange) {
+      onInPersonFilterChange(value);
+    } else {
+      setLocalInPersonFilter(value);
+    }
+  };
+
+  const handleCheckedInFilterChange = (value) => {
+    if (onCheckedInFilterChange) {
+      onCheckedInFilterChange(value);
+    } else {
+      setLocalCheckedInFilter(value);
+    }
+  };
+
+  const handleSortByChange = (value) => {
+    if (onSortByChange) {
+      onSortByChange(value);
+    } else {
+      setLocalSortBy(value);
+    }
+  };
+  
+  const handleSortOrderChange = (value) => {
+    if (onSortOrderChange) {
+      onSortOrderChange(value);
+    } else {
+      setLocalSortOrder(value);
+    }
+  };
+  
+  const handleShowBatchActionsChange = (value) => {
+    if (onShowBatchActionsChange) {
+      onShowBatchActionsChange(value);
+    } else {
+      setLocalShowBatchActions(value);
+    }
+  };
 
   // Statistics
   const stats = useMemo(() => {
@@ -57,8 +143,8 @@ const ApplicationReviewList = ({
     let filtered = applications;
 
     // Apply text filter
-    if (filter) {
-      const searchLower = filter.toLowerCase();
+    if (currentFilter) {
+      const searchLower = currentFilter.toLowerCase();
       filtered = filtered.filter(app => 
         (app.name || '').toLowerCase().includes(searchLower) ||
         (app.email || '').toLowerCase().includes(searchLower) ||
@@ -70,21 +156,42 @@ const ApplicationReviewList = ({
     }
 
     // Apply status filter
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'approved') {
+    if (currentStatusFilter !== 'all') {
+      if (currentStatusFilter === 'approved') {
         filtered = filtered.filter(app => app.isSelected);
-      } else if (statusFilter === 'pending') {
+      } else if (currentStatusFilter === 'pending') {
         filtered = filtered.filter(app => !app.isSelected);
+      } else if (applicationType === 'judge') {
+        // For judges, also support filtering by specific status values
+        filtered = filtered.filter(app => app.status === currentStatusFilter);
+      }
+    }
+
+    // Apply in-person filter (for judges)
+    if (currentInPersonFilter !== 'all' && applicationType === 'judge') {
+      if (currentInPersonFilter === 'yes') {
+        filtered = filtered.filter(app => app.inPerson === 'Yes' || app.inPerson === true);
+      } else if (currentInPersonFilter === 'no') {
+        filtered = filtered.filter(app => app.inPerson === 'No' || app.inPerson === false || !app.inPerson);
+      }
+    }
+
+    // Apply checked-in filter (for all volunteer types)
+    if (currentCheckedInFilter !== 'all') {
+      if (currentCheckedInFilter === 'yes') {
+        filtered = filtered.filter(app => app.checkedIn === true);
+      } else if (currentCheckedInFilter === 'no') {
+        filtered = filtered.filter(app => app.checkedIn === false || app.checkedIn === null || app.checkedIn === undefined);
       }
     }
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
+      let aValue = a[currentSortBy];
+      let bValue = b[currentSortBy];
 
       // Handle different data types
-      if (sortBy === 'timestamp') {
+      if (currentSortBy === 'timestamp') {
         aValue = new Date(aValue || 0);
         bValue = new Date(bValue || 0);
       } else if (typeof aValue === 'string') {
@@ -92,13 +199,13 @@ const ApplicationReviewList = ({
         bValue = (bValue || '').toLowerCase();
       }
 
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      if (aValue < bValue) return currentSortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return currentSortOrder === 'asc' ? 1 : -1;
       return 0;
     });
 
     return filtered;
-  }, [applications, filter, statusFilter, sortBy, sortOrder]);
+  }, [applications, currentFilter, currentStatusFilter, currentInPersonFilter, currentCheckedInFilter, currentSortBy, currentSortOrder, applicationType]);
 
   // Handle individual application actions
   const handleApprove = useCallback(async (application) => {
@@ -203,7 +310,7 @@ const ApplicationReviewList = ({
         </Typography>
         
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary">
                 {stats.total}
@@ -213,7 +320,7 @@ const ApplicationReviewList = ({
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main">
                 {stats.approved}
@@ -223,7 +330,7 @@ const ApplicationReviewList = ({
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main">
                 {stats.pending}
@@ -239,39 +346,81 @@ const ApplicationReviewList = ({
       {/* Filters and Controls */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Search applications"
               variant="outlined"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              value={currentFilter}
+              onChange={(e) => handleFilterChange(e.target.value)}
               placeholder="Name, email, organization..."
               size="small"
             />
           </Grid>
           
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Status</InputLabel>
               <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                value={currentStatusFilter}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
                 label="Status"
               >
                 <MenuItem value="all">All</MenuItem>
                 <MenuItem value="pending">Pending</MenuItem>
                 <MenuItem value="approved">Approved</MenuItem>
+                {/* Additional status options for judges */}
+                {applicationType === 'judge' && [
+                  <MenuItem key="denied" value="denied">Denied</MenuItem>,
+                  <MenuItem key="verified_travel" value="verified_travel">Verified Travel</MenuItem>,
+                  <MenuItem key="confirmed" value="confirmed">Confirmed</MenuItem>,
+                  <MenuItem key="withdrew" value="withdrew">Withdrew</MenuItem>,
+                  <MenuItem key="no_show" value="no_show">No Show</MenuItem>
+                ]}
               </Select>
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          {/* Checked In Filter - Show for all volunteer types */}
+          <Grid size={{ xs: 12, sm: 2 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Checked In</InputLabel>
+              <Select
+                value={currentCheckedInFilter}
+                onChange={(e) => handleCheckedInFilterChange(e.target.value)}
+                label="Checked In"
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="yes">Checked In</MenuItem>
+                <MenuItem value="no">Not Checked In</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* In Person Filter - Only show for judges */}
+          {applicationType === 'judge' && (
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>In Person</InputLabel>
+                <Select
+                  value={currentInPersonFilter}
+                  onChange={(e) => handleInPersonFilterChange(e.target.value)}
+                  label="In Person"
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="yes">In Person</MenuItem>
+                  <MenuItem value="no">Remote</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+
+          <Grid size={{ xs: 12, sm: 2 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Sort by</InputLabel>
               <Select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                value={currentSortBy}
+                onChange={(e) => handleSortByChange(e.target.value)}
                 label="Sort by"
               >
                 <MenuItem value="timestamp">Date</MenuItem>
@@ -282,29 +431,29 @@ const ApplicationReviewList = ({
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <ButtonGroup size="small" fullWidth>
               <Button
-                variant={sortOrder === 'asc' ? 'contained' : 'outlined'}
-                onClick={() => setSortOrder('asc')}
+                variant={currentSortOrder === 'asc' ? 'contained' : 'outlined'}
+                onClick={() => handleSortOrderChange('asc')}
               >
                 A-Z
               </Button>
               <Button
-                variant={sortOrder === 'desc' ? 'contained' : 'outlined'}
-                onClick={() => setSortOrder('desc')}
+                variant={currentSortOrder === 'desc' ? 'contained' : 'outlined'}
+                onClick={() => handleSortOrderChange('desc')}
               >
                 Z-A
               </Button>
             </ButtonGroup>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={showBatchActions}
-                  onChange={(e) => setShowBatchActions(e.target.checked)}
+                  checked={currentShowBatchActions}
+                  onChange={(e) => handleShowBatchActionsChange(e.target.checked)}
                 />
               }
               label="Batch Actions"
@@ -313,7 +462,7 @@ const ApplicationReviewList = ({
         </Grid>
 
         {/* Batch Actions */}
-        {showBatchActions && (
+        {currentShowBatchActions && (
           <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
               <FormControlLabel
@@ -362,19 +511,37 @@ const ApplicationReviewList = ({
           Showing {processedApplications.length} of {applications.length} applications
         </Typography>
         
-        {filter && (
+        {currentFilter && (
           <Chip
-            label={`Search: "${filter}"`}
-            onDelete={() => setFilter('')}
+            label={`Search: "${currentFilter}"`}
+            onDelete={() => handleFilterChange('')}
             size="small"
             variant="outlined"
           />
         )}
         
-        {statusFilter !== 'all' && (
+        {currentStatusFilter !== 'all' && (
           <Chip
-            label={`Status: ${statusFilter}`}
-            onDelete={() => setStatusFilter('all')}
+            label={`Status: ${currentStatusFilter}`}
+            onDelete={() => handleStatusFilterChange('all')}
+            size="small"
+            variant="outlined"
+          />
+        )}
+
+        {currentCheckedInFilter !== 'all' && (
+          <Chip
+            label={`Checked In: ${currentCheckedInFilter === 'yes' ? 'Yes' : 'No'}`}
+            onDelete={() => handleCheckedInFilterChange('all')}
+            size="small"
+            variant="outlined"
+          />
+        )}
+
+        {currentInPersonFilter !== 'all' && applicationType === 'judge' && (
+          <Chip
+            label={`In Person: ${currentInPersonFilter === 'yes' ? 'Yes' : 'No'}`}
+            onDelete={() => handleInPersonFilterChange('all')}
             size="small"
             variant="outlined"
           />
@@ -390,12 +557,14 @@ const ApplicationReviewList = ({
               : 'No applications match your current filters'
             }
           </Typography>
-          {filter || statusFilter !== 'all' ? (
+          {currentFilter || currentStatusFilter !== 'all' || currentInPersonFilter !== 'all' || currentCheckedInFilter !== 'all' ? (
             <Button
               variant="outlined"
               onClick={() => {
-                setFilter('');
-                setStatusFilter('all');
+                handleFilterChange('');
+                handleStatusFilterChange('all');
+                handleInPersonFilterChange('all');
+                handleCheckedInFilterChange('all');
               }}
               sx={{ mt: 2 }}
             >
@@ -407,7 +576,7 @@ const ApplicationReviewList = ({
         <Box>
           {processedApplications.map((application, index) => (
             <Box key={application.id || application.timestamp || index} sx={{ position: 'relative' }}>
-              {showBatchActions && (
+              {currentShowBatchActions && (
                 <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1 }}>
                   <Checkbox
                     checked={selectedApplications.has(application.id || application.timestamp)}

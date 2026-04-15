@@ -65,12 +65,13 @@ const roundToOneDecimal = (number) => {
 export async function getStaticProps() {
   return {
     props: {
-      metaTitle: "Volunteer Time Tracking - Opportunity Hack",
+      metaTitle: "Volunteer Tracking & Time Management - Opportunity Hack",
       metaDescription:
-        "Track your volunteer hours with Opportunity Hack. Our easy-to-use platform helps you record and manage your contributions to the community.",
+        "Comprehensive volunteer tracking platform for managing volunteer hours, tracking community service, and measuring social impact. Perfect for nonprofits and volunteers.",
       metaKeywords:
-        "volunteer tracking, time tracking, community service, opportunity hack, volunteer hours",
+        "volunteer tracking, volunteer time tracking, volunteer hours tracker, volunteer management, community service tracking, nonprofit volunteer tracking, volunteer hour management, volunteer time management system",
       ogImage: "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp",
+      canonicalUrl: "https://ohack.dev/volunteer/track",
     },
   };
 }
@@ -84,6 +85,7 @@ const VolunteerTrackingPage = withAuthInfo(
     metaDescription,
     metaKeywords,
     ogImage,
+    canonicalUrl,
   }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -356,33 +358,65 @@ const VolunteerTrackingPage = withAuthInfo(
           <title>{metaTitle}</title>
           <meta name="description" content={metaDescription} />
           <meta name="keywords" content={metaKeywords} />
+          <link rel="canonical" href={canonicalUrl} />
           <meta property="og:title" content={metaTitle} />
           <meta property="og:description" content={metaDescription} />
           <meta property="og:image" content={ogImage} />
-          <meta property="og:url" content="https://ohack.dev/volunteer/track" />
+          <meta property="og:url" content={canonicalUrl} />
           <meta property="og:site_name" content="Opportunity Hack" />
-          <meta property="image" content={ogImage} />
           <meta property="og:type" content="website" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={metaTitle} />
           <meta name="twitter:description" content={metaDescription} />
           <meta name="twitter:image" content={ogImage} />
+          <meta name="robots" content="index, follow" />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "Volunteer Tracking Platform",
+                "description": metaDescription,
+                "url": canonicalUrl,
+                "applicationCategory": "VolunteerManagement",
+                "operatingSystem": "Web",
+                "offers": {
+                  "@type": "Offer",
+                  "price": "0",
+                  "priceCurrency": "USD"
+                },
+                "provider": {
+                  "@type": "Organization",
+                  "name": "Opportunity Hack"
+                }
+              })
+            }}
+          />
         </Head>
 
         {showConfetti && <Confetti />}
-        <Typography variant="h4" gutterBottom align="center">
-          Volunteer Time Tracking
+        <Typography variant="h1" sx={{ fontSize: { xs: '2rem', sm: '2.5rem' } }} gutterBottom align="center">
+          Volunteer Tracking & Time Management
         </Typography>
 
         <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 }, mb: 2 }}>
+          <Typography variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }} gutterBottom>
+            Professional Volunteer Tracking Platform
+          </Typography>
           <Typography variant="body1" paragraph>
-            At Opportunity Hack, we believe in recognizing and celebrating your
-            contributions. By tracking volunteer hours, we can:
+            Our volunteer tracking system helps you efficiently manage and record your volunteer hours.
+            Whether you're tracking community service for nonprofits, managing volunteer schedules, 
+            or measuring social impact, our platform provides comprehensive volunteer time management tools.
+          </Typography>
+          <Typography variant="h3" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} gutterBottom>
+            Why Track Volunteer Hours?
           </Typography>
           <ul>
-            <li>Acknowledge your dedication and impact</li>
-            <li>Provide certificates and recognition for your service</li>
-            <li>Improve our programs based on volunteer engagement</li>
+            <li><strong>Impact Measurement:</strong> Quantify your contributions to community service and social causes</li>
+            <li><strong>Professional Recognition:</strong> Build a verified record of your volunteer work for resumes and applications</li>
+            <li><strong>Nonprofit Support:</strong> Help organizations track volunteer engagement and program effectiveness</li>
+            <li><strong>Personal Growth:</strong> Monitor your volunteer journey and celebrate milestones</li>
           </ul>
           <Typography variant="body1" paragraph>
             For coding contributions, we also track time through GitHub commits.
@@ -393,9 +427,8 @@ const VolunteerTrackingPage = withAuthInfo(
             .
           </Typography>
           <Typography variant="body1" paragraph>
-            Like all code for Opportunity Hack, this code is open-source and
-            available on GitHub. If you'd like to contribute, please check out
-            the{" "}
+            This volunteer tracking platform is open-source and available on GitHub. 
+            Contribute to improving volunteer management tools by checking out the{" "}
             <StyledLink href="https://github.com/opportunity-hack/frontend-ohack.dev/blob/main/src/pages/volunteer/track.js">
               source code
             </StyledLink>
@@ -417,7 +450,7 @@ const VolunteerTrackingPage = withAuthInfo(
           <>
             <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 }, mb: 2 }}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormControl fullWidth error={isVolunteering && !commitmentHours}>
                     <InputLabel id="commitment-hours-label">Commitment Hours</InputLabel>
                     <Select
@@ -439,7 +472,7 @@ const VolunteerTrackingPage = withAuthInfo(
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormControl fullWidth error={isVolunteering && !reason}>
                     <InputLabel id="reason-label">Reason for Volunteering</InputLabel>
                     <Select
@@ -461,7 +494,7 @@ const VolunteerTrackingPage = withAuthInfo(
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Button
                     variant="contained"
                     color={isVolunteering ? "secondary" : "primary"}
@@ -519,7 +552,7 @@ const VolunteerTrackingPage = withAuthInfo(
 
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={5}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                     <DatePicker
                       label="Start Date"
                       value={startDate}
@@ -527,7 +560,7 @@ const VolunteerTrackingPage = withAuthInfo(
                       slotProps={{ textField: { fullWidth: true } }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={5}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                     <DatePicker
                       label="End Date"
                       value={endDate}
@@ -535,7 +568,7 @@ const VolunteerTrackingPage = withAuthInfo(
                       slotProps={{ textField: { fullWidth: true } }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={2}>
+                  <Grid size={{ xs: 12, sm: 2 }}>
                     <Button
                       variant="outlined"
                       onClick={fetchtotalActiveHours}

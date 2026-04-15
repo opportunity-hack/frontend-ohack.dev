@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { Typography, Box, Button, Grid, Container, Divider, Alert, Paper, Card, CardContent } from '@mui/material';
+import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import { TitleContainer, LayoutContainer, ProjectsContainer } from '../../styles/nonprofit/styles';
 import HackathonList from '../../components/HackathonList/HackathonList';
 import PreviousHackathonList from '../../components/HackathonList/PreviousHackathonList';
@@ -10,6 +11,12 @@ import { EventAvailable, Code, Group, EmojiEvents, Gavel, CameraAlt, Business, P
 
 const HackathonIndex = () => {
   const style = { fontSize: '15px' };
+
+  useEffect(() => { initFacebookPixel(); }, []);
+
+  const track = (action, label) => {
+    trackEvent({ action: `hack_${action}`, params: { event_label: label, page: 'hack' } });
+  };
 
   return (
     <LayoutContainer key="hackathons" container>
@@ -71,28 +78,33 @@ const HackathonIndex = () => {
           component="h1"
           sx={{ fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" }, mb: 2 }}
         >
-          Join Our Global Hackathons
+          Code for Social Good at Our Global Hackathons
         </Typography>
 
         <Typography variant="body1" sx={{ fontSize: '18px', mb: 3, maxWidth: '800px', mx: 'auto' }}>
-          Build technology solutions for nonprofits at our hackathons worldwide. 
-          Connect with developers, designers, and nonprofits to create lasting social impact.
+          Join developers, designers, and nonprofits worldwide to build technology solutions that create lasting social impact. 
+          Since 2013, we've helped 100+ nonprofits serving underserved communities.
         </Typography>
 
         <Grid container spacing={2} sx={{ maxWidth: '600px', mx: 'auto', mb: 3 }}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="contained"
               color="primary"
               size="large"
               fullWidth
-              href="/volunteer"
+              href="#upcoming-events"
               startIcon={<EventAvailable />}
+              onClick={(e) => {
+                e.preventDefault();
+                track('cta_click', 'view_upcoming_events');
+                document.getElementById('upcoming-events')?.scrollIntoView({ behavior: 'smooth' });
+              }}
             >
-              Find Your Role
+              View Upcoming Events
             </Button>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="outlined"
               color="primary"
@@ -100,27 +112,24 @@ const HackathonIndex = () => {
               fullWidth
               href="/signup"
               startIcon={<Group />}
+              onClick={() => track('cta_click', 'join_community')}
             >
-              Join Community
+              Join Our Community
             </Button>
           </Grid>
         </Grid>
       </TitleContainer>
 
       <ProjectsContainer style={{ marginTop: 20, width: "100%" }}>
-        <Box mb={4}>
-          <HackathonList />
-        </Box>
-        
-        {/* Why Join Section with Image */}
-        <Paper sx={{ p: 4, my: 4, bgcolor: 'grey.50' }}>
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
+        {/* Why Join Section with Image - Moved to top for better UX flow */}
+        <Paper sx={{ p: 4, mb: 5, bgcolor: 'grey.50' }}>
+          <Grid container spacing={4} sx={{ alignItems: 'center' }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h3" component="h2" gutterBottom>
                 Why Join Opportunity Hack?
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <Code color="primary" sx={{ mr: 2, mt: 0.5 }} />
                     <Box>
@@ -133,7 +142,7 @@ const HackathonIndex = () => {
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <Group color="primary" sx={{ mr: 2, mt: 0.5 }} />
                     <Box>
@@ -146,7 +155,7 @@ const HackathonIndex = () => {
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <EmojiEvents color="primary" sx={{ mr: 2, mt: 0.5 }} />
                     <Box>
@@ -159,7 +168,7 @@ const HackathonIndex = () => {
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                     <EventAvailable color="primary" sx={{ mr: 2, mt: 0.5 }} />
                     <Box>
@@ -174,107 +183,121 @@ const HackathonIndex = () => {
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Image
-                  src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
-                  alt="Developers collaborating at Opportunity Hack hackathon"
-                  width={500}
-                  height={350}
-                  style={{
-                    maxWidth: "100%",
-                    height: "auto",
-                    borderRadius: "12px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                  }}
-                />
-                <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
-                  Developers working together to create solutions for nonprofits
-                </Typography>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                <Box sx={{ textAlign: 'center', maxWidth: '100%' }}>
+                  <Image
+                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
+                    alt="Developers collaborating at Opportunity Hack hackathon"
+                    width={500}
+                    height={350}
+                    style={{
+                      maxWidth: "100%",
+                      height: "auto",
+                      borderRadius: "12px",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    }}
+                  />
+                  <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+                    Developers working together to create solutions for nonprofits
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
           </Grid>
         </Paper>
         
-        <Divider sx={{ my: 4 }} />
-        <Box>
+        {/* Upcoming Events Section - Now positioned after "Why Join" */}
+        <Box 
+          id="upcoming-events" 
+          component="section"
+          aria-labelledby="upcoming-events-heading"
+          mb={5}
+        >
+          <HackathonList />
+        </Box>
+        
+        {/* Previous Events Section - Positioned right after Upcoming Events for better content grouping */}
+        <Box mb={5}>
           <PreviousHackathonList />
         </Box>
       </ProjectsContainer>
 
-
-      {/* Before You Join Section */}
-      <Box mt={4} mb={4}>
-        <Typography variant="h3" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+      {/* Before You Join Section - Moved after all event content for better UX hierarchy */}
+      <Box mt={5} mb={5} px={2}>
+        <Typography variant="h3" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
           Before You Join an Event
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mb: 4, maxWidth: '600px', mx: 'auto' }}>
-          A few quick reads to ensure everyone has a great and safe experience at our hackathons.
+          Quick reads to ensure everyone has a great and safe experience.
         </Typography>
         
-        <Grid container spacing={3} sx={{ maxWidth: '800px', mx: 'auto' }}>
-          <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', textAlign: 'center' }}>
+        <Grid container spacing={3} sx={{ maxWidth: '900px', mx: 'auto' }}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <Policy color="primary" sx={{ fontSize: 40, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
                   Code of Conduct
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Our community guidelines for respectful collaboration
+                  Community guidelines for respectful collaboration
                 </Typography>
-                <Button 
-                  variant="contained" 
-                  component={Link} 
+                <Button
+                  variant="outlined"
+                  component={Link}
                   href="/hack/code-of-conduct"
                   fullWidth
                   size="small"
+                  onClick={() => track('cta_click', 'code_of_conduct')}
                 >
                   Read Guidelines
                 </Button>
               </CardContent>
             </Card>
           </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', textAlign: 'center' }}>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <Gavel color="action" sx={{ fontSize: 40, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
                   Liability Waiver
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Standard legal protection for in-person events
+                  Standard protection for in-person events
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  component={Link} 
+                <Button
+                  variant="outlined"
+                  component={Link}
                   href="/hack/liability-waiver"
                   fullWidth
                   size="small"
+                  onClick={() => track('cta_click', 'liability_waiver')}
                 >
                   View Waiver
                 </Button>
               </CardContent>
             </Card>
           </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', textAlign: 'center' }}>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
               <CardContent>
                 <CameraAlt color="action" sx={{ fontSize: 40, mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
                   Photo Release
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Permission to share photos from our events
+                  Permission to share event photos
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  component={Link} 
+                <Button
+                  variant="outlined"
+                  component={Link}
                   href="/hack/photo-release"
                   fullWidth
                   size="small"
+                  onClick={() => track('cta_click', 'photo_release')}
                 >
                   Photo Policy
                 </Button>
@@ -284,22 +307,22 @@ const HackathonIndex = () => {
         </Grid>
       </Box>
 
-      {/* Support Our Mission Section */}
-      <Paper sx={{ p: 4, mt: 4, bgcolor: 'primary.light', color: 'white', textAlign: 'center' }}>
-        <Business sx={{ fontSize: 48, mb: 2 }} />
-        <Typography variant="h4" gutterBottom>
+      {/* Support Our Mission Section - Appropriate for secondary audience */}
+      <Paper sx={{ p: 3, mt: 5, bgcolor: 'grey.100', color: 'text.primary', textAlign: 'center', borderTop: '3px solid', borderColor: 'primary.main' }}>
+        <Business color="primary" sx={{ fontSize: 40, mb: 1.5 }} />
+        <Typography variant="h5" gutterBottom>
           Support Our Mission
         </Typography>
-        <Typography variant="body1" sx={{ mb: 3, maxWidth: '600px', mx: 'auto' }}>
-          Help us continue organizing impactful hackathons by becoming a sponsor. 
-          Partner with us to support the next generation of social impact technologists.
+        <Typography variant="body2" sx={{ mb: 2.5, maxWidth: '600px', mx: 'auto' }}>
+          Help us continue organizing impactful hackathons. Partner with us to support the next generation of social impact technologists.
         </Typography>
         <Button 
           variant="contained" 
-          size="large"
-          component={Link} 
+          size="medium"
+          component={Link}
           href="/sponsor"
-          sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+          sx={{ textTransform: 'none' }}
+          onClick={() => track('cta_click', 'become_sponsor')}
         >
           Become a Sponsor
         </Button>

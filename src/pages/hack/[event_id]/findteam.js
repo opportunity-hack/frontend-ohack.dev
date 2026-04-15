@@ -102,6 +102,7 @@ const FindTeamPage = () => {
 
   // State variables
   const [loading, setLoading] = useState(true);
+  const [isCheckingApplication, setIsCheckingApplication] = useState(true);
   const [myProfile, setMyProfile] = useState(null);
   const [potentialTeammates, setPotentialTeammates] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -124,6 +125,7 @@ const FindTeamPage = () => {
   // Fetch current user's profile and application data
   const fetchMyProfile = useCallback(async () => {
     try {
+      setIsCheckingApplication(true);
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile`,
         {
@@ -154,6 +156,14 @@ const FindTeamPage = () => {
 
           console.log("My application data:", appData);
           console.log("socialCauses:", appData.socialCauses);
+          console.log("isSelected:", appData.isSelected);
+
+          // Check if user is selected for the hackathon
+          if (appData.isSelected === false) {
+            setError("Your application for this hackathon was not selected. The team finder is only available to selected participants.");
+            setIsCheckingApplication(false);
+            return;
+          }
 
           // Parse interests from social causes and preferred causes
           const interests = [];
@@ -205,12 +215,14 @@ const FindTeamPage = () => {
           });
         } else {
           setMyProfile(response.data);
-          setError("You haven't submitted a hacker application for this event yet. Some features may be limited.");
+          setError("You haven't submitted a hacker application for this event yet. The team finder is only available to participants who have applied and been selected.");
         }
       }
     } catch (err) {
       console.error("Error fetching profile:", err);
       setError("Failed to fetch your profile. Please try again later.");
+    } finally {
+      setIsCheckingApplication(false);
     }
   }, [accessToken, orgId, event_id]);
 
@@ -317,6 +329,7 @@ const FindTeamPage = () => {
             participantType: appData.participantType,
             schoolOrganization: appData.schoolOrganization,
             linkedin: appData.linkedin || appData.linkedinProfile,
+            photoUrl: appData.photoUrl || null,
             portfolio: appData.portfolio,
             willContinue: appData.willContinue,
             inPerson: appData.inPerson === 'Yes' || appData.isInPerson,
@@ -336,8 +349,9 @@ const FindTeamPage = () => {
           };
         });
 
-        // Only show users who are looking for a team or want to be matched
+        // Only show users who are selected, looking for a team or want to be matched
         const lookingForTeamHackers = processedHackers.filter(hacker =>
+          hacker.application.isSelected === true && // Only show selected users
           hacker.application.teamStatus &&
           (hacker.application.teamStatus.includes('match') ||
            hacker.application.teamStatus.includes('looking for')) &&
@@ -484,12 +498,13 @@ const FindTeamPage = () => {
       );
     }
     
-    // Only show users who are looking for a team or to be matched
-    result = result.filter(mate => 
-      mate.application?.team_formation === 'looking_for_members' || 
-      mate.application?.team_formation === 'want_to_be_matched'
+    // Only show users who are selected and looking for a team or to be matched
+    result = result.filter(mate =>
+      mate.application?.isSelected === true && // Only selected users
+      (mate.application?.team_formation === 'looking_for_members' ||
+       mate.application?.team_formation === 'want_to_be_matched')
     );
-    
+
     // Don't show self
     result = result.filter(mate => mate.user_id !== user?.userId);
     
@@ -607,8 +622,149 @@ const FindTeamPage = () => {
           </Alert>
         )}
 
+        {/* Show loading state while checking application */}
+        {isCheckingApplication && (
+          <Box sx={{ mt: 4, mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Paper
+              sx={{
+                p: 4,
+                maxWidth: 500,
+                textAlign: 'center',
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+                border: '1px solid #90caf9',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                <CircularProgress size={60} thickness={4} />
+                <Box>
+                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                    Checking Your Application
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    Verifying your participation status for {eventDetails?.title || 'this hackathon'}...
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Box>
+        )}
+
+        {/* Show message for non-selected users or users without applications */}
+        {!isCheckingApplication && (myProfile?.application?.isSelected === false || !myProfile?.application) && (
+          <Box sx={{ mt: 3, mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Paper
+              sx={{
+                p: 4,
+                maxWidth: 600,
+                textAlign: 'center',
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%)',
+                border: '1px solid #ffab91',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}
+            >
+              <Box sx={{ mb: 3 }}>
+                <Box
+                  component="span"
+                  sx={{
+                    fontSize: '4rem',
+                    display: 'block',
+                    lineHeight: 1,
+                    mb: 2
+                  }}
+                >
+                  📋
+                </Box>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#d84315' }}>
+                  Application Status Update
+                </Typography>
+              </Box>
+
+              <Typography variant="h6" paragraph sx={{ mb: 3, color: '#5d4037' }}>
+                Thank you for your interest in participating in {eventDetails?.title || 'this hackathon'}!
+              </Typography>
+
+              <Typography variant="body1" paragraph sx={{ mb: 3, lineHeight: 1.6 }}>
+                {!myProfile?.application
+                  ? "You need to submit a hacker application to access the team finder. Only participants who have applied and been selected can use this feature."
+                  : "Unfortunately, your application for this hackathon was not selected. Due to limited capacity, we were unable to accommodate all applicants, but we encourage you to:"
+                }
+              </Typography>
+
+              {!myProfile?.application ? (
+                <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    href={`/hack/${event_id}/hacker-application`}
+                    sx={{ flex: 1 }}
+                  >
+                    Submit Hacker Application
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="large"
+                    href={`/hack/${event_id}`}
+                    sx={{ flex: 1 }}
+                  >
+                    Back to Hackathon
+                  </Button>
+                </Box>
+              ) : (
+                <>
+                  <Box sx={{ textAlign: 'left', mb: 3, mx: 2 }}>
+                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🎯</Box>
+                      Apply for future Opportunity Hack events
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>💻</Box>
+                      Contribute to open-source nonprofit projects year-round
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🤝</Box>
+                      Join our community on Slack for networking and opportunities
+                    </Typography>
+                    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🔔</Box>
+                      Follow us on social media for updates on upcoming events
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="large"
+                      href="https://opportunity-hack.slack.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ flex: 1 }}
+                    >
+                      Join Our Slack Community
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="large"
+                      href="/hackathons"
+                      sx={{ flex: 1 }}
+                    >
+                      View Upcoming Events
+                    </Button>
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Box>
+        )}
+
         {/* Link to team creation if they've found their teammates */}
-        {favorites.length > 0 && (
+        {!isCheckingApplication && favorites.length > 0 && myProfile?.application?.isSelected !== false && myProfile?.application && (
           <Zoom in={favorites.length > 0}>
             <Box textAlign="center" mt={3} mb={3}>
               <Button
@@ -633,10 +789,11 @@ const FindTeamPage = () => {
         )}
       </Box>
 
-      {/* Main content area */}
-      <Grid container spacing={4}>
+      {/* Main content area - Only show for selected users with applications */}
+      {!isCheckingApplication && myProfile?.application?.isSelected !== false && myProfile?.application && (
+        <Grid container spacing={4}>
         {/* Left sidebar - Your profile */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <StyledPaper>
             <Typography variant="h5" gutterBottom>
               Your Profile
@@ -663,7 +820,7 @@ const FindTeamPage = () => {
               <>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <Avatar 
-                    src={myProfile?.picture} 
+                    src={myProfile?.profile_image} 
                     alt={myProfile?.name}
                     sx={{ width: 60, height: 60, mr: 2 }}
                   />
@@ -835,7 +992,7 @@ const FindTeamPage = () => {
         </Grid>
 
         {/* Right content area - Potential teammates */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <StyledPaper>
             <Tabs
               value={selectedTab}
@@ -920,7 +1077,7 @@ const FindTeamPage = () => {
                 {currentList.map((teammate) => {
                   const matchScore = calculateMatchScore(teammate);
                   return (
-                    <Grid item xs={12} sm={6} key={teammate.user_id}>
+                    <Grid size={{ xs: 12, sm: 6 }} key={teammate.user_id}>
                       <ProfileCard>
                         <CardContent sx={{ position: 'relative', flexGrow: 1 }}>
                           <MatchScore score={matchScore}>
@@ -929,7 +1086,7 @@ const FindTeamPage = () => {
                           
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Avatar
-                              src={teammate.picture}
+                              src={teammate?.photoUrl}
                               alt={teammate.name || 'User'}
                               sx={{ width: 50, height: 50, mr: 2 }}
                             />
@@ -1207,6 +1364,7 @@ const FindTeamPage = () => {
           </StyledPaper>
         </Grid>
       </Grid>
+      )}
 
       {/* Contact Dialog */}
       <Dialog
@@ -1223,7 +1381,7 @@ const FindTeamPage = () => {
             <>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <Avatar
-                  src={selectedUser.picture}
+                  src={selectedUser?.photoUrl}
                   alt={selectedUser.name}
                   sx={{ width: 60, height: 60, mr: 2 }}
                 />

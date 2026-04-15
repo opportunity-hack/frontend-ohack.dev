@@ -35,6 +35,7 @@ import {
   Tabs,
   Tab
 } from '@mui/material';
+import { TEAM_STATUS_OPTIONS, getStatusOption } from '../../constants/teamStatus';
 import { 
   FaEdit, 
   FaUsers, 
@@ -54,6 +55,8 @@ import {
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
+import { useRouter } from 'next/router';
+import useHackathonEvents from '../../hooks/use-hackathon-events';
 
 // Constants for assignment status
 const ASSIGNMENT_STATUS = {
@@ -63,19 +66,15 @@ const ASSIGNMENT_STATUS = {
   FINALIZING: 'finalizing'
 };
 
-const TEAM_STATUS_OPTIONS = [
-  { value: 'IN_REVIEW', label: 'In Review', color: 'default' },
-  { value: 'NONPROFIT_SELECTED', label: 'Nonprofit Selected', color: 'primary' },
-  { value: 'ONBOARDED', label: 'Onboarded', color: 'info' },
-  { value: 'SWAG_RECEIVED', label: 'Swag Received', color: 'success' },
-  { value: 'PROJECT_COMPLETE', label: 'Project Complete', color: 'success' },
-  { value: 'INACTIVE', label: 'Inactive', color: 'error' }
-];
-
-const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon }) => {
+const TeamAssignments = ({ orgId }) => {
   const theme = useTheme();
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
+  const router = useRouter();
+  
+  // Fetch hackathons using the hook
+  const { hackathons = [] } = useHackathonEvents(false) || {};
+  const [selectedHackathon, setSelectedHackathon] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [nonprofits, setNonprofits] = useState([]);
@@ -94,6 +93,61 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
     key: "name",
     direction: "asc",
   });
+
+  // Handle URL parameters and set initial state
+  useEffect(() => {
+    if (!router?.query) return;
+    
+    const { event_id, tab } = router.query;
+    
+    if (event_id && Array.isArray(hackathons) && hackathons.some(h => h?.id === event_id)) {
+      setSelectedHackathon(event_id);
+    } else if (Array.isArray(hackathons) && hackathons.length > 0 && !selectedHackathon) {
+      // Sort hackathons by date (descending) and use the most recent one
+      const sortedHackathons = [...hackathons]
+        .filter(h => h?.start_date) // Filter out invalid entries
+        .sort((a, b) => {
+          const dateA = new Date(a.start_date);
+          const dateB = new Date(b.start_date);
+          return dateB - dateA; // Most recent first
+        });
+      
+      if (sortedHackathons.length > 0) {
+        setSelectedHackathon(sortedHackathons[0].id);
+      }
+    }
+    
+    if (tab !== undefined) {
+      const tabIndex = parseInt(tab, 10);
+      if (tabIndex >= 0 && tabIndex <= 1) {
+        setViewMode(tabIndex);
+      }
+    }
+  }, [hackathons, router?.query]);
+  
+  // Update URL when selectedHackathon or viewMode changes
+  useEffect(() => {
+    if (!router?.replace || !selectedHackathon || !Array.isArray(hackathons) || hackathons.length === 0) {
+      return;
+    }
+    
+    try {
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      queryParams.set('event_id', selectedHackathon);
+      queryParams.set('tab', viewMode.toString());
+      
+      const newUrl = `${router.pathname}?${queryParams.toString()}`;
+      
+      const newQuery = Object.fromEntries(queryParams);
+      router.replace({
+        pathname: router.pathname,
+        query: newQuery
+      }, undefined, { shallow: true });
+    } catch (error) {
+      console.warn('Failed to update URL:', error);
+    }
+  }, [selectedHackathon, viewMode, router, hackathons]);
 
   // Fetch both nonprofits and teams when hackathon changes
   useEffect(() => {
@@ -236,8 +290,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
         );
       case ASSIGNMENT_STATUS.MULTIPLE:
         return (
-          <Chip 
-            icon={<FaExclamationTriangle />} 
+          <Chip             
             label="Multiple Teams" 
             color="warning" 
             size="small" 
@@ -268,9 +321,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
 
   // Render team status chip
   const renderTeamStatus = (status) => {
-    const statusOption =
-      TEAM_STATUS_OPTIONS.find((opt) => opt.value === status) ||
-      TEAM_STATUS_OPTIONS[0];
+    const statusOption = getStatusOption(status);
     return (
       <Chip
         label={statusOption.label}
@@ -366,10 +417,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
                     <Box sx={{ display: "flex", flexDirection: "column" }}>
                       <Typography variant="body1" fontWeight="medium">
                         {nonprofit.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {nonprofit.project_type || "No project type specified"}
-                      </Typography>
+                      </Typography>                      
                     </Box>
                   </TableCell>
                   <TableCell>
@@ -460,7 +508,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
 
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6">
               Assigned Teams ({teamsByAssignment.assigned.length})
@@ -568,7 +616,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
           </TableContainer>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6">
               Unassigned Teams ({teamsByAssignment.unassigned.length})
@@ -715,7 +763,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
     return (
       <Box sx={{ mb: 4 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={2} sx={{ height: '100%' }}>
               <CardHeader title="Nonprofit Assignment Status" />
               <Divider />
@@ -759,7 +807,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
             </Card>
           </Grid>
           
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={2} sx={{ height: '100%' }}>
               <CardHeader title="Team Assignment Status" />
               <Divider />
@@ -802,7 +850,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
             </Card>
           </Grid>
           
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={2} sx={{ height: '100%' }}>
               <CardHeader title="Assignment Suggestions" />
               <Divider />
@@ -881,7 +929,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
 
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <InputLabel id="hackathon-select-label">
                 Select Hackathon
@@ -895,15 +943,17 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
                 <MenuItem value="">
                   <em>Select a hackathon</em>
                 </MenuItem>
-                {hackathons.map((hackathon) => (
-                  <MenuItem key={hackathon.id} value={hackathon.id}>
-                    {hackathon.event_id}
-                  </MenuItem>
-                ))}
+                {hackathons
+                  .filter(hackathon => hackathon?.id) // Filter out invalid entries
+                  .map((hackathon) => (
+                    <MenuItem key={hackathon.id} value={hackathon.id}>
+                      {hackathon.event_id} - {hackathon.start_date ? new Date(hackathon.start_date).toLocaleDateString() : 'Unknown Date'}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <TextField
               fullWidth
               placeholder="Search nonprofits, teams, or descriptions..."
@@ -979,7 +1029,7 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
                 </Typography>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="body2" color="text.secondary">
                         Name:
                       </Typography>
@@ -987,15 +1037,12 @@ const TeamAssignments = ({ orgId, hackathons, selectedHackathon, setSelectedHack
                         {selectedNonprofit.name}
                       </Typography>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="body2" color="text.secondary">
                         Project Type:
-                      </Typography>
-                      <Typography variant="body1" gutterBottom>
-                        {selectedNonprofit.project_type || "Not specified"}
-                      </Typography>
+                      </Typography>                      
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Typography variant="body2" color="text.secondary">
                         Description:
                       </Typography>

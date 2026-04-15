@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -33,6 +33,8 @@ import HelpIcon from '@mui/icons-material/Help';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import InsightsIcon from '@mui/icons-material/Insights';
 import { trackEvent } from '../../lib/ga';
+import axios from 'axios';
+import { useAuthInfo } from '@propelauth/react';
 
 // Styled components
 const RatingContainer = styled(Box)(({ theme }) => ({
@@ -64,8 +66,30 @@ const TopicChip = styled(Chip)(({ theme, selected }) => ({
 /**
  * FeedbackSection component
  * Collects feedback from users about their onboarding experience
+ * 
+ * Spam Prevention: Includes user agent and timestamp in feedback data
+ * to help prevent multiple submissions from the same source.
+ * IP address will be captured server-side for additional protection.
  */
 const FeedbackSection = () => {
+  const { user, isLoggedIn } = useAuthInfo();
+  // Load from localStorage if available
+  useEffect(() => {
+    const saved = localStorage.getItem('ohack_feedback_form');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.overallRating !== undefined) setOverallRating(data.overallRating);
+      if (data.usefulTopics !== undefined) setUsefulTopics(data.usefulTopics);
+      if (data.missingTopics !== undefined) setMissingTopics(data.missingTopics);
+      if (data.easeOfUnderstanding !== undefined) setEaseOfUnderstanding(data.easeOfUnderstanding);
+      if (data.improvements !== undefined) setImprovements(data.improvements);
+      if (data.additionalFeedback !== undefined) setAdditionalFeedback(data.additionalFeedback);
+      if (data.contactForFollowup !== undefined) setContactForFollowup(data.contactForFollowup);
+      if (data.firstName !== undefined) setFirstName(data.firstName);
+      if (data.email !== undefined) setEmail(data.email);
+    }
+  }, []);
+
   // Form state
   const [overallRating, setOverallRating] = useState(0);
   const [usefulTopics, setUsefulTopics] = useState([]);
@@ -83,11 +107,31 @@ const FeedbackSection = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [errors, setErrors] = useState({});
+
+  // Function to get client IP address and user agent
+  const getClientInfo = async () => {
+    const userAgent = navigator.userAgent || 'Unknown';
+    
+    // Get IP address from a public IP service
+    let ipAddress = 'Unknown';
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      ipAddress = data.ip;
+    } catch (error) {
+      console.warn('Could not fetch IP address:', error);
+    }
+    
+    return {
+      userAgent,
+      ipAddress
+    };
+  };
 
   // Available topics for feedback
   const topicOptions = [
     'Mission Overview', 
-    'Community Channels', 
     'Introduction Guide', 
     'Slack Tutorial', 
     'Buddy System', 
@@ -101,6 +145,7 @@ const FeedbackSection = () => {
     } else {
       setUsefulTopics([...usefulTopics, topic]);
     }
+    if (errors.usefulTopics) setErrors({ ...errors, usefulTopics: undefined });
   };
 
   // Show a snackbar message
@@ -111,24 +156,44 @@ const FeedbackSection = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check for recent submission to prevent spam
+    const lastSubmission = localStorage.getItem('ohack_feedback_last_submission');
+    const now = Date.now();
+    if (lastSubmission && (now - parseInt(lastSubmission)) < 60000) { // 1 minute cooldown
+      showMessage('Please wait a moment before submitting another feedback.', 'warning');
+      return;
+    }
+    
     setSubmitting(true);
-
-    // Validate the form
+    let newErrors = {};
     if (overallRating === 0) {
-      showMessage('Please provide an overall rating before submitting.', 'error');
-      setSubmitting(false);
-      return;
+      newErrors.overallRating = 'Please provide an overall rating.';
     }
-
+    if (usefulTopics.length === 0) {
+      newErrors.usefulTopics = 'Please select at least one topic.';
+    }
+    if (!easeOfUnderstanding) {
+      newErrors.easeOfUnderstanding = 'Please select an option.';
+    }
+    if (easeOfUnderstanding && easeOfUnderstanding !== 'Very easy' && !improvements.trim()) {
+      newErrors.improvements = 'Please provide suggestions for improvement.';
+    }
     if (contactForFollowup && (!email || !firstName)) {
-      showMessage('Please provide your name and email if you would like us to follow up.', 'error');
+      newErrors.contactForFollowup = 'Please provide your name and email if you would like us to follow up.';
+    }
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       setSubmitting(false);
       return;
     }
 
-    // Prepare feedback data
+    // Get client information for spam prevention
+    const clientInfo = await getClientInfo();
+    
+    // Prepare feedback data in the required format
     const feedbackData = {
       overallRating,
       usefulTopics,
@@ -136,46 +201,119 @@ const FeedbackSection = () => {
       easeOfUnderstanding,
       improvements,
       additionalFeedback,
-      contactForFollowup: contactForFollowup ? { firstName, email } : false
+      contactForFollowup: contactForFollowup
+        ? { willing: true, firstName, email }
+        : { willing: false },
+      // Add client information for spam prevention
+      clientInfo: {
+        userAgent: clientInfo.userAgent,
+        ipAddress: clientInfo.ipAddress
+      }
     };
 
-    // In a real implementation, this would send data to your backend
-    console.log('Submitting feedback:', feedbackData);
-    
-    // Track feedback submission event
-    trackEvent({
-      action: 'onboarding_feedback_submitted',
-      params: {
-        rating: overallRating,
-        topics_count: usefulTopics.length
-      }
-    });
-
-    // Simulate API call with a timeout
-    setTimeout(() => {
+    try {
+      // Indicate submit was clicked and API will be called
+      console.log('Submit Feedback button clicked. Calling /onboarding_feedback API...');
+      // Log the data for debugging (including client info for spam prevention)
+      console.log('Feedback data to be sent to /onboarding_feedback:', feedbackData);
+      await axios.post(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/onboarding_feedback`, 
+        feedbackData);
+      // Track feedback submission event
+      trackEvent({
+        action: 'onboarding_feedback_submitted',
+        params: {
+          rating: overallRating,
+          topics_count: usefulTopics.length
+        }
+      });
+      // Store the original feedback data for potential editing
+      setOriginalFeedback({
+        overallRating,
+        usefulTopics,
+        missingTopics,
+        easeOfUnderstanding,
+        improvements,
+        additionalFeedback,
+        contactForFollowup,
+        firstName,
+        email
+      });
+      
       setSubmitting(false);
       setSubmitted(true);
+      // Record submission timestamp for spam prevention
+      localStorage.setItem('ohack_feedback_last_submission', Date.now().toString());
       showMessage('Thank you for your feedback! It helps us improve the onboarding experience.');
-      
-      // Reset form after a delay if needed
-      // setTimeout(() => {
-      //   resetForm();
-      // }, 5000);
-    }, 1500);
+    } catch (error) {
+      setSubmitting(false);
+      showMessage('There was an error submitting your feedback. Please try again.', 'error');
+    }
   };
 
-  // Reset the form
+  // Store original feedback data for editing
+  const [originalFeedback, setOriginalFeedback] = useState(null);
+
+  // Reset the form to allow editing
   const resetForm = () => {
-    setOverallRating(0);
-    setUsefulTopics([]);
-    setMissingTopics('');
-    setEaseOfUnderstanding('');
-    setImprovements('');
-    setAdditionalFeedback('');
-    setContactForFollowup(false);
-    setFirstName('');
-    setEmail('');
+    // Restore the original feedback data instead of clearing it
+    if (originalFeedback) {
+      setOverallRating(originalFeedback.overallRating || 0);
+      setUsefulTopics(originalFeedback.usefulTopics || []);
+      setMissingTopics(originalFeedback.missingTopics || '');
+      setEaseOfUnderstanding(originalFeedback.easeOfUnderstanding || '');
+      setImprovements(originalFeedback.improvements || '');
+      setAdditionalFeedback(originalFeedback.additionalFeedback || '');
+      setContactForFollowup(originalFeedback.contactForFollowup || false);
+      setFirstName(originalFeedback.firstName || '');
+      setEmail(originalFeedback.email || '');
+    }
     setSubmitted(false);
+    
+    // Clear submission timestamp to allow new feedback
+    localStorage.removeItem('ohack_feedback_last_submission');
+  };
+
+  // Persist all feedback fields to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('ohack_feedback_form', JSON.stringify({
+      overallRating,
+      usefulTopics,
+      missingTopics,
+      easeOfUnderstanding,
+      improvements,
+      additionalFeedback,
+      contactForFollowup,
+      firstName,
+      email
+    }));
+  }, [overallRating, usefulTopics, missingTopics, easeOfUnderstanding, improvements, additionalFeedback, contactForFollowup, firstName, email]);
+
+  // Autofill first name and email if user is logged in and fields are empty when contactForFollowup is checked
+  useEffect(() => {
+    if (
+      contactForFollowup &&
+      isLoggedIn &&
+      user &&
+      (firstName === '' || email === '')
+    ) {
+      if (firstName === '' && user.firstName) setFirstName(user.firstName);
+      if (email === '' && user.email) setEmail(user.email);
+    }
+  }, [contactForFollowup, isLoggedIn, user, firstName, email]);
+
+  const handleRatingChange = (event, newValue) => {
+    setOverallRating(newValue === null ? 0 : newValue);
+    if (errors.overallRating) setErrors({ ...errors, overallRating: undefined });
+  };
+
+  const handleEaseChange = (e) => {
+    setEaseOfUnderstanding(e.target.value);
+    if (errors.easeOfUnderstanding) setErrors({ ...errors, easeOfUnderstanding: undefined });
+  };
+
+  const handleImprovementsChange = (e) => {
+    setImprovements(e.target.value);
+    if (errors.improvements) setErrors({ ...errors, improvements: undefined });
   };
 
   return (
@@ -223,7 +361,7 @@ const FeedbackSection = () => {
               <Typography variant="body1" paragraph sx={{ fontSize: '1.2rem' }}>
                 {contactForFollowup ? 
                   `We'll be in touch with you soon at ${email} to discuss your feedback further.` : 
-                  'If you have any additional thoughts, feel free to share them in our Slack community.'}
+                  'You can edit your feedback if you\'d like to make any changes.'}
               </Typography>
               <Button 
                 variant="outlined" 
@@ -231,7 +369,7 @@ const FeedbackSection = () => {
                 onClick={resetForm}
                 sx={{ mt: 2, fontSize: '1.1rem', py: 1.5, px: 3 }}
               >
-                Provide Additional Feedback
+                Edit feedback
               </Button>
             </CardContent>
           </Card>
@@ -241,7 +379,7 @@ const FeedbackSection = () => {
           <form onSubmit={handleSubmit}>
             <Grid container spacing={4}>
               {/* Overall rating */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <RatingContainer>
                   <Box sx={{ mr: 2 }}>
                     <Typography variant="h6" id="overall-rating-label" sx={{ fontSize: '1.4rem' }}>
@@ -250,24 +388,26 @@ const FeedbackSection = () => {
                     <Typography variant="body2" color="textSecondary" sx={{ fontSize: '1.1rem' }}>
                       How would you rate your onboarding experience?
                     </Typography>
+                    {errors.overallRating && (
+                      <Typography color="error" sx={{ fontSize: '1.1rem', mt: 1 }}>{errors.overallRating}</Typography>
+                    )}
                   </Box>
                   <StyledRating
                     name="overall-rating"
                     value={overallRating}
-                    onChange={(event, newValue) => {
-                      setOverallRating(newValue);
-                    }}
+                    onChange={handleRatingChange}
                     precision={1}
                     icon={<StarIcon sx={{ fontSize: '2.5rem' }} />}
                     emptyIcon={<StarIcon sx={{ fontSize: '2.5rem' }} />}
                     aria-labelledby="overall-rating-label"
                     size="large"
+                    sx={errors.overallRating ? { border: '2px solid red', borderRadius: 2, p: 0.5 } : {}}
                   />
                 </RatingContainer>
               </Grid>
 
               {/* Most useful topics */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem' }}>
                   Most Useful Content
                 </Typography>
@@ -282,13 +422,17 @@ const FeedbackSection = () => {
                       clickable
                       selected={usefulTopics.includes(topic)}
                       onClick={() => handleTopicToggle(topic)}
+                      sx={errors.usefulTopics ? { border: '2px solid red' } : {}}
                     />
                   ))}
                 </Box>
+                {errors.usefulTopics && (
+                  <Typography color="error" sx={{ fontSize: '1.1rem', mt: 1 }}>{errors.usefulTopics}</Typography>
+                )}
               </Grid>
 
               {/* Missing topics */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="What topics were missing or should be covered better?"
@@ -307,8 +451,8 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Ease of understanding */}
-              <Grid item xs={12}>
-                <FormControl component="fieldset">
+              <Grid size={{ xs: 12 }}>
+                <FormControl component="fieldset" error={!!errors.easeOfUnderstanding}>
                   <FormLabel component="legend">
                     <Typography variant="h6" gutterBottom sx={{ fontSize: '1.4rem' }}>
                       Clarity & Understanding
@@ -320,10 +464,10 @@ const FeedbackSection = () => {
                   <RadioGroup
                     name="ease-of-understanding"
                     value={easeOfUnderstanding}
-                    onChange={(e) => setEaseOfUnderstanding(e.target.value)}
+                    onChange={handleEaseChange}
                   >
                     <Grid container spacing={1}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel 
                           value="Very easy" 
                           control={<Radio />} 
@@ -331,7 +475,7 @@ const FeedbackSection = () => {
                           sx={{ '& .MuiFormControlLabel-label': { fontSize: '1.1rem' } }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel 
                           value="Mostly clear" 
                           control={<Radio />} 
@@ -339,7 +483,7 @@ const FeedbackSection = () => {
                           sx={{ '& .MuiFormControlLabel-label': { fontSize: '1.1rem' } }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel 
                           value="Somewhat confusing" 
                           control={<Radio />} 
@@ -347,7 +491,7 @@ const FeedbackSection = () => {
                           sx={{ '& .MuiFormControlLabel-label': { fontSize: '1.1rem' } }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel 
                           value="Very difficult" 
                           control={<Radio />} 
@@ -357,11 +501,14 @@ const FeedbackSection = () => {
                       </Grid>
                     </Grid>
                   </RadioGroup>
+                  {errors.easeOfUnderstanding && (
+                    <Typography color="error" sx={{ fontSize: '1.1rem', mt: 1 }}>{errors.easeOfUnderstanding}</Typography>
+                  )}
                 </FormControl>
               </Grid>
 
               {/* Suggestions for improvement */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="How could we improve the onboarding experience?"
@@ -369,18 +516,20 @@ const FeedbackSection = () => {
                   multiline
                   rows={3}
                   value={improvements}
-                  onChange={(e) => setImprovements(e.target.value)}
+                  onChange={handleImprovementsChange}
                   InputProps={{
                     style: { fontSize: '1.1rem' }
                   }}
                   InputLabelProps={{
                     style: { fontSize: '1.1rem' }
                   }}
+                  error={!!errors.improvements}
+                  helperText={errors.improvements}
                 />
               </Grid>
 
               {/* Additional feedback */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="Additional Comments (Optional)"
@@ -399,7 +548,7 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Contact for follow-up */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -415,7 +564,7 @@ const FeedbackSection = () => {
                 {contactForFollowup && (
                   <Fade in={contactForFollowup}>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="First Name"
@@ -430,7 +579,7 @@ const FeedbackSection = () => {
                           }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="Email"
@@ -452,13 +601,13 @@ const FeedbackSection = () => {
               </Grid>
 
               {/* Submit button */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Button
                   type="submit"
                   variant="contained"
                   color="primary"
                   size="large"
-                  disabled={submitting}
+                  disabled={submitting || overallRating === 0}
                   startIcon={submitting ? <CircularProgress size={24} /> : null}
                   sx={{ 
                     py: 1.5, 
@@ -485,7 +634,7 @@ const FeedbackSection = () => {
           How We Use Your Feedback
         </Typography>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -500,7 +649,7 @@ const FeedbackSection = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -515,7 +664,7 @@ const FeedbackSection = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>

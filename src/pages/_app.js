@@ -3,9 +3,12 @@ import dynamic from 'next/dynamic'
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AuthProvider } from "@propelauth/react";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box } from "@mui/material";
+import { useRouter } from "next/router";
 import theme from "../assets/theme";
+import { ShoppingCartProvider } from "../context/ShoppingCartContext";
 
 // Simple placeholder components to reduce CLS
 const NavBarPlaceholder = () => <Box sx={{ height: '64px', width: '100%' }} />;
@@ -32,9 +35,21 @@ const GA = dynamic(() => import('../components/GA/GA'), {
   ssr: false
 });
 
+const OnboardingDialog = dynamic(() => import('../components/Onboarding/OnboardingDialog'), {
+  ssr: false
+});
+
+const ProfileCompletionPrompt = dynamic(() => import('../components/ProfileCompletionPrompt/ProfileCompletionPrompt'), {
+  ssr: false
+});
+
 // This default export is required in a new `pages/_app.js` file.
 export default function MyApp({ Component, pageProps }) {
   const { openGraphData = [] } = pageProps;
+  const router = useRouter();
+  
+  // Check if this is the print-timeline page
+  const isPrintTimelinePage = router.pathname === '/hack/[event_id]/print-timeline';
   
   return (
     <>
@@ -50,17 +65,23 @@ export default function MyApp({ Component, pageProps }) {
         <title>{pageProps.title}</title>
       </Head>
       <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
-        <AxiosWrapper>
-          <ThemeProvider theme={theme}>
-            <CssBaseline>
-              <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <NavBar />                
-                <Component {...pageProps} />                
-                <Footer />              
-              </Box>
-            </CssBaseline>
-          </ThemeProvider>
-        </AxiosWrapper>
+        <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY}>
+          <AxiosWrapper>
+            <ThemeProvider theme={theme}>
+              <ShoppingCartProvider>
+              <CssBaseline>
+                <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                  {!isPrintTimelinePage && <NavBar />}
+                  <Component {...pageProps} />
+                  {!isPrintTimelinePage && <Footer />}
+                </Box>
+              </CssBaseline>
+              <OnboardingDialog />
+              <ProfileCompletionPrompt />
+              </ShoppingCartProvider>
+            </ThemeProvider>
+          </AxiosWrapper>
+        </GoogleReCaptchaProvider>
       </AuthProvider>
       <GA/>
     </>

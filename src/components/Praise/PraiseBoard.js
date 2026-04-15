@@ -19,7 +19,7 @@ const StyledContainer = styled(Container)(({ theme }) => ({
 const LoadingSkeleton = () => (
   <Grid container spacing={3}>
     {Array.from({ length: 8 }).map((_, index) => (
-      <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
         <Box sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
@@ -346,12 +346,12 @@ const PraiseBoard = () => {
       <Grid container spacing={3}>
         {currentItems.length > 0 ? (
           currentItems.map((praise) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={praise.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={praise.id}>
               <PraiseCard praise={praise} />
             </Grid>
           ))
         ) : (
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <EmptyState onRefresh={() => window.location.reload()} />
           </Grid>
         )}

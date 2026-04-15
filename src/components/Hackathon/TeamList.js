@@ -16,37 +16,43 @@ import {
   Divider,
   Badge,
   LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControlLabel,
+  Checkbox,
+  Alert as MuiAlertComponent,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
-import { 
-  FaGithub, 
-  FaCalendarAlt, 
-  FaUser, 
+import {
+  FaGithub,
+  FaCalendarAlt,
+  FaUser,
   FaHeart,
   FaCodeBranch,
   FaExclamationCircle,
   FaCheckCircle,
   FaCode,
   FaGitAlt,
+  FaExternalLinkAlt,
+  FaClock,
+  FaUserFriends,
+  FaHandshake,
+  FaUsers,
+  FaShieldAlt,
 } from 'react-icons/fa';
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
-
-// Status options and their colors for visual representation
-const TEAM_STATUS_OPTIONS = [
-  { value: 'IN_REVIEW', label: 'In Review', color: 'default' },
-  { value: 'NONPROFIT_SELECTED', label: 'Nonprofit Selected', color: 'primary' },
-  { value: 'ONBOARDED', label: 'Onboarded', color: 'info' },
-  { value: 'SWAG_RECEIVED', label: 'Swag Received', color: 'success' },
-  { value: 'PROJECT_COMPLETE', label: 'Project Complete', color: 'success' },
-  { value: 'INACTIVE', label: 'Inactive', color: 'error' }
-];
-
-// Statuses that prevent new members from joining
-const JOINING_DISABLED_STATUSES = ['ONBOARDED', 'SWAG_RECEIVED', 'PROJECT_COMPLETE', 'INACTIVE'];
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { TEAM_STATUS_OPTIONS, getStatusOption, isJoiningDisabled } from '../../constants/teamStatus';
 
 // Helper function to check if team status prevents joining
 const isJoiningDisabledByStatus = (status) => {
-  return JOINING_DISABLED_STATUSES.includes(status);
+  return isJoiningDisabled(status);
 };
 
 // Reusable Alert component
@@ -69,7 +75,7 @@ const TeamMember = ({ user, isCurrentUser }) => {
   const firstLetter = displayName && displayName.length > 0 ? displayName[0] : '?';
   
   return (
-    <Grid item>
+    <Grid>
       <Tooltip
         title={
           <Box sx={{ fontSize: "12px" }}>
@@ -176,18 +182,25 @@ const LoadingIndicator = ({ message }) => (
 );
 
 // Utility function to check if hackathon has ended
-const isHackathonExpired = (endDate) => {  
+// Compares "now" to end-of-day in the hackathon's own timezone so viewers in
+// other timezones don't see a premature "Hackathon Ended" badge.
+const isHackathonExpired = (endDate, eventTimezone) => {
   if (!endDate) return false;
-  const now = new Date();
-  const hackathonEnd = new Date(endDate);
-  
-  // Set the end time to 11:59:59 PM of the end date to allow participation until the last minute
-  hackathonEnd.setHours(23, 59, 59, 999);
 
-  console.log("Hackathon Current time:", now);
-  console.log("Hackathon end time:", hackathonEnd);
-  
-  return now > hackathonEnd;
+  const tz = eventTimezone || 'America/Phoenix';
+
+  // Get the current date/time as it appears in the event timezone
+  const nowInTz = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+
+  // Build end-of-day for the end date in the event timezone
+  // endDate is "YYYY-MM-DD"; parse parts to avoid UTC-midnight pitfall
+  const [year, month, day] = endDate.split('-').map(Number);
+  const endInTz = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+  console.log("Hackathon current time in", tz, ":", nowInTz);
+  console.log("Hackathon end time in", tz, ":", endInTz);
+
+  return nowInTz > endInTz;
 };
 
 // Utility function to render team status chip
@@ -236,8 +249,302 @@ const parseGithubUrl = (url) => {
   return null;
 };
 
+// Team Join Confirmation Modal Component
+const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading }) => {
+  const [confirmations, setConfirmations] = useState({
+    knowTeamMember: false,
+    notMentor: false,
+    understands: false,
+  });
+
+  const handleCheckboxChange = (field) => (event) => {
+    setConfirmations(prev => ({
+      ...prev,
+      [field]: event.target.checked
+    }));
+  };
+
+  const allConfirmed = Object.values(confirmations).every(Boolean);
+
+  const handleConfirm = () => {
+    if (allConfirmed) {
+      onConfirm();
+      // Reset confirmations for next time
+      setConfirmations({
+        knowTeamMember: false,
+        notMentor: false,
+        understands: false,
+      });
+    }
+  };
+
+  const handleClose = () => {
+    onClose();
+    // Reset confirmations when closing
+    setConfirmations({
+      knowTeamMember: false,
+      notMentor: false,
+      understands: false,
+    });
+  };
+
+  const checklistItems = [
+    {
+      key: 'knowTeamMember',
+      icon: <FaHandshake style={{ color: '#2e7d32', fontSize: '20px' }} />,
+      title: 'I know someone on this team',
+      description: 'Connect with existing members or come with friends for the best experience, don\'t join random teams',
+      color: '#2e7d32'
+    },
+    {
+      key: 'notMentor',
+      icon: <FaShieldAlt style={{ color: '#1976d2', fontSize: '20px' }} />,
+      title: 'I\'m participating as a hacker',
+      description: 'Mentors can help multiple teams, may not be available for the entire hackathon, and shouldn\'t join individual teams',
+      color: '#1976d2'
+    },
+    {
+      key: 'understands',
+      icon: <FaUsers style={{ color: '#9c27b0', fontSize: '20px' }} />,
+      title: 'I\'m ready to collaborate',
+      description: 'I\'ll contribute actively throughout the hackathon making something great for nonprofits and the community',
+      color: '#9c27b0'
+    }
+  ];
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          overflow: 'hidden',
+        }
+      }}
+    >
+      {/* Header with gradient background */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          p: 3,
+          textAlign: 'center',
+          position: 'relative',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 1,
+          }}
+        >
+          <Box
+            sx={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '50%',
+              p: 1.5,
+              mr: 2,
+            }}
+          >
+            <FaUserFriends style={{ fontSize: '24px' }} />
+          </Box>
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+            Ready to join {teamName}?
+          </Typography>
+        </Box>
+        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+          Let's make sure you're all set for an awesome collaboration! 🚀
+        </Typography>
+      </Box>
+
+      <DialogContent sx={{ p: 0 }}>
+        {/* Quick checklist */}
+        <Box sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', color: 'text.primary' }}>
+            Quick Team Guidelines
+          </Typography>
+
+          <Grid container spacing={2}>
+            {checklistItems.map((item) => (
+              <Grid size={{ xs: 12, sm: 4 }} key={item.key}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    border: confirmations[item.key] ? `2px solid ${item.color}` : '2px solid transparent',
+                    background: confirmations[item.key] 
+                      ? `linear-gradient(135deg, ${item.color}08, ${item.color}15)` 
+                      : 'white',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 3,
+                    }
+                  }}
+                  onClick={() => handleCheckboxChange(item.key)({ target: { checked: !confirmations[item.key] } })}
+                >
+                  <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                    <Box sx={{ mb: 2 }}>
+                      {item.icon}
+                    </Box>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={confirmations[item.key]}
+                          onChange={handleCheckboxChange(item.key)}
+                          sx={{ 
+                            color: item.color,
+                            '&.Mui-checked': { color: item.color }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      }
+                      label={
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                          {item.title}
+                        </Typography>
+                      }
+                      sx={{ 
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        m: 0,
+                        '& .MuiFormControlLabel-label': { mt: 1 }
+                      }}
+                    />
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ fontSize: '12px', lineHeight: 1.4 }}
+                    >
+                      {item.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* Progress indicator */}
+          <Box sx={{ mt: 3, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Progress: {Object.values(confirmations).filter(Boolean).length}/3
+              </Typography>
+              <Box sx={{ flexGrow: 1, mx: 2 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={(Object.values(confirmations).filter(Boolean).length / 3) * 100}
+                  sx={{
+                    height: 6,
+                    borderRadius: 3,
+                    '& .MuiLinearProgress-bar': {
+                      background: 'linear-gradient(90deg, #667eea, #764ba2)',
+                      borderRadius: 3,
+                    }
+                  }}
+                />
+              </Box>
+              {allConfirmed && <FaCheckCircle style={{ color: '#4caf50', fontSize: '18px' }} />}
+            </Box>
+          </Box>
+
+          {/* Encouragement message */}
+          {allConfirmed ? (
+            <MuiAlertComponent 
+              severity="success" 
+              sx={{ 
+                mt: 2,
+                borderRadius: 2,
+                '& .MuiAlert-icon': {
+                  fontSize: '20px'
+                }
+              }}
+            >
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                Perfect! 🎉 You're all set to join the team and start building something amazing together.
+              </Typography>
+            </MuiAlertComponent>
+          ) : (
+            <MuiAlertComponent 
+              severity="info" 
+              sx={{ 
+                mt: 2,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
+                border: 'none'
+              }}
+            >
+              <Typography variant="body1">
+                Almost there! Just confirm the items above to join your new team. 
+              </Typography>
+            </MuiAlertComponent>
+          )}
+        </Box>
+      </DialogContent>
+
+      <DialogActions 
+        sx={{ 
+          px: 3, 
+          pb: 3, 
+          pt: 0,
+          background: 'linear-gradient(to right, #fafafa, #f5f5f5)',
+          gap: 2
+        }}
+      >
+        <Button
+          onClick={handleClose}
+          disabled={loading}
+          variant="outlined"
+          color="inherit"
+          size="large"
+          sx={{ 
+            minWidth: 100,
+            borderRadius: 2,
+            textTransform: 'none',
+            fontWeight: 500
+          }}
+        >
+          Maybe Later
+        </Button>
+        <Button
+          onClick={handleConfirm}
+          disabled={!allConfirmed || loading}
+          variant="contained"
+          size="large"
+          startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <FaUserFriends />}
+          sx={{
+            minWidth: 140,
+            borderRadius: 2,
+            textTransform: 'none',
+            fontWeight: 600,
+            background: allConfirmed 
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+              : undefined,
+            opacity: !allConfirmed ? 0.6 : 1,
+            transform: allConfirmed ? 'scale(1.02)' : 'scale(1)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              background: allConfirmed 
+                ? 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' 
+                : undefined,
+              transform: allConfirmed ? 'scale(1.05)' : 'scale(1)',
+            }
+          }}
+        >
+          {loading ? 'Joining Team...' : 'Join Team! 🚀'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 // Enhanced TeamMember component with GitHub stats integration
-const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
+const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUsername }) => {
   if (!user) return null;
   
   // Handle both profile objects and user ID strings
@@ -253,8 +560,38 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
   // Get GitHub stats for this member
   const hasActivity = githubStats && (githubStats.commits > 0 || githubStats.issues?.total > 0);
   
+  const handleCopyGithubUsername = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!cleanGithubUsername) return;
+    
+    try {
+      await navigator.clipboard.writeText(cleanGithubUsername);
+      if (onCopyGithubUsername) {
+        onCopyGithubUsername(cleanGithubUsername);
+      }
+    } catch (err) {
+      console.error('Failed to copy GitHub username:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = cleanGithubUsername;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        if (onCopyGithubUsername) {
+          onCopyGithubUsername(cleanGithubUsername);
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed:', fallbackErr);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+  
   return (
-    <Grid item>
+    <Grid>
       <Tooltip
         title={
           <Box sx={{ fontSize: "12px" }}>
@@ -266,6 +603,8 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
               <div style={{ marginTop: "4px", fontSize: "11px", opacity: 0.8 }}>
                 <FaGithub style={{ marginRight: "4px", fontSize: "10px" }} />@
                 {cleanGithubUsername}
+                <br />
+                <em style={{ fontSize: "10px" }}>Click username below to copy</em>
               </div>
             )}
             {githubStats ? (
@@ -365,6 +704,7 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
           <Typography
             variant="caption"
             display="block"
+            onClick={handleCopyGithubUsername}
             sx={{
               fontSize: "10px",
               color: "text.secondary",
@@ -372,7 +712,21 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats }) => {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               mt: 0.25,
+              cursor: "pointer",
+              userSelect: "none",
+              padding: "2px 4px",
+              borderRadius: "4px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                backgroundColor: "rgba(0, 0, 0, 0.08)",
+                color: "primary.main",
+                transform: "scale(1.05)",
+              },
+              "&:active": {
+                transform: "scale(0.95)",
+              },
             }}
+            title="Click to copy GitHub username"
           >
             <FaGithub style={{ marginRight: "2px", fontSize: "8px" }} />@
             {cleanGithubUsername}
@@ -427,10 +781,13 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
         );
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Failed to fetch GitHub data`);
+          console.warn(`GitHub stats returned ${response.status} for ${parsedUrl.org}/${parsedUrl.repo}`);
+          setError(null);
+          return;
         }
 
         const data = await response.json();
+        console.log("GitHub stats data:", data);
         setGithubData(data);
         
         // Pass stats back to parent component
@@ -475,6 +832,12 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 
   // Calculate total commits
   const totalCommits = githubData.contributors?.reduce((sum, contributor) => sum + (contributor.commits || 0), 0) || 0;
+
+  // Get the latest_commit_time from all contributors
+  const latestCommitTime = githubData.contributors?.reduce((latest, contributor) => 
+    contributor.latest_commit_time && (!latest || new Date(contributor.latest_commit_time) > new Date(latest))
+      ? contributor.latest_commit_time 
+      : latest, null) || null;
   
   // Calculate total issues
   const totalIssues = githubData.contributors?.reduce((sum, contributor) => {
@@ -491,7 +854,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
   return (
     <Box sx={{ mt: 1, mb: 1 }}>
       {/* Repository Overview Stats */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>        
         <Chip
           icon={<FaGitAlt />}
           label={`${totalCommits} commits`}
@@ -522,6 +885,16 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
         </Typography>
       </Box>
 
+      {/* Last commit time */}
+      {latestCommitTime && (
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <FaClock style={{ marginRight: 6, fontSize: '12px', color: '#666' }} />
+          <Typography variant="caption" color="textSecondary">
+            Last commit: {formatDistanceToNow(parseISO(latestCommitTime), { addSuffix: true })}
+          </Typography>
+        </Box>
+      )}
+
       {/* Encouragement message for inactive teams */}
       {totalCommits === 0 && (
         <Box sx={{ mt: 1, p: 1, backgroundColor: '#fff3e0', borderRadius: 1, border: '1px solid #ffcc02' }}>
@@ -536,9 +909,10 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken, onCopyGithubUsername }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   
   // Check if this team's button is currently loading
   const isLoading = loadingTeamId === team?.id;
@@ -565,17 +939,33 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   // Map team members to their GitHub stats
   const getStatsForMember = (teamMember) => {
     if (!githubData?.contributors || !teamMember) return null;
-    
+
     // Try to match by GitHub username
     const githubUsername = teamMember.github || teamMember.github_username;
     if (!githubUsername) return null;
 
     // Clean the username (remove @ and URL parts)
     const cleanUsername = githubUsername.replace(/^@/, '').replace(/^https?:\/\/(www\.)?github\.com\//, '');
-    
-    return githubData.contributors.find(contributor => 
+
+    return githubData.contributors.find(contributor =>
       contributor.login === cleanUsername || contributor.id === cleanUsername
     );
+  };
+
+  // Handle showing join confirmation modal
+  const handleJoinClick = () => {
+    setShowJoinModal(true);
+  };
+
+  // Handle confirmed join action
+  const handleConfirmJoin = () => {
+    setShowJoinModal(false);
+    onJoin(team.id);
+  };
+
+  // Handle modal close
+  const handleCloseJoinModal = () => {
+    setShowJoinModal(false);
   };
 
   return (
@@ -680,6 +1070,34 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
           )}
         </Box>
 
+        {/* DevPost Project */}
+        <Box sx={{ mb: 1 }}>
+          {team?.devpost_link ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <FaExternalLinkAlt style={{ marginRight: 8, fontSize: '14px' }} />
+              <Link
+                href={team.devpost_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="body2"
+              >
+                DevPost Project
+              </Link>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <FaExternalLinkAlt style={{ marginRight: 8, fontSize: '14px', opacity: 0.5 }} />
+              <Link
+                href={`/hack/${team?.hackathon_event_id}/manageteam`}
+                variant="body2"
+                sx={{ fontStyle: 'italic', color: 'text.secondary' }}
+              >
+                Add DevPost Project
+              </Link>
+            </Box>
+          )}
+        </Box>
+
         {/* Created Date */}
         {team?.created && (
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -718,6 +1136,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                   user={user}
                   isCurrentUser={isCurrentUser}
                   githubStats={githubStats}
+                  onCopyGithubUsername={onCopyGithubUsername}
                 />
               );
             })}
@@ -741,9 +1160,9 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 size="small"
                 variant="outlined"
                 color="primary"
-                onClick={() => onJoin(team.id)}
+                onClick={handleJoinClick}
                 disabled={isLoading || !canJoin}
-                startIcon={isLoading && <CircularProgress size={16} />}                
+                startIcon={isLoading && <CircularProgress size={16} />}
               >
                 {isLoading ? "Joining..." : "Join Team"}
               </Button>
@@ -768,12 +1187,21 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
             )}
           </div>
         )}
+
+        {/* Team Join Confirmation Modal */}
+        <TeamJoinConfirmationModal
+          open={showJoinModal}
+          onClose={handleCloseJoinModal}
+          onConfirm={handleConfirmJoin}
+          teamName={team?.name}
+          loading={isLoading}
+        />
       </CardContent>
     </Card>
   );
 };
 
-const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
+const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {} }) => {
   const [teamData, setTeamData] = useState(teams);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
@@ -1066,6 +1494,14 @@ const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleCopyGithubUsername = (username) => {
+    setSnackbar({
+      open: true,
+      message: `GitHub username "${username}" copied to clipboard!`,
+      severity: "success",
+    });
+  };
+
   if (loading) {
     return <LoadingIndicator message="Loading teams..." />;
   }
@@ -1092,7 +1528,7 @@ const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
 
       <Grid container spacing={2}>
         {teamData.map((team) => (
-          <Grid item xs={12} sm={6} md={4} key={team?.id}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={team?.id}>
             <TeamCard
               team={team}
               userProfile={userProfile}
@@ -1100,14 +1536,16 @@ const TeamList = ({ teams, event_id, id, endDate, constraints = {} }) => {
               onJoin={handleJoinTeam}
               onLeave={handleUnjoinTeam}
               loadingTeamId={loadingTeamId}
-              isHackathonExpired={isHackathonExpired(endDate)}
+              isHackathonExpired={isHackathonExpired(endDate, eventTimezone)}
               teamJoinEnabled={teamJoinEnabled}
               nonprofitMap={nonprofitMap}
               accessToken={accessToken}
+              onCopyGithubUsername={handleCopyGithubUsername}
             />
           </Grid>        
         ))}
       </Grid>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

@@ -71,7 +71,7 @@ const FlierComponent = () => {
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <Typography variant="h5" sx={{ fontSize: "19px" }}>
                 📅 Date: October 12-13, 2024
               </Typography>
@@ -79,7 +79,7 @@ const FlierComponent = () => {
                 📍 Location: Tempe, Arizona
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <Typography variant="h5" sx={{ fontSize: "19px" }}>
                 💻 48-hour hackathon
               </Typography>
