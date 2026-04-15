@@ -27,6 +27,7 @@ import {
   Menu as MenuIcon,
   Close as CloseIcon,
   Keyboard as KeyboardIcon,
+  EmojiEvents as EmojiEventsIcon,
 } from "@mui/icons-material";
 import { trackEvent } from "../../lib/ga";
 
@@ -56,11 +57,19 @@ function isTyping() {
   );
 }
 
-const FloatingNavigation = () => {
+const FloatingNavigation = ({ isHackathonExpired = false }) => {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+
+  const activeSections = React.useMemo(() => {
+    if (!isHackathonExpired) return sectionConfig;
+    return [
+      { id: "results", name: "Results", icon: <EmojiEventsIcon />, shortcut: "R" },
+      ...sectionConfig,
+    ];
+  }, [isHackathonExpired]);
   const [flashSection, setFlashSection] = useState("");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -89,13 +98,13 @@ const FloatingNavigation = () => {
       { root: null, rootMargin: "-20% 0px -70% 0px", threshold: 0.1 }
     );
 
-    sectionConfig.forEach((section) => {
+    activeSections.forEach((section) => {
       const element = document.getElementById(section.id);
       if (element) observer.observe(element);
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [activeSections]);
 
   const navigateToSection = useCallback((sectionId, sectionName) => {
     const element = document.getElementById(sectionId);
@@ -195,23 +204,23 @@ const FloatingNavigation = () => {
       // Number keys 1-9 and 0 for sections
       if (key >= "1" && key <= "9") {
         const index = parseInt(key) - 1;
-        if (index < sectionConfig.length) {
+        if (index < activeSections.length) {
           event.preventDefault();
-          const section = sectionConfig[index];
+          const section = activeSections[index];
           navigateToSection(section.id, section.name);
         }
         return;
       }
-      if (key === "0" && sectionConfig.length >= 10) {
+      if (key === "0" && activeSections.length >= 10) {
         event.preventDefault();
-        const section = sectionConfig[9];
+        const section = activeSections[9];
         navigateToSection(section.id, section.name);
         return;
       }
 
       // Letter shortcuts
       const upper = key.toUpperCase();
-      const section = sectionConfig.find((s) => s.shortcut === upper);
+      const section = activeSections.find((s) => s.shortcut === upper);
       if (section) {
         event.preventDefault();
         navigateToSection(section.id, section.name);
@@ -224,7 +233,7 @@ const FloatingNavigation = () => {
 
   if (!isVisible) return null;
 
-  const visibleSections = isMobile ? sectionConfig.slice(0, 6) : sectionConfig;
+  const visibleSections = isMobile ? activeSections.slice(0, 6) : activeSections;
   const displaySections = [...visibleSections].reverse();
 
   return (
@@ -280,7 +289,7 @@ const FloatingNavigation = () => {
                     </Typography>
                   </td>
                 </tr>
-                {sectionConfig.map((section, i) => (
+                {activeSections.map((section, i) => (
                   <tr key={section.id}>
                     <td>
                       <Box sx={{ display: "flex", gap: 0.5 }}>

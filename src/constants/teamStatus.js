@@ -39,3 +39,18 @@ export const getStatusOption = (status) => {
 export const isJoiningDisabled = (status) => {
   return JOINING_DISABLED_STATUSES.includes(status);
 };
+
+// Winning statuses with rank ordering
+export const WINNING_STATUSES = [
+  { value: 'FOUNDING_ENGINEERS', label: '1st Place', rank: 1 },
+  { value: 'COMPLETION_SUPPORT', label: '2nd Place', rank: 2 },
+  { value: 'CATEGORY_WINNER', label: 'Category Winner', rank: 3 },
+];
+
+export const isWinningStatus = (status) => {
+  return WINNING_STATUSES.some(ws => ws.value === status);
+};
+
+export const getWinningStatus = (status) => {
+  return WINNING_STATUSES.find(ws => ws.value === status);
+};

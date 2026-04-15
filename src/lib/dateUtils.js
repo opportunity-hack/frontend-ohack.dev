@@ -17,3 +17,17 @@ export function parseLocalDate(date) {
   }
   return new Date(date);
 }
+
+/**
+ * Check if a hackathon has ended by comparing "now" to end-of-day in the
+ * hackathon's own timezone so viewers in other timezones don't see a
+ * premature "Hackathon Ended" badge.
+ */
+export function isHackathonExpired(endDate, eventTimezone) {
+  if (!endDate) return false;
+  const tz = eventTimezone || 'America/Phoenix';
+  const nowInTz = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+  const [year, month, day] = endDate.split('-').map(Number);
+  const endInTz = new Date(year, month - 1, day, 23, 59, 59, 999);
+  return nowInTz > endInTz;
+}
