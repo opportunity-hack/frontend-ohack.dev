@@ -95,13 +95,15 @@ const BatchEmailDialog = ({
   const [placeholderValues, setPlaceholderValues] = useState({});
   const [detectedPlaceholders, setDetectedPlaceholders] = useState([]);
   const [restoredFromSaved, setRestoredFromSaved] = useState(false);
+  const [removedEmails, setRemovedEmails] = useState(new Set());
 
   const { savedValues, saveValues, clearValues, hasSavedValues } = useSavedPlaceholders(eventId, selectedTemplate?.id);
 
   // Filter eligible users when volunteers change based on context
-  const eligibleUsers = isSelectedUsers
+  const allEligibleUsers = isSelectedUsers
     ? BatchEmailService.filterEligibleUsers(volunteers)
     : BatchEmailService.filterNotSelectedUsers(volunteers);
+  const eligibleUsers = allEligibleUsers.filter(u => !removedEmails.has(u.email));
 
   // Get the singular form of volunteer type for consistent usage
   const recipientType = BatchEmailService.getRecipientType(volunteerType);
@@ -124,6 +126,7 @@ const BatchEmailDialog = ({
       setPlaceholderValues({});
       setDetectedPlaceholders([]);
       setRestoredFromSaved(false);
+      setRemovedEmails(new Set());
     } else if (!isSelectedUsers) {
       // Auto-suggest the appropriate denial template for not-selected users
       const templateId = volunteerType === 'judge' || volunteerType === 'judges'
@@ -589,9 +592,19 @@ const BatchEmailDialog = ({
                 )}
 
                 {/* Users to be emailed */}
-                <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                  Users to be emailed ({eligibleUsers.length} total):
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, mb: 1 }}>
+                  <Typography variant="subtitle2">
+                    Users to be emailed ({eligibleUsers.length} total):
+                  </Typography>
+                  {removedEmails.size > 0 && (
+                    <Button
+                      size="small"
+                      onClick={() => setRemovedEmails(new Set())}
+                    >
+                      Restore {removedEmails.size} removed
+                    </Button>
+                  )}
+                </Box>
                 <Box sx={{ mb: 2 }}>
                   {eligibleUsers.length <= 20 ? (
                     // Show all users if 20 or fewer
@@ -603,6 +616,7 @@ const BatchEmailDialog = ({
                           size="small"
                           sx={{ m: 0.5 }}
                           icon={<PersonIcon />}
+                          onDelete={() => setRemovedEmails(prev => new Set([...prev, user.email]))}
                         />
                       ))}
                     </Box>
@@ -635,6 +649,7 @@ const BatchEmailDialog = ({
                             icon={<PersonIcon />}
                             color={user.source === 'custom' ? 'success' : 'default'}
                             variant={user.source === 'custom' ? 'outlined' : 'filled'}
+                            onDelete={() => setRemovedEmails(prev => new Set([...prev, user.email]))}
                           />
                         ))}
                         <Chip
@@ -743,7 +758,20 @@ const BatchEmailDialog = ({
         <Button onClick={handleClose} disabled={isScheduling}>
           {results ? 'Close' : 'Cancel'}
         </Button>
-        
+
+        {currentStep === 2 && results && (
+          <Button
+            onClick={() => {
+              setCurrentStep(1);
+              setResults(null);
+              setProgress(null);
+            }}
+            startIcon={<ArrowBackIcon />}
+          >
+            Back to Message
+          </Button>
+        )}
+
         {currentStep === 1 && !results && eligibleUsers.length > 0 && (
           <>
             <Button

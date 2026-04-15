@@ -57,7 +57,9 @@ class BatchEmailService {
           message: processedMessage,
           subject: subject,
           recipient_type: recipientType,
-          recipient_id: user.id
+          recipient_id: user.id,
+          email: user.email,
+          name: user.name || user.email || 'Recipient'
         };
       }
 
