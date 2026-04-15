@@ -37,7 +37,7 @@ const pages = [
 
 // Hackathon-related dropdown menu
 const hackathonMenuItems = [
-  ["Upcoming Events", "/hack"],
+  ["Events", "/hack"],
   ["What is a Hackathon?", "/about/process"],
   ["Request a Hackathon", "/hack/request"],
   ["Code of Conduct", "/hack/code-of-conduct"],
