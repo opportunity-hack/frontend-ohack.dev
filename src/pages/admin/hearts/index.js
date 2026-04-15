@@ -111,6 +111,8 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
     useState(false);
   const [slackUsers, setSlackUsers] = useState([]);
   const [loadingSlackUsers, setLoadingSlackUsers] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -167,6 +169,48 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
       setLoadingSlackUsers(false);
     }
   }, [user, accessToken]);
+
+  const syncSlackUsers = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/slack/admin/sync-users`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
+          },
+          body: JSON.stringify({ lookback_days: 30 }),
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setSyncResult(data);
+        setSnackbar({
+          open: true,
+          message: `Sync complete: ${data.created} new user${data.created !== 1 ? "s" : ""} created, ${data.skipped_existing} already existed.`,
+          severity: data.created > 0 ? "success" : "info",
+        });
+        if (data.created > 0) {
+          fetchSlackUsers();
+        }
+      } else {
+        throw new Error("Failed to sync Slack users");
+      }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: "Failed to sync Slack users. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const fetchUsersHearts = useCallback(async () => {
     if (user === null) {
@@ -309,16 +353,34 @@ const AdminHeartsPage = withRequiredAuthInfo(({ userClass }) => {
       onSnackbarClose={handleSnackbarClose}
     >
       <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ mb: 3, display: "flex", alignItems: "center" }}
-        >
-          🏆 Award Hearts to Team Members
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, flexWrap: "wrap", gap: 1 }}>
+          <Typography
+            variant="h5"
+            sx={{ display: "flex", alignItems: "center" }}
+          >
+            🏆 Award Hearts to Team Members
+          </Typography>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={syncSlackUsers}
+            disabled={syncing}
+            size="small"
+          >
+            {syncing ? "Syncing..." : "Sync Slack Users to DB"}
+          </Button>
+        </Box>
+        {syncResult && (
+          <Alert severity="info" sx={{ mb: 2 }} onClose={() => setSyncResult(null)}>
+            Sync results: {syncResult.created} created, {syncResult.skipped_existing} already existed, {syncResult.skipped_no_email} skipped (no email).
+            {syncResult.errors && syncResult.errors.length > 0 && ` ${syncResult.errors.length} error(s).`}
+          </Alert>
+        )}
         <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
           Select multiple users and award hearts for their contributions. You
-          can select multiple recipients and heart types at once.
+          can select multiple recipients and heart types at once. If a user
+          logged in only via Google and not Slack, click &quot;Sync Slack Users to
+          DB&quot; first to ensure they have a database record.
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit}>
