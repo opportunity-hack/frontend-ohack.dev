@@ -379,7 +379,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     try {
       const [judgesResponse, teamsResponse] = await Promise.all([
         axios.get(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedHackathon}/judge`,
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/admin/hackathon/${selectedHackathon}/judge`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
