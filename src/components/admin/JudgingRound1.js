@@ -219,7 +219,7 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       setLoadingJudges(true);
       console.log('Fetching judges for hackathon:', selectedHackathon);
       const judgesResponse = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedHackathon}/judge`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/admin/hackathon/${selectedHackathon}/judge`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
