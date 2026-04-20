@@ -10,9 +10,12 @@ import { useRouter } from "next/router";
 import theme from "../assets/theme";
 import { ShoppingCartProvider } from "../context/ShoppingCartContext";
 
-// Simple placeholder components to reduce CLS
+// Placeholder heights tuned to match the rendered NavBar/Footer so the shell
+// doesn't shift when these chunks load (major source of site-wide CLS).
 const NavBarPlaceholder = () => <Box sx={{ height: '64px', width: '100%' }} />;
-const FooterPlaceholder = () => <Box sx={{ height: '500px', width: '100%', bgcolor: theme.palette.primary.main }} />;
+const FooterPlaceholder = () => (
+  <Box sx={{ height: { xs: '760px', md: '560px' }, width: '100%', bgcolor: theme.palette.primary.main }} />
+);
 
 // NOTE: Load dynamics below static imports to avoid eslint errors.
 
@@ -21,13 +24,16 @@ const AxiosWrapper = dynamic(() => import('../components/axios-wrapper'), {
   loading: () => null
 })
 
+// SSR the NavBar shell so the layout above the fold is stable before hydration.
+// Auth-dependent avatar/login toggle is now wrapped in a fixed-width slot
+// inside Navbar.js so the flip on hydration doesn't shift layout.
 const NavBar = dynamic(() => import('../components/Navbar/Navbar'), {
-  ssr: false,
+  ssr: true,
   loading: () => <NavBarPlaceholder />
 })
 
 const Footer = dynamic(() => import('../components/Footer/Footer'), {
-  ssr: false,
+  ssr: true,
   loading: () => <FooterPlaceholder />
 });
 

@@ -1,4 +1,9 @@
 let ReactPixel;
+// Guards against the pixel being initialized repeatedly — many components call
+// initFacebookPixel() in useEffect, and _document.js also fires fbq('init').
+// Re-initializing imports react-facebook-pixel on every call and re-runs init,
+// which shows up as wasted INP work.
+let pixelInitPromise = null;
 
 /**
  * Enhanced Google Analytics and Facebook Pixel tracking module
@@ -39,9 +44,12 @@ export const EventAction = {
   DOWNLOAD: 'download'
 };
 
-// Initialize Facebook Pixel
+// Initialize Facebook Pixel (idempotent — subsequent calls reuse the first init).
 export const initFacebookPixel = async () => {
-  if (typeof window !== 'undefined') {
+  if (typeof window === 'undefined') return;
+  if (pixelInitPromise) return pixelInitPromise;
+
+  pixelInitPromise = (async () => {
     try {
       ReactPixel = (await import('react-facebook-pixel')).default;
       const options = {
@@ -52,8 +60,11 @@ export const initFacebookPixel = async () => {
       ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
     } catch (error) {
       console.error('Failed to initialize Facebook Pixel:', error);
+      pixelInitPromise = null; // allow retry after failure
     }
-  }
+  })();
+
+  return pixelInitPromise;
 };
 
 /**

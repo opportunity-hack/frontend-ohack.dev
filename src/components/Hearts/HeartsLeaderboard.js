@@ -29,14 +29,29 @@ const HeartsLeaderboard = () => {
     return () => controller.abort();
   }, [apiServerUrl]);
 
-  if (!leaders.length) return null;
-
   const avatarSize = isMobile ? 36 : 48;
   const badgeSize = isMobile ? 16 : 20;
+
+  // Reserve space matching the rendered leaderboard to prevent CLS.
+  // Heights tuned to match: padding + title + row (avatar + name + hearts) + margin.
+  const reservedMinHeight = { xs: 128, md: 172 };
+
+  if (!leaders.length) {
+    return (
+      <Box
+        aria-hidden="true"
+        sx={{
+          minHeight: reservedMinHeight,
+          mb: { xs: 1.5, md: 2 },
+        }}
+      />
+    );
+  }
 
   return (
     <Box
       sx={{
+        minHeight: reservedMinHeight,
         py: { xs: 1.5, md: 2 },
         px: { xs: 0.5, md: 2 },
         mb: { xs: 1.5, md: 2 },
