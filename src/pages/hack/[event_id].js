@@ -517,17 +517,6 @@ export default function HackathonEvent({ eventData }) {
           href="https://cdn.ohack.dev"
           crossOrigin="anonymous"
         />
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-
         {/* DNS Prefetch */}
         <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ReCaptchaProvider from "../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import {
   Container,
@@ -656,4 +657,10 @@ const ContactPage = () => {
   );
 };
 
-export default ContactPage;
+export default function ContactPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <ContactPage {...props} />
+    </ReCaptchaProvider>
+  );
+}

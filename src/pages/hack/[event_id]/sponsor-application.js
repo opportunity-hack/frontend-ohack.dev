@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/router";
+import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -2335,4 +2336,10 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default SponsorApplicationPage;
+export default function SponsorApplicationPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <SponsorApplicationPage {...props} />
+    </ReCaptchaProvider>
+  );
+}

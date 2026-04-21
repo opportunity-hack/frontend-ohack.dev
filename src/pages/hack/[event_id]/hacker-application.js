@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
+import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
@@ -3454,4 +3455,10 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default HackerApplicationPage;
+export default function HackerApplicationPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <HackerApplicationPage {...props} />
+    </ReCaptchaProvider>
+  );
+}

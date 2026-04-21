@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { useRouter } from "next/router";
+import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
@@ -2615,4 +2616,10 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default JudgeApplicationPage;
+export default function JudgeApplicationPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <JudgeApplicationPage {...props} />
+    </ReCaptchaProvider>
+  );
+}
