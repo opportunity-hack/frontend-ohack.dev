@@ -13,6 +13,7 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import ReCaptchaProvider from "../ReCaptchaProvider";
 import { initFacebookPixel, trackEvent, trackForm } from '../../lib/ga';
 
 // Utility functions for bot detection
@@ -387,4 +388,13 @@ const LeadForm = () => {
   );
 };
 
-export default LeadForm;
+// Wrap the default export so consumers (homepage, etc.) get the reCAPTCHA
+// context without having to mount the provider sitewide. This keeps the
+// reCAPTCHA v3 script off of pages that don't render LeadForm.
+export default function LeadFormWithRecaptcha() {
+  return (
+    <ReCaptchaProvider>
+      <LeadForm />
+    </ReCaptchaProvider>
+  );
+}

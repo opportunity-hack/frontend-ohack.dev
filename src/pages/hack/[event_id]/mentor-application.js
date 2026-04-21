@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
+import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
@@ -2403,4 +2404,10 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default MentorApplicationPage;
+export default function MentorApplicationPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <MentorApplicationPage {...props} />
+    </ReCaptchaProvider>
+  );
+}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
+import ReCaptchaProvider from '../../../components/ReCaptchaProvider';
 import {
   Typography, TextField, Button, FormControlLabel, Checkbox,
   Container, Box, Grid, Paper, List, ListItem, ListItemIcon,
@@ -164,7 +165,7 @@ const CTAButton = styled(Button)(({ theme }) => ({
   transition: 'all 0.3s ease-in-out',
 }));
 
-export default function Apply({ title, description, openGraphData }) {
+function Apply({ title, description, openGraphData }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { executeRecaptcha } = useGoogleReCaptcha();
@@ -1087,6 +1088,14 @@ export default function Apply({ title, description, openGraphData }) {
         </Box>
       </Container>
     </>
+  );
+}
+
+export default function ApplyWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <Apply {...props} />
+    </ReCaptchaProvider>
   );
 }
 

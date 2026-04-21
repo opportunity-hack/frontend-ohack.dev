@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
+import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
@@ -2902,4 +2903,10 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default VolunteerApplicationPage;
+export default function VolunteerApplicationPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <VolunteerApplicationPage {...props} />
+    </ReCaptchaProvider>
+  );
+}
