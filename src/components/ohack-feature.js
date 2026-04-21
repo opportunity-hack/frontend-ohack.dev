@@ -14,6 +14,10 @@ export default function OHackFeature({ title, description, resourceUrl, icon }){
         className="ohack-feature__icon"
         src={icon}
         alt="external link icon"
+        width={36}
+        height={36}
+        loading="lazy"
+        decoding="async"
       />
       {title}
     </h3>

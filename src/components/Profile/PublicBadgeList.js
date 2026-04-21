@@ -36,17 +36,19 @@ export default function PublicBadgeList({ badges }) {
               gap: 1
             }}
           >
-            <img 
-              src={badge.image} 
-              alt={badge.description || "Badge"} 
-              style={{ 
-                width: 60, 
-                height: 60, 
+            <img
+              src={badge.image}
+              alt={badge.description || "Badge"}
+              width={60}
+              height={60}
+              loading="lazy"
+              decoding="async"
+              style={{
                 borderRadius: '50%',
                 objectFit: 'cover',
                 border: '2px solid',
                 borderColor: 'rgba(0,0,0,0.1)'
-              }} 
+              }}
             />
             <Typography variant="caption" sx={{ fontWeight: 500, textAlign: 'center' }}>
               {badge.description}

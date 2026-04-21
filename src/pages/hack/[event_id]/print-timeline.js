@@ -328,9 +328,11 @@ const PrintTimelinePage = () => {
       </div>
 
       <div className="qr-code no-print">
-        <img 
-          src={generateQRCode(eventUrl)} 
+        <img
+          src={generateQRCode(eventUrl)}
           alt={`QR code for ${eventUrl}`}
+          width={120}
+          height={120}
           style={{ maxWidth: '120px', height: 'auto' }}
         />
         <div style={{fontSize: '12px', marginTop: '5px'}}>

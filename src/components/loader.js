@@ -5,7 +5,7 @@ export default function Loader(){
 
   return (
     <div className="loader">
-      <img src={loadingImg} alt="Loading..." />
+      <img src={loadingImg} alt="Loading..." width={80} height={80} />
     </div>
   );
 };

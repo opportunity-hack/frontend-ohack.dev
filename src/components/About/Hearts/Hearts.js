@@ -633,11 +633,13 @@ const Hearts = () => {
               </Paper>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <InstagramEmbed
-                url="https://www.instagram.com/p/CoupvGxuiLX/"
-                maxWidth={400}
-                height={480}
-              />
+              <Box sx={{ minHeight: 480, maxWidth: 400, mx: "auto" }}>
+                <InstagramEmbed
+                  url="https://www.instagram.com/p/CoupvGxuiLX/"
+                  maxWidth={400}
+                  height={480}
+                />
+              </Box>
             </Grid>
           </Grid>
         </Section>
