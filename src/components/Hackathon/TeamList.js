@@ -49,6 +49,7 @@ import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { TEAM_STATUS_OPTIONS, getStatusOption, isJoiningDisabled } from '../../constants/teamStatus';
+import { isHackathonExpired } from '../../lib/dateUtils';
 
 // Helper function to check if team status prevents joining
 const isJoiningDisabledByStatus = (status) => {
@@ -180,28 +181,6 @@ const LoadingIndicator = ({ message }) => (
     </Typography>
   </Box>
 );
-
-// Utility function to check if hackathon has ended
-// Compares "now" to end-of-day in the hackathon's own timezone so viewers in
-// other timezones don't see a premature "Hackathon Ended" badge.
-const isHackathonExpired = (endDate, eventTimezone) => {
-  if (!endDate) return false;
-
-  const tz = eventTimezone || 'America/Phoenix';
-
-  // Get the current date/time as it appears in the event timezone
-  const nowInTz = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
-
-  // Build end-of-day for the end date in the event timezone
-  // endDate is "YYYY-MM-DD"; parse parts to avoid UTC-midnight pitfall
-  const [year, month, day] = endDate.split('-').map(Number);
-  const endInTz = new Date(year, month - 1, day, 23, 59, 59, 999);
-
-  console.log("Hackathon current time in", tz, ":", nowInTz);
-  console.log("Hackathon end time in", tz, ":", endInTz);
-
-  return nowInTz > endInTz;
-};
 
 // Utility function to render team status chip
 const renderStatusChip = (status) => {

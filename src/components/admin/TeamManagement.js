@@ -65,7 +65,8 @@ import {
   FaChevronUp,
   FaExternalLinkAlt,
   FaCheckCircle,
-  FaBug
+  FaBug,
+  FaLink
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
@@ -1385,6 +1386,37 @@ const TeamManagement = ({ orgId }) => {
 
                 <TextField
                   fullWidth
+                  label="DevPost Link"
+                  value={teamData.devpost_link || ""}
+                  onChange={(e) =>
+                    handleTeamDataChange("devpost_link", e.target.value)
+                  }
+                  placeholder="https://devpost.com/software/project-name"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <FaLink />
+                      </InputAdornment>
+                    ),
+                    endAdornment: teamData.devpost_link && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          component="a"
+                          href={teamData.devpost_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          color="primary"
+                        >
+                          <FaExternalLinkAlt size={14} />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+
+                <TextField
+                  fullWidth
                   label="Admin Notes (Private)"
                   value={teamData.admin_notes || ""}
                   onChange={(e) =>
@@ -2085,6 +2117,7 @@ const TeamManagement = ({ orgId }) => {
                     </TableCell>
                     <TableCell>Members</TableCell>
                     <TableCell>GitHub</TableCell>
+                    <TableCell>DevPost</TableCell>
                     <TableCell>Nonprofit</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
@@ -2159,6 +2192,30 @@ const TeamManagement = ({ orgId }) => {
                         </TableCell>
                         <TableCell>
                           {renderGitHubCell(team)}
+                        </TableCell>
+                        <TableCell>
+                          {team.devpost_link ? (
+                            <Link
+                              href={team.devpost_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{
+                                textDecoration: 'none',
+                                color: theme.palette.primary.main,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                '&:hover': {
+                                  textDecoration: 'underline'
+                                }
+                              }}
+                            >
+                              <FaLink size={12} />
+                              DevPost
+                            </Link>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">—</Typography>
+                          )}
                         </TableCell>
                         <TableCell>
                           {getNonprofitName(team.selected_nonprofit_id)}

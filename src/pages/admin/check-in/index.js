@@ -241,7 +241,7 @@ const AdminCheckInPage = withRequiredAuthInfo(({ userClass }) => {
     setLoading(true);
     try {
       // First, fetch the volunteer data to verify it exists
-      const fetchUrl = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}/${volunteerType}`;
+      const fetchUrl = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/admin/hackathon/${eventId}/${volunteerType}`;
       const response = await fetch(fetchUrl, {
         headers: {
           authorization: `Bearer ${accessToken}`,

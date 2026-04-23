@@ -37,7 +37,7 @@ const pages = [
 
 // Hackathon-related dropdown menu
 const hackathonMenuItems = [
-  ["Upcoming Events", "/hack"],
+  ["Events", "/hack"],
   ["What is a Hackathon?", "/about/process"],
   ["Request a Hackathon", "/hack/request"],
   ["Code of Conduct", "/hack/code-of-conduct"],
@@ -429,71 +429,86 @@ export default function NavBar() {
             </Menu>
           </Box>
 
-          {isLoggedIn && (
-            <Box sx={{ flexGrow: 0 }}>
-              <Tooltip title="Open settings">
-                <IconButton 
-                  onClick={handleOpenUserMenu} 
-                  sx={{ 
-                    p: 0,
-                    minWidth: "48px", 
-                    minHeight: "48px",
-                    margin: "4px" 
+          {/*
+            Fixed-width auth slot keeps the navbar's right edge stable whether we
+            render the Log In button (SSR/logged-out) or the Avatar (post-hydration
+            logged-in). Prevents CLS from the auth state flipping on hydration.
+          */}
+          <Box
+            sx={{
+              flexGrow: 0,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              minWidth: { xs: 56, md: 140 },
+              minHeight: "56px",
+            }}
+          >
+            {isLoggedIn ? (
+              <>
+                <Tooltip title="Open settings">
+                  <IconButton
+                    onClick={handleOpenUserMenu}
+                    sx={{
+                      p: 0,
+                      minWidth: "48px",
+                      minHeight: "48px",
+                      margin: "4px",
+                    }}
+                  >
+                    <Avatar alt={user?.firstName} src={user?.pictureUrl} />
+                  </IconButton>
+                </Tooltip>
+                <Menu
+                  sx={{ mt: "45px" }}
+                  id="menu-appbar"
+                  anchorEl={anchorElUser}
+                  anchorOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
                   }}
+                  keepMounted
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                  }}
+                  open={Boolean(anchorElUser)}
+                  onClose={handleCloseUserMenu}
                 >
-                  <Avatar alt={user?.firstName} src={user?.pictureUrl} />
-                </IconButton>
-              </Tooltip>
-              <Menu
-                sx={{ mt: "45px" }}
-                id="menu-appbar"
-                anchorEl={anchorElUser}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                open={Boolean(anchorElUser)}
-                onClose={handleCloseUserMenu}
+                  {auth_settings.map((setting) => (
+                    <Link href={setting[1]} key={setting[0]} passHref>
+                      <MenuItem
+                        onClick={handleCloseUserMenu}
+                        sx={{ py: 1.5, minHeight: "48px" }}
+                      >
+                        <Typography textAlign="center">{setting[0]}</Typography>
+                      </MenuItem>
+                    </Link>
+                  ))}
+                  <MenuItem
+                    onClick={() => logout(true)}
+                    sx={{ py: 1.5, minHeight: "48px" }}
+                  >
+                    <Typography textAlign="center">Log Out</Typography>
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <LoginButton
+                variant="contained"
+                disableElevation
+                onClick={() =>
+                  redirectToLoginPage({
+                    postLoginRedirectUrl: window.location.href,
+                  })
+                }
+                className="login-button"
               >
-                {auth_settings.map((setting) => (
-                  <Link href={setting[1]} key={setting[0]} passHref>
-                    <MenuItem 
-                      onClick={handleCloseUserMenu}
-                      sx={{ py: 1.5, minHeight: "48px" }}
-                    >
-                      <Typography textAlign="center">{setting[0]}</Typography>
-                    </MenuItem>
-                  </Link>
-                ))}
-                <MenuItem 
-                  onClick={() => logout(true)}
-                  sx={{ py: 1.5, minHeight: "48px" }}
-                >
-                  <Typography textAlign="center">Log Out</Typography>
-                </MenuItem>
-              </Menu>
-            </Box>
-          )}
-
-          {!isLoggedIn && (
-            <LoginButton
-              variant="contained"
-              disableElevation
-              onClick={() =>
-                redirectToLoginPage({
-                  postLoginRedirectUrl: window.location.href,
-                })
-              }
-              className="login-button"
-            >
-              Log In
-            </LoginButton>
-          )}
+                Log In
+              </LoginButton>
+            )}
+          </Box>
         </Toolbar>
       </Container>
     </AppBar>

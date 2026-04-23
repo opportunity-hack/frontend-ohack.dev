@@ -15,7 +15,7 @@ export default function BadgeList({badges}){
         </div>
         {
                 badges.map(badge => {
-                    return <div key={badge.id}><img key={badge.id} alt="Badge" src={badge.image} className="profile__avatar" />{badge.description}</div>;
+                    return <div key={badge.id}><img key={badge.id} alt="Badge" src={badge.image} width={80} height={80} loading="lazy" decoding="async" className="profile__avatar" />{badge.description}</div>;
                 })
         }        
     </div>

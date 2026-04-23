@@ -1,10 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Grid, Button, Box, Typography, Paper, List, ListItem, Divider, Chip } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import LinkIcon from "@mui/icons-material/Link";
 
-const sections = [
+const baseSections = [
   {
     id: "applications",
     name: "Apply Now",
@@ -43,10 +43,25 @@ const trackNavigation = (sectionName) => {
   });
 };
 
-const TableOfContents = ({ eventLinks = [] }) => {
+const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
   useEffect(() => {
     initFacebookPixel();
   }, []);
+
+  const sections = useMemo(() => {
+    if (!isHackathonExpired) return baseSections;
+    return [
+      {
+        id: "results",
+        name: "Results",
+        highlight: true,
+        ariaLabel: "View hackathon results and winners",
+      },
+      ...baseSections.map(s =>
+        s.id === "applications" ? { ...s, highlight: false } : s
+      ),
+    ];
+  }, [isHackathonExpired]);
 
   const handleClick = (event, sectionId, sectionName) => {
     event.preventDefault();

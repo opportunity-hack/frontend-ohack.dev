@@ -51,10 +51,19 @@ const LeadForm = dynamic(() => import("../components/LeadForm/LeadForm"), {
   ssr: true, // Enable SSR to reduce CLS
 });
 
+// Reserve above-the-fold space so the leaderboard popping in doesn't shove
+// HeroBanner/LeadForm/HackathonList down on first paint.
+const HeartsLeaderboardPlaceholder = () => (
+  <Box
+    aria-hidden="true"
+    sx={{ minHeight: { xs: 128, md: 172 }, mb: { xs: 1.5, md: 2 } }}
+  />
+);
+
 const HeartsLeaderboard = dynamic(
   () => import("../components/Hearts/HeartsLeaderboard"),
   {
-    loading: () => null,
+    loading: () => <HeartsLeaderboardPlaceholder />,
     ssr: false, // Not critical for first paint
   }
 );

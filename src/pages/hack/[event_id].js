@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import { parseLocalDate } from "../../lib/dateUtils";
+import { parseLocalDate, isHackathonExpired } from "../../lib/dateUtils";
 import { 
   CircularProgress, 
   Container, 
@@ -175,9 +175,17 @@ const EventConstraints = dynamic(
 
 const InteractiveFAQ = dynamic(
   () => import("../../components/Hackathon/InteractiveFAQ"),
-  { 
+  {
     ssr: false,
     loading: () => <LoadingPlaceholder height="400px" label="Loading frequently asked questions" />
+  }
+);
+
+const HackathonResults = dynamic(
+  () => import("../../components/Hackathon/HackathonResults"),
+  {
+    ssr: false,
+    loading: () => <LoadingPlaceholder height="300px" label="Loading hackathon results" />
   }
 );
 
@@ -193,6 +201,17 @@ export default function HackathonEvent({ eventData }) {
   const isLoading = router.isFallback;
   const { event_id } = router.query || {};
   const event = eventData;
+
+  const hackathonExpired = event?.end_date
+    ? isHackathonExpired(event.end_date, event.timezone)
+    : false;
+
+  const nonprofitMap = useMemo(() => {
+    if (!event?.nonprofits) return {};
+    const map = {};
+    event.nonprofits.forEach(npo => { map[npo.id] = npo.name; });
+    return map;
+  }, [event?.nonprofits]);
 
   useEffect(() => {
     // Handle scrolling to the correct section when the page loads
@@ -557,8 +576,20 @@ export default function HackathonEvent({ eventData }) {
           description={event.description}
         />
 
+        {hackathonExpired && (
+          <section id="results" aria-labelledby="results-heading">
+            <HackathonResults
+              teams={event.teams}
+              nonprofitMap={nonprofitMap}
+              eventId={event_id}
+              eventTitle={event.title}
+              githubOrg={event.github_org}
+            />
+          </section>
+        )}
+
         <nav aria-label="Event navigation">
-          <TableOfContents eventLinks={event.links} />
+          <TableOfContents eventLinks={event.links} isHackathonExpired={hackathonExpired} />
         </nav>
 
         <Grid container spacing={3}>
@@ -632,112 +663,120 @@ export default function HackathonEvent({ eventData }) {
             </Typography>
             <LinksContainer elevation={2} id="build-a-team">
               <Box>
-                <Typography variant="h5" gutterBottom fontWeight="bold">
-                  Step 3. Build a team
-                </Typography>
-
-                {/* Team options - Find or Create */}
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="body2" color="textSecondary" paragraph>
-                    You can either join an existing team or create your own team
-                    to participate in this hackathon:
+                {hackathonExpired ? (
+                  <Typography variant="h5" gutterBottom fontWeight="bold">
+                    Participating Teams
                   </Typography>
+                ) : (
+                  <>
+                    <Typography variant="h5" gutterBottom fontWeight="bold">
+                      Step 3. Build a team
+                    </Typography>
 
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                        href={event.constraints?.team_find_a_team_enabled !== false ? `/hack/${event_id}/findteam` : undefined}
-                        disabled={event.constraints?.team_find_a_team_enabled === false}
-                        component={event.constraints?.team_find_a_team_enabled !== false ? "a" : "button"}
-                        sx={{
-                          py: 2,
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          height: "100%",
-                          borderRadius: 2,
-                          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-                          transition:
-                            "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-                          "&:hover": {
-                            transform: event.constraints?.team_find_a_team_enabled !== false ? "translateY(-3px)" : "none",
-                            boxShadow: event.constraints?.team_find_a_team_enabled !== false ? "0 6px 12px rgba(0, 0, 0, 0.15)" : "0 4px 10px rgba(0, 0, 0, 0.1)",
-                          },
-                          opacity: event.constraints?.team_find_a_team_enabled !== false ? 1 : 0.6,
-                          cursor: event.constraints?.team_find_a_team_enabled !== false ? 'pointer' : 'not-allowed'
-                        }}
-                      >
-                        <Box sx={{ fontSize: "2rem", mb: 1 }}>🔍</Box>
-                        <Typography
-                          variant="h6"
-                          component="span"
-                          fontWeight="bold"
-                        >
-                          Find a Team
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="inherit"
-                          sx={{ opacity: 0.85, mt: 0.5 }}
-                        >
-                          Browse and join existing teams
-                          {event.constraints?.team_find_a_team_enabled === false && " (Closed)"}
-                        </Typography>
-                      </Button>
-                    </Grid>
+                    {/* Team options - Find or Create */}
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="body2" color="textSecondary" paragraph>
+                        You can either join an existing team or create your own team
+                        to participate in this hackathon:
+                      </Typography>
 
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        fullWidth
-                        href={event.constraints?.team_creation_enabled !== false ? `/hack/${event_id}/manageteam` : undefined}
-                        disabled={event.constraints?.team_creation_enabled === false}
-                        component={event.constraints?.team_creation_enabled !== false ? "a" : "button"}
-                        sx={{
-                          py: 2,
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          height: "100%",
-                          borderRadius: 2,
-                          borderWidth: 2,
-                          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)",
-                          transition:
-                            "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-                          "&:hover": {
-                            transform: event.constraints?.team_creation_enabled !== false ? "translateY(-3px)" : "none",
-                            boxShadow: event.constraints?.team_creation_enabled !== false ? "0 6px 12px rgba(0, 0, 0, 0.1)" : "0 4px 10px rgba(0, 0, 0, 0.05)",
-                          },
-                          opacity: event.constraints?.team_creation_enabled !== false ? 1 : 0.6,
-                          cursor: event.constraints?.team_creation_enabled !== false ? 'pointer' : 'not-allowed'
-                        }}
-                      >
-                        <Box sx={{ fontSize: "2rem", mb: 1 }}>🚀</Box>
-                        <Typography
-                          variant="h6"
-                          component="span"
-                          fontWeight="bold"
-                        >
-                          Manage a Team
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="inherit"
-                          sx={{ opacity: 0.85, mt: 0.5 }}
-                        >
-                          Create or manage your own team
-                          {event.constraints?.team_creation_enabled === false && " (Closed)"}
-                        </Typography>
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Box>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                            href={event.constraints?.team_find_a_team_enabled !== false ? `/hack/${event_id}/findteam` : undefined}
+                            disabled={event.constraints?.team_find_a_team_enabled === false}
+                            component={event.constraints?.team_find_a_team_enabled !== false ? "a" : "button"}
+                            sx={{
+                              py: 2,
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              height: "100%",
+                              borderRadius: 2,
+                              boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+                              transition:
+                                "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+                              "&:hover": {
+                                transform: event.constraints?.team_find_a_team_enabled !== false ? "translateY(-3px)" : "none",
+                                boxShadow: event.constraints?.team_find_a_team_enabled !== false ? "0 6px 12px rgba(0, 0, 0, 0.15)" : "0 4px 10px rgba(0, 0, 0, 0.1)",
+                              },
+                              opacity: event.constraints?.team_find_a_team_enabled !== false ? 1 : 0.6,
+                              cursor: event.constraints?.team_find_a_team_enabled !== false ? 'pointer' : 'not-allowed'
+                            }}
+                          >
+                            <Box sx={{ fontSize: "2rem", mb: 1 }}>🔍</Box>
+                            <Typography
+                              variant="h6"
+                              component="span"
+                              fontWeight="bold"
+                            >
+                              Find a Team
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="inherit"
+                              sx={{ opacity: 0.85, mt: 0.5 }}
+                            >
+                              Browse and join existing teams
+                              {event.constraints?.team_find_a_team_enabled === false && " (Closed)"}
+                            </Typography>
+                          </Button>
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <Button
+                            variant="outlined"
+                            color="primary"
+                            fullWidth
+                            href={event.constraints?.team_creation_enabled !== false ? `/hack/${event_id}/manageteam` : undefined}
+                            disabled={event.constraints?.team_creation_enabled === false}
+                            component={event.constraints?.team_creation_enabled !== false ? "a" : "button"}
+                            sx={{
+                              py: 2,
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              height: "100%",
+                              borderRadius: 2,
+                              borderWidth: 2,
+                              boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)",
+                              transition:
+                                "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+                              "&:hover": {
+                                transform: event.constraints?.team_creation_enabled !== false ? "translateY(-3px)" : "none",
+                                boxShadow: event.constraints?.team_creation_enabled !== false ? "0 6px 12px rgba(0, 0, 0, 0.1)" : "0 4px 10px rgba(0, 0, 0, 0.05)",
+                              },
+                              opacity: event.constraints?.team_creation_enabled !== false ? 1 : 0.6,
+                              cursor: event.constraints?.team_creation_enabled !== false ? 'pointer' : 'not-allowed'
+                            }}
+                          >
+                            <Box sx={{ fontSize: "2rem", mb: 1 }}>🚀</Box>
+                            <Typography
+                              variant="h6"
+                              component="span"
+                              fontWeight="bold"
+                            >
+                              Manage a Team
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="inherit"
+                              sx={{ opacity: 0.85, mt: 0.5 }}
+                            >
+                              Create or manage your own team
+                              {event.constraints?.team_creation_enabled === false && " (Closed)"}
+                            </Typography>
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </>
+                )}
 
                 <TeamList
                   teams={event.teams?.sort((a, b) => {
@@ -1010,7 +1049,7 @@ export default function HackathonEvent({ eventData }) {
       </Container>
 
       {/* Floating Navigation Component */}
-      <FloatingNavigation />
+      <FloatingNavigation isHackathonExpired={hackathonExpired} />
     </>
   );
 }

@@ -89,11 +89,13 @@ const ProjectCompletion = () => {
             </Box>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <InstagramEmbed
-              url="https://www.instagram.com/p/CoBFS8hvcnB/"
-              maxWidth={328}
-              height={500}
-            />
+            <Box sx={{ minHeight: 500, maxWidth: 328, mx: "auto" }}>
+              <InstagramEmbed
+                url="https://www.instagram.com/p/CoBFS8hvcnB/"
+                maxWidth={328}
+                height={500}
+              />
+            </Box>
           </Grid>
         </Grid>
       </TitleContainer>
@@ -287,7 +289,7 @@ const ProjectCompletion = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 4, minHeight: 500, maxWidth: 328, mx: "auto" }}>
           <InstagramEmbed
             url="https://www.instagram.com/p/CVicxFMPiqo/"
             maxWidth={328}
