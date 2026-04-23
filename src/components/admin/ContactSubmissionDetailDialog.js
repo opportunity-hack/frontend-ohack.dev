@@ -28,6 +28,22 @@ const statusOptions = [
   { value: "responded", label: "Responded", color: "success" },
 ];
 
+const INQUIRY_TYPE_DISPLAY = {
+  hackathon: "General Hackathon Inquiry",
+  sponsor: "Sponsorship Opportunity",
+  nonprofit: "Nonprofit Partnership",
+  judge: "Judging Opportunity",
+  volunteer: "Volunteer Opportunity",
+  media: "Media Inquiry",
+  other: "General Question",
+};
+
+const buildContactSubject = (inquiryType) => {
+  const display =
+    INQUIRY_TYPE_DISPLAY[inquiryType] || inquiryType || "General Inquiry";
+  return `Contact Us: ${display.toLowerCase()} - Opportunity Hack`;
+};
+
 const formatDate = (dateStr) => {
   if (!dateStr) return "Not set";
   try {
@@ -219,6 +235,7 @@ const ContactSubmissionDetailDialog = ({
           accessToken={accessToken}
           orgId={orgId}
           onEmailSent={onRefresh}
+          fixedSubject={buildContactSubject(submission.inquiryType)}
         />
 
         {/* Metadata */}
