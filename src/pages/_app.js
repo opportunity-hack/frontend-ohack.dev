@@ -3,7 +3,6 @@ import dynamic from 'next/dynamic'
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AuthProvider } from "@propelauth/react";
-import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box } from "@mui/material";
 import { useRouter } from "next/router";
@@ -71,23 +70,21 @@ export default function MyApp({ Component, pageProps }) {
         <title>{pageProps.title}</title>
       </Head>
       <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
-        <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY}>
-          <AxiosWrapper>
-            <ThemeProvider theme={theme}>
-              <ShoppingCartProvider>
-              <CssBaseline>
-                <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                  {!isPrintTimelinePage && <NavBar />}
-                  <Component {...pageProps} />
-                  {!isPrintTimelinePage && <Footer />}
-                </Box>
-              </CssBaseline>
-              <OnboardingDialog />
-              <ProfileCompletionPrompt />
-              </ShoppingCartProvider>
-            </ThemeProvider>
-          </AxiosWrapper>
-        </GoogleReCaptchaProvider>
+        <AxiosWrapper>
+          <ThemeProvider theme={theme}>
+            <ShoppingCartProvider>
+            <CssBaseline>
+              <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                {!isPrintTimelinePage && <NavBar />}
+                <Component {...pageProps} />
+                {!isPrintTimelinePage && <Footer />}
+              </Box>
+            </CssBaseline>
+            <OnboardingDialog />
+            <ProfileCompletionPrompt />
+            </ShoppingCartProvider>
+          </ThemeProvider>
+        </AxiosWrapper>
       </AuthProvider>
       <GA/>
     </>

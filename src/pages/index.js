@@ -128,10 +128,6 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
         
-        {/* Performance optimizations */}        
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
         {/* Preload critical assets with higher fetchpriority */}
         <link 
           rel="preload" 

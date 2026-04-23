@@ -46,6 +46,7 @@ const AdminEmailCompose = ({
   accessToken,
   orgId,
   onEmailSent,
+  fixedSubject,
 }) => {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -53,8 +54,11 @@ const AdminEmailCompose = ({
   const [alert, setAlert] = useState(null);
   const [composeOpen, setComposeOpen] = useState(false);
 
+  const isSubjectLocked = Boolean(fixedSubject);
+  const effectiveSubject = isSubjectLocked ? fixedSubject : subject;
+
   const handleSend = async () => {
-    if (!subject.trim() || !message.trim()) {
+    if (!effectiveSubject.trim() || !message.trim()) {
       setAlert({ severity: "warning", text: "Subject and message are required." });
       return;
     }
@@ -75,7 +79,7 @@ const AdminEmailCompose = ({
           body: JSON.stringify({
             email: recipientEmail,
             name: recipientName,
-            subject,
+            subject: effectiveSubject,
             message,
             recipient_type: "contact",
             collection_name: collectionName,
@@ -86,7 +90,7 @@ const AdminEmailCompose = ({
 
       if (response.ok) {
         setAlert({ severity: "success", text: "Email sent successfully!" });
-        setSubject("");
+        if (!isSubjectLocked) setSubject("");
         setMessage("");
         setComposeOpen(false);
         if (onEmailSent) onEmailSent();
@@ -136,9 +140,15 @@ const AdminEmailCompose = ({
             <TextField
               size="small"
               label="Subject"
-              value={subject}
+              value={effectiveSubject}
               onChange={(e) => setSubject(e.target.value)}
               fullWidth
+              InputProps={{ readOnly: isSubjectLocked }}
+              helperText={
+                isSubjectLocked
+                  ? "Subject matches the original email thread and can't be changed."
+                  : undefined
+              }
             />
             <TextField
               size="small"

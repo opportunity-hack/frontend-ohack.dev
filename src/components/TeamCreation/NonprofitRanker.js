@@ -7,7 +7,7 @@ import {
   Chip,
   Alert
 } from '@mui/material';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { MdDragHandle } from 'react-icons/md';
 
 /**

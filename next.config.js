@@ -8,6 +8,23 @@ module.exports = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
+  // Modular imports / tree-shaking for heavy dependencies. Many MUI components
+  // and icons get pulled in via named imports; without this, the full package
+  // ships in the initial bundle. Also covers lodash (use lodash-es per import
+  // path too) and date-fns.
+  experimental: {
+    optimizePackageImports: [
+      "@mui/material",
+      "@mui/icons-material",
+      "@mui/lab",
+      "@mui/x-data-grid",
+      "@mui/x-date-pickers",
+      "date-fns",
+      "lodash",
+      "react-icons",
+    ],
+  },
+
   // Rewrites configuration
   async rewrites() {
     return [

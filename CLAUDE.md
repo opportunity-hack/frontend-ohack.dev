@@ -51,6 +51,10 @@ Patterns that must stay in place to keep Google Search Console CWV green:
 - Iframes (YouTube, Instagram, Calendar) must be wrapped in an aspect-ratio container (the existing pattern is `paddingBottom: '56.25%'` with `height: 0` + absolutely-positioned iframe) or given a fixed pixel height.
 - `initFacebookPixel` in `src/lib/ga/index.js` is idempotent via `pixelInitPromise`. Don't add `ReactPixel.init` calls outside of it.
 
+## Admin Email Compose (`AdminEmailCompose`)
+- The component accepts an optional `fixedSubject` prop. When set, the Subject field is read-only and that exact value is sent.
+- `ContactSubmissionDetailDialog` passes a subject derived from `submission.inquiryType` matching the backend format in `backend-ohack.dev/api/contact/contact_service.py`: `Contact Us: {inquiry_type_display.lower()} - Opportunity Hack`. The `INQUIRY_TYPE_DISPLAY` map in `ContactSubmissionDetailDialog.js` must stay in sync with the backend's map so admin replies thread with the original confirmation email.
+
 ## Social Media Integration
 
 ### Overview
