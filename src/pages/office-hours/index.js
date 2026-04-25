@@ -120,7 +120,7 @@ END:VCALENDAR`;
             </Head>
             <InnerContainer container>
                 <SlackSignupContainer>
-                    <Typography variant="h1" gutterBottom>Office Hours</Typography>
+                    <Typography variant="h1" component="h1" gutterBottom>Free Developer Office Hours</Typography>
                     {isLoading ? (
                         <Skeleton variant="text" width="100%" height={40} />
                     ) : (

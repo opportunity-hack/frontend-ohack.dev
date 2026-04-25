@@ -196,6 +196,11 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                     value: countOfhelpingHackers + '/' + countOfhelpingMentors,
                     key: 'twitterdata2',
                 },
+                {
+                    name: 'robots',
+                    content: 'noindex,follow',
+                    key: 'robots',
+                },
             ],
         },
     };

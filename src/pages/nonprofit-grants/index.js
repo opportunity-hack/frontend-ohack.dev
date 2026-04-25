@@ -58,16 +58,16 @@ const NonprofitGrants = () => {
   return (
     <>
       <Head>
-        <title>Free Nonprofit Grants | Opportunity Hack</title>
-        <meta name="description" content="Discover free grant opportunities for nonprofits. No paywall, no fees - just a curated list of technology funding sources to help your nonprofit organization make a greater impact." />
+        <title>Free Software Grants for Nonprofits | Opportunity Hack</title>
+        <meta name="description" content="Discover free software development grants for nonprofits. Opportunity Hack connects 501(c)(3) organizations with volunteer developers who build custom tech solutions at no cost." />
         <meta name="keywords" content="nonprofit grants, free grants, nonprofit funding, charity grants, NGO grants, technology grants, nonprofit tech, Opportunity Hack" />
-        <meta property="og:title" content="Free Nonprofit Grants | Opportunity Hack" />
-        <meta property="og:description" content="Discover free technology grant opportunities for nonprofits. No paywall, no fees - just a curated list of funding sources." />
+        <meta property="og:title" content="Free Software Grants for Nonprofits | Opportunity Hack" />
+        <meta property="og:description" content="Discover free software development grants for nonprofits. Opportunity Hack connects 501(c)(3) organizations with volunteer developers who build custom tech solutions at no cost." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://ohack.dev/nonprofit-grants" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Free Nonprofit Grants | Opportunity Hack" />
-        <meta name="twitter:description" content="Discover free technology grant opportunities for nonprofits. No paywall, no fees." />
+        <meta name="twitter:title" content="Free Software Grants for Nonprofits | Opportunity Hack" />
+        <meta name="twitter:description" content="Discover free software development grants for nonprofits. Opportunity Hack connects 501(c)(3) organizations with volunteer developers who build custom tech solutions at no cost." />
         <link rel="canonical" href="https://ohack.dev/nonprofit-grants" />
       </Head>
 

@@ -78,7 +78,7 @@ const HackathonIndex = () => {
           component="h1"
           sx={{ fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" }, mb: 2 }}
         >
-          Code for Social Good at Our Global Hackathons
+          Hackathons
         </Typography>
 
         <Typography variant="body1" sx={{ fontSize: '18px', mb: 3, maxWidth: '800px', mx: 'auto' }}>
