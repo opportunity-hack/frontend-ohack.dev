@@ -35,6 +35,22 @@ module.exports = {
     ];
   },
 
+  // Redirects: deprecated judge-keyword variants → canonical
+  async redirects() {
+    return [
+      {
+        source: "/judge-a-hackathon",
+        destination: "/hackathon-judge-opportunities",
+        permanent: true,
+      },
+      {
+        source: "/judge-hackathon",
+        destination: "/hackathon-judge-opportunities",
+        permanent: true,
+      },
+    ];
+  },
+
   // Optimize images
   images: {
     formats: ["image/avif", "image/webp"],

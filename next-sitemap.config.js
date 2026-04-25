@@ -11,6 +11,11 @@ module.exports = {
     "/hackathon/[hackathon_id]",
     "/project/[project_id]",
     "/hack/[event_id]",
+    // Deprecated judge-keyword variants — canonical is /hackathon-judge-opportunities.
+    // Kept indexable with rel=canonical so existing links/equity transfer.
+    "/hackathon-judge",
+    "/hackathon-judging",
+    "/hackathon-judging-opportunities",
     "https://api.test.ohack.dev/",
     "https://test.api.ohack.dev/",
   ],
@@ -50,6 +55,7 @@ module.exports = {
       changefreq = "weekly";
     } else if (
       path.includes("judging") ||
+      path.includes("judge") ||
       path.includes("mentor") ||
       path.includes("sponsor")
     ) {

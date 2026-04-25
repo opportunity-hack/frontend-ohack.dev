@@ -713,8 +713,9 @@ export const getStaticProps = async () => {
     const description = "Join prestigious hackathon judging opportunities for technology professionals. Evaluate innovative solutions, mentor emerging talent, and contribute to meaningful social impact through expert technical assessment.";
     return {
         props: {
-            title: "Hackathon Judging Opportunities - Opportunity Hack",
+            title: title,
             description: description,
+            canonical: "https://www.ohack.dev/hackathon-judge-opportunities",
             openGraphData: [
                 {
                     name: "title",

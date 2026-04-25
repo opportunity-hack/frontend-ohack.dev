@@ -67,7 +67,20 @@ export default function MyApp({ Component, pageProps }) {
           <meta key={index} {...og} />
         ))}
 
+        {pageProps.canonical && (
+          <link rel="canonical" href={pageProps.canonical} />
+        )}
+
         <title>{pageProps.title}</title>
+
+        {pageProps.structuredData && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(pageProps.structuredData),
+            }}
+          />
+        )}
       </Head>
       <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
         <AxiosWrapper>
