@@ -643,10 +643,30 @@ const HackathonJudgeOpportunities = () => {
               Training Score: {totalScore}/40
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Practice with our evaluation framework to prepare for 
+              Practice with our evaluation framework to prepare for
               hackathon judge opportunities
             </Typography>
           </Paper>
+
+          <Alert severity="info" sx={{ mt: 3 }}>
+            <Typography variant="body1">
+              Want the full rubric with worked examples and a downloadable scorecard? See the{" "}
+              <Link href="/hackathon-judging-criteria" style={{ color: "inherit", fontWeight: 700 }}>
+                Hackathon Judging Criteria
+              </Link>{" "}
+              reference page.
+            </Typography>
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                href="/hackathon-judging-criteria"
+                onClick={() => trackOnClickButtonClickWithGoogleAndFacebook("view_full_judging_criteria")}
+              >
+                View Full Judging Criteria
+              </Button>
+            </Box>
+          </Alert>
         </Box>
 
         {/* Learn More About Our Mission */}
