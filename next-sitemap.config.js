@@ -58,7 +58,9 @@ module.exports = {
       path.includes("judge") ||
       path.includes("mentor") ||
       path.includes("sponsor") ||
-      path.includes("hackathon")
+      path.includes("hackathon") ||
+      path.includes("social-good") ||
+      path.includes("nonprofits")
     ) {
       priority = 0.8;
       changefreq = "weekly";

@@ -322,15 +322,26 @@ const HackathonForSocialGood = () => {
             actually shipped software to the people who need it.
           </Typography>
 
-          <Button
-            variant="outlined"
-            color="primary"
-            size="large"
-            href="/hack"
-            onClick={() => trackClick("browse_past_hackathons")}
-          >
-            Browse Past Hackathons
-          </Button>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              href="/hack"
+              onClick={() => trackClick("browse_past_hackathons")}
+            >
+              Browse Past Hackathons
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              href="/12-years-of-social-good"
+              onClick={() => trackClick("read_field_report")}
+            >
+              Read the 12-Year Field Report →
+            </Button>
+          </Box>
         </Box>
 
         <Divider sx={{ my: 5 }} />
