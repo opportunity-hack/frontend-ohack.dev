@@ -301,7 +301,7 @@ export default function SponsorIndexList() {
           Current Sponsorship Opportunities
         </Typography>
         <Typography variant="body1" paragraph style={style}>
-          Sponsor one of our upcoming hackathons and make a direct impact on nonprofits and the tech community.
+          Sponsor one of our upcoming hackathons and make a direct impact on nonprofits and the tech community. For the data behind 12 years of OHack — completion rates, recruitment patterns, what works and what doesn{"'"}t — see our <Link href="/12-years-of-social-good" style={{ color: "#0066cc", fontWeight: 600 }}>12-Year Field Report</Link>.
         </Typography>
         
         <Grid container spacing={3}>
@@ -558,6 +558,16 @@ export default function SponsorIndexList() {
                 >
                   Learn more about our upcoming 2024 Fall Hackathon
                 </Link>
+                <br />
+                <br />
+                Local Arizona companies — see our{" "}
+                <Link
+                  href="/hackathons/arizona"
+                  style={{ color: "blue", textDecoration: "underline" }}
+                >
+                  Arizona hackathons page
+                </Link>{" "}
+                for the local-philanthropy angle.
               </Typography>
               <Typography variant="body1" paragraph style={style}>
                 <strong>Key Statistics from 2023:</strong>

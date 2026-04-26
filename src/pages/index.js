@@ -176,8 +176,8 @@ export default function Home() {
           {/* 5. Events */}
           <HackathonList compact={true} />
 
-          {/* 6. Pillar link — how we build for nonprofits */}
-          <Box sx={{ textAlign: "center", mt: { xs: 2, md: 3 }, mb: { xs: 1, md: 2 } }}>
+          {/* 6. Pillar links */}
+          <Box sx={{ textAlign: "center", mt: { xs: 2, md: 3 }, mb: { xs: 1, md: 2 }, display: "flex", gap: 2, justifyContent: "center", flexWrap: "wrap" }}>
             <Button
               variant="text"
               color="primary"
@@ -185,6 +185,22 @@ export default function Home() {
               sx={{ fontSize: { xs: "0.95rem", md: "1rem" } }}
             >
               Learn how we code for nonprofits
+            </Button>
+            <Button
+              variant="text"
+              color="primary"
+              href="/hackathon-for-social-good"
+              sx={{ fontSize: { xs: "0.95rem", md: "1rem" } }}
+            >
+              About our hackathon for social good
+            </Button>
+            <Button
+              variant="text"
+              color="primary"
+              href="/hackathons/arizona"
+              sx={{ fontSize: { xs: "0.95rem", md: "1rem" } }}
+            >
+              Hackathons in Arizona
             </Button>
           </Box>
         </Container>      
