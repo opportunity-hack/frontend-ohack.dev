@@ -5,13 +5,15 @@ import {
     LinearScale,
     LogarithmicScale,
     BarElement,
+    BarController,
     LineElement,
+    LineController,
     PointElement,
     Title,
     Tooltip,
     Legend,
 } from "chart.js";
-import { Bar, Line, Chart as ReactChart } from "react-chartjs-2";
+import { Bar, Chart as ReactChart } from "react-chartjs-2";
 import { DATA } from "./data";
 
 ChartJS.register(
@@ -19,7 +21,9 @@ ChartJS.register(
     LinearScale,
     LogarithmicScale,
     BarElement,
+    BarController,
     LineElement,
+    LineController,
     PointElement,
     Title,
     Tooltip,
