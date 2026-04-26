@@ -3,7 +3,7 @@ import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useAuthInfo } from "@propelauth/react";
 
-import { Skeleton, Box, Container } from "@mui/material";
+import { Skeleton, Box, Container, Typography } from "@mui/material";
 
 // Simplified loading placeholder - avoiding detailed skeletons to prevent layout shifts
 const SimplePlaceholder = () => (
