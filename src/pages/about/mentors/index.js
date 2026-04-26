@@ -33,6 +33,11 @@ const FAQ_DATA = [
             "Plan on 8-16 hours over the hackathon weekend. A typical Saturday is 4-6 hours of in-event mentoring, Sunday is another 4-6 hours, plus a 30-minute Friday kickoff briefing. We use a shift signup so mentors can come and go — you do not need to be present continuously. For online events, mentor availability is asynchronous through Discord and the time investment is similar but more flexible.",
     },
     {
+        question: "Can I earn a Heart Certificate for mentoring?",
+        answer:
+            "Yes — Opportunity Hack issues Heart Certificates to mentors who demonstrate genuine engagement during the event. The bar is proactive helpfulness: reaching out to teams directly on Slack (for virtual events) or in person, reviewing code, offering architecture or debugging advice, and following up when a team gets stuck. Simply posting in a general channel that you're available does not qualify. The same standard applies whether you're mentoring remotely or on-site — judges don't just check that you showed up; they look for evidence that teams actually benefited from your involvement. After the hackathon, mentors who met that bar can request their Heart Certificate through the organizer team.",
+    },
+    {
         question: "Do I need specific technical expertise to be a mentor?",
         answer:
             "No single stack is required. We recruit mentors across full-stack web (React, Next.js, Node, Python, Ruby), mobile (iOS, Android, React Native), data engineering and ML, security, design, product management, and DevOps. When you sign up, you list your areas of expertise and we route team questions to mentors with matching skills. Mentors are expected to know their own stack well; nobody is expected to know every stack.",
