@@ -207,9 +207,18 @@ const HackathonIndex = () => {
           </Grid>
         </Paper>
         
+        {/* Arizona local callout */}
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Local to Arizona? See{" "}
+          <Link href="/hackathons/arizona" style={{ color: "inherit", fontWeight: 600 }}>
+            hackathons in Arizona
+          </Link>{" "}
+          for ASU, Tempe, and Phoenix-area events.
+        </Alert>
+
         {/* Upcoming Events Section - Now positioned after "Why Join" */}
-        <Box 
-          id="upcoming-events" 
+        <Box
+          id="upcoming-events"
           component="section"
           aria-labelledby="upcoming-events-heading"
           mb={5}

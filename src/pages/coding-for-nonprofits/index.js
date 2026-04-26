@@ -520,10 +520,20 @@ const CodingForNonprofits = () => {
           </Typography>
           <Typography
             variant="body1"
-            sx={{ fontSize: "18px", mb: 4, maxWidth: "600px", mx: "auto", color: "text.secondary" }}
+            sx={{ fontSize: "18px", mb: 2, maxWidth: "600px", mx: "auto", color: "text.secondary" }}
           >
             Whether you're a nonprofit looking for software, a developer looking to do meaningful
             work, or a sponsor looking to fund the model — we'd love to hear from you.
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{ fontSize: "16px", mb: 4, maxWidth: "600px", mx: "auto", color: "text.secondary" }}
+          >
+            Interested in the event itself?{" "}
+            <Link href="/hackathon-for-social-good" style={{ color: "inherit" }}>
+              Learn about our hackathon for social good
+            </Link>{" "}
+            — the annual flagship where all this work begins.
           </Typography>
           <Box sx={{ display: "flex", gap: 2, justifyContent: "center", flexWrap: "wrap" }}>
             <Button

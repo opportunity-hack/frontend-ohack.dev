@@ -65,6 +65,9 @@ Static pages targeting organic search impressions. Each uses `getStaticProps` wi
 - `/hackathon-judging-criteria` — 4-category rubric (Scope, Documentation, Polish, Security), HowTo + FAQPage schema. Linked from `/hackathon-judge-opportunities` Expert Evaluation section.
 - `/coding-for-nonprofits` — free software for nonprofits, FAQPage schema.
 
+## Pillar Pages
+SEO landing pages at `/coding-for-nonprofits` (service: free software model) and `/hackathon-for-social-good` (event: the hackathon experience). Cross-linked from homepage (`index.js` pillar link buttons), about page, and each other. Both follow the same pattern: `getStaticProps` with full OG/Twitter meta + structured data (`WebPage`, `BreadcrumbList`, `FAQPage`). The hackathon page also includes an `Event` schema node for Fall 2026. Do not duplicate content between the two — keep the service/event distinction.
+
 ## Social Media Integration
 
 ### Overview
@@ -145,3 +148,12 @@ if (env.TWITTER_API_KEY && env.TWITTER_API_SECRET) {
 
 3. Add environment variables to `.env`
 4. Update `SUPPORTED_PLATFORMS` in `src/lib/social-media/index.js`
+
+## Local Landing Pages
+
+### Arizona Hackathons (`/hackathons/arizona`)
+- File: `src/pages/hackathons/arizona/index.js`
+- Targets: "asu hackathon", "phoenix hackathon", "hack arizona", "hackathons in arizona", etc.
+- Uses `useHackathonEvents("current")` and `useHackathonEvents("previous")` with `isArizonaLocation()` filter (AZ_LOCATION_PATTERNS constant at top of file).
+- Structured data: WebPage + BreadcrumbList + Event (Fall 2026 ASU with GeoCoordinates) + FAQPage.
+- Internal links from: `pages/index.js` (pillar links section), `pages/hack/index.js` (Alert above events list), `pages/sponsor/index.js` (About section).

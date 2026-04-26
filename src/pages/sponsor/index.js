@@ -558,6 +558,16 @@ export default function SponsorIndexList() {
                 >
                   Learn more about our upcoming 2024 Fall Hackathon
                 </Link>
+                <br />
+                <br />
+                Local Arizona companies — see our{" "}
+                <Link
+                  href="/hackathons/arizona"
+                  style={{ color: "blue", textDecoration: "underline" }}
+                >
+                  Arizona hackathons page
+                </Link>{" "}
+                for the local-philanthropy angle.
               </Typography>
               <Typography variant="body1" paragraph style={style}>
                 <strong>Key Statistics from 2023:</strong>
