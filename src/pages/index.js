@@ -3,7 +3,7 @@ import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useAuthInfo } from "@propelauth/react";
 
-import { Skeleton, Box, Container, Typography } from "@mui/material";
+import { Skeleton, Box, Container, Button, Typography } from "@mui/material";
 
 // Simplified loading placeholder - avoiding detailed skeletons to prevent layout shifts
 const SimplePlaceholder = () => (
@@ -175,6 +175,18 @@ export default function Home() {
 
           {/* 5. Events */}
           <HackathonList compact={true} />
+
+          {/* 6. Pillar link — how we build for nonprofits */}
+          <Box sx={{ textAlign: "center", mt: { xs: 2, md: 3 }, mb: { xs: 1, md: 2 } }}>
+            <Button
+              variant="text"
+              color="primary"
+              href="/coding-for-nonprofits"
+              sx={{ fontSize: { xs: "0.95rem", md: "1rem" } }}
+            >
+              Learn how we code for nonprofits
+            </Button>
+          </Box>
         </Container>      
     </Fragment>
   );

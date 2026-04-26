@@ -55,6 +55,11 @@ Patterns that must stay in place to keep Google Search Console CWV green:
 - The component accepts an optional `fixedSubject` prop. When set, the Subject field is read-only and that exact value is sent.
 - `ContactSubmissionDetailDialog` passes a subject derived from `submission.inquiryType` matching the backend format in `backend-ohack.dev/api/contact/contact_service.py`: `Contact Us: {inquiry_type_display.lower()} - Opportunity Hack`. The `INQUIRY_TYPE_DISPLAY` map in `ContactSubmissionDetailDialog.js` must stay in sync with the backend's map so admin replies thread with the original confirmation email.
 
+## Pillar Landing Pages
+The following SEO pillar pages follow the `hackathon-judge-opportunities.js` pattern (getStaticProps with openGraphData + structuredData arrays, initFacebookPixel in useEffect, trackEvent on button clicks):
+- `/coding-for-nonprofits` — `src/pages/coding-for-nonprofits/index.js` — covers the free software development model, 3-step process, project types, FAQ (8 items), FAQPage schema. Internal links from homepage (Button), about page (inline Link), and NonProfitList component (Alert callout).
+- `/hackathon-judge-opportunities` — `src/pages/hackathon-judge-opportunities.js`
+
 ## Social Media Integration
 
 ### Overview

@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useMemo } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import Image from 'next/image';
 import { 
   Typography, 
@@ -260,9 +261,10 @@ export default function AboutUsPage() {
             textAlign: "center"
           }}
         >
-          Founded in 2013 as part of eBay/PayPal Inc., Opportunity Hack was created to meet the technological needs of nonprofits. 
-          Our vision has since grown to harness the power of code for social good, fostering an inclusive society, 
-          and championing impactful, sustainable change.
+          Founded in 2013 as part of eBay/PayPal Inc., Opportunity Hack was created to meet the technological needs of nonprofits.
+          Our vision has since grown to harness the power of code for social good, fostering an inclusive society,
+          and championing impactful, sustainable change.{" "}
+          Read more about how we <Link href="/coding-for-nonprofits" style={{ color: "inherit" }}>code for nonprofits</Link>.
         </Typography>
 
         {/* Hero Image */}
