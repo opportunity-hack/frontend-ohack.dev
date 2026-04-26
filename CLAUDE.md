@@ -60,6 +60,11 @@ The following SEO pillar pages follow the `hackathon-judge-opportunities.js` pat
 - `/coding-for-nonprofits` — `src/pages/coding-for-nonprofits/index.js` — covers the free software development model, 3-step process, project types, FAQ (8 items), FAQPage schema. Internal links from homepage (Button), about page (inline Link), and NonProfitList component (Alert callout).
 - `/hackathon-judge-opportunities` — `src/pages/hackathon-judge-opportunities.js`
 
+## SEO Resource Pages
+Static pages targeting organic search impressions. Each uses `getStaticProps` with the full openGraphData + structuredData pattern. No Organization node in the page's `@graph` (global one in `_app.js` handles it).
+- `/hackathon-judging-criteria` — 4-category rubric (Scope, Documentation, Polish, Security), HowTo + FAQPage schema. Linked from `/hackathon-judge-opportunities` Expert Evaluation section.
+- `/coding-for-nonprofits` — free software for nonprofits, FAQPage schema.
+
 ## Social Media Integration
 
 ### Overview
