@@ -325,6 +325,23 @@ function NonProfitList() {
               </Box>
             </Paper>
 
+            {/* How the free software process works */}
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <Typography variant="body1">
+                <strong>How does the free software process work?</strong>{" "}
+                Learn how we match nonprofits with volunteer developers, what kinds of projects we build, and what to expect from application to deployed software.{" "}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="info"
+                  href="/coding-for-nonprofits"
+                  sx={{ ml: 1, verticalAlign: 'middle' }}
+                >
+                  How it works
+                </Button>
+              </Typography>
+            </Alert>
+
             {/* Upcoming Events Preview */}
             {upcomingEvents && upcomingEvents.length > 0 && (
               <Alert
