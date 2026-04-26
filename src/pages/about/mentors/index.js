@@ -17,8 +17,9 @@ export const getStaticProps = async () => {
     const description = "Become a mentor at Opportunity Hack and guide talented teams building life-changing technology solutions for nonprofits. Share your expertise, develop leadership skills, and create lasting social impact through code.";
     return {
         props: {
-            title: "Mentor Guide - Opportunity Hack",
+            title: title,
             description: description,
+            canonical: "https://www.ohack.dev/about/mentors",
             openGraphData: [
                 {
                     name: "title",

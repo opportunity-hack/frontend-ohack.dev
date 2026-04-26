@@ -1188,10 +1188,12 @@ export default AboutJudges;
 export const getStaticProps = async () => {    
     const title = "Judge Guide - Evaluate Tech Solutions for Social Impact | Opportunity Hack";
     const description = "Become an Opportunity Hack judge and evaluate innovative technology solutions that transform nonprofits. Use your expertise to identify projects creating real social impact worldwide.";
+    const canonicalUrl = "https://www.ohack.dev/about/judges";
     return {
         props: {
-            title: "Judge Guide - Opportunity Hack",
+            title: title,
             description: description,
+            canonical: canonicalUrl,
             openGraphData: [
                 {
                     name: "title",
@@ -1292,32 +1294,18 @@ export const getStaticProps = async () => {
                 "@context": "https://schema.org",
                 "@graph": [
                     {
-                        "@type": "Organization",
-                        "@id": "https://ohack.dev/#organization",
-                        "name": "Opportunity Hack",
-                        "url": "https://ohack.dev",
-                        "logo": {
-                            "@type": "ImageObject",
-                            "url": "https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
-                        },
-                        "sameAs": [
-                            "https://twitter.com/opportunityhack",
-                            "https://github.com/opportunity-hack"
-                        ]
-                    },
-                    {
                         "@type": "WebPage",
-                        "@id": "https://ohack.dev/about/judges#webpage",
-                        "url": "https://ohack.dev/about/judges",
+                        "@id": canonicalUrl + "#webpage",
+                        "url": canonicalUrl,
                         "name": title,
                         "description": description,
                         "isPartOf": {
                             "@type": "WebSite",
-                            "@id": "https://ohack.dev/#website"
+                            "@id": "https://www.ohack.dev/#website"
                         },
                         "about": {
                             "@type": "EducationalOrganization",
-                            "name": "Opportunity Hack Judging Program", 
+                            "name": "Opportunity Hack Judging Program",
                             "description": "Judges use their expertise as experienced professionals to give feedback to teams building technology solutions for nonprofits"
                         }
                     },
@@ -1328,21 +1316,32 @@ export const getStaticProps = async () => {
                                 "@type": "ListItem",
                                 "position": 1,
                                 "name": "Home",
-                                "item": "https://ohack.dev"
+                                "item": "https://www.ohack.dev"
                             },
                             {
-                                "@type": "ListItem", 
+                                "@type": "ListItem",
                                 "position": 2,
                                 "name": "About",
-                                "item": "https://ohack.dev/about"
+                                "item": "https://www.ohack.dev/about"
                             },
                             {
                                 "@type": "ListItem",
                                 "position": 3,
                                 "name": "Judges",
-                                "item": "https://ohack.dev/about/judges"
+                                "item": canonicalUrl
                             }
                         ]
+                    },
+                    {
+                        "@type": "FAQPage",
+                        "mainEntity": FAQ_DATA.map((faq) => ({
+                            "@type": "Question",
+                            "name": faq.question,
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": faq.answer,
+                            },
+                        })),
                     }
                 ]
             }
