@@ -81,6 +81,38 @@ export default function MyApp({ Component, pageProps }) {
             }}
           />
         )}
+
+        {/* Global Organization schema — renders on every page so brand SERP
+            features (knowledge panel eligibility, sameAs verification) work
+            sitewide. Page-level WebPage / BreadcrumbList / FAQPage scripts
+            reference this entity via @id. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "@id": "https://www.ohack.dev/#organization",
+              name: "Opportunity Hack",
+              alternateName: "OHack",
+              url: "https://www.ohack.dev",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://cdn.ohack.dev/ohack.dev/ohack.png",
+              },
+              description:
+                "501(c)(3) nonprofit connecting volunteer software developers with nonprofits to build free, custom software since 2013.",
+              foundingDate: "2013",
+              sameAs: [
+                "https://www.linkedin.com/company/opportunity-hack/",
+                "https://github.com/opportunity-hack",
+                "https://twitter.com/opportunityhack",
+                "https://www.instagram.com/opportunityhack/",
+                "https://www.youtube.com/@OpportunityHack",
+              ],
+            }),
+          }}
+        />
       </Head>
       <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
         <AxiosWrapper>
