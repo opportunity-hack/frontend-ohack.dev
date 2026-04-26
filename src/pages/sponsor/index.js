@@ -417,11 +417,11 @@ export default function SponsorIndexList() {
     <LayoutContainer maxWidth="lg">
       <Head>
         <title>
-          Sponsor Opportunity Hack | Transform Tech Talent and Communities
+          Sponsor a Hackathon for Social Good | Opportunity Hack
         </title>
         <meta
           name="description"
-          content="Power innovation and social impact by sponsoring Opportunity Hack. Connect with top tech talent, showcase your brand, and drive meaningful change through technology."
+          content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available."
         />
         <meta
           name="keywords"
@@ -431,11 +431,11 @@ export default function SponsorIndexList() {
         <meta property="og:url" content="https://www.ohack.dev/sponsor" />
         <meta
           property="og:title"
-          content="Sponsor Opportunity Hack | Transform Tech Talent and Communities"
+          content="Sponsor a Hackathon for Social Good | Opportunity Hack"
         />
         <meta
           property="og:description"
-          content="Power innovation and social impact by sponsoring Opportunity Hack. Connect with top tech talent, showcase your brand, and drive meaningful change through technology."
+          content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available."
         />
         <meta
           property="og:image"
@@ -445,11 +445,11 @@ export default function SponsorIndexList() {
         <meta property="twitter:url" content="https://www.ohack.dev/sponsor" />
         <meta
           property="twitter:title"
-          content="Sponsor Opportunity Hack | Transform Tech Talent and Communities"
+          content="Sponsor a Hackathon for Social Good | Opportunity Hack"
         />
         <meta
           property="twitter:description"
-          content="Power innovation and social impact by sponsoring Opportunity Hack. Connect with top tech talent, showcase your brand, and drive meaningful change through technology."
+          content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available."
         />
         <meta
           property="twitter:image"
@@ -460,8 +460,8 @@ export default function SponsorIndexList() {
       </Head>
       <TitleContainer>
         <Typography
-          variant="h2"
-          component="h2"
+          variant="h1"
+          component="h1"
           gutterBottom
           style={isMobile ? { fontSize: "2rem" } : {}}
         >

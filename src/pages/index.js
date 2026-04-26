@@ -3,7 +3,7 @@ import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useAuthInfo } from "@propelauth/react";
 
-import { Skeleton, Box, Container } from "@mui/material";
+import { Skeleton, Box, Container, Typography } from "@mui/material";
 
 // Simplified loading placeholder - avoiding detailed skeletons to prevent layout shifts
 const SimplePlaceholder = () => (
@@ -120,10 +120,10 @@ export default function Home() {
   return (
     <Fragment>
       <Head>
-        <title>Opportunity Hack: Tech Hackathons for Social Good</title>
+        <title>Opportunity Hack — Hackathons Where Developers Build Free Software for Nonprofits</title>
         <meta
           name="description"
-          content="Empowering volunteers to create tech solutions for nonprofits, fostering community bonds."
+          content="Since 2013, Opportunity Hack has connected 3,000+ developers with 200+ nonprofits to build free software for social good. Join our annual hackathon at ASU."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
@@ -146,6 +146,18 @@ export default function Home() {
         <Container maxWidth="xl" sx={{ mt: { xs: 9, md: 10 }, px: { xs: 1.5, sm: 3, md: 4 } }}>
           {/* 1. Brand — attention */}
           <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
+            <Typography
+              variant="h1"
+              component="h1"
+              sx={{
+                fontSize: { xs: '2rem', md: '2.75rem' },
+                fontWeight: 700,
+                mb: 1,
+                textAlign: 'center'
+              }}
+            >
+              Tech Hackathons for Social Good
+            </Typography>
             <Logo />
             <TitleStyled />
           </Box>
@@ -170,9 +182,9 @@ export default function Home() {
 
 export async function getStaticProps() {
   const title =
-    "Opportunity Hack: Tech Hackathons for Social Good, Empowering Nonprofits, Learn how to code, Solve end-to-end problems";
+    "Opportunity Hack — Hackathons Where Developers Build Free Software for Nonprofits";
   const metaDescription =
-    "Empowering volunteers to create tech solutions for nonprofits, fostering community bonds. Join us at Opportunity Hack to use your skills for good, boost your resume, and find purpose in work.";
+    "Since 2013, Opportunity Hack has connected 3,000+ developers with 200+ nonprofits to build free software for social good. Join our annual hackathon at ASU.";
 
   return {
     props: {

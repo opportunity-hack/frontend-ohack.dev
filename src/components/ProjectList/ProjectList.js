@@ -175,6 +175,10 @@ export default function ProjectList({ initialProjects, events }) {
     <Box sx={{ p: { xs: 2, md: 3 }, mt: { xs: 8, md: 10 } }}>
       {!user && <LoginOrRegister />}
 
+      <Typography variant="h1" component="h1" sx={{ fontSize: { xs: '2rem', md: '2.75rem' }, fontWeight: 700, mb: 3 }}>
+        Projects
+      </Typography>
+
       <Box sx={{ mb: 5 }}>
         <Typography variant="h4" gutterBottom>
           Featured Projects

@@ -154,6 +154,11 @@ export async function getStaticProps({ params = {} } = {}) {
           property: "twitter:data3",
           value: countOfhelpingMentors,
           key: "twitterdata3",
+        },
+        {
+          name: "robots",
+          content: "noindex,follow",
+          key: "robots",
         }
       ],
     },

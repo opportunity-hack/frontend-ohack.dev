@@ -239,7 +239,8 @@ const VolunteerPage = () => {
       }}>
         <Container maxWidth="lg">
           <Typography
-            variant={isMobile ? "h3" : "h1"}
+            variant="h1"
+            component="h1"
             sx={{
               fontWeight: 800,
               mb: 2,
@@ -247,7 +248,7 @@ const VolunteerPage = () => {
               fontSize: { xs: '2.5rem', md: '3.5rem' },
             }}
           >
-            Make a Difference with Technology
+            Volunteer With Opportunity Hack
           </Typography>
           <Typography
             variant={isMobile ? "h6" : "h5"}
@@ -681,11 +682,11 @@ const VolunteerPage = () => {
 export default VolunteerPage;
 
 export const getStaticProps = async () => {
-    const title = "How to Get Involved - Hacker, Mentor, or Volunteer | Opportunity Hack";
-    const description = "Join Opportunity Hack and make a difference! Whether you're a developer who wants to hack solutions, an experienced professional ready to mentor teams, or someone who loves supporting events, we have the perfect volunteer role for you.";
+    const title = "Volunteer as a Developer, Mentor, or Judge | Opportunity Hack";
+    const description = "Use your tech skills for social good. Volunteer with Opportunity Hack as a developer, mentor, or hackathon judge to help nonprofits build the software they need.";
     return {
         props: {
-            title: "How to Get Involved - Opportunity Hack",
+            title: title,
             description: description,
             openGraphData: [
                 {
