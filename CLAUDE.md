@@ -149,6 +149,49 @@ if (env.TWITTER_API_KEY && env.TWITTER_API_SECRET) {
 3. Add environment variables to `.env`
 4. Update `SUPPORTED_PLATFORMS` in `src/lib/social-media/index.js`
 
+## Application Forms (`/hack/[event_id]/{judge,mentor,hacker,volunteer}-application.js`)
+Shared scaffolding lives in `src/components/ApplicationForm/`. Use these instead of re-implementing in each form:
+- `PronounsPicker` — chip-based picker with curated pronouns + "Add your own". Stores a comma-joined string (back-compatible with old free-text values). All four forms use it.
+- `OHackParticipationSelect` — the "How many Opportunity Hack hackathons have you attended?" dropdown. Helper text makes clear it's about OHack only, not other hackathons.
+- `ProfileAutofillNotice` — reusable green "auto-filled from your profile" alert.
+- `MealMenu` — restaurant-style meal selector for `eventData.constraints.meals`.
+Primary copy on these forms uses `body1`. Reserve `body2` for true helper text under inputs.
+
+## Hackathon Event Photos & Social Posts
+Two top-level fields on the hackathon doc (NOT under `constraints`):
+- `event_photos: [{ url, caption?, credit?, sort_order? }]`
+- `social_posts: [{ platform: "linkedin"|"instagram"|"threads", url, caption? }]`
+
+Both flow through the existing `PATCH /api/messages/hackathon`. Backend caps live in `validators.py` (`MAX_EVENT_PHOTOS=100`, `MAX_SOCIAL_POSTS=25`); social URL hosts are validated against the chosen platform.
+
+Admin UI: `EventMediaManagement` component (`src/components/admin/EventMediaManagement.js`) renders inside the "Event Photos & Social Posts" Accordion in the admin Advanced Settings tab. Photos uploader is gated until `event_id` is set; posts to `/api/messages/upload-image` with `directory=hackathons/{event_id}/photos`.
+
+Public surfaces:
+- `/hack/[event_id]/media` — full carousel (`react-responsive-carousel`) + Instagram embeds (`react-social-media-embed`, dynamic ssr:false) + LinkedIn/Threads link cards. Includes `ImageGallery` JSON-LD.
+- `/hack/[event_id]` — compact 3-thumbnail teaser strip + "View gallery" button rendered above the `TableOfContents` (right after `HackathonResults`), **only when `event_photos.length > 0`** (renders nothing when empty).
+- `/hack/[event_id]/upload` — legacy page is now a redirect stub pointing users to `/admin/hackathons` and `/media`.
+
+## Hackathon Per-Event Config (admin → `constraints`)
+The `constraints` object on a hackathon doc carries per-event toggles. Keys consumed by the application forms:
+- `judge_venue_arrival_time` (HH:MM, 24-hour) — judge form's Availability step shows it when set; falls back to existing default copy when null.
+- `hacker_deposit: { enabled, default_amount_cents }` — when enabled, hacker form's Review step adds deposit fields and routes through Stripe Checkout (see below) before submit.
+- `meals: [{ id, name, time, catering_provided, dietary_tags, items: [{ id, name, description, dietary_tags }] }]` — hacker form renders a `MealMenu` for each slot when in-person and meals are configured. Allowed `dietary_tags` are validated server-side; keep them in sync with `ALLOWED_DIETARY_TAGS` in `MealManagement.js` and the backend `validators.py`.
+Admin UI lives in `src/pages/admin/hackathons/index.js` Advanced Settings tab. New `MealManagement` component handles meal editing.
+
+## Hacker Stripe Deposit Flow
+- Frontend route `/api/applications/hacker-deposit/checkout` creates a Stripe Checkout session; success URL is the hacker form with `?deposit_session_id=...`.
+- Frontend route `/api/applications/hacker-deposit/session` retrieves the session by id and returns `{ payment_status, payment_intent_id, amount_total, metadata }`.
+- Hacker form auto-saves to localStorage, so the form survives the Stripe round-trip. On return, it reads the session id, populates `stripePaymentIntentId`/`depositAmountCents`/`depositDisposition`, jumps to Review, and the next submit posts the application with those fields. Submission fields: `stripe_payment_intent_id`, `deposit_amount_cents`, `deposit_disposition` ("refund" | "donate").
+
+## Hacker `isSelected` Gating UX (findteam / manageteam)
+`isSelected` is a single boolean that defaults to `false`. `false` is ambiguous — it covers both "still under review" and "not selected after review" — so do NOT render rejection copy on `isSelected === false`. Both `findteam.js` and `manageteam.js` render two distinct neutral panels (blue `#e3f2fd → #ede7f6/#e8eaf6`, border `#90caf9`):
+- `!application` → 📝 "Apply first to use the Team Finder" / "Apply first to manage a team" with submit-application CTA.
+- `application && isSelected === false` → ⏳ "Your application is awaiting confirmation" with an info Alert explaining ~1-week review, "while you wait" actions (Slack, year-round projects, other events), and a refresh hint for sync lag.
+Keep both files in sync if the copy changes. Do not call `setError(...)` for these states — the dedicated panels handle it; the Alert at the top is reserved for actual fetch failures.
+
+## Mentor + Judge Pending-Review Confirmation Email
+Backend `send_volunteer_confirmation_email()` (`services/volunteers_service.py`) now adds a `[Pending Review]` subject prefix and a yellow "your application is pending review — up to a week" banner for `volunteer_type in ("mentor","judge")`. Role-specific next-steps live under an "Once approved" heading. Hacker confirmations (when added) should keep the existing "received" framing since they don't go through staff review.
+
 ## Local Landing Pages
 
 ### Arizona Hackathons (`/hackathons/arizona`)

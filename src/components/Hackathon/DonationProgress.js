@@ -30,10 +30,14 @@ const ThankYouContainer = styled(Typography)(({ theme }) => ({
   paddingTop: theme.spacing(2),
 }));
 
-const DonationProgress = ({ donationGoals, donationCurrent }) => {
+const DonationProgress = ({ donationGoals = {}, donationCurrent = {} }) => {
   const calculatePercentage = (current, goal) => {
-    return goal > 0 ? Math.min((current / goal) * 100, 100) : 0;
+    const c = Number(current) || 0;
+    const g = Number(goal) || 0;
+    return g > 0 ? Math.min((c / g) * 100, 100) : 0;
   };
+
+  const fmt = (v) => Number(v) || 0;
 
   const categories = [
     { name: "Food", key: "food" },
@@ -65,12 +69,12 @@ const DonationProgress = ({ donationGoals, donationCurrent }) => {
               })}
             />
             <Typography variant="body1" style={{ marginTop: "8px" }}>
-              ${donationCurrent[category.key]} / ${donationGoals[category.key]}
+              ${fmt(donationCurrent[category.key])} / ${fmt(donationGoals[category.key])}
             </Typography>
           </ProgressItem>
         ))}
       </Grid>
-      {donationCurrent.thank_you && donationCurrent.thank_you.length > 0 && (
+      {donationCurrent && donationCurrent.thank_you && donationCurrent.thank_you.length > 0 && (
         <ThankYouContainer variant="body1">
           Special thanks to: {donationCurrent.thank_you} for donating!
         </ThankYouContainer>

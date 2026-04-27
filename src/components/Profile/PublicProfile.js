@@ -32,9 +32,12 @@ import InstagramIcon from "@mui/icons-material/Instagram";
 import BuildIcon from "@mui/icons-material/Build";
 
 import usePublicProfile from "../../hooks/use-public-profile";
-import PublicBadgeList from "./PublicBadgeList";
-import PublicHackathonList from "./PublicHackathonList";
-import PublicFeedback from "./PublicFeedback";
+import HackathonsSection from "./Sections/HackathonsSection";
+import BadgesSection from "./Sections/BadgesSection";
+import PraisesSection from "./Sections/PraisesSection";
+import FeedbackSection from "./Sections/FeedbackSection";
+import HeartsExplainer from "./Sections/HeartsExplainer";
+import LinkedInShareButton from "../share/LinkedInShareButton";
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 
 const PublicProfile = () => {
@@ -47,11 +50,15 @@ const PublicProfile = () => {
     profile,
     badges,
     hackathons,
+    praisesRecent,
+    praisesCount,
     feedbackUrl,
     privacySettings,
     isLoading,
     error,
   } = usePublicProfile(userid);
+
+  const profilePath = userid ? `/profile/${userid}` : "/";
 
   if (isLoading) {
     return (
@@ -204,19 +211,28 @@ const PublicProfile = () => {
             </Box>
           </Box>
 
-          <Button
-            variant="contained"
-            color="primary"
-            size={isMobile ? "medium" : "large"}
-            startIcon={<FeedbackIcon />}
-            component={Link}
-            href={feedbackUrl}
-            sx={{ mt: 1, width: { xs: "100%", sm: "auto" } }}
-          >
-            {isMobile
-              ? `Send Feedback`
-              : `Send Feedback to ${profile?.name || "User"}`}
-          </Button>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              size={isMobile ? "medium" : "large"}
+              startIcon={<FeedbackIcon />}
+              component={Link}
+              href={feedbackUrl}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
+            >
+              {isMobile
+                ? `Send Feedback`
+                : `Send Feedback to ${profile?.name || "User"}`}
+            </Button>
+            <LinkedInShareButton
+              variant="profile"
+              url={profilePath}
+              size={isMobile ? "medium" : "large"}
+              fullWidth={isMobile}
+              label={`Share ${profile?.name || "this profile"} to LinkedIn`}
+            />
+          </Box>
         </CardContent>
       </Paper>
 
@@ -420,7 +436,7 @@ const PublicProfile = () => {
                   <EmojiEventsIcon />
                   Achievements & Badges
                 </Typography>
-                <PublicBadgeList badges={badges} />
+                <BadgesSection badges={badges} mode="public" profileUrl={profilePath} />
               </CardContent>
             </Paper>
           )}
@@ -446,7 +462,37 @@ const PublicProfile = () => {
                   Track record of participation, mentoring, and judging at
                   Opportunity Hack events.
                 </Typography>
-                <PublicHackathonList hackathons={hackathons} />
+                <HackathonsSection
+                  hackathons={hackathons}
+                  mode="public"
+                  profileUrl={profilePath}
+                />
+              </CardContent>
+            </Paper>
+          )}
+
+          {/* Praises — only show when public */}
+          {isPublic("praises") && (praisesCount > 0 || praisesRecent?.length > 0) && (
+            <Paper elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    mb: 3,
+                    fontWeight: 500,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <FeedbackIcon />
+                  Praises Received
+                </Typography>
+                <PraisesSection
+                  userId={userid}
+                  initialPraises={praisesRecent || []}
+                  initialCount={praisesCount || 0}
+                />
               </CardContent>
             </Paper>
           )}
@@ -468,12 +514,16 @@ const PublicProfile = () => {
                   <FeedbackIcon />
                   Community Feedback
                 </Typography>
-                <PublicFeedback
-                  feedbackUrl={feedbackUrl}
-                  history={profile?.history}
-                  userName={profile?.name}
-                  privacySettings={privacySettings}
-                />
+                <HeartsExplainer compact />
+                <Box sx={{ mt: 2 }}>
+                  <FeedbackSection
+                    history={profile?.history}
+                    feedbackUrl={feedbackUrl}
+                    userName={profile?.name}
+                    showWhat={isPublic("what")}
+                    showHow={isPublic("how")}
+                  />
+                </Box>
               </CardContent>
             </Paper>
           )}

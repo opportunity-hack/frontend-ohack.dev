@@ -999,8 +999,59 @@ const ManageTeamComponent = () => {
           </Box>
         )}
 
-        {/* Show message for non-selected users or users without applications */}
-        {!isLoadingApplication && (hackerApplication?.isSelected === false || !hackerApplication) && (
+        {/* No application submitted yet */}
+        {!isLoadingApplication && !hackerApplication && (
+          <Box sx={{ mt: 4, mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Paper
+              sx={{
+                p: 4,
+                maxWidth: 640,
+                textAlign: 'center',
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #e3f2fd 0%, #ede7f6 100%)',
+                border: '1px solid #90caf9',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}
+            >
+              <Box sx={{ mb: 3 }}>
+                <Box component="span" sx={{ fontSize: '4rem', display: 'block', lineHeight: 1, mb: 2 }}>
+                  📝
+                </Box>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1565c0' }}>
+                  Apply first to manage a team
+                </Typography>
+              </Box>
+
+              <Typography variant="body1" paragraph sx={{ mb: 3, lineHeight: 1.6 }}>
+                Team management is only available to hackers who have submitted a hacker application and been confirmed for {event?.title || 'this hackathon'}. Submit your application to get started — we&apos;ll email you once your spot is confirmed.
+              </Typography>
+
+              <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  href={`/hack/${event_id}/hacker-application`}
+                  sx={{ flex: 1 }}
+                >
+                  Submit Hacker Application
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="large"
+                  href={`/hack/${event_id}`}
+                  sx={{ flex: 1 }}
+                >
+                  Back to Hackathon
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+        )}
+
+        {/* Application submitted but not yet confirmed (under review or not chosen) */}
+        {!isLoadingApplication && hackerApplication && hackerApplication.isSelected === false && (
           <Box sx={{ mt: 4, mb: 4, display: 'flex', justifyContent: 'center' }}>
             <Paper
               sx={{
@@ -1008,108 +1059,77 @@ const ManageTeamComponent = () => {
                 maxWidth: 700,
                 textAlign: 'center',
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%)',
-                border: '1px solid #ffab91',
+                background: 'linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%)',
+                border: '1px solid #90caf9',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
               }}
             >
               <Box sx={{ mb: 3 }}>
-                <Box
-                  component="span"
-                  sx={{
-                    fontSize: '4rem',
-                    display: 'block',
-                    lineHeight: 1,
-                    mb: 2
-                  }}
-                >
-                  🚫
+                <Box component="span" sx={{ fontSize: '4rem', display: 'block', lineHeight: 1, mb: 2 }}>
+                  ⏳
                 </Box>
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#d84315' }}>
-                  {!hackerApplication ? 'Application Required' : 'Access Not Available'}
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1565c0' }}>
+                  Your application is awaiting confirmation
                 </Typography>
               </Box>
 
-              <Typography variant="h6" paragraph sx={{ mb: 3, color: '#5d4037' }}>
-                {!hackerApplication
-                  ? `To access team management for ${event?.title || 'this hackathon'}, you need to submit a hacker application.`
-                  : `Your application for ${event?.title || 'this hackathon'} was not selected.`
-                }
+              <Typography variant="body1" paragraph sx={{ mb: 2, lineHeight: 1.6 }}>
+                Thanks for applying to {event?.title || 'this hackathon'}! We&apos;ve received your hacker application — it just hasn&apos;t been confirmed for a spot yet, so team management is locked for now.
               </Typography>
 
-              <Typography variant="body1" paragraph sx={{ mb: 3, lineHeight: 1.6 }}>
-                {!hackerApplication
-                  ? "Team management is only available to participants who have applied and been selected for the hackathon."
-                  : "Team management is only available to participants who have been selected for the hackathon. We appreciate your interest and encourage you to:"
-                }
+              <Alert severity="info" icon={false} sx={{ textAlign: 'left', mb: 3, borderRadius: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>What this means:</strong> Most applications are reviewed within about a week. You&apos;ll get an email as soon as your spot is confirmed, and team management will unlock automatically.
+                </Typography>
+                <Typography variant="body2">
+                  If the event is close and you haven&apos;t heard back, we may have reached capacity for this hackathon. Either way, the options below are open to you right now.
+                </Typography>
+              </Alert>
+
+              <Box sx={{ textAlign: 'left', mb: 3, mx: { xs: 0, sm: 2 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1.5, color: '#283593' }}>
+                  While you wait
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                  <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🤝</Box>
+                  Join our Slack to meet hackers, mentors, and nonprofits
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                  <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>💻</Box>
+                  Contribute to open-source nonprofit projects year-round
+                </Typography>
+                <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🎯</Box>
+                  Browse other Opportunity Hack events you can apply to
+                </Typography>
+              </Box>
+
+              <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  href="https://opportunity-hack.slack.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ flex: 1 }}
+                >
+                  Join Our Community
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="large"
+                  href="/hackathons"
+                  sx={{ flex: 1 }}
+                >
+                  View Upcoming Events
+                </Button>
+              </Box>
+
+              <Typography variant="caption" sx={{ display: 'block', mt: 3, color: 'text.secondary' }}>
+                Already received your confirmation email? Try refreshing this page — your status may not have synced yet.
               </Typography>
-
-              {!hackerApplication ? (
-                <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    href={`/hack/${event_id}/hacker-application`}
-                    sx={{ flex: 1 }}
-                  >
-                    Submit Hacker Application
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="large"
-                    href={`/hack/${event_id}`}
-                    sx={{ flex: 1 }}
-                  >
-                    Back to Hackathon
-                  </Button>
-                </Box>
-              ) : (
-                <>
-                  <Box sx={{ textAlign: 'left', mb: 3, mx: 2 }}>
-                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🎯</Box>
-                      Apply for future Opportunity Hack events
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>💻</Box>
-                      Contribute to open-source nonprofit projects year-round
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🤝</Box>
-                      Join our community on Slack for networking opportunities
-                    </Typography>
-                    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🔔</Box>
-                      Stay connected for updates on upcoming hackathons
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="large"
-                      href="https://opportunity-hack.slack.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{ flex: 1 }}
-                    >
-                      Join Our Community
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="large"
-                      href="/hackathons"
-                      sx={{ flex: 1 }}
-                    >
-                      View Upcoming Events
-                    </Button>
-                  </Box>
-                </>
-              )}
             </Paper>
           </Box>
         )}

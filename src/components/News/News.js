@@ -292,9 +292,9 @@ function News({ newsData, frontpage, loading }) {
                 <ButtonContainersSmall>
                   {newsItem.links
                     .filter(link => !link.url.startsWith("#") && !link.name.startsWith("@"))
-                    .map((link) => (
+                    .map((link, idx) => (
                       <NewsLinkButton
-                        key={link.name}
+                        key={`${link.name}-${link.url}-${idx}`}
                         onClick={() => gaButton("button_news", link.name + ":" + link.url)}
                         variant="contained"
                         href={link.url}
@@ -311,9 +311,9 @@ function News({ newsData, frontpage, loading }) {
                 <ButtonContainersSmall sx={{ mt: 1 }}>
                   {newsItem.links
                     .filter(link => link.url.startsWith("#"))
-                    .map((link) => (
+                    .map((link, idx) => (
                       <SlackButton
-                        key={link.name}
+                        key={`${link.name}-${idx}`}
                         onClick={() => gaButton("button_slack", link.name + ":" + link.url)}
                         variant="outlined"
                         size="small"

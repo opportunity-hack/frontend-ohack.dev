@@ -66,6 +66,8 @@ import CountdownManagement from "../../../components/admin/CountdownManagement";
 import LinkManagement from "../../../components/admin/LinkManagement";
 import HackathonDuplicator from "../../../components/admin/HackathonDuplicator";
 import NonprofitManagement from "../../../components/admin/NonprofitManagement";
+import MealManagement from "../../../components/admin/MealManagement";
+import EventMediaManagement from "../../../components/admin/EventMediaManagement";
 import TimezoneSelect from "react-timezone-select";
 import { DEFAULT_EVENT_TIMEZONE } from "../../../lib/timezoneUtils";
 
@@ -158,6 +160,8 @@ const AdminHackathonPage = () => {
       type: "",
       links: [],
       countdowns: [],
+      event_photos: [],
+      social_posts: [],
       constraints: {
         max_people_per_team: 5,
         max_teams_per_problem: 10,
@@ -286,6 +290,21 @@ const AdminHackathonPage = () => {
     setEditingHackathon((prev) => ({
       ...prev,
       constraints: { ...prev.constraints, [field]: value },
+    }));
+  };
+
+  const handleUpdateDeposit = (field, value) => {
+    setEditingHackathon((prev) => ({
+      ...prev,
+      constraints: {
+        ...prev.constraints,
+        hacker_deposit: {
+          enabled: false,
+          default_amount_cents: 500,
+          ...(prev.constraints?.hacker_deposit || {}),
+          [field]: value,
+        },
+      },
     }));
   };
 
@@ -932,6 +951,92 @@ const AdminHackathonPage = () => {
                       Add Question
                     </Button>
                   </Box>
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>Judges — Venue Arrival Time</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    The time judges should arrive at the venue (24-hour, HH:MM, in the event's timezone). When set, the judge application's Availability step displays this time. Leave blank to use the default copy.
+                  </Typography>
+                  <TextField
+                    label="Judge venue arrival time"
+                    placeholder="16:00"
+                    type="time"
+                    value={editingHackathon?.constraints?.judge_venue_arrival_time || ""}
+                    onChange={(e) => handleUpdateConstraint("judge_venue_arrival_time", e.target.value || null)}
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                    margin="normal"
+                    sx={{ maxWidth: 240 }}
+                  />
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>Hackers — Deposit (Stripe)</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    When enabled, hackers pay a small deposit at application time. They can choose to donate it or request a refund after completing the hackathon. They can also choose to pay more than the default amount.
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={!!editingHackathon?.constraints?.hacker_deposit?.enabled}
+                        onChange={(e) => handleUpdateDeposit("enabled", e.target.checked)}
+                      />
+                    }
+                    label="Require hacker deposit"
+                  />
+                  {!!editingHackathon?.constraints?.hacker_deposit?.enabled && (
+                    <TextField
+                      label="Default deposit amount (USD)"
+                      type="number"
+                      value={(((editingHackathon?.constraints?.hacker_deposit?.default_amount_cents ?? 500) / 100)).toString()}
+                      onChange={(e) => {
+                        const dollars = parseFloat(e.target.value);
+                        const cents = Number.isFinite(dollars) ? Math.round(dollars * 100) : 500;
+                        handleUpdateDeposit("default_amount_cents", cents);
+                      }}
+                      inputProps={{ min: 1, max: 500, step: 1 }}
+                      helperText="Defaults to $5. Hackers can choose to pay more on the form."
+                      sx={{ ml: 4, mt: 1, maxWidth: 240 }}
+                    />
+                  )}
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>Meals & Catering</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <MealManagement
+                    meals={editingHackathon?.constraints?.meals || []}
+                    onChange={(newMeals) => handleUpdateConstraint("meals", newMeals)}
+                  />
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>Event Photos & Social Posts</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <EventMediaManagement
+                    eventId={editingHackathon?.event_id}
+                    accessToken={accessToken}
+                    orgId={orgId}
+                    photos={editingHackathon?.event_photos || []}
+                    onPhotosChange={(p) => handleInputChange("event_photos", p)}
+                    socialPosts={editingHackathon?.social_posts || []}
+                    onSocialPostsChange={(s) => handleInputChange("social_posts", s)}
+                  />
                 </AccordionDetails>
               </Accordion>
 

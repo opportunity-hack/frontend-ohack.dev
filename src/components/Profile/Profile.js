@@ -26,9 +26,10 @@ import {
 } from "@mui/material";
 import useProfileApi from "../../hooks/use-profile-api.js";
 import usePrivacySettings from "../../hooks/use-privacy-settings.js";
-import BadgeList from "../../components/badge-list";
-import ProfileHackathonList from "../../components/profile-hackathon-list";
-import FeedbackLite from "../../components/feedback-lite";
+import BadgesSection from "./Sections/BadgesSection";
+import HackathonsSection from "./Sections/HackathonsSection";
+import FeedbackSection from "./Sections/FeedbackSection";
+import HeartsExplainer from "./Sections/HeartsExplainer";
 import PrivacyToggle from "../../components/PrivacyToggle/PrivacyToggle";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister2';
@@ -898,7 +899,11 @@ export default function Profile(props) {
                   <Typography variant="h4" sx={{ mb: 3, fontWeight: 500, fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Your Impact & Achievements
                   </Typography>
-                  
+
+                  <Box sx={{ mb: 3 }}>
+                    <HeartsExplainer />
+                  </Box>
+
                   <Grid container spacing={{ xs: 2, sm: 4 }}>
                     <Grid size={{ xs: 12, md: 6 }}>
                       {isLoading ? (
@@ -1101,29 +1106,7 @@ export default function Profile(props) {
                     {isLoading ? (
                       <Skeleton variant="rectangular" height={100} />
                     ) : (
-                      <>
-                        <BadgeList badges={badges} />
-                        {badges && badges.length > 0 && (
-                          <Box sx={{ 
-                            mt: 2, 
-                            p: 2, 
-                            backgroundColor: 'action.hover', 
-                            borderRadius: 1,
-                            border: '1px solid',
-                            borderColor: 'divider'
-                          }}>
-                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
-                              <EmojiEventsIcon fontSize="small" color="primary" />
-                              <strong>Congratulations on your achievement!</strong> 
-                              If you've reached a milestone and are eligible for a prize, please{' '}
-                              <Link href="/contact?type=prize" underline="hover" color="primary">
-                                contact us
-                              </Link>
-                              {' '}to claim it.
-                            </Typography>
-                          </Box>
-                        )}
-                      </>
+                      <BadgesSection badges={badges} mode="private" />
                     )}
                   </Box>
                   
@@ -1145,7 +1128,7 @@ export default function Profile(props) {
                     {isLoading ? (
                       <Skeleton variant="rectangular" height={150} />
                     ) : (
-                      <ProfileHackathonList hackathons={hackathons} />
+                      <HackathonsSection hackathons={hackathons} mode="private" />
                     )}
                   </Box>
                   
@@ -1163,7 +1146,29 @@ export default function Profile(props) {
                     <Typography variant="body2" sx={{ mb: 2 }}>
                       Feedback you've given and received from the community.
                     </Typography>
-                    <FeedbackLite feedback_url={feedback_url} history={profile?.history} />
+                    <FeedbackSection
+                      feedbackUrl={feedback_url}
+                      history={profile?.history}
+                      showCta={false}
+                    />
+                  </Box>
+
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="h5" sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>Praises Received</Typography>
+                      <PrivacyToggle
+                        field="praises"
+                        isPrivate={privacySettings.praises !== 'public'}
+                        onToggle={togglePrivacySetting}
+                        size="small"
+                        disabled={privacyLoading}
+                      />
+                    </Box>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Praises sent to you in Slack appear on your public profile when this is set to public.
+                      You can view all praises on the{' '}
+                      <Link href="/praise" underline="hover" color="primary">community praise board</Link>.
+                    </Typography>
                   </Box>
                   
                   <Box>

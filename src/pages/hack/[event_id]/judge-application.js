@@ -57,6 +57,10 @@ import GiveButterWidget from "../../../components/GiveButterWidget";
 import useProfileApi from "../../../hooks/use-profile-api";
 import UploadPhoto from "../../../components/UploadPhoto";
 import {
+  OHackParticipationSelect,
+  PronounsPicker,
+} from "../../../components/ApplicationForm";
+import {
   SchoolRounded,
   WorkRounded,
   TrendingUpRounded,
@@ -131,6 +135,7 @@ const JudgeApplicationComponent = () => {
       otherBackground: "", // New field for "Other" option
       participationCount: "", // Added participation count field
       agreedToCodeOfConduct: false,
+      judgingCommitment: false,
       linkedinProfile: "",
       shortBio: "",
       photoUrl: "",
@@ -1172,12 +1177,20 @@ const JudgeApplicationComponent = () => {
       validateBasicInfo() &&
       validateBackgroundAndExperience() &&
       validateAvailability() &&
-      formData.codeOfConduct
+      formData.codeOfConduct &&
+      formData.judgingCommitment
     );
   };
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+
+    if (!formData.judgingCommitment) {
+      setError(
+        "Please confirm you'll review each project and ask questions tied to the judging criteria.",
+      );
+      return;
+    }
 
     if (!formData.codeOfConduct) {
       setError("You must agree to the code of conduct");
@@ -1358,7 +1371,7 @@ const JudgeApplicationComponent = () => {
         !profileLoading &&
         dataLoadingStatus === "completed" && (
           <Alert severity="success" sx={{ mb: 3 }}>
-            <Typography variant="body2">
+            <Typography variant="body1">
               ✓ We've automatically filled in some fields using your existing
               profile information. You can edit any field as needed.{" "}
               <Link href="/profile" sx={{ fontWeight: "bold" }}>
@@ -1409,14 +1422,11 @@ const JudgeApplicationComponent = () => {
           }
         />
 
-        <TextField
-          label="Pronouns"
-          name="pronouns"
-          fullWidth
+        <PronounsPicker
           value={formData.pronouns}
-          onChange={handleChange}
-          helperText="e.g. he/him, she/her, they/them"
-          sx={{ mb: 3 }}
+          onChange={(next) =>
+            setFormData((prev) => ({ ...prev, pronouns: next }))
+          }
         />
 
         <TextField
@@ -1468,32 +1478,11 @@ const JudgeApplicationComponent = () => {
       </Typography>
 
       <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="participation-count-label">
-            How many times have you participated in Opportunity Hack?
-          </InputLabel>
-          <Select
-            labelId="participation-count-label"
-            id="participation-count"
-            name="participationCount"
-            value={formData.participationCount}
-            onChange={handleChange}
-            label="How many times have you participated in Opportunity Hack?"
-          >
-            <MenuItem value="This is my first year! 👆">
-              This is my first year! 👆
-            </MenuItem>
-            <MenuItem value="This will be the 2nd time ✌️">
-              This will be the 2nd time ✌️
-            </MenuItem>
-            <MenuItem value="This will be the 3rd time ☘️">
-              This will be the 3rd time ☘️
-            </MenuItem>
-            <MenuItem value="I've been here 4+ times 🔥">
-              I've been here 4+ times 🔥
-            </MenuItem>
-          </Select>
-        </FormControl>
+        <OHackParticipationSelect
+          value={formData.participationCount}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
 
         <FormControl
           fullWidth
@@ -1590,7 +1579,9 @@ const JudgeApplicationComponent = () => {
   );
 
   // Render availability form
-  const renderAvailabilityForm = () => (
+  const renderAvailabilityForm = () => {
+    const arrivalTime = eventData?.constraints?.judge_venue_arrival_time;
+    return (
     <Box sx={{ mb: 4 }}>
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Availability & Logistics
@@ -1601,13 +1592,24 @@ const JudgeApplicationComponent = () => {
           <Typography variant="subtitle1" fontWeight="bold">
             Important Judging Schedule
           </Typography>
-          <Typography variant="body2">
+          <Typography variant="body1">
             Judging starts at 3:00 PM on the last day of the hackathon
             (typically Sunday). We expect to complete judging and announce the
             winning teams by 5:30 PM. Your presence during this entire timeframe
             is crucial. Please plan to arrive 15 to 30 minutes early to ensure you can participate fully.
           </Typography>
         </Alert>
+
+        {arrivalTime && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body1">
+              <strong>Please arrive at the venue by {arrivalTime}</strong>
+              {eventData?.location ? ` (${eventData.location})` : ""} on the
+              final day. This gives you time to settle in and review the
+              projects before judging begins.
+            </Typography>
+          </Alert>
+        )}
 
         {eventData && eventData.endDate && (
           <Box
@@ -1766,7 +1768,8 @@ const JudgeApplicationComponent = () => {
         </FormControl>
       </Box>
     </Box>
-  );
+    );
+  };
 
   // Render review form
   const renderReviewForm = () => (
@@ -1789,6 +1792,25 @@ const JudgeApplicationComponent = () => {
       <FormControlLabel
         control={
           <Checkbox
+            name="judgingCommitment"
+            checked={!!formData.judgingCommitment}
+            onChange={handleChange}
+            color="primary"
+            required
+          />
+        }
+        label={
+          <Typography variant="body1">
+            I will review each project I'm assigned and ask questions tied to
+            the judging criteria — Scope, Documentation, Polish, and Security.
+          </Typography>
+        }
+        sx={{ mb: 2, alignItems: "flex-start" }}
+      />
+
+      <FormControlLabel
+        control={
+          <Checkbox
             name="codeOfConduct"
             checked={formData.codeOfConduct}
             onChange={handleChange}
@@ -1797,7 +1819,7 @@ const JudgeApplicationComponent = () => {
           />
         }
         label={
-          <Typography variant="body2">
+          <Typography variant="body1">
             I agree to the{" "}
             <Link
               href="/hack/code-of-conduct"
@@ -1812,10 +1834,11 @@ const JudgeApplicationComponent = () => {
       />
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          By submitting this form, you're expressing interest in judging at
-          Opportunity Hack. Our team will review your application and reach out
-          with further details about judging logistics and criteria.
+        <Typography variant="body1">
+          Your application is <strong>pending review</strong> — our staff
+          reviews every judge application by hand, which can take up to a week.
+          We'll email you once you're approved or if we have follow-up
+          questions.
         </Typography>
       </Alert>
 
@@ -1991,9 +2014,20 @@ const JudgeApplicationComponent = () => {
             Application Submitted!
           </Typography>
 
-          <Alert severity="success" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            Thank you for applying to be a judge at Opportunity Hack. We'll
-            review your application and contact you soon.
+          <Alert severity="success" sx={{ mb: 2, mx: "auto", maxWidth: 600 }}>
+            <Typography variant="body1">
+              Thanks for applying to judge at Opportunity Hack — we've received
+              your application.
+            </Typography>
+          </Alert>
+
+          <Alert severity="info" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
+            <Typography variant="body1">
+              <strong>Your application is pending review.</strong> Our staff
+              reviews every judge application — this typically takes up to a
+              week. You'll get an email when you're approved or if we have
+              follow-up questions.
+            </Typography>
           </Alert>
 
           <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
@@ -2316,11 +2350,19 @@ const JudgeApplicationComponent = () => {
                   </Stepper>
 
                   <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                    <Typography variant="body1" paragraph>
-                      Thank you for your interest in judging at Opportunity
-                      Hack! Judges play a crucial role in evaluating the
-                      projects created by our participants and providing
-                      valuable feedback.
+                    <Typography
+                      variant="h5"
+                      component="h2"
+                      sx={{ fontWeight: 600, mb: 1.5 }}
+                    >
+                      Judge at Opportunity Hack
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
+                      Strong judging is what makes the work teams put in
+                      meaningful — for them, and for the nonprofits they're
+                      building for. As a judge, you'll review every project
+                      you're assigned and ask questions that probe gaps in the
+                      judging criteria so teams get real, useful feedback.
                     </Typography>
 
                     {eventData && eventData.description && (
@@ -2330,12 +2372,50 @@ const JudgeApplicationComponent = () => {
                       </Typography>
                     )}
 
-                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                      <Typography variant="body1" paragraph>
-                        <strong>
-                          Want to learn more about judging at Opportunity Hack?
-                        </strong>{" "}
-                        Visit our{" "}
+                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontWeight: 600, mb: 1 }}
+                      >
+                        What good judging looks like
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        We score on four pillars — Scope, Documentation, Polish,
+                        and Security (
+                        <Link
+                          href="/hackathon-judging-criteria"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ fontWeight: 600 }}
+                        >
+                          read the full rubric
+                        </Link>
+                        ). When the team hasn't covered a pillar in their pitch,
+                        ask probing questions to find out:
+                      </Typography>
+                      <Box component="ul" sx={{ m: 0, pl: 3 }}>
+                        <Typography component="li" variant="body1">
+                          <strong>Scope:</strong> "Which user problem does this
+                          solve, and how did you decide what to leave out?"
+                        </Typography>
+                        <Typography component="li" variant="body1">
+                          <strong>Documentation:</strong> "If a new contributor
+                          joined Monday, where would they start?"
+                        </Typography>
+                        <Typography component="li" variant="body1">
+                          <strong>Polish:</strong> "Walk me through the happy
+                          path — what does the nonprofit see?"
+                        </Typography>
+                        <Typography component="li" variant="body1">
+                          <strong>Security:</strong> "Where does sensitive data
+                          live, and who has access?"
+                        </Typography>
+                      </Box>
+                    </Alert>
+
+                    <Alert severity="info" sx={{ mb: 4 }}>
+                      <Typography variant="body1">
+                        New to judging at Opportunity Hack? Visit our{" "}
                         <Link
                           href="/about/judges"
                           target="_blank"
@@ -2344,17 +2424,9 @@ const JudgeApplicationComponent = () => {
                         >
                           Judges Information Page
                         </Link>{" "}
-                        for details about the evaluation criteria, judging
-                        process, and commitment.
+                        for the full process and commitment.
                       </Typography>
                     </Alert>
-
-                    <Typography variant="body1" paragraph>
-                      As a judge, you'll review innovative solutions developed
-                      for nonprofits and help recognize outstanding
-                      contributions. Your expertise will help ensure the success
-                      of our hackathon.
-                    </Typography>
 
                     {(error || recaptchaError) && (
                       <Alert severity="error" sx={{ mb: 4 }}>

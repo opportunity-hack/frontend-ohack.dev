@@ -158,9 +158,15 @@ const FindTeamPage = () => {
           console.log("socialCauses:", appData.socialCauses);
           console.log("isSelected:", appData.isSelected);
 
-          // Check if user is selected for the hackathon
+          // If the application has not yet been confirmed, render the
+          // dedicated pending-confirmation panel below instead of an error.
+          // isSelected === false covers both "still under review" and
+          // "not selected after review" — don't prejudge here.
           if (appData.isSelected === false) {
-            setError("Your application for this hackathon was not selected. The team finder is only available to selected participants.");
+            setMyProfile({
+              ...response.data,
+              application: appData,
+            });
             setIsCheckingApplication(false);
             return;
           }
@@ -214,8 +220,9 @@ const FindTeamPage = () => {
             application: processedApp,
           });
         } else {
+          // No application yet — the dedicated panel below renders the
+          // submit-application CTA.
           setMyProfile(response.data);
-          setError("You haven't submitted a hacker application for this event yet. The team finder is only available to participants who have applied and been selected.");
         }
       }
     } catch (err) {
@@ -651,8 +658,8 @@ const FindTeamPage = () => {
           </Box>
         )}
 
-        {/* Show message for non-selected users or users without applications */}
-        {!isCheckingApplication && (myProfile?.application?.isSelected === false || !myProfile?.application) && (
+        {/* No application submitted yet */}
+        {!isCheckingApplication && !myProfile?.application && (
           <Box sx={{ mt: 3, mb: 4, display: 'flex', justifyContent: 'center' }}>
             <Paper
               sx={{
@@ -660,105 +667,128 @@ const FindTeamPage = () => {
                 maxWidth: 600,
                 textAlign: 'center',
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%)',
-                border: '1px solid #ffab91',
+                background: 'linear-gradient(135deg, #e3f2fd 0%, #ede7f6 100%)',
+                border: '1px solid #90caf9',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
               }}
             >
               <Box sx={{ mb: 3 }}>
-                <Box
-                  component="span"
-                  sx={{
-                    fontSize: '4rem',
-                    display: 'block',
-                    lineHeight: 1,
-                    mb: 2
-                  }}
-                >
-                  📋
+                <Box component="span" sx={{ fontSize: '4rem', display: 'block', lineHeight: 1, mb: 2 }}>
+                  📝
                 </Box>
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#d84315' }}>
-                  Application Status Update
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1565c0' }}>
+                  Apply first to use the Team Finder
                 </Typography>
               </Box>
 
-              <Typography variant="h6" paragraph sx={{ mb: 3, color: '#5d4037' }}>
-                Thank you for your interest in participating in {eventDetails?.title || 'this hackathon'}!
-              </Typography>
-
               <Typography variant="body1" paragraph sx={{ mb: 3, lineHeight: 1.6 }}>
-                {!myProfile?.application
-                  ? "You need to submit a hacker application to access the team finder. Only participants who have applied and been selected can use this feature."
-                  : "Unfortunately, your application for this hackathon was not selected. Due to limited capacity, we were unable to accommodate all applicants, but we encourage you to:"
-                }
+                The Team Finder is only available to hackers who have submitted a hacker application and been confirmed for {eventDetails?.title || 'this hackathon'}. Submit your application to get started — we&apos;ll email you once your spot is confirmed.
               </Typography>
 
-              {!myProfile?.application ? (
-                <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    href={`/hack/${event_id}/hacker-application`}
-                    sx={{ flex: 1 }}
-                  >
-                    Submit Hacker Application
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="large"
-                    href={`/hack/${event_id}`}
-                    sx={{ flex: 1 }}
-                  >
-                    Back to Hackathon
-                  </Button>
-                </Box>
-              ) : (
-                <>
-                  <Box sx={{ textAlign: 'left', mb: 3, mx: 2 }}>
-                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🎯</Box>
-                      Apply for future Opportunity Hack events
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>💻</Box>
-                      Contribute to open-source nonprofit projects year-round
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🤝</Box>
-                      Join our community on Slack for networking and opportunities
-                    </Typography>
-                    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🔔</Box>
-                      Follow us on social media for updates on upcoming events
-                    </Typography>
-                  </Box>
+              <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  href={`/hack/${event_id}/hacker-application`}
+                  sx={{ flex: 1 }}
+                >
+                  Submit Hacker Application
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="large"
+                  href={`/hack/${event_id}`}
+                  sx={{ flex: 1 }}
+                >
+                  Back to Hackathon
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+        )}
 
-                  <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="large"
-                      href="https://opportunity-hack.slack.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{ flex: 1 }}
-                    >
-                      Join Our Slack Community
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="large"
-                      href="/hackathons"
-                      sx={{ flex: 1 }}
-                    >
-                      View Upcoming Events
-                    </Button>
-                  </Box>
-                </>
-              )}
+        {/* Application submitted but not yet confirmed (under review or not chosen) */}
+        {!isCheckingApplication && myProfile?.application && myProfile.application.isSelected === false && (
+          <Box sx={{ mt: 3, mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Paper
+              sx={{
+                p: 4,
+                maxWidth: 640,
+                textAlign: 'center',
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%)',
+                border: '1px solid #90caf9',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}
+            >
+              <Box sx={{ mb: 3 }}>
+                <Box component="span" sx={{ fontSize: '4rem', display: 'block', lineHeight: 1, mb: 2 }}>
+                  ⏳
+                </Box>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1565c0' }}>
+                  Your application is awaiting confirmation
+                </Typography>
+              </Box>
+
+              <Typography variant="body1" paragraph sx={{ mb: 2, lineHeight: 1.6 }}>
+                Thanks for applying to {eventDetails?.title || 'this hackathon'}! We&apos;ve received your hacker application — it just hasn&apos;t been confirmed for a spot yet.
+              </Typography>
+
+              <Alert severity="info" icon={false} sx={{ textAlign: 'left', mb: 3, borderRadius: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>What this means:</strong> Most applications are reviewed within about a week. You&apos;ll get an email as soon as your spot is confirmed, and the Team Finder will unlock automatically.
+                </Typography>
+                <Typography variant="body2">
+                  If the event is close and you haven&apos;t heard back, we may have reached capacity for this hackathon. Either way, the options below are open to you right now.
+                </Typography>
+              </Alert>
+
+              <Box sx={{ textAlign: 'left', mb: 3, mx: { xs: 0, sm: 2 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1.5, color: '#283593' }}>
+                  While you wait
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                  <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🤝</Box>
+                  Join our Slack to meet hackers, mentors, and nonprofits
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                  <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>💻</Box>
+                  Contribute to open-source nonprofit projects year-round
+                </Typography>
+                <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box component="span" sx={{ mr: 2, fontSize: '1.2rem' }}>🎯</Box>
+                  Browse other Opportunity Hack events you can apply to
+                </Typography>
+              </Box>
+
+              <Box sx={{ mt: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  href="https://opportunity-hack.slack.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ flex: 1 }}
+                >
+                  Join Our Slack Community
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="large"
+                  href="/hackathons"
+                  sx={{ flex: 1 }}
+                >
+                  View Upcoming Events
+                </Button>
+              </Box>
+
+              <Typography variant="caption" sx={{ display: 'block', mt: 3, color: 'text.secondary' }}>
+                Already received your confirmation email? Try refreshing this page — your status may not have synced yet.
+              </Typography>
             </Paper>
           </Box>
         )}

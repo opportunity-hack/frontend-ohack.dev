@@ -47,6 +47,10 @@ import FormPersistenceControls from "../../../components/FormPersistenceControls
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
+import {
+  OHackParticipationSelect,
+  PronounsPicker,
+} from "../../../components/ApplicationForm";
 import UploadPhoto from "../../../components/UploadPhoto";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Accordion from "@mui/material/Accordion";
@@ -108,6 +112,7 @@ const MentorApplicationComponent = () => {
     country: "",
     state: "",
     codeOfConduct: false,
+    proactiveHelpUnderstood: false,
     comments: "",
     shirtSize: "",
     agreedToCodeOfConduct: false,
@@ -663,7 +668,8 @@ const MentorApplicationComponent = () => {
       validateBasicInfo() &&
       validateSkillsAndExperience() &&
       validateAvailability() &&
-      formData.codeOfConduct
+      formData.codeOfConduct &&
+      formData.proactiveHelpUnderstood
     );
   };
 
@@ -869,6 +875,13 @@ const MentorApplicationComponent = () => {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
+    if (!formData.proactiveHelpUnderstood) {
+      setError(
+        "Please confirm you understand mentor certificates require proactive help.",
+      );
+      return;
+    }
+
     if (!formData.codeOfConduct) {
       setError("You must agree to the code of conduct");
       return;
@@ -1053,13 +1066,11 @@ const MentorApplicationComponent = () => {
           sx={{ mb: 3 }}
         />
 
-        <TextField
-          label="Your Pronouns (Optional)"
-          name="pronouns"
-          fullWidth
+        <PronounsPicker
           value={formData.pronouns}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
+          onChange={(next) =>
+            setFormData((prev) => ({ ...prev, pronouns: next }))
+          }
         />
 
         <TextField
@@ -1208,32 +1219,11 @@ const MentorApplicationComponent = () => {
           </FormControl>
         )}
 
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="participation-count-label">
-            How many times have you participated in Opportunity Hack?
-          </InputLabel>
-          <Select
-            labelId="participation-count-label"
-            id="participation-count"
-            name="participationCount"
-            value={formData.participationCount}
-            onChange={handleChange}
-            label="How many times have you participated in Opportunity Hack?"
-          >
-            <MenuItem value="This is my first year! 👆">
-              This is my first year! 👆
-            </MenuItem>
-            <MenuItem value="This will be the 2nd time ✌️">
-              This will be the 2nd time ✌️
-            </MenuItem>
-            <MenuItem value="This will be the 3rd time ☘️">
-              This will be the 3rd time ☘️
-            </MenuItem>
-            <MenuItem value="I've been here 4+ times 🔥">
-              I've been here 4+ times 🔥
-            </MenuItem>
-          </Select>
-        </FormControl>
+        <OHackParticipationSelect
+          value={formData.participationCount}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
       </Box>
     </Box>
   );
@@ -1661,6 +1651,26 @@ const MentorApplicationComponent = () => {
       <FormControlLabel
         control={
           <Checkbox
+            name="proactiveHelpUnderstood"
+            checked={!!formData.proactiveHelpUnderstood}
+            onChange={handleChange}
+            color="primary"
+            required
+          />
+        }
+        label={
+          <Typography variant="body1">
+            I understand mentor certificates are awarded for{" "}
+            <strong>proactive help</strong> (Slack outreach, code review,
+            presentation feedback) — not for showing up.
+          </Typography>
+        }
+        sx={{ mb: 2, alignItems: "flex-start" }}
+      />
+
+      <FormControlLabel
+        control={
+          <Checkbox
             name="codeOfConduct"
             checked={formData.codeOfConduct}
             onChange={handleChange}
@@ -1669,7 +1679,7 @@ const MentorApplicationComponent = () => {
           />
         }
         label={
-          <Typography variant="body2">
+          <Typography variant="body1">
             I agree to the{" "}
             <Link
               href="/hack/code-of-conduct"
@@ -1684,10 +1694,11 @@ const MentorApplicationComponent = () => {
       />
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          By submitting this form, you're expressing interest in mentoring at
-          Opportunity Hack. Our team will review your application and reach out
-          to match you with teams based on your expertise and availability.
+        <Typography variant="body1">
+          Your application is <strong>pending review</strong> — our staff
+          reviews every mentor application by hand, which can take up to a week.
+          We'll email you once you're approved or if we have follow-up
+          questions.
         </Typography>
       </Alert>
     </Box>
@@ -1728,9 +1739,20 @@ const MentorApplicationComponent = () => {
             Application Submitted!
           </Typography>
 
-          <Alert severity="success" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            Thank you for applying to be a mentor at Opportunity Hack. We'll
-            review your application and contact you soon.
+          <Alert severity="success" sx={{ mb: 2, mx: "auto", maxWidth: 600 }}>
+            <Typography variant="body1">
+              Thanks for applying to mentor at Opportunity Hack — we've received
+              your application.
+            </Typography>
+          </Alert>
+
+          <Alert severity="info" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
+            <Typography variant="body1">
+              <strong>Your application is pending review.</strong> Our staff
+              reviews every mentor application — this typically takes up to a
+              week. You'll get an email when you're approved or if we have
+              follow-up questions.
+            </Typography>
           </Alert>
 
           <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
@@ -2107,10 +2129,19 @@ const MentorApplicationComponent = () => {
                     </Stepper>
 
                     <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                      <Typography variant="body1" paragraph>
-                        Thank you for your interest in mentoring at Opportunity
-                        Hack! Mentors play a crucial role in guiding teams and
-                        helping them create impactful solutions for nonprofits.
+                      <Typography
+                        variant="h5"
+                        component="h2"
+                        sx={{ fontWeight: 600, mb: 1.5 }}
+                      >
+                        Mentor at Opportunity Hack
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
+                        Opportunity Hack exists to help nonprofits ship working
+                        software that makes their mission easier. Mentors are a
+                        huge part of that — when teams get stuck on architecture,
+                        scope, or the last 20% of polish, you're who unblocks
+                        them.
                       </Typography>
 
                       {eventData && eventData.description && (
@@ -2120,13 +2151,41 @@ const MentorApplicationComponent = () => {
                         </Typography>
                       )}
 
+                      <Alert severity="warning" sx={{ mb: 3 }}>
+                        <Typography
+                          variant="body1"
+                          sx={{ fontWeight: 600, mb: 1 }}
+                        >
+                          Mentor certificates are awarded for proactive help —
+                          not attendance.
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 1 }}>
+                          We're glad to write certificates that vouch for what
+                          you actually did. To qualify, expect to:
+                        </Typography>
+                        <Box component="ul" sx={{ m: 0, pl: 3 }}>
+                          <Typography component="li" variant="body1">
+                            Reach out to teams in Slack proactively (especially
+                            if you're remote) — don't wait to be asked.
+                          </Typography>
+                          <Typography component="li" variant="body1">
+                            Review code, point out concrete improvements, and
+                            help teams scope down to something they can finish.
+                          </Typography>
+                          <Typography component="li" variant="body1">
+                            Sit with teams during presentation prep and give
+                            feedback on their pitch.
+                          </Typography>
+                          <Typography component="li" variant="body1">
+                            Show up consistently — checking in, then
+                            disappearing, isn't enough.
+                          </Typography>
+                        </Box>
+                      </Alert>
+
                       <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                        <Typography variant="body1" paragraph>
-                          <strong>
-                            Want to learn more about mentoring at Opportunity
-                            Hack?
-                          </strong>{" "}
-                          Check out our{" "}
+                        <Typography variant="body1">
+                          New to mentoring at Opportunity Hack? Check out our{" "}
                           <Link
                             href="/about/mentors"
                             target="_blank"
@@ -2135,8 +2194,7 @@ const MentorApplicationComponent = () => {
                           >
                             Mentors Guide
                           </Link>{" "}
-                          to understand the role, expectations, and impact
-                          you'll make.
+                          for the role, expectations, and impact you'll make.
                         </Typography>
                       </Alert>
 

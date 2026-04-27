@@ -50,6 +50,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
+import { PronounsPicker } from "../../../components/ApplicationForm";
 import UploadPhoto from "../../../components/UploadPhoto";
 import GiveButterWidget from "../../../components/GiveButterWidget";
 import { getEventTimezone, getTimezoneAbbreviation } from "../../../lib/timezoneUtils";
@@ -1497,13 +1498,12 @@ const VolunteerApplicationComponent = () => {
         </AccordionSummary>
         <AccordionDetails>
           <Box sx={{ pt: 1 }}>
-            <TextField
-              label="Your Pronouns (Optional)"
-              name="pronouns"
-              fullWidth
+            <PronounsPicker
               value={formData.pronouns || ""}
-              onChange={handleFormChange}
-              sx={{ mb: 3 }}
+              onChange={(next) =>
+                setFormData((prev) => ({ ...prev, pronouns: next }))
+              }
+              required={false}
             />
 
             <TextField

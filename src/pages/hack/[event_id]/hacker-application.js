@@ -50,6 +50,13 @@ import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
 import UploadPhoto from "../../../components/UploadPhoto";
+import useProfileApi from "../../../hooks/use-profile-api";
+import {
+  MealMenu,
+  OHackParticipationSelect,
+  PronounsPicker,
+  ProfileAutofillNotice,
+} from "../../../components/ApplicationForm";
 import Moment from "moment";
 import "moment-timezone";
 import { getEventTimezone, getTimezoneAbbreviation, formatDualTimezone } from "../../../lib/timezoneUtils";
@@ -71,6 +78,13 @@ const HackerApplicationComponent = () => {
   // Store volunteer ID for QR code generation
   const [volunteerId, setVolunteerId] = useState(null);
   const [isSelected, setIsSelected] = useState(false);
+  const [profileAutofilled, setProfileAutofilled] = useState(false);
+  const [eventTeams, setEventTeams] = useState([]);
+  const [teamsLoading, setTeamsLoading] = useState(false);
+  const [teamSearch, setTeamSearch] = useState("");
+
+  // Profile API integration — used to pre-fill LinkedIn/GitHub from the user's profile
+  const { profile, isLoading: profileLoading } = useProfileApi();
 
   // reCAPTCHA integration
   const {
@@ -114,6 +128,7 @@ const HackerApplicationComponent = () => {
     arizonaResident: "",
     county: "",
     ageRange: "",
+    parentalPermission: false,
     referralSource: "",
     referralSourceOther: "",
     socialCauses: [], // Array of selected causes
@@ -122,6 +137,7 @@ const HackerApplicationComponent = () => {
     motivation: "",
     teamStatus: "",
     teamCode: "",
+    soloAcknowledged: false,
     teamNeededSkills: "",
     teamMatchingPreferences: {
       preferredSize: "",
@@ -129,6 +145,11 @@ const HackerApplicationComponent = () => {
       preferredCauses: [],
     },
     workshopInterests: [],
+    workshopInterestsOther: "",
+    mealSelections: {},
+    depositAmountCents: null,
+    depositDisposition: "refund",
+    stripePaymentIntentId: "",
     interestedInTaxCredit: false,
     willContinue: false,
     codeOfConduct: false,
@@ -392,12 +413,20 @@ const HackerApplicationComponent = () => {
     "During-event technical sessions",
     "Social impact design thinking",
     "Git/GitHub workflow",
-    "Cloud deployment",
+    "Cloud deployment (AWS, GCP, Azure)",
     "UX/UI fundamentals",
-    "API integration",
+    "Frontend (React, Next.js)",
+    "Backend & API integration",
     "Database design",
     "Mobile development",
-    "Machine learning basics",
+    "AI / Machine learning basics",
+    "DevOps & CI/CD",
+    "Cybersecurity basics",
+    "Accessibility",
+    "Working with nonprofits — scoping & requirements",
+    "Pitch & demo coaching",
+    "Fundraising & grants for tech projects",
+    "Other",
   ];
 
   // Arizona county options
@@ -716,6 +745,56 @@ const HackerApplicationComponent = () => {
     fetchEventData();
   }, [event_id, apiServerUrl, setIsLoading, initializeRecaptcha, setFormData]);
 
+  // Fetch teams for this event so hackers can browse and pick the team they're on.
+  useEffect(() => {
+    if (!apiServerUrl || !event_id) return;
+    let cancelled = false;
+    const fetchTeams = async () => {
+      setTeamsLoading(true);
+      try {
+        const res = await fetch(`${apiServerUrl}/api/messages/teams`);
+        if (!res.ok) throw new Error(`Failed to load teams: ${res.status}`);
+        const json = await res.json();
+        const all = Array.isArray(json?.teams) ? json.teams : [];
+        const filtered = all.filter(
+          (t) =>
+            t?.active !== false &&
+            (t?.hackathon_event_id === event_id ||
+              t?.eventId === event_id),
+        );
+        if (!cancelled) setEventTeams(filtered);
+      } catch (err) {
+        console.warn("Could not load teams for event browser:", err);
+        if (!cancelled) setEventTeams([]);
+      } finally {
+        if (!cancelled) setTeamsLoading(false);
+      }
+    };
+    fetchTeams();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiServerUrl, event_id]);
+
+  // Pre-fill LinkedIn and GitHub from the user's saved profile when fields are empty
+  useEffect(() => {
+    if (profileLoading || !profile) return;
+    let didAutofill = false;
+    setFormData((prev) => {
+      const next = { ...prev };
+      if (!prev.linkedin && profile.linkedin_url) {
+        next.linkedin = profile.linkedin_url;
+        didAutofill = true;
+      }
+      if (!prev.github && profile.github) {
+        next.github = profile.github;
+        didAutofill = true;
+      }
+      return didAutofill ? next : prev;
+    });
+    if (didAutofill) setProfileAutofilled(true);
+  }, [profile, profileLoading, setFormData]);
+
   // Handle user data and application loading - separate from event loading
   useEffect(() => {
     const loadUserAndFormData = async () => {
@@ -959,20 +1038,24 @@ const HackerApplicationComponent = () => {
 
   const [inPersonError, setInPersonError] = useState("");
 
-  // Extend the validateLocationInfo function to check in-person requirement
+  // For in-person events, auto-set the legacy `inPerson` field to "Yes" since we no longer show the radio.
+  useEffect(() => {
+    if (!eventData) return;
+    if (!eventData.isOnlineEvent && formData.inPerson !== "Yes") {
+      setFormData((prev) => ({ ...prev, inPerson: "Yes" }));
+    }
+  }, [eventData, formData.inPerson, setFormData]);
+
+  // Validate location and demographics; under-18 attendees must confirm guardian permission.
   const validateLocationInfo = () => {
     // Clear any previous error
     setInPersonError("");
 
     const requiredFields = ["arizonaResident", "country", "state", "ageRange"];
 
-    // Add in-person validation for non-online events
-    if (!eventData?.isOnlineEvent && formData.inPerson === "No") {
+    if (formData.ageRange === "Under 18" && !formData.parentalPermission) {
       setErrorAndScroll(
-        "This event is in-person only. Virtual participation is not supported.",
-      );
-      setInPersonError(
-        'This event requires in-person attendance. Please select "Yes, I\'ll attend in person".',
+        "Please confirm you have parent or guardian permission to attend.",
       );
       return false;
     }
@@ -1031,6 +1114,16 @@ const HackerApplicationComponent = () => {
     // Specific validations based on team status
     if (formData.teamStatus === "I have a team" && !formData.teamCode) {
       setErrorAndScroll("Please enter your team code");
+      return false;
+    }
+
+    if (
+      formData.teamStatus === "I would like to work alone" &&
+      !formData.soloAcknowledged
+    ) {
+      setErrorAndScroll(
+        "Please confirm you understand the risks of working solo, or pick a team option.",
+      );
       return false;
     }
 
@@ -1140,6 +1233,98 @@ const HackerApplicationComponent = () => {
   };
 
   // handleSubmit function - Ensure backward compatibility
+  const isDepositRequired = () =>
+    !!eventData?.constraints?.hacker_deposit?.enabled;
+
+  const startDepositCheckout = async () => {
+    setSubmitting(true);
+    setError("");
+    try {
+      const defaultCents =
+        eventData?.constraints?.hacker_deposit?.default_amount_cents || 500;
+      const amount =
+        Number.isInteger(formData.depositAmountCents) &&
+        formData.depositAmountCents > 0
+          ? formData.depositAmountCents
+          : defaultCents;
+      const res = await fetch("/api/applications/hacker-deposit/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id,
+          amount_cents: amount,
+          disposition: formData.depositDisposition || "refund",
+          hacker_email: formData.email,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.error || "Failed to start deposit checkout");
+      // Form data is already auto-saved to localStorage; redirect to Stripe.
+      window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Could not start deposit checkout.");
+      setSubmitting(false);
+    }
+  };
+
+  // Resume the application after returning from Stripe Checkout
+  useEffect(() => {
+    const params =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : null;
+    const sessionId = params?.get("deposit_session_id");
+    const cancelled = params?.get("deposit_cancelled");
+    if (cancelled) {
+      setError(
+        "Deposit checkout was cancelled. You can try again on the Review step.",
+      );
+      // Clean the URL so the message goes away on next refresh.
+      const url = new URL(window.location.href);
+      url.searchParams.delete("deposit_cancelled");
+      window.history.replaceState({}, "", url.toString());
+      return;
+    }
+    if (!sessionId || formData.stripePaymentIntentId) return;
+    let cancelledFlag = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/applications/hacker-deposit/session?session_id=${encodeURIComponent(sessionId)}`,
+        );
+        const data = await res.json();
+        if (cancelledFlag) return;
+        if (data.payment_status === "paid" && data.payment_intent_id) {
+          setFormData((prev) => ({
+            ...prev,
+            stripePaymentIntentId: data.payment_intent_id,
+            depositAmountCents: data.amount_total ?? prev.depositAmountCents,
+            depositDisposition:
+              data.metadata?.disposition || prev.depositDisposition,
+          }));
+          setActiveStep(steps.length - 1);
+          // Clean the URL.
+          const url = new URL(window.location.href);
+          url.searchParams.delete("deposit_session_id");
+          window.history.replaceState({}, "", url.toString());
+        } else {
+          setError(
+            "Deposit not completed. You can try again on the Review step.",
+          );
+        }
+      } catch (err) {
+        if (!cancelledFlag)
+          setError("Could not verify deposit. Please try again.");
+      }
+    })();
+    return () => {
+      cancelledFlag = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event_id]);
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
@@ -1163,6 +1348,12 @@ const HackerApplicationComponent = () => {
     }
 
     if (!validateForm()) {
+      return;
+    }
+
+    // If a deposit is required and not yet paid, route to Stripe Checkout first.
+    if (isDepositRequired() && !formData.stripePaymentIntentId) {
+      await startDepositCheckout();
       return;
     }
 
@@ -1228,6 +1419,15 @@ const HackerApplicationComponent = () => {
         linkedinProfile: formData.linkedin,
         shortBio: formData.bio,
         photoUrl: uploadedPhotoUrlRef.current || formData.photoUrl || "",
+        // Deposit + meal selections (when applicable)
+        meal_selections: formData.mealSelections || {},
+        parental_permission: !!formData.parentalPermission,
+        workshop_interests_other: formData.workshopInterestsOther || "",
+        deposit_amount_cents: formData.depositAmountCents || null,
+        deposit_disposition: formData.stripePaymentIntentId
+          ? formData.depositDisposition || "refund"
+          : null,
+        stripe_payment_intent_id: formData.stripePaymentIntentId || null,
       };
 
       if (apiServerUrl) {
@@ -1384,13 +1584,12 @@ const HackerApplicationComponent = () => {
           sx={{ mb: 3 }}
         />
 
-        <TextField
-          label="Your Pronouns (Optional)"
-          name="pronouns"
-          fullWidth
+        <PronounsPicker
           value={formData.pronouns || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
+          onChange={(next) =>
+            setFormData((prev) => ({ ...prev, pronouns: next }))
+          }
+          required={false}
         />
 
         <FormControl fullWidth required sx={{ mb: 3 }}>
@@ -1607,6 +1806,8 @@ const HackerApplicationComponent = () => {
           />
         )}
 
+        <ProfileAutofillNotice show={profileAutofilled} />
+
         <TextField
           label="Short bio"
           name="bio"
@@ -1615,7 +1816,7 @@ const HackerApplicationComponent = () => {
           fullWidth
           value={formData.bio || ""}
           onChange={handleChange}
-          helperText="Tell us a bit about yourself and your background (aim for 100-200 words)"
+          helperText="We use your bio to help match you with a team — and we share it publicly on the hackathon page so people can find you and connect. Aim for 100–200 words."
           sx={{ mb: 3 }}
         />
 
@@ -1628,6 +1829,11 @@ const HackerApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
           placeholder="https://linkedin.com/in/yourprofile"
+          helperText={
+            profileAutofilled && profile?.linkedin_url
+              ? "Auto-filled from your profile — edit your profile to update everywhere."
+              : undefined
+          }
         />
 
         <TextField
@@ -1639,6 +1845,11 @@ const HackerApplicationComponent = () => {
           onChange={handleChange}
           sx={{ mb: 3 }}
           placeholder="https://github.com/yourusername"
+          helperText={
+            profileAutofilled && profile?.github
+              ? "Auto-filled from your profile — edit your profile to update everywhere."
+              : undefined
+          }
         />
 
         <TextField
@@ -1666,32 +1877,11 @@ const HackerApplicationComponent = () => {
           sx={{ mb: 3 }}
         />
 
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="participation-count-label">
-            How many times have you participated in Opportunity Hack?
-          </InputLabel>
-          <Select
-            labelId="participation-count-label"
-            id="participation-count"
-            name="participationCount"
-            value={formData.participationCount || ""}
-            onChange={handleChange}
-            label="How many times have you participated in Opportunity Hack?"
-          >
-            <MenuItem value="This is my first year! 👆">
-              This is my first year! 👆
-            </MenuItem>
-            <MenuItem value="This will be the 2nd time ✌️">
-              This will be the 2nd time ✌️
-            </MenuItem>
-            <MenuItem value="This will be the 3rd time ☘️">
-              This will be the 3rd time ☘️
-            </MenuItem>
-            <MenuItem value="I've been here 4+ times 🔥">
-              I've been here 4+ times 🔥
-            </MenuItem>
-          </Select>
-        </FormControl>
+        <OHackParticipationSelect
+          value={formData.participationCount}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
       </Box>
     </Box>
   );
@@ -1704,78 +1894,20 @@ const HackerApplicationComponent = () => {
       </Typography>
 
       <Box sx={{ mb: 3 }}>
-        {/* Only show in-person question if it's not an online event */}
+        {/* In-person events: confirm on-site attendance commitment */}
         {!eventData?.isOnlineEvent && (
-          <FormControl
-            required
-            component="fieldset"
-            sx={{ mb: 3 }}
-            error={!!inPersonError}
-          >
-            <Typography variant="subtitle1" gutterBottom>
-              {`Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : ""}?`}{" "}
-              <Box component="span" color="error.main">
-                *
-              </Box>
+          <Alert severity="info" sx={{ mb: 3 }}>
+            <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+              This is an in-person event
+              {eventData?.location ? ` in ${eventData.location}` : ""}.
             </Typography>
-            <RadioGroup
-              name="inPerson"
-              value={formData.inPerson || ""}
-              onChange={handleChange}
-            >
-              <FormControlLabel
-                value="Yes"
-                control={<Radio />}
-                label="Yes, I'll attend in person"
-              />
-              <FormControlLabel
-                value="No"
-                control={<Radio />}
-                label={
-                  <Box
-                    component="span"
-                    sx={{ display: "flex", alignItems: "center" }}
-                  >
-                    <Typography
-                      component="span"
-                      sx={{
-                        textDecoration: !!inPersonError
-                          ? "line-through"
-                          : "none",
-                        color: !!inPersonError ? "error.main" : "inherit",
-                      }}
-                    >
-                      No, I'll participate virtually
-                    </Typography>
-                    {!!inPersonError && (
-                      <Typography
-                        component="span"
-                        sx={{ ml: 1, fontSize: "0.75rem", color: "error.main" }}
-                      >
-                        (not available)
-                      </Typography>
-                    )}
-                  </Box>
-                }
-              />
-            </RadioGroup>
-            {!!inPersonError && (
-              <FormHelperText error>{inPersonError}</FormHelperText>
-            )}
-            {!inPersonError && (
-              <FormHelperText
-                sx={{
-                  fontSize: "1.20rem",
-                  color: "red",
-                  fontWeight: 500,
-                }}
-              >
-                {!eventData?.isOnlineEvent
-                  ? "This event is in-person event only. Virtual participation is not supported because it's hard to engage with a virtual audience when we have to focus on the in-person attendees."
-                  : ""}
-              </FormHelperText>
-            )}
-          </FormControl>
+            <Typography variant="body1">
+              We ask hackers to be on-site for the entire hackathon. You're
+              welcome to go home to sleep overnight if you prefer, but we expect
+              you with us during the build, demos, and judging. Virtual
+              participation isn't supported for this event.
+            </Typography>
+          </Alert>
         )}
 
         <FormControl fullWidth required sx={{ mb: 3 }}>
@@ -1860,6 +1992,29 @@ const HackerApplicationComponent = () => {
           </FormHelperText>
         </FormControl>
 
+        {formData.ageRange === "Under 18" && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="parentalPermission"
+                  checked={!!formData.parentalPermission}
+                  onChange={handleChange}
+                  color="primary"
+                  required
+                />
+              }
+              label={
+                <Typography variant="body1">
+                  I confirm I have permission from a parent or legal guardian to
+                  attend and participate in this hackathon.
+                </Typography>
+              }
+              sx={{ alignItems: "flex-start" }}
+            />
+          </Alert>
+        )}
+
         <FormControl
           fullWidth
           required
@@ -1932,6 +2087,18 @@ const HackerApplicationComponent = () => {
             helperText="Please let us know about any dietary restrictions for in-person attendees"
           />
         )}
+
+        {!eventData?.isOnlineEvent &&
+          Array.isArray(eventData?.constraints?.meals) &&
+          eventData.constraints.meals.length > 0 && (
+            <MealMenu
+              meals={eventData.constraints.meals}
+              selections={formData.mealSelections || {}}
+              onChange={(next) =>
+                setFormData((prev) => ({ ...prev, mealSelections: next }))
+              }
+            />
+          )}
 
         {formData.arizonaResident === "Arizona Resident" && (
           <FormControlLabel
@@ -2333,16 +2500,149 @@ const HackerApplicationComponent = () => {
           </FormControl>
 
           {formData.teamStatus === "I have a team" && (
-            <TextField
-              label="Team Name"
-              name="teamCode"
-              required
-              fullWidth
-              value={formData.teamCode || ""}
-              onChange={handleChange}
-              helperText="Talk with other team members to decide on unique name and you all should write that here"
-              sx={{ mb: 3 }}
-            />
+            <Box
+              sx={{
+                border: "1px solid #e0e0e0",
+                borderRadius: 1,
+                p: 2,
+                mb: 3,
+              }}
+            >
+              <Typography variant="subtitle1" gutterBottom>
+                Find your team
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Pick the team you're on from the list below. If your team
+                isn't created yet, type the agreed team name in the field —
+                make sure your teammates use the same name so we can match you
+                up.
+              </Typography>
+              <TextField
+                label="Search teams"
+                fullWidth
+                size="small"
+                value={teamSearch}
+                onChange={(e) => setTeamSearch(e.target.value)}
+                placeholder="Filter by team name…"
+                sx={{ mb: 2 }}
+                disabled={teamsLoading}
+              />
+              {teamsLoading && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Loading teams…
+                </Typography>
+              )}
+              {!teamsLoading && eventTeams.length === 0 && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="body2">
+                    No teams have been created for this event yet — you'll be
+                    among the first. Type your agreed team name below.
+                  </Typography>
+                </Alert>
+              )}
+              {!teamsLoading && eventTeams.length > 0 && (
+                <Box
+                  sx={{
+                    maxHeight: 240,
+                    overflowY: "auto",
+                    border: "1px solid #f0f0f0",
+                    borderRadius: 1,
+                    mb: 2,
+                  }}
+                >
+                  {eventTeams
+                    .filter((t) =>
+                      teamSearch
+                        ? (t.name || "")
+                            .toLowerCase()
+                            .includes(teamSearch.toLowerCase())
+                        : true,
+                    )
+                    .map((t) => {
+                      const selected =
+                        (formData.teamCode || "").trim().toLowerCase() ===
+                        (t.name || "").trim().toLowerCase();
+                      const memberCount = Array.isArray(t.users)
+                        ? t.users.length
+                        : 0;
+                      return (
+                        <Box
+                          key={t.id || t.name}
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              teamCode: t.name || "",
+                            }))
+                          }
+                          sx={{
+                            p: 1.5,
+                            cursor: "pointer",
+                            borderBottom: "1px solid #f5f5f5",
+                            bgcolor: selected ? "action.selected" : "inherit",
+                            "&:hover": { bgcolor: "action.hover" },
+                          }}
+                        >
+                          <Typography
+                            variant="body1"
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {t.name || "(unnamed team)"}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            {memberCount} member
+                            {memberCount === 1 ? "" : "s"}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                </Box>
+              )}
+              <TextField
+                label="Team Name"
+                name="teamCode"
+                required
+                fullWidth
+                value={formData.teamCode || ""}
+                onChange={handleChange}
+                helperText="Pick a team above to fill this in, or type your agreed team name. Your teammates must enter the exact same name."
+              />
+            </Box>
+          )}
+
+          {formData.teamStatus === "I would like to work alone" && (
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                Solo hackers usually don't finish.
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                In our experience most hackers who start solo drop out by the
+                end of day one — building, testing, demoing, and presenting
+                alone in 36 hours is genuinely hard. Joining a team makes
+                finishing far more likely, and you'll learn more along the way.
+                We strongly recommend picking "I don't have a team" instead so
+                we can match you with people.
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    name="soloAcknowledged"
+                    checked={!!formData.soloAcknowledged}
+                    onChange={handleChange}
+                    color="primary"
+                    required
+                  />
+                }
+                label={
+                  <Typography variant="body1">
+                    I understand the risks and still want to work alone.
+                  </Typography>
+                }
+                sx={{ alignItems: "flex-start", mt: 1 }}
+              />
+            </Alert>
           )}
 
           {(formData.teamStatus === "I'm looking for team members" ||
@@ -2443,7 +2743,7 @@ const HackerApplicationComponent = () => {
             </Box>
           )}
 
-          <FormControl fullWidth sx={{ mb: 3 }}>
+          <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="workshop-interests-label">
               Workshop Interests (Optional)
             </InputLabel>
@@ -2476,9 +2776,22 @@ const HackerApplicationComponent = () => {
               ))}
             </Select>
             <FormHelperText>
-              Select workshops you're interested in attending
+              We use this to plan workshop topics. Select anything that sounds
+              useful — pick "Other" if you have something specific in mind.
             </FormHelperText>
           </FormControl>
+
+          {(formData.workshopInterests || []).includes("Other") && (
+            <TextField
+              label="Tell us what other workshop you'd like"
+              name="workshopInterestsOther"
+              fullWidth
+              value={formData.workshopInterestsOther || ""}
+              onChange={handleChange}
+              helperText="What topic, format, or speaker would help you?"
+              sx={{ mb: 3 }}
+            />
+          )}
 
           <FormControlLabel
             control={
@@ -2498,7 +2811,15 @@ const HackerApplicationComponent = () => {
   };
 
   // Render review form
-  const renderReviewForm = () => (
+  const renderReviewForm = () => {
+    const depositCfg = eventData?.constraints?.hacker_deposit;
+    const depositEnabled = !!depositCfg?.enabled;
+    const defaultCents = depositCfg?.default_amount_cents || 500;
+    const currentCents = Number.isInteger(formData.depositAmountCents)
+      ? formData.depositAmountCents
+      : defaultCents;
+    const paid = !!formData.stripePaymentIntentId;
+    return (
     <Box sx={{ mb: 4 }}>
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Review & Submit
@@ -2515,6 +2836,84 @@ const HackerApplicationComponent = () => {
         sx={{ mb: 4 }}
       />
 
+      {depositEnabled && (
+        <Paper variant="outlined" sx={{ p: 2.5, mb: 4 }}>
+          <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
+            Hacker deposit
+          </Typography>
+          {paid ? (
+            <Alert severity="success" sx={{ mb: 1 }}>
+              <Typography variant="body1">
+                ✓ Deposit received (
+                ${((currentCents || 0) / 100).toFixed(2)}{" "}
+                — {formData.depositDisposition === "donate"
+                  ? "donated to OHack"
+                  : "refundable on completion"}
+                ). You're all set to submit your application.
+              </Typography>
+            </Alert>
+          ) : (
+            <>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                We collect a small deposit so we can plan accurately for food
+                and supplies. After the hackathon, we'll refund it — or you
+                can leave it as a donation to keep Opportunity Hack free for
+                the next group of hackers.
+              </Typography>
+              <TextField
+                label="Deposit amount (USD)"
+                type="number"
+                value={(currentCents / 100).toString()}
+                onChange={(e) => {
+                  const dollars = parseFloat(e.target.value);
+                  const cents = Number.isFinite(dollars)
+                    ? Math.round(dollars * 100)
+                    : defaultCents;
+                  setFormData((prev) => ({
+                    ...prev,
+                    depositAmountCents: Math.max(
+                      Math.round(defaultCents),
+                      cents,
+                    ),
+                  }));
+                }}
+                inputProps={{
+                  min: (defaultCents / 100).toString(),
+                  step: 1,
+                }}
+                helperText={`Minimum is the default ($${(defaultCents / 100).toFixed(2)}). You can pay more if you'd like to chip in.`}
+                sx={{ maxWidth: 240, mb: 2 }}
+              />
+              <FormControl component="fieldset" sx={{ mb: 1 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  What should we do with your deposit?
+                </Typography>
+                <RadioGroup
+                  name="depositDisposition"
+                  value={formData.depositDisposition || "refund"}
+                  onChange={handleChange}
+                >
+                  <FormControlLabel
+                    value="refund"
+                    control={<Radio />}
+                    label="Refund it to me after I complete the hackathon."
+                  />
+                  <FormControlLabel
+                    value="donate"
+                    control={<Radio />}
+                    label="Donate it to Opportunity Hack."
+                  />
+                </RadioGroup>
+              </FormControl>
+              <Typography variant="body2" color="text.secondary">
+                You'll be redirected to Stripe to pay when you submit. Your
+                application is saved and will pick up where you left off.
+              </Typography>
+            </>
+          )}
+        </Paper>
+      )}
+
       <FormControlLabel
         control={
           <Checkbox
@@ -2526,7 +2925,7 @@ const HackerApplicationComponent = () => {
           />
         }
         label={
-          <Typography variant="body2">
+          <Typography variant="body1">
             I agree to the{" "}
             <Link
               href="/hack/code-of-conduct"
@@ -2541,14 +2940,14 @@ const HackerApplicationComponent = () => {
       />
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          By submitting this form, you're expressing interest in participating
-          in Opportunity Hack. We'll review your application and send you
-          further details about the event.
+        <Typography variant="body1">
+          By submitting this form, you're applying to participate in Opportunity
+          Hack. We'll send you next steps and event details over email.
         </Typography>
       </Alert>
     </Box>
-  );
+    );
+  };
 
   // Function to render the current step form
   const getStepContent = (step) => {
@@ -2728,8 +3127,10 @@ const HackerApplicationComponent = () => {
           </Typography>
 
           <Alert severity="success" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            Thank you for applying to participate in Opportunity Hack. We'll
-            review your application and contact you with next steps soon.
+            <Typography variant="body1">
+              Thanks for applying to participate in Opportunity Hack — we've
+              received your application. Watch your email for next steps.
+            </Typography>
           </Alert>
 
           <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
@@ -3235,6 +3636,9 @@ const HackerApplicationComponent = () => {
                           {activeStep === steps.length - 1 ? (
                             submitting || recaptchaLoading ? (
                               <CircularProgress size={24} />
+                            ) : isDepositRequired() &&
+                              !formData.stripePaymentIntentId ? (
+                              "Continue to deposit"
                             ) : (
                               "Submit Application"
                             )

@@ -14,6 +14,7 @@ import {
   Paper
 } from "@mui/material";
 import Script from 'next/script';
+import NextLink from 'next/link';
 import TableOfContents from '../../components/Hackathon/TableOfContents';
 import FloatingNavigation from '../../components/Hackathon/FloatingNavigation';
 
@@ -577,6 +578,101 @@ export default function HackathonEvent({ eventData }) {
           </section>
         )}
 
+        {/* Event recap teaser — only render when photos exist */}
+        {Array.isArray(event.event_photos) && event.event_photos.length > 0 && (
+          <Box component="section" aria-labelledby="recap-heading" sx={{ mt: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2, md: 3 },
+                mb: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                backgroundColor: 'background.paper',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  mb: 1.5,
+                }}
+              >
+                <Typography
+                  id="recap-heading"
+                  variant="h6"
+                  component="h2"
+                  sx={{ fontWeight: 600, m: 0 }}
+                >
+                  Event recap
+                </Typography>
+                <Button
+                  component={NextLink}
+                  href={`/hack/${event_id}/media`}
+                  size="small"
+                  variant="outlined"
+                >
+                  View gallery →
+                </Button>
+              </Box>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: 'repeat(3, 1fr)', sm: 'repeat(3, 1fr)' },
+                  gap: 1,
+                }}
+              >
+                {event.event_photos.slice(0, 3).map((photo, idx) => (
+                  <NextLink
+                    key={`${photo.url}-${idx}`}
+                    href={`/hack/${event_id}/media`}
+                    style={{ display: 'block', textDecoration: 'none' }}
+                    aria-label={`Open event photo gallery (${event.event_photos.length} photos)`}
+                  >
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: '100%',
+                        aspectRatio: '16 / 10',
+                        minHeight: { xs: 80, sm: 120 },
+                        overflow: 'hidden',
+                        borderRadius: 1,
+                        backgroundColor: 'grey.100',
+                      }}
+                    >
+                      <img
+                        src={photo.url}
+                        alt={photo.caption || `${event.title || 'Event'} photo ${idx + 1}`}
+                        loading="lazy"
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </Box>
+                  </NextLink>
+                ))}
+              </Box>
+              {event.event_photos.length > 3 && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 1 }}
+                >
+                  + {event.event_photos.length - 3} more photo{event.event_photos.length - 3 === 1 ? '' : 's'}
+                </Typography>
+              )}
+            </Paper>
+          </Box>
+        )}
+
         <nav aria-label="Event navigation">
           <TableOfContents eventLinks={event.links} isHackathonExpired={hackathonExpired} />
         </nav>
@@ -812,15 +908,28 @@ export default function HackathonEvent({ eventData }) {
             >
               Event Information
             </Typography>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <DonationProgress
-                donationGoals={event.donation_goals}
-                donationCurrent={event.donation_current}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EventLinks links={event.links} variant="event-links" constraints={event.constraints} />
-            </Grid>
+            {(() => {
+              const hasDonationData =
+                (event.donation_goals && Object.keys(event.donation_goals).length > 0) ||
+                (event.donation_current && Object.keys(event.donation_current).length > 0);
+              return hasDonationData ? (
+                <>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <DonationProgress
+                      donationGoals={event.donation_goals}
+                      donationCurrent={event.donation_current}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <EventLinks links={event.links} variant="event-links" constraints={event.constraints} />
+                  </Grid>
+                </>
+              ) : (
+                <Grid size={{ xs: 12 }}>
+                  <EventLinks links={event.links} variant="event-links" constraints={event.constraints} />
+                </Grid>
+              );
+            })()}
           </Grid>
           {/* Hackathon Stats and Countdown side by side */}
           <Grid
