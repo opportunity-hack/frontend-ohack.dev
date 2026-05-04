@@ -35,9 +35,10 @@ module.exports = {
     ];
   },
 
-  // Redirects: deprecated judge-keyword variants → canonical
+  // Redirects: deprecated paths → canonical
   async redirects() {
     return [
+      // judge-keyword variants → canonical
       {
         source: "/judge-a-hackathon",
         destination: "/hackathon-judge-opportunities",
@@ -46,6 +47,23 @@ module.exports = {
       {
         source: "/judge-hackathon",
         destination: "/hackathon-judge-opportunities",
+        permanent: true,
+      },
+
+      // Hackathon event slug normalisation: YYYY_season → season-YYYY
+      // (Google treats hyphens as word separators; underscores are not split.
+      //  season-first matches how users search: "fall 2026 hackathon".)
+      // Two rules per pattern: bare URL + any sub-paths (:path* is 1+).
+      {
+        source:
+          "/hack/:year(\\d{4})_:season(fall|spring|summer|winter)",
+        destination: "/hack/:season-:year",
+        permanent: true,
+      },
+      {
+        source:
+          "/hack/:year(\\d{4})_:season(fall|spring|summer|winter)/:path*",
+        destination: "/hack/:season-:year/:path*",
         permanent: true,
       },
     ];

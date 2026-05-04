@@ -1181,7 +1181,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 };
 
 const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {} }) => {
-  const [teamData, setTeamData] = useState(teams);
+  const [teamData, setTeamData] = useState(teams || []);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
   // Add state to track which team's button is being processed
@@ -1506,7 +1506,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
       )}
 
       <Grid container spacing={2}>
-        {teamData.map((team) => (
+        {(teamData || []).map((team) => (
           <Grid size={{ xs: 12, sm: 6, md: 4 }} key={team?.id}>
             <TeamCard
               team={team}

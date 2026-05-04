@@ -716,6 +716,7 @@ const HackerApplicationComponent = () => {
             applicationDeadline.diff(now, "hours"),
           ),
           requiredQuestions,
+          constraints: eventData.constraints || {},
         });
 
         // Initialize requiredQuestionAnswers array to match questions
