@@ -56,6 +56,7 @@ import {
   QuizOutlined as QuizIcon,
   ToggleOn as ToggleIcon,
   Groups as TeamSettingsIcon,
+  Dashboard as PlanningIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider, DatePicker, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -68,6 +69,8 @@ import HackathonDuplicator from "../../../components/admin/HackathonDuplicator";
 import NonprofitManagement from "../../../components/admin/NonprofitManagement";
 import MealManagement from "../../../components/admin/MealManagement";
 import EventMediaManagement from "../../../components/admin/EventMediaManagement";
+import PlanningEditorsManager from "../../../components/Planning/PlanningEditorsManager";
+import PlanningSlackSettings from "../../../components/Planning/PlanningSlackSettings";
 import TimezoneSelect from "react-timezone-select";
 import { DEFAULT_EVENT_TIMEZONE } from "../../../lib/timezoneUtils";
 
@@ -1037,6 +1040,131 @@ const AdminHackathonPage = () => {
                     socialPosts={editingHackathon?.social_posts || []}
                     onSocialPostsChange={(s) => handleInputChange("social_posts", s)}
                   />
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <PlanningIcon fontSize="small" />
+                    <Typography>Planning Board</Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Stack spacing={2}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={!!(editingHackathon?.planning?.enabled)}
+                          onChange={(e) => handleInputChange("planning", {
+                            ...(editingHackathon?.planning || {}),
+                            enabled: e.target.checked,
+                          })}
+                        />
+                      }
+                      label="Enable planning board (makes /hack/{event_id}/plan public)"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={!!(editingHackathon?.planning?.budget_widget_on_event_page)}
+                          onChange={(e) => handleInputChange("planning", {
+                            ...(editingHackathon?.planning || {}),
+                            budget_widget_on_event_page: e.target.checked,
+                          })}
+                        />
+                      }
+                      label="Show budget widget on the public event page"
+                    />
+                    {editingHackathon?.event_id && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        href={`/hack/${editingHackathon.event_id}/plan`}
+                        target="_blank"
+                        startIcon={<LaunchIcon />}
+                      >
+                        Open planning board ↗
+                      </Button>
+                    )}
+                    {editingHackathon?.planning?.enabled && !editingHackathon?.planning?.template_seeded && (
+                      <Alert
+                        severity="info"
+                        action={
+                          <Button
+                            size="small"
+                            onClick={async () => {
+                              await fetch(
+                                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/planning/${editingHackathon.event_id}/seed-template`,
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    authorization: `Bearer ${accessToken}`,
+                                    "X-Org-Id": orgId,
+                                  },
+                                }
+                              );
+                              handleInputChange("planning", {
+                                ...(editingHackathon?.planning || {}),
+                                template_seeded: true,
+                              });
+                            }}
+                          >
+                            Apply template
+                          </Button>
+                        }
+                      >
+                        Template not yet applied. Seed the OHack default lists and cards.
+                      </Alert>
+                    )}
+                    <Divider />
+                    <PlanningSlackSettings
+                      planning={editingHackathon?.planning || {}}
+                      onUpdateConfig={(config) => {
+                        const updated = { ...(editingHackathon?.planning || {}), ...config };
+                        handleInputChange("planning", updated);
+                      }}
+                      onSlackNotify={async () => {
+                        await fetch(
+                          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/planning/${editingHackathon?.event_id}/slack/notify`,
+                          {
+                            method: "POST",
+                            headers: {
+                              authorization: `Bearer ${accessToken}`,
+                              "X-Org-Id": orgId,
+                            },
+                          }
+                        );
+                      }}
+                    />
+                    <Divider />
+                    <PlanningEditorsManager
+                      editors={(editingHackathon?.planning?.editors) || []}
+                      onUpdateEditors={async (add, remove) => {
+                        const res = await fetch(
+                          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/planning/${editingHackathon?.event_id}/editors`,
+                          {
+                            method: "PATCH",
+                            headers: {
+                              authorization: `Bearer ${accessToken}`,
+                              "content-type": "application/json",
+                              "X-Org-Id": orgId,
+                            },
+                            body: JSON.stringify({ add, remove }),
+                          }
+                        );
+                        if (res.ok) {
+                          const data = await res.json();
+                          handleInputChange("planning", {
+                            ...(editingHackathon?.planning || {}),
+                            editors: data.editors,
+                          });
+                          return { ok: true };
+                        }
+                        return { ok: false, error: "Failed" };
+                      }}
+                    />
+                  </Stack>
                 </AccordionDetails>
               </Accordion>
 
