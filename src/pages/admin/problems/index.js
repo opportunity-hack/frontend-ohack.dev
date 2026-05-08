@@ -105,8 +105,10 @@ const AdminProblemsPage = () => {
       );
       
       if (response.ok) {
-        const data = await response.json();                
-        setProblems(data.problem_statements || []);
+        const data = await response.json();
+        const ps = data.problem_statements || [];
+        if (ps.length > 0) console.log('[problems] sample keys:', Object.keys(ps[0]), 'rank value:', ps[0].rank);
+        setProblems(ps);
       } else {
         throw new Error("Failed to fetch problems");
       }
@@ -592,7 +594,7 @@ const AdminProblemsPage = () => {
                     </Box>
                     
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      <Chip size="small" label={`Rank: ${problem.rank || 'N/A'}`} variant="outlined" />
+                      <Chip size="small" label={`Rank: ${problem.rank != null ? problem.rank : 'N/A'}`} variant="outlined" />
                       <Chip size="small" label={`Year: ${problem.first_thought_of || 'N/A'}`} variant="outlined" />
                     </Box>
                     
@@ -685,9 +687,6 @@ const AdminProblemsPage = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ minWidth: '80px' }}>
-                    Actions
-                  </TableCell>
                   <TableCell sx={{ minWidth: '200px' }}>                    
                     <TableSortLabel
                       active={orderBy === "title"}
@@ -750,7 +749,10 @@ const AdminProblemsPage = () => {
                   </TableCell>
                   <TableCell sx={{ minWidth: '90px' }}>
                     Community
-                  </TableCell>                  
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '80px' }}>
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -825,8 +827,8 @@ const AdminProblemsPage = () => {
                       {/* Rank */}
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: problem.rank ? 'primary.main' : 'text.secondary' }}>
-                            {problem.rank || 'N/A'}
+                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: problem.rank != null ? 'primary.main' : 'text.secondary' }}>
+                            {problem.rank != null ? problem.rank : 'N/A'}
                           </Typography>
                         </Box>
                       </TableCell>
@@ -1180,11 +1182,12 @@ const AdminProblemsPage = () => {
 
                 <TextField
                 label="Rank"
-                value={editingProblem?.rank || ""}
+                type="number"
+                value={editingProblem?.rank ?? ""}
                 onChange={(e) =>
                   setEditingProblem((prev) => ({
                     ...prev,
-                    rank: e.target.value,
+                    rank: e.target.value === "" ? null : Number(e.target.value),
                   }))
                 }
                 margin="normal"
