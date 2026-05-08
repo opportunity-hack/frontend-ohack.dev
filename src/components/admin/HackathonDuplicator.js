@@ -44,6 +44,15 @@ const HackathonDuplicator = ({
         swag: "0",
         thank_you: "",
       },
+      // Planning board: subcollections are not copied to the duplicate.
+      // Reset to defaults so the new event starts disabled with no orphaned editors / Slack settings.
+      planning: {
+        enabled: false,
+        editors: [],
+        slack: { channel: "", notify_on_card_change: false },
+        template_seeded: false,
+        budget_widget_on_event_page: false,
+      },
     };
 
     setNewHackathon(duplicatedHackathon);
