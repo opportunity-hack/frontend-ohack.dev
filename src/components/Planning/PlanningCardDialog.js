@@ -29,6 +29,7 @@ import ReactMarkdown from "react-markdown";
 import PlanningPublicNotice from "./PlanningPublicNotice";
 import PlanningCardKindRenderer from "./PlanningCardKindRenderer";
 import { CARD_STATUSES, statusMeta } from "../../lib/planningStatus";
+import MentionTextField, { MentionRenderer } from "./MentionTextField";
 
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -457,24 +458,22 @@ export default function PlanningCardDialog({
                 </Tooltip>
               )}
             </Stack>
-            <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-              {c.body}
-            </Typography>
+            <MentionRenderer body={c.body} />
           </Box>
         ))}
         {canComment && (
           <Box sx={{ mt: 1 }}>
             <PlanningPublicNotice collapsible />
             <Stack direction="row" spacing={1} alignItems="flex-end">
-              <TextField
-                fullWidth
-                multiline
-                minRows={2}
-                placeholder="Add a comment…"
-                value={commentBody}
-                onChange={(e) => setCommentBody(e.target.value)}
-                size="small"
-              />
+              <Box sx={{ flex: 1 }}>
+                <MentionTextField
+                  value={commentBody}
+                  onChange={setCommentBody}
+                  placeholder="Add a comment… type @ to mention someone"
+                  rows={2}
+                  size="small"
+                />
+              </Box>
               <Button
                 variant="contained"
                 size="small"
