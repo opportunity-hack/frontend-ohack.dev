@@ -1,9 +1,11 @@
 import { useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
   FormControlLabel,
+  Snackbar,
   Stack,
   Switch,
   TextField,
@@ -17,6 +19,7 @@ export default function PlanningSlackSettings({ planning = {}, onUpdateConfig, o
   const [notify, setNotify] = useState(!!slack.notify_on_card_change);
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
+  const [feedback, setFeedback] = useState(null); // { severity, message }
 
   async function handleSave() {
     setSaving(true);
@@ -28,7 +31,21 @@ export default function PlanningSlackSettings({ planning = {}, onUpdateConfig, o
 
   async function handleSendNow() {
     setSending(true);
-    await onSlackNotify();
+    setFeedback(null);
+    const result = await onSlackNotify();
+    if (result?.ok) {
+      setFeedback({
+        severity: "success",
+        message: result.data?.message || `Digest posted to #${channel}`,
+      });
+    } else {
+      setFeedback({
+        severity: "error",
+        message:
+          result?.error ||
+          `Couldn't post to #${channel}. Make sure the OHack bot is invited to the channel (/invite @ohack-bot).`,
+      });
+    }
     setSending(false);
   }
 
@@ -81,7 +98,21 @@ export default function PlanningSlackSettings({ planning = {}, onUpdateConfig, o
             </Button>
           )}
         </Stack>
+
+        {feedback && (
+          <Alert severity={feedback.severity} onClose={() => setFeedback(null)}>
+            {feedback.message}
+          </Alert>
+        )}
       </Stack>
+
+      <Snackbar
+        open={!!feedback && feedback.severity === "success"}
+        autoHideDuration={3000}
+        onClose={() => setFeedback(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        message={feedback?.message}
+      />
     </Box>
   );
 }
