@@ -200,3 +200,58 @@ Backend `send_volunteer_confirmation_email()` (`services/volunteers_service.py`)
 - Uses `useHackathonEvents("current")` and `useHackathonEvents("previous")` with `isArizonaLocation()` filter (AZ_LOCATION_PATTERNS constant at top of file).
 - Structured data: WebPage + BreadcrumbList + Event (Fall 2026 ASU with GeoCoordinates) + FAQPage.
 - Internal links from: `pages/index.js` (pillar links section), `pages/hack/index.js` (Alert above events list), `pages/sponsor/index.js` (About section).
+
+## Gotchas (load-bearing — every one of these has bitten us)
+
+### PropelAuth permission checks — `userClass`, NOT `orgHelper`
+`useAuthInfo()` returns both `userClass` and `orgHelper`. They look interchangeable but they are NOT:
+
+- `orgHelper.getOrgs()` returns **plain info objects** (`{orgId, orgName, ...}`) with NO methods. Calling `.hasPermission()` on them throws (silently caught by surrounding try/catch, leaving every admin check returning `false`).
+- `userClass.getOrgByName("Opportunity Hack Org")` returns the **full OrgInfo object** with `.hasPermission(perm)`, `.assignedRole()`, etc.
+
+Pattern to copy (matches `pages/admin/index.js`):
+```js
+const { userClass } = useAuthInfo();
+const org = userClass?.getOrgByName("Opportunity Hack Org");
+const isAdmin = org?.hasPermission("volunteer.admin");
+```
+
+`orgHelper` is fine for getting `orgId` to pass as the `X-Org-Id` header (`orgHelper?.getOrgs()?.[0]?.orgId`), but never use it for permission checks.
+
+### Public profile route is `/profile/{db_id}`, NOT propel_id
+- `/profile/[userid].js` expects the **Firestore document ID** (`User.id`), not the PropelAuth `user_id` / `propel_id`.
+- Things stored across the system as `propel_user_id` (assignees, editors, mentions, etc.) cannot be plugged directly into the profile URL — you need the `db_id` field too.
+- When the backend bundles user profiles for a list view (planning board users map, team rosters, etc.), it should include BOTH `user_id` (propel) AND `db_id`. The frontend uses propel for matching and db_id for linking.
+
+### MUI TextField in custom theme + Portal — pin colors explicitly
+MUI Dialogs render via Portal. The `ThemeProvider` context flows through Portals in MUI v5+ but the underlying `<textarea>` / `<input>` element still inherits browser default styling for `background` and `color` in some configurations — most reliably broken when:
+- A page-level `ThemeProvider` overrides `palette.mode` (e.g. local dark mode toggle).
+- The Dialog renders a `<TextField>` with `variant="outlined"` (the default).
+
+Symptom: white textarea with light-gray placeholder, unreadable inside a dark dialog. Fix is to pin the input area to theme tokens via `sx`:
+```js
+<TextField
+  sx={{
+    "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+    "& textarea, & input": { color: "text.primary" },
+  }}
+/>
+```
+Apply this to any TextField inside a Dialog when the page uses a non-global theme override.
+
+### Stale "selected item" snapshots vs. polled list state
+Pattern that bit us: a list view (board, roster, etc.) polls fresh data into `boardState`. A user clicks a row → we set `selectedItem = item` (a snapshot of the click-time value). The detail Dialog renders from `selectedItem`.
+
+Two consequences when subsequent edits land:
+1. The Dialog shows stale fields (the saved description doesn't appear after the polled refresh).
+2. Optimistic-concurrency PATCHes (`If-Match: <updated_at>`) use the click-time `updated_at` and 412 on every save after the first.
+
+Fix: derive the live record from the polled state, not from the captured selection:
+```js
+const liveItem = state.items.find((i) => i.id === selectedItem.id) || selectedItem;
+return <DetailDialog item={liveItem} ... />
+```
+This pattern applies anywhere a Dialog opens with a snapshot from a polled or paginated list.
+
+### Local theme provider for scoped dark mode
+The OHack global theme is light-only. If you need dark mode for a specific surface (e.g. the planning board), don't add a global toggle — wrap that surface in a local `ThemeProvider` and persist the preference per-feature in localStorage. See `src/components/Planning/PlanningThemeProvider.js` for the pattern (auto / light / dark cycle, `prefers-color-scheme` detection).
