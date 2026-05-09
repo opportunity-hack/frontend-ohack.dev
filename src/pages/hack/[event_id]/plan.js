@@ -137,8 +137,8 @@ export default function PlanPage({ eventData, initialBoard }) {
           sx={{
             bgcolor: "primary.dark",
             color: "white",
-            py: 1,
-            px: 2,
+            py: 1.75,
+            px: 2.5,
             flexShrink: 0,
           }}
         >
