@@ -255,3 +255,56 @@ This pattern applies anywhere a Dialog opens with a snapshot from a polled or pa
 
 ### Local theme provider for scoped dark mode
 The OHack global theme is light-only. If you need dark mode for a specific surface (e.g. the planning board), don't add a global toggle — wrap that surface in a local `ThemeProvider` and persist the preference per-feature in localStorage. See `src/components/Planning/PlanningThemeProvider.js` for the pattern (auto / light / dark cycle, `prefers-color-scheme` detection).
+
+### Vertical padding for dense control rows — default is too tight
+MUI `py: 1` (8px each side, 16px total) is what you'll reach for instinctively, and it's wrong for any container holding multiple chips/buttons/avatars side-by-side. The result feels cramped — and when the container sits right under the global NavBar (64px), it visually crowds the navbar.
+
+Heuristic for any "header bar" or row of controls:
+- `py: 1.75` → minimum, acceptable on light rows
+- **`py: 2.25` + `minHeight: 64`** → the safe default for a header-style bar with chips/buttons (matches the NavBar's own height so the surfaces feel balanced)
+- Add `flexShrink: 0` if it lives inside a flex column — otherwise dense content can compress it.
+
+If you reach for `py: 1` on a row of controls, stop and use `py: 2.25 + minHeight: 64` instead. We've fixed this same bug twice in the planning board.
+
+### Don't repeat the same notice/warning inside one surface
+A full-width MUI Alert that screams "this is public" is appropriate ONCE near the top of a form/dialog/page. Repeating the same Alert beside every input that "could expose data" (attachments, comments, descriptions) is alarmist, hurts readability, and trains users to ignore the warning entirely.
+
+Pattern instead:
+- One compact notice at the top (`<PlanningPublicNotice compact />` style — single line, smaller font, no AlertTitle).
+- Subtle inline hints at each input that needs the reminder:
+  - Placeholder text: `"Post a public comment…"`
+  - Helper text under a file picker: `"PNG, JPG, WebP, GIF — max 10 MB · publicly visible"`
+- Reserve full Alerts for state changes the user actually needs to act on (errors, conflicts, success).
+
+### Shareable dialog state — sync open card/item with the URL
+When a Dialog represents a specific item (a card, a hackathon, a profile section), make the URL reflect what's open so users can copy/paste/share the link:
+
+```js
+function handleOpen(item) {
+  setSelectedItem(item);
+  router.replace(
+    { pathname: router.pathname, query: { ...router.query, card: item.id } },
+    undefined,
+    { shallow: true } // critical — no refetch, no scroll, no re-render of getStaticProps
+  );
+}
+
+function handleClose() {
+  setSelectedItem(null);
+  const { card: _, ...rest } = router.query;
+  router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+}
+
+// Auto-open on mount when the URL says so:
+React.useEffect(() => {
+  const targetId = router.query.card;
+  if (!targetId || !items) return;
+  const found = items.find((i) => i.id === targetId);
+  if (found && !openedRef.current) {
+    handleOpen(found);
+    openedRef.current = targetId;
+  }
+}, [router.query.card, items]);
+```
+
+For social-unfurl-quality previews (Slack, Twitter, LinkedIn) the URL also needs an SSR route that emits per-item OG meta tags — query-param-based opens won't unfurl. See `src/pages/hack/[event_id]/plan/c/[card_id].js` for the pattern (separate SSR route with `getServerSideProps`, fetches the item server-side, emits `og:title` / `og:description` / `og:image`, then re-renders the parent page with the dialog pre-opened).
