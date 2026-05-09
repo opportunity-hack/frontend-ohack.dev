@@ -17,16 +17,25 @@ export default function PlanningSlackSettings({ planning = {}, onUpdateConfig, o
   const slack = planning.slack || {};
   const [channel, setChannel] = useState((slack.channel || "").replace(/^#/, ""));
   const [notify, setNotify] = useState(!!slack.notify_on_card_change);
-  const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState(null); // { severity, message }
 
-  async function handleSave() {
-    setSaving(true);
-    await onUpdateConfig({
-      slack: { channel: channel.replace(/^#/, ""), notify_on_card_change: notify },
+  // Propagate changes immediately to parent state — the page-level Save
+  // button persists everything together, so a dedicated "Save Slack
+  // settings" button was misleading (it just updated local state, not the
+  // backend, leaving the user thinking they'd saved when they hadn't).
+  function pushChannel(next) {
+    const cleaned = next.replace(/^#/, "");
+    setChannel(cleaned);
+    onUpdateConfig({
+      slack: { channel: cleaned, notify_on_card_change: notify },
     });
-    setSaving(false);
+  }
+  function pushNotify(next) {
+    setNotify(next);
+    onUpdateConfig({
+      slack: { channel: channel.replace(/^#/, ""), notify_on_card_change: next },
+    });
   }
 
   async function handleSendNow() {
@@ -60,33 +69,23 @@ export default function PlanningSlackSettings({ planning = {}, onUpdateConfig, o
           label="Slack channel (no #)"
           size="small"
           value={channel}
-          onChange={(e) => setChannel(e.target.value.replace(/^#/, ""))}
+          onChange={(e) => pushChannel(e.target.value)}
           placeholder="2026-fall-plan"
-          helperText="Members can join via the 'Join Slack' button on the planning board."
+          helperText="Members can join via the 'Join Slack' button on the planning board. Saved with the rest of the hackathon settings."
         />
 
         <FormControlLabel
           control={
             <Switch
               checked={notify}
-              onChange={(e) => setNotify(e.target.checked)}
+              onChange={(e) => pushNotify(e.target.checked)}
             />
           }
           label="Send card-change digests to this channel"
         />
 
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleSave}
-            disabled={saving}
-            startIcon={saving ? <CircularProgress size={14} /> : null}
-          >
-            Save Slack settings
-          </Button>
-
-          {slack.channel && (
+        {slack.channel && (
+          <Box>
             <Button
               variant="outlined"
               size="small"
@@ -96,8 +95,8 @@ export default function PlanningSlackSettings({ planning = {}, onUpdateConfig, o
             >
               Send digest now
             </Button>
-          )}
-        </Stack>
+          </Box>
+        )}
 
         {feedback && (
           <Alert severity={feedback.severity} onClose={() => setFeedback(null)}>

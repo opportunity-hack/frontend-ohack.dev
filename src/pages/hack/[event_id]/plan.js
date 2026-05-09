@@ -117,19 +117,25 @@ function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDar
     );
   }
 
-  // Auto-open the targeted card once the board snapshot loads.
-  // Runs once per (target, board-load) pair so users can still close the dialog.
-  const autoOpenedRef = React.useRef(null);
+  // Auto-open the URL-targeted card — TRUE one-shot. Fires only when the
+  // board first loads with cards. After that, ignore everything (dialog
+  // close, polling re-renders, target changes) so the URL card never
+  // "pops back up" over a card the user has clicked into.
+  //
+  // Trade-off: the URL is a load-time hint, not a sticky reactive source.
+  // Once consumed, `?card=` / initialCardId have no further effect this
+  // session. To re-open the same card, the user clicks it again or
+  // reloads the page.
+  const autoOpenConsumedRef = React.useRef(false);
   React.useEffect(() => {
-    if (!targetCardId || !board?.cards) return;
-    if (autoOpenedRef.current === targetCardId) return;
+    if (autoOpenConsumedRef.current) return;
+    if (!board?.cards || board.cards.length === 0) return;
+    autoOpenConsumedRef.current = true;
+    if (!targetCardId) return;
     const found = board.cards.find((c) => c.id === targetCardId);
-    if (found) {
-      handleCardClick(found);
-      autoOpenedRef.current = targetCardId;
-    }
+    if (found) handleCardClick(found);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetCardId, board?.cards]);
+  }, [board?.cards]);
 
   async function handleCardClick(card) {
     setSelectedCard(card);
@@ -322,7 +328,6 @@ function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDar
             eventId={eventId}
             onClose={() => {
               setSelectedCard(null);
-              autoOpenedRef.current = null;
               if (router.query.card) {
                 const { card: _, ...rest } = router.query;
                 router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
@@ -332,7 +337,6 @@ function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDar
             onArchive={() => {
               archiveCard(liveCard.id);
               setSelectedCard(null);
-              autoOpenedRef.current = null;
             }}
             onCreateComment={(body) => createComment(liveCard.id, body)}
             onDeleteComment={deleteComment}
