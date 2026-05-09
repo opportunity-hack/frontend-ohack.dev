@@ -133,9 +133,19 @@ const NonprofitList = dynamic(
   }
 );
 
+const PlanningBudgetEventPageWidget = dynamic(
+  () => import("../../components/Planning/PlanningBudgetEventPageWidget"),
+  {
+    ssr: false,
+    // Reserve height per CLAUDE.md CWV rules — Skeleton inside the component
+    // matches this so there's no layout shift when the planning fetch resolves.
+    loading: () => <LoadingPlaceholder height="200px" label="Loading budget overview" />,
+  }
+);
+
 const DonationProgress = dynamic(
   () => import("../../components/Hackathon/DonationProgress"),
-  { 
+  {
     ssr: false,
     loading: () => <LoadingPlaceholder height="200px" label="Loading donation progress" />
   }
@@ -912,8 +922,20 @@ export default function HackathonEvent({ eventData }) {
               const hasDonationData =
                 (event.donation_goals && Object.keys(event.donation_goals).length > 0) ||
                 (event.donation_current && Object.keys(event.donation_current).length > 0);
+              const showBudgetWidget =
+                event.planning?.enabled === true &&
+                event.planning?.budget_widget_on_event_page === true;
               return hasDonationData ? (
                 <>
+                  {showBudgetWidget && (
+                    <Grid size={{ xs: 12 }}>
+                      <PlanningBudgetEventPageWidget
+                        eventId={event_id}
+                        donationGoals={event.donation_goals}
+                        donationCurrent={event.donation_current}
+                      />
+                    </Grid>
+                  )}
                   <Grid size={{ xs: 12, md: 6 }}>
                     <DonationProgress
                       donationGoals={event.donation_goals}
