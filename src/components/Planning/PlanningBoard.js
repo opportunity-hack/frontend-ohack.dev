@@ -103,12 +103,27 @@ export default function PlanningBoard({
     >
       <Box
         sx={{
+          // Edge-to-edge horizontal scroll. Padding lives INSIDE the scroll
+          // container so first/last lists have breathing room without
+          // truncating the scroll surface (Trello pattern).
+          height: "100%",
           display: "flex",
           flexDirection: "row",
-          gap: 2,
+          gap: 1.5,
           overflowX: "auto",
-          pb: 2,
+          overflowY: "hidden",
+          px: 2,
+          pb: 1.5,
+          pt: 1,
           alignItems: "flex-start",
+          // Visible custom scrollbar — prevents "looks like nothing scrolls"
+          "&::-webkit-scrollbar": { height: 12 },
+          "&::-webkit-scrollbar-thumb": {
+            bgcolor: "rgba(255,255,255,0.4)",
+            borderRadius: 6,
+            "&:hover": { bgcolor: "rgba(255,255,255,0.6)" },
+          },
+          "&::-webkit-scrollbar-track": { bgcolor: "rgba(0,0,0,0.1)" },
         }}
       >
         {sortedLists.map((list) => (

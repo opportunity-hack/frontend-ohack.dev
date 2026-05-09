@@ -119,97 +119,117 @@ export default function PlanPage({ eventData, initialBoard }) {
 
       <Box
         sx={{
-          bgcolor: "primary.dark",
-          color: "white",
-          py: 1.5,
-          px: 2,
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+          // Trello-style focused workspace: fills the viewport so the board
+          // scrolls horizontally as one unit without the page footer pulling
+          // attention away. Calculated below the global NavBar (64px).
+          position: "fixed",
+          top: 64,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          flexDirection: "column",
+          bgcolor: "#1e88e5", // board background — Trello-style accent
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-          <Button
-            component={NextLink}
-            href={`/hack/${eventId}`}
-            startIcon={<ArrowBack />}
-            size="small"
-            sx={{ color: "white" }}
-          >
-            {title}
-          </Button>
-
-          <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
-            Planning Board
-          </Typography>
-
-          <Tooltip title={canWrite ? "You can edit this board" : "Read-only view"}>
-            <Chip
-              icon={canWrite ? <EditNote /> : <Visibility />}
-              label={canWrite ? "Editor" : "Viewer"}
-              size="small"
-              sx={{ color: "white", borderColor: "rgba(255,255,255,0.5)", border: "1px solid" }}
-            />
-          </Tooltip>
-
-          {planning.slack?.channel && (
+        {/* Board header bar */}
+        <Box
+          sx={{
+            bgcolor: "primary.dark",
+            color: "white",
+            py: 1,
+            px: 2,
+            flexShrink: 0,
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
             <Button
+              component={NextLink}
+              href={`/hack/${eventId}`}
+              startIcon={<ArrowBack />}
               size="small"
-              variant="outlined"
-              sx={{ color: "white", borderColor: "rgba(255,255,255,0.5)" }}
-              href={`https://opportunityhack.slack.com/channels/${planning.slack.channel}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              endIcon={<OpenInNew />}
+              sx={{ color: "white" }}
             >
-              Join Slack
+              {title}
             </Button>
-          )}
-        </Stack>
-      </Box>
 
-      <Box sx={{ p: 2, overflowX: "hidden" }}>
-        <PlanningPublicNotice />
+            <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
+              Planning Board
+            </Typography>
 
-        {loading && (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress />
-          </Box>
-        )}
+            <Tooltip title={canWrite ? "You can edit this board" : "Read-only view"}>
+              <Chip
+                icon={canWrite ? <EditNote /> : <Visibility />}
+                label={canWrite ? "Editor" : "Viewer"}
+                size="small"
+                sx={{ color: "white", borderColor: "rgba(255,255,255,0.5)", border: "1px solid" }}
+              />
+            </Tooltip>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {!loading && !error && board && (
-          <>
-            {canWrite && !planning.template_seeded && (
-              <Alert
-                severity="info"
-                sx={{ mb: 2 }}
-                action={
-                  <Button size="small" onClick={seedTemplate}>
-                    Apply template
-                  </Button>
-                }
+            {planning.slack?.channel && (
+              <Button
+                size="small"
+                variant="outlined"
+                sx={{ color: "white", borderColor: "rgba(255,255,255,0.5)" }}
+                href={`https://opportunityhack.slack.com/channels/${planning.slack.channel}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                endIcon={<OpenInNew />}
               >
-                Start with the OHack default template to get lists and cards pre-populated.
-              </Alert>
+                Join Slack
+              </Button>
             )}
+          </Stack>
+        </Box>
 
-            <PlanningBoard
-              board={board}
-              canWrite={canWrite}
-              onCardClick={handleCardClick}
-              createCard={createCard}
-              updateCard={updateCard}
-              moveCard={moveCard}
-              createList={createList}
-            />
-          </>
-        )}
+        {/* Public notice — compact strip above the board */}
+        <Box sx={{ flexShrink: 0, px: 2, pt: 1 }}>
+          <PlanningPublicNotice compact />
+        </Box>
+
+        {/* Board area — fills remaining height, scrolls horizontally as one unit */}
+        <Box sx={{ flex: 1, minHeight: 0, position: "relative" }}>
+          {loading && (
+            <Box sx={{ display: "flex", justifyContent: "center", pt: 8 }}>
+              <CircularProgress sx={{ color: "white" }} />
+            </Box>
+          )}
+
+          {error && (
+            <Box sx={{ p: 2 }}>
+              <Alert severity="error">{error}</Alert>
+            </Box>
+          )}
+
+          {!loading && !error && board && (
+            <>
+              {canWrite && !planning.template_seeded && (
+                <Box sx={{ p: 2 }}>
+                  <Alert
+                    severity="info"
+                    action={
+                      <Button size="small" onClick={seedTemplate}>
+                        Apply template
+                      </Button>
+                    }
+                  >
+                    Start with the OHack default template to get lists and cards pre-populated.
+                  </Alert>
+                </Box>
+              )}
+
+              <PlanningBoard
+                board={board}
+                canWrite={canWrite}
+                onCardClick={handleCardClick}
+                createCard={createCard}
+                updateCard={updateCard}
+                moveCard={moveCard}
+                createList={createList}
+              />
+            </>
+          )}
+        </Box>
       </Box>
 
       {selectedCard && (

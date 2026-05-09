@@ -35,16 +35,18 @@ export default function PlanningList({
 
   return (
     <Paper
-      elevation={0}
+      elevation={1}
       sx={{
-        bgcolor: "grey.100",
+        bgcolor: "#ebecf0",
         borderRadius: 2,
         p: 1,
         minWidth: 272,
         maxWidth: 272,
         display: "flex",
         flexDirection: "column",
-        maxHeight: "calc(100vh - 200px)",
+        // Sizes against the parent flex container (which has height: 100%)
+        // so each list has its own internal scroll without being viewport-tied.
+        maxHeight: "100%",
         outline: isOver ? "2px solid" : "none",
         outlineColor: "primary.main",
       }}
