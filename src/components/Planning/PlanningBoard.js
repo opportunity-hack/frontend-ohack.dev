@@ -49,7 +49,7 @@ export default function PlanningBoard({
 
   if (!board) return <CircularProgress />;
 
-  const { lists = [], cards = [], labels = [] } = board;
+  const { lists = [], cards = [], labels = [], users = {} } = board;
 
   const sortedLists = [...lists].sort((a, b) =>
     (a.position || "").localeCompare(b.position || "")
@@ -119,11 +119,19 @@ export default function PlanningBoard({
           // Visible custom scrollbar — prevents "looks like nothing scrolls"
           "&::-webkit-scrollbar": { height: 12 },
           "&::-webkit-scrollbar-thumb": {
-            bgcolor: "rgba(255,255,255,0.4)",
+            bgcolor: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.25)"
+                : "rgba(255,255,255,0.4)",
             borderRadius: 6,
-            "&:hover": { bgcolor: "rgba(255,255,255,0.6)" },
+            "&:hover": {
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.4)"
+                  : "rgba(255,255,255,0.6)",
+            },
           },
-          "&::-webkit-scrollbar-track": { bgcolor: "rgba(0,0,0,0.1)" },
+          "&::-webkit-scrollbar-track": { bgcolor: "rgba(0,0,0,0.15)" },
         }}
       >
         {sortedLists.map((list) => (
@@ -132,6 +140,7 @@ export default function PlanningBoard({
             list={list}
             cards={cardsForList(list.id)}
             labels={labels}
+            users={users}
             canWrite={canWrite}
             onCardClick={onCardClick}
             onCreateCard={createCard}
@@ -143,7 +152,8 @@ export default function PlanningBoard({
             {addingList ? (
               <Box
                 sx={{
-                  bgcolor: "grey.100",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark" ? "#2a2f38" : "#ebecf0",
                   borderRadius: 2,
                   p: 1,
                 }}
@@ -159,7 +169,8 @@ export default function PlanningBoard({
                     if (e.key === "Escape") setAddingList(false);
                   }}
                   sx={{
-                    bgcolor: "white",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     borderRadius: 1,
                     p: 1,
                     mb: 0.5,
@@ -199,7 +210,7 @@ export default function PlanningBoard({
 
       <DragOverlay>
         {activeCard && (
-          <PlanningCard card={activeCard} labels={labels} canWrite={false} />
+          <PlanningCard card={activeCard} labels={labels} users={users} canWrite={false} />
         )}
       </DragOverlay>
     </DndContext>

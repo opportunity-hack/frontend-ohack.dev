@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Avatar,
+  AvatarGroup,
   Box,
   Button,
   Checkbox,
@@ -22,10 +24,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Archive, AttachFile, Close, Delete } from "@mui/icons-material";
+import { Archive, AttachFile, Close, Delete, PersonAdd, PersonRemove } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 import PlanningPublicNotice from "./PlanningPublicNotice";
 import PlanningCardKindRenderer from "./PlanningCardKindRenderer";
+import { CARD_STATUSES, statusMeta } from "../../lib/planningStatus";
 
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -47,6 +50,8 @@ export default function PlanningCardDialog({
   card: initialCard,
   comments: initialComments = [],
   labels = [],
+  users = {},
+  myId = null,
   canWrite,
   canComment,
   eventId,
@@ -204,6 +209,94 @@ export default function PlanningCardDialog({
       <DialogContent dividers>
         <PlanningPublicNotice />
 
+        {/* Status + Assignees row — primary metadata, prominent placement */}
+        <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+          {/* Status selector */}
+          <Box sx={{ minWidth: 200 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+              Status
+            </Typography>
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+              {CARD_STATUSES.map((s) => {
+                const selected = card.status === s.id;
+                return (
+                  <Chip
+                    key={s.id}
+                    label={s.label}
+                    size="small"
+                    clickable={canWrite}
+                    onClick={canWrite ? () => onUpdate({ status: selected ? null : s.id }) : undefined}
+                    sx={{
+                      bgcolor: selected ? s.color : "transparent",
+                      color: selected ? "#fff" : "text.primary",
+                      border: "1px solid",
+                      borderColor: selected ? s.color : "divider",
+                      fontWeight: selected ? 600 : 400,
+                      "&:hover": canWrite
+                        ? { bgcolor: selected ? s.color : "action.hover", opacity: selected ? 0.85 : 1 }
+                        : {},
+                    }}
+                  />
+                );
+              })}
+              {!canWrite && !card.status && (
+                <Typography variant="caption" color="text.secondary">
+                  No status set
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Assignees */}
+          <Box sx={{ minWidth: 200, flex: 1 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+              Assignees
+            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+              <AvatarGroup
+                max={6}
+                sx={{ "& .MuiAvatar-root": { width: 32, height: 32, fontSize: "0.85rem" } }}
+              >
+                {(card.assignees || []).map((id) => {
+                  const profile = users[id] || {};
+                  return (
+                    <Tooltip key={id} title={profile.name || "Unknown"}>
+                      <Avatar src={profile.profile_image} alt={profile.name || ""}>
+                        {(profile.name || "?").charAt(0).toUpperCase()}
+                      </Avatar>
+                    </Tooltip>
+                  );
+                })}
+              </AvatarGroup>
+              {(card.assignees || []).length === 0 && (
+                <Typography variant="caption" color="text.secondary">
+                  Nobody owns this card yet
+                </Typography>
+              )}
+              {/* Self-assign button — gated to editors since the backend PATCH requires write perm */}
+              {myId && canWrite && (() => {
+                const isMe = (card.assignees || []).includes(myId);
+                return (
+                  <Button
+                    size="small"
+                    variant={isMe ? "outlined" : "contained"}
+                    color={isMe ? "inherit" : "primary"}
+                    startIcon={isMe ? <PersonRemove fontSize="small" /> : <PersonAdd fontSize="small" />}
+                    onClick={() => {
+                      const next = isMe
+                        ? (card.assignees || []).filter((id) => id !== myId)
+                        : [...(card.assignees || []), myId];
+                      onUpdate({ assignees: next });
+                    }}
+                  >
+                    {isMe ? "Unassign me" : "Assign me"}
+                  </Button>
+                );
+              })()}
+            </Stack>
+          </Box>
+        </Stack>
+
         {/* Live data strip for non-freetext kinds */}
         {card.kind && card.kind !== "freetext" && (
           <Box sx={{ mb: 2 }}>
@@ -235,8 +328,8 @@ export default function PlanningCardDialog({
               borderRadius: 1,
               minHeight: 60,
               cursor: canWrite ? "pointer" : "default",
-              bgcolor: "grey.50",
-              "&:hover": canWrite ? { bgcolor: "grey.100" } : {},
+              bgcolor: "action.hover",
+              "&:hover": canWrite ? { bgcolor: "action.selected" } : {},
             }}
           >
             {card.description ? (

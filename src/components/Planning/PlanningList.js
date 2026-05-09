@@ -16,6 +16,7 @@ export default function PlanningList({
   list,
   cards = [],
   labels = [],
+  users = {},
   canWrite,
   onCardClick,
   onCreateCard,
@@ -37,15 +38,15 @@ export default function PlanningList({
     <Paper
       elevation={1}
       sx={{
-        bgcolor: "#ebecf0",
+        bgcolor: (theme) =>
+          theme.palette.mode === "dark" ? "#2a2f38" : "#ebecf0",
+        color: "text.primary",
         borderRadius: 2,
         p: 1,
         minWidth: 272,
         maxWidth: 272,
         display: "flex",
         flexDirection: "column",
-        // Sizes against the parent flex container (which has height: 100%)
-        // so each list has its own internal scroll without being viewport-tied.
         maxHeight: "100%",
         outline: isOver ? "2px solid" : "none",
         outlineColor: "primary.main",
@@ -68,6 +69,7 @@ export default function PlanningList({
               key={card.id}
               card={card}
               labels={labels}
+              users={users}
               canWrite={canWrite}
               onClick={onCardClick}
             />
@@ -94,7 +96,8 @@ export default function PlanningList({
                   if (e.key === "Escape") setAddingCard(false);
                 }}
                 sx={{
-                  bgcolor: "white",
+                  bgcolor: "background.paper",
+                  color: "text.primary",
                   borderRadius: 1,
                   p: 1,
                   mb: 0.5,

@@ -1,9 +1,10 @@
 import {
+  AvatarGroup,
+  Avatar,
   Box,
   Card,
   CardContent,
   Chip,
-  IconButton,
   Stack,
   Tooltip,
   Typography,
@@ -16,6 +17,7 @@ import {
 } from "@mui/icons-material";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { statusMeta } from "../../lib/planningStatus";
 
 function DueDateChip({ dueDate }) {
   if (!dueDate) return null;
@@ -47,7 +49,37 @@ function BudgetChip({ budget }) {
   );
 }
 
-export default function PlanningCard({ card, labels = [], canWrite, onClick }) {
+function AssigneeAvatars({ assignees = [], users = {} }) {
+  if (assignees.length === 0) return null;
+  return (
+    <AvatarGroup
+      max={4}
+      sx={{
+        "& .MuiAvatar-root": {
+          width: 24,
+          height: 24,
+          fontSize: "0.7rem",
+          border: "2px solid",
+          borderColor: "background.paper",
+        },
+      }}
+    >
+      {assignees.map((id) => {
+        const profile = users[id] || {};
+        const initial = (profile.name || "?").charAt(0).toUpperCase();
+        return (
+          <Tooltip key={id} title={profile.name || "Unknown"}>
+            <Avatar src={profile.profile_image} alt={profile.name || ""}>
+              {initial}
+            </Avatar>
+          </Tooltip>
+        );
+      })}
+    </AvatarGroup>
+  );
+}
+
+export default function PlanningCard({ card, labels = [], users = {}, canWrite, onClick }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: card.id, disabled: !canWrite });
 
@@ -70,6 +102,9 @@ export default function PlanningCard({ card, labels = [], canWrite, onClick }) {
     0
   );
 
+  const status = statusMeta(card.status);
+  const isCompleted = card.status === "completed";
+
   return (
     <Box ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card
@@ -78,9 +113,28 @@ export default function PlanningCard({ card, labels = [], canWrite, onClick }) {
         sx={{
           mb: 1,
           cursor: canWrite ? "grab" : "pointer",
+          position: "relative",
+          overflow: "hidden",
+          // Theme-aware: light => paper white, dark => paper from theme
+          bgcolor: "background.paper",
+          borderColor: "divider",
+          opacity: isCompleted ? 0.75 : 1,
           "&:hover": { boxShadow: 2 },
         }}
       >
+        {/* Status top bar — colored stripe à la Trello label bars */}
+        {status && (
+          <Tooltip title={`Status: ${status.label}`} placement="top">
+            <Box
+              sx={{
+                height: 4,
+                width: "100%",
+                bgcolor: status.color,
+              }}
+            />
+          </Tooltip>
+        )}
+
         {cardLabels.length > 0 && (
           <Box sx={{ display: "flex", gap: 0.5, p: 0.5, flexWrap: "wrap" }}>
             {cardLabels.map((label) => (
@@ -96,12 +150,20 @@ export default function PlanningCard({ card, labels = [], canWrite, onClick }) {
             ))}
           </Box>
         )}
+
         <CardContent sx={{ py: 1, "&:last-child": { pb: 1 } }}>
-          <Typography variant="body2" sx={{ mb: 1, wordBreak: "break-word" }}>
+          <Typography
+            variant="body2"
+            sx={{
+              mb: 1,
+              wordBreak: "break-word",
+              textDecoration: isCompleted ? "line-through" : "none",
+            }}
+          >
             {card.title}
           </Typography>
 
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap alignItems="center">
             <DueDateChip dueDate={card.due_date} />
             <BudgetChip budget={card.budget} />
 
@@ -132,6 +194,10 @@ export default function PlanningCard({ card, labels = [], canWrite, onClick }) {
                 sx={{ fontSize: "0.7rem" }}
               />
             )}
+
+            {/* Push avatars to the far right */}
+            <Box sx={{ flex: 1 }} />
+            <AssigneeAvatars assignees={card.assignees} users={users} />
           </Stack>
         </CardContent>
       </Card>

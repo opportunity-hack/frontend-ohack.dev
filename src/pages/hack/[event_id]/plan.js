@@ -18,6 +18,9 @@ import {
 } from "@mui/material";
 import {
   ArrowBack,
+  Brightness4,
+  Brightness7,
+  BrightnessAuto,
   EditNote,
   LockOutlined,
   OpenInNew,
@@ -25,6 +28,9 @@ import {
 } from "@mui/icons-material";
 import { usePlanningBoard } from "../../../hooks/use-planning-board";
 import PlanningPublicNotice from "../../../components/Planning/PlanningPublicNotice";
+import PlanningThemeProvider, {
+  usePlanningColorMode,
+} from "../../../components/Planning/PlanningThemeProvider";
 
 const PlanningBoard = dynamic(
   () => import("../../../components/Planning/PlanningBoard"),
@@ -36,7 +42,20 @@ const PlanningCardDialog = dynamic(
   { ssr: false }
 );
 
-export default function PlanPage({ eventData, initialBoard }) {
+export default function PlanPage(props) {
+  // The actual page is wrapped in PlanningThemeProvider so all MUI components
+  // inside (including the dialog rendered via portal) get the planning-scoped
+  // light/dark theme. Color mode lives at the page level so the toggle button
+  // in the header can control it.
+  const { mode, setMode, isDark } = usePlanningColorMode();
+  return (
+    <PlanningThemeProvider isDark={isDark}>
+      <PlanPageInner {...props} colorMode={mode} setColorMode={setMode} isDark={isDark} />
+    </PlanningThemeProvider>
+  );
+}
+
+function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDark }) {
   const router = useRouter();
   const eventId = router.query.event_id;
 
@@ -46,6 +65,8 @@ export default function PlanPage({ eventData, initialBoard }) {
     error,
     canWrite,
     canComment,
+    users,
+    myId,
     createList,
     createCard,
     updateCard,
@@ -129,7 +150,8 @@ export default function PlanPage({ eventData, initialBoard }) {
           bottom: 0,
           display: "flex",
           flexDirection: "column",
-          bgcolor: "#1e88e5", // board background — Trello-style accent
+          // Theme-aware board background — Trello blue in light, deep slate in dark
+          bgcolor: isDark ? "#0f1115" : "#1e88e5",
         }}
       >
         {/* Board header bar */}
@@ -162,6 +184,28 @@ export default function PlanPage({ eventData, initialBoard }) {
                 icon={canWrite ? <EditNote /> : <Visibility />}
                 label={canWrite ? "Editor" : "Viewer"}
                 size="small"
+                sx={{ color: "white", borderColor: "rgba(255,255,255,0.5)", border: "1px solid" }}
+              />
+            </Tooltip>
+
+            {/* Color mode cycler: auto → light → dark → auto */}
+            <Tooltip title={`Color mode: ${colorMode} (click to cycle)`}>
+              <Chip
+                icon={
+                  colorMode === "auto" ? (
+                    <BrightnessAuto sx={{ color: "white !important" }} />
+                  ) : colorMode === "dark" ? (
+                    <Brightness4 sx={{ color: "white !important" }} />
+                  ) : (
+                    <Brightness7 sx={{ color: "white !important" }} />
+                  )
+                }
+                label={colorMode === "auto" ? "Auto" : colorMode === "dark" ? "Dark" : "Light"}
+                size="small"
+                clickable
+                onClick={() =>
+                  setColorMode(colorMode === "auto" ? "light" : colorMode === "light" ? "dark" : "auto")
+                }
                 sx={{ color: "white", borderColor: "rgba(255,255,255,0.5)", border: "1px solid" }}
               />
             </Tooltip>
@@ -243,6 +287,8 @@ export default function PlanPage({ eventData, initialBoard }) {
             card={liveCard}
             comments={selectedCardComments}
             labels={board?.labels || []}
+            users={users}
+            myId={myId}
             canWrite={canWrite}
             canComment={canComment}
             eventId={eventId}

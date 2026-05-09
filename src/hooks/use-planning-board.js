@@ -216,6 +216,8 @@ export function usePlanningBoard(eventId) {
   // ---------- derived permissions ----------
 
   const planning = board?.planning || {};
+  const users = board?.users || {};
+  const myId = user?.userId || null;
   const canWrite = (() => {
     if (!user) return false;
     try {
@@ -237,6 +239,8 @@ export function usePlanningBoard(eventId) {
     error,
     canWrite,
     canComment,
+    users,
+    myId,
     refetch: fetchBoard,
     // mutations
     createList,
