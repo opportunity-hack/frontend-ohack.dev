@@ -14,7 +14,7 @@ function buildHeaders(accessToken, orgId) {
 }
 
 export function usePlanningBoard(eventId) {
-  const { accessToken, orgHelper, user } = useAuthInfo();
+  const { accessToken, orgHelper, userClass, user } = useAuthInfo();
   const orgId = orgHelper?.getOrgs()?.[0]?.orgId;
 
   const [board, setBoard] = useState(null); // { lists, cards, labels, planning }
@@ -219,10 +219,10 @@ export function usePlanningBoard(eventId) {
   const canWrite = (() => {
     if (!user) return false;
     try {
-      const isAdmin = orgHelper
-        ?.getOrgs()
-        ?.some((org) => org.hasPermission("volunteer.admin"));
-      if (isAdmin) return true;
+      // Match OHack pattern (see pages/admin/index.js): use userClass —
+      // orgHelper returns plain info objects without hasPermission().
+      const org = userClass?.getOrgByName("Opportunity Hack Org");
+      if (org?.hasPermission("volunteer.admin")) return true;
       const editors = planning.editors || [];
       return editors.includes(user.userId);
     } catch {
