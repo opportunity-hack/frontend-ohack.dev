@@ -73,31 +73,28 @@ export default function PlanningEditorsManager({ editors = [], onUpdateEditors }
     };
   }, [debouncedQ, accessToken, orgId]);
 
-  // Resolve display names for current editors (one batched search per missing id)
+  // Resolve display profiles for current editors via the exact-id lookup
+  // endpoint (single round-trip; falls back to PropelAuth for users with no
+  // Firestore profile record so we never show "Unknown user").
   useEffect(() => {
     const missing = editors.filter((id) => !editorProfiles[id]);
     if (missing.length === 0) return;
     let cancelled = false;
-    Promise.all(
-      missing.map((id) =>
-        fetch(`${API}/api/planning/_users/search?q=${encodeURIComponent(id.slice(0, 8))}`, {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            ...(orgId && { "X-Org-Id": orgId }),
-          },
-        })
-          .then((r) => (r.ok ? r.json() : { users: [] }))
-          .then((data) => (data.users || []).find((u) => u.user_id === id))
-          .catch(() => null)
-      )
-    ).then((results) => {
-      if (cancelled) return;
-      const next = { ...editorProfiles };
-      missing.forEach((id, i) => {
-        if (results[i]) next[id] = results[i];
-      });
-      setEditorProfiles(next);
-    });
+    fetch(
+      `${API}/api/planning/_users/by-ids?ids=${encodeURIComponent(missing.join(","))}`,
+      {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          ...(orgId && { "X-Org-Id": orgId }),
+        },
+      }
+    )
+      .then((r) => (r.ok ? r.json() : { users: {} }))
+      .then((data) => {
+        if (cancelled) return;
+        setEditorProfiles((prev) => ({ ...prev, ...(data.users || {}) }));
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };

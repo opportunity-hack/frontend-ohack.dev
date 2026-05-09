@@ -180,14 +180,16 @@ function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDar
           bgcolor: isDark ? "#0f1115" : "#1e88e5",
         }}
       >
-        {/* Board header bar */}
+        {/* Board header bar — generous vertical padding so the chips have
+            breathing room and don't visually crowd the NavBar above. */}
         <Box
           sx={{
             bgcolor: "primary.dark",
             color: "white",
-            py: 1.75,
+            py: 2.25,
             px: 2.5,
             flexShrink: 0,
+            minHeight: 64,
           }}
         >
           <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
