@@ -174,6 +174,13 @@ export default function MentionTextField({
         size={size}
         disabled={disabled}
         helperText="Type @ to mention someone — they'll get a Slack DM and email."
+        sx={{
+          "& .MuiInputBase-root": {
+            bgcolor: "background.paper",
+            color: "text.primary",
+          },
+          "& textarea, & input": { color: "text.primary" },
+        }}
       />
       <Popper
         open={mentionOpen && (suggestions.length > 0 || searchLoading)}

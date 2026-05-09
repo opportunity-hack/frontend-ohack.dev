@@ -28,6 +28,7 @@ import { Archive, AttachFile, Close, Delete, PersonAdd, PersonRemove } from "@mu
 import ReactMarkdown from "react-markdown";
 import PlanningPublicNotice from "./PlanningPublicNotice";
 import PlanningCardKindRenderer from "./PlanningCardKindRenderer";
+import NextLink from "next/link";
 import { CARD_STATUSES, statusMeta } from "../../lib/planningStatus";
 import MentionTextField, { MentionRenderer } from "./MentionTextField";
 
@@ -260,11 +261,36 @@ export default function PlanningCardDialog({
               >
                 {(card.assignees || []).map((id) => {
                   const profile = users[id] || {};
+                  const displayName = profile.name || profile.nickname || "Loading…";
+                  const profileHref = profile.db_id ? `/profile/${profile.db_id}` : null;
+                  const tooltip = (
+                    <Box sx={{ p: 0.5 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{displayName}</Typography>
+                      {profileHref && (
+                        <Typography variant="caption" color="inherit" sx={{ opacity: 0.8 }}>
+                          Click to view profile
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                  const avatar = (
+                    <Avatar src={profile.profile_image} alt={displayName}>
+                      {displayName.charAt(0).toUpperCase()}
+                    </Avatar>
+                  );
                   return (
-                    <Tooltip key={id} title={profile.name || "Unknown"}>
-                      <Avatar src={profile.profile_image} alt={profile.name || ""}>
-                        {(profile.name || "?").charAt(0).toUpperCase()}
-                      </Avatar>
+                    <Tooltip key={id} title={tooltip} arrow>
+                      {profileHref ? (
+                        <Box
+                          component={NextLink}
+                          href={profileHref}
+                          sx={{ display: "inline-flex", textDecoration: "none" }}
+                        >
+                          {avatar}
+                        </Box>
+                      ) : (
+                        avatar
+                      )}
                     </Tooltip>
                   );
                 })}
@@ -318,7 +344,19 @@ export default function PlanningCardDialog({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             onBlur={saveDescription}
-            sx={{ mb: 2 }}
+            sx={{
+              mb: 2,
+              // Force theme-aware input colors — without these, the underlying
+              // textarea inherits browser defaults (white bg, dark text) which
+              // is unreadable inside the dialog when planning dark mode is on.
+              "& .MuiInputBase-root": {
+                bgcolor: "background.paper",
+                color: "text.primary",
+              },
+              "& textarea": {
+                color: "text.primary",
+              },
+            }}
           />
         ) : (
           <Box

@@ -1,3 +1,4 @@
+import NextLink from "next/link";
 import {
   AvatarGroup,
   Avatar,
@@ -66,12 +67,40 @@ function AssigneeAvatars({ assignees = [], users = {} }) {
     >
       {assignees.map((id) => {
         const profile = users[id] || {};
-        const initial = (profile.name || "?").charAt(0).toUpperCase();
+        const displayName = profile.name || profile.nickname || "Loading…";
+        const initial = displayName.charAt(0).toUpperCase();
+        // Prefer Firestore db_id (canonical /profile/{id} URL); skip the link
+        // entirely if the user has no profile record yet (db_id missing).
+        const profileHref = profile.db_id ? `/profile/${profile.db_id}` : null;
+        const tooltipTitle = (
+          <Box sx={{ p: 0.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>{displayName}</Typography>
+            {profileHref && (
+              <Typography variant="caption" color="inherit" sx={{ opacity: 0.8 }}>
+                Click to view profile
+              </Typography>
+            )}
+          </Box>
+        );
+        const avatarEl = (
+          <Avatar src={profile.profile_image} alt={displayName}>
+            {initial}
+          </Avatar>
+        );
         return (
-          <Tooltip key={id} title={profile.name || "Unknown"}>
-            <Avatar src={profile.profile_image} alt={profile.name || ""}>
-              {initial}
-            </Avatar>
+          <Tooltip key={id} title={tooltipTitle} arrow>
+            {profileHref ? (
+              <Box
+                component={NextLink}
+                href={profileHref}
+                onClick={(e) => e.stopPropagation()} // don't open the card dialog
+                sx={{ display: "inline-flex", textDecoration: "none" }}
+              >
+                {avatarEl}
+              </Box>
+            ) : (
+              avatarEl
+            )}
           </Tooltip>
         );
       })}
