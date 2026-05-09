@@ -139,15 +139,31 @@ function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDar
 
   async function handleCardClick(card) {
     setSelectedCard(card);
-    // Reflect the open card in the URL so the user can copy/share it directly.
-    // shallow:true keeps the page state intact (no re-fetch).
-    if (router.query.card !== card.id && !initialCardId) {
+
+    // URL ALWAYS reflects what's open — three branches:
+    //
+    // 1. On /plan/c/{originalId} (SSR permalink) and clicking a DIFFERENT
+    //    card → full nav to /plan?card={newId}. We can't shallow-route
+    //    across pathnames in Next.js, but /plan is statically generated
+    //    with ISR so the nav is just a cached HTML fetch — fast. The SSR
+    //    route is reserved for sharing (Copy Link still produces it);
+    //    interactive browsing happens on the simpler form.
+    //
+    // 2. On /plan/c/{originalId} and clicking the SAME card → URL already
+    //    correct, leave it alone (avoids ugly /plan/c/X?card=X).
+    //
+    // 3. On /plan → shallow-update ?card={id} on the same pathname.
+    const onPermalink = !!initialCardId;
+    if (onPermalink && initialCardId !== card.id) {
+      router.replace(`/hack/${eventId}/plan?card=${card.id}`);
+    } else if (!onPermalink && router.query.card !== card.id) {
       router.replace(
         { pathname: router.pathname, query: { ...router.query, card: card.id } },
         undefined,
         { shallow: true }
       );
     }
+
     // Fetch comments for the card
     try {
       const res = await fetch(
@@ -328,7 +344,12 @@ function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDar
             eventId={eventId}
             onClose={() => {
               setSelectedCard(null);
-              if (router.query.card) {
+              // Always strip the card from the URL on close. On the SSR
+              // permalink page that means a full nav to /plan; on /plan it's
+              // a shallow query strip.
+              if (initialCardId) {
+                router.replace(`/hack/${eventId}/plan`);
+              } else if (router.query.card) {
                 const { card: _, ...rest } = router.query;
                 router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
               }
