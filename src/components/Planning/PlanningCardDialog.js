@@ -24,7 +24,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Archive, AttachFile, Close, Delete, PersonAdd, PersonRemove } from "@mui/icons-material";
+import { Archive, AttachFile, Close, Delete, Link as LinkIcon, PersonAdd, PersonRemove } from "@mui/icons-material";
+import { Snackbar } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import PlanningPublicNotice from "./PlanningPublicNotice";
 import PlanningCardKindRenderer from "./PlanningCardKindRenderer";
@@ -74,6 +75,27 @@ export default function PlanningCardDialog({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const cardPermalink = typeof window !== "undefined" && eventId && card?.id
+    ? `${window.location.origin}/hack/${eventId}/plan/c/${card.id}`
+    : "";
+
+  async function copyLink() {
+    if (!cardPermalink) return;
+    try {
+      await navigator.clipboard.writeText(cardPermalink);
+      setLinkCopied(true);
+    } catch {
+      // Older browsers / non-https — fall back to selecting the text
+      const ta = document.createElement("textarea");
+      ta.value = cardPermalink;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); setLinkCopied(true); } catch {}
+      document.body.removeChild(ta);
+    }
+  }
 
   // Sync updates back
   useEffect(() => { setCard(initialCard); }, [initialCard]);
@@ -203,13 +225,25 @@ export default function PlanningCardDialog({
             sx={{ bgcolor: l.color, ml: 0.5 }}
           />
         ))}
+        {/* Copy link → permalink that unfurls with the card title/desc on Slack/Twitter/LinkedIn */}
+        <Tooltip title="Copy link to this card">
+          <IconButton
+            onClick={copyLink}
+            size="small"
+            sx={{ position: "absolute", top: 8, right: 44 }}
+          >
+            <LinkIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <IconButton onClick={onClose} size="small" sx={{ position: "absolute", top: 8, right: 8 }}>
           <Close />
         </IconButton>
       </DialogTitle>
 
       <DialogContent dividers>
-        <PlanningPublicNotice />
+        {/* Single, compact public-data notice. Inline hints replace the older
+            full-width Alerts that used to repeat next to attachments + comments. */}
+        <PlanningPublicNotice compact />
 
         {/* Status + Assignees row — primary metadata, prominent placement */}
         <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
@@ -450,26 +484,27 @@ export default function PlanningCardDialog({
         ))}
         {canWrite && (
           <Box sx={{ mt: 1 }}>
-            <PlanningPublicNotice />
             {uploadError && <Alert severity="error" sx={{ mb: 1 }}>{uploadError}</Alert>}
-            <Button
-              variant="outlined"
-              size="small"
-              component="label"
-              startIcon={<AttachFile />}
-              disabled={uploading}
-            >
-              {uploading ? "Uploading…" : "Attach image"}
-              <input
-                type="file"
-                hidden
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-              />
-            </Button>
-            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-              PNG, JPG, WebP, GIF only (v1). Max 10 MB.
-            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Button
+                variant="outlined"
+                size="small"
+                component="label"
+                startIcon={<AttachFile />}
+                disabled={uploading}
+              >
+                {uploading ? "Uploading…" : "Attach image"}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                />
+              </Button>
+              <Typography variant="caption" color="text.secondary">
+                PNG, JPG, WebP, GIF — max 10 MB · publicly visible
+              </Typography>
+            </Stack>
           </Box>
         )}
 
@@ -501,13 +536,12 @@ export default function PlanningCardDialog({
         ))}
         {canComment && (
           <Box sx={{ mt: 1 }}>
-            <PlanningPublicNotice collapsible />
             <Stack direction="row" spacing={1} alignItems="flex-end">
               <Box sx={{ flex: 1 }}>
                 <MentionTextField
                   value={commentBody}
                   onChange={setCommentBody}
-                  placeholder="Add a comment… type @ to mention someone"
+                  placeholder="Post a public comment… type @ to mention someone"
                   rows={2}
                   size="small"
                 />
@@ -524,21 +558,29 @@ export default function PlanningCardDialog({
           </Box>
         )}
 
-        {/* Archive */}
+        {/* Archive — quiet, destructive action lives at the bottom */}
         {canWrite && (
-          <>
-            <Divider sx={{ my: 2 }} />
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
             <Button
               startIcon={<Archive />}
-              color="error"
+              color="inherit"
               size="small"
               onClick={onArchive}
+              sx={{ color: "text.secondary", textTransform: "none" }}
             >
               Archive card
             </Button>
-          </>
+          </Box>
         )}
       </DialogContent>
+
+      <Snackbar
+        open={linkCopied}
+        autoHideDuration={2000}
+        onClose={() => setLinkCopied(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        message="Link copied to clipboard"
+      />
     </Dialog>
   );
 }

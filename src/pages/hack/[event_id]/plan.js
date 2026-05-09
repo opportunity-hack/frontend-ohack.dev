@@ -2,7 +2,7 @@ import dynamic from "next/dynamic";
 import Head from "next/head";
 import NextLink from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Box,
@@ -55,9 +55,12 @@ export default function PlanPage(props) {
   );
 }
 
-function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDark }) {
+function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDark, initialCardId }) {
   const router = useRouter();
   const eventId = router.query.event_id;
+  // Direct-link target. Either from the SSR permalink route (initialCardId
+  // prop) or from the ?card=… query param so any URL form opens the dialog.
+  const targetCardId = initialCardId || router.query.card;
 
   const {
     board,
@@ -114,8 +117,31 @@ function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDar
     );
   }
 
+  // Auto-open the targeted card once the board snapshot loads.
+  // Runs once per (target, board-load) pair so users can still close the dialog.
+  const autoOpenedRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!targetCardId || !board?.cards) return;
+    if (autoOpenedRef.current === targetCardId) return;
+    const found = board.cards.find((c) => c.id === targetCardId);
+    if (found) {
+      handleCardClick(found);
+      autoOpenedRef.current = targetCardId;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetCardId, board?.cards]);
+
   async function handleCardClick(card) {
     setSelectedCard(card);
+    // Reflect the open card in the URL so the user can copy/share it directly.
+    // shallow:true keeps the page state intact (no re-fetch).
+    if (router.query.card !== card.id && !initialCardId) {
+      router.replace(
+        { pathname: router.pathname, query: { ...router.query, card: card.id } },
+        undefined,
+        { shallow: true }
+      );
+    }
     // Fetch comments for the card
     try {
       const res = await fetch(
@@ -292,11 +318,19 @@ function PlanPageInner({ eventData, initialBoard, colorMode, setColorMode, isDar
             canWrite={canWrite}
             canComment={canComment}
             eventId={eventId}
-            onClose={() => setSelectedCard(null)}
+            onClose={() => {
+              setSelectedCard(null);
+              autoOpenedRef.current = null;
+              if (router.query.card) {
+                const { card: _, ...rest } = router.query;
+                router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+              }
+            }}
             onUpdate={(updates) => updateCard(liveCard.id, updates, liveCard.updated_at)}
             onArchive={() => {
               archiveCard(liveCard.id);
               setSelectedCard(null);
+              autoOpenedRef.current = null;
             }}
             onCreateComment={(body) => createComment(liveCard.id, body)}
             onDeleteComment={deleteComment}
