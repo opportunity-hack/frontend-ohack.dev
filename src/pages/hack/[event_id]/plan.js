@@ -232,25 +232,32 @@ export default function PlanPage({ eventData, initialBoard }) {
         </Box>
       </Box>
 
-      {selectedCard && (
-        <PlanningCardDialog
-          card={selectedCard}
-          comments={selectedCardComments}
-          labels={board?.labels || []}
-          canWrite={canWrite}
-          canComment={canComment}
-          eventId={eventId}
-          onClose={() => setSelectedCard(null)}
-          onUpdate={(updates) => updateCard(selectedCard.id, updates, selectedCard.updated_at)}
-          onArchive={() => {
-            archiveCard(selectedCard.id);
-            setSelectedCard(null);
-          }}
-          onCreateComment={(body) => createComment(selectedCard.id, body)}
-          onDeleteComment={deleteComment}
-          onCreateLabel={createLabel}
-        />
-      )}
+      {selectedCard && (() => {
+        // Always pull the freshest card from the board so the dialog sees
+        // the latest description/title/checklists after a save, AND so the
+        // If-Match header for subsequent PATCHes uses the current updated_at.
+        const liveCard =
+          board?.cards?.find((c) => c.id === selectedCard.id) || selectedCard;
+        return (
+          <PlanningCardDialog
+            card={liveCard}
+            comments={selectedCardComments}
+            labels={board?.labels || []}
+            canWrite={canWrite}
+            canComment={canComment}
+            eventId={eventId}
+            onClose={() => setSelectedCard(null)}
+            onUpdate={(updates) => updateCard(liveCard.id, updates, liveCard.updated_at)}
+            onArchive={() => {
+              archiveCard(liveCard.id);
+              setSelectedCard(null);
+            }}
+            onCreateComment={(body) => createComment(liveCard.id, body)}
+            onDeleteComment={deleteComment}
+            onCreateLabel={createLabel}
+          />
+        );
+      })()}
     </>
   );
 }
