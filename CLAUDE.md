@@ -171,6 +171,9 @@ Public surfaces:
 - `/hack/[event_id]` — compact 3-thumbnail teaser strip + "View gallery" button rendered above the `TableOfContents` (right after `HackathonResults`), **only when `event_photos.length > 0`** (renders nothing when empty).
 - `/hack/[event_id]/upload` — legacy page is now a redirect stub pointing users to `/admin/hackathons` and `/media`.
 
+## Planning Card Budget Editor
+`PlanningCardDialog` has an inline budget editor (amount USD, bucket: food/prize/swag, state: estimated/committed/paid, vendor). Edits PATCH `card.budget` and feed `PlanningBudgetWidget` (event page widget gated by `planning.budget_widget_on_event_page`). Backend constants live in `model/planning.py` (`ALLOWED_BUDGET_BUCKETS`, `ALLOWED_BUDGET_STATES`, `MAX_BUDGET_CENTS`); keep frontend select options in sync. Clear with `{ budget: null }`. Read-only viewers still see the chip; editors get the form.
+
 ## Hackathon Per-Event Config (admin → `constraints`)
 The `constraints` object on a hackathon doc carries per-event toggles. Keys consumed by the application forms:
 - `judge_venue_arrival_time` (HH:MM, 24-hour) — judge form's Availability step shows it when set; falls back to existing default copy when null.

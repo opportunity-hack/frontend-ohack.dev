@@ -77,6 +77,15 @@ export default function PlanningCardDialog({
   const [uploadError, setUploadError] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
 
+  const [budgetEditing, setBudgetEditing] = useState(false);
+  const [budgetAmount, setBudgetAmount] = useState(
+    initialCard.budget ? (initialCard.budget.amount_cents / 100).toString() : ""
+  );
+  const [budgetBucket, setBudgetBucket] = useState(initialCard.budget?.bucket || "food");
+  const [budgetState, setBudgetState] = useState(initialCard.budget?.state || "estimated");
+  const [budgetVendor, setBudgetVendor] = useState(initialCard.budget?.vendor || "");
+  const [budgetError, setBudgetError] = useState("");
+
   const cardPermalink = typeof window !== "undefined" && eventId && card?.id
     ? `${window.location.origin}/hack/${eventId}/plan/c/${card.id}`
     : "";
@@ -100,6 +109,13 @@ export default function PlanningCardDialog({
   // Sync updates back
   useEffect(() => { setCard(initialCard); }, [initialCard]);
   useEffect(() => { setComments(initialComments); }, [initialComments]);
+  useEffect(() => {
+    // Reset budget edit buffer when the live card budget changes (poll/save)
+    setBudgetAmount(initialCard.budget ? (initialCard.budget.amount_cents / 100).toString() : "");
+    setBudgetBucket(initialCard.budget?.bucket || "food");
+    setBudgetState(initialCard.budget?.state || "estimated");
+    setBudgetVendor(initialCard.budget?.vendor || "");
+  }, [initialCard.budget]);
 
   async function saveTitle() {
     const t = title.trim();
@@ -117,6 +133,52 @@ export default function PlanningCardDialog({
       await onUpdate({ description });
     }
     setEditingDesc(false);
+  }
+
+  async function saveBudget(overrides = {}) {
+    const rawAmount = overrides.amount !== undefined ? overrides.amount : budgetAmount;
+    // Empty amount = no-op (haven't typed anything yet), not an error.
+    if (rawAmount === "" || rawAmount === null || rawAmount === undefined) {
+      setBudgetError("");
+      return;
+    }
+    const amountNum = parseFloat(rawAmount);
+    if (!Number.isFinite(amountNum) || amountNum < 0) {
+      setBudgetError("Enter a valid amount (0 or more)");
+      return;
+    }
+    if (amountNum > 1_000_000) {
+      setBudgetError("Maximum $1,000,000");
+      return;
+    }
+    setBudgetError("");
+    const existing = card.budget;
+    const payload = {
+      amount_cents: Math.round(amountNum * 100),
+      bucket: overrides.bucket ?? budgetBucket,
+      state: overrides.state ?? budgetState,
+      vendor: (overrides.vendor ?? budgetVendor).trim() || null,
+      // Backend re-stores invoice_url from the incoming payload — preserve it
+      // so saves from this editor don't nuke a URL set elsewhere.
+      invoice_url: existing?.invoice_url ?? null,
+    };
+    const unchanged =
+      existing &&
+      existing.amount_cents === payload.amount_cents &&
+      existing.bucket === payload.bucket &&
+      existing.state === payload.state &&
+      (existing.vendor || null) === payload.vendor;
+    if (unchanged) return;
+    const result = await onUpdate({ budget: payload });
+    if (result?.conflict) {
+      setBudgetError("Another editor updated this card. Please reload.");
+    }
+  }
+
+  async function clearBudget() {
+    setBudgetError("");
+    setBudgetEditing(false);
+    await onUpdate({ budget: null });
   }
 
   async function handleChecklistToggle(clIdx, itemIdx, done) {
@@ -447,21 +509,134 @@ export default function PlanningCardDialog({
           </Box>
         ))}
 
-        {/* Budget */}
-        {card.budget && (
+        {/* Budget — feeds the public event-page widget when admin enables it */}
+        {(card.budget || canWrite) && (
           <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
-              Budget
-            </Typography>
-            <Chip
-              label={`$${(card.budget.amount_cents / 100).toFixed(0)} · ${card.budget.bucket} · ${card.budget.state}`}
-              size="small"
-              color={card.budget.state === "paid" ? "success" : card.budget.state === "committed" ? "warning" : "default"}
-            />
-            {card.budget.vendor && (
-              <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                {card.budget.vendor}
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Budget
               </Typography>
+              {card.budget && canWrite && !budgetEditing && (
+                <Button size="small" onClick={() => setBudgetEditing(true)} sx={{ textTransform: "none", py: 0 }}>
+                  Edit
+                </Button>
+              )}
+            </Stack>
+
+            {!canWrite && card.budget && (
+              <Chip
+                label={`$${(card.budget.amount_cents / 100).toFixed(0)} · ${card.budget.bucket} · ${card.budget.state}${card.budget.vendor ? ` · ${card.budget.vendor}` : ""}`}
+                size="small"
+                color={card.budget.state === "paid" ? "success" : card.budget.state === "committed" ? "warning" : "default"}
+              />
+            )}
+
+            {canWrite && !card.budget && !budgetEditing && (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setBudgetEditing(true)}
+                sx={{ textTransform: "none" }}
+              >
+                + Add budget
+              </Button>
+            )}
+
+            {canWrite && card.budget && !budgetEditing && (
+              <Chip
+                label={`$${(card.budget.amount_cents / 100).toFixed(0)} · ${card.budget.bucket} · ${card.budget.state}${card.budget.vendor ? ` · ${card.budget.vendor}` : ""}`}
+                size="small"
+                color={card.budget.state === "paid" ? "success" : card.budget.state === "committed" ? "warning" : "default"}
+                onClick={() => setBudgetEditing(true)}
+                sx={{ cursor: "pointer" }}
+              />
+            )}
+
+            {canWrite && budgetEditing && (
+              <Box>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="flex-start">
+                  <TextField
+                    label="Amount (USD)"
+                    type="number"
+                    size="small"
+                    value={budgetAmount}
+                    onChange={(e) => setBudgetAmount(e.target.value)}
+                    onBlur={() => saveBudget()}
+                    inputProps={{ min: 0, step: "0.01" }}
+                    sx={{
+                      width: 140,
+                      "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+                      "& input": { color: "text.primary" },
+                    }}
+                  />
+                  <TextField
+                    select
+                    label="Bucket"
+                    size="small"
+                    value={budgetBucket}
+                    onChange={(e) => {
+                      setBudgetBucket(e.target.value);
+                      saveBudget({ bucket: e.target.value });
+                    }}
+                    sx={{
+                      width: 130,
+                      "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+                    }}
+                  >
+                    <MenuItem value="food">Food</MenuItem>
+                    <MenuItem value="prize">Prize</MenuItem>
+                    <MenuItem value="swag">Swag</MenuItem>
+                  </TextField>
+                  <TextField
+                    select
+                    label="State"
+                    size="small"
+                    value={budgetState}
+                    onChange={(e) => {
+                      setBudgetState(e.target.value);
+                      saveBudget({ state: e.target.value });
+                    }}
+                    sx={{
+                      width: 140,
+                      "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+                    }}
+                  >
+                    <MenuItem value="estimated">Estimated</MenuItem>
+                    <MenuItem value="committed">Committed</MenuItem>
+                    <MenuItem value="paid">Paid</MenuItem>
+                  </TextField>
+                  <TextField
+                    label="Vendor (optional)"
+                    size="small"
+                    value={budgetVendor}
+                    onChange={(e) => setBudgetVendor(e.target.value)}
+                    onBlur={() => saveBudget()}
+                    inputProps={{ maxLength: 200 }}
+                    sx={{
+                      minWidth: 180,
+                      flex: 1,
+                      "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+                      "& input": { color: "text.primary" },
+                    }}
+                  />
+                </Stack>
+                <Stack direction="row" spacing={1} sx={{ mt: 1 }} alignItems="center">
+                  <Button size="small" variant="contained" onClick={() => { saveBudget(); setBudgetEditing(false); }}>
+                    Done
+                  </Button>
+                  {card.budget && (
+                    <Button size="small" color="error" onClick={clearBudget} sx={{ textTransform: "none" }}>
+                      Remove budget
+                    </Button>
+                  )}
+                  <Typography variant="caption" color="text.secondary">
+                    Feeds the event-page budget widget. Estimated / Committed / Paid roll up by bucket.
+                  </Typography>
+                </Stack>
+                {budgetError && (
+                  <Alert severity="error" sx={{ mt: 1 }}>{budgetError}</Alert>
+                )}
+              </Box>
             )}
           </Box>
         )}
