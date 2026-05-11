@@ -61,6 +61,362 @@ import Moment from "moment";
 import "moment-timezone";
 import { getEventTimezone, getTimezoneAbbreviation, formatDualTimezone } from "../../../lib/timezoneUtils";
 
+// ---------------------------------------------------------------------------
+// Static option lists — module-scope so they aren't reallocated on every
+// render. Hoisting also lets MUI Autocomplete keep its internal memoization
+// (passing the same `options` reference avoids re-filtering on every keystroke).
+// ---------------------------------------------------------------------------
+
+const PARTICIPANT_TYPE_OPTIONS = [
+  "Student",
+  "Professional",
+  "Educator",
+  "Community Member",
+  "Other",
+];
+
+const EXPERIENCE_LEVEL_OPTIONS = [
+  "First-time hacker",
+  "Some hackathon experience (1-3 events)",
+  "Experienced hacker (4+ events)",
+];
+
+const PRIMARY_ROLE_OPTIONS = [
+  "Software Development - Frontend",
+  "Software Development - Backend",
+  "Software Development - Mobile",
+  "Software Development - Full Stack",
+  "Design (UI/UX, Graphics)",
+  "Data Science/Analytics",
+  "Project Management",
+  "Business Analysis",
+  "Quality Assurance",
+  "DevOps",
+  "Other",
+];
+
+const TECHNICAL_SKILLS_OPTIONS = {
+  "Programming Languages": [
+    "JavaScript/TypeScript",
+    "Python",
+    "Java",
+    "C#/.NET",
+    "Ruby",
+    "PHP",
+    "Go",
+    "Swift",
+    "Kotlin",
+    "C/C++",
+    "Rust",
+    "Scala",
+    "R",
+    "Perl",
+  ],
+  "Frontend Development": [
+    "React",
+    "Angular",
+    "Vue.js",
+    "Next.js",
+    "HTML/CSS",
+    "Redux",
+    "Tailwind CSS",
+    "Bootstrap",
+    "Material UI",
+    "Web Components",
+    "Svelte",
+    "jQuery",
+  ],
+  "Backend Development": [
+    "Node.js",
+    "Express",
+    "Django",
+    "Flask",
+    "Spring Boot",
+    "Laravel",
+    "ASP.NET",
+    "Ruby on Rails",
+    "FastAPI",
+    "GraphQL",
+    "RESTful APIs",
+    "Serverless Architecture",
+  ],
+  "Mobile Development": [
+    "React Native",
+    "Flutter",
+    "iOS Development",
+    "Android Development",
+    "Xamarin",
+    "Ionic",
+  ],
+  "Database & Storage": [
+    "SQL Databases",
+    "PostgreSQL",
+    "MySQL/MariaDB",
+    "MongoDB",
+    "NoSQL Databases",
+    "Redis",
+    "Elasticsearch",
+    "DynamoDB",
+    "Firebase",
+    "ORM Tools",
+  ],
+  "DevOps & Cloud": [
+    "AWS",
+    "Azure",
+    "Google Cloud",
+    "Docker",
+    "Kubernetes",
+    "CI/CD Pipelines",
+    "GitHub Actions",
+    "Jenkins",
+    "Terraform",
+    "Ansible",
+  ],
+  "Data Science & AI": [
+    "Machine Learning",
+    "AI/NLP",
+    "Data Visualization",
+    "TensorFlow",
+    "PyTorch",
+    "Computer Vision",
+    "Pandas",
+    "NumPy",
+    "Big Data",
+    "Statistical Analysis",
+  ],
+  "Design & UX": [
+    "UI Design",
+    "UX Research",
+    "Graphic Design",
+    "Figma",
+    "Adobe XD",
+    "Sketch",
+    "Wireframing",
+    "Prototyping",
+  ],
+  "Other Skills": [
+    "Blockchain",
+    "AR/VR",
+    "IoT",
+    "Game Development",
+    "Cybersecurity",
+    "Project Management",
+    "Agile/Scrum",
+    "Technical Writing",
+    "Accessibility",
+    "Other",
+  ],
+};
+
+const ALL_TECHNICAL_SKILLS = Object.values(TECHNICAL_SKILLS_OPTIONS).flat();
+
+const SOCIAL_CAUSES_OPTIONS = [
+  "Education",
+  "Healthcare",
+  "Environment",
+  "Economic Opportunity",
+  "Community Development",
+  "Accessibility/Inclusion",
+  "Homelessness",
+  "Food Security",
+  "Mental Health",
+  "Disaster Relief",
+  "Animal Welfare",
+  "Other",
+];
+
+const WORKSHOP_OPTIONS = [
+  "Pre-hackathon skill-building workshops",
+  "During-event technical sessions",
+  "Social impact design thinking",
+  "Git/GitHub workflow",
+  "Cloud deployment (AWS, GCP, Azure)",
+  "UX/UI fundamentals",
+  "Frontend (React, Next.js)",
+  "Backend & API integration",
+  "Database design",
+  "Mobile development",
+  "AI / Machine learning basics",
+  "DevOps & CI/CD",
+  "Cybersecurity basics",
+  "Accessibility",
+  "Working with nonprofits — scoping & requirements",
+  "Pitch & demo coaching",
+  "Fundraising & grants for tech projects",
+  "Other",
+];
+
+const ARIZONA_COUNTY_OPTIONS = [
+  "Apache",
+  "Cochise",
+  "Coconino",
+  "Gila",
+  "Graham",
+  "Greenlee",
+  "La Paz",
+  "Maricopa",
+  "Mohave",
+  "Navajo",
+  "Pima",
+  "Pinal",
+  "Santa Cruz",
+  "Yavapai",
+  "Yuma",
+];
+
+// Country options — common first, then alphabetical. Stored value is the
+// display name so legacy free-text records ("United States") line up.
+const COUNTRY_OPTIONS = [
+  "United States",
+  "Canada",
+  "Mexico",
+  "Argentina",
+  "Australia",
+  "Austria",
+  "Bangladesh",
+  "Belgium",
+  "Brazil",
+  "Chile",
+  "China",
+  "Colombia",
+  "Czechia",
+  "Denmark",
+  "Egypt",
+  "Finland",
+  "France",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Hong Kong",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Japan",
+  "Jordan",
+  "Kenya",
+  "Lebanon",
+  "Malaysia",
+  "Morocco",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nigeria",
+  "Norway",
+  "Pakistan",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Romania",
+  "Russia",
+  "Saudi Arabia",
+  "Singapore",
+  "South Africa",
+  "South Korea",
+  "Spain",
+  "Sri Lanka",
+  "Sweden",
+  "Switzerland",
+  "Taiwan",
+  "Thailand",
+  "Turkey",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "Venezuela",
+  "Vietnam",
+  "Other",
+];
+
+// US state options — 50 states + DC. Used only when country === "United States".
+const US_STATE_OPTIONS = [
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "District of Columbia",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
+];
+
+const AGE_RANGE_OPTIONS = [
+  "Under 18",
+  "18-24",
+  "25-34",
+  "35-44",
+  "45-54",
+  "55+",
+];
+
+const REFERRAL_SOURCE_OPTIONS = [
+  "School/University",
+  "Employer",
+  "Social Media",
+  "Friend/Colleague",
+  "Previous Participant",
+  "Nonprofit Organization",
+  "Other",
+];
+
+const TEAM_SIZE_OPTIONS = [
+  "No preference",
+  "2 people",
+  "3 people",
+  "4 people",
+  "5 people",
+  "I prefer to work alone even if that disqualifies me from winning a prize",
+];
+
 const HackerApplicationComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
@@ -99,6 +455,11 @@ const HackerApplicationComponent = () => {
   const initialLoadRef = useRef(false);
   const formInitializedRef = useRef(false);
   const confirmationShownRef = useRef(false);
+  // Guards `loadUserAndFormData` against re-runs when PropelAuth re-emits a new
+  // `user` object reference (token refresh, internal SDK updates). Without this
+  // guard the effect would re-fire `loadPreviousSubmission` (an API call) on
+  // every reference change.
+  const userDataLoadedRef = useRef(false);
 
   // Use ref to store uploaded photo URL to avoid race conditions
   const uploadedPhotoUrlRef = useRef("");
@@ -125,7 +486,6 @@ const HackerApplicationComponent = () => {
     inPerson: "",
     shirtSize: "",
     participationCount: "",
-    arizonaResident: "",
     county: "",
     ageRange: "",
     parentalPermission: false,
@@ -150,7 +510,6 @@ const HackerApplicationComponent = () => {
     depositAmountCents: null,
     depositDisposition: "refund",
     stripePaymentIntentId: "",
-    interestedInTaxCredit: false,
     willContinue: false,
     codeOfConduct: false,
     dietaryRestrictions: "",
@@ -240,245 +599,6 @@ const HackerApplicationComponent = () => {
     [setFormData],
   );
 
-  // Participant type options
-  const participantTypeOptions = [
-    "Student",
-    "Professional",
-    "Educator",
-    "Community Member",
-    "Other",
-  ];
-
-  // Experience level options
-  const experienceLevelOptions = [
-    "First-time hacker",
-    "Some hackathon experience (1-3 events)",
-    "Experienced hacker (4+ events)",
-  ];
-
-  // Primary role options
-  const primaryRoleOptions = [
-    "Software Development - Frontend",
-    "Software Development - Backend",
-    "Software Development - Mobile",
-    "Software Development - Full Stack",
-    "Design (UI/UX, Graphics)",
-    "Data Science/Analytics",
-    "Project Management",
-    "Business Analysis",
-    "Quality Assurance",
-    "DevOps",
-    "Other",
-  ];
-
-  // Technical skills options categorized
-  const technicalSkillsOptions = {
-    "Programming Languages": [
-      "JavaScript/TypeScript",
-      "Python",
-      "Java",
-      "C#/.NET",
-      "Ruby",
-      "PHP",
-      "Go",
-      "Swift",
-      "Kotlin",
-      "C/C++",
-      "Rust",
-      "Scala",
-      "R",
-      "Perl",
-    ],
-    "Frontend Development": [
-      "React",
-      "Angular",
-      "Vue.js",
-      "Next.js",
-      "HTML/CSS",
-      "Redux",
-      "Tailwind CSS",
-      "Bootstrap",
-      "Material UI",
-      "Web Components",
-      "Svelte",
-      "jQuery",
-    ],
-    "Backend Development": [
-      "Node.js",
-      "Express",
-      "Django",
-      "Flask",
-      "Spring Boot",
-      "Laravel",
-      "ASP.NET",
-      "Ruby on Rails",
-      "FastAPI",
-      "GraphQL",
-      "RESTful APIs",
-      "Serverless Architecture",
-    ],
-    "Mobile Development": [
-      "React Native",
-      "Flutter",
-      "iOS Development",
-      "Android Development",
-      "Xamarin",
-      "Ionic",
-    ],
-    "Database & Storage": [
-      "SQL Databases",
-      "PostgreSQL",
-      "MySQL/MariaDB",
-      "MongoDB",
-      "NoSQL Databases",
-      "Redis",
-      "Elasticsearch",
-      "DynamoDB",
-      "Firebase",
-      "ORM Tools",
-    ],
-    "DevOps & Cloud": [
-      "AWS",
-      "Azure",
-      "Google Cloud",
-      "Docker",
-      "Kubernetes",
-      "CI/CD Pipelines",
-      "GitHub Actions",
-      "Jenkins",
-      "Terraform",
-      "Ansible",
-    ],
-    "Data Science & AI": [
-      "Machine Learning",
-      "AI/NLP",
-      "Data Visualization",
-      "TensorFlow",
-      "PyTorch",
-      "Computer Vision",
-      "Pandas",
-      "NumPy",
-      "Big Data",
-      "Statistical Analysis",
-    ],
-    "Design & UX": [
-      "UI Design",
-      "UX Research",
-      "Graphic Design",
-      "Figma",
-      "Adobe XD",
-      "Sketch",
-      "Wireframing",
-      "Prototyping",
-    ],
-    "Other Skills": [
-      "Blockchain",
-      "AR/VR",
-      "IoT",
-      "Game Development",
-      "Cybersecurity",
-      "Project Management",
-      "Agile/Scrum",
-      "Technical Writing",
-      "Accessibility",
-      "Other",
-    ],
-  };
-
-  // Create a flat list of all skills for the autocomplete component
-  const allTechnicalSkills = Object.values(technicalSkillsOptions).flat();
-
-  // Original technical skills list for backward compatibility
-  const technicalSkillsOptionsFlat = allTechnicalSkills;
-
-  // Social causes options
-  const socialCausesOptions = [
-    "Education",
-    "Healthcare",
-    "Environment",
-    "Economic Opportunity",
-    "Community Development",
-    "Accessibility/Inclusion",
-    "Homelessness",
-    "Food Security",
-    "Mental Health",
-    "Disaster Relief",
-    "Animal Welfare",
-    "Other",
-  ];
-
-  // Workshop interest options
-  const workshopOptions = [
-    "Pre-hackathon skill-building workshops",
-    "During-event technical sessions",
-    "Social impact design thinking",
-    "Git/GitHub workflow",
-    "Cloud deployment (AWS, GCP, Azure)",
-    "UX/UI fundamentals",
-    "Frontend (React, Next.js)",
-    "Backend & API integration",
-    "Database design",
-    "Mobile development",
-    "AI / Machine learning basics",
-    "DevOps & CI/CD",
-    "Cybersecurity basics",
-    "Accessibility",
-    "Working with nonprofits — scoping & requirements",
-    "Pitch & demo coaching",
-    "Fundraising & grants for tech projects",
-    "Other",
-  ];
-
-  // Arizona county options
-  const arizonaCountyOptions = [
-    "Apache",
-    "Cochise",
-    "Coconino",
-    "Gila",
-    "Graham",
-    "Greenlee",
-    "La Paz",
-    "Maricopa",
-    "Mohave",
-    "Navajo",
-    "Pima",
-    "Pinal",
-    "Santa Cruz",
-    "Yavapai",
-    "Yuma",
-  ];
-
-  // Age range options
-  const ageRangeOptions = [
-    "Under 18",
-    "18-24",
-    "25-34",
-    "35-44",
-    "45-54",
-    "55+",
-  ];
-
-  // Referral source options
-  const referralSourceOptions = [
-    "School/University",
-    "Employer",
-    "Social Media",
-    "Friend/Colleague",
-    "Previous Participant",
-    "Nonprofit Organization",
-    "Other",
-  ];
-
-  // Team size preferences
-  const teamSizeOptions = [
-    "No preference",
-    "2 people",
-    "3 people",
-    "4 people",
-    "5 people",
-    "I prefer to work alone even if that disqualifies me from winning a prize",
-  ];
-
   // Set up form with event_id
   useEffect(() => { initFacebookPixel(); }, []);
 
@@ -553,14 +673,6 @@ const HackerApplicationComponent = () => {
         setFormData((prev) => ({
           ...prev,
           referralSourceOther: "",
-        }));
-      }
-
-      // Custom handling for Arizona residency to clear county when not an Arizona resident
-      if (name === "arizonaResident" && value !== "Arizona Resident") {
-        setFormData((prev) => ({
-          ...prev,
-          county: "",
         }));
       }
 
@@ -801,6 +913,10 @@ const HackerApplicationComponent = () => {
     const loadUserAndFormData = async () => {
       // Skip if already initialized, event_id missing, or user not loaded yet
       if (!event_id || !formInitializedRef.current) return;
+      // Run-once: PropelAuth re-emits `user` on token refresh, which would
+      // otherwise re-fire loadPreviousSubmission (an API call) on every emit.
+      if (userDataLoadedRef.current) return;
+      userDataLoadedRef.current = true;
 
       try {
         // Pre-fill with user information if available
@@ -873,7 +989,6 @@ const HackerApplicationComponent = () => {
                     isSelected: prevData.isSelected || false,
                     shirtSize: prevData.shirtSize || "",
                     participationCount: prevData.participationCount || "",
-                    arizonaResident: prevData.arizonaResident || "",
                     county: prevData.county || "",
                     ageRange: prevData.ageRange || "",
                     referralSource: prevData.referralSource || "",
@@ -898,8 +1013,6 @@ const HackerApplicationComponent = () => {
                     },
                     workshopInterests:
                       parsePreviousArrayField("workshopInterests"),
-                    interestedInTaxCredit:
-                      prevData.interestedInTaxCredit || false,
                     willContinue: prevData.willContinue || false,
                     codeOfConduct:
                       prevData.codeOfConduct ||
@@ -1052,7 +1165,7 @@ const HackerApplicationComponent = () => {
     // Clear any previous error
     setInPersonError("");
 
-    const requiredFields = ["arizonaResident", "country", "state", "ageRange"];
+    const requiredFields = ["country", "state", "ageRange"];
 
     if (formData.ageRange === "Under 18" && !formData.parentalPermission) {
       setErrorAndScroll(
@@ -1070,8 +1183,12 @@ const HackerApplicationComponent = () => {
       }
     }
 
-    // Check for Arizona resident and county
-    if (formData.arizonaResident === "Arizona Resident" && !formData.county) {
+    // AZ residents must select a county.
+    if (
+      formData.country === "United States" &&
+      formData.state === "Arizona" &&
+      !formData.county
+    ) {
       setErrorAndScroll("Please select your county");
       return false;
     }
@@ -1413,6 +1530,12 @@ const HackerApplicationComponent = () => {
         requiredQuestionAnswers: formData.requiredQuestionAnswers || [],
         // Add reCAPTCHA token
         recaptchaToken,
+        // Derive arizonaResident from country + state (kept in payload for any
+        // legacy downstream consumers — the user-facing dropdown was removed).
+        arizonaResident:
+          formData.country === "United States" && formData.state === "Arizona"
+            ? "Arizona Resident"
+            : "Non-Arizona Resident",
         // Add type information
         type: "hackers",
         volunteer_type: "hacker",
@@ -1603,7 +1726,7 @@ const HackerApplicationComponent = () => {
             onChange={handleChange}
             label="Participant Type"
           >
-            {participantTypeOptions.map((option) => (
+            {PARTICIPANT_TYPE_OPTIONS.map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>
@@ -1647,7 +1770,7 @@ const HackerApplicationComponent = () => {
             onChange={handleChange}
             label="Hackathon Experience Level"
           >
-            {experienceLevelOptions.map((option) => (
+            {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>
@@ -1681,7 +1804,7 @@ const HackerApplicationComponent = () => {
               </Box>
             )}
           >
-            {primaryRoleOptions.map((option) => (
+            {PRIMARY_ROLE_OPTIONS.map((option) => (
               <MenuItem key={option} value={option}>
                 <Checkbox
                   checked={(formData.primaryRoles || []).indexOf(option) > -1}
@@ -1734,7 +1857,7 @@ const HackerApplicationComponent = () => {
           <Autocomplete
             multiple
             id="skills-autocomplete"
-            options={allTechnicalSkills}
+            options={ALL_TECHNICAL_SKILLS}
             value={formData.skills || []}
             onChange={handleSkillsChange}
             renderInput={(params) => (
@@ -1753,7 +1876,7 @@ const HackerApplicationComponent = () => {
             groupBy={(option) => {
               // Find the category for this skill
               for (const [category, skills] of Object.entries(
-                technicalSkillsOptions,
+                TECHNICAL_SKILLS_OPTIONS,
               )) {
                 if (skills.includes(option)) {
                   return category;
@@ -1911,27 +2034,61 @@ const HackerApplicationComponent = () => {
           </Alert>
         )}
 
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="arizona-resident-label">Arizona Residency</InputLabel>
-          <Select
-            labelId="arizona-resident-label"
-            id="arizona-resident"
-            name="arizonaResident"
-            value={formData.arizonaResident || ""}
-            onChange={handleChange}
-            label="Arizona Residency"
-          >
-            <MenuItem value="Arizona Resident">Arizona Resident</MenuItem>
-            <MenuItem value="Non-Arizona Resident">
-              Non-Arizona Resident
-            </MenuItem>
-          </Select>
-          <FormHelperText>
-            This information helps with our QCO reporting requirements
-          </FormHelperText>
-        </FormControl>
+        <Autocomplete
+          options={COUNTRY_OPTIONS}
+          value={formData.country || null}
+          onChange={(_e, newValue) => {
+            setFormData((prev) => ({
+              ...prev,
+              country: newValue || "",
+              state: "",
+              county: "",
+            }));
+          }}
+          renderInput={(params) => (
+            <TextField {...params} label="Country" required />
+          )}
+          sx={{ mb: 3 }}
+        />
 
-        {formData.arizonaResident === "Arizona Resident" && (
+        {formData.country === "United States" ? (
+          <FormControl fullWidth required sx={{ mb: 3 }}>
+            <InputLabel id="state-label">State</InputLabel>
+            <Select
+              labelId="state-label"
+              id="state"
+              name="state"
+              value={formData.state || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  state: value,
+                  county: value === "Arizona" ? prev.county : "",
+                }));
+              }}
+              label="State"
+            >
+              {US_STATE_OPTIONS.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        ) : formData.country ? (
+          <TextField
+            label="State / Province / Region"
+            name="state"
+            required
+            fullWidth
+            value={formData.state || ""}
+            onChange={handleChange}
+            sx={{ mb: 3 }}
+          />
+        ) : null}
+
+        {formData.country === "United States" && formData.state === "Arizona" && (
           <FormControl fullWidth required sx={{ mb: 3 }}>
             <InputLabel id="county-label">County</InputLabel>
             <Select
@@ -1942,7 +2099,7 @@ const HackerApplicationComponent = () => {
               onChange={handleChange}
               label="County"
             >
-              {arizonaCountyOptions.map((county) => (
+              {ARIZONA_COUNTY_OPTIONS.map((county) => (
                 <MenuItem key={county} value={county}>
                   {county}
                 </MenuItem>
@@ -1951,26 +2108,6 @@ const HackerApplicationComponent = () => {
             <FormHelperText>Select your county in Arizona</FormHelperText>
           </FormControl>
         )}
-
-        <TextField
-          label="Country"
-          name="country"
-          required
-          fullWidth
-          value={formData.country || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
-
-        <TextField
-          label="State/Province"
-          name="state"
-          required
-          fullWidth
-          value={formData.state || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
 
         <FormControl fullWidth required sx={{ mb: 3 }}>
           <InputLabel id="age-range-label">Age Range</InputLabel>
@@ -1982,7 +2119,7 @@ const HackerApplicationComponent = () => {
             onChange={handleChange}
             label="Age Range"
           >
-            {ageRangeOptions.map((option) => (
+            {AGE_RANGE_OPTIONS.map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>
@@ -2032,7 +2169,7 @@ const HackerApplicationComponent = () => {
             onChange={handleChange}
             label="How did you hear about Opportunity Hack?"
           >
-            {referralSourceOptions.map((option) => (
+            {REFERRAL_SOURCE_OPTIONS.map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>
@@ -2101,20 +2238,6 @@ const HackerApplicationComponent = () => {
             />
           )}
 
-        {formData.arizonaResident === "Arizona Resident" && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                name="interestedInTaxCredit"
-                checked={formData.interestedInTaxCredit || false}
-                onChange={handleChange}
-                color="primary"
-              />
-            }
-            label="I'm interested in receiving information about Arizona tax credits for supporting Opportunity Hack"
-            sx={{ mb: 2 }}
-          />
-        )}
       </Box>
     </Box>
   );
@@ -2271,7 +2394,7 @@ const HackerApplicationComponent = () => {
               }}
               input={<OutlinedInput label="Add Social Causes" />}
             >
-              {socialCausesOptions
+              {SOCIAL_CAUSES_OPTIONS
                 .filter((option) => !formData.socialCauses.includes(option))
                 .map((option) => (
                   <MenuItem key={option} value={option}>
@@ -2676,7 +2799,7 @@ const HackerApplicationComponent = () => {
                   }
                   label="Preferred Team Size"
                 >
-                  {teamSizeOptions.map((option) => (
+                  {TEAM_SIZE_OPTIONS.map((option) => (
                     <MenuItem key={option} value={option}>
                       {option}
                     </MenuItem>
@@ -2712,7 +2835,7 @@ const HackerApplicationComponent = () => {
                     </Box>
                   )}
                 >
-                  {primaryRoleOptions
+                  {PRIMARY_ROLE_OPTIONS
                     .filter((option) => option !== "Other")
                     .map((option) => (
                       <MenuItem key={option} value={option}>
@@ -2765,7 +2888,7 @@ const HackerApplicationComponent = () => {
                 </Box>
               )}
             >
-              {workshopOptions.map((option) => (
+              {WORKSHOP_OPTIONS.map((option) => (
                 <MenuItem key={option} value={option}>
                   <Checkbox
                     checked={
@@ -2794,6 +2917,38 @@ const HackerApplicationComponent = () => {
             />
           )}
 
+          <Alert severity="info" icon={false} sx={{ mb: 1.5 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              Continuing after the hackathon
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              Finishing a project means taking your prototype the rest of the
+              way to production for the nonprofit — usually about three months
+              of part-time follow-through after the event. It's how nonprofits
+              actually get a working tool (most can't take a hackathon
+              prototype to production on their own), and it's how teams earn
+              the highest tier of recognition.
+            </Typography>
+            <Typography variant="body2">
+              See our{" "}
+              <Link
+                href="/about/completion"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Definition of Done
+              </Link>{" "}
+              for what "complete" looks like, and the{" "}
+              <Link
+                href="/about/hearts"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Hearts system
+              </Link>{" "}
+              for how productionalized projects are rewarded.
+            </Typography>
+          </Alert>
           <FormControlLabel
             control={
               <Checkbox

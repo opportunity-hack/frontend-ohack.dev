@@ -157,6 +157,9 @@ Shared scaffolding lives in `src/components/ApplicationForm/`. Use these instead
 - `MealMenu` — restaurant-style meal selector for `eventData.constraints.meals`.
 Primary copy on these forms uses `body1`. Reserve `body2` for true helper text under inputs.
 
+### Hacker form — country/state/AZ residency
+Country is a curated `Autocomplete` (`COUNTRY_OPTIONS`); State is a `Select` of `US_STATE_OPTIONS` only when `country === "United States"`, otherwise a free-text "State / Province / Region". County (`ARIZONA_COUNTY_OPTIONS`) only renders when country=US AND state=Arizona. There is no user-facing "Arizona Residency" dropdown — `arizonaResident` is **derived at submit time** from country+state and sent in the payload so legacy downstream consumers still receive it. If you re-introduce a dropdown for this, you'll create the redundancy we just removed. (The 2026 tax credit / QCO question was also removed — no QCO this year.) All option arrays (`PARTICIPANT_TYPE_OPTIONS`, `COUNTRY_OPTIONS`, etc.) are module-scope constants at the top of `hacker-application.js` so they're not reallocated on every render — keep them there or Autocomplete will lose its memoization.
+
 ## Hackathon Event Photos & Social Posts
 Two top-level fields on the hackathon doc (NOT under `constraints`):
 - `event_photos: [{ url, caption?, credit?, sort_order? }]`
