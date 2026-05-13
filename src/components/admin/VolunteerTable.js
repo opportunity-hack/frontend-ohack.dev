@@ -41,6 +41,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
 import { Email as EmailIcon, VolunteerActivism as CertificateIcon } from '@mui/icons-material';
 import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
+import HackerDepositChip from "./HackerDepositChip";
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
@@ -201,6 +202,9 @@ const VolunteerTable = ({
   // Auth props for Resend status lookup
   accessToken,
   orgId,
+  // Deposit refund (hackers only)
+  depositEnabled = false,
+  onDepositClick,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState({ open: false, message: '' });
   const [resendStatuses, setResendStatuses] = useState({}); // { resend_id: { last_event, ... } }
@@ -428,15 +432,19 @@ const VolunteerTable = ({
         { id: "artifacts", label: "Contrib.", minWidth: 100, priority: 3 },
       ];
     } else if (type === "hackers") {
-      return [
+      const cols = [
         ...baseColumns,
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
-        { id: "teamCode", label: "Team Code", minWidth: 50 }, // Reduced from 120, shorter label        
+        { id: "teamCode", label: "Team Code", minWidth: 50 }, // Reduced from 120, shorter label
         { id: "participantType", label: "Type", minWidth: 80 }, // Reduced from 120, shorter label
         { id: "experienceLevel", label: "Exp.", minWidth: 60 }, // Reduced from 120, shorter label
         { id: "teamStatus", label: "Team", minWidth: 80 }, // Reduced from 120, shorter label
         { id: "primaryRoles", label: "Roles", minWidth: 100, priority: 2 }, // Reduced from 150
       ];
+      if (depositEnabled) {
+        cols.push({ id: "deposit", label: "Deposit", minWidth: 130 });
+      }
+      return cols;
     } else if (type === "sponsors") {
       return [
         ...baseColumns,
@@ -453,7 +461,7 @@ const VolunteerTable = ({
     }
 
     return baseColumns;
-  }, [type]);
+  }, [type, depositEnabled]);
 
   const selectedCount = useMemo(() => {
     return volunteers.filter((volunteer) => volunteer.isSelected).length;
@@ -507,6 +515,13 @@ const VolunteerTable = ({
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
+      case "deposit":
+        return (
+          <HackerDepositChip
+            volunteer={volunteer}
+            onClick={onDepositClick ? () => onDepositClick(volunteer) : undefined}
+          />
+        );
       case "id":
         const id = volunteer.id || "N/A";
         const truncatedId = id.length > 8 ? `${id.slice(0, 8)}...` : id;
@@ -1569,6 +1584,16 @@ const VolunteerTable = ({
                       size="small"
                       variant="outlined"
                       color="primary"
+                    />
+                  )}
+                  {type === "hackers" && depositEnabled && (
+                    <HackerDepositChip
+                      volunteer={volunteer}
+                      onClick={
+                        onDepositClick
+                          ? () => onDepositClick(volunteer)
+                          : undefined
+                      }
                     />
                   )}
                 </Box>

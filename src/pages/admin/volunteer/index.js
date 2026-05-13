@@ -41,6 +41,7 @@ import VolunteerCommunication from "../../../components/admin/VolunteerCommunica
 import SlackInviteDialog from "../../../components/admin/SlackInviteDialog";
 import BatchEmailDialog from "../../../components/admin/BatchEmailDialog";
 import BulkCertificateDialog from "../../../components/admin/BulkCertificateDialog";
+import HackerDepositRefundDialog from "../../../components/admin/HackerDepositRefundDialog";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 
 // Define initial state outside component to prevent re-initialization
@@ -119,6 +120,11 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   const [editingVolunteer, setEditingVolunteer] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState("");
+  // Full event doc for the selected event — used to read constraints
+  // (currently just hacker_deposit.enabled). Fetched separately because the
+  // hackathons LIST endpoint doesn't include the `constraints` blob.
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [depositDialogVolunteer, setDepositDialogVolunteer] = useState(null);
   const [viewMode, setViewMode] = useState("table"); // "table" or "review"
   const [applicationEditDialogOpen, setApplicationEditDialogOpen] = useState(false);
   const [editingApplication, setEditingApplication] = useState(null);
@@ -497,6 +503,55 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       }
     }
   }, [isAdmin, selectedEventId, accessToken, orgId]);
+
+  // Load the full event doc so we can read constraints.hacker_deposit.enabled.
+  // The hackathons list endpoint omits `constraints`, so we fetch the event
+  // individually. Reset on event change so a stale `selectedEvent` from the
+  // previous event can't leak the wrong deposit column visibility.
+  useEffect(() => {
+    if (!selectedEventId) {
+      setSelectedEvent(null);
+      return;
+    }
+    let cancelled = false;
+    const apiServerUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
+    if (!apiServerUrl) return;
+    setSelectedEvent(null);
+    (async () => {
+      try {
+        const res = await fetch(
+          `${apiServerUrl}/api/messages/hackathon/${selectedEventId}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setSelectedEvent(data);
+      } catch (e) {
+        if (!cancelled) console.warn("Failed to load event for admin:", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedEventId]);
+
+  const depositEnabled = Boolean(
+    selectedEvent?.constraints?.hacker_deposit?.enabled,
+  );
+
+  const handleDepositClick = useCallback((volunteer) => {
+    setDepositDialogVolunteer(volunteer);
+  }, []);
+
+  const handleDepositRefunded = useCallback(() => {
+    // Re-fetch hackers so the chip/state updates immediately.
+    dataLoadedRef.current = false;
+    fetchVolunteers();
+    setSnackbar({
+      open: true,
+      message: "Deposit refunded successfully",
+      severity: "success",
+    });
+  }, [fetchVolunteers]);
 
   const handleRequestSort = useCallback(
     (property) => {
@@ -1502,6 +1557,8 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
                 onCheckedInFilterChange={(value) => updateFilterState('checkedInFilter', value)}
                 accessToken={accessToken}
                 orgId={orgId}
+                depositEnabled={depositEnabled}
+                onDepositClick={handleDepositClick}
               />
               {sortedVolunteers.length === 0 && (
                 <Box sx={{ mt: 2, textAlign: "center" }}>
@@ -1632,6 +1689,16 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         accessToken={accessToken}
         orgId={orgId}
         onComplete={handleBulkCertificateComplete}
+      />
+
+      <HackerDepositRefundDialog
+        open={Boolean(depositDialogVolunteer)}
+        onClose={() => setDepositDialogVolunteer(null)}
+        volunteer={depositDialogVolunteer}
+        apiServerUrl={process.env.NEXT_PUBLIC_API_SERVER_URL}
+        accessToken={accessToken}
+        orgId={orgId}
+        onRefunded={handleDepositRefunded}
       />
 
       {/* Share Link Snackbar */}
