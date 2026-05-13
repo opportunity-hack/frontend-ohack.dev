@@ -21,12 +21,19 @@ export default async function handler(req, res) {
   }
 
   const secretKey = process.env.STRIPE_SECRET_KEY;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Renamed from STRIPE_WEBHOOK_SECRET to disambiguate from the hacker-deposit
+  // webhook on the backend — these are two separate Stripe webhook endpoints
+  // with two distinct signing secrets. Keep them separated by env var name.
+  const webhookSecret =
+    process.env.STRIPE_STORE_WEBHOOK_SECRET ||
+    process.env.STRIPE_WEBHOOK_SECRET; // legacy fallback during rollout
   const storeWebhookSecret = process.env.STORE_WEBHOOK_SECRET;
   const apiServerUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
 
   if (!secretKey || !webhookSecret) {
-    console.error("Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET");
+    console.error(
+      "Missing STRIPE_SECRET_KEY or STRIPE_STORE_WEBHOOK_SECRET",
+    );
     return res.status(500).json({ error: "Stripe is not configured" });
   }
 
