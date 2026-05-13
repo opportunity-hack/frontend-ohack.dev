@@ -59,12 +59,17 @@ export default async function handler(req, res) {
         kind: "hacker_deposit",
         event_id,
         disposition: normalizedDisposition,
+        // Carried on the session metadata so the webhook can reconcile the
+        // volunteer doc by email + event_id without depending on Stripe's
+        // customer_details being populated.
+        hacker_email: hacker_email || "",
       },
       payment_intent_data: {
         metadata: {
           kind: "hacker_deposit",
           event_id,
           disposition: normalizedDisposition,
+          hacker_email: hacker_email || "",
         },
       },
       success_url: `${baseUrl}/hack/${encodeURIComponent(event_id)}/hacker-application?deposit_session_id={CHECKOUT_SESSION_ID}`,

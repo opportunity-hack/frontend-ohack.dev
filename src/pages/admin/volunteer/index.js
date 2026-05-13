@@ -42,6 +42,8 @@ import SlackInviteDialog from "../../../components/admin/SlackInviteDialog";
 import BatchEmailDialog from "../../../components/admin/BatchEmailDialog";
 import BulkCertificateDialog from "../../../components/admin/BulkCertificateDialog";
 import HackerDepositRefundDialog from "../../../components/admin/HackerDepositRefundDialog";
+import HackerDepositBulkRefundDialog from "../../../components/admin/HackerDepositBulkRefundDialog";
+import { getDepositState } from "../../../components/admin/HackerDepositChip";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 
 // Define initial state outside component to prevent re-initialization
@@ -125,6 +127,7 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
   // hackathons LIST endpoint doesn't include the `constraints` blob.
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [depositDialogVolunteer, setDepositDialogVolunteer] = useState(null);
+  const [bulkRefundDialogOpen, setBulkRefundDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState("table"); // "table" or "review"
   const [applicationEditDialogOpen, setApplicationEditDialogOpen] = useState(false);
   const [editingApplication, setEditingApplication] = useState(null);
@@ -538,6 +541,17 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
     selectedEvent?.constraints?.hacker_deposit?.enabled,
   );
 
+  // Eligible for bulk refund: paid + disposition=refund. Donate-disposition
+  // is excluded (override is a per-row decision); refund_failed is excluded
+  // (those likely need human triage).
+  const eligibleForBulkRefund = useMemo(() => {
+    if (!depositEnabled) return [];
+    return (volunteers.hackers || []).filter((h) => {
+      const state = getDepositState(h);
+      return state.kind === "paid" && h.deposit_disposition === "refund";
+    });
+  }, [volunteers.hackers, depositEnabled]);
+
   const handleDepositClick = useCallback((volunteer) => {
     setDepositDialogVolunteer(volunteer);
   }, []);
@@ -551,6 +565,11 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
       message: "Deposit refunded successfully",
       severity: "success",
     });
+  }, [fetchVolunteers]);
+
+  const handleBulkRefundComplete = useCallback(() => {
+    dataLoadedRef.current = false;
+    fetchVolunteers();
   }, [fetchVolunteers]);
 
   const handleRequestSort = useCallback(
@@ -1541,6 +1560,39 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         <Box sx={{ mt: 2 }} ref={scrollContainerRef}>
           {viewMode === "table" ? (
             <>
+              {tabValue === 3 && depositEnabled && (
+                <Box
+                  sx={{
+                    mb: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    disabled={eligibleForBulkRefund.length === 0}
+                    onClick={() => setBulkRefundDialogOpen(true)}
+                  >
+                    {eligibleForBulkRefund.length === 0
+                      ? "No deposits eligible for bulk refund"
+                      : `Refund ${eligibleForBulkRefund.length} eligible deposit${
+                          eligibleForBulkRefund.length === 1 ? "" : "s"
+                        } ($${(
+                          eligibleForBulkRefund.reduce(
+                            (s, h) => s + (h.deposit_amount_cents || 0),
+                            0,
+                          ) / 100
+                        ).toFixed(2)})`}
+                  </Button>
+                  <Typography variant="caption" color="text.secondary">
+                    Eligible = paid + disposition=refund. Donated and
+                    refund-failed rows excluded.
+                  </Typography>
+                </Box>
+              )}
               <VolunteerTable
                 volunteers={sortedVolunteers}
                 type={getCurrentVolunteerType(tabValue)}
@@ -1699,6 +1751,17 @@ const AdminVolunteerPage = withRequiredAuthInfo(({ userClass }) => {
         accessToken={accessToken}
         orgId={orgId}
         onRefunded={handleDepositRefunded}
+      />
+
+      <HackerDepositBulkRefundDialog
+        open={bulkRefundDialogOpen}
+        onClose={() => setBulkRefundDialogOpen(false)}
+        eligibleHackers={eligibleForBulkRefund}
+        eventId={selectedEventId}
+        apiServerUrl={process.env.NEXT_PUBLIC_API_SERVER_URL}
+        accessToken={accessToken}
+        orgId={orgId}
+        onComplete={handleBulkRefundComplete}
       />
 
       {/* Share Link Snackbar */}
