@@ -51,6 +51,20 @@ Patterns that must stay in place to keep Google Search Console CWV green:
 - Iframes (YouTube, Instagram, Calendar) must be wrapped in an aspect-ratio container (the existing pattern is `paddingBottom: '56.25%'` with `height: 0` + absolutely-positioned iframe) or given a fixed pixel height.
 - `initFacebookPixel` in `src/lib/ga/index.js` is idempotent via `pixelInitPromise`. Don't add `ReactPixel.init` calls outside of it.
 
+## Admin Profile Search (`/admin/profile`)
+Search-first people-finder. Single file: `src/pages/admin/profile/index.js`. Backend `GET /api/messages/admin/profiles` returns all users; filtering is client-side across ~14 fields (no server-side search). Auth: `userClass.hasPermission("profile.admin")`.
+
+Load-bearing details:
+- **`?q=<term>` is the canonical search state** and the destination of the Chrome `ohadmin` site-search shortcut (`https://www.ohack.dev/admin/profile?q=%s`). Do NOT add redirects that strip query params (e.g. `router.replace('/admin/profile')` without preserving `...router.query`) — it silently breaks the shortcut.
+- URL ↔ input sync uses the CLAUDE.md "Shareable dialog state" pattern: hydrate once with `initFromUrlRef`, react to back/forward via a separate effect with a `lastUrlQRef` echo guard, write to URL via `lodash.debounce` (250ms) with `router.replace({ shallow: true, scroll: false })`.
+- Keyboard: `⌘K` or `/` focuses search (with typing-elsewhere guard); `Esc` clears query + focuses search; rows are `tabIndex={0}` with `Enter`/`Space` opening `/profile/{id}` in a new tab.
+- Default view is **compact list** (`Table`), not cards. Toggle persisted in `localStorage["ohack.adminProfile.viewMode"]` (values: `"list" | "grid"`).
+- Other localStorage keys: `ohack.adminProfile.setupHelpDismissed` (Chrome-shortcut tip banner), `ohack.adminProfile.listToastSeen` (reserved for a future toast).
+- Quick actions on every row/card link to `/profile/{user.id}` — that's the Firestore `id`, NOT `user_id` (gotcha). Volunteer deep link uses `/admin/volunteer?filter=<email>` (the volunteer page reads `filter=`, not `search=`).
+- `BestMatchHero` shows when the query is an exact name/email match or an `@`-shaped query that uniquely hits one email. `MatchPills` strip shows when 2–5 results.
+- `highlightMatch(text, query)` is a single-substring helper (not multi-term). Stays consistent with the underlying filter, which also matches the full string against each field.
+- `UserSearchDialog.js` still duplicates the fetch+filter logic — extract a shared `useAdminProfilesSearch()` hook when convenient.
+
 ## Admin Email Compose (`AdminEmailCompose`)
 - The component accepts an optional `fixedSubject` prop. When set, the Subject field is read-only and that exact value is sent.
 - `ContactSubmissionDetailDialog` passes a subject derived from `submission.inquiryType` matching the backend format in `backend-ohack.dev/api/contact/contact_service.py`: `Contact Us: {inquiry_type_display.lower()} - Opportunity Hack`. The `INQUIRY_TYPE_DISPLAY` map in `ContactSubmissionDetailDialog.js` must stay in sync with the backend's map so admin replies thread with the original confirmation email.
