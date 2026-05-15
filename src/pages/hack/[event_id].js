@@ -584,6 +584,7 @@ export default function HackathonEvent({ eventData }) {
               eventId={event_id}
               eventTitle={event.title}
               githubOrg={event.github_org}
+              fullResultsHref={`/hack/${event_id}/results`}
             />
           </section>
         )}

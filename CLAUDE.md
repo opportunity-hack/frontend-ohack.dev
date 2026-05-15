@@ -233,6 +233,24 @@ Keep both files in sync if the copy changes. Do not call `setError(...)` for the
 ## Mentor + Judge Pending-Review Confirmation Email
 Backend `send_volunteer_confirmation_email()` (`services/volunteers_service.py`) now adds a `[Pending Review]` subject prefix and a yellow "your application is pending review — up to a week" banner for `volunteer_type in ("mentor","judge")`. Role-specific next-steps live under an "Once approved" heading. Hacker confirmations (when added) should keep the existing "received" framing since they don't go through staff review.
 
+## Hackathon Results & Hacker Funnel
+Per-event results live on a dedicated page `/hack/[event_id]/results` that renders the existing `HackathonResults` component plus a new `HackathonFunnel` viz. The funnel reads from a new public-safe summary doc.
+
+Subcollection: `hackathons/{hackathon_doc_id}/funnel/summary` — counts only (no PII):
+- `registered`, `started_project`, `submitted_project`, `submitted_gallery_visible`
+- `status_breakdown`, `step_breakdown`, `referral_breakdown`, `teammate_intent_breakdown`, `country_breakdown`
+- `source`, `source_files`, `last_updated`, `last_updated_by`
+
+Winning + founding-engineer counts are NOT stored in the summary — they're computed at read time from the teams collection (status in `WINNING_STATUSES`) so they stay fresh as judging changes. The funnel response also includes a `participation` block computed live: `applied_as_hacker` (count of `volunteers` docs for the event with `volunteer_type=hacker`, no `isSelected` filter — matches `HackathonResults.js`) and `formed_team` (count of unique user-doc IDs across all teams linked to this hackathon, deduped because a person could be on more than one team).
+
+Backend: `GET /api/messages/hackathon/{event_id}/funnel` (5-min TTL cache, public, no auth). Service in `services/hackathons_service.py::get_hackathon_funnel`. Cache is cleared via `clear_cache()` along with the other hackathon caches.
+
+Aggregate (all-time): `GET /api/messages/hackathons/funnel/aggregate` (10-min cache) sums every stage across every hackathon — no cross-event dedup, so a person in three events counts three times. Service: `get_hackathon_funnel_aggregate`. Page: `/hack/results` (no event_id) renders the same `HackathonFunnel` viz on aggregate data. Per-event dedup IS applied (a person on multiple winning teams in one event is counted once for that event), but across events totals are summed.
+
+Backfill script: `backend-ohack.dev/scripts/backfill_devpost_funnel.py` — dry-run by default. Takes `--registrants-csv` and/or `--projects-csv` (Devpost exports). Re-running is idempotent — the summary doc is fully overwritten on `--apply`.
+
+Front-of-house: `HackathonResults` accepts a `fullResultsHref` prop. On `/hack/[event_id]` it points to `/hack/[event_id]/results` so users can jump to the deeper page. The /results page renders the same `HackathonResults` widget at top + `HackathonFunnel` below.
+
 ## Local Landing Pages
 
 ### Arizona Hackathons (`/hackathons/arizona`)

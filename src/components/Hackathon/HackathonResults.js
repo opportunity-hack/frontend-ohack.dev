@@ -16,7 +16,9 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import PersonIcon from '@mui/icons-material/Person';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import PendingIcon from '@mui/icons-material/HourglassTop';
+import { useAuthInfo } from '@propelauth/react';
 import { WINNING_STATUSES, isWinningStatus, getWinningStatus } from '../../constants/teamStatus';
+import TeamMember from './TeamMember';
 
 const RANK_STYLES = {
   1: { gradient: 'linear-gradient(135deg, #FFD700 0%, #FFA000 100%)', emoji: '\uD83E\uDD47', border: '#FFD700' },
@@ -70,10 +72,12 @@ const RankBadge = styled(Avatar)(({ gradient }) => ({
   marginBottom: 8,
 }));
 
-const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg }) => {
+const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg, fullResultsHref }) => {
   const [leaderboardStats, setLeaderboardStats] = useState(null);
   const [volunteerCounts, setVolunteerCounts] = useState({});
   const [statsLoading, setStatsLoading] = useState(true);
+  const [memberProfiles, setMemberProfiles] = useState({});
+  const { accessToken } = useAuthInfo();
 
   // Extract winning teams
   const winningTeams = useMemo(() => {
@@ -102,6 +106,49 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
       .catch(() => {})
       .finally(() => setStatsLoading(false));
   }, [eventId]);
+
+  // Fetch profile details for winning-team members (so we can show avatars + names)
+  useEffect(() => {
+    if (!accessToken || winningTeams.length === 0) return;
+
+    const userIds = new Set();
+    winningTeams.forEach((team) => {
+      if (Array.isArray(team.users)) {
+        team.users.forEach((u) => {
+          const id = typeof u === 'string' ? u : u?.user_id || u?.id;
+          if (id) userIds.add(id);
+        });
+      }
+    });
+    if (userIds.size === 0) return;
+
+    let cancelled = false;
+    Promise.all(
+      Array.from(userIds).map((userId) =>
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            const profile = data?.text || data;
+            if (profile) profile.user_id = userId;
+            return [userId, profile];
+          })
+          .catch(() => [userId, null])
+      )
+    ).then((entries) => {
+      if (cancelled) return;
+      const map = {};
+      entries.forEach(([id, profile]) => {
+        if (profile) map[id] = profile;
+      });
+      setMemberProfiles(map);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, winningTeams]);
 
   // Fetch volunteer/mentor/judge/hacker counts
   useEffect(() => {
@@ -248,9 +295,26 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
                       </Typography>
                     )}
 
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {memberCount} team member{memberCount !== 1 ? 's' : ''}
-                    </Typography>
+                    {memberCount > 0 && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          Team Members ({memberCount})
+                        </Typography>
+                        <Grid container spacing={1}>
+                          {team.users.map((u, idx) => {
+                            const id = typeof u === 'string' ? u : u?.user_id || u?.id;
+                            const enriched = (id && memberProfiles[id]) || u;
+                            return (
+                              <TeamMember
+                                key={id || `member-${idx}`}
+                                user={enriched}
+                                isCurrentUser={false}
+                              />
+                            );
+                          })}
+                        </Grid>
+                      </Box>
+                    )}
 
                     <Box sx={{ mt: 'auto', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                       {githubLink && (
@@ -299,8 +363,18 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
         </Box>
       )}
 
-      {/* View all teams link */}
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
+      {/* CTA row */}
+      <Box sx={{ textAlign: 'center', mt: 4, display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+        {fullResultsHref && (
+          <Button
+            variant="contained"
+            color="primary"
+            component="a"
+            href={fullResultsHref}
+          >
+            See full results & hacker funnel →
+          </Button>
+        )}
         <Button
           variant="outlined"
           endIcon={<ArrowDownwardIcon />}
