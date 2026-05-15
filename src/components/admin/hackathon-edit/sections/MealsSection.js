@@ -11,6 +11,7 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   OutlinedInput,
@@ -29,6 +30,7 @@ import {
   ContentCopy as CloneIcon,
   Delete as DeleteIcon,
   DragIndicator as DragIcon,
+  MenuBook as CatalogIcon,
   Restaurant as MealIcon,
   Visibility as PreviewIcon,
   VisibilityOff as PreviewOffIcon,
@@ -43,6 +45,13 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, parseISO } from "date-fns";
 import SectionContainer from "../SectionContainer";
+import MenuCatalogPicker from "../catalog/MenuCatalogPicker";
+import {
+  computeAllMealsCostCents,
+  computeItemCostCents,
+  computeMealCostCents,
+  formatUSD,
+} from "../catalog/formatCurrency";
 
 // Kept in sync with backend `ALLOWED_DIETARY_TAGS` in validators.py.
 export const ALLOWED_DIETARY_TAGS = [
@@ -55,6 +64,16 @@ export const ALLOWED_DIETARY_TAGS = [
   "nut-free",
   "pescatarian",
 ];
+
+// Default surcharge assumptions sourced from the Fat Freddy's quote
+// (8.6% AZ tax, ~10% gratuity, $45 flat delivery, 2.9% credit-card
+// surcharge). Used only for the "with fees" toggle.
+const DEFAULT_SURCHARGES = {
+  tax_pct: 8.6,
+  gratuity_pct: 10,
+  delivery_cents: 4500,
+  card_surcharge_pct: 2.9,
+};
 
 const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -90,7 +109,7 @@ const formatMealTime = (value) => {
 };
 
 const QUICK_ADD = [
-  { label: "Friday Dinner", icon: DinnerIcon, hint: "Friday at 7:00 PM" },
+  { label: "Friday Dinner", icon: DinnerIcon },
   { label: "Saturday Breakfast", icon: MorningIcon },
   { label: "Saturday Lunch", icon: LunchIcon },
   { label: "Saturday Dinner", icon: DinnerIcon },
@@ -99,7 +118,31 @@ const QUICK_ADD = [
   { label: "Snacks", icon: SnackIcon },
 ];
 
-const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandleProps, eventStart, eventEnd }) => {
+const ItemCostRow = ({ item, headcount }) => {
+  if (!item.price_cents) return null;
+  const unit = item.unit || "per_person";
+  const cost = computeItemCostCents(item, headcount);
+  return (
+    <Box sx={{ mt: 0.75, display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+      <Chip
+        label={`${formatUSD(item.price_cents)} ${unit === "per_person" ? "/ person" : unit === "each" ? "each" : "fixed"}`}
+        size="small"
+        variant="outlined"
+        color="primary"
+      />
+      {cost > 0 && (
+        <Typography variant="caption" color="text.secondary">
+          ≈ <strong>{formatUSD(cost)}</strong> at {unit === "each" ? `qty ${item.quantity || 1}` : `${headcount} people`}
+        </Typography>
+      )}
+      {item.vendor && (
+        <Typography variant="caption" color="text.secondary">· {item.vendor}</Typography>
+      )}
+    </Box>
+  );
+};
+
+const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalog, dragHandleProps, eventStart, eventEnd, headcount }) => {
   const updateField = (field, value) => onUpdate({ ...meal, [field]: value });
   const updateItem = (itemIndex, field, value) => {
     const items = (meal.items || []).map((it, i) => (i === itemIndex ? { ...it, [field]: value } : it));
@@ -110,6 +153,10 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
     onUpdate({ ...meal, items: (meal.items || []).filter((_, i) => i !== itemIndex) });
 
   const parsedTime = parseMealTime(meal.time);
+  const overriddenHeadcount = meal.headcount_override != null && meal.headcount_override !== ""
+    ? Number(meal.headcount_override)
+    : headcount;
+  const mealCost = computeMealCostCents(meal, headcount);
 
   return (
     <Card variant="outlined" sx={{ mb: 2 }}>
@@ -122,6 +169,15 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
           <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }}>
             {meal.name || `Meal ${mealIndex + 1}`}
           </Typography>
+          {mealCost > 0 && (
+            <Chip
+              label={formatUSD(mealCost)}
+              size="small"
+              color="success"
+              variant="outlined"
+              sx={{ fontWeight: 700 }}
+            />
+          )}
           <Tooltip title="Duplicate this meal">
             <IconButton size="small" onClick={onClone} aria-label="Duplicate meal">
               <CloneIcon fontSize="small" />
@@ -135,7 +191,7 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
         </Stack>
 
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 5 }}>
             <TextField
               label="Name"
               fullWidth
@@ -145,7 +201,7 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
               placeholder="Saturday Lunch"
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 5 }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DateTimePicker
                 label="Time"
@@ -156,13 +212,27 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
                 slotProps={{ textField: { size: "small", fullWidth: true } }}
               />
             </LocalizationProvider>
-            {meal.time && !parsedTime && (
-              <Typography variant="caption" color="warning.main">
-                Legacy free-text time — pick a real datetime to upgrade.
-              </Typography>
-            )}
+          </Grid>
+          <Grid size={{ xs: 12, sm: 2 }}>
+            <TextField
+              label="People eating"
+              type="number"
+              size="small"
+              fullWidth
+              value={meal.headcount_override ?? ""}
+              onChange={(e) => updateField("headcount_override", e.target.value === "" ? null : Number(e.target.value))}
+              placeholder={String(headcount || 0)}
+              inputProps={{ min: 0 }}
+              helperText={meal.headcount_override == null ? `default ${headcount}` : "override"}
+            />
           </Grid>
         </Grid>
+
+        {meal.time && !parsedTime && (
+          <Typography variant="caption" color="warning.main" sx={{ display: "block", mt: 1 }}>
+            Legacy free-text time — pick a real datetime above to upgrade.
+          </Typography>
+        )}
 
         <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 2 }}>
           <FormControlLabel
@@ -198,21 +268,28 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
 
         {meal.catering_provided !== false && (
           <Box sx={{ mt: 2, pl: 2, borderLeft: "3px solid", borderColor: "primary.light" }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Menu options
-            </Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2">Menu options</Typography>
+              <Stack direction="row" spacing={1}>
+                <Button size="small" startIcon={<CatalogIcon />} variant="contained" color="primary" onClick={onOpenCatalog}>
+                  Browse menu
+                </Button>
+                <Button size="small" startIcon={<AddIcon />} onClick={addItem} variant="outlined">
+                  Blank item
+                </Button>
+              </Stack>
+            </Stack>
             <Stack spacing={2}>
               {(meal.items || []).map((item, i) => (
                 <Box key={item.id || i} sx={{ pb: 2, borderBottom: i < (meal.items.length - 1) ? "1px solid" : "none", borderColor: "divider" }}>
                   <Stack direction="row" spacing={1} alignItems="flex-start">
-                    <Box sx={{ flex: 1 }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
                       <TextField
                         label={`Item ${i + 1} name`}
                         size="small"
                         fullWidth
                         value={item.name || ""}
                         onChange={(e) => updateItem(i, "name", e.target.value)}
-                        placeholder="Margherita Pizza"
                       />
                       <TextField
                         label="Description"
@@ -222,29 +299,68 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
                         rows={2}
                         value={item.description || ""}
                         onChange={(e) => updateItem(i, "description", e.target.value)}
-                        placeholder="Tomato, fresh mozzarella, basil"
                         sx={{ mt: 1 }}
                       />
-                      <FormControl size="small" fullWidth sx={{ mt: 1 }}>
-                        <InputLabel>Dietary tags</InputLabel>
-                        <Select
-                          multiple
-                          value={item.dietary_tags || []}
-                          onChange={(e) => updateItem(i, "dietary_tags", e.target.value)}
-                          input={<OutlinedInput label="Dietary tags" />}
-                          renderValue={(selected) => (
-                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                              {selected.map((v) => (
-                                <Chip key={v} label={v} size="small" />
-                              ))}
-                            </Box>
-                          )}
-                        >
-                          {ALLOWED_DIETARY_TAGS.map((tag) => (
-                            <MenuItem key={tag} value={tag}>{tag}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1 }}>
+                        <TextField
+                          label="Price"
+                          type="number"
+                          size="small"
+                          value={item.price_cents != null ? (item.price_cents / 100).toString() : ""}
+                          onChange={(e) => {
+                            const dollars = parseFloat(e.target.value);
+                            const cents = Number.isFinite(dollars) ? Math.round(dollars * 100) : null;
+                            updateItem(i, "price_cents", cents);
+                          }}
+                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                          inputProps={{ min: 0, step: 0.25 }}
+                          sx={{ width: 130 }}
+                        />
+                        <FormControl size="small" sx={{ minWidth: 130 }}>
+                          <InputLabel>Unit</InputLabel>
+                          <Select
+                            label="Unit"
+                            value={item.unit || "per_person"}
+                            onChange={(e) => updateItem(i, "unit", e.target.value)}
+                          >
+                            <MenuItem value="per_person">per person</MenuItem>
+                            <MenuItem value="each">each (qty)</MenuItem>
+                            <MenuItem value="fixed">fixed total</MenuItem>
+                          </Select>
+                        </FormControl>
+                        {item.unit === "each" && (
+                          <TextField
+                            label="Qty"
+                            type="number"
+                            size="small"
+                            value={item.quantity ?? 1}
+                            onChange={(e) => updateItem(i, "quantity", Math.max(0, parseInt(e.target.value, 10) || 0))}
+                            inputProps={{ min: 0, step: 1 }}
+                            sx={{ width: 90 }}
+                          />
+                        )}
+                        <FormControl size="small" sx={{ flex: 1, minWidth: 200 }}>
+                          <InputLabel>Dietary tags</InputLabel>
+                          <Select
+                            multiple
+                            value={item.dietary_tags || []}
+                            onChange={(e) => updateItem(i, "dietary_tags", e.target.value)}
+                            input={<OutlinedInput label="Dietary tags" />}
+                            renderValue={(selected) => (
+                              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                {selected.map((v) => (
+                                  <Chip key={v} label={v} size="small" />
+                                ))}
+                              </Box>
+                            )}
+                          >
+                            {ALLOWED_DIETARY_TAGS.map((tag) => (
+                              <MenuItem key={tag} value={tag}>{tag}</MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Stack>
+                      <ItemCostRow item={item} headcount={overriddenHeadcount} />
                     </Box>
                     <IconButton size="small" color="error" onClick={() => removeItem(i)} aria-label="Remove item">
                       <DeleteIcon fontSize="small" />
@@ -252,11 +368,11 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
                   </Stack>
                 </Box>
               ))}
-              <Box>
-                <Button size="small" startIcon={<AddIcon />} onClick={addItem} variant="outlined">
-                  Add menu item
-                </Button>
-              </Box>
+              {(meal.items || []).length === 0 && (
+                <Typography variant="caption" color="text.secondary">
+                  No items yet. Click "Browse menu" to pick from Fat Freddy's, or add a blank item.
+                </Typography>
+              )}
             </Stack>
           </Box>
         )}
@@ -265,9 +381,6 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, dragHandlePr
   );
 };
 
-// What hackers see at the bottom of the application form. Keep this rendering
-// loose enough to remind the admin of the experience without depending on
-// any of the live components.
 const HackerPreview = ({ meals }) => {
   if (!meals || meals.length === 0) {
     return (
@@ -324,12 +437,70 @@ const HackerPreview = ({ meals }) => {
   );
 };
 
+const CostSummary = ({ meals, headcount }) => {
+  const [showFees, setShowFees] = useState(true);
+  const subtotal = computeAllMealsCostCents(meals, headcount);
+  if (subtotal === 0) return null;
+
+  const tax = Math.round((subtotal * DEFAULT_SURCHARGES.tax_pct) / 100);
+  const gratuity = Math.round((subtotal * DEFAULT_SURCHARGES.gratuity_pct) / 100);
+  const cardSurcharge = Math.round((subtotal * DEFAULT_SURCHARGES.card_surcharge_pct) / 100);
+  const delivery = DEFAULT_SURCHARGES.delivery_cents;
+  const grand = subtotal + tax + gratuity + cardSurcharge + delivery;
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2, bgcolor: "success.50", borderColor: "success.light" }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ sm: "center" }}>
+        <Box>
+          <Typography variant="overline" color="text.secondary">Estimated cost</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: "success.dark" }}>
+            {formatUSD(showFees ? grand : subtotal)}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {meals.length} meal slot{meals.length === 1 ? "" : "s"} · {headcount} people · {showFees ? "with" : "without"} typical fees
+          </Typography>
+        </Box>
+        <FormControlLabel
+          control={<Switch checked={showFees} onChange={(e) => setShowFees(e.target.checked)} />}
+          label="Include taxes & fees"
+        />
+      </Stack>
+      {showFees && (
+        <Box sx={{ mt: 1.5, fontSize: "0.85rem" }}>
+          <Stack spacing={0.25}>
+            <CostLine label="Subtotal" value={subtotal} />
+            <CostLine label={`Tax (${DEFAULT_SURCHARGES.tax_pct}%)`} value={tax} />
+            <CostLine label={`Gratuity (~${DEFAULT_SURCHARGES.gratuity_pct}%)`} value={gratuity} />
+            <CostLine label={`Card surcharge (${DEFAULT_SURCHARGES.card_surcharge_pct}%)`} value={cardSurcharge} />
+            <CostLine label="Delivery (flat)" value={delivery} />
+            <Divider sx={{ my: 0.5 }} />
+            <CostLine label="Estimated total" value={grand} bold />
+          </Stack>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, fontStyle: "italic" }}>
+            Surcharges based on Fat Freddy's quote (Phoenix, AZ). Adjust with the vendor.
+          </Typography>
+        </Box>
+      )}
+    </Paper>
+  );
+};
+
+const CostLine = ({ label, value, bold }) => (
+  <Stack direction="row" justifyContent="space-between" sx={{ fontWeight: bold ? 700 : 400 }}>
+    <Box>{label}</Box>
+    <Box>{formatUSD(value)}</Box>
+  </Stack>
+);
+
 const MealsSection = ({ admin }) => {
   const { hackathon, setConstraint, markSectionDirty, dirtySections, commitSection, discardSection, saveState } = admin;
   const meals = hackathon.constraints?.meals || [];
+  const headcount = hackathon.constraints?.meals_estimated_headcount ?? 50;
   const dirty = dirtySections.has("meals");
   const saving = saveState.status === "saving";
   const [showPreview, setShowPreview] = useState(true);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogTargetMeal, setCatalogTargetMeal] = useState(null);
 
   const eventStart = useMemo(
     () => (hackathon.start_date ? new Date(`${hackathon.start_date}T00:00:00`) : null),
@@ -363,6 +534,11 @@ const MealsSection = ({ admin }) => {
     updateMeals(next);
   };
 
+  const setHeadcount = (value) => {
+    setConstraint("meals_estimated_headcount", value);
+    // headcount is purely an estimation aid — no need to mark dirty
+  };
+
   const onDragEnd = (result) => {
     if (!result.destination) return;
     if (result.destination.index === result.source.index) return;
@@ -372,10 +548,24 @@ const MealsSection = ({ admin }) => {
     updateMeals(next);
   };
 
+  const openCatalogFor = (mealIndex) => {
+    setCatalogTargetMeal(mealIndex);
+    setCatalogOpen(true);
+  };
+
+  const handleCatalogAdd = (newItems) => {
+    if (catalogTargetMeal == null) return;
+    const target = meals[catalogTargetMeal];
+    if (!target) return;
+    const updated = { ...target, items: [...(target.items || []), ...newItems] };
+    updateOne(catalogTargetMeal, updated);
+    setCatalogTargetMeal(null);
+  };
+
   return (
     <SectionContainer
       title="Meals & Catering"
-      description="Configure meals served at the in-person event. Hackers pick one option per slot, so the catering team has exact orders. Drag to reorder."
+      description="Configure meals, pick items from a vendor catalog (Fat Freddy's seeded), and see live cost estimates. Drag to reorder. Hackers pick one option per slot."
       actions={
         <ToggleButtonGroup
           value={showPreview ? "preview" : "edit"}
@@ -392,6 +582,32 @@ const MealsSection = ({ admin }) => {
       onSave={() => commitSection("meals")}
       onDiscard={() => discardSection("meals")}
     >
+      <Stack spacing={2.5} sx={{ mb: 3 }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
+          <TextField
+            label="Estimated headcount"
+            type="number"
+            size="small"
+            value={headcount}
+            onChange={(e) => setHeadcount(Math.max(0, parseInt(e.target.value, 10) || 0))}
+            inputProps={{ min: 0, step: 1 }}
+            helperText="Used for cost estimates and per-meal defaults"
+            sx={{ maxWidth: 220 }}
+          />
+          <Button
+            size="medium"
+            variant="outlined"
+            startIcon={<CatalogIcon />}
+            onClick={() => openCatalogFor(null)}
+            disabled
+            sx={{ visibility: "hidden" }}
+          >
+            Browse menu
+          </Button>
+        </Stack>
+        <CostSummary meals={meals} headcount={headcount} />
+      </Stack>
+
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: showPreview ? 7 : 12 }}>
           {meals.length === 0 ? (
@@ -415,9 +631,11 @@ const MealsSection = ({ admin }) => {
                               onUpdate={(v) => updateOne(index, v)}
                               onRemove={() => removeOne(index)}
                               onClone={() => cloneOne(index)}
+                              onOpenCatalog={() => openCatalogFor(index)}
                               dragHandleProps={p.dragHandleProps}
                               eventStart={eventStart}
                               eventEnd={eventEnd}
+                              headcount={headcount}
                             />
                           </Box>
                         )}
@@ -463,6 +681,20 @@ const MealsSection = ({ admin }) => {
           </Grid>
         )}
       </Grid>
+
+      <MenuCatalogPicker
+        open={catalogOpen}
+        onClose={() => {
+          setCatalogOpen(false);
+          setCatalogTargetMeal(null);
+        }}
+        onAddItems={handleCatalogAdd}
+        headcount={
+          catalogTargetMeal != null && meals[catalogTargetMeal]?.headcount_override != null && meals[catalogTargetMeal].headcount_override !== ""
+            ? Number(meals[catalogTargetMeal].headcount_override)
+            : headcount
+        }
+      />
     </SectionContainer>
   );
 };
