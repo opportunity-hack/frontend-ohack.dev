@@ -10,6 +10,7 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 
 const FunnelContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -22,7 +23,7 @@ const FunnelContainer = styled(Paper)(({ theme }) => ({
 
 // Visual funnel "slice" that gets narrower for later stages.
 // Width is a percentage; color is per stage.
-const FunnelSlice = ({ widthPct, color, height = 84, children, value, label, sublabel, icon }) => {
+const FunnelSlice = ({ widthPct, color, height = 84, value, pctOfTop, label, sublabel, icon }) => {
   const theme = useTheme();
   const bg = `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.7)} 100%)`;
   return (
@@ -32,13 +33,12 @@ const FunnelSlice = ({ widthPct, color, height = 84, children, value, label, sub
         justifyContent: 'center',
         position: 'relative',
         width: '100%',
-        mb: 1,
       }}
     >
       <Box
         sx={{
           width: `${widthPct}%`,
-          minWidth: 220,
+          minWidth: 240,
           maxWidth: 760,
           minHeight: height,
           background: bg,
@@ -51,14 +51,14 @@ const FunnelSlice = ({ widthPct, color, height = 84, children, value, label, sub
           justifyContent: 'space-between',
           gap: 2,
           boxShadow: theme.shadows[2],
-          transition: 'transform 120ms',
-          '&:hover': { transform: 'translateY(-2px)' },
+          transition: 'transform 120ms, box-shadow 120ms',
+          '&:hover': { transform: 'translateY(-2px)', boxShadow: theme.shadows[4] },
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
           {icon}
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
               {label}
             </Typography>
             {sublabel && (
@@ -68,20 +68,46 @@ const FunnelSlice = ({ widthPct, color, height = 84, children, value, label, sub
             )}
           </Box>
         </Box>
-        <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+        <Box sx={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1 }}>
             {value?.toLocaleString?.() ?? value ?? '—'}
           </Typography>
-          {children && (
-            <Typography variant="caption" sx={{ opacity: 0.9 }}>
-              {children}
-            </Typography>
+          {pctOfTop != null && (
+            <Tooltip title="Share of the top of the funnel">
+              <Typography variant="caption" sx={{ opacity: 0.9, mt: 0.25 }}>
+                {pctOfTop}% of top
+              </Typography>
+            </Tooltip>
           )}
         </Box>
       </Box>
     </Box>
   );
 };
+
+// Compact chip rendered BETWEEN slices to make the drop-off the headline.
+const DropChip = ({ pct, color }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      my: 0.75,
+    }}
+  >
+    <Chip
+      icon={<TrendingDownIcon sx={{ fontSize: 16 }} />}
+      label={`${pct}% from previous`}
+      size="small"
+      sx={{
+        bgcolor: alpha(color, 0.15),
+        color,
+        border: `1px solid ${alpha(color, 0.4)}`,
+        fontWeight: 600,
+        height: 24,
+      }}
+    />
+  </Box>
+);
 
 const formatPct = (numerator, denominator) => {
   if (!denominator || numerator == null) return null;
@@ -125,17 +151,24 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
     const wonPrize = winners.won_prize ?? 0;
     const founding = winners.founding_engineers ?? 0;
 
-    // Width-scale relative to the widest known stage. Funnel widths are
-    // visual; counts at different stages aren't strictly comparable units
-    // (people vs. projects vs. winning teams).
+    // Width math: linear widths make the funnel useless when one stage is
+    // 14x another (everything below "Interested" collapses to the floor).
+    // Instead we (a) use log scaling so each stage stays distinguishable,
+    // and (b) enforce a monotonic step-down so the bars still TAPER even
+    // when two consecutive stages have similar magnitudes. The numeric
+    // dropoff is told separately via the drop chips between rows.
     const candidates = [interested, appliedHacker, formedTeam, started, submitted, wonPrize, founding]
       .filter((v) => typeof v === 'number');
     const top = candidates.length ? Math.max(...candidates, 1) : 1;
 
-    const minWidth = 26;
-    const widthFor = (val) => {
-      if (val == null || top === 0) return minWidth;
-      return Math.max(minWidth, Math.round((val / top) * 100));
+    const MIN_WIDTH = 22;        // floor so the narrowest bar is still readable
+    const MAX_WIDTH = 100;
+    const STEP = 5;              // each stage must be ≥ STEP% narrower than the previous
+    const logTop = Math.log1p(top);
+    const widthForLog = (val) => {
+      if (!Number.isFinite(val) || val <= 0 || logTop <= 0) return MIN_WIDTH;
+      const norm = Math.log1p(val) / logTop;   // 0..1
+      return MIN_WIDTH + norm * (MAX_WIDTH - MIN_WIDTH);
     };
 
     // For each stage, compute the "previous" stage value (the closest
@@ -201,13 +234,21 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
     ].filter(Boolean);
 
     let prevValue = null;
+    let prevWidth = MAX_WIDTH + STEP; // so the first stage isn't capped
     return stageDefs.map((s) => {
+      const rawWidth = widthForLog(Math.max(s.value || 0, 1));
+      // Cap so each stage is at least STEP% narrower than the previous one
+      // (enforces visual taper even when two stages have close magnitudes).
+      const cappedWidth = Math.min(rawWidth, prevWidth - STEP);
+      const finalWidth = Math.max(cappedWidth, MIN_WIDTH);
       const out = {
         ...s,
-        widthPct: widthFor(Math.max(s.value || 0, 1)),
+        widthPct: finalWidth,
         pctOf: prevValue ? formatPct(s.value, prevValue) : null,
+        pctOfTop: top ? formatPct(s.value, top) : null,
       };
       if (typeof s.value === 'number') prevValue = s.value;
+      prevWidth = finalWidth;
       return out;
     });
   }, [funnel, hasResults, theme]);
@@ -229,25 +270,32 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1 }}>
         {stages.map((s, idx) => (
-          <FunnelSlice
-            key={s.key}
-            widthPct={s.widthPct}
-            color={s.color}
-            icon={s.icon}
-            label={s.label}
-            sublabel={s.sublabel}
-            value={s.value}
-          >
+          <React.Fragment key={s.key}>
             {idx > 0 && s.pctOf != null && (
-              <Tooltip title={`${s.pctOf}% of the previous stage`}>
-                <span>{s.pctOf}% from previous</span>
-              </Tooltip>
+              <DropChip pct={s.pctOf} color={s.color} />
             )}
-          </FunnelSlice>
+            <FunnelSlice
+              widthPct={s.widthPct}
+              color={s.color}
+              icon={s.icon}
+              label={s.label}
+              sublabel={s.sublabel}
+              value={s.value}
+              pctOfTop={idx === 0 ? null : s.pctOfTop}
+            />
+          </React.Fragment>
         ))}
       </Box>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', textAlign: 'center', mb: 2 }}
+      >
+        Bar widths use a logarithmic scale so each stage stays readable — the
+        chips above each row tell the real dropoff story.
+      </Typography>
 
       {!hasResults && (
         <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
