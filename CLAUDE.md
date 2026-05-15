@@ -177,6 +177,21 @@ Public surfaces:
 ## Planning Card Budget Editor
 `PlanningCardDialog` has an inline budget editor (amount USD, bucket: food/prize/swag, state: estimated/committed/paid, vendor). Edits PATCH `card.budget` and feed `PlanningBudgetWidget` (event page widget gated by `planning.budget_widget_on_event_page`). Backend constants live in `model/planning.py` (`ALLOWED_BUDGET_BUCKETS`, `ALLOWED_BUDGET_STATES`, `MAX_BUDGET_CENTS`); keep frontend select options in sync. Clear with `{ budget: null }`. Read-only viewers still see the chip; editors get the form.
 
+## Hackathon Admin Edit (per-event page)
+The old "Edit Hackathon" Dialog at `/admin/hackathons` is gone. Editing now lives on `/admin/hackathons/[event_id]` with a left sidebar navigating between sections (`?section=overview|schedule|meals|participants|judges|nonprofits|media|planning|donations|links`). URLs are deep-linkable for sharing.
+
+- Page: `src/pages/admin/hackathons/[event_id].js`. List page (`index.js`) routes "Edit" buttons here and keeps a small "Add Hackathon" modal that bootstraps a row then redirects.
+- Layout: `src/components/admin/hackathon-edit/HackathonAdminLayout.js` — sticky header w/ save indicator, sidebar from `sectionsManifest.js`.
+- Hook: `src/components/admin/hackathon-edit/useHackathonAdmin.js` — owns `draft` + `committed` state and runs the **hybrid save model**:
+  - **Autosave** (debounced 1.5s PATCH `/api/messages/hackathon`): all "low-risk" keys.
+  - **Explicit Save** (sticky bar inside `SectionContainer`): `overview-dates`, `schedule`, `meals`, `screening`, `deposit`. While any of these are dirty, autosave is **paused** so unrelated text edits don't sneak through.
+  - The sidebar shows a yellow dot on sections with unsaved changes. `beforeunload` warns.
+- Section components live in `src/components/admin/hackathon-edit/sections/*.js`. Each receives `{ admin, accessToken, orgId, onSnack }`. To add a new section: append to `sectionsManifest.js` + create `<Slug>Section.js` + add to the `sectionLoaders` map in `[event_id].js`.
+- **Removed legacy components** (do not re-introduce): `DonationManagement.js` (had bolt-on "Update Donation Data" button), `MealManagement.js` (free-text time field), `CountdownManagement.js` (modal-per-edit, no reorder). Their replacements (inline donation editor, `MealsSection`, `ScheduleSection`) live under `hackathon-edit/sections/`.
+- The Meals editor uses `@hello-pangea/dnd` for drag-reorder, a real `DateTimePicker` constrained to the event window, a "Clone" button per slot, and a side-by-side "Hacker preview" pane (toggleable).
+- The Schedule editor groups countdowns by day in a timeline view with "Quick add" presets (Kickoff, Workshop, Coffee break, Lunch, Judging starts, Awards, Wrap-up). Single timezone selector at the top of the section defaults to the hackathon's `timezone`. List view is a fallback that supports drag-reorder.
+- `ALLOWED_DIETARY_TAGS` lives in `MealsSection.js` (was previously in the deleted `MealManagement.js`). Keep in sync with backend `validators.py`.
+
 ## Hackathon Per-Event Config (admin → `constraints`)
 The `constraints` object on a hackathon doc carries per-event toggles. Keys consumed by the application forms:
 - `judge_venue_arrival_time` (HH:MM, 24-hour) — judge form's Availability step shows it when set; falls back to existing default copy when null.
