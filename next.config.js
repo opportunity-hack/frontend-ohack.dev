@@ -54,18 +54,7 @@ module.exports = {
       // (Google treats hyphens as word separators; underscores are not split.
       //  season-first matches how users search: "fall 2026 hackathon".)
       // Two rules per pattern: bare URL + any sub-paths (:path* is 1+).
-      {
-        source:
-          "/hack/:year(\\d{4})_:season(fall|spring|summer|winter)",
-        destination: "/hack/:season-:year",
-        permanent: true,
-      },
-      {
-        source:
-          "/hack/:year(\\d{4})_:season(fall|spring|summer|winter)/:path*",
-        destination: "/hack/:season-:year/:path*",
-        permanent: true,
-      },
+      
     ];
   },
 

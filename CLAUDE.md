@@ -51,6 +51,20 @@ Patterns that must stay in place to keep Google Search Console CWV green:
 - Iframes (YouTube, Instagram, Calendar) must be wrapped in an aspect-ratio container (the existing pattern is `paddingBottom: '56.25%'` with `height: 0` + absolutely-positioned iframe) or given a fixed pixel height.
 - `initFacebookPixel` in `src/lib/ga/index.js` is idempotent via `pixelInitPromise`. Don't add `ReactPixel.init` calls outside of it.
 
+## Admin Profile Search (`/admin/profile`)
+Search-first people-finder. Single file: `src/pages/admin/profile/index.js`. Backend `GET /api/messages/admin/profiles` returns all users; filtering is client-side across ~14 fields (no server-side search). Auth: `userClass.hasPermission("profile.admin")`.
+
+Load-bearing details:
+- **`?q=<term>` is the canonical search state** and the destination of the Chrome `ohadmin` site-search shortcut (`https://www.ohack.dev/admin/profile?q=%s`). Do NOT add redirects that strip query params (e.g. `router.replace('/admin/profile')` without preserving `...router.query`) — it silently breaks the shortcut.
+- URL ↔ input sync uses the CLAUDE.md "Shareable dialog state" pattern: hydrate once with `initFromUrlRef`, react to back/forward via a separate effect with a `lastUrlQRef` echo guard, write to URL via `lodash.debounce` (250ms) with `router.replace({ shallow: true, scroll: false })`.
+- Keyboard: `⌘K` or `/` focuses search (with typing-elsewhere guard); `Esc` clears query + focuses search; rows are `tabIndex={0}` with `Enter`/`Space` opening `/profile/{id}` in a new tab.
+- Default view is **compact list** (`Table`), not cards. Toggle persisted in `localStorage["ohack.adminProfile.viewMode"]` (values: `"list" | "grid"`).
+- Other localStorage keys: `ohack.adminProfile.setupHelpDismissed` (Chrome-shortcut tip banner), `ohack.adminProfile.listToastSeen` (reserved for a future toast).
+- Quick actions on every row/card link to `/profile/{user.id}` — that's the Firestore `id`, NOT `user_id` (gotcha). Volunteer deep link uses `/admin/volunteer?filter=<email>` (the volunteer page reads `filter=`, not `search=`).
+- `BestMatchHero` shows when the query is an exact name/email match or an `@`-shaped query that uniquely hits one email. `MatchPills` strip shows when 2–5 results.
+- `highlightMatch(text, query)` is a single-substring helper (not multi-term). Stays consistent with the underlying filter, which also matches the full string against each field.
+- `UserSearchDialog.js` still duplicates the fetch+filter logic — extract a shared `useAdminProfilesSearch()` hook when convenient.
+
 ## Admin Email Compose (`AdminEmailCompose`)
 - The component accepts an optional `fixedSubject` prop. When set, the Subject field is read-only and that exact value is sent.
 - `ContactSubmissionDetailDialog` passes a subject derived from `submission.inquiryType` matching the backend format in `backend-ohack.dev/api/contact/contact_service.py`: `Contact Us: {inquiry_type_display.lower()} - Opportunity Hack`. The `INQUIRY_TYPE_DISPLAY` map in `ContactSubmissionDetailDialog.js` must stay in sync with the backend's map so admin replies thread with the original confirmation email.
@@ -232,6 +246,24 @@ Keep both files in sync if the copy changes. Do not call `setError(...)` for the
 
 ## Mentor + Judge Pending-Review Confirmation Email
 Backend `send_volunteer_confirmation_email()` (`services/volunteers_service.py`) now adds a `[Pending Review]` subject prefix and a yellow "your application is pending review — up to a week" banner for `volunteer_type in ("mentor","judge")`. Role-specific next-steps live under an "Once approved" heading. Hacker confirmations (when added) should keep the existing "received" framing since they don't go through staff review.
+
+## Hackathon Results & Hacker Funnel
+Per-event results live on a dedicated page `/hack/[event_id]/results` that renders the existing `HackathonResults` component plus a new `HackathonFunnel` viz. The funnel reads from a new public-safe summary doc.
+
+Subcollection: `hackathons/{hackathon_doc_id}/funnel/summary` — counts only (no PII):
+- `registered`, `started_project`, `submitted_project`, `submitted_gallery_visible`
+- `status_breakdown`, `step_breakdown`, `referral_breakdown`, `teammate_intent_breakdown`, `country_breakdown`
+- `source`, `source_files`, `last_updated`, `last_updated_by`
+
+Winning + founding-engineer counts are NOT stored in the summary — they're computed at read time from the teams collection (status in `WINNING_STATUSES`) so they stay fresh as judging changes. The funnel response also includes a `participation` block computed live: `applied_as_hacker` (count of `volunteers` docs for the event with `volunteer_type=hacker`, no `isSelected` filter — matches `HackathonResults.js`) and `formed_team` (count of unique user-doc IDs across all teams linked to this hackathon, deduped because a person could be on more than one team).
+
+Backend: `GET /api/messages/hackathon/{event_id}/funnel` (5-min TTL cache, public, no auth). Service in `services/hackathons_service.py::get_hackathon_funnel`. Cache is cleared via `clear_cache()` along with the other hackathon caches.
+
+Aggregate (all-time): `GET /api/messages/hackathons/funnel/aggregate` (10-min cache) sums every stage across every hackathon — no cross-event dedup, so a person in three events counts three times. Service: `get_hackathon_funnel_aggregate`. Page: `/hack/results` (no event_id) renders the same `HackathonFunnel` viz on aggregate data. Per-event dedup IS applied (a person on multiple winning teams in one event is counted once for that event), but across events totals are summed.
+
+Backfill script: `backend-ohack.dev/scripts/backfill_devpost_funnel.py` — dry-run by default. Takes `--registrants-csv` and/or `--projects-csv` (Devpost exports). Re-running is idempotent — the summary doc is fully overwritten on `--apply`.
+
+Front-of-house: `HackathonResults` accepts a `fullResultsHref` prop. On `/hack/[event_id]` it points to `/hack/[event_id]/results` so users can jump to the deeper page. The /results page renders the same `HackathonResults` widget at top + `HackathonFunnel` below.
 
 ## Local Landing Pages
 
