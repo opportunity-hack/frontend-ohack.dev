@@ -10,3 +10,4 @@ sitemap*.xml
 **/robots.txt
 test-results/.last-run.json
 test-scroll-behavior.sh
+.claude/
