@@ -192,6 +192,20 @@ The old "Edit Hackathon" Dialog at `/admin/hackathons` is gone. Editing now live
 - The Schedule editor groups countdowns by day in a timeline view with "Quick add" presets (Kickoff, Workshop, Coffee break, Lunch, Judging starts, Awards, Wrap-up). Single timezone selector at the top of the section defaults to the hackathon's `timezone`. List view is a fallback that supports drag-reorder.
 - `ALLOWED_DIETARY_TAGS` lives in `MealsSection.js` (was previously in the deleted `MealManagement.js`). Keep in sync with backend `validators.py`.
 
+### Vendor menu catalog (Meals section)
+The Meals editor has a "Browse menu" button on each meal slot that opens a searchable catalog picker. Catalog files live in `src/components/admin/hackathon-edit/catalog/`:
+- `fatFreddysCatalog.js` — seeded items from Fat Freddy's Catering (Phoenix). Update freely as menus change. Items have `{ id, category, name, description, price_cents, unit, min_quantity, dietary_tags, bundled_with? }`. `unit` is `"per_person" | "each" | "fixed"`.
+- `catalogStorage.js` — combines the seeded catalog with user-added items persisted to `localStorage` under `ohack_admin_menu_catalog_v1`. New vendors / items added via the picker's "Add a custom item" form go here. (Promote to backend storage if you want cross-device sharing.)
+- `MenuCatalogPicker.js` — the dialog. Filters by vendor + category, search across name/description, multi-select to add to a meal.
+- `formatCurrency.js` — USD formatters and `computeItemCostCents` / `computeMealCostCents` / `computeAllMealsCostCents`.
+
+Cost extras stored on the hackathon doc (both pass through the permissive `validate_meals` validator without backend changes):
+- `constraints.meals_estimated_headcount` (int, default 50) — used as the default people-eating count for cost estimates.
+- `meal.headcount_override` (int, optional) — per-slot override when not all attendees eat that meal.
+- `meal.items[i]` gains optional `price_cents`, `unit`, `quantity` (for `each`), `vendor`, `catalog_item_id` fields.
+
+`MealsSection` shows a "Estimated cost" summary card at the top of the section using the Fat Freddy's quote defaults (8.6% AZ tax, ~10% gratuity, 2.9% card surcharge, $45 delivery) — toggleable. Per-meal subtotals display as a green chip on each meal card; per-item cost shows under each priced item.
+
 ## Hackathon Per-Event Config (admin → `constraints`)
 The `constraints` object on a hackathon doc carries per-event toggles. Keys consumed by the application forms:
 - `judge_venue_arrival_time` (HH:MM, 24-hour) — judge form's Availability step shows it when set; falls back to existing default copy when null.
