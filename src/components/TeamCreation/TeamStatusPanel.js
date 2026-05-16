@@ -48,6 +48,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import StarIcon from '@mui/icons-material/Star';
 import Link from 'next/link';
+import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -244,6 +245,8 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
   const [selectedVideo, setSelectedVideo] = useState('');
   const [devpostSubmissions, setDevpostSubmissions] = useState({});
   const [devpostLoading, setDevpostLoading] = useState({});
+  const [demoVideoSubmissions, setDemoVideoSubmissions] = useState({});
+  const [demoVideoLoading, setDemoVideoLoading] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Select a random waiting video on component mount
@@ -337,6 +340,74 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
   // Handle input change for DevPost URL
   const handleDevPostInputChange = (teamId, value) => {
     setDevpostSubmissions(prev => ({ ...prev, [teamId]: value }));
+  };
+
+  // Demo video URL: accept YouTube, Vimeo, Loom, or Google Drive (matches VideoDisplay providers)
+  const isValidDemoVideoUrl = (url) => {
+    if (!url) return false;
+    const trimmed = url.trim();
+    return (
+      /youtube\.com\/.+v=[\w-]{11}/i.test(trimmed) ||
+      /youtu\.be\/[\w-]{11}/i.test(trimmed) ||
+      /vimeo\.com\/\d+/i.test(trimmed) ||
+      /loom\.com\/(share|embed)\/[a-zA-Z0-9]+/i.test(trimmed) ||
+      /drive\.google\.com\/file\/d\//i.test(trimmed)
+    );
+  };
+
+  const handleDemoVideoInputChange = (teamId, value) => {
+    setDemoVideoSubmissions(prev => ({ ...prev, [teamId]: value }));
+  };
+
+  const handleDemoVideoSubmit = async (teamId) => {
+    const url = (demoVideoSubmissions[teamId] || '').trim();
+    if (!url) {
+      setSnackbar({ open: true, message: 'Please enter a video URL', severity: 'error' });
+      return;
+    }
+    if (!isValidDemoVideoUrl(url)) {
+      setSnackbar({
+        open: true,
+        message: 'Please enter a YouTube, Vimeo, Loom, or Google Drive video URL.',
+        severity: 'error',
+      });
+      return;
+    }
+
+    setDemoVideoLoading(prev => ({ ...prev, [teamId]: true }));
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${teamId}/demo-video`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ demo_video_url: url }),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to update demo video');
+
+      // Mirror DevPost handler: snackbar success; team prop is owned by parent.
+      // Locally update the input value to the saved URL so the preview reflects truth.
+      setDemoVideoSubmissions(prev => ({ ...prev, [teamId]: url }));
+
+      setSnackbar({
+        open: true,
+        message: 'Demo video saved! Judges and visitors will see it on the event page.',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error updating demo video URL:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update demo video. Please try again.',
+        severity: 'error',
+      });
+    } finally {
+      setDemoVideoLoading(prev => ({ ...prev, [teamId]: false }));
+    }
   };
 
   // Handle loading state with better UX
@@ -1340,7 +1411,101 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                           Judging Criteria
                         </Button>
                       </Box>
-                    </Box>                    
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+
+              {/* Demo Video Section */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  gutterBottom
+                  sx={{ display: "flex", alignItems: "center" }}
+                >
+                  <YouTubeIcon fontSize="small" sx={{ mr: 1 }} /> Demo Video
+                </Typography>
+                <Card
+                  variant="outlined"
+                  sx={{ borderLeft: "4px solid #c4302b", borderRadius: 1 }}
+                >
+                  <CardContent>
+                    {team.demo_video_url ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <CheckIcon sx={{ color: 'success.main', mr: 1 }} />
+                        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                          Demo Video Linked
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Typography
+                        variant="body1"
+                        paragraph
+                        sx={{ color: "text.secondary", fontSize: "1.05rem" }}
+                      >
+                        🎬 <strong>Share Your Demo Video:</strong> Paste a public YouTube (or Vimeo / Loom / Google Drive) link so judges and visitors can watch your demo right from the event page.
+                      </Typography>
+                    )}
+
+                    <TextField
+                      fullWidth
+                      label="Demo Video URL"
+                      placeholder="https://youtu.be/..."
+                      value={demoVideoSubmissions[team.id] ?? team.demo_video_url ?? ''}
+                      onChange={(e) => handleDemoVideoInputChange(team.id, e.target.value)}
+                      error={
+                        !!demoVideoSubmissions[team.id] &&
+                        !isValidDemoVideoUrl(demoVideoSubmissions[team.id])
+                      }
+                      helperText={
+                        demoVideoSubmissions[team.id] && !isValidDemoVideoUrl(demoVideoSubmissions[team.id])
+                          ? "Enter a YouTube, Vimeo, Loom, or Google Drive URL."
+                          : team.demo_video_url && !demoVideoSubmissions[team.id]
+                          ? "Your current demo video is shown above."
+                          : "Public link only — viewers will not need to sign in."
+                      }
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <YouTubeIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ mb: 2 }}
+                    />
+
+                    {(() => {
+                      const previewUrl =
+                        (demoVideoSubmissions[team.id] && isValidDemoVideoUrl(demoVideoSubmissions[team.id])
+                          ? demoVideoSubmissions[team.id]
+                          : team.demo_video_url) || null;
+                      return previewUrl ? (
+                        <Box sx={{ mb: 2, maxWidth: 360 }}>
+                          <LiteVideoThumbnail
+                            url={previewUrl}
+                            label="Preview"
+                            onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
+                          />
+                        </Box>
+                      ) : null;
+                    })()}
+
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleDemoVideoSubmit(team.id)}
+                        disabled={
+                          demoVideoLoading[team.id] ||
+                          !demoVideoSubmissions[team.id] ||
+                          !isValidDemoVideoUrl(demoVideoSubmissions[team.id])
+                        }
+                        startIcon={demoVideoLoading[team.id] ? <CircularProgress size={16} /> : <SendIcon />}
+                      >
+                        {demoVideoLoading[team.id] ? 'Saving...' : (team.demo_video_url ? 'Update Video' : 'Save Video')}
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Box>

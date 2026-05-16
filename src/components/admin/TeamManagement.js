@@ -66,7 +66,9 @@ import {
   FaExternalLinkAlt,
   FaCheckCircle,
   FaBug,
-  FaLink
+  FaLink,
+  FaVideo,
+  FaPlus
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
@@ -74,7 +76,9 @@ import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/router';
 import useHackathonEvents from '../../hooks/use-hackathon-events';
 import UserSearchDialog from './UserSearchDialog';
-import { TEAM_STATUS_OPTIONS, getStatusOption } from '../../constants/teamStatus';
+import TeamFieldPopover from './TeamFieldPopover';
+import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
+import { TEAM_STATUS_OPTIONS, getStatusOption, WINNING_STATUSES, isWinningStatus } from '../../constants/teamStatus';
 
 // GitHub Issue Templates for different hackathon phases
 // Returns templates with event-specific URLs based on the provided eventId
@@ -293,6 +297,17 @@ const TeamManagement = ({ orgId }) => {
   const [expandedRepo, setExpandedRepo] = useState(null);
   const [githubIssueSummaries, setGithubIssueSummaries] = useState({}); // Add state for table issue summaries
 
+  // Status / completeness filter applied above the team table
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  // Inline quick-edit popover (for video and devpost columns)
+  const [popoverState, setPopoverState] = useState({
+    open: false,
+    anchorEl: null,
+    team: null,
+    field: null,
+  });
+
   // Handle URL parameters and set initial state
   useEffect(() => {
     if (!router?.query) return;
@@ -353,31 +368,42 @@ const TeamManagement = ({ orgId }) => {
   }, [selectedHackathon]);
 
   console.log("Team Data:", teamData);
-  // Filter teams based on search term
+  // Filter teams based on search term + active filter chip
   useEffect(() => {
     if (!teams) return;
 
-    const filtered = teams.filter(
-      (team) => {
-        const searchLower = searchTerm.toLowerCase();
-        
-        // Check team name
-        const nameMatch = team.name?.toLowerCase().includes(searchLower);
-        
-        // Check slack channel
-        const slackMatch = team.slack_channel?.toLowerCase().includes(searchLower);
-        
-        // Check team members - with null-safe checks
-        const memberMatch = team.team_members?.some(
-          (member) => member?.name?.toLowerCase().includes(searchLower)
-        );
-        
-        return nameMatch || slackMatch || memberMatch;
+    const searchLower = searchTerm.toLowerCase();
+    const filtered = teams.filter((team) => {
+      // Search filter
+      const nameMatch = team.name?.toLowerCase().includes(searchLower);
+      const slackMatch = team.slack_channel?.toLowerCase().includes(searchLower);
+      const memberMatch = team.team_members?.some(
+        (member) => member?.name?.toLowerCase().includes(searchLower)
+      );
+      const matchesSearch = !searchLower || nameMatch || slackMatch || memberMatch;
+      if (!matchesSearch) return false;
+
+      // Chip filter
+      switch (activeFilter) {
+        case 'winning':
+          return isWinningStatus(team.status);
+        case 'in_review':
+          return (team.status || 'IN_REVIEW') === 'IN_REVIEW';
+        case 'active':
+          return team.active === 'True' || team.active === true;
+        case 'missing_devpost':
+          return !team.devpost_link;
+        case 'missing_video':
+          return !team.demo_video_url;
+        case 'all':
+        default:
+          return true;
       }
-    );
+    });
 
     setFilteredTeams(filtered);
-  }, [searchTerm, teams]);
+    setPage(0);
+  }, [searchTerm, teams, activeFilter]);
 
   // Sort teams when sortConfig changes
   useEffect(() => {
@@ -583,35 +609,87 @@ const TeamManagement = ({ orgId }) => {
     }));
   };
 
-  // Save team updates
+  // Low-level PATCH helper used by both the full edit Dialog save and inline Popover quick-edits.
+  // `partial` should include `id` and whatever fields to update. Caller is responsible for
+  // showing snackbars and refreshing list state if it cares about them.
+  const patchTeam = useCallback(async (partial) => {
+    const response = await axios.patch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,
+      partial,
+      {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "content-type": "application/json",
+          "X-Org-Id": orgId,
+        },
+      }
+    );
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || "Update failed");
+    }
+    return response.data;
+  }, [accessToken, orgId]);
+
+  // Save team updates from the full edit Dialog
   const handleSaveTeam = async () => {
     setLoading(true);
     try {
-      const response = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,        
-        {
-            ...teamData,
-            active: teamData.active ? "True" : "False",          
-        },
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            "content-type": "application/json",
-            "X-Org-Id": orgId,
-          },                
-        });
-
-      if (response.data && response.data.success) {
-        enqueueSnackbar("Team updated successfully", { variant: "success" });
-        setEditDialogOpen(false);
-        fetchTeams(selectedHackathon);
-      }
+      await patchTeam({
+        ...teamData,
+        active: teamData.active ? "True" : "False",
+      });
+      enqueueSnackbar("Team updated successfully", { variant: "success" });
+      setEditDialogOpen(false);
+      fetchTeams(selectedHackathon);
     } catch (error) {
       console.error("Error updating team:", error);
       enqueueSnackbar("Failed to update team", { variant: "error" });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Optimistic inline-edit save used by TeamFieldPopover.
+  // Updates the local teams list immediately so the table reflects the change without a full refetch.
+  const handleQuickPatch = useCallback(async (team, partial) => {
+    try {
+      await patchTeam({ id: team.id, ...partial });
+      setTeams((prev) =>
+        prev.map((t) => (t.id === team.id ? { ...t, ...partial } : t))
+      );
+      enqueueSnackbar("Team updated", { variant: "success" });
+    } catch (error) {
+      console.error("Quick-edit failed:", error);
+      enqueueSnackbar("Failed to update team", { variant: "error" });
+      throw error;
+    }
+  }, [patchTeam, enqueueSnackbar]);
+
+  // Demo-video URL validator shared by the Popover and the full edit Dialog
+  const validateDemoVideoUrl = (value) => {
+    if (!value) return null; // empty = clear (allowed)
+    const trimmed = value.trim();
+    if (trimmed.length > 500) return "URL too long (500 char max).";
+    const valid =
+      /youtube\.com\/.+v=[\w-]{11}/i.test(trimmed) ||
+      /youtu\.be\/[\w-]{11}/i.test(trimmed) ||
+      /vimeo\.com\/\d+/i.test(trimmed) ||
+      /loom\.com\/(share|embed)\/[a-zA-Z0-9]+/i.test(trimmed) ||
+      /drive\.google\.com\/file\/d\//i.test(trimmed);
+    return valid ? null : "Enter a YouTube, Vimeo, Loom, or Google Drive URL.";
+  };
+
+  const openVideoPopover = (event, team) => {
+    setPopoverState({
+      open: true,
+      anchorEl: event.currentTarget,
+      team,
+      field: "demo_video_url",
+    });
+  };
+
+  const closePopover = () => {
+    setPopoverState((prev) => ({ ...prev, open: false }));
   };
 
   // Send message to team's slack channel
@@ -1417,6 +1495,53 @@ const TeamManagement = ({ orgId }) => {
 
                 <TextField
                   fullWidth
+                  label="Demo Video URL"
+                  value={teamData.demo_video_url || ""}
+                  onChange={(e) =>
+                    handleTeamDataChange("demo_video_url", e.target.value)
+                  }
+                  placeholder="https://youtu.be/..."
+                  error={!!validateDemoVideoUrl(teamData.demo_video_url)}
+                  helperText={
+                    validateDemoVideoUrl(teamData.demo_video_url) ||
+                    "YouTube, Vimeo, Loom, or Google Drive"
+                  }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <FaVideo />
+                      </InputAdornment>
+                    ),
+                    endAdornment: teamData.demo_video_url && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          component="a"
+                          href={teamData.demo_video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          color="primary"
+                        >
+                          <FaExternalLinkAlt size={14} />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                {teamData.demo_video_url && !validateDemoVideoUrl(teamData.demo_video_url) && (
+                  <Box sx={{ maxWidth: 320 }}>
+                    <LiteVideoThumbnail
+                      url={teamData.demo_video_url}
+                      label="Preview"
+                      onClick={() =>
+                        window.open(teamData.demo_video_url, '_blank', 'noopener,noreferrer')
+                      }
+                    />
+                  </Box>
+                )}
+
+                <TextField
+                  fullWidth
                   label="Admin Notes (Private)"
                   value={teamData.admin_notes || ""}
                   onChange={(e) =>
@@ -2022,6 +2147,36 @@ const TeamManagement = ({ orgId }) => {
             />
           </Grid>
         </Grid>
+
+        {/* Filter chips — quick scoping for demo/judging-day workflows */}
+        {selectedHackathon && (
+          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+              Show:
+            </Typography>
+            {[
+              { key: 'all',             label: 'All' },
+              { key: 'winning',         label: 'Winning' },
+              { key: 'in_review',       label: 'In review' },
+              { key: 'active',          label: 'Active' },
+              { key: 'missing_devpost', label: 'Missing DevPost' },
+              { key: 'missing_video',   label: 'Missing Video' },
+            ].map((f) => {
+              const selected = activeFilter === f.key;
+              return (
+                <Chip
+                  key={f.key}
+                  label={f.label}
+                  size="small"
+                  clickable
+                  color={selected ? 'primary' : 'default'}
+                  variant={selected ? 'filled' : 'outlined'}
+                  onClick={() => setActiveFilter(f.key)}
+                />
+              );
+            })}
+          </Box>
+        )}
       </Paper>
 
       {loading && !editDialogOpen ? (
@@ -2118,6 +2273,7 @@ const TeamManagement = ({ orgId }) => {
                     <TableCell>Members</TableCell>
                     <TableCell>GitHub</TableCell>
                     <TableCell>DevPost</TableCell>
+                    <TableCell>Demo Video</TableCell>
                     <TableCell>Nonprofit</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
@@ -2215,6 +2371,28 @@ const TeamManagement = ({ orgId }) => {
                             </Link>
                           ) : (
                             <Typography variant="body2" color="text.secondary">—</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {team.demo_video_url ? (
+                            <Box sx={{ width: 96 }}>
+                              <LiteVideoThumbnail
+                                url={team.demo_video_url}
+                                width={96}
+                                height={54}
+                                label="Edit demo video"
+                                onClick={(e) => openVideoPopover(e, team)}
+                              />
+                            </Box>
+                          ) : (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<FaPlus size={10} />}
+                              onClick={(e) => openVideoPopover(e, team)}
+                            >
+                              Add
+                            </Button>
                           )}
                         </TableCell>
                         <TableCell>
@@ -2722,6 +2900,37 @@ const TeamManagement = ({ orgId }) => {
           }}
         />
       )}
+
+      {/* Inline quick-edit popover (video / devpost) */}
+      <TeamFieldPopover
+        open={popoverState.open}
+        anchorEl={popoverState.anchorEl}
+        onClose={closePopover}
+        team={popoverState.team}
+        field={popoverState.field}
+        label={
+          popoverState.field === 'demo_video_url'
+            ? 'Demo Video URL'
+            : popoverState.field === 'devpost_link'
+            ? 'DevPost Link'
+            : 'Value'
+        }
+        placeholder={
+          popoverState.field === 'demo_video_url'
+            ? 'https://youtu.be/...'
+            : popoverState.field === 'devpost_link'
+            ? 'https://devpost.com/software/...'
+            : ''
+        }
+        helperText={
+          popoverState.field === 'demo_video_url'
+            ? 'YouTube, Vimeo, Loom, or Google Drive'
+            : ''
+        }
+        validate={popoverState.field === 'demo_video_url' ? validateDemoVideoUrl : undefined}
+        previewKind={popoverState.field === 'demo_video_url' ? 'video' : 'none'}
+        onSave={handleQuickPatch}
+      />
     </div>
   );
 };

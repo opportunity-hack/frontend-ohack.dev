@@ -19,6 +19,7 @@ import PendingIcon from '@mui/icons-material/HourglassTop';
 import { useAuthInfo } from '@propelauth/react';
 import { WINNING_STATUSES, isWinningStatus, getWinningStatus } from '../../constants/teamStatus';
 import TeamMember from './TeamMember';
+import VideoDisplay from '../VideoDisplay/VideoDisplay';
 
 const RANK_STYLES = {
   1: { gradient: 'linear-gradient(135deg, #FFD700 0%, #FFA000 100%)', emoji: '\uD83E\uDD47', border: '#FFD700' },
@@ -313,6 +314,15 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
                             );
                           })}
                         </Grid>
+                      </Box>
+                    )}
+
+                    {team.demo_video_url && (
+                      <Box sx={{ mb: 2 }}>
+                        <VideoDisplay
+                          url={team.demo_video_url}
+                          title={`${team.name} demo`}
+                        />
                       </Box>
                     )}
 
