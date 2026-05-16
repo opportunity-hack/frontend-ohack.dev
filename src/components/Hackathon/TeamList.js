@@ -44,12 +44,15 @@ import {
   FaHandshake,
   FaUsers,
   FaShieldAlt,
+  FaTimes,
 } from 'react-icons/fa';
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { TEAM_STATUS_OPTIONS, getStatusOption, isJoiningDisabled } from '../../constants/teamStatus';
 import { isHackathonExpired } from '../../lib/dateUtils';
+import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
+import VideoDisplay from '../VideoDisplay/VideoDisplay';
 
 // Helper function to check if team status prevents joining
 const isJoiningDisabledByStatus = (status) => {
@@ -777,7 +780,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken, onCopyGithubUsername }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -938,6 +941,17 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
           )}
         </Box>
 
+        {/* Demo Video */}
+        {team?.demo_video_url && (
+          <Box sx={{ mb: 1.5 }}>
+            <LiteVideoThumbnail
+              url={team.demo_video_url}
+              label={`Watch ${team?.name || 'team'} demo`}
+              onClick={() => onPlayVideo?.(team.demo_video_url, team?.name)}
+            />
+          </Box>
+        )}
+
         {/* DevPost Project */}
         <Box sx={{ mb: 1 }}>
           {team?.devpost_link ? (
@@ -1083,7 +1097,20 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
   const [userProfile, setUserProfile] = useState(null);
   const [nonprofitMap, setNonprofitMap] = useState({});
   const [nonprofitsLoading, setNonprofitsLoading] = useState(false);
+  const [videoDialog, setVideoDialog] = useState({
+    open: false,
+    url: null,
+    teamName: null,
+  });
   const { isLoggedIn, accessToken } = useAuthInfo();
+
+  const handlePlayVideo = useCallback((url, teamName) => {
+    setVideoDialog({ open: true, url, teamName: teamName || null });
+  }, []);
+
+  const handleCloseVideoDialog = useCallback(() => {
+    setVideoDialog((prev) => ({ ...prev, open: false }));
+  }, []);
 
   // Check if team joining is enabled from constraints
   const teamJoinEnabled = constraints.team_join_enabled !== false; // Default to true if not specified
@@ -1409,10 +1436,38 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
               nonprofitMap={nonprofitMap}
               accessToken={accessToken}
               onCopyGithubUsername={handleCopyGithubUsername}
+              onPlayVideo={handlePlayVideo}
             />
           </Grid>        
         ))}
       </Grid>
+
+      <Dialog
+        open={videoDialog.open}
+        onClose={handleCloseVideoDialog}
+        maxWidth="md"
+        fullWidth
+        aria-labelledby="team-demo-video-title"
+      >
+        <DialogTitle id="team-demo-video-title" sx={{ pr: 6 }}>
+          {videoDialog.teamName ? `${videoDialog.teamName} demo` : "Team demo"}
+          <IconButton
+            aria-label="Close demo video"
+            onClick={handleCloseVideoDialog}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <FaTimes />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {videoDialog.url && (
+            <VideoDisplay
+              url={videoDialog.url}
+              title={videoDialog.teamName || "Team demo"}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}

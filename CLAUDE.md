@@ -265,6 +265,21 @@ Backfill script: `backend-ohack.dev/scripts/backfill_devpost_funnel.py` — dry-
 
 Front-of-house: `HackathonResults` accepts a `fullResultsHref` prop. On `/hack/[event_id]` it points to `/hack/[event_id]/results` so users can jump to the deeper page. The /results page renders the same `HackathonResults` widget at top + `HackathonFunnel` below.
 
+## Team Demo Videos
+Per-team `demo_video_url` (string) + companion `demo_video_url_submitted` (ISO timestamp, set on first save). Stored on the Firestore `teams` doc, mirrors the `devpost_link` shape. Allowed providers: YouTube, Vimeo, Loom, Google Drive (same set the `VideoDisplay` component handles).
+- **Backend:** field in `edit_team()` allowlist (`api/teams/teams_service.py`). Hacker self-serve via `POST /api/team/<teamid>/demo-video` (mirrors `/devpost`). Admin uses the existing `PATCH /api/team/edit` (gated on `volunteer.admin`).
+- **Public display:** `TeamList.js` shows a `<LiteVideoThumbnail>` per team card (CWV-safe — single lazy `<img>` of the YouTube hqdefault.jpg, NOT an iframe per card). Click → one page-level `<Dialog>` with `<VideoDisplay>`. Per-card iframes were rejected because 30+ embeds = ~45MB and trashes LCP/CLS.
+- **Winners (`HackathonResults` on `/hack/[id]/results`):** inline `<VideoDisplay>` embed — only 3-5 cards so direct iframe is fine. Iframe has `loading="lazy"`.
+- **Hacker self-serve:** `TeamCreation/TeamStatusPanel.js` has its own "Demo Video" section beside the DevPost section with live preview via `LiteVideoThumbnail`. Validates URL is one of the 4 supported providers client-side.
+- **`LiteVideoThumbnail`** (`src/components/VideoDisplay/LiteVideoThumbnail.js`): the lite-embed component. Renders YouTube hqdefault thumb when the URL is YouTube; otherwise a generic dark "▶ Watch demo" tile (don't fetch Vimeo oEmbed per render — kills CWV). Always wraps a `<button>` with `loading="lazy" decoding="async"` + explicit `width`/`height` (CLAUDE.md CWV rule).
+
+## Admin Teams (`/admin/teams?event_id=...`)
+File: `src/components/admin/TeamManagement.js` (~2900 lines, hosted in `src/pages/admin/teams/index.js`). Three concerns added together (deliberately scoped — no full redesign):
+- **Demo Video column + inline-edit Popover** (`TeamFieldPopover`): table cell shows a 96×54 thumbnail if set, "+ Add" button if missing. Click → Popover with `TextField` + live `LiteVideoThumbnail` preview + Save/Cancel/Clear. Optimistic update: `handleQuickPatch` PATCHes the partial and merges into local `teams` state — no full refetch.
+- **`patchTeam(partial)` helper**: extracted from `handleSaveTeam`. Always include `id` in the partial. Both the full edit Dialog and `TeamFieldPopover` use it. If you add another quick-edit field, hang it off this same helper + the Popover (parameterize `field`/`label`/`placeholder`/`validate`/`previewKind`).
+- **Filter chips above the table** (state: `activeFilter`): `All` / `Winning` / `In review` / `Active` / `Missing DevPost` / `Missing Video`. Pure client-side — extends the existing `filteredTeams` useEffect. Filter resets `page` to 0 so the user lands on results.
+- The full edit Dialog's Team Details tab also has the Demo Video URL TextField (next to DevPost), with the same `validateDemoVideoUrl` helper and a `LiteVideoThumbnail` preview underneath.
+
 ## Local Landing Pages
 
 ### Arizona Hackathons (`/hackathons/arizona`)
