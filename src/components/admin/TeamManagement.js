@@ -367,7 +367,6 @@ const TeamManagement = ({ orgId }) => {
     }
   }, [selectedHackathon]);
 
-  console.log("Team Data:", teamData);
   // Filter teams based on search term + active filter chip
   useEffect(() => {
     if (!teams) return;
@@ -422,17 +421,12 @@ const TeamManagement = ({ orgId }) => {
     setFilteredTeams(sortedTeams);
   }, [sortConfig]);
 
-  // Add function to fetch issue summary for table display
-  const fetchGithubIssueSummary = async (repo) => {
+  // Fetch issue summary for one repo. Returns [repoKey, summary] or null.
+  // NOTE: Intentionally does NOT setState — callers should batch the results
+  // into a single setGithubIssueSummaries call to avoid N-renders-per-fetch.
+  const fetchGithubIssueSummaryRaw = async (repo) => {
     const repoKey = `${repo.link}-summary`;
-    
-    // Don't refetch if we already have the data
-    if (githubIssueSummaries[repoKey]) {
-      return githubIssueSummaries[repoKey];
-    }
-
     try {
-      // Extract org and repo from the GitHub URL
       const urlParts = repo.link.split('/');
       const org = urlParts[urlParts.length - 2];
       const repoName = urlParts[urlParts.length - 1];
@@ -440,11 +434,7 @@ const TeamManagement = ({ orgId }) => {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues`,
         {
-          params: {
-            org: org,
-            repo: repoName,
-            state: 'all'
-          },
+          params: { org, repo: repoName, state: 'all' },
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
@@ -454,21 +444,14 @@ const TeamManagement = ({ orgId }) => {
 
       if (response.data && response.data.success) {
         const issues = response.data.issues || [];
-        const openCount = issues.filter(issue => issue.state === 'open').length;
-        const closedCount = issues.filter(issue => issue.state === 'closed').length;
-        const summary = { open: openCount, closed: closedCount, total: issues.length };
-        
-        setGithubIssueSummaries(prev => ({
-          ...prev,
-          [repoKey]: summary
-        }));
-        
-        return summary;
+        const openCount = issues.filter((issue) => issue.state === 'open').length;
+        const closedCount = issues.filter((issue) => issue.state === 'closed').length;
+        return [repoKey, { open: openCount, closed: closedCount, total: issues.length }];
       }
     } catch (error) {
       console.error("Error fetching GitHub issues summary:", error);
-      return { open: 0, closed: 0, total: 0 };
     }
+    return null;
   };
 
   // Fetch teams for a hackathon
@@ -488,18 +471,40 @@ const TeamManagement = ({ orgId }) => {
       if (response.data && response.data.teams) {
         setTeams(response.data.teams);
         setFilteredTeams(response.data.teams);
-        
+
         // Fetch nonprofits to build the map for displaying nonprofit names
         fetchNonprofits(hackathonId);
-        
-        // Fetch GitHub issue summaries for all teams with repositories
-        response.data.teams.forEach(team => {
-          if (team.github_links && team.github_links.length > 0) {
-            team.github_links.forEach(repo => {
-              fetchGithubIssueSummary(repo);
-            });
-          }
+
+        // Fetch GitHub issue summaries for all teams with repositories.
+        // Dedupe by repo link, skip already-cached, and batch into a SINGLE
+        // setGithubIssueSummaries call so we don't trigger one re-render per
+        // repo (which used to cascade through this 2900-line component).
+        const reposToFetch = [];
+        const seen = new Set();
+        response.data.teams.forEach((team) => {
+          (team.github_links || []).forEach((repo) => {
+            if (!repo?.link) return;
+            const repoKey = `${repo.link}-summary`;
+            if (seen.has(repoKey) || githubIssueSummaries[repoKey]) return;
+            seen.add(repoKey);
+            reposToFetch.push(repo);
+          });
         });
+
+        if (reposToFetch.length > 0) {
+          (async () => {
+            const results = await Promise.all(
+              reposToFetch.map((repo) => fetchGithubIssueSummaryRaw(repo))
+            );
+            const next = {};
+            results.forEach((entry) => {
+              if (entry) next[entry[0]] = entry[1];
+            });
+            if (Object.keys(next).length > 0) {
+              setGithubIssueSummaries((prev) => ({ ...prev, ...next }));
+            }
+          })();
+        }
       }
     } catch (error) {
       console.error("Error fetching teams:", error);
@@ -509,8 +514,38 @@ const TeamManagement = ({ orgId }) => {
     }
   };
 
-  // Fetch nonprofits for the selected hackathon
+  // Track whether the current nonprofit list is the global fallback (hackathon
+  // had no nonprofits attached) vs. the hackathon-scoped list.
+  const [nonprofitSource, setNonprofitSource] = useState("hackathon");
+
+  // Fetch nonprofits for the selected hackathon. If the hackathon doc has no
+  // nonprofits attached (or the fetch fails), fall back to ALL nonprofits so
+  // an admin can still manually assign one to a team.
   const fetchNonprofits = async (hackathonId) => {
+    const applyList = (list, source) => {
+      setNonprofitOptions(list);
+      const npMap = {};
+      list.forEach((np) => {
+        npMap[np.id] = np.name;
+      });
+      setNonprofitMap(npMap);
+      setNonprofitSource(source);
+    };
+
+    const fetchAll = async () => {
+      const all = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+      const list = all?.data?.nonprofits || [];
+      applyList(list, "all");
+    };
+
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos/hackathon/${hackathonId}`,
@@ -522,19 +557,22 @@ const TeamManagement = ({ orgId }) => {
         }
       );
 
-      if (response.data && response.data.nonprofits) {
-        setNonprofitOptions(response.data.nonprofits);
-        
-        // Build the nonprofit map for quick lookups
-        const npMap = {};
-        response.data.nonprofits.forEach(nonprofit => {
-          npMap[nonprofit.id] = nonprofit.name;
-        });
-        setNonprofitMap(npMap);
+      const scoped = response?.data?.nonprofits || [];
+      if (scoped.length > 0) {
+        applyList(scoped, "hackathon");
+      } else {
+        // No nonprofits attached to this hackathon — fall back so the manual
+        // assignment dropdown still has something to choose from.
+        await fetchAll();
       }
     } catch (error) {
       console.error("Error fetching nonprofits:", error);
-      enqueueSnackbar("Failed to fetch nonprofits", { variant: "error" });
+      try {
+        await fetchAll();
+      } catch (fallbackError) {
+        console.error("Error fetching all nonprofits fallback:", fallbackError);
+        enqueueSnackbar("Failed to fetch nonprofits", { variant: "error" });
+      }
     }
   };
 
@@ -551,7 +589,6 @@ const TeamManagement = ({ orgId }) => {
           },
         }
       );
-      console.log("Team Details Response:", response.data);
       if (response.data && response.data.team) {
         // Ensure team_members is always an array to prevent rendering issues
         const team = {
@@ -586,13 +623,50 @@ const TeamManagement = ({ orgId }) => {
       ...team,
       active: team.active === "True",
     });
-    // Fetch GitHub issues for all repositories to populate summaries
-    console.log("Fetching GitHub issues for team:", team);
-    if (team.github_links && team.github_links.length > 0) {
-      team.github_links.forEach((repo) => {
-        fetchGithubIssues(repo, "all"); // Fetch all issues for summary
-      });
+
+    // Prefetch GitHub issues for all repos but BATCH the results into a single
+    // setGithubIssues call. Calling fetchGithubIssues in a forEach would
+    // setState once per repo, triggering N renders of the full edit dialog.
+    const reposToFetch = (team.github_links || []).filter(
+      (repo) => repo?.link && !githubIssues[`${repo.link}-all`]
+    );
+    if (reposToFetch.length > 0) {
+      (async () => {
+        const results = await Promise.all(
+          reposToFetch.map(async (repo) => {
+            try {
+              const urlParts = repo.link.split('/');
+              const org = urlParts[urlParts.length - 2];
+              const repoName = urlParts[urlParts.length - 1];
+              const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues`,
+                {
+                  params: { org, repo: repoName, state: 'all' },
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "X-Org-Id": orgId,
+                  },
+                }
+              );
+              if (response.data?.success) {
+                return [`${repo.link}-all`, response.data.issues || []];
+              }
+            } catch (error) {
+              console.error("Error prefetching GitHub issues:", error);
+            }
+            return null;
+          })
+        );
+        const next = {};
+        results.forEach((entry) => {
+          if (entry) next[entry[0]] = entry[1];
+        });
+        if (Object.keys(next).length > 0) {
+          setGithubIssues((prev) => ({ ...prev, ...next }));
+        }
+      })();
     }
+
     fetchNonprofits(selectedHackathon);
     // Reset message dialog state when switching teams
     setSelectedTemplate(null);
@@ -801,7 +875,6 @@ const TeamManagement = ({ orgId }) => {
   // Handle user selection from user search dialog
   const handleUserSelect = (user) => {
     if (user && user.id) {
-      console.log("User added to team:", user);
       // Reload team details to reflect the new member
       loadTeamDetails(teamData.id);
       // Show success message
@@ -1106,16 +1179,48 @@ const TeamManagement = ({ orgId }) => {
 
   // Render selected nonprofit with history
   const renderNonprofitSelection = () => {
-    if (!teamData || !teamData.nonprofit_rankings) return null;
+    if (!teamData) return null;
+
+    const rankings = Array.isArray(teamData.nonprofit_rankings)
+      ? teamData.nonprofit_rankings
+      : [];
+    const hasRankings = rankings.length > 0;
+    const hasOptions = nonprofitOptions.length > 0;
 
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
         <CardHeader
           title="Nonprofit Assignment"
-          subheader="Current selection and ranking history"
+          subheader={
+            hasRankings
+              ? "Current selection and ranking history"
+              : "Manually assign a nonprofit to this team"
+          }
         />
         <Divider />
         <CardContent>
+          {!hasRankings && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              This team has no nonprofit rankings on file — the team
+              creation / nonprofit matching flow was not completed for this
+              hackathon. You can still manually assign a nonprofit below.
+            </Alert>
+          )}
+          {!hasOptions && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              No nonprofits are attached to this hackathon, and the global
+              fallback returned no nonprofits either. Add nonprofits to the
+              hackathon (Admin → Hackathons → this event → Nonprofits) and
+              reopen this dialog.
+            </Alert>
+          )}
+          {hasOptions && nonprofitSource === "all" && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Showing all nonprofits as a fallback because none are attached
+              to this hackathon.
+            </Alert>
+          )}
+
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" gutterBottom>
               Current Assignment
@@ -1131,6 +1236,7 @@ const TeamManagement = ({ orgId }) => {
                   handleTeamDataChange("selected_nonprofit_id", e.target.value)
                 }
                 label="Assigned Nonprofit"
+                disabled={!hasOptions}
               >
                 <MenuItem value="">
                   <em>Not assigned yet</em>
@@ -1144,54 +1250,58 @@ const TeamManagement = ({ orgId }) => {
             </FormControl>
           </Box>
 
-          <Typography variant="subtitle2" gutterBottom>
-            Team's Nonprofit Rankings
-          </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Rank</TableCell>
-                  <TableCell>Nonprofit</TableCell>
-                  <TableCell>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {teamData.nonprofit_rankings.map((ranking, index) => {
-                  const nonprofit = nonprofitOptions.find(
-                    (n) => n.id === ranking.nonprofit_id
-                  );
-                  const isSelected =
-                    teamData.selected_nonprofit_id === ranking.nonprofit_id;
-
-                  return (
-                    <TableRow key={index} selected={isSelected}>
-                      <TableCell>{ranking.rank}</TableCell>
-                      <TableCell>
-                        {nonprofit ? nonprofit.name : "Unknown Nonprofit"}
-                      </TableCell>
-                      <TableCell>
-                        {isSelected ? (
-                          <Chip
-                            size="small"
-                            color="primary"
-                            label="Selected"
-                            icon={<FaCheck />}
-                          />
-                        ) : (
-                          <Chip
-                            size="small"
-                            variant="outlined"
-                            label="Not Selected"
-                          />
-                        )}
-                      </TableCell>
+          {hasRankings && (
+            <>
+              <Typography variant="subtitle2" gutterBottom>
+                Team's Nonprofit Rankings
+              </Typography>
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Rank</TableCell>
+                      <TableCell>Nonprofit</TableCell>
+                      <TableCell>Status</TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {rankings.map((ranking, index) => {
+                      const nonprofit = nonprofitOptions.find(
+                        (n) => n.id === ranking.nonprofit_id
+                      );
+                      const isSelected =
+                        teamData.selected_nonprofit_id === ranking.nonprofit_id;
+
+                      return (
+                        <TableRow key={index} selected={isSelected}>
+                          <TableCell>{ranking.rank}</TableCell>
+                          <TableCell>
+                            {nonprofit ? nonprofit.name : "Unknown Nonprofit"}
+                          </TableCell>
+                          <TableCell>
+                            {isSelected ? (
+                              <Chip
+                                size="small"
+                                color="primary"
+                                label="Selected"
+                                icon={<FaCheck />}
+                              />
+                            ) : (
+                              <Chip
+                                size="small"
+                                variant="outlined"
+                                label="Not Selected"
+                              />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CardContent>
       </Card>
     );
