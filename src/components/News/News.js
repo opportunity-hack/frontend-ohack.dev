@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PersonIcon from "@mui/icons-material/Person";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
-import { Alert, Snackbar, Skeleton, Box, Typography } from "@mui/material";
+import { Alert, Chip, Snackbar, Skeleton, Stack, Box, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import {
   BlankContainer,
@@ -61,18 +62,17 @@ const formatDate = (dateString) => {
 // Generate structured data for SEO
 const generateStructuredData = (newsData) => {
   if (!newsData || newsData.length === 0) return null;
-  
+
   const articles = newsData.map(item => ({
     "@type": "NewsArticle",
     "headline": item.title,
     "description": item.description,
     "url": `https://ohack.dev/blog/${item.id}`,
-    "datePublished": item.slack_ts_human_readable,
-    "dateModified": item.slack_ts_human_readable,
-    "author": {
-      "@type": "Organization",
-      "name": "Opportunity Hack"
-    },
+    "datePublished": item.published_at || item.slack_ts_human_readable,
+    "dateModified": item.last_updated || item.published_at || item.slack_ts_human_readable,
+    "author": item.author?.name
+      ? { "@type": "Person", "name": item.author.name }
+      : { "@type": "Organization", "name": "Opportunity Hack" },
     "publisher": {
       "@type": "Organization",
       "name": "Opportunity Hack",
@@ -81,7 +81,7 @@ const generateStructuredData = (newsData) => {
         "url": "https://ohack.dev/logo.png"
       }
     },
-    "image": item.image || "https://ohack.dev/default-news.png",
+    "image": item.featured_image || item.image || "https://ohack.dev/default-news.png",
     "mainEntityOfPage": {
       "@type": "WebPage",
       "@id": `https://ohack.dev/blog/${item.id}`
@@ -176,8 +176,28 @@ function News({ newsData, frontpage, loading }) {
           </React.Fragment>
         ))
       ) : (
-        newsData?.map((newsItem, index) => (
-          <BlankContainer 
+        newsData?.map((newsItem, index) => {
+          const heroImage = newsItem.featured_image || newsItem.image;
+          const publishedDate = newsItem.published_at || newsItem.slack_ts_human_readable;
+          const authorName = newsItem.author?.name;
+          const explicitTags = Array.isArray(newsItem.tags) ? newsItem.tags.slice(0, 4) : [];
+          // For markdown posts, fall back to a markdown-stripped excerpt when
+          // description is missing or short.
+          const stripMd = (md) =>
+            (md || '')
+              .replace(/```[\s\S]*?```/g, '')
+              .replace(/`[^`]*`/g, '')
+              .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+              .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+              .replace(/^[#>\-*\d.\s]+/gm, '')
+              .replace(/[*_~`]/g, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+          const previewText = (newsItem.description && newsItem.description.length > 40)
+            ? newsItem.description
+            : (newsItem.content_format === 'markdown' ? stripMd(newsItem.content_markdown).slice(0, 280) : newsItem.description);
+          return (
+          <BlankContainer
             key={newsItem.id}
             component="article"
             role="article"
@@ -185,7 +205,7 @@ function News({ newsData, frontpage, loading }) {
           >
             <TitleContainer component="header">
               <Box display="flex" alignItems="flex-start" mb={2} gap={2}>
-                {newsItem.image && (
+                {heroImage && (
                   <Box
                     sx={{
                       width: 70,
@@ -197,7 +217,7 @@ function News({ newsData, frontpage, loading }) {
                     }}
                   >
                     <Image
-                      src={normalizeImageUrl(newsItem.image)}
+                      src={normalizeImageUrl(heroImage)}
                       alt={`Featured image for ${newsItem.title}`}
                       fill
                       style={{ objectFit: 'cover' }}
@@ -206,11 +226,11 @@ function News({ newsData, frontpage, loading }) {
                   </Box>
                 )}
                 <Box flex={1} minWidth={0}>
-                  <Typography 
-                    variant="h3" 
+                  <Typography
+                    variant="h3"
                     component="h2"
                     id={`news-title-${newsItem.id}`}
-                    sx={{ 
+                    sx={{
                       fontSize: { xs: '1.25rem', sm: '1.5rem' },
                       fontWeight: 600,
                       lineHeight: 1.3,
@@ -218,33 +238,59 @@ function News({ newsData, frontpage, loading }) {
                       color: '#1a1a1a'
                     }}
                   >
-                    <Link 
-                      href={`/blog/${newsItem.id}`} 
+                    <Link
+                      href={`/blog/${newsItem.id}`}
                       style={{ textDecoration: 'none', color: 'inherit' }}
                       aria-label={`Read full article: ${newsItem.title}`}
                     >
                       {newsItem.title}
                     </Link>
                   </Typography>
-                  
-                  <Box display="flex" alignItems="center" gap={1} mb={1}>
-                    <AccessTimeIcon 
-                      sx={{ fontSize: '1rem', color: 'text.secondary' }} 
-                      aria-hidden="true" 
-                    />
-                    <Typography 
-                      component="time" 
-                      dateTime={newsItem.slack_ts_human_readable}
-                      sx={{ 
-                        fontSize: '0.875rem', 
-                        color: 'text.secondary',
-                        fontWeight: 500
-                      }}
-                    >
-                      {formatDate(newsItem.slack_ts_human_readable)}
-                    </Typography>
-                  </Box>
-                  
+
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={2}
+                    flexWrap="wrap"
+                    useFlexGap
+                    sx={{ mb: 1 }}
+                  >
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <AccessTimeIcon
+                        sx={{ fontSize: '1rem', color: 'text.secondary' }}
+                        aria-hidden="true"
+                      />
+                      <Typography
+                        component="time"
+                        dateTime={publishedDate}
+                        sx={{
+                          fontSize: '0.875rem',
+                          color: 'text.secondary',
+                          fontWeight: 500
+                        }}
+                      >
+                        {formatDate(publishedDate)}
+                      </Typography>
+                    </Box>
+                    {authorName && (
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <PersonIcon
+                          sx={{ fontSize: '1rem', color: 'text.secondary' }}
+                          aria-hidden="true"
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: '0.875rem',
+                            color: 'text.secondary',
+                            fontWeight: 500
+                          }}
+                        >
+                          {authorName}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Stack>
+
                   <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                     {newsItem.slack_permalink && (
                       <SlackButton
@@ -262,8 +308,8 @@ function News({ newsData, frontpage, loading }) {
                       onClick={() => handleCopy(
                         `${newsItem.title} ${newsItem.description} More at https://ohack.dev/blog/${newsItem.id}`
                       )}
-                      sx={{ 
-                        cursor: "pointer", 
+                      sx={{
+                        cursor: "pointer",
                         fontSize: '1.2rem',
                         color: 'text.secondary',
                         '&:hover': { color: 'primary.main' }
@@ -275,17 +321,40 @@ function News({ newsData, frontpage, loading }) {
               </Box>
             </TitleContainer>
 
-            <CaptionContainer 
+            <CaptionContainer
               component="div"
               sx={{
                 fontSize: '1rem',
                 lineHeight: 1.6,
                 color: 'text.primary',
-                mb: 3
+                mb: explicitTags.length > 0 ? 2 : 3
               }}
             >
-              {newsItem.description}
+              {previewText}
             </CaptionContainer>
+
+            {explicitTags.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                  {explicitTags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/blog?tag=${encodeURIComponent(tag)}`}
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <Chip
+                        label={`#${tag}`}
+                        size="small"
+                        variant="outlined"
+                        clickable
+                        onClick={() => gaButton("tag_click", tag)}
+                        sx={{ borderRadius: 1 }}
+                      />
+                    </Link>
+                  ))}
+                </Stack>
+              </Box>
+            )}
             
             {newsItem.links && newsItem.links.length > 0 && (
               <Box component="nav" aria-label="Related links" sx={{ mb: 2 }}>
@@ -331,7 +400,8 @@ function News({ newsData, frontpage, loading }) {
             )}
             
           </BlankContainer>
-        ))
+          );
+        })
       )}
       
       <Snackbar
