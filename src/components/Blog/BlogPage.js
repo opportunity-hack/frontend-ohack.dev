@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { TitleContainer, LayoutContainer } from '../../styles/nonprofit/styles';
 import { Typography, Box, Chip, TextField, InputAdornment, Grid, Divider, Paper } from '@mui/material';
 import Button from '@mui/material/Button';
@@ -74,35 +75,53 @@ const SearchContainer = styled(Paper)(({ theme }) => ({
 }));
 
 const BlogPage = ({ posts }) => {
+    const router = useRouter();
     const [newsData, setNewsData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTag, setSelectedTag] = useState('');
     const [loading, setLoading] = useState(true);
-    
-    // Extract all unique tags from blog posts
+
+    // Extract all unique tags from blog posts.
+    // Prefers explicit tags[] from the admin CMS, then falls back to hashtags in
+    // the description and Slack channel links for legacy posts.
     const getAllTags = (data) => {
         if (!data) return [];
-        
+
         const tagsSet = new Set();
         data.forEach(post => {
-            // Extract hashtags from the description
+            if (Array.isArray(post.tags)) {
+                post.tags.forEach(t => t && tagsSet.add(String(t)));
+            }
+
             const hashtagRegex = /#(\w+)/g;
             const matches = post.description?.match(hashtagRegex) || [];
-            
-            matches.forEach(tag => {
-                tagsSet.add(tag.substring(1)); // Remove the # character
-            });
-            
-            // Also include any Slack channels as tags
+            matches.forEach(tag => tagsSet.add(tag.substring(1)));
+
             post.links?.forEach(link => {
-                if (link.url.startsWith('#')) {
+                if (link.url?.startsWith('#')) {
                     tagsSet.add(link.name);
                 }
             });
         });
-        
-        return Array.from(tagsSet);
+
+        return Array.from(tagsSet).sort((a, b) => a.localeCompare(b));
+    };
+
+    // Whether a post should be included for the given selected tag.
+    const postMatchesTag = (post, tag) => {
+        if (!tag) return true;
+        const lower = tag.toLowerCase();
+        if (Array.isArray(post.tags) && post.tags.some(t => String(t).toLowerCase() === lower)) {
+            return true;
+        }
+        if (post.description?.toLowerCase().includes(`#${lower}`)) {
+            return true;
+        }
+        if (post.links?.some(link => link.url?.startsWith('#') && link.name?.toLowerCase() === lower)) {
+            return true;
+        }
+        return false;
     };
 
     useEffect(() => {
@@ -128,63 +147,84 @@ const BlogPage = ({ posts }) => {
         }
     }, [posts]);
 
+    // Hydrate selectedTag from ?tag= so chip clicks from SingleNews.js land here filtered.
     useEffect(() => {
-        // Filter data based on search term and selected tag
-        if (newsData) {
-            let filtered = [...newsData];
-            
-            if (searchTerm) {
-                const term = searchTerm.toLowerCase();
-                filtered = filtered.filter(post => 
-                    post.title?.toLowerCase().includes(term) || 
-                    post.description?.toLowerCase().includes(term)
-                );
-                
-                // Track search event
-                ga.trackStructuredEvent(
-                    ga.EventCategory.CONTENT,
-                    'search',
-                    'blog_content',
-                    null,
-                    { search_term: searchTerm }
-                );
-            }
-            
-            if (selectedTag) {
-                filtered = filtered.filter(post => {
-                    // Check description for hashtags
-                    const hasTagInDescription = post.description?.toLowerCase().includes(`#${selectedTag.toLowerCase()}`);
-                    
-                    // Check if any Slack channel matches the tag
-                    const hasTagInLinks = post.links?.some(link => 
-                        link.url.startsWith('#') && link.name.toLowerCase() === selectedTag.toLowerCase()
-                    );
-                    
-                    return hasTagInDescription || hasTagInLinks;
-                });
-                
-                // Track tag selection event
-                ga.trackStructuredEvent(
-                    ga.EventCategory.CONTENT,
-                    'filter',
-                    'blog_tag',
-                    null,
-                    { selected_tag: selectedTag }
-                );
-            }
-            
-            setFilteredData(filtered);
+        if (!router.isReady) return;
+        const urlTag = Array.isArray(router.query.tag) ? router.query.tag[0] : router.query.tag;
+        setSelectedTag(urlTag || '');
+    }, [router.isReady, router.query.tag]);
+
+    useEffect(() => {
+        if (!newsData) return;
+        let filtered = [...newsData];
+
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(post => {
+                const tagBlob = Array.isArray(post.tags) ? post.tags.join(' ') : '';
+                const authorBlob = post.author?.name || '';
+                return [
+                    post.title,
+                    post.description,
+                    post.content_markdown,
+                    tagBlob,
+                    authorBlob,
+                ]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase()
+                    .includes(term);
+            });
+
+            ga.trackStructuredEvent(
+                ga.EventCategory.CONTENT,
+                'search',
+                'blog_content',
+                null,
+                { search_term: searchTerm }
+            );
         }
+
+        if (selectedTag) {
+            filtered = filtered.filter(post => postMatchesTag(post, selectedTag));
+
+            ga.trackStructuredEvent(
+                ga.EventCategory.CONTENT,
+                'filter',
+                'blog_tag',
+                null,
+                { selected_tag: selectedTag }
+            );
+        }
+
+        setFilteredData(filtered);
     }, [searchTerm, selectedTag, newsData]);
 
     const handleSearch = (event) => {
         setSearchTerm(event.target.value);
     };
-    
-    const handleTagClick = (tag) => {
-        setSelectedTag(tag === selectedTag ? '' : tag);
+
+    const updateTagInUrl = (tag) => {
+        const { tag: _drop, ...rest } = router.query;
+        const nextQuery = tag ? { ...rest, tag } : rest;
+        router.replace({ pathname: router.pathname, query: nextQuery }, undefined, {
+            shallow: true,
+            scroll: false,
+        });
     };
-    
+
+    const handleTagClick = (tag) => {
+        const next = tag === selectedTag ? '' : tag;
+        setSelectedTag(next);
+        updateTagInUrl(next);
+    };
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setSelectedTag('');
+        updateTagInUrl('');
+    };
+
     const tags = getAllTags(newsData);
 
     return (
@@ -243,13 +283,10 @@ const BlogPage = ({ posts }) => {
                             <Typography variant="h6">
                                 No blog posts found matching your criteria.
                             </Typography>
-                            <Button 
-                                variant="contained" 
-                                color="primary" 
-                                onClick={() => {
-                                    setSearchTerm('');
-                                    setSelectedTag('');
-                                }}
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={clearFilters}
                                 sx={{ mt: 2 }}
                             >
                                 Clear Filters
