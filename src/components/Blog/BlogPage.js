@@ -96,10 +96,14 @@ const BlogPage = ({ posts }) => {
 
             const hashtagRegex = /#(\w+)/g;
             const matches = post.description?.match(hashtagRegex) || [];
-            matches.forEach(tag => tagsSet.add(tag.substring(1)));
-
+            
+            matches.forEach(tag => {
+                tagsSet.add(tag.substring(1)); // Remove the # character
+            });
+            
+            // Also include valid Slack channels as tags (lowercase names only)
             post.links?.forEach(link => {
-                if (link.url?.startsWith('#')) {
+                if (link.url.startsWith('#') && link.name && /^[a-z0-9_-]+$/.test(link.name)) {
                     tagsSet.add(link.name);
                 }
             });

@@ -379,7 +379,7 @@ function News({ newsData, frontpage, loading }) {
 
                 <ButtonContainersSmall sx={{ mt: 1 }}>
                   {newsItem.links
-                    .filter(link => link.url.startsWith("#"))
+                    .filter(link => link.url.startsWith("#") && link.name && /^[a-z0-9_-]+$/.test(link.name))
                     .map((link, idx) => (
                       <SlackButton
                         key={`${link.name}-${idx}`}
