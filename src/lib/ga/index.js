@@ -27,7 +27,8 @@ export const EventCategory = {
   DONATION: 'donation',
   ERROR: 'error',
   USER: 'user',
-  SOCIAL: 'social'
+  SOCIAL: 'social',
+  ADMIN: 'admin'
 };
 
 // Standard event actions for consistent naming

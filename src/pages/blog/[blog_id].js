@@ -74,6 +74,17 @@ export default function BlogPostPage({ title, openGraphData, blogData }) {
         );
     }
 
+    const canonicalUrl = blogData?.seo?.canonical || `https://ohack.dev/blog/${blog_id}`;
+    const datePublished = blogData?.published_at || blogData?.slack_ts_human_readable || new Date().toISOString();
+    const dateModified = blogData?.last_updated || datePublished;
+    const ogImage = openGraphData?.find((og) => og.property === "og:image")?.content || "";
+    const ogDescription = openGraphData?.find((og) => og.property === "og:description")?.content || "";
+    const safeHeadline = String(title).replace("News: ", "").replace(/"/g, '\\"');
+    const safeDescription = String(ogDescription).replace(/"/g, '\\"');
+    const authorBlock = blogData?.author?.name
+      ? `, "author": { "@type": "Person", "name": "${String(blogData.author.name).replace(/"/g, '\\"')}" }`
+      : '';
+
     return (
       <>
         <Head>
@@ -87,18 +98,18 @@ export default function BlogPostPage({ title, openGraphData, blogData }) {
             />
           ))}
           <meta name="robots" content="index, follow" />
-          <link rel="canonical" href={`https://ohack.dev/blog/${blog_id}`} />
+          <link rel="canonical" href={canonicalUrl} />
           <script type="application/ld+json">
             {`
                     {
                         "@context": "https://schema.org",
                         "@type": "BlogPosting",
-                        "headline": "${title.replace("News: ", "")}",
-                        "image": "${openGraphData?.find((og) => og.property === "og:image")?.content || ""}",
-                        "datePublished": "${blogData?.slack_ts_human_readable || new Date().toISOString()}",
-                        "dateModified": "${blogData?.slack_ts_human_readable || new Date().toISOString()}",
-                        "description": "${openGraphData?.find((og) => og.property === "og:description")?.content || ""}",
-                        "url": "https://ohack.dev/blog/${blog_id}",
+                        "headline": "${safeHeadline}",
+                        "image": "${ogImage}",
+                        "datePublished": "${datePublished}",
+                        "dateModified": "${dateModified}",
+                        "description": "${safeDescription}",
+                        "url": "${canonicalUrl}"${authorBlock},
                         "publisher": {
                             "@type": "Organization",
                             "name": "Opportunity Hack",
@@ -109,7 +120,7 @@ export default function BlogPostPage({ title, openGraphData, blogData }) {
                         },
                         "mainEntityOfPage": {
                             "@type": "WebPage",
-                            "@id": "https://ohack.dev/blog/${blog_id}"
+                            "@id": "${canonicalUrl}"
                         }
                     }
                     `}
@@ -176,15 +187,22 @@ export const getStaticProps = async ({ params = {} } = {}) => {
         }
 
         const blogPost = data.text;
-        const title = "OHack Blog: " + blogPost.title; // Improved title format
-        const metaDescription = blogPost.description ? 
-            (blogPost.description.length > 160 ? 
-                blogPost.description.substring(0, 157) + '...' : 
-                blogPost.description) : 
+        const seo = blogPost.seo || {};
+        const title = seo.title || ("OHack Blog: " + blogPost.title);
+        const rawDescription = seo.description || blogPost.description;
+        const metaDescription = rawDescription ?
+            (rawDescription.length > 160 ?
+                rawDescription.substring(0, 157) + '...' :
+                rawDescription) :
             'Read the latest insights from Opportunity Hack, where tech volunteers create solutions for nonprofits.';
         const image =
+          seo.og_image ||
+          blogPost.featured_image ||
           blogPost.image ||
           "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp";
+        const canonicalUrl = seo.canonical || `https://ohack.dev/blog/${params.blog_id}`;
+        const publishedTime = blogPost.published_at || blogPost.slack_ts_human_readable || new Date().toISOString();
+        const authorName = blogPost.author?.name || 'Opportunity Hack';
         
         // Extract keywords from the blog post content
         const extractKeywords = (text) => {
@@ -208,7 +226,9 @@ export const getStaticProps = async ({ params = {} } = {}) => {
             return uniqueWords.slice(0, 8).join(', ');
         };
         
-        const keywords = extractKeywords(blogPost.description + ' ' + blogPost.title);
+        const seoKeywords = Array.isArray(seo.keywords) ? seo.keywords.join(', ') : (typeof seo.keywords === 'string' ? seo.keywords : '');
+        const tagKeywords = Array.isArray(blogPost.tags) ? blogPost.tags.join(', ') : '';
+        const keywords = seoKeywords || tagKeywords || extractKeywords((blogPost.description || '') + ' ' + (blogPost.title || ''));
 
         return {
             props: {
@@ -252,7 +272,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                     },
                     {
                         property: 'og:url',
-                        content: `https://ohack.dev/blog/${params.blog_id}`,
+                        content: canonicalUrl,
                         key: 'ogurl',
                     },
                     {
@@ -287,12 +307,12 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                     },
                     {
                         property: 'article:published_time',
-                        content: blogPost.slack_ts_human_readable || new Date().toISOString(),
+                        content: publishedTime,
                         key: 'articlepublished',
                     },
                     {
                         property: 'article:author',
-                        content: 'Opportunity Hack',
+                        content: authorName,
                         key: 'articleauthor',
                     },
                 ],

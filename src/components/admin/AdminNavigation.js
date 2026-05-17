@@ -41,6 +41,7 @@ import {
   PostAdd as RequestIcon,
   ContactMail as ContactMailIcon,
   Storefront as StorefrontIcon,
+  Article as ArticleIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -153,6 +154,11 @@ const adminPages = [
     path: "/admin/social-media",
     label: "Social Media",
     icon: <ShareIcon style={{ color: "#1DA1F2" }} />
+  },
+  {
+    path: "/admin/blog",
+    label: "Blog",
+    icon: <ArticleIcon style={{ color: "#093170" }} />
   },
   // {
   //   path: "/admin/store",
