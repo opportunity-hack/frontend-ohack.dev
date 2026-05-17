@@ -82,6 +82,37 @@ Static pages targeting organic search impressions. Each uses `getStaticProps` wi
 ## Pillar Pages
 SEO landing pages at `/coding-for-nonprofits` (service: free software model) and `/hackathon-for-social-good` (event: the hackathon experience). Cross-linked from homepage (`index.js` pillar link buttons), about page, and each other. Both follow the same pattern: `getStaticProps` with full OG/Twitter meta + structured data (`WebPage`, `BreadcrumbList`, `FAQPage`). The hackathon page also includes an `Event` schema node for Fall 2026. Do not duplicate content between the two — keep the service/event distinction.
 
+## Blog Admin (`/admin/blog`)
+Full CMS for the `news` Firestore collection. Mirrors the `/admin/hackathons/[event_id]` pattern (sidebar + hybrid autosave/explicit save).
+
+- **List page**: `src/pages/admin/blog/index.js`. Search across title/description/author/tags, status filter chips (All / Published / Drafts / Archived), table with status chips and inline actions (edit, view-public, delete). "+ New post" creates a draft via `POST /api/messages/admin/news` and redirects to the editor. Delete is hard delete via `DELETE /api/messages/admin/news/<id>` (Firestore doc removed).
+- **Editor**: `src/pages/admin/blog/[id].js` + `src/components/admin/blog-edit/` (mirrors `hackathon-edit/`):
+  - `useBlogAdmin` — hybrid save: `content` (title/body/featured_image) and `seo` (all seo.* fields) sections require **explicit Save**; `metadata` (author, tags, status, slug, published_at) autosaves on change (debounced 1.5s). Status change uses a dedicated `setStatus()` that bypasses the debounce so the publish/unpublish chip updates immediately. `beforeunload` warns when any explicit section is dirty.
+  - Reuses `SectionContainer` from `hackathon-edit/` for the sticky save bar.
+  - URL state: `?section=content|seo|metadata` (shallow router replace).
+- **Body format**: posts have `content_format` ("html" | "markdown"). Markdown is authored with `@uiw/react-md-editor` (dynamic, ssr:false) and rendered with `react-markdown` in `SingleNews.js`. Switching from markdown to plain in the editor does NOT delete the markdown — both fields persist. Legacy posts default to "html" so they render unchanged.
+- **Backend routes** (in `backend-ohack.dev/api/messages/messages_views.py`):
+  - `GET /api/messages/admin/news?limit=&status=` — admin list (includes drafts/archived). Service: `admin_list_news`.
+  - `POST /api/messages/admin/news` — create. Service: `admin_create_news`. Skips OpenAI image generation when `featured_image` is supplied. Stamps `slack_ts=time.time()` if missing so existing ordering keeps working.
+  - `PATCH /api/messages/admin/news/<id>` — partial update. Service: `admin_update_news`. Only keys in `_ADMIN_ALLOWED_KEYS` get through; clears `get_news` cache.
+  - `DELETE /api/messages/admin/news/<id>` — hard delete. Service: `admin_delete_news`.
+  - All four are auth-gated with `volunteer.admin`. The original public `POST /api/messages/news` (X-Api-Key) is **untouched** — the Slack integration depends on it.
+- **Public `get_news` filtering**: `services/news_service.py::_is_publicly_visible` filters out `status in ("draft", "archived")` for both the list and single-item routes. Over-fetches by 3x so the limit-after-filter still returns enough.
+- **New optional fields on a news doc** (all optional; legacy docs without them stay valid):
+  - `content_markdown`, `content_format` ("html"|"markdown")
+  - `featured_image` (overrides the auto-generated `image`)
+  - `author: { name, email, propel_user_id, db_id }`
+  - `tags: string[]`, `slug`, `status` ("draft"|"published"|"archived"), `published_at` (ISO)
+  - `seo: { title, description, keywords[], canonical, og_image }`
+  - `last_updated_by`, `created_by`
+- **Public-side honoring** (`src/pages/blog/[blog_id].js` + `src/components/News/SingleNews.js`):
+  - When `seo.title|description|canonical|og_image` are set, they win; otherwise current auto-derivation is the fallback.
+  - When `content_format === "markdown"`, the body renders via `<ReactMarkdown>`; when not, the legacy `description` plain-text path renders.
+  - `tags[]` render as clickable chips; falls back to hashtag regex extraction when absent.
+  - `published_at` → `article:published_time` (falls back to `slack_ts_human_readable`).
+  - Markdown `<img>`s render with `loading="lazy"` and `max-width: 100%; height: auto` to preserve CWV.
+- **GA tracking**: admin actions emit events under `EventCategory.ADMIN` — `admin_blog_view_list`, `admin_blog_create`, `admin_blog_edit_save` (per section), `admin_blog_publish`, `admin_blog_unpublish`, `admin_blog_archive`, `admin_blog_delete`, `admin_blog_open_ga`. Public-side tracking is unchanged (lives in `SingleNews.js` `gaButton` helper + `ScrollTracker`).
+
 ## Social Media Integration
 
 ### Overview
