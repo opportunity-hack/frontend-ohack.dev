@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -254,6 +255,27 @@ const TeamManagement = ({ orgId }) => {
   // Fetch hackathons using the hook
   const { hackathons = [] } = useHackathonEvents(false) || {};
   const [selectedHackathon, setSelectedHackathon] = useState('');
+
+  // Stable option list — prevents MUI Autocomplete from resetting inputValue on re-render
+  const hackathonOptions = React.useMemo(
+    () =>
+      hackathons
+        .filter((h) => h?.id)
+        .sort((a, b) => {
+          const da = a.start_date ? new Date(a.start_date) : new Date(0);
+          const db = b.start_date ? new Date(b.start_date) : new Date(0);
+          return db - da;
+        })
+        .map((h) => ({
+          id: h.id,
+          label: `${h.event_id}${h.start_date ? ' \u00b7 ' + new Date(h.start_date).toLocaleDateString() : ''}`,
+        })),
+    [hackathons]
+  );
+  const selectedHackathonOption = React.useMemo(
+    () => hackathonOptions.find((o) => o.id === selectedHackathon) ?? null,
+    [hackathonOptions, selectedHackathon]
+  );
 
   // State for teams data and UI
   const [loading, setLoading] = useState(false);
@@ -2211,28 +2233,17 @@ const TeamManagement = ({ orgId }) => {
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, md: 4 }}>
-            <FormControl fullWidth>
-              <InputLabel id="hackathon-select-label">
-                Select Hackathon
-              </InputLabel>
-              <Select
-                labelId="hackathon-select-label"
-                value={selectedHackathon}
-                onChange={(e) => setSelectedHackathon(e.target.value)}
-                label="Select Hackathon"
-              >
-                <MenuItem value="">
-                  <em>Select a hackathon</em>
-                </MenuItem>
-                {hackathons
-                  .filter(hackathon => hackathon?.id) // Filter out invalid entries
-                  .map((hackathon) => (
-                    <MenuItem key={hackathon.id} value={hackathon.id}>
-                      {hackathon.event_id} - {hackathon.start_date ? new Date(hackathon.start_date).toLocaleDateString() : 'Unknown Date'}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
+            <Autocomplete
+              fullWidth
+              options={hackathonOptions}
+              value={selectedHackathonOption}
+              onChange={(_, option) => setSelectedHackathon(option?.id ?? '')}
+              isOptionEqualToValue={(opt, val) => opt.id === val.id}
+              renderInput={(params) => (
+                <TextField {...params} label="Select Hackathon" placeholder="Type to search…" />
+              )}
+              noOptionsText="No hackathons found"
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 8 }}>
             <TextField
