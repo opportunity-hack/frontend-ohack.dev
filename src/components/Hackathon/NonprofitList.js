@@ -173,7 +173,7 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
             <ImageContainer>
               {nonprofit.image ? (
                 <Image
-                  src={normalizeImageUrl(nonprofit.image) || "/npo_placeholder.png"}
+                  src={normalizeImageUrl(nonprofit.image) || "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Square.png"}
                   alt={`${nonprofit.name} logo or image`}
                   fill
                   sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
@@ -183,7 +183,7 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
                 />
               ) : (
                 <Image
-                  src="/npo_placeholder.png"
+                  src="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Square.png"
                   alt="Nonprofit placeholder image"
                   fill
                   sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"

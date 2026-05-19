@@ -87,7 +87,7 @@ const NonprofitRanker = memo(({ selectedNonprofits, handleDragEnd }) => {
                                   }}
                                 >
                                   <img 
-                                    src={nonprofit.image || "/npo_placeholder.png"} 
+                                    src={nonprofit.image || "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Square.png"} 
                                     alt={nonprofit.name} 
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                   />

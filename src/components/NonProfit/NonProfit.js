@@ -125,7 +125,7 @@ const NonProfit = React.memo(function NonProfit(props) {
     </Suspense>
   );
   
-  const image = normalizeImageUrl(nonprofit.image) || '/npo_placeholder.png';
+  const image = normalizeImageUrl(nonprofit.image) || 'https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Banner.png';
   const projectCount = nonprofit.problem_statements?.length || 0;
 
   // Preload the nonprofit image for better LCP
