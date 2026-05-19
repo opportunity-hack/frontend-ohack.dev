@@ -49,6 +49,13 @@ const DescriptionContainer = styled(Box)(({ theme }) => ({
     marginBottom: theme.spacing(1.5),
     fontSize: '1rem',
     lineHeight: 1.6
+  },
+  '& a': {
+    color: theme.palette.primary.dark,
+    textDecoration: 'underline',
+  },
+  '& a:hover': {
+    color: theme.palette.primary.main,
   }
 }));
 
