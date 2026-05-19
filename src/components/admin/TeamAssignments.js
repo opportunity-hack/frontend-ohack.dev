@@ -66,7 +66,10 @@ const ASSIGNMENT_STATUS = {
   FINALIZING: 'finalizing'
 };
 
-const TeamAssignments = ({ orgId }) => {
+// When `embeddedHackathonId` is provided (Firestore doc id), the component
+// skips its own URL parsing/writeback and hides the event picker, pinning to
+// that one hackathon. See TeamManagement for the same contract.
+const TeamAssignments = ({ orgId, embeddedHackathonId }) => {
   const theme = useTheme();
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
@@ -94,12 +97,19 @@ const TeamAssignments = ({ orgId }) => {
     direction: "asc",
   });
 
-  // Handle URL parameters and set initial state
+  // Handle URL parameters and set initial state.
+  // Embedded mode pins to the host page's hackathon and ignores URL state.
   useEffect(() => {
+    if (embeddedHackathonId) {
+      if (selectedHackathon !== embeddedHackathonId) {
+        setSelectedHackathon(embeddedHackathonId);
+      }
+      return;
+    }
     if (!router?.query) return;
-    
+
     const { event_id, tab } = router.query;
-    
+
     if (event_id && Array.isArray(hackathons) && hackathons.some(h => h?.id === event_id)) {
       setSelectedHackathon(event_id);
     } else if (Array.isArray(hackathons) && hackathons.length > 0 && !selectedHackathon) {
@@ -111,34 +121,36 @@ const TeamAssignments = ({ orgId }) => {
           const dateB = new Date(b.start_date);
           return dateB - dateA; // Most recent first
         });
-      
+
       if (sortedHackathons.length > 0) {
         setSelectedHackathon(sortedHackathons[0].id);
       }
     }
-    
+
     if (tab !== undefined) {
       const tabIndex = parseInt(tab, 10);
       if (tabIndex >= 0 && tabIndex <= 1) {
         setViewMode(tabIndex);
       }
     }
-  }, [hackathons, router?.query]);
+  }, [embeddedHackathonId, hackathons, router?.query, selectedHackathon]);
   
-  // Update URL when selectedHackathon or viewMode changes
+  // Update URL when selectedHackathon or viewMode changes.
+  // Embedded mode never writes back — host page owns the URL.
   useEffect(() => {
+    if (embeddedHackathonId) return;
     if (!router?.replace || !selectedHackathon || !Array.isArray(hackathons) || hackathons.length === 0) {
       return;
     }
-    
+
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
       queryParams.set('event_id', selectedHackathon);
       queryParams.set('tab', viewMode.toString());
-      
+
       const newUrl = `${router.pathname}?${queryParams.toString()}`;
-      
+
       const newQuery = Object.fromEntries(queryParams);
       router.replace({
         pathname: router.pathname,
@@ -147,7 +159,7 @@ const TeamAssignments = ({ orgId }) => {
     } catch (error) {
       console.warn('Failed to update URL:', error);
     }
-  }, [selectedHackathon, viewMode, router, hackathons]);
+  }, [embeddedHackathonId, selectedHackathon, viewMode, router, hackathons]);
 
   // Fetch both nonprofits and teams when hackathon changes
   useEffect(() => {
@@ -918,42 +930,46 @@ const TeamAssignments = ({ orgId }) => {
 
   return (
     <div>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Team Assignments
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Manage assignments between teams and nonprofits. Ensure all nonprofits have the right teams to support their projects.
-        </Typography>
-      </Box>
+      {!embeddedHackathonId && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Team Assignments
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Manage assignments between teams and nonprofits. Ensure all nonprofits have the right teams to support their projects.
+          </Typography>
+        </Box>
+      )}
 
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, md: 4 }}>
-            <FormControl fullWidth>
-              <InputLabel id="hackathon-select-label">
-                Select Hackathon
-              </InputLabel>
-              <Select
-                labelId="hackathon-select-label"
-                value={selectedHackathon}
-                onChange={(e) => setSelectedHackathon(e.target.value)}
-                label="Select Hackathon"
-              >
-                <MenuItem value="">
-                  <em>Select a hackathon</em>
-                </MenuItem>
-                {hackathons
-                  .filter(hackathon => hackathon?.id) // Filter out invalid entries
-                  .map((hackathon) => (
-                    <MenuItem key={hackathon.id} value={hackathon.id}>
-                      {hackathon.event_id} - {hackathon.start_date ? new Date(hackathon.start_date).toLocaleDateString() : 'Unknown Date'}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
+          {!embeddedHackathonId && (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <FormControl fullWidth>
+                <InputLabel id="hackathon-select-label">
+                  Select Hackathon
+                </InputLabel>
+                <Select
+                  labelId="hackathon-select-label"
+                  value={selectedHackathon}
+                  onChange={(e) => setSelectedHackathon(e.target.value)}
+                  label="Select Hackathon"
+                >
+                  <MenuItem value="">
+                    <em>Select a hackathon</em>
+                  </MenuItem>
+                  {hackathons
+                    .filter(hackathon => hackathon?.id) // Filter out invalid entries
+                    .map((hackathon) => (
+                      <MenuItem key={hackathon.id} value={hackathon.id}>
+                        {hackathon.event_id} - {hackathon.start_date ? new Date(hackathon.start_date).toLocaleDateString() : 'Unknown Date'}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+          <Grid size={{ xs: 12, md: embeddedHackathonId ? 12 : 8 }}>
             <TextField
               fullWidth
               placeholder="Search nonprofits, teams, or descriptions..."

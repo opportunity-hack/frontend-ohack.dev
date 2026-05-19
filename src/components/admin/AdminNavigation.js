@@ -93,27 +93,7 @@ const adminPages = [
     path: "/admin/contact",
     label: "Contact",
     icon: <ContactMailIcon style={{ color: "#00897b" }} />
-  },
-  {
-    path: "/admin/check-in",
-    label: "Check In",
-    icon: <HandshakeIcon color="primary" />
   },  
-  {
-    path: "/admin/volunteer",
-    label: "Volunteer",
-    icon: <HandshakeIcon color="secondary" />
-  },
-  {
-    path: "/admin/teams",
-    label: "Teams",
-    icon: <TeamsIcon color="info" />
-  },
-  {
-    path: "/admin/judging",
-    label: "Judging",
-    icon: <JudgingIcon style={{ color: "#673ab7" }} />
-  },
   {
     path: "/admin/giveaways",
     label: "Giveaways",

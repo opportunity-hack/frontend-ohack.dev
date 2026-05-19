@@ -245,8 +245,12 @@ const MESSAGE_TEMPLATES = {
   }
 };
 
-// Component for managing teams in the admin panel
-const TeamManagement = ({ orgId }) => {
+// Component for managing teams in the admin panel.
+// When `embeddedHackathonId` is provided (the Firestore doc id of a hackathon),
+// the component skips its own URL parsing/writeback and hides the event picker,
+// pinning the view to that one hackathon. Used by the per-event sidebar
+// section at /admin/hackathons/[event_id]?section=teams.
+const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const theme = useTheme();
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
@@ -330,12 +334,20 @@ const TeamManagement = ({ orgId }) => {
     field: null,
   });
 
-  // Handle URL parameters and set initial state
+  // Handle URL parameters and set initial state.
+  // When embedded, the parent owns event selection — pin to that hackathon
+  // and skip both URL parsing and the most-recent fallback.
   useEffect(() => {
+    if (embeddedHackathonId) {
+      if (selectedHackathon !== embeddedHackathonId) {
+        setSelectedHackathon(embeddedHackathonId);
+      }
+      return;
+    }
     if (!router?.query) return;
-    
+
     const { event_id } = router.query;
-    
+
     if (event_id && Array.isArray(hackathons) && hackathons.some(h => h?.id === event_id)) {
       setSelectedHackathon(event_id);
     } else if (Array.isArray(hackathons) && hackathons.length > 0 && !selectedHackathon) {
@@ -347,19 +359,22 @@ const TeamManagement = ({ orgId }) => {
           const dateB = new Date(b.start_date);
           return dateB - dateA; // Most recent first
         });
-      
+
       if (sortedHackathons.length > 0) {
         setSelectedHackathon(sortedHackathons[0].id);
       }
     }
-  }, [hackathons, router?.query]);
+  }, [embeddedHackathonId, hackathons, router?.query, selectedHackathon]);
   
   // Update URL when selectedHackathon changes
   useEffect(() => {
+    // Host page owns the URL when embedded — never write back, or we'd
+    // clobber the [event_id] path param and the ?section= query.
+    if (embeddedHackathonId) return;
     if (!router?.replace || !selectedHackathon || !Array.isArray(hackathons) || hackathons.length === 0) {
       return;
     }
-    
+
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
@@ -380,7 +395,7 @@ const TeamManagement = ({ orgId }) => {
     } catch (error) {
       console.warn('Failed to update URL:', error);
     }
-  }, [selectedHackathon, router, hackathons]);
+  }, [embeddedHackathonId, selectedHackathon, router, hackathons]);
 
   // Fetch teams for the selected hackathon
   useEffect(() => {
@@ -2220,32 +2235,36 @@ const TeamManagement = ({ orgId }) => {
 
   return (
     <div>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Team Management
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Manage teams, assign nonprofits, and monitor team progress across all
-          hackathons.
-        </Typography>
-      </Box>
+      {!embeddedHackathonId && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Team Management
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Manage teams, assign nonprofits, and monitor team progress across all
+            hackathons.
+          </Typography>
+        </Box>
+      )}
 
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Autocomplete
-              fullWidth
-              options={hackathonOptions}
-              value={selectedHackathonOption}
-              onChange={(_, option) => setSelectedHackathon(option?.id ?? '')}
-              isOptionEqualToValue={(opt, val) => opt.id === val.id}
-              renderInput={(params) => (
-                <TextField {...params} label="Select Hackathon" placeholder="Type to search…" />
-              )}
-              noOptionsText="No hackathons found"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
+          {!embeddedHackathonId && (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Autocomplete
+                fullWidth
+                options={hackathonOptions}
+                value={selectedHackathonOption}
+                onChange={(_, option) => setSelectedHackathon(option?.id ?? '')}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                renderInput={(params) => (
+                  <TextField {...params} label="Select Hackathon" placeholder="Type to search…" />
+                )}
+                noOptionsText="No hackathons found"
+              />
+            </Grid>
+          )}
+          <Grid size={{ xs: 12, md: embeddedHackathonId ? 12 : 8 }}>
             <TextField
               fullWidth
               placeholder="Search teams, members, or slack channels..."

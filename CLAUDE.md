@@ -54,6 +54,8 @@ Patterns that must stay in place to keep Google Search Console CWV green:
 ## Admin Profile Search (`/admin/profile`)
 Search-first people-finder. Single file: `src/pages/admin/profile/index.js`. Backend `GET /api/messages/admin/profiles` returns all users; filtering is client-side across ~14 fields (no server-side search). Auth: `userClass.hasPermission("profile.admin")`.
 
+**Backend payload is lean by design.** `get_all_profiles()` (`api/messages/messages_service.py`) explicitly projects only the fields the admin search needs (`_ADMIN_PROFILE_LEAN_FIELDS`) — dropping the heavy `history` field, mailing address fields, `want_stickers`, and `propel_id`. `badges/teams/hackathons` are returned as id-string arrays (the frontend only reads `.length` on these). `volunteering` is compressed to `[{hours}]`. Wrapped in a 5-min TTL cache (`@cached(TTLCache(maxsize=1, ttl=300))`). If you add a new field to the admin profile UI, add it to both `_ADMIN_PROFILE_LEAN_FIELDS` AND clear the cache by restarting (or extend the cache invalidation hook). The per-row `/profile/<id>` route still returns the full doc when an admin opens an individual profile.
+
 Load-bearing details:
 - **`?q=<term>` is the canonical search state** and the destination of the Chrome `ohadmin` site-search shortcut (`https://www.ohack.dev/admin/profile?q=%s`). Do NOT add redirects that strip query params (e.g. `router.replace('/admin/profile')` without preserving `...router.query`) — it silently breaks the shortcut.
 - URL ↔ input sync uses the CLAUDE.md "Shareable dialog state" pattern: hydrate once with `initFromUrlRef`, react to back/forward via a separate effect with a `lastUrlQRef` echo guard, write to URL via `lodash.debounce` (250ms) with `router.replace({ shallow: true, scroll: false })`.
@@ -223,7 +225,17 @@ Public surfaces:
 `PlanningCardDialog` has an inline budget editor (amount USD, bucket: food/prize/swag, state: estimated/committed/paid, vendor). Edits PATCH `card.budget` and feed `PlanningBudgetWidget` (event page widget gated by `planning.budget_widget_on_event_page`). Backend constants live in `model/planning.py` (`ALLOWED_BUDGET_BUCKETS`, `ALLOWED_BUDGET_STATES`, `MAX_BUDGET_CENTS`); keep frontend select options in sync. Clear with `{ budget: null }`. Read-only viewers still see the chip; editors get the form.
 
 ## Hackathon Admin Edit (per-event page)
-The old "Edit Hackathon" Dialog at `/admin/hackathons` is gone. Editing now lives on `/admin/hackathons/[event_id]` with a left sidebar navigating between sections (`?section=overview|schedule|meals|participants|judges|nonprofits|media|planning|donations|links`). URLs are deep-linkable for sharing.
+The old "Edit Hackathon" Dialog at `/admin/hackathons` is gone. Editing now lives on `/admin/hackathons/[event_id]` with a left sidebar navigating between sections (`?section=overview|schedule|meals|participants|judges|nonprofits|media|planning|donations|links|volunteer|teams|judging|checkin`). URLs are deep-linkable for sharing.
+
+**Sidebar is grouped.** Sections in `sectionsManifest.js` carry a `group` field — `"config"` (Configure: overview…links) vs. `"ops"` (Operate: volunteer/teams/judging/checkin). `HackathonAdminLayout` renders one labeled List per group with an "overline" header. Legacy entries without a `group` default to "config".
+
+**Volunteer / Teams / Judging / Check-in are consolidated here.** The old standalone routes (`/admin/volunteer`, `/admin/teams`, `/admin/judging`, `/admin/check-in`) are now redirect stubs that forward to `/admin/hackathons/<event_id>?section=<slug>` (preserving all other query params). The actual workbenches live at:
+- `src/components/admin/volunteer/VolunteerWorkbench.js` — accepts `{ userClass, embedded, externalEventId, onSnack }`. When `embedded=true`, skips the `AdminPage` chrome, hides the in-page event picker, and trusts `externalEventId` instead of the URL. URL writeback is short-circuited.
+- `src/components/admin/checkin/CheckInWorkbench.js` — same `embedded` contract.
+- `TeamsSection` / `JudgingSection` are thin section files that lazy-load existing components (`TeamManagement`, `TeamAssignments`, `JudgingRound1/2/Results`) and wire `selectedHackathon` to `admin.hackathon.event_id` (the setter is a no-op since the host URL owns the event).
+- Sub-tab state for Teams/Judging persists via `?subtab=management|assignments|stats` (Teams) / `round1|round2|results` (Judging).
+
+**Known minor regression (embedded mode):** the workbench's internal `setSnackbar` calls don't currently render any toast UI because the `AdminPage` wrapper that owned the Snackbar is skipped. Admin actions still work; dialogs close and lists refresh. To fix later: thread `setSnackbar` through `onSnack` in the workbenches.
 
 - Page: `src/pages/admin/hackathons/[event_id].js`. List page (`index.js`) routes "Edit" buttons here and keeps a small "Add Hackathon" modal that bootstraps a row then redirects.
 - Layout: `src/components/admin/hackathon-edit/HackathonAdminLayout.js` — sticky header w/ save indicator, sidebar from `sectionsManifest.js`.

@@ -21,6 +21,10 @@ const sectionLoaders = {
   planning: dynamic(() => import("../../../components/admin/hackathon-edit/sections/PlanningSection"), { ssr: false }),
   donations: dynamic(() => import("../../../components/admin/hackathon-edit/sections/DonationsSection"), { ssr: false }),
   links: dynamic(() => import("../../../components/admin/hackathon-edit/sections/LinksSection"), { ssr: false }),
+  volunteer: dynamic(() => import("../../../components/admin/hackathon-edit/sections/VolunteerSection"), { ssr: false }),
+  teams: dynamic(() => import("../../../components/admin/hackathon-edit/sections/TeamsSection"), { ssr: false }),
+  judging: dynamic(() => import("../../../components/admin/hackathon-edit/sections/JudgingSection"), { ssr: false }),
+  checkin: dynamic(() => import("../../../components/admin/hackathon-edit/sections/CheckInSection"), { ssr: false }),
 };
 
 const AdminHackathonEditPage = () => {

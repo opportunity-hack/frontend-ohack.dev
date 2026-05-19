@@ -37,10 +37,13 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  ListItemAvatar,
+  Avatar,
   Autocomplete,
   OutlinedInput,
+  Tooltip,
 } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon, Delete as DeleteIcon, Event as EventIcon, Close as CloseIcon, GitHub as GitHubIcon, People as PeopleIcon, Description as DescriptionIcon, Chat as ChatIcon } from "@mui/icons-material";
+import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon, Delete as DeleteIcon, Event as EventIcon, Close as CloseIcon, GitHub as GitHubIcon, People as PeopleIcon, Description as DescriptionIcon, Chat as ChatIcon, OpenInNew as OpenInNewIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
 import LinkManagement from "../../../components/admin/LinkManagement";
 import useNonprofit from "../../../hooks/use-nonprofit";
@@ -60,6 +63,10 @@ const AdminProblemsPage = () => {
   const [nonprofitSearchTerm, setNonprofitSearchTerm] = useState("");
   const [selectedHackathonId, setSelectedHackathonId] = useState("");
   const [customSkillInput, setCustomSkillInput] = useState("");
+  const [helpersDialogProblem, setHelpersDialogProblem] = useState(null);
+  const [helperProfiles, setHelperProfiles] = useState({});
+  const [helperProfilesLoading, setHelperProfilesLoading] = useState(false);
+  const helperProfilesCache = React.useRef({});
 
   // Common skills based on database examples
   const commonSkills = [
@@ -144,6 +151,40 @@ const AdminProblemsPage = () => {
     fetchProblems();
   }, [fetchProblems]);
 
+  // Resolve helper user IDs to profiles when the helpers dialog opens
+  useEffect(() => {
+    if (!helpersDialogProblem?.helping?.length || !accessToken) return;
+    // If all IDs are already cached (by user or slack_user), skip the fetch
+    const needsFetch = helpersDialogProblem.helping.some(h =>
+      (h.user && !helperProfilesCache.current[h.user]) ||
+      (h.slack_user && !helperProfilesCache.current[h.slack_user])
+    );
+    if (!needsFetch) {
+      setHelperProfiles({ ...helperProfilesCache.current });
+      return;
+    }
+    setHelperProfilesLoading(true);
+    fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/admin/profiles`, {
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        'X-Org-Id': org?.orgId || '',
+      },
+    })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+      .then(data => {
+        const all = data.profiles ?? (Array.isArray(data) ? data : []);
+        // Index by every available ID so we can look up by helper.user (db_id) or helper.slack_user (oauth)
+        all.forEach(p => {
+          const entry = { name: p.name || p.nickname, email: p.email_address };
+          if (p.id) helperProfilesCache.current[p.id] = entry;
+          if (p.user_id) helperProfilesCache.current[p.user_id] = entry;
+        });
+        setHelperProfiles({ ...helperProfilesCache.current });
+      })
+      .catch(err => console.error('[HelpersDialog] Failed to fetch profiles:', err))
+      .finally(() => setHelperProfilesLoading(false));
+  }, [helpersDialogProblem, accessToken, org?.orgId]);
+
   const handleSort = (property) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -160,21 +201,27 @@ const AdminProblemsPage = () => {
     )
     .sort((a, b) => {
       const isAsc = order === "asc";
-      
+      const aVal = a[orderBy];
+      const bVal = b[orderBy];
 
-      // Handle case where column is a number or null/not set
-        if (typeof a[orderBy] === "number") {
-            return (a[orderBy] - b[orderBy]) * (isAsc ? 1 : -1);
-        }
+      // Push nulls/undefined to the end regardless of sort direction
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
 
-    // Handle case where column is a number but is a string
-    if (typeof a[orderBy] === "string" && !isNaN(a[orderBy])) {
-        return (parseInt(a[orderBy]) - parseInt(b[orderBy])) * (isAsc ? 1 : -1);
-    }
-    
-      const aValue = String(a[orderBy]).toLowerCase();
-      const bValue = String(b[orderBy]).toLowerCase();
-      return (aValue < bValue ? -1 : 1) * (isAsc ? 1 : -1);
+      // Numeric values (includes rank)
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return (aVal - bVal) * (isAsc ? 1 : -1);
+      }
+
+      // Numeric strings
+      if (!isNaN(aVal) && !isNaN(bVal)) {
+        return (parseFloat(aVal) - parseFloat(bVal)) * (isAsc ? 1 : -1);
+      }
+
+      const aStr = String(aVal).toLowerCase();
+      const bStr = String(bVal).toLowerCase();
+      return (aStr < bStr ? -1 : aStr > bStr ? 1 : 0) * (isAsc ? 1 : -1);
     })
     : [];  
 
@@ -576,7 +623,21 @@ const AdminProblemsPage = () => {
                 <Card key={problem.id} sx={{ mb: 2, overflow: 'visible' }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                      <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold', flex: 1 }}>
+                      <Typography
+                        variant="h6"
+                        component="a"
+                        href={`/project/${problem.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{
+                          fontWeight: 'bold',
+                          flex: 1,
+                          color: 'inherit',
+                          textDecoration: 'none',
+                          '&:hover': { textDecoration: 'underline', color: 'primary.main' },
+                          cursor: 'pointer',
+                        }}
+                      >
                         {problem.title}
                       </Typography>
                       <Chip
@@ -604,7 +665,10 @@ const AdminProblemsPage = () => {
                     
                     {problem.nonprofit_id ? (
                       <Chip
-                        icon={<LinkIcon />}
+                        component="a"
+                        href={`/admin/nonprofit?id=${problem.nonprofit_id}&from=/admin/problems`}
+                        clickable
+                        icon={<OpenInNewIcon />}
                         label={nonprofits.find(np => np.id === problem.nonprofit_id)?.name || problem.nonprofit_id}
                         size="small"
                         color="primary"
@@ -617,7 +681,10 @@ const AdminProblemsPage = () => {
                             {nonprofitProblemStatementsMap[problem.id].map((nonprofit) => (
                               <Chip
                                 key={nonprofit.id}
-                                icon={<LinkIcon />}
+                                component="a"
+                                href={`/admin/nonprofit?id=${nonprofit.id}&from=/admin/problems`}
+                                clickable
+                                icon={<OpenInNewIcon />}
                                 label={nonprofit.name}
                                 size="small"
                                 color="success"
@@ -675,8 +742,44 @@ const AdminProblemsPage = () => {
                         </Box>
                       </>
                     )}
+
+                    {/* Helping */}
+                    {Array.isArray(problem.helping) && problem.helping.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Button
+                          size="small"
+                          startIcon={<PeopleIcon />}
+                          onClick={() => setHelpersDialogProblem(problem)}
+                          color="primary"
+                          variant="text"
+                          sx={{ pl: 0, textTransform: 'none' }}
+                        >
+                          {problem.helping.length} {problem.helping.length === 1 ? 'person' : 'people'} helping
+                        </Button>
+                      </Box>
+                    )}
                   </CardContent>
-                  
+                <CardActions sx={{ pt: 0, px: 2, pb: 1.5, gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<OpenInNewIcon />}
+                    href={`/project/${problem.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    component="a"
+                  >
+                    View Public Page
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => handleEditProblem(problem)}
+                    color="primary"
+                  >
+                    Edit
+                  </Button>
+                </CardActions>
                 </Card>
               ))
             )}
@@ -684,10 +787,10 @@ const AdminProblemsPage = () => {
         ) : (
           // Desktop table view
           <TableContainer component={Paper}>
-            <Table>
+            <Table size="small">
               <TableHead>
-                <TableRow>
-                  <TableCell sx={{ minWidth: '200px' }}>                    
+                <TableRow sx={{ '& th': { py: 1, px: 1, whiteSpace: 'nowrap' } }}>
+                  <TableCell sx={{ minWidth: '180px' }}>
                     <TableSortLabel
                       active={orderBy === "title"}
                       direction={orderBy === "title" ? order : "asc"}
@@ -696,7 +799,7 @@ const AdminProblemsPage = () => {
                       Problem Statement
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ minWidth: '120px' }}>
+                  <TableCell sx={{ minWidth: '90px' }}>
                     <TableSortLabel
                       active={orderBy === "status"}
                       direction={orderBy === "status" ? order : "asc"}
@@ -705,7 +808,7 @@ const AdminProblemsPage = () => {
                       Status
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ minWidth: '80px' }}>
+                  <TableCell sx={{ minWidth: '55px' }}>
                     <TableSortLabel
                       active={orderBy === "rank"}
                       direction={orderBy === "rank" ? order : "asc"}
@@ -714,7 +817,7 @@ const AdminProblemsPage = () => {
                       Rank
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ minWidth: '100px' }}>
+                  <TableCell sx={{ minWidth: '60px' }}>
                     <TableSortLabel
                       active={orderBy === "first_thought_of"}
                       direction={orderBy === "first_thought_of" ? order : "asc"}
@@ -723,7 +826,7 @@ const AdminProblemsPage = () => {
                       Year
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ minWidth: '160px' }}>
+                  <TableCell sx={{ minWidth: '130px' }}>
                     <TableSortLabel
                       active={orderBy === "nonprofit_id"}
                       direction={orderBy === "nonprofit_id" ? order : "asc"}
@@ -732,10 +835,8 @@ const AdminProblemsPage = () => {
                       Nonprofit
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ minWidth: '120px' }}>
-                    Resources
-                  </TableCell>
-                  <TableCell sx={{ minWidth: '140px' }}>
+                  <TableCell sx={{ minWidth: '80px' }}>Resources</TableCell>
+                  <TableCell sx={{ minWidth: '110px' }}>
                     <TableSortLabel
                       active={orderBy === "skills"}
                       direction={orderBy === "skills" ? order : "asc"}
@@ -744,15 +845,9 @@ const AdminProblemsPage = () => {
                       Skills
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ minWidth: '100px' }}>
-                    Events
-                  </TableCell>
-                  <TableCell sx={{ minWidth: '90px' }}>
-                    Community
-                  </TableCell>
-                  <TableCell sx={{ minWidth: '80px' }}>
-                    Actions
-                  </TableCell>
+                  <TableCell sx={{ minWidth: '70px' }}>Events</TableCell>
+                  <TableCell sx={{ minWidth: '80px' }}>Community</TableCell>
+                  <TableCell sx={{ minWidth: '70px', position: 'sticky', right: 0, bgcolor: 'background.paper', zIndex: 1, boxShadow: '-2px 0 4px rgba(0,0,0,0.08)' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -766,23 +861,39 @@ const AdminProblemsPage = () => {
                   </TableRow>
                 ) : (
                   filteredAndSortedProblems.map((problem) => (
-                    <TableRow key={problem.id} hover>
+                    <TableRow key={problem.id} hover sx={{ '& td': { py: 0.75, px: 1 } }}>
                       {/* Problem Statement Title + Description Preview */}
-                      <TableCell sx={{ maxWidth: '300px' }}>
-                        <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
-                    <Button 
-                      size="small" 
-                      startIcon={<EditIcon />} 
-                      onClick={() => handleEditProblem(problem)}
-                      color="primary"
-                    >
-                      Edit
-                    </Button>
-                  </CardActions>
-                        <Box>                          
-                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, lineHeight: 1.2 }}>
-                            {problem.title}
-                          </Typography>
+                      <TableCell sx={{ maxWidth: '260px' }}>
+                        <Box>
+                          <Box
+                            component="a"
+                            href={`/project/${problem.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              color: 'inherit',
+                              textDecoration: 'none',
+                              '&:hover .title-text': { textDecoration: 'underline', color: 'primary.main' },
+                              '&:hover .title-icon': { opacity: 1 },
+                              cursor: 'pointer',
+                              mb: 0.5,
+                            }}
+                          >
+                            <Typography
+                              className="title-text"
+                              variant="subtitle2"
+                              sx={{ fontWeight: 'bold', lineHeight: 1.2 }}
+                            >
+                              {problem.title}
+                            </Typography>
+                            <OpenInNewIcon
+                              className="title-icon"
+                              sx={{ fontSize: '0.85rem', color: 'primary.main', opacity: 0, transition: 'opacity 0.15s' }}
+                            />
+                          </Box>
                           {problem.description && (
                             <Typography
                               variant="body2"
@@ -844,7 +955,10 @@ const AdminProblemsPage = () => {
                       <TableCell>
                         {problem.nonprofit_id ? (
                           <Chip
-                            icon={<LinkIcon />}
+                            component="a"
+                            href={`/admin/nonprofit?id=${problem.nonprofit_id}&from=/admin/problems`}
+                            clickable
+                            icon={<OpenInNewIcon />}
                             label={nonprofits.find(np => np.id === problem.nonprofit_id)?.name || problem.nonprofit_id}
                             size="small"
                             color="primary"
@@ -857,13 +971,16 @@ const AdminProblemsPage = () => {
                                 {nonprofitProblemStatementsMap[problem.id].slice(0, 2).map((nonprofit, i) => (
                                   <Chip
                                     key={nonprofit.id}
-                                    icon={<LinkIcon />}
+                                    component="a"
+                                    href={`/admin/nonprofit?id=${nonprofit.id}&from=/admin/problems`}
+                                    clickable
+                                    icon={<OpenInNewIcon />}
                                     label={nonprofit.name}
                                     size="small"
                                     color="success"
                                     variant="outlined"
                                     sx={{ fontSize: '0.7rem', height: '24px' }}
-                                    title={`This problem statement is linked to ${nonprofit.name}`}
+                                    title={`Go to ${nonprofit.name}`}
                                   />
                                 ))}
                                 {nonprofitProblemStatementsMap[problem.id].length > 2 && (
@@ -977,9 +1094,12 @@ const AdminProblemsPage = () => {
                             </Box>
                           )}
                           {Array.isArray(problem.helping) && problem.helping.length > 0 && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <PeopleIcon sx={{ fontSize: '0.9rem', color: 'text.secondary' }} />
-                              <Typography variant="body2" color="primary" sx={{ fontWeight: 'medium', fontSize: '0.75rem' }}>
+                            <Box
+                              sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer', borderRadius: 1, '&:hover .helping-text': { textDecoration: 'underline' } }}
+                              onClick={() => setHelpersDialogProblem(problem)}
+                            >
+                              <PeopleIcon sx={{ fontSize: '0.9rem', color: 'primary.main' }} />
+                              <Typography className="helping-text" variant="body2" color="primary" sx={{ fontWeight: 'medium', fontSize: '0.75rem' }}>
                                 {problem.helping.length} helping
                               </Typography>
                             </Box>
@@ -993,20 +1113,41 @@ const AdminProblemsPage = () => {
                       </TableCell>
 
                       {/* Actions */}
-                      <TableCell>
-                        <IconButton
-                          onClick={() => handleEditProblem(problem)}
-                          color="primary"
-                          size="small"
-                          sx={{
-                            '&:hover': {
-                              backgroundColor: 'primary.light',
-                              color: 'white'
-                            }
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
+                      <TableCell sx={{ position: 'sticky', right: 0, bgcolor: 'background.paper', zIndex: 1, boxShadow: '-2px 0 4px rgba(0,0,0,0.08)' }}>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Tooltip title="View public project page" placement="top">
+                            <IconButton
+                              component="a"
+                              href={`/project/${problem.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              color="default"
+                              size="small"
+                              sx={{
+                                '&:hover': {
+                                  backgroundColor: 'grey.200',
+                                }
+                              }}
+                            >
+                              <OpenInNewIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit problem statement" placement="top">
+                            <IconButton
+                              onClick={() => handleEditProblem(problem)}
+                              color="primary"
+                              size="small"
+                              sx={{
+                                '&:hover': {
+                                  backgroundColor: 'primary.light',
+                                  color: 'white'
+                                }
+                              }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))
@@ -1015,6 +1156,113 @@ const AdminProblemsPage = () => {
             </Table>
           </TableContainer>
         )}
+
+        {/* Helpers Dialog */}
+        <Dialog
+          open={Boolean(helpersDialogProblem)}
+          onClose={() => setHelpersDialogProblem(null)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <PeopleIcon color="primary" />
+              <Box>
+                <Typography variant="h6" component="span">People Helping</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+                  {helpersDialogProblem?.title}
+                </Typography>
+              </Box>
+            </Box>
+            <IconButton size="small" onClick={() => setHelpersDialogProblem(null)}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 0 }}>
+            {helperProfilesLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : helpersDialogProblem?.helping?.length > 0 ? (
+              <List disablePadding>
+                {helpersDialogProblem.helping.map((helper, index) => {
+                  const typeColor = helper.type === 'mentor' ? 'warning' : helper.type === 'judge' ? 'secondary' : 'primary';
+                  const resolved = helperProfiles[helper.user] || helperProfiles[helper.slack_user];
+                  const displayName = resolved?.name || null;
+                  const displayEmail = resolved?.email || null;
+                  const initials = displayName
+                    ? displayName.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+                    : '?';
+                  const joinedDate = helper.timestamp
+                    ? new Date(helper.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : null;
+                  return (
+                    <ListItem
+                      key={index}
+                      divider={index < helpersDialogProblem.helping.length - 1}
+                      sx={{ px: 0, py: 1.25 }}
+                    >
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: `${typeColor}.main`, width: 40, height: 40, fontSize: '0.85rem' }}>
+                          {initials}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.25 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {displayName || 'Unknown User'}
+                            </Typography>
+                            <Chip
+                              label={helper.type || 'contributor'}
+                              size="small"
+                              color={typeColor}
+                              variant="outlined"
+                              sx={{ height: '20px', fontSize: '0.7rem', textTransform: 'capitalize' }}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box component="span" sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                            {displayEmail && (
+                              <Typography variant="caption" color="text.secondary" component="span">
+                                {displayEmail}
+                              </Typography>
+                            )}
+                            {joinedDate && (
+                              <Typography variant="caption" color="text.secondary" component="span">
+                                Joined {joinedDate}
+                              </Typography>
+                            )}
+                          </Box>
+                        }
+                      />
+                      {helper.user && (
+                        <Tooltip title="View admin profile" placement="left">
+                          <IconButton
+                            component="a"
+                            href={`/admin/profile?q=${helper.user}`}
+                            size="small"
+                            color="primary"
+                          >
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </ListItem>
+                  );
+                })}
+              </List>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                No one is helping yet.
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setHelpersDialogProblem(null)}>Close</Button>
+          </DialogActions>
+        </Dialog>
 
         <Dialog
           open={dialogOpen}
@@ -1191,6 +1439,25 @@ const AdminProblemsPage = () => {
                   }))
                 }
                 margin="normal"
+                />
+
+                <TextField
+                  fullWidth
+                  label="Slack Channel"
+                  value={editingProblem?.slack_channel || ""}
+                  onChange={(e) =>
+                    setEditingProblem((prev) => ({
+                      ...prev,
+                      slack_channel: e.target.value,
+                    }))
+                  }
+                  margin="normal"
+                  InputProps={{
+                    startAdornment: (
+                      <Box component="span" sx={{ mr: 0.5, color: 'text.secondary', fontWeight: 'bold' }}>#</Box>
+                    ),
+                  }}
+                  helperText="Slack channel name (without #)"
                 />
               </>
             )}

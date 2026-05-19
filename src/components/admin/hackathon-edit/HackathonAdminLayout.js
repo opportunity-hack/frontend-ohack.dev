@@ -32,43 +32,59 @@ const SidebarContent = ({ activeSection, onPick, dirtySections }) => {
     // An explicit-save section is "dirty" when its name is in dirtySections.
     return dirtySections?.has(slug);
   };
+
+  // Group by manifest group; default to "config" for any unlabeled (legacy)
+  // entries. The order of groups here defines the order in the sidebar.
+  const groupOrder = ["config", "ops"];
+  const groupLabels = { config: "Configure", ops: "Operate" };
+  const grouped = groupOrder.map((g) => [g, SECTIONS.filter((s) => (s.group || "config") === g)]);
+
+  const renderItem = ({ slug, label, icon: Icon }) => {
+    const active = activeSection === slug;
+    const dirty = dirtyByKey(slug);
+    return (
+      <ListItemButton
+        key={slug}
+        selected={active}
+        onClick={() => onPick(slug)}
+        sx={{
+          mx: 1,
+          borderRadius: 1,
+          my: 0.25,
+          "&.Mui-selected": { bgcolor: "primary.50", color: "primary.main", "& .MuiListItemIcon-root": { color: "primary.main" } },
+        }}
+      >
+        <ListItemIcon sx={{ minWidth: 36 }}>
+          <Icon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText
+          primary={label}
+          primaryTypographyProps={{ fontSize: "0.92rem", fontWeight: active ? 600 : 500 }}
+        />
+        {dirty && (
+          <Tooltip title="Unsaved changes">
+            <DotIcon sx={{ fontSize: 10, color: "warning.main" }} />
+          </Tooltip>
+        )}
+      </ListItemButton>
+    );
+  };
+
   return (
     <Box sx={{ width: SIDEBAR_WIDTH, py: 2 }}>
-      <Typography variant="overline" sx={{ px: 2, color: "text.secondary", display: "block" }}>
-        Sections
-      </Typography>
-      <List dense>
-        {SECTIONS.map(({ slug, label, icon: Icon }) => {
-          const active = activeSection === slug;
-          const dirty = dirtyByKey(slug);
-          return (
-            <ListItemButton
-              key={slug}
-              selected={active}
-              onClick={() => onPick(slug)}
-              sx={{
-                mx: 1,
-                borderRadius: 1,
-                my: 0.25,
-                "&.Mui-selected": { bgcolor: "primary.50", color: "primary.main", "& .MuiListItemIcon-root": { color: "primary.main" } },
-              }}
+      {grouped.map(([groupKey, items], idx) => (
+        items.length > 0 && (
+          <Box key={groupKey} sx={{ mb: idx === grouped.length - 1 ? 0 : 1 }}>
+            <Typography
+              variant="overline"
+              sx={{ px: 2, color: "text.secondary", display: "block", mt: idx === 0 ? 0 : 1 }}
             >
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                <Icon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText
-                primary={label}
-                primaryTypographyProps={{ fontSize: "0.92rem", fontWeight: active ? 600 : 500 }}
-              />
-              {dirty && (
-                <Tooltip title="Unsaved changes">
-                  <DotIcon sx={{ fontSize: 10, color: "warning.main" }} />
-                </Tooltip>
-              )}
-            </ListItemButton>
-          );
-        })}
-      </List>
+              {groupLabels[groupKey] || groupKey}
+            </Typography>
+            <List dense>{items.map(renderItem)}</List>
+          </Box>
+        )
+      ))}
     </Box>
   );
 };

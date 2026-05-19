@@ -123,8 +123,15 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
   // Build a payload that contains the committed state plus only the keys not
   // touched by any currently-dirty explicit-save section. (This preserves the
   // user's expectation that an explicit-save section won't commit until Save.)
+  //
+  // Special case: if "overview-dates" is dirty, skip autosave entirely (return
+  // null). Its fields (start_date, end_date, timezone) are required by the
+  // backend AND cross-field-validated. Sending stale committed values can fail
+  // the "end_date > start_date" check; omitting them causes "Missing required
+  // field". The explicit Save button is the only safe flush path for this section.
   const buildAutosavePayload = useCallback(() => {
     if (!draft || !committed) return null;
+    if (dirtySections.has("overview-dates")) return null;
     const dirtyKeys = collectKeysForSections(dirtySections);
     const merged = { ...committed };
     Object.keys(draft).forEach((k) => {
@@ -156,7 +163,7 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       }
     }, SAVE_DEBOUNCE_MS);
     return () => clearTimeout(saveTimerRef.current);
-  }, [draft, committed, buildAutosavePayload, pushPatch]);
+  }, [draft, committed, dirtySections, buildAutosavePayload, pushPatch]);
 
   // Field-update helpers ----------------------------------------------------
   const setField = useCallback((field, value) => {
@@ -199,6 +206,13 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
   const commitSection = useCallback(
     async (section) => {
       if (!draft) return { ok: false, error: "No draft" };
+      // Cancel any pending autosave timer so it can't fire mid-flight and
+      // overwrite inflightRef, which would cause the explicit save to return
+      // null (treated as cancelled) while the autosave wins with stale data.
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
       setSaveState({ status: "saving", lastSavedAt: null, error: null });
       try {
         const saved = await pushPatch(draft);
