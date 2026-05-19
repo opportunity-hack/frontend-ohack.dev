@@ -1125,7 +1125,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
         // Extract unique user IDs from all teams (users are stored as string IDs)
         const userIds = new Set();
         teamsData.forEach((team) => {
-          if (Array.isArray(team.users)) {
+          if (Array.isArray(team?.users)) {
             team.users.forEach((userId) => {
               if (userId) userIds.add(userId);
             });
@@ -1169,7 +1169,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
         // Update teams with detailed user profiles, converting string IDs to profile objects
         const updatedTeams = teamsData.map((team) => ({
           ...team,
-          users: Array.isArray(team.users)
+          users: Array.isArray(team?.users)
             ? team.users.map(
                 (userId) => profileMap[userId] || { user_id: userId }
               )

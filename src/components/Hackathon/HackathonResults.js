@@ -84,7 +84,7 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
   const winningTeams = useMemo(() => {
     if (!teams) return [];
     return teams
-      .filter(team => isWinningStatus(team.status))
+      .filter(team => isWinningStatus(team?.status))
       .map(team => ({ ...team, winInfo: getWinningStatus(team.status) }))
       .sort((a, b) => a.winInfo.rank - b.winInfo.rank);
   }, [teams]);
@@ -93,7 +93,7 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
   const totalTeams = teams?.length || 0;
   const totalParticipants = useMemo(() => {
     if (!teams) return 0;
-    return teams.reduce((sum, t) => sum + (t.users?.length || 0), 0);
+    return teams.reduce((sum, t) => sum + (t?.users?.length || 0), 0);
   }, [teams]);
 
   // Fetch leaderboard stats
