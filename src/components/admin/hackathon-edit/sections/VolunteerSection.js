@@ -2,6 +2,7 @@ import React from "react";
 import { useAuthInfo } from "@propelauth/react";
 import { Box, Alert } from "@mui/material";
 import { VolunteerWorkbench } from "../../volunteer/VolunteerWorkbench";
+import SectionContainer from "../SectionContainer";
 
 const VolunteerSection = ({ admin, onSnack }) => {
   const { userClass } = useAuthInfo();
@@ -9,21 +10,25 @@ const VolunteerSection = ({ admin, onSnack }) => {
 
   if (!eventId) {
     return (
-      <Alert severity="warning">
-        Save the event ID under Overview before managing applications.
-      </Alert>
+      <SectionContainer title="Applications">
+        <Alert severity="warning">
+          Save the event ID under Overview before managing applications.
+        </Alert>
+      </SectionContainer>
     );
   }
 
   return (
-    <Box>
-      <VolunteerWorkbench
-        userClass={userClass}
-        embedded
-        externalEventId={eventId}
-        onSnack={onSnack}
-      />
-    </Box>
+    <SectionContainer disableGutters>
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <VolunteerWorkbench
+          userClass={userClass}
+          embedded
+          externalEventId={eventId}
+          onSnack={onSnack}
+        />
+      </Box>
+    </SectionContainer>
   );
 };
 

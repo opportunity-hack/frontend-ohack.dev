@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Alert, Box, Tab, Tabs } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+import SectionContainer from "../SectionContainer";
 
 const JudgingRound1 = dynamic(() => import("../../JudgingRound1"), { ssr: false });
 const JudgingRound2 = dynamic(() => import("../../JudgingRound2"), { ssr: false });
@@ -43,9 +44,11 @@ const JudgingSection = ({ admin, orgId }) => {
 
   if (!eventId) {
     return (
-      <Alert severity="warning">
-        Save the event ID under Overview before managing judging.
-      </Alert>
+      <SectionContainer title="Judging">
+        <Alert severity="warning">
+          Save the event ID under Overview before managing judging.
+        </Alert>
+      </SectionContainer>
     );
   }
 
@@ -57,8 +60,8 @@ const JudgingSection = ({ admin, orgId }) => {
   };
 
   return (
-    <Box>
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+    <SectionContainer disableGutters>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 2, md: 3 } }}>
         <Tabs value={activeTab} onChange={handleTabChange} aria-label="Judging tabs">
           <Tab label="Round 1 - Initial Judging" />
           <Tab label="Round 2 - Final Judging" />
@@ -66,10 +69,12 @@ const JudgingSection = ({ admin, orgId }) => {
         </Tabs>
       </Box>
 
-      {activeTab === 0 && <JudgingRound1 {...shared} />}
-      {activeTab === 1 && <JudgingRound2 {...shared} />}
-      {activeTab === 2 && <JudgingResults {...shared} />}
-    </Box>
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        {activeTab === 0 && <JudgingRound1 {...shared} />}
+        {activeTab === 1 && <JudgingRound2 {...shared} />}
+        {activeTab === 2 && <JudgingResults {...shared} />}
+      </Box>
+    </SectionContainer>
   );
 };
 

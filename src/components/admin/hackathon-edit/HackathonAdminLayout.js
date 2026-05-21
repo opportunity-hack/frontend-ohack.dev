@@ -171,8 +171,16 @@ const HackathonAdminLayout = ({
           </Stack>
         </Box>
 
-        {/* Content */}
-        <Box sx={{ p: { xs: 2, md: 3 }, flex: 1, overflowY: "auto" }}>{children}</Box>
+        {/* Content — width contract:
+            - `overflowY: auto` + `scrollbarGutter: stable` keep width identical between
+              scrollable and non-scrollable sections (no ~17px scrollbar jitter).
+            - `overflowX: hidden` + `minWidth: 0` are critical: MUI Grid container's
+              negative margins (e.g. `spacing={3}` in MealsSection) extend the grid
+              past its parent's content area. Without these, sections containing
+              `<Grid container spacing=...>` visibly bleed wider than sections built
+              with `<Stack>` (e.g. ScheduleSection). Clipping here pins every section
+              to the same outer width. */}
+        <Box sx={{ p: { xs: 2, md: 3 }, flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden", scrollbarGutter: "stable" }}>{children}</Box>
       </Box>
     </Box>
   );
