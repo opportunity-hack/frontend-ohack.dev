@@ -41,6 +41,23 @@
 - E2E tests located in `/src/tests/e2e/`
 - Mock implementation examples available in test files
 
+## Admin layout width
+`AdminPage`'s `AdminPageContainer` (`src/components/admin/AdminPage.js`) is a plain `Box` (NOT MUI `Container`) with `width: 100%`, `maxWidth: none` at all breakpoints. The Container variant kept reintroducing a 1400px desktop cap via its internal media-query rules even with `maxWidth={false}` — using `Box` avoids that. Admin tables (teams, volunteer, profile, hackathon edit) need the full viewport on desktop. Don't switch back to `Container` or add a maxWidth here. If a specific admin section wants centered narrower content, scope it to that section's wrapper. `SectionContainer` (`src/components/admin/hackathon-edit/SectionContainer.js`) carries explicit `width: 100%; boxSizing: border-box` on its Paper so every section renders to the same visible width regardless of inner content (TextField stack vs. Grid of cards).
+
+### Hackathon admin section frame contract
+Every section under `/admin/hackathons/[event_id]?section=...` MUST render through `SectionContainer` so the outer frame width is identical across sidebar tabs. Heavy sections (Teams, Judging, Volunteer, CheckIn) that embed their own Paper-laden workbenches/tabs use `<SectionContainer disableGutters>` — the outer Paper border + `width:100%; boxSizing:border-box` contract is preserved, but the inner 24px padding is dropped so the embedded content doesn't double-pad. Heavy sections add their own `Box sx={{ p: { xs:2, md:3 } }}` around the body (after the Tabs strip if any) so spacing inside the frame still feels right. `HackathonAdminLayout`'s content Box uses `scrollbarGutter: stable` so a section with internal scrolling doesn't shift the visible width by ~17px. Don't reintroduce bare `<Box>` section roots — that breaks the frame consistency and is the bug that motivated this contract.
+
+#### Width clipping layers (don't remove)
+Initially the section frame alone wasn't enough — `MealsSection` was visibly wider than `ScheduleSection` because something deep in its tree (Grid item width math or a fixed-width input row) was pushing horizontal overflow up to the document body, which made the whole `AdminPage` card grow and shift the sidebar sideways between section navigations. The fix is layered `overflowX: hidden` clips at every level above the section so overflow never escapes:
+1. `AdminPage` root `<Box>`: `overflowX: hidden` + `maxWidth: 100%`
+2. `AdminPageContainer` styled: `overflowX: hidden` + `minWidth: 0`
+3. `AdminPageContent` styled: `overflowX: hidden` + `width: 100%; maxWidth: 100%; minWidth: 0; boxSizing: border-box`
+4. `HackathonAdminLayout` root flex: already has `overflow: hidden`
+5. `HackathonAdminLayout` content scroll box: `overflowX: hidden; minWidth: 0; scrollbarGutter: stable; overflowY: auto`
+6. `SectionContainer` Paper: `width: 100%; maxWidth: 100%; minWidth: 0; boxSizing: border-box`
+
+Removing any of these and a section that contains wide intrinsic min-content (e.g. side-by-side fixed-width inputs, a wide table, a long unbreakable label) will start shifting the whole admin layout sideways again. Tooltips/dialogs render through MUI Portal so they're not affected by these clips.
+
 ## Core Web Vitals (CLS hygiene)
 Patterns that must stay in place to keep Google Search Console CWV green:
 - `NavBar` and `Footer` are `ssr: true` in `_app.js`; their loading placeholders in `_app.js` match the rendered heights (NavBar 64px, Footer 760px/560px mobile/desktop). Don't flip them back to `ssr: false`.

@@ -81,7 +81,7 @@ const AdminHackathonPage = () => {
   }, [isAdmin, fetchHackathons]);
 
   const handleEdit = (hackathon) => {
-    router.push(`/admin/hackathons/${hackathon.event_id}`);
+    router.push(`/admin/hackathons/${hackathon.event_id || hackathon.id}`);
   };
 
   const handleOpenCreate = () => {
@@ -238,7 +238,7 @@ const AdminHackathonPage = () => {
                           size="small"
                           startIcon={<TeamsIcon />}
                           variant="outlined"
-                          onClick={() => router.push(`/admin/teams?event_id=${hackathon.event_id}`)}
+                          onClick={() => router.push(`/admin/teams?event_id=${hackathon.event_id || hackathon.id}`)}
                           sx={{ flex: 1, textTransform: "none", fontSize: "0.7rem", minHeight: 32, px: 0.5, "& .MuiButton-startIcon": { mr: 0.5 } }}
                         >
                           Teams
@@ -247,7 +247,7 @@ const AdminHackathonPage = () => {
                           size="small"
                           startIcon={<VolunteerIcon />}
                           variant="outlined"
-                          onClick={() => router.push(`/admin/volunteer?event_id=${hackathon.event_id}`)}
+                          onClick={() => router.push(`/admin/volunteer?event_id=${hackathon.event_id || hackathon.id}`)}
                           sx={{ flex: 1, textTransform: "none", fontSize: "0.7rem", minHeight: 32, px: 0.5, "& .MuiButton-startIcon": { mr: 0.5 } }}
                         >
                           Volunteer
@@ -258,7 +258,7 @@ const AdminHackathonPage = () => {
                           size="small"
                           startIcon={<CheckInIcon />}
                           variant="outlined"
-                          onClick={() => router.push(`/admin/check-in?event_id=${hackathon.event_id}`)}
+                          onClick={() => router.push(`/admin/check-in?event_id=${hackathon.event_id || hackathon.id}`)}
                           sx={{ flex: 1, textTransform: "none", fontSize: "0.7rem", minHeight: 32, px: 0.5, "& .MuiButton-startIcon": { mr: 0.5 } }}
                         >
                           Check-in
@@ -267,7 +267,7 @@ const AdminHackathonPage = () => {
                           size="small"
                           startIcon={<JudgingIcon />}
                           variant="outlined"
-                          onClick={() => router.push(`/admin/judging?event_id=${hackathon.event_id}`)}
+                          onClick={() => router.push(`/admin/judging?event_id=${hackathon.event_id || hackathon.id}`)}
                           sx={{ flex: 1, textTransform: "none", fontSize: "0.7rem", minHeight: 32, px: 0.5, "& .MuiButton-startIcon": { mr: 0.5 } }}
                         >
                           Judging
@@ -279,7 +279,7 @@ const AdminHackathonPage = () => {
                       fullWidth
                       variant="outlined"
                       startIcon={<LaunchIcon />}
-                      onClick={() => window.open(`/hack/${hackathon.event_id}`, "_blank")}
+                      onClick={() => window.open(`/hack/${hackathon.event_id || hackathon.id}`, "_blank")}
                       sx={{ textTransform: "none", minHeight: 36 }}
                     >
                       View public event page

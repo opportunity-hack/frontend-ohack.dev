@@ -64,7 +64,13 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       });
       if (!res.ok) throw new Error(`Failed to load hackathons (${res.status})`);
       const data = await res.json();
-      const found = (data.hackathons || []).find((h) => h.event_id === eventId);
+      // Prefer event_id (the slug) but fall back to the Firestore doc id —
+      // legacy hackathons + some of the per-event admin shortcut buttons end
+      // up routing here with the doc id instead of the slug.
+      const list = data.hackathons || [];
+      const found =
+        list.find((h) => h.event_id === eventId) ||
+        list.find((h) => h.id === eventId);
       if (!found) {
         setLoadError(`No hackathon with event_id "${eventId}"`);
         setDraft(null);

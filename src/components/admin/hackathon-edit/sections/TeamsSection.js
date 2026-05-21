@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Alert, Box, Tab, Tabs } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+import SectionContainer from "../SectionContainer";
 
 // Heavy admin sub-pages — lazy-loaded so the section bundle stays small.
 const TeamManagement = dynamic(
@@ -49,15 +50,17 @@ const TeamsSection = ({ admin, orgId }) => {
 
   if (!eventId || !hackathonDocId) {
     return (
-      <Alert severity="warning">
-        Save the event under Overview before managing teams for this hackathon.
-      </Alert>
+      <SectionContainer title="Teams">
+        <Alert severity="warning">
+          Save the event under Overview before managing teams for this hackathon.
+        </Alert>
+      </SectionContainer>
     );
   }
 
   return (
-    <Box>
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+    <SectionContainer disableGutters>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 2, md: 3 } }}>
         <Tabs value={activeTab} onChange={handleTabChange} aria-label="Team management tabs">
           <Tab label="Team Management" />
           <Tab label="Team Assignments" />
@@ -65,15 +68,17 @@ const TeamsSection = ({ admin, orgId }) => {
         </Tabs>
       </Box>
 
-      {activeTab === 0 && <TeamManagement orgId={orgId} embeddedHackathonId={hackathonDocId} />}
-      {activeTab === 1 && <TeamAssignments orgId={orgId} embeddedHackathonId={hackathonDocId} />}
-      {activeTab === 2 && (
-        <Alert severity="info">
-          Team statistics dashboard is coming soon. This will include insights on team
-          performance, engagement metrics, and project progress tracking.
-        </Alert>
-      )}
-    </Box>
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        {activeTab === 0 && <TeamManagement orgId={orgId} embeddedHackathonId={hackathonDocId} />}
+        {activeTab === 1 && <TeamAssignments orgId={orgId} embeddedHackathonId={hackathonDocId} />}
+        {activeTab === 2 && (
+          <Alert severity="info">
+            Team statistics dashboard is coming soon. This will include insights on team
+            performance, engagement metrics, and project progress tracking.
+          </Alert>
+        )}
+      </Box>
+    </SectionContainer>
   );
 };
 
