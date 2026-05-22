@@ -60,7 +60,9 @@ export default function TeamDetailPage({ teamData, eventData }) {
         const teamJson = await teamRes.json();
         const eventJson = eventRes.ok ? await eventRes.json() : null;
 
-        setTeam(teamJson);
+        // API returns { team: { ... } } wrapper
+        const teamObj = teamJson.team || teamJson;
+        setTeam(teamObj);
         setEvent(eventJson);
       } catch (err) {
         console.error("Error fetching team data:", err);
@@ -372,8 +374,11 @@ export async function getStaticProps({ params }) {
       ),
     ]);
 
-    const teamData = teamRes.ok ? await teamRes.json() : null;
+    const teamRaw = teamRes.ok ? await teamRes.json() : null;
     const eventData = eventRes.ok ? await eventRes.json() : null;
+
+    // API returns { team: { ... } } wrapper
+    const teamData = teamRaw?.team || teamRaw;
 
     if (!teamData) {
       return { notFound: true };
