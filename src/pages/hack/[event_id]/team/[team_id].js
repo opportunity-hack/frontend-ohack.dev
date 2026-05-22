@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import NextLink from "next/link";
+import dynamic from "next/dynamic";
 import {
   Container,
   Typography,
@@ -24,16 +25,24 @@ import {
   VideoLibrary as VideoIcon,
   Group as GroupIcon,
   Launch as LaunchIcon,
+  CalendarToday as CalendarIcon,
 } from "@mui/icons-material";
 import { FaSlack, FaHeart } from "react-icons/fa";
 
-export default function TeamDetailPage({ teamData, eventData }) {
+const VideoDisplay = dynamic(
+  () => import("../../../../components/VideoDisplay/VideoDisplay"),
+  { ssr: false }
+);
+
+export default function TeamDetailPage({ teamData, eventData, problemStatementsData, nonprofitName: initialNonprofitName }) {
   const router = useRouter();
   const { event_id, team_id } = router.query;
   const [loading, setLoading] = useState(!teamData);
   const [team, setTeam] = useState(teamData || null);
   const [event, setEvent] = useState(eventData || null);
   const [error, setError] = useState(null);
+  const [problemStatements, setProblemStatements] = useState(problemStatementsData || []);
+  const [nonprofitName, setNonprofitName] = useState(initialNonprofitName || null);
 
   useEffect(() => {
     if (teamData && eventData) return;
@@ -64,6 +73,17 @@ export default function TeamDetailPage({ teamData, eventData }) {
         const teamObj = teamJson.team || teamJson;
         setTeam(teamObj);
         setEvent(eventJson);
+
+        // Fetch problem statement details
+        if (teamObj.problem_statements?.length > 0) {
+          const psDetails = await fetchProblemStatementDetails(teamObj.problem_statements);
+          setProblemStatements(psDetails);
+        }
+
+        // Fetch nonprofit name if team has selected_nonprofit_id
+        if (teamObj.selected_nonprofit_id) {
+          fetchNonprofitName(teamObj.selected_nonprofit_id);
+        }
       } catch (err) {
         console.error("Error fetching team data:", err);
         setError("Failed to load team details");
@@ -74,6 +94,20 @@ export default function TeamDetailPage({ teamData, eventData }) {
 
     fetchData();
   }, [event_id, team_id, teamData, eventData]);
+
+  const fetchNonprofitName = async (nonprofitId) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${nonprofitId}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setNonprofitName(data.name || data.nonprofit?.name || null);
+      }
+    } catch (err) {
+      console.error("Error fetching nonprofit:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -155,6 +189,14 @@ export default function TeamDetailPage({ teamData, eventData }) {
                   color={isActive ? "success" : "default"}
                   size="small"
                 />
+                {team.status && (
+                  <Chip
+                    label={team.status}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                )}
                 <Chip
                   label={`${memberCount} member${memberCount !== 1 ? "s" : ""}`}
                   size="small"
@@ -171,6 +213,27 @@ export default function TeamDetailPage({ teamData, eventData }) {
               {eventName}
             </Link>
           </Typography>
+
+          {/* Nonprofit */}
+          {(nonprofitName || team.selected_nonprofit_id) && (
+            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              <FaHeart style={{ marginRight: 8, color: "#e91e63", fontSize: 14 }} />
+              <Typography variant="body2" color="textSecondary">
+                <strong>Nonprofit:</strong>{" "}
+                {nonprofitName || team.selected_nonprofit_id}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Created date */}
+          {team.created && (
+            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              <CalendarIcon sx={{ fontSize: 14, mr: 1, color: "text.secondary" }} />
+              <Typography variant="caption" color="textSecondary">
+                Created: {new Date(team.created).toLocaleDateString()}
+              </Typography>
+            </Box>
+          )}
         </Paper>
 
         {/* Team Links */}
@@ -246,44 +309,53 @@ export default function TeamDetailPage({ teamData, eventData }) {
               </Card>
             </Grid>
           )}
-
-          {/* Demo Video */}
-          {team.demo_video_url && (
-            <Grid item xs={12} sm={6} md={4}>
-              <Card variant="outlined" sx={{ height: "100%" }}>
-                <CardContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <VideoIcon sx={{ fontSize: 20, color: "#FF0000" }} />
-                  <Box>
-                    <Typography variant="body2" color="textSecondary">
-                      Demo Video
-                    </Typography>
-                    <Link
-                      href={team.demo_video_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="body2"
-                    >
-                      Watch Demo
-                    </Link>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
         </Grid>
 
-        {/* Nonprofit Information */}
-        {team.problem_statements && team.problem_statements.length > 0 && (
+        {/* Demo Video Embed */}
+        {team.demo_video_url && (
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <FaHeart style={{ marginRight: 8, color: "#e91e63", fontSize: 18 }} />
-              <Typography variant="h6">Problem Statement</Typography>
+              <VideoIcon sx={{ fontSize: 20, color: "#FF0000", mr: 1 }} />
+              <Typography variant="h6">Demo Video</Typography>
             </Box>
-            {team.problem_statements.map((ps, index) => (
-              <Box key={index} sx={{ ml: 3 }}>
-                <Typography variant="body2">
-                  {typeof ps === "string" ? ps : ps.title || ps.name || "View problem statement"}
+            <VideoDisplay
+              url={team.demo_video_url}
+              title={`${teamName} Demo`}
+            />
+          </Paper>
+        )}
+
+        {/* Problem Statements */}
+        {problemStatements.length > 0 && (
+          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <FaHeart style={{ marginRight: 8, color: "#e91e63", fontSize: 18 }} />
+              <Typography variant="h6">
+                Problem Statement{problemStatements.length > 1 ? "s" : ""}
+              </Typography>
+            </Box>
+            {problemStatements.map((ps, index) => (
+              <Box key={ps.id || index} sx={{ ml: 1, mb: index < problemStatements.length - 1 ? 2 : 0 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  {ps.title || "Untitled Problem Statement"}
                 </Typography>
+                {ps.description && (
+                  <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
+                    {ps.description.length > 300
+                      ? `${ps.description.substring(0, 300)}...`
+                      : ps.description}
+                  </Typography>
+                )}
+                {ps.id && (
+                  <Link
+                    component={NextLink}
+                    href={`/project/${ps.id}`}
+                    variant="body2"
+                    sx={{ mt: 0.5, display: "inline-block" }}
+                  >
+                    View full project details →
+                  </Link>
+                )}
               </Box>
             ))}
           </Paper>
@@ -361,6 +433,34 @@ export default function TeamDetailPage({ teamData, eventData }) {
   );
 }
 
+// Helper to fetch problem statement details from IDs
+async function fetchProblemStatementDetails(problemStatementIds) {
+  if (!problemStatementIds?.length) return [];
+
+  const results = await Promise.all(
+    problemStatementIds.map(async (psId) => {
+      // Handle case where it's already an object
+      if (typeof psId === "object" && psId !== null) {
+        return psId;
+      }
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${psId}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          return { id: psId, title: data.title, description: data.description, ...data };
+        }
+      } catch (err) {
+        console.error(`Error fetching problem statement ${psId}:`, err);
+      }
+      return { id: psId, title: null, description: null };
+    })
+  );
+
+  return results;
+}
+
 export async function getStaticProps({ params }) {
   const { event_id, team_id } = params;
 
@@ -384,10 +484,34 @@ export async function getStaticProps({ params }) {
       return { notFound: true };
     }
 
+    // Fetch problem statement details
+    let problemStatementsData = [];
+    if (teamData.problem_statements?.length > 0) {
+      problemStatementsData = await fetchProblemStatementDetails(teamData.problem_statements);
+    }
+
+    // Fetch nonprofit name if team has selected_nonprofit_id
+    let nonprofitName = null;
+    if (teamData.selected_nonprofit_id) {
+      try {
+        const npoRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${teamData.selected_nonprofit_id}`
+        );
+        if (npoRes.ok) {
+          const npoData = await npoRes.json();
+          nonprofitName = npoData.name || npoData.nonprofit?.name || null;
+        }
+      } catch (err) {
+        console.error("Error fetching nonprofit:", err);
+      }
+    }
+
     return {
       props: {
         teamData,
         eventData,
+        problemStatementsData,
+        nonprofitName,
       },
       revalidate: 60,
     };
