@@ -102,7 +102,8 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
       );
       if (res.ok) {
         const data = await res.json();
-        setNonprofitName(data.name || data.nonprofit?.name || null);
+        // API returns { nonprofits: { name, ... } }
+        setNonprofitName(data.nonprofits?.name || data.name || null);
       }
     } catch (err) {
       console.error("Error fetching nonprofit:", err);
@@ -499,7 +500,8 @@ export async function getStaticProps({ params }) {
         );
         if (npoRes.ok) {
           const npoData = await npoRes.json();
-          nonprofitName = npoData.name || npoData.nonprofit?.name || null;
+          // API returns { nonprofits: { name, ... } }
+          nonprofitName = npoData.nonprofits?.name || npoData.name || null;
         }
       } catch (err) {
         console.error("Error fetching nonprofit:", err);
