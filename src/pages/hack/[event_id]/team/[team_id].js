@@ -105,8 +105,7 @@ export default function TeamDetailPage({ teamData, eventData }) {
   const teamName = team.name || "Unnamed Team";
   const eventName = event?.title || event?.event_id || event_id;
   const isActive = team.active === "True" || team.active === true;
-  const hasGithubLinks =
-    team.github_links && team.github_links.length > 0 && team.github_links[0]?.link;
+  const hasGithubLinks = team.github_links?.length > 0;
   const memberCount = Array.isArray(team.users) ? team.users.length : 0;
 
   const pageTitle = `${teamName} | ${eventName} | Opportunity Hack`;
@@ -320,7 +319,7 @@ export default function TeamDetailPage({ teamData, eventData }) {
                         alt={displayName}
                         sx={{ width: 56, height: 56, mb: 1 }}
                       >
-                        {displayName[0] || "?"}
+                        {displayName?.[0] || "?"}
                       </Avatar>
                       <Typography variant="body2" noWrap sx={{ maxWidth: "100%" }}>
                         {displayName}

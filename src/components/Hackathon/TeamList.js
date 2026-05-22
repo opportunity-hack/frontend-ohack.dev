@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import NextLink from "next/link";
 import {
   Typography,
   Card,
@@ -874,6 +875,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
         <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
           <Typography variant="h6" sx={{ mr: 1 }}>
             <Link
+              component={NextLink}
               href={`/hack/${event_id}/team/${team?.id}`}
               underline="hover"
             >
