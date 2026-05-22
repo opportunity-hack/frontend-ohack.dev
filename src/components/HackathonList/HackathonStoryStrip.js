@@ -20,7 +20,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { format } from "date-fns";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
 import { useEnv } from "../../context/env.context";
-import { parseLocalDate } from "../../lib/dateUtils";
+import { parseLocalDate, isValidDate } from "../../lib/dateUtils";
 import { trackEvent } from "../../lib/ga";
 
 // Reserve vertical space up front to prevent CLS while the funnel fetches.
@@ -124,12 +124,12 @@ function HackathonStoryStrip() {
   const { yearMarkers, yearsActive, earliestYear } = useMemo(() => {
     const counts = {};
     (pastEvents || []).forEach((e) => {
-      if (!e.start_date) return;
+      if (!e.start_date || !isValidDate(e.start_date)) return;
       const y = format(parseLocalDate(e.start_date), "yyyy");
       counts[y] = (counts[y] || 0) + 1;
     });
     (currentEvents || []).forEach((e) => {
-      if (!e.start_date) return;
+      if (!e.start_date || !isValidDate(e.start_date)) return;
       const y = format(parseLocalDate(e.start_date), "yyyy");
       counts[y] = (counts[y] || 0) + 1;
     });
