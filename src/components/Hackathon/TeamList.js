@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import NextLink from "next/link";
 import {
   Typography,
   Card,
@@ -780,7 +781,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo, event_id }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -872,7 +873,15 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
       )}
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
-          <Typography variant="h6" sx={{ mr: 1 }}>{team?.name}</Typography>
+          <Typography variant="h6" sx={{ mr: 1 }}>
+            <Link
+              component={NextLink}
+              href={`/hack/${event_id}/team/${team?.id}`}
+              underline="hover"
+            >
+              {team?.name}
+            </Link>
+          </Typography>
           {team?.status && renderStatusChip(team?.status)}
         </Box>
         
@@ -1437,6 +1446,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
               accessToken={accessToken}
               onCopyGithubUsername={handleCopyGithubUsername}
               onPlayVideo={handlePlayVideo}
+              event_id={event_id}
             />
           </Grid>        
         ))}
