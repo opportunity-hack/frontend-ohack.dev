@@ -343,6 +343,51 @@ File: `src/components/admin/TeamManagement.js` (~2900 lines, hosted in `src/page
 - **Don't N-render the component.** Fetching per-repo GitHub data (issue summaries, issues) used to do a separate `setState` per repo, which re-renders this ~2900-line component once per repo (~12–30 cascading renders on load and on every dialog open). Both prefetch paths now collect results via `Promise.all` and merge into a SINGLE `setGithubIssueSummaries` / `setGithubIssues` call. If you add another per-team batch fetch, follow the same pattern — never call setState in a forEach loop over teams/repos.
 - **No render-body `console.log`s.** Logs at module top-level inside the component body (e.g. `console.log("Team Data:", teamData)`) fire on EVERY render. They turn a render storm into console spam and slow the page further. Keep diagnostic logs inside callbacks or effects, never in the render path.
 
+## /hack Index Page Architecture
+
+The page is intentionally optimized so a visitor reaches an upcoming event in the first ~250px of scroll. The order is **hero → upcoming events → story strip → archive → "About these events" (merged Why Join + Before signing up) → Sponsor CTA**. Do not re-insert marketing copy ("Why Join") or news ("Latest Updates") between hero and events — both were removed because they pushed events 900+px below the fold.
+
+Hero is intentionally minimal: one h1 (`<h1>Hackathons for nonprofits</h1>`) + two CTAs ("See upcoming events" / "Join the community"). The long "Since 2013, we've helped 100+ nonprofits..." tagline was removed because the Story Strip immediately below shows that with concrete numbers. Don't re-add the tagline.
+
+**Section IDs (load-bearing for `HackPageNav` and other anchor consumers):**
+- `#upcoming-events` on the upcoming events `<Box>` wrapper in `pages/hack/index.js`
+- `#since-2013` on the outer `<Box>` of `HackathonStoryStrip`
+- `#previous-events` on the `OuterGrid` of `PreviousHackathonList`
+- `#about-events` on the merged Why Join + Before You Join section in `pages/hack/index.js`
+- `#year-{yyyy}` on each `YearSection` inside the archive
+- All section anchors carry `scrollMarginTop: 100` (or higher) so jumps don't get hidden behind the 80px NavBar.
+
+### HackPageNav (page-level TOC)
+`src/components/HackathonList/HackPageNav.js` — small floating widget showing the four top-level sections. Hidden until hero scrolls past (driven by a rAF-throttled scroll listener checking when `h1.getBoundingClientRect().bottom < 60`). Desktop: `position: fixed; left: 16px; top: 50%` vertical pill stack. Mobile: `position: fixed; top: 64px` (below NavBar) horizontal scrollable pill bar. Active state follows scroll position via the same rAF anchor-line pattern as the archive (`anchorY = 160`). Updating the section list = edit `SECTIONS` array at the top of the file.
+
+### HackathonList — news removed
+The "Latest Updates" news block inside `HackathonList` is rendered ONLY in `compact={true}` mode (used by the home page sidebar). On `/hack`, the news fetch is gated by `if (!compact) return undefined;` in its `useEffect` to avoid the network call. The full-width `/hack` render shows a small "Read latest updates from Opportunity Hack" link to `/blog` below the events grid. Do not re-add news to the full-width render — it broke the events → strip → archive flow and added ~500-800px of scroll.
+
+### About these events (merged section)
+After the archive, `#about-events` combines:
+1. A compact "What you get" 4-up icon row (Code / Group / EmojiEvents / EventAvailable) — replaces the old "Why Join" Paper. No big photo. Icons + 1-line descriptions.
+2. The original "Before signing up" 3-card row (Code of Conduct / Liability Waiver / Photo Release).
+Both share the same h2 ("About these events") and are stacked under `overline` sub-headings. Don't promote either back above the events — they're context, not finder-flow.
+
+## Story Strip + Year-Grouped Archive
+`HackathonStoryStrip` (`src/components/HackathonList/HackathonStoryStrip.js`) bridges `<HackathonList />` (upcoming) and `<PreviousHackathonList />` (archive) on `/hack`. It fetches `GET /api/messages/hackathons/funnel/aggregate` for stat tiles and derives a year sparkline from `useHackathonEvents("previous"|"current")` (no extra fetch).
+
+- **Year jump uses a CustomEvent, NOT URL hash.** Clicking a year dot dispatches `window.dispatchEvent(new CustomEvent('ohack:archive-jump-year', { detail: { year } }))`. `PreviousHackathonList` listens for that event, sets `activeYear`, then scrolls `#year-{yyyy}` into view. Don't switch to hash-based — it would collide with deep-link patterns elsewhere.
+- **Arizona callout lives INSIDE the strip.** Previously a standalone `<Alert>` between "Why Join" and Upcoming. Do not re-add it to `pages/hack/index.js` — it now sits below the year sparkline inside `HackathonStoryStrip`.
+- **CLS guardrail.** Strip reserves `minHeight: { xs: 420, md: 240 }` on its outer `<Box>`. Funnel data load shows `Skeleton`s inside the stat tiles, not a missing component. Don't return `null` while loading.
+- **Heading:** strip uses `<h2 id="story-strip-heading">`. Page-level h1 ("Hackathons") in `pages/hack/index.js` is the only h1 — keep it that way.
+
+### Previous Events archive — year-grouped, no pagination, photo-led
+`PreviousHackathonList` (`src/components/HackathonList/PreviousHackathonList.js`) renders the full 12+ year archive on one continuous scroll. **No pagination, no year-filter chips** — the prior design (8/page + chip filter + scroll-to-top jumps) created the "takes a while to click around" friction the redesign addresses.
+
+- **Year-grouped layout.** Events are grouped by `format(parseLocalDate(start_date), 'yyyy')`, sorted desc. Each year renders as a `<YearSection>` with `id="year-{yyyy}"` anchor, year heading (h3), and event-count chip. `scrollMarginTop: { xs: 130, md: 100 }` accounts for the NavBar (~80px).
+- **Sticky vertical `YearRail`** (desktop ≥md): left-side `<nav aria-label="Jump to a year">` with `position: sticky; top: 84px`, vertical list of year buttons sized by event count. On mobile (<md): horizontal sticky bar at `top: 64px`. Clicking a year scrolls to `#year-{yyyy}` and sets `activeYear` state (which drives the bright-blue active pill via `$active` styled-component prop). **`activeYear` is click-driven only** — earlier scroll-driven IntersectionObserver/scroll-listener attempts fought smooth-scroll race conditions (last in-flight year would win the final state, landing on neighbor). Cut entirely; cleaner code, no race.
+- **Photo-led `PastEventCard`.** Cards lead with a 16:9 image header from `event.event_photos?.[0]?.url`. When absent, fall back to a `GradientFallback` that hashes year → HSL hue (`((year - 2013) * 37) % 360`) so the wall doesn't feel monotone. `next/image` with `fill` + `sizes` + `loading="lazy"`. `event.image_url` is intentionally NOT used as a fallback (it's typically the generic OHack logo on legacy events — would make every card look the same).
+- **Image domain allowlist.** `cdn.ohack.dev` is in `next.config.js` `images.remotePatterns`. Adding new event-photo CDN domains requires updating that file too.
+- **`LazyMount` per card.** `ImpactMetrics` per-card API fetch is gated by IntersectionObserver with `rootMargin: '300px'`. The archive is long (~30+ cards across 13 year groups); without this, every card fetches on mount → CORS-flood the backend. Keep it.
+- **Layout flex.** `<Box display="flex" flexDirection={{xs:'column', md:'row'}}>` wraps `YearRail` + content area. Year rail width is `108px` on desktop. Content area uses `<Grid container spacing={2}>` with `size={{ xs: 12, sm: 6, md: 4, lg: 3 }}` — 4 cards/row on lg, 3 on md, 2 on sm, 1 on xs.
+- **Don't reintroduce pagination.** The whole point of this redesign is one continuous scroll with rail-teleport. If you need to gate something for perf, prefer further lazy-loading of card content, not paging the list.
+
 ## Local Landing Pages
 
 ### Arizona Hackathons (`/hackathons/arizona`)
@@ -350,7 +395,7 @@ File: `src/components/admin/TeamManagement.js` (~2900 lines, hosted in `src/page
 - Targets: "asu hackathon", "phoenix hackathon", "hack arizona", "hackathons in arizona", etc.
 - Uses `useHackathonEvents("current")` and `useHackathonEvents("previous")` with `isArizonaLocation()` filter (AZ_LOCATION_PATTERNS constant at top of file).
 - Structured data: WebPage + BreadcrumbList + Event (Fall 2026 ASU with GeoCoordinates) + FAQPage.
-- Internal links from: `pages/index.js` (pillar links section), `pages/hack/index.js` (Alert above events list), `pages/sponsor/index.js` (About section).
+- Internal links from: `pages/index.js` (pillar links section), `pages/hack/index.js` (inside `HackathonStoryStrip`, not as a top-level Alert), `pages/sponsor/index.js` (About section).
 
 ## Gotchas (load-bearing — every one of these has bitten us)
 

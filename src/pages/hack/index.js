@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import Head from 'next/head';
-import Image from 'next/image';
-import { Typography, Box, Button, Grid, Container, Divider, Alert, Paper, Card, CardContent } from '@mui/material';
+import { Typography, Box, Button, Grid, Paper, Card, CardContent } from '@mui/material';
 import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import { TitleContainer, LayoutContainer, ProjectsContainer } from '../../styles/nonprofit/styles';
 import HackathonList from '../../components/HackathonList/HackathonList';
+import HackathonStoryStrip from '../../components/HackathonList/HackathonStoryStrip';
 import PreviousHackathonList from '../../components/HackathonList/PreviousHackathonList';
+import HackPageNav from '../../components/HackathonList/HackPageNav';
 import Link from 'next/link';
 import { EventAvailable, Code, Group, EmojiEvents, Gavel, CameraAlt, Business, Policy } from '@mui/icons-material';
 
@@ -20,6 +21,7 @@ const HackathonIndex = () => {
 
   return (
     <LayoutContainer key="hackathons" container>
+      <HackPageNav />
       <Head>
         <title>
           Opportunity Hack - Global Hackathons Including Phoenix & ASU Events
@@ -72,248 +74,176 @@ const HackathonIndex = () => {
         `}</script>
       </Head>
 
-      <TitleContainer container>
+      <TitleContainer container sx={{ pt: { xs: 2, md: 3 }, pb: { xs: 2, md: 2 } }}>
         <Typography
           variant="h1"
           component="h1"
-          sx={{ fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" }, mb: 2 }}
+          sx={{
+            fontSize: { xs: "1.75rem", sm: "2.25rem", md: "2.5rem" },
+            mb: { xs: 1.5, md: 2 },
+            lineHeight: 1.15,
+          }}
         >
-          Hackathons
+          Hackathons for nonprofits
         </Typography>
 
-        <Typography variant="body1" sx={{ fontSize: '18px', mb: 3, maxWidth: '800px', mx: 'auto' }}>
-          Join developers, designers, and nonprofits worldwide to build technology solutions that create lasting social impact. 
-          Since 2013, we've helped 100+ nonprofits serving underserved communities.
-        </Typography>
-
-        <Grid container spacing={2} sx={{ maxWidth: '600px', mx: 'auto', mb: 3 }}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              fullWidth
-              href="#upcoming-events"
-              startIcon={<EventAvailable />}
-              onClick={(e) => {
-                e.preventDefault();
-                track('cta_click', 'view_upcoming_events');
-                document.getElementById('upcoming-events')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              View Upcoming Events
-            </Button>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Button
-              variant="outlined"
-              color="primary"
-              size="large"
-              fullWidth
-              href="/signup"
-              startIcon={<Group />}
-              onClick={() => track('cta_click', 'join_community')}
-            >
-              Join Our Community
-            </Button>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1.5,
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            maxWidth: 560,
+            mx: 'auto',
+          }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            size="medium"
+            href="#upcoming-events"
+            startIcon={<EventAvailable />}
+            onClick={(e) => {
+              e.preventDefault();
+              track('cta_click', 'view_upcoming_events');
+              document.getElementById('upcoming-events')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            See upcoming events
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="medium"
+            href="/signup"
+            startIcon={<Group />}
+            onClick={() => track('cta_click', 'join_community')}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            Join the community
+          </Button>
+        </Box>
       </TitleContainer>
 
-      <ProjectsContainer style={{ marginTop: 20, width: "100%" }}>
-        {/* Why Join Section with Image - Moved to top for better UX flow */}
-        <Paper sx={{ p: 4, mb: 5, bgcolor: 'grey.50' }}>
-          <Grid container spacing={4} sx={{ alignItems: 'center' }}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="h3" component="h2" gutterBottom>
-                Why Join Opportunity Hack?
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                    <Code color="primary" sx={{ mr: 2, mt: 0.5 }} />
-                    <Box>
-                      <Typography variant="h6" gutterBottom>
-                        Build Real Solutions
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Create technology that actually gets used by nonprofits to help communities
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                    <Group color="primary" sx={{ mr: 2, mt: 0.5 }} />
-                    <Box>
-                      <Typography variant="h6" gutterBottom>
-                        Global Community
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Network with developers, designers, and nonprofits from around the world
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                    <EmojiEvents color="primary" sx={{ mr: 2, mt: 0.5 }} />
-                    <Box>
-                      <Typography variant="h6" gutterBottom>
-                        Skill Development
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Learn new technologies and improve your coding skills in a real-world setting
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                    <EventAvailable color="primary" sx={{ mr: 2, mt: 0.5 }} />
-                    <Box>
-                      <Typography variant="h6" gutterBottom>
-                        Career Growth
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Connect with sponsors and gain experience that enhances your professional profile
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <Box sx={{ textAlign: 'center', maxWidth: '100%' }}>
-                  <Image
-                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
-                    alt="Developers collaborating at Opportunity Hack hackathon"
-                    width={500}
-                    height={350}
-                    style={{
-                      maxWidth: "100%",
-                      height: "auto",
-                      borderRadius: "12px",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                    }}
-                  />
-                  <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
-                    Developers working together to create solutions for nonprofits
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-        
-        {/* Arizona local callout */}
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Local to Arizona? See{" "}
-          <Link href="/hackathons/arizona" style={{ color: "inherit", fontWeight: 600 }}>
-            hackathons in Arizona
-          </Link>{" "}
-          for ASU, Tempe, and Phoenix-area events.
-        </Alert>
-
-        {/* Upcoming Events Section - Now positioned after "Why Join" */}
+      <ProjectsContainer style={{ marginTop: 12, width: "100%" }}>
+        {/* Upcoming Events — first in flow so visitors landing here find an
+            event to join without scrolling past marketing copy. */}
         <Box
           id="upcoming-events"
           component="section"
           aria-labelledby="upcoming-events-heading"
-          mb={5}
+          mb={3}
+          sx={{ scrollMarginTop: 100 }}
         >
           <HackathonList />
         </Box>
-        
+
+        {/* Story Strip — bridges upcoming and previous with aggregate impact stats
+            and a clickable year sparkline that jumps into the archive below. */}
+        <HackathonStoryStrip />
+
         {/* Previous Events Section - Positioned right after Upcoming Events for better content grouping */}
         <Box mb={5}>
           <PreviousHackathonList />
         </Box>
       </ProjectsContainer>
 
-      {/* Before You Join Section - Moved after all event content for better UX hierarchy */}
-      <Box mt={5} mb={5} px={2}>
-        <Typography variant="h3" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
-          Before You Join an Event
+      {/* About These Events — merged "Why Join" + "Before You Join".
+          Both are context, not finder-flow: positioned after the archive so
+          the first-scroll experience is hero → events → impact → past, and
+          this section catches users who scrolled deep. */}
+      <Box
+        id="about-events"
+        component="section"
+        aria-labelledby="about-events-heading"
+        sx={{ mt: 5, mb: 5, px: 2, scrollMarginTop: 100 }}
+      >
+        <Typography
+          id="about-events-heading"
+          variant="h4"
+          component="h2"
+          gutterBottom
+          sx={{ textAlign: 'center', mb: 1, fontWeight: 700 }}
+        >
+          About these events
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mb: 4, maxWidth: '600px', mx: 'auto' }}>
-          Quick reads to ensure everyone has a great and safe experience.
+        <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mb: 4, maxWidth: 720, mx: 'auto' }}>
+          What you get out of joining — and the quick reads to skim before you sign up.
         </Typography>
-        
-        <Grid container spacing={3} sx={{ maxWidth: '900px', mx: 'auto' }}>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
-              <CardContent>
-                <Policy color="primary" sx={{ fontSize: 40, mb: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Code of Conduct
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Community guidelines for respectful collaboration
-                </Typography>
-                <Button
-                  variant="outlined"
-                  component={Link}
-                  href="/hack/code-of-conduct"
-                  fullWidth
-                  size="small"
-                  onClick={() => track('cta_click', 'code_of_conduct')}
-                >
-                  Read Guidelines
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
-              <CardContent>
-                <Gavel color="action" sx={{ fontSize: 40, mb: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Liability Waiver
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Standard protection for in-person events
-                </Typography>
-                <Button
-                  variant="outlined"
-                  component={Link}
-                  href="/hack/liability-waiver"
-                  fullWidth
-                  size="small"
-                  onClick={() => track('cta_click', 'liability_waiver')}
-                >
-                  View Waiver
-                </Button>
-              </CardContent>
-            </Card>
+        {/* What you get — compact 4-up icon row (no big photo, no h3 per item).
+            The Story Strip above already proves the scale with numbers, so
+            this is descriptive complement, not the headline. */}
+        <Box sx={{ maxWidth: 1000, mx: 'auto', mb: 5 }}>
+          <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1.5, textAlign: 'center', letterSpacing: 1 }}>
+            What you get
+          </Typography>
+          <Grid container spacing={2}>
+            {[
+              { icon: <Code color="primary" />, title: 'Build real solutions', desc: "Software nonprofits actually deploy — not throwaway demos." },
+              { icon: <Group color="primary" />, title: 'Global community', desc: 'Developers, designers, and nonprofit leads from around the world.' },
+              { icon: <EmojiEvents color="primary" />, title: 'Skill development', desc: 'Learn shipping with real users, deadlines, and constraints.' },
+              { icon: <EventAvailable color="primary" />, title: 'Career growth', desc: 'Network with sponsors and ship a portfolio piece worth talking about.' },
+            ].map((item) => (
+              <Grid key={item.title} size={{ xs: 12, sm: 6, md: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                  <Box sx={{ flexShrink: 0, mt: 0.25 }}>{item.icon}</Box>
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.25 }}>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {item.desc}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            ))}
           </Grid>
+        </Box>
 
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
-              <CardContent>
-                <CameraAlt color="action" sx={{ fontSize: 40, mb: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Photo Release
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Permission to share event photos
-                </Typography>
-                <Button
-                  variant="outlined"
-                  component={Link}
-                  href="/hack/photo-release"
-                  fullWidth
-                  size="small"
-                  onClick={() => track('cta_click', 'photo_release')}
-                >
-                  Photo Policy
-                </Button>
-              </CardContent>
-            </Card>
+        {/* Before signing up — the three legal/safety reads. Same cards as
+            before, just under a different heading and reduced visual weight
+            (this is a "skim before signup" thing, not the page's hero). */}
+        <Box sx={{ maxWidth: 900, mx: 'auto' }}>
+          <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1.5, textAlign: 'center', letterSpacing: 1 }}>
+            Before signing up
+          </Typography>
+          <Grid container spacing={2}>
+            {[
+              { icon: <Policy color="primary" sx={{ fontSize: 32 }} />, title: 'Code of Conduct', desc: 'Community guidelines for respectful collaboration', href: '/hack/code-of-conduct', cta: 'Read guidelines', tracker: 'code_of_conduct' },
+              { icon: <Gavel color="action" sx={{ fontSize: 32 }} />, title: 'Liability Waiver', desc: 'Standard protection for in-person events', href: '/hack/liability-waiver', cta: 'View waiver', tracker: 'liability_waiver' },
+              { icon: <CameraAlt color="action" sx={{ fontSize: 32 }} />, title: 'Photo Release', desc: 'Permission to share event photos', href: '/hack/photo-release', cta: 'Photo policy', tracker: 'photo_release' },
+            ].map((item) => (
+              <Grid key={item.title} size={{ xs: 12, md: 4 }}>
+                <Card sx={{ height: '100%', textAlign: 'center', '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.3s' }}>
+                  <CardContent>
+                    <Box sx={{ mb: 1 }}>{item.icon}</Box>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {item.desc}
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      component={Link}
+                      href={item.href}
+                      fullWidth
+                      size="small"
+                      onClick={() => track('cta_click', item.tracker)}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {item.cta}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
-        </Grid>
+        </Box>
       </Box>
 
       {/* Support Our Mission Section - Appropriate for secondary audience */}
