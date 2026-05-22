@@ -389,11 +389,7 @@ export async function getStaticProps({ params }) {
   } catch (error) {
     console.error("Error fetching team data:", error);
     return {
-      props: {
-        teamData: null,
-        eventData: null,
-      },
-      revalidate: 60,
+      notFound: true,
     };
   }
 }
