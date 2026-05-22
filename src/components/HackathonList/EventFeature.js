@@ -31,7 +31,7 @@ import {
 } from "@mui/material";
 import { format, getYear } from 'date-fns';
 import Link from 'next/link';
-import { parseLocalDate } from '../../lib/dateUtils';
+import { parseLocalDate, isValidDate } from '../../lib/dateUtils';
 import { useAuthInfo } from '@propelauth/react';
 import ImpactMetrics from '../ImpactMetrics';
 
@@ -149,6 +149,7 @@ function EventFeature(props) {
           
           <div style={{ marginBottom: '16px' }}>
             {
+              isValidDate(start_date) && isValidDate(end_date) &&
               getYear(new Date()) === getYear(parseLocalDate(start_date)) &&
               <Typography variant="body1" sx={{ fontSize: '1rem', color: '#333', marginBottom: '8px' }}>
                 {format(parseLocalDate(start_date), 'MMM do')} to {format(parseLocalDate(end_date), 'MMM do yyyy')}
@@ -156,6 +157,7 @@ function EventFeature(props) {
             }
 
             {
+              isValidDate(start_date) && isValidDate(end_date) &&
               getYear(new Date()) !== getYear(parseLocalDate(start_date)) &&
               <Typography variant="body1" sx={{ fontSize: '1rem', color: '#333', marginBottom: '8px' }}>
                 {format(parseLocalDate(start_date), 'MMM do yyyy')} to {format(parseLocalDate(end_date), 'MMM do yyyy')}

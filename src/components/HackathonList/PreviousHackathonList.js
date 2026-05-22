@@ -13,7 +13,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { format } from 'date-fns';
 import useHackathonEvents from '../../hooks/use-hackathon-events';
-import { parseLocalDate } from '../../lib/dateUtils';
+import { parseLocalDate, isValidDate } from '../../lib/dateUtils';
 import ImpactMetrics from '../ImpactMetrics';
 import {
   OuterGrid,
@@ -139,7 +139,7 @@ function GradientFallback({ year }) {
 
 function PastEventCard({ event }) {
   const photo = event?.event_photos?.[0]?.url || null;
-  const year = event?.start_date
+  const year = event?.start_date && isValidDate(event.start_date)
     ? format(parseLocalDate(event.start_date), 'yyyy')
     : '';
 
@@ -361,7 +361,7 @@ function PreviousHackathonList() {
   const yearGroups = useMemo(() => {
     const map = new Map();
     (hackathons || []).forEach((event) => {
-      if (!event?.start_date) return;
+      if (!event?.start_date || !isValidDate(event.start_date)) return;
       const y = format(parseLocalDate(event.start_date), 'yyyy');
       if (!map.has(y)) map.set(y, []);
       map.get(y).push(event);

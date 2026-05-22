@@ -11,3 +11,4 @@ sitemap*.xml
 test-results/.last-run.json
 test-scroll-behavior.sh
 .claude/
+.env

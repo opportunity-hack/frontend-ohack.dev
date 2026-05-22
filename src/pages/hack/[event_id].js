@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import { parseLocalDate, isHackathonExpired } from "../../lib/dateUtils";
+import { parseLocalDate, isHackathonExpired, isValidDate } from "../../lib/dateUtils";
 import { 
   CircularProgress, 
   Container, 
@@ -291,8 +291,8 @@ export default function HackathonEvent({ eventData }) {
   // Enhanced meta title and description with better fallbacks
   const eventTitle = event.title || `Hackathon Event ${event_id}`;
   const eventLocation = event.location || "Virtual/TBA";
-  const eventStartDate = event.start_date ? parseLocalDate(event.start_date).toLocaleDateString() : "TBA";
-  const eventEndDate = event.end_date ? parseLocalDate(event.end_date).toLocaleDateString() : "TBA";
+  const eventStartDate = event.start_date && isValidDate(event.start_date) ? parseLocalDate(event.start_date).toLocaleDateString() : "TBA";
+  const eventEndDate = event.end_date && isValidDate(event.end_date) ? parseLocalDate(event.end_date).toLocaleDateString() : "TBA";
   
   const metaTitle = `${eventTitle} - ${eventLocation} | Opportunity Hack`;
   const metaDescription = `Join ${eventTitle} hackathon in ${eventLocation} from ${eventStartDate} to ${eventEndDate}. Apply as a hacker, volunteer, mentor, judge, or sponsor. Build technology solutions for nonprofits and make a positive impact. Register now!`;

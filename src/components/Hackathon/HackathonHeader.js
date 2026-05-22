@@ -68,10 +68,12 @@ const HackathonHeader = ({
 }) => {
   const formatDate = (date) => {
     const d = parseLocalDate(date);
+    if (isNaN(d.getTime())) return 'TBA';
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
   const formatDateISO = (date) => {
     const d = parseLocalDate(date);
+    if (isNaN(d.getTime())) return '';
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
