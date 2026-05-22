@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-import { EmptyGrid, OuterGrid, MoreNewsStyle, HackathonGrid, NewsContainer, NewsSection, NewsSectionTitle } from "./styles";
+import { EmptyGrid, OuterGrid, MoreNewsStyle, HackathonGrid } from "./styles";
 import EventFeature from "./EventFeature";
 import { SectionTitle } from "./styles";
 import Link from "next/link";
@@ -30,19 +30,30 @@ function HackathonList({ compact = false }) {
     }
   }, [hackathons, router]);
 
+  // Only fetch news for the compact sidebar variant — the full /hack page
+  // routes users to /blog for the news feed instead of embedding it here,
+  // which removes ~500-800px of vertical scroll between Upcoming Events
+  // and the Previous Events archive.
   useEffect(() => {
+    if (!compact) return undefined;
+    let cancelled = false;
     setNewsLoading(true);
     fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=3`)
       .then((response) => response.json())
       .then((data) => {
+        if (cancelled) return;
         setNewsData(data.text || null);
         setNewsLoading(false);
       })
       .catch((error) => {
+        if (cancelled) return;
         console.error(error);
         setNewsLoading(false);
       });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [compact]);
 
   const renderEventSkeleton = () => (
     <Skeleton
@@ -219,16 +230,16 @@ function HackathonList({ compact = false }) {
           </Box>
         )}
 
-        <NewsSection>
-          <NewsSectionTitle>Latest Updates</NewsSectionTitle>
-          <NewsContainer>
-            {newsLoading ? (
-              <News newsData={[]} frontpage={"true"} loading={true} />
-            ) : (
-              <News newsData={newsData} frontpage={"true"} loading={false} />
-            )}
-          </NewsContainer>
-        </NewsSection>
+        {hackathons && hackathons.length > 0 && (
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Link prefetch={false} href="/blog" style={{ textDecoration: 'none' }}>
+              <MoreNewsStyle>
+                Read latest updates from Opportunity Hack
+                <ArrowForwardIcon sx={{ ml: 1, fontSize: 16 }} />
+              </MoreNewsStyle>
+            </Link>
+          </Box>
+        )}
       </EmptyGrid>
     </OuterGrid>
   );
