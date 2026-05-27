@@ -20,6 +20,22 @@ const HackathonIndex = () => {
   };
 
   return (
+    <Box
+      sx={{
+        // Mobile horizontal-overflow guard for the WHOLE /hack page. Some
+        // descendants (the EventFeature upcoming-event cards in particular)
+        // have intrinsic min-content widths wider than a phone viewport.
+        // Without this clip, the page horizontally scrolls and the Story
+        // Strip + archive look cut off. Clipping at the page root is safer
+        // than touching shared layout styles or rewriting EventFeature.
+        // We can't put this on LayoutContainer (styled Grid sx overrides
+        // are unreliable through its existing styled chain), so we put a
+        // plain Box around everything.
+        overflowX: 'hidden',
+        width: '100%',
+        maxWidth: '100%',
+      }}
+    >
     <LayoutContainer key="hackathons" container>
       <HackPageNav />
       <Head>
@@ -267,6 +283,7 @@ const HackathonIndex = () => {
         </Button>
       </Paper>
     </LayoutContainer>
+    </Box>
   );
 };
 

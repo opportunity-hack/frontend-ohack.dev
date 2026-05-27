@@ -28,12 +28,25 @@ import { trackEvent } from "../../lib/ga";
 const STRIP_MIN_HEIGHT = { xs: 420, md: 240 };
 
 const StripPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
+  // Mobile-first padding: less breathing room on phones so 4,222 + 293 +
+  // year sparkline + Arizona alert all fit inside the viewport.
+  padding: theme.spacing(2),
+  [theme.breakpoints.up("md")]: {
+    padding: theme.spacing(3),
+  },
   marginTop: theme.spacing(2),
   marginBottom: theme.spacing(4),
   background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.10)} 0%, ${alpha(theme.palette.secondary.light, 0.10)} 100%)`,
   border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
   borderRadius: theme.shape.borderRadius * 2,
+  // CRITICAL for mobile: constrain to parent and clip any child overflow.
+  // Without this, the year sparkline below pushes the Paper wider than the
+  // viewport on phones (visible left/right content gets cut off).
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+  overflow: "hidden",
 }));
 
 const YearDot = styled("button")(({ theme, $size, $active, $hasEvents }) => ({
@@ -64,16 +77,18 @@ const YearDot = styled("button")(({ theme, $size, $active, $hasEvents }) => ({
 }));
 
 function StatTile({ icon, value, label, loading }) {
+  // No minWidth here on purpose — the parent uses CSS grid (2 cols on
+  // xs, 4 cols on md+) which deterministically slots each tile. A
+  // minWidth would fight that grid on narrow phones and force overflow.
   return (
     <Box
       sx={{
-        flex: "1 1 150px",
-        minWidth: 140,
+        minWidth: 0,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         py: 1,
-        px: 1,
+        px: 0.5,
       }}
     >
       <Box sx={{ color: "primary.main", mb: 0.5, display: "flex" }}>{icon}</Box>
@@ -84,7 +99,12 @@ function StatTile({ icon, value, label, loading }) {
           {(value || 0).toLocaleString()}
         </Typography>
       )}
-      <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ mt: 0.25 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        textAlign="center"
+        sx={{ mt: 0.25, lineHeight: 1.2 }}
+      >
         {label}
       </Typography>
     </Box>
@@ -180,16 +200,25 @@ function HackathonStoryStrip() {
       id="since-2013"
       component="section"
       aria-labelledby="story-strip-heading"
-      sx={{ minHeight: STRIP_MIN_HEIGHT, scrollMarginTop: 100 }}
+      sx={{
+        minHeight: STRIP_MIN_HEIGHT,
+        scrollMarginTop: 100,
+        // Belt-and-suspenders with StripPaper: ensure the section itself
+        // never escapes its parent's width on mobile.
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
+      }}
     >
       <StripPaper variant="outlined">
         <Stack
           direction={{ xs: "column", md: "row" }}
-          spacing={3}
+          spacing={{ xs: 2, md: 3 }}
           alignItems={{ xs: "stretch", md: "center" }}
           justifyContent="space-between"
+          sx={{ minWidth: 0 }}
         >
-          <Box sx={{ flex: { md: "0 0 auto" }, minWidth: { md: 220 } }}>
+          <Box sx={{ flex: { md: "0 0 auto" }, minWidth: { xs: 0, md: 220 } }}>
             <Typography
               variant="overline"
               color="text.secondary"
@@ -210,12 +239,20 @@ function HackathonStoryStrip() {
             </Typography>
           </Box>
 
-          <Stack
-            direction="row"
-            spacing={1}
-            flexWrap="wrap"
-            useFlexGap
-            sx={{ flex: 1, justifyContent: { xs: "flex-start", md: "center" } }}
+          {/* CSS grid (not flex+wrap) so the layout is deterministic on
+              mobile: always 2x2 on xs, 4x1 on md+. flex+wrap with minWidth
+              was unreliable on narrow phones — children would push the
+              parent wider than the viewport instead of wrapping. */}
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: "grid",
+              gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+              columnGap: { xs: 1, md: 1.5 },
+              rowGap: { xs: 1, md: 0 },
+              justifyItems: "center",
+            }}
           >
             <StatTile
               icon={<EventAvailableIcon />}
@@ -241,7 +278,7 @@ function HackathonStoryStrip() {
               label="Events with winners"
               loading={!showStats}
             />
-          </Stack>
+          </Box>
 
           <Box
             sx={{
@@ -275,17 +312,24 @@ function HackathonStoryStrip() {
         </Stack>
 
         {yearMarkers.length > 0 && (
-          <Box sx={{ mt: 3 }}>
+          <Box sx={{ mt: 3, width: "100%", maxWidth: "100%", minWidth: 0 }}>
             <Stack
               direction="row"
               alignItems="center"
               spacing={1.5}
               sx={{
+                // CRITICAL on mobile: width + minWidth: 0 lets overflowX: auto
+                // actually clip + scroll the sparkline content. Without it,
+                // the row of year dots pushes the parent Paper wider than
+                // the viewport and content gets cut off.
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
                 overflowX: "auto",
                 pb: 1,
                 pt: 0.5,
-                // Hide the scrollbar but keep horizontal scroll on mobile.
                 scrollbarWidth: "thin",
+                WebkitOverflowScrolling: "touch",
               }}
               aria-label="Hackathon years"
             >
