@@ -18,6 +18,7 @@ import {
   Link,
   Paper,
   Alert,
+  Skeleton,
 } from "@mui/material";
 import {
   ArrowBack as BackIcon,
@@ -28,11 +29,22 @@ import {
   CalendarToday as CalendarIcon,
 } from "@mui/icons-material";
 import { FaSlack, FaHeart } from "react-icons/fa";
+import { isWinningStatus } from "../../../../constants/teamStatus";
 
 const VideoDisplay = dynamic(
   () => import("../../../../components/VideoDisplay/VideoDisplay"),
   { ssr: false }
 );
+
+const TeamCompletionChecklist = dynamic(
+  () => import("../../../../components/Teams/TeamCompletionChecklist"),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={520} sx={{ mb: 3, borderRadius: 1 }} />,
+  }
+);
+
+const COMPLETION_VISIBLE_STATUSES = new Set(["DEPLOYED", "NONPROFIT_SIGNOFF"]);
 
 export default function TeamDetailPage({ teamData, eventData, problemStatementsData, nonprofitName: initialNonprofitName }) {
   const router = useRouter();
@@ -45,11 +57,16 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
   const [nonprofitName, setNonprofitName] = useState(initialNonprofitName || null);
 
   useEffect(() => {
-    if (teamData && eventData) return;
     if (!event_id || !team_id) return;
 
+    // Always refetch team data on the client after hydration so that newly-added
+    // team members (and other live mutations like checklist toggles) are reflected
+    // immediately — ISR (revalidate: 60) + the backend's 10-min TTL on get_team
+    // would otherwise show stale users[] for several minutes.
+    const hadSsrData = !!(teamData && eventData);
+
     const fetchData = async () => {
-      setLoading(true);
+      if (!hadSsrData) setLoading(true);
       try {
         const [teamRes, eventRes] = await Promise.all([
           fetch(
@@ -61,39 +78,36 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
         ]);
 
         if (!teamRes.ok) {
-          setError("Team not found");
-          setLoading(false);
+          if (!hadSsrData) setError("Team not found");
           return;
         }
 
         const teamJson = await teamRes.json();
         const eventJson = eventRes.ok ? await eventRes.json() : null;
 
-        // API returns { team: { ... } } wrapper
         const teamObj = teamJson.team || teamJson;
         setTeam(teamObj);
-        setEvent(eventJson);
+        if (eventJson) setEvent(eventJson);
 
-        // Fetch problem statement details
         if (teamObj.problem_statements?.length > 0) {
           const psDetails = await fetchProblemStatementDetails(teamObj.problem_statements);
           setProblemStatements(psDetails);
         }
 
-        // Fetch nonprofit name if team has selected_nonprofit_id
         if (teamObj.selected_nonprofit_id) {
           fetchNonprofitName(teamObj.selected_nonprofit_id);
         }
       } catch (err) {
         console.error("Error fetching team data:", err);
-        setError("Failed to load team details");
+        if (!hadSsrData) setError("Failed to load team details");
       } finally {
-        setLoading(false);
+        if (!hadSsrData) setLoading(false);
       }
     };
 
     fetchData();
-  }, [event_id, team_id, teamData, eventData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event_id, team_id]);
 
   const fetchNonprofitName = async (nonprofitId) => {
     try {
@@ -144,6 +158,8 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
   const isActive = team.active === "True" || team.active === true;
   const hasGithubLinks = team.github_links?.length > 0;
   const memberCount = Array.isArray(team.users) ? team.users.length : 0;
+  const showCompletionChecklist =
+    isWinningStatus(team.status) || COMPLETION_VISIBLE_STATUSES.has(team.status);
 
   const pageTitle = `${teamName} | ${eventName} | Opportunity Hack`;
   const pageDescription = `Team ${teamName} participating in ${eventName}. ${memberCount} member${memberCount !== 1 ? "s" : ""}.`;
@@ -236,6 +252,15 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
             </Box>
           )}
         </Paper>
+
+        {/* Project Completion Checklist (winning teams only) */}
+        {showCompletionChecklist && (
+          <TeamCompletionChecklist
+            team={team}
+            eventId={event_id}
+            onTeamUpdate={(updated) => setTeam(updated)}
+          />
+        )}
 
         {/* Team Links */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -374,32 +399,52 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
               {team.users.map((user, index) => {
                 const isObject = typeof user === "object" && user !== null;
                 const displayName = isObject
-                  ? user.name || user.nickname || "Team Member"
-                  : "Team Member";
+                  ? user.name || user.nickname || `Team member #${index + 1}`
+                  : `Team member #${index + 1}`;
                 const profileImage = isObject ? user.profile_image : null;
-                const userId = isObject ? user.user_id || user.id : user;
+                const dbId = isObject ? user.id : user;
+                const key = dbId || `member-${index}`;
+
+                const tileInner = (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      p: 1,
+                      borderRadius: 1,
+                      transition: "background-color 150ms ease",
+                      "&:hover": dbId ? { backgroundColor: "rgba(0,0,0,0.04)" } : {},
+                    }}
+                  >
+                    <Avatar
+                      src={profileImage}
+                      alt={displayName}
+                      sx={{ width: 56, height: 56, mb: 1 }}
+                    >
+                      {displayName?.[0] || "?"}
+                    </Avatar>
+                    <Typography variant="body2" noWrap sx={{ maxWidth: "100%" }}>
+                      {displayName}
+                    </Typography>
+                  </Box>
+                );
 
                 return (
-                  <Grid item xs={6} sm={4} md={3} key={userId || index}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        textAlign: "center",
-                      }}
-                    >
-                      <Avatar
-                        src={profileImage}
-                        alt={displayName}
-                        sx={{ width: 56, height: 56, mb: 1 }}
+                  <Grid item xs={6} sm={4} md={3} key={key}>
+                    {dbId ? (
+                      <Link
+                        component={NextLink}
+                        href={`/profile/${dbId}`}
+                        underline="none"
+                        color="inherit"
                       >
-                        {displayName?.[0] || "?"}
-                      </Avatar>
-                      <Typography variant="body2" noWrap sx={{ maxWidth: "100%" }}>
-                        {displayName}
-                      </Typography>
-                    </Box>
+                        {tileInner}
+                      </Link>
+                    ) : (
+                      tileInner
+                    )}
                   </Grid>
                 );
               })}
