@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import NextLink from 'next/link';
 import {
   Paper, Typography, Box, Grid, Chip, Link, Button,
   Divider, Skeleton, Avatar
 } from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { styled, alpha } from '@mui/material/styles';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupIcon from '@mui/icons-material/Group';
@@ -284,9 +287,56 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
                             mb: 0.5,
                           }}
                         />
-                        <Typography variant="h6" fontWeight="bold" noWrap>
-                          {team.name}
-                        </Typography>
+                        {eventId && team.id ? (
+                          <Link
+                            component={NextLink}
+                            href={`/hack/${eventId}/team/${team.id}`}
+                            underline="none"
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              mt: 0.75,
+                              color: 'primary.main',
+                              fontWeight: 'bold',
+                              fontSize: '1.25rem',
+                              lineHeight: 1.3,
+                              maxWidth: '100%',
+                              width: 'fit-content',
+                              '& .team-name-text': {
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                borderBottom: '2px solid transparent',
+                                transition: 'border-color 150ms ease',
+                              },
+                              '& .team-name-arrow': {
+                                fontSize: '1.1rem',
+                                transition: 'transform 150ms ease',
+                                flexShrink: 0,
+                              },
+                              '&:hover .team-name-text': {
+                                borderBottomColor: 'primary.main',
+                              },
+                              '&:hover .team-name-arrow': {
+                                transform: 'translateX(3px)',
+                              },
+                              '&:focus-visible': {
+                                outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                                outlineOffset: 2,
+                                borderRadius: 1,
+                              },
+                            }}
+                            aria-label={`View ${team.name} team page`}
+                          >
+                            <span className="team-name-text">{team.name}</span>
+                            <ArrowForwardIcon className="team-name-arrow" />
+                          </Link>
+                        ) : (
+                          <Typography variant="h6" fontWeight="bold" noWrap>
+                            {team.name}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
 
@@ -327,6 +377,21 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
                     )}
 
                     <Box sx={{ mt: 'auto', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {eventId && team.id && (
+                        <Chip
+                          icon={<OpenInNewIcon sx={{ color: 'inherit !important' }} />}
+                          label="View team page"
+                          component={NextLink}
+                          href={`/hack/${eventId}/team/${team.id}`}
+                          clickable
+                          size="small"
+                          color="primary"
+                          sx={{
+                            fontWeight: 600,
+                            '& .MuiChip-label': { px: 1.25 },
+                          }}
+                        />
+                      )}
                       {githubLink && (
                         <Chip
                           icon={<GitHubIcon />}
