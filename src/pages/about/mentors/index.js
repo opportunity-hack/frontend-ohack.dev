@@ -19,6 +19,20 @@ const Mentorship = dynamic(
     }
 );
 
+const MentorChecklist = dynamic(
+    () => import("../../../components/About/Mentorship/MentorChecklist"),
+    {
+        ssr: false,
+    }
+);
+
+const MentorTeamPanelDemo = dynamic(
+    () => import("../../../components/Teams/MentorTeamPanelDemo"),
+    {
+        ssr: false,
+    }
+);
+
 // Visible FAQ content — the FAQPage JSON-LD in getStaticProps mirrors this
 // array exactly. Visible UI ↔ schema parity is required for FAQ rich results.
 const FAQ_DATA = [
@@ -73,9 +87,69 @@ export default function Mentors() {
     return (
         <>
             <Mentorship />
+
+            {/* Your impact, tracked — embedded personal checklist + per-team panel demo */}
             <Container maxWidth="lg">
                 <Box sx={{ padding: "2rem", mb: 5 }}>
+                    <Typography
+                        variant="overline"
+                        sx={{ color: "primary.main", fontWeight: 700 }}
+                    >
+                        Your impact, tracked
+                    </Typography>
                     <Typography variant="h2" component="h2" gutterBottom>
+                        A standard process we've built over the years
+                    </Typography>
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            mb: 4,
+                            maxWidth: "780px",
+                            fontSize: "18px",
+                            color: "text.secondary",
+                        }}
+                    >
+                        Mentoring at Opportunity Hack isn't ad-hoc. We give every mentor a
+                        personal preparation checklist <em>and</em> a per-team support panel
+                        that other mentors can see live — so coverage is even, nothing falls
+                        through the cracks, and your contributions are credited publicly to
+                        your name.
+                    </Typography>
+
+                    <Typography variant="h4" component="h3" sx={{ mt: 4, mb: 2 }}>
+                        1. Your personal mentor checklist
+                    </Typography>
+                    <Typography
+                        variant="body1"
+                        sx={{ mb: 3, fontSize: "16px", color: "text.secondary" }}
+                    >
+                        Use this before, during, and after the event to stay on track. The
+                        current phase highlights automatically based on the upcoming event's
+                        schedule.
+                    </Typography>
+                    <Box sx={{ mb: 5 }}>
+                        <MentorChecklist />
+                    </Box>
+
+                    <Typography variant="h4" component="h3" sx={{ mt: 4, mb: 2 }}>
+                        2. What you'll see on every team's page during the event
+                    </Typography>
+                    <Typography
+                        variant="body1"
+                        sx={{ mb: 3, fontSize: "16px", color: "text.secondary" }}
+                    >
+                        On <code>/hack/&lt;event&gt;/team/&lt;team_id&gt;</code>, every mentor sees a
+                        shared support panel: open concerns owned by a specific mentor so others
+                        don't duplicate effort, a 6-item coverage checklist with attribution, a
+                        4-criterion judging-readiness rubric (worst rating wins, so you coach
+                        the weakest area first), and a public notes feed. Below is a live
+                        preview using sample data.
+                    </Typography>
+                    <Box sx={{ mb: 5 }}>
+                        <MentorTeamPanelDemo />
+                    </Box>
+
+                    <Typography variant="h2" component="h2" gutterBottom sx={{ mt: 6 }}>
                         Frequently Asked Questions for Hackathon Mentors
                     </Typography>
                     <Typography

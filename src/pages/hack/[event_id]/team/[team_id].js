@@ -36,6 +36,14 @@ const VideoDisplay = dynamic(
   { ssr: false }
 );
 
+const MentorTeamPanel = dynamic(
+  () => import("../../../../components/Teams/MentorTeamPanel"),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={420} sx={{ mb: 3, borderRadius: 1 }} />,
+  }
+);
+
 const TeamCompletionChecklist = dynamic(
   () => import("../../../../components/Teams/TeamCompletionChecklist"),
   {
@@ -160,6 +168,11 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
   const memberCount = Array.isArray(team.users) ? team.users.length : 0;
   const showCompletionChecklist =
     isWinningStatus(team.status) || COMPLETION_VISIBLE_STATUSES.has(team.status);
+  const eventHasStarted = (() => {
+    if (!event?.start_date) return false;
+    const start = new Date(event.start_date);
+    return !Number.isNaN(start.getTime()) && start <= new Date();
+  })();
 
   const pageTitle = `${teamName} | ${eventName} | Opportunity Hack`;
   const pageDescription = `Team ${teamName} participating in ${eventName}. ${memberCount} member${memberCount !== 1 ? "s" : ""}.`;
@@ -252,6 +265,16 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
             </Box>
           )}
         </Paper>
+
+        {/* Mentor Support Panel — visible to everyone once the event has started */}
+        {eventHasStarted && (
+          <MentorTeamPanel
+            team={team}
+            event={event}
+            eventId={event_id}
+            onTeamUpdate={(updated) => setTeam(updated)}
+          />
+        )}
 
         {/* Project Completion Checklist (winning teams only) */}
         {showCompletionChecklist && (

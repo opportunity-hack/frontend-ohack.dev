@@ -110,6 +110,14 @@ const OverviewSection = ({ admin }) => {
           disabled
           helperText="The URL identifier for this hackathon. Renaming requires re-creating the event."
         />
+        <TextField
+          label="Mentor Slack channel"
+          fullWidth
+          value={hackathon.mentor_slack_channel || ""}
+          onChange={(e) => setField("mentor_slack_channel", e.target.value)}
+          placeholder={`${hackathon.event_id || "your-event"}-mentors`.replace(/_/g, "-").toLowerCase()}
+          helperText="Heartbeats for raised mentor flags get posted here. Defaults to <event_id>-mentors if empty."
+        />
       </Stack>
     </SectionContainer>
   );
