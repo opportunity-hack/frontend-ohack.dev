@@ -54,6 +54,166 @@ import { TEAM_STATUS_OPTIONS, getStatusOption, isJoiningDisabled } from '../../c
 import { isHackathonExpired } from '../../lib/dateUtils';
 import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
 import VideoDisplay from '../VideoDisplay/VideoDisplay';
+import {
+  MENTOR_COVERAGE_ITEMS,
+  MENTOR_COVERAGE_TOTAL,
+  JUDGING_CRITERIA,
+  SCORE_META,
+  latestRatingsByMentor,
+  consensusForCriterion,
+  relativeTime as mentorRelativeTime,
+} from '../Teams/mentorCoverage';
+import FlagIcon from '@mui/icons-material/Flag';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
+import GavelIcon from '@mui/icons-material/Gavel';
+
+// Map MUI palette color names to a hex so the dots paint reliably without
+// having to pass the whole theme down. Mirrors SCORE_META.color.
+const SCORE_DOT_COLORS = {
+  green: '#2e7d32',   // success.main
+  yellow: '#ed6c02',  // warning.main
+  red: '#d32f2f',     // error.main
+};
+
+/**
+ * 5-dot judging-readiness strip. One dot per criterion, painted by team
+ * consensus (worst rating across mentors). Empty dots when nobody's rated.
+ * Renders nothing if no criterion has any rating.
+ */
+const JudgingReadinessStrip = ({ team }) => {
+  const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
+  const hasAnyRating = Object.values(ratingsByMentor).some(
+    (perMentor) => perMentor && Object.keys(perMentor).length > 0
+  );
+  if (!hasAnyRating) return null;
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5, flexWrap: 'wrap' }}>
+      <GavelIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+        Judging readiness
+      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+        {JUDGING_CRITERIA.map((c) => {
+          const consensus = consensusForCriterion(ratingsByMentor[c.slug]);
+          const dotColor = consensus ? SCORE_DOT_COLORS[consensus] : 'transparent';
+          const label = consensus
+            ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label}`
+            : `${c.label}: not rated yet`;
+          return (
+            <Tooltip key={c.slug} title={label} placement="top" arrow>
+              <Box
+                aria-label={label}
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: dotColor,
+                  border: 1,
+                  borderColor: consensus ? dotColor : 'divider',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 8,
+                  color: '#fff',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                {c.label[0]}
+              </Box>
+            </Tooltip>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+};
+
+/**
+ * Compact at-a-glance mentor-support summary for the team list cards on
+ * /hack/<event_id>. Mirrors the per-team MentorTeamPanel's header pills but
+ * stays small. Renders nothing if a team has no mentor activity yet.
+ */
+const MentorSupportSummary = ({ team, eventId }) => {
+  const checklist = team?.mentor_checklist || {};
+  const doneCount = MENTOR_COVERAGE_ITEMS.reduce(
+    (acc, it) => acc + (checklist[it.slug]?.done ? 1 : 0),
+    0
+  );
+  const openFlags = Number(team?.mentor_open_flag_count || 0);
+  const lastTouchedAt = team?.mentor_last_touched_at;
+  const lastTouchedBy = team?.mentor_last_touched_by_name;
+  const hasAnyRating = Array.isArray(team?.mentor_ratings) && team.mentor_ratings.length > 0;
+
+  // Hide entirely if there's no mentor activity to report.
+  if (!doneCount && !openFlags && !lastTouchedAt && !hasAnyRating) return null;
+
+  const coverageColor =
+    doneCount === MENTOR_COVERAGE_TOTAL ? 'success' : doneCount > 0 ? 'primary' : 'default';
+
+  return (
+    <Box
+      sx={{
+        mb: 1,
+        p: 1,
+        borderRadius: 1,
+        backgroundColor: openFlags > 0 ? 'rgba(255,167,38,0.10)' : 'rgba(33,150,243,0.06)',
+        border: 1,
+        borderColor: openFlags > 0 ? 'warning.light' : 'divider',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+        <EmojiPeopleIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+          Mentor support
+        </Typography>
+        {eventId && team?.id && (
+          <Link
+            component={NextLink}
+            href={`/hack/${eventId}/team/${team.id}`}
+            variant="caption"
+            sx={{ ml: 'auto' }}
+          >
+            Details →
+          </Link>
+        )}
+      </Box>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+        <Chip
+          size="small"
+          color={coverageColor}
+          label={`${doneCount}/${MENTOR_COVERAGE_TOTAL} covered`}
+          sx={{ fontWeight: 600, height: 22 }}
+        />
+        {openFlags > 0 && (
+          <Chip
+            size="small"
+            color="warning"
+            icon={<FlagIcon sx={{ fontSize: 14 }} />}
+            label={`${openFlags} open flag${openFlags === 1 ? '' : 's'}`}
+            sx={{ height: 22 }}
+          />
+        )}
+        {lastTouchedAt && (
+          <Chip
+            size="small"
+            variant="outlined"
+            icon={<ScheduleIcon sx={{ fontSize: 14 }} />}
+            label={
+              lastTouchedBy
+                ? `${mentorRelativeTime(lastTouchedAt)} · ${lastTouchedBy}`
+                : mentorRelativeTime(lastTouchedAt)
+            }
+            sx={{ height: 22 }}
+          />
+        )}
+      </Box>
+      <JudgingReadinessStrip team={team} />
+    </Box>
+  );
+};
 
 // Helper function to check if team status prevents joining
 const isJoiningDisabledByStatus = (status) => {
@@ -892,7 +1052,10 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
               : "This team is currently inactive"}
           </Typography>
         )}
-        
+
+        {/* At-a-glance mentor support — renders nothing if no mentor activity yet */}
+        <MentorSupportSummary team={team} eventId={event_id} />
+
         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
           Slack Channel:{" "}
           <Link
