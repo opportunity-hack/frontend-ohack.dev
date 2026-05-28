@@ -29,7 +29,7 @@ export const MENTOR_COVERAGE_ITEMS = [
     slug: "criteria_walkthrough",
     label: "Judging criteria walkthrough",
     blurb:
-      "Team has been shown the 4-criterion rubric and knows what judges look for.",
+      "Team has been shown the judging rubric (Scope, Documentation, Polish, Security, plus Accessibility) and knows what judges look for.",
   },
   {
     slug: "demo_devpost_reviewed",
@@ -41,8 +41,9 @@ export const MENTOR_COVERAGE_ITEMS = [
 
 export const MENTOR_COVERAGE_TOTAL = MENTOR_COVERAGE_ITEMS.length;
 
-// 4-criterion judging rubric mentors use to coach teams. The labels and
-// blurbs mirror /about/judges#judging-criteria.
+// Judging rubric mentors use to coach teams. The labels and blurbs mirror
+// /about/judges#judging-criteria. Accessibility is a separate "special
+// category" prize on the judges page but mentors still need to coach for it.
 export const JUDGING_CRITERIA = [
   {
     slug: "scope",
@@ -62,8 +63,13 @@ export const JUDGING_CRITERIA = [
   {
     slug: "security",
     label: "Security",
+    blurb: "Data is protected; role-based access where applicable.",
+  },
+  {
+    slug: "accessibility",
+    label: "Accessibility",
     blurb:
-      "Data is protected; role-based access where applicable.",
+      "W3C principles (perceivable, operable, understandable, robust); aim for Lighthouse a11y > 95.",
   },
 ];
 

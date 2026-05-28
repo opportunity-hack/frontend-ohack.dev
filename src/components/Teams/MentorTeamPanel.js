@@ -806,12 +806,22 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         <>
           Mentor support is tracked publicly per team.{" "}
           {isLoggedIn ? (
-            <>
-              You're not registered as an approved mentor for this event. Want to help?{" "}
-              <Link component={NextLink} href={`/hack/${eventId}/mentor-application`}>
-                Apply as a mentor →
-              </Link>
-            </>
+            eventId ? (
+              <>
+                You're not registered as an approved mentor for this event. Want to help?{" "}
+                <Link component={NextLink} href={`/hack/${eventId}/mentor-application`}>
+                  Apply as a mentor →
+                </Link>
+              </>
+            ) : (
+              <>
+                Approved mentors can mark coverage, raise flags, rate judging-readiness,
+                and leave public notes. Want to mentor an upcoming event?{" "}
+                <Link component={NextLink} href="/hack">
+                  Browse hackathons →
+                </Link>
+              </>
+            )
           ) : (
             <>
               Approved mentors can mark coverage, raise flags, rate judging-readiness,
