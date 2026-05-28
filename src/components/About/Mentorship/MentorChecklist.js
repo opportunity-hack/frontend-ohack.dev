@@ -15,10 +15,8 @@ import {
   Link,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import Moment from "moment";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import CircularProgress from "@mui/material/CircularProgress";
 import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 
 const ChecklistContainer = styled(Paper)(({ theme }) => ({
@@ -27,9 +25,8 @@ const ChecklistContainer = styled(Paper)(({ theme }) => ({
   marginBottom: theme.spacing(4),
 }));
 
-const SectionTitle = styled(Typography)(({ theme, active }) => ({
-  fontWeight: active ? "bold" : "normal",
-  color: active ? theme.palette.primary.main : "inherit",
+const SectionTitle = styled(Typography)(({ theme }) => ({
+  fontWeight: "normal",
   marginTop: theme.spacing(2),
   marginBottom: theme.spacing(1),
   display: "flex",
@@ -43,8 +40,7 @@ const ProgressBar = styled(LinearProgress)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-const MentorChecklist = ({ hackathonStart, hackathonEnd }) => {
-  const [currentSection, setCurrentSection] = useState("");
+const MentorChecklist = () => {
   const [checklist, setChecklist] = useState({});
   const [expandedSections, setExpandedSections] = useState({});
   const [progress, setProgress] = useState(0);
@@ -238,40 +234,6 @@ const MentorChecklist = ({ hackathonStart, hackathonEnd }) => {
   };
 
   useEffect(() => {
-    const updateCurrentSection = () => {
-      const now = Moment();
-      const start = Moment(hackathonStart);
-      const end = Moment(hackathonEnd);
-      
-      if (now.isBefore(start)) {
-        setCurrentSection("before");
-      } else if (
-        now.isBetween(start, start.clone().add(6, "hours"))
-      ) {
-        setCurrentSection("early");
-      } else if (
-        now.isBetween(
-          start.clone().add(6, "hours"),
-          end.clone().subtract(3, "hours")
-        )
-      ) {
-        setCurrentSection("during");
-      } else if (
-        now.isBetween(end.clone().subtract(3, "hours"), end)
-      ) {
-        setCurrentSection("wrapping");
-      } else {
-        setCurrentSection("after");
-      }
-    };
-
-    updateCurrentSection();
-    const interval = setInterval(updateCurrentSection, 60000); // Update every minute
-
-    return () => clearInterval(interval);
-  }, [hackathonStart, hackathonEnd]);
-
-  useEffect(() => {
     const totalTasks = Object.values(checklist).flat().length;
     const completedTasks = Object.values(checklist)
       .flat()
@@ -297,17 +259,8 @@ const MentorChecklist = ({ hackathonStart, hackathonEnd }) => {
 
   const renderSection = (title, items, section) => (
     <Box key={section}>
-      <SectionTitle
-        variant="h6"
-        active={currentSection === section}
-        onClick={() => toggleSection(section)}
-      >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          {currentSection === section && (
-            <CircularProgress size={20} thickness={5} sx={{ marginRight: 1 }} />
-          )}
-          {title}
-        </Box>
+      <SectionTitle variant="h6" onClick={() => toggleSection(section)}>
+        <Box sx={{ display: "flex", alignItems: "center" }}>{title}</Box>
         {expandedSections[section] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
       </SectionTitle>
       <Collapse in={expandedSections[section]}>
@@ -365,40 +318,6 @@ const MentorChecklist = ({ hackathonStart, hackathonEnd }) => {
           #ask-a-mentor Slack channel
         </Link>{" "}
         to handle reachouts from teams.  Once a team reaches out to you, you'll want to stay with them for the duration of the hackathon.  Having this shared context with the people in the team, the problem they are solving, and the tech they are using allows for less context switching and a more durable relationship that improves team productivity.
-      </Typography>
-      <Typography variant="body1" paragraph>
-        Join the{" "}
-        <Link
-          href="https://opportunity-hack.slack.com/archives/C07JBKSPWP7"
-          target="_blank"
-          rel="noopener"
-        >
-          🔒 #2024-mentors
-        </Link>{" "}
-        private Slack channel for mentor-specific announcements.
-      </Typography>
-
-      <Typography variant="body1" paragraph>
-        View team projects on GitHub:{" "}
-        <Link
-          href="https://github.com/2024-Arizona-Opportunity-Hack"
-          target="_blank"
-          rel="noopener"
-        >
-          2024 Arizona Opportunity Hack
-        </Link>{" "}
-        - this is where teams will be committing their open-source code. You can find the Slack channel for each team in the README of their GitHub repository.
-      </Typography>
-      <Typography variant="body1" paragraph>
-        See DevPost:{" "}
-        <Link
-          href="https://opportunity-hack-2024-arizona.devpost.com/"
-          target="_blank"
-          rel="noopener"
-        >
-          2024 DevPost
-        </Link>{" "}
-        - this is what the teams will be submitting their projects to.
       </Typography>
       <Tooltip title={`${Math.round(progress)}% completed`} placement="top">
         <ProgressBar variant="determinate" value={progress} />

@@ -340,6 +340,23 @@ Both routes are `@auth.require_user` + a `user_is_on_team()` check. **Identity m
 
 **Team member rendering on the same page**: the public `get_team` (`services/teams_service.py`) now enriches `team.users[]` from a list of doc-id strings into `{id, user_id, name, nickname, profile_image}` via a single batched Firestore `get_all`, cached behind the existing 10-min TTL. Backwards-compatible: `HackathonResults.js`/`TeamList.js` already handle both shapes. The list endpoint `get_teams_list()` is NOT enriched — only the single-team getter. Profile tile links point to `/profile/{user.id}` (Firestore doc id, NOT propel_id — see "Public profile route" gotcha).
 
+## Mentor Team Panel (per-team mentor coordination)
+On `/hack/<event_id>/team/<team_id>`, mentors get an interactive support panel (`src/components/Teams/MentorTeamPanel.js`) above the completion checklist. Visible to everyone once `event.start_date <= now` (read-only for non-mentors, never archived). Four sections: **Open concerns** (flags with owner attribution + take-over), **Coverage** (6-item team-observation checklist mirroring `MENTOR_COVERAGE_ITEMS`), **Judging readiness** (5-criterion rubric — Scope/Documentation/Polish/Security/Accessibility, the last being the special-category prize on `/about/judges`; consensus = worst rating across mentors), and **Notes feed** (chronological, attributed, soft-delete-own). Mobile renders as `<Accordion>`s, desktop renders all sections inline (`useMediaQuery(theme.breakpoints.down("sm"))`).
+
+Item slugs (`intro_made`, `scope_reviewed`, `architecture_discussed`, `repo_health_checked`, `criteria_walkthrough`, `demo_devpost_reviewed`) MUST stay in lockstep with backend `MENTOR_COVERAGE_ITEMS` in `api/mentors/mentors_service.py`. Same lockstep contract as `TeamCompletionChecklist`.
+
+**Mentor auth gate**: server-enforced via `user_is_mentor_for_event(propel_user_id, event_id)` in `api/mentors/mentors_service.py`. Requires a volunteer doc with `volunteer_type='mentor'`, `event_id=<this event>`, `isSelected=True`. Identity matching follows the same propel-UUID → OAuth user_id translation as `user_is_on_team` (via `get_propel_user_details_by_id`), with a `propel_id` direct-match fallback. Frontend gates interactivity via `GET /api/volunteer/<event_id>/me?type=mentor` (returns `{is_mentor, volunteer}` — the volunteer subset is lean, no PII). When `eventId={null}` is passed, the fetch is skipped entirely — used by `MentorTeamPanelDemo.js` on `/about/mentors` to render the panel statically without backend calls.
+
+**Slack volume is intentionally quiet**: only flag-raises, flag-resolutions, and the first-time "all 6 covered" milestone broadcast to the team's `slack_channel`. Flag-raises also heartbeat the per-event mentor channel (`hackathon.mentor_slack_channel`, defaulting to `<event_id>-mentors` lowercased with `_`→`-`). Coverage toggles, notes, take-overs, and rating changes are quiet. Each write does call `send_slack_audit(...)` for the audit trail.
+
+**Live updates**: the panel refetches `GET /api/messages/team/<id>` on `document.visibilitychange` (tab refocus) — best-effort, errors swallowed. No polling.
+
+**"Teams Ready for a Boost" extension** (`api/leaderboard/leaderboard_service.py::collect_mentor_panel_opportunities`): the leaderboard's `mentor_opportunities` array now includes two new sources — any team with an open `mentor_flag` (up to 2 per team to limit noise), and any team with `mentor_last_touched_at > 4h ago` during a live event window (`start_date <= now <= end_date + 1d`). Renders alongside the existing GitHub-derived signals.
+
+**Hackathon field**: `mentor_slack_channel` (optional string, max 80 chars, validated as a top-level field in `common/utils/validators.py`). Admin UI lives in `OverviewSection.js`. The frontend never reads this directly — it's purely a backend Slack-routing config.
+
+**Denormalized team fields** (kept in sync by every mentor service write): `mentor_last_touched_at`, `mentor_last_touched_by_name`, `mentor_open_flag_count`, `mentor_coverage_completed_at`, `mentor_coverage_completed_by_name`. The leaderboard reads these directly; don't compute on the fly.
+
 ## Admin Teams (`/admin/teams?event_id=...`)
 File: `src/components/admin/TeamManagement.js` (~2900 lines, hosted in `src/pages/admin/teams/index.js`). Three concerns added together (deliberately scoped — no full redesign):
 - **Demo Video column + inline-edit Popover** (`TeamFieldPopover`): table cell shows a 96×54 thumbnail if set, "+ Add" button if missing. Click → Popover with `TextField` + live `LiteVideoThumbnail` preview + Save/Cancel/Clear. Optimistic update: `handleQuickPatch` PATCHes the partial and merges into local `teams` state — no full refetch.
