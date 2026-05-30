@@ -941,7 +941,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo, event_id }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, hackerStatus, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo, event_id }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -965,7 +965,11 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   
   // Check if joining is disabled by team status
   const joiningDisabledByStatus = isJoiningDisabledByStatus(team?.status);
-  const canJoin = canJoinLeave && !joiningDisabledByStatus;
+  // Only approved hackers can join a team. Mentors/judges/non-applicants resolve
+  // to a non-"approved" hackerStatus and are blocked from joining. null means the
+  // status hasn't loaded yet — keep Join disabled until we know.
+  const isApprovedHacker = hackerStatus === "approved";
+  const canJoin = canJoinLeave && !joiningDisabledByStatus && isApprovedHacker;
   const canLeave = canJoinLeave; // Users can still leave teams with restricted statuses
 
   // Map team members to their GitHub stats
@@ -1199,46 +1203,89 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
         {isLoggedIn && userProfile && (
           <div style={{ marginTop: "10px" }}>
             {isUserInTeam ? (
-              <Button
-                size="small"
-                variant="outlined"
-                color="secondary"
-                onClick={() => onLeave(team.id)}
-                disabled={isLoading || !canLeave}
-                startIcon={isLoading && <CircularProgress size={16} />}                
-              >
-                {isLoading ? "Leaving..." : "Leave Team"}
-              </Button>
-            ) : (
-              <Button
-                size="small"
-                variant="outlined"
-                color="primary"
-                onClick={handleJoinClick}
-                disabled={isLoading || !canJoin}
-                startIcon={isLoading && <CircularProgress size={16} />}
-              >
-                {isLoading ? "Joining..." : "Join Team"}
-              </Button>
-            )}
-            {(!canJoin || !canLeave) && (
+              <>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => onLeave(team.id)}
+                  disabled={isLoading || !canLeave}
+                  startIcon={isLoading && <CircularProgress size={16} />}
+                >
+                  {isLoading ? "Leaving..." : "Leave Team"}
+                </Button>
+                {!canLeave && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    display="block"
+                    sx={{ mt: 1 }}
+                  >
+                    {isHackathonExpired
+                      ? "Hackathon has ended - teams are now closed"
+                      : !teamJoinEnabled
+                        ? "Team joining is currently disabled"
+                        : "Team operations are currently restricted"}
+                  </Typography>
+                )}
+              </>
+            ) : isApprovedHacker ? (
+              <>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleJoinClick}
+                  disabled={isLoading || !canJoin}
+                  startIcon={isLoading && <CircularProgress size={16} />}
+                >
+                  {isLoading ? "Joining..." : "Join Team"}
+                </Button>
+                {!canJoin && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    display="block"
+                    sx={{ mt: 1 }}
+                  >
+                    {isHackathonExpired
+                      ? "Hackathon has ended - teams are now closed"
+                      : !teamJoinEnabled
+                        ? "Team joining is currently disabled"
+                        : !isActive
+                          ? "You cannot join inactive teams"
+                          : joiningDisabledByStatus
+                            ? "This team is no longer accepting new members"
+                            : "Team operations are currently restricted"}
+                  </Typography>
+                )}
+              </>
+            ) : hackerStatus === "pending" ? (
               <Typography
                 variant="caption"
-                color="error"
+                color="text.secondary"
                 display="block"
-                sx={{ mt: 1 }}
               >
-                {isHackathonExpired
-                  ? "Hackathon has ended - teams are now closed"
-                  : !teamJoinEnabled
-                    ? "Team joining is currently disabled"
-                    : !isActive
-                      ? "You cannot join/leave inactive teams"
-                      : joiningDisabledByStatus && !isUserInTeam
-                        ? "This team is no longer accepting new members"
-                        : "Team operations are currently restricted"}
+                Your hacker application is awaiting confirmation. You can join a
+                team once it&apos;s approved.
               </Typography>
-            )}
+            ) : hackerStatus === "none" ? (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
+                Joining a team is for approved hackers.{" "}
+                <Link
+                  component={NextLink}
+                  href={`/hack/${event_id}/hacker-application`}
+                  underline="hover"
+                >
+                  Apply as a hacker
+                </Link>{" "}
+                to get started.
+              </Typography>
+            ) : null}
           </div>
         )}
 
@@ -1267,6 +1314,11 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
     severity: "success",
   });
   const [userProfile, setUserProfile] = useState(null);
+  // Approved-hacker gate for Join: "approved" when the caller's hacker
+  // application for this event exists and isSelected === true. Mentors/judges
+  // hit the hacker-scoped endpoint and get nothing back, so they can't join.
+  // null = unknown/loading, "approved" | "pending" | "none" once resolved.
+  const [hackerStatus, setHackerStatus] = useState(null);
   const [nonprofitMap, setNonprofitMap] = useState({});
   const [nonprofitsLoading, setNonprofitsLoading] = useState(false);
   const [videoDialog, setVideoDialog] = useState({
@@ -1392,6 +1444,36 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
     }
   }, [isLoggedIn, accessToken]);
 
+  // Resolve the caller's hacker application for this event. The endpoint is
+  // volunteer_type-scoped to "hacker", so a mentor/judge (or someone with no
+  // application) gets null back and is never treated as an approved hacker.
+  const fetchHackerStatus = useCallback(async () => {
+    if (!isLoggedIn || !accessToken || !event_id) {
+      setHackerStatus("none");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/application/${event_id}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!response.ok) {
+        setHackerStatus("none");
+        return;
+      }
+      const data = await response.json();
+      const app = data?.data ?? null;
+      if (!app) {
+        setHackerStatus("none");
+      } else {
+        setHackerStatus(app.isSelected === true ? "approved" : "pending");
+      }
+    } catch (error) {
+      console.error("Error resolving hacker application status:", error);
+      setHackerStatus("none");
+    }
+  }, [isLoggedIn, accessToken, event_id]);
+
   // Fetch nonprofits for the event to build a name mapping
   const fetchNonprofits = useCallback(async () => {
     if (!id || !accessToken) return;
@@ -1434,12 +1516,13 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
 
   useEffect(() => {
     fetchUserProfile();
+    fetchHackerStatus();
     fetchNonprofits();
     // Fetch detailed profiles for team members
     if (teams && teams.length > 0) {
       fetchTeamMemberProfiles(teams);
     }
-  }, [teams, fetchUserProfile, fetchTeamMemberProfiles, fetchNonprofits]);
+  }, [teams, fetchUserProfile, fetchHackerStatus, fetchTeamMemberProfiles, fetchNonprofits]);
 
   const handleJoinTeam = async (teamId) => {
     try {
@@ -1605,6 +1688,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
               loadingTeamId={loadingTeamId}
               isHackathonExpired={isHackathonExpired(endDate, eventTimezone)}
               teamJoinEnabled={teamJoinEnabled}
+              hackerStatus={hackerStatus}
               nonprofitMap={nonprofitMap}
               accessToken={accessToken}
               onCopyGithubUsername={handleCopyGithubUsername}

@@ -10,27 +10,24 @@ import {
   InputAdornment,
   IconButton,
   Checkbox,
-  Button,
   Alert
 } from '@mui/material';
-import { FaTimes, FaRocket } from 'react-icons/fa';
+import { FaTimes } from 'react-icons/fa';
 
 /**
  * Component for selecting nonprofits from a list
  */
-const NonprofitSelector = memo(({ 
-  searchTerm, 
-  filteredNonprofits, 
-  selectedNonprofits, 
-  handleSearchChange, 
-  toggleNonprofitSelection, 
-  clearSearch,
-  proceedToRanking
+const NonprofitSelector = memo(({
+  searchTerm,
+  filteredNonprofits,
+  selectedNonprofits,
+  handleSearchChange,
+  toggleNonprofitSelection,
+  clearSearch
 }) => {
   const MIN_SELECTIONS = 2;
   const selectionCount = selectedNonprofits.length;
   const meetsMinimum = selectionCount >= MIN_SELECTIONS;
-  const needsMore = MIN_SELECTIONS - selectionCount;
 
   return (
     <Box 
@@ -53,7 +50,8 @@ const NonprofitSelector = memo(({
         />
       </Box>
       <Typography variant="body2" color="text.secondary" paragraph>
-        Browse the nonprofits below and select at least {MIN_SELECTIONS} that interest you. You'll be able to rank them in the next step.
+        Tap a card to add it. Pick at least {MIN_SELECTIONS} — they appear in your
+        ranked list above as you go, where you can drag them into your order of preference.
       </Typography>
       
       {/* Search Filter */}
@@ -169,33 +167,6 @@ const NonprofitSelector = memo(({
         <Alert severity="info" sx={{ my: 2 }}>
           {searchTerm ? "No nonprofits match your search. Try different keywords." : "Loading nonprofit information..."}
         </Alert>
-      )}
-      
-      {selectedNonprofits.length > 0 && (
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            size="large"
-            onClick={proceedToRanking}
-            disabled={!meetsMinimum}
-            startIcon={<FaRocket />}
-          >
-            {meetsMinimum 
-              ? `Continue to Rank ${selectionCount} Selected Nonprofit${selectionCount > 1 ? 's' : ''}`
-              : `Select ${needsMore} More Nonprofit${needsMore > 1 ? 's' : ''} to Continue`
-            }
-          </Button>
-          {!meetsMinimum && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: 'block', mt: 1 }}
-            >
-              Minimum {MIN_SELECTIONS} nonprofits required
-            </Typography>
-          )}
-        </Box>
       )}
     </Box>
   );

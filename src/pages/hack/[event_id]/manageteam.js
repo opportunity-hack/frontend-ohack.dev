@@ -147,7 +147,6 @@ const ManageTeamComponent = () => {
   const [memberInput, setMemberInput] = useState('');
   const [teamLeadConfirmed, setTeamLeadConfirmed] = useState(false);
   const [comments, setComments] = useState('');
-  const [rankingMode, setRankingMode] = useState('select'); // 'select' or 'rank'
   const [slackUsers, setSlackUsers] = useState([]);
   const [myTeams, setMyTeams] = useState(null); // Initially null to indicate loading state
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
@@ -458,21 +457,6 @@ const ManageTeamComponent = () => {
     
     setSelectedNonprofits(items);
   }, [selectedNonprofits]);
-  
-  // Move from selection mode to ranking mode
-  const proceedToRanking = useCallback(() => {
-    if (selectedNonprofits.length === 0) {
-      setError("Please select at least one nonprofit before proceeding to ranking.");
-      return;
-    }
-    
-    setRankingMode('rank');
-  }, [selectedNonprofits.length]);
-  
-  // Go back to selection mode
-  const backToSelection = useCallback(() => {
-    setRankingMode('select');
-  }, []);
   
   // Team member management
   const handleAddTeamMember = useCallback(() => {
@@ -844,15 +828,12 @@ const ManageTeamComponent = () => {
       case 2: // Nonprofit Selection & Team
         return (
           <NonprofitSelectionStep
-            rankingMode={rankingMode}
             searchTerm={searchTerm}
             filteredNonprofits={filteredNonprofits}
             selectedNonprofits={selectedNonprofits}
             handleSearchChange={handleSearchChange}
             toggleNonprofitSelection={toggleNonprofitSelection}
             clearSearch={clearSearch}
-            proceedToRanking={proceedToRanking}
-            backToSelection={backToSelection}
             handleDragEnd={handleDragEnd}
             teamMembers={teamMembers}
             memberInput={memberInput}
