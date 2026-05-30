@@ -1287,6 +1287,66 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             </FormControl>
           </Box>
 
+          {(teamData.status || "IN_REVIEW") === "IN_REVIEW" ? (
+            <Box
+              sx={{
+                mb: 3,
+                p: 2,
+                borderRadius: 1,
+                bgcolor: "#e8f5e9",
+                border: 1,
+                borderColor: "success.light",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  {teamData.selected_nonprofit_id
+                    ? "Ready to approve"
+                    : "Pick a nonprofit to approve this team"}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {teamData.selected_nonprofit_id
+                    ? `Approving notifies the team and assigns them to ${getNonprofitName(
+                        teamData.selected_nonprofit_id
+                      )}.`
+                    : "Choose a nonprofit above, then approve — this notifies the team and sets their status to Nonprofit Selected."}
+                </Typography>
+              </Box>
+              <Tooltip
+                title={
+                  teamData.selected_nonprofit_id ? "" : "Select a nonprofit first"
+                }
+              >
+                <span>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<FaCheckCircle />}
+                    disabled={!teamData.selected_nonprofit_id}
+                    onClick={() => setApprovalDialogOpen(true)}
+                  >
+                    Approve Team
+                  </Button>
+                </span>
+              </Tooltip>
+            </Box>
+          ) : (
+            <Alert severity="success" icon={<FaCheckCircle />} sx={{ mb: 3 }}>
+              This team has been approved
+              {teamData.selected_nonprofit_id
+                ? ` and assigned to ${getNonprofitName(
+                    teamData.selected_nonprofit_id
+                  )}`
+                : ""}
+              .
+            </Alert>
+          )}
+
           {hasRankings && (
             <>
               <Typography variant="subtitle2" gutterBottom>
@@ -2009,21 +2069,6 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             >
               Send Message
             </Button>
-
-            {/* Add Approve Team Button */}
-            <Button
-              startIcon={<FaCheckCircle />}
-              variant="contained"
-              color="success"
-              onClick={() => setApprovalDialogOpen(true)}
-              disabled={
-                !teamData.selected_nonprofit_id ||
-                teamData.status !== "IN_REVIEW"
-              }
-              sx={{ ml: 2 }}
-            >
-              Approve Team
-            </Button>
           </Box>
 
           <Typography variant="subtitle2" gutterBottom>
@@ -2617,6 +2662,30 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Box sx={{ flex: 1 }} />
+          {(teamData?.status || "IN_REVIEW") === "IN_REVIEW" &&
+            (teamData?.selected_nonprofit_id ? (
+              <Button
+                onClick={() => setApprovalDialogOpen(true)}
+                variant="contained"
+                color="success"
+                startIcon={<FaCheckCircle />}
+                disabled={loading}
+              >
+                Approve Team
+              </Button>
+            ) : (
+              <Tooltip title="Select a nonprofit, then approve">
+                <Button
+                  onClick={() => setActiveTab(1)}
+                  variant="outlined"
+                  color="success"
+                  startIcon={<FaCheckCircle />}
+                >
+                  Assign nonprofit to approve
+                </Button>
+              </Tooltip>
+            ))}
           <Button
             onClick={handleSaveTeam}
             variant="contained"

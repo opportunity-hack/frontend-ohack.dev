@@ -1,8 +1,7 @@
 import React, { memo } from 'react';
 import {
   Box,
-  Typography,
-  Button
+  Typography
 } from '@mui/material';
 import NonprofitSelector from './NonprofitSelector';
 import NonprofitRanker from './NonprofitRanker';
@@ -10,22 +9,22 @@ import TeamMemberManager from './TeamMemberManager';
 import CommentsSection from './CommentsSection';
 
 /**
- * Nonprofit selection and team member step (step 3)
+ * Nonprofit selection and team member step (step 3).
+ *
+ * Selection and ranking share one surface: the ranked list appears the moment a
+ * nonprofit is picked and updates live, so ranking can't be missed or skipped.
  */
 const NonprofitSelectionStep = memo(({
-  rankingMode,
   searchTerm,
   filteredNonprofits,
   selectedNonprofits,
   handleSearchChange,
   toggleNonprofitSelection,
   clearSearch,
-  proceedToRanking,
-  backToSelection,
   handleDragEnd,
   teamMembers,
   memberInput,
-  setMemberInput,  
+  setMemberInput,
   handleAddTeamMember,
   handleRemoveTeamMember,
   comments,
@@ -33,6 +32,8 @@ const NonprofitSelectionStep = memo(({
   slackUsers,
   error
 }) => {
+  const hasSelections = selectedNonprofits.length > 0;
+
   return (
     <Box>
       <Typography
@@ -45,81 +46,39 @@ const NonprofitSelectionStep = memo(({
 
       <Typography variant="body1" paragraph>
         Your team will be working to create tech solutions that directly impact
-        these amazing organizations. First select the nonprofits you're
-        interested in, then rank them in your order of preference!
+        these amazing organizations. Pick the nonprofits you're interested in
+        below — each one you choose drops into your ranked list, where you can
+        drag them into your order of preference.
       </Typography>
 
-      {/* Selection/Ranking Tabs */}
       <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", mb: 3 }}>
-          <Box sx={{ display: "flex" }}>
-            <Button
-              variant={rankingMode === "select" ? "contained" : "outlined"}
-              onClick={backToSelection}
-              sx={{
-                flexGrow: 1,
-                borderTopRightRadius: 0,
-                borderBottomRightRadius: 0,
-                opacity: rankingMode === "select" ? 1 : 0.7,
-              }}
-            >
-              1. Select Nonprofits
-            </Button>
-            <Button
-              variant={rankingMode === "rank" ? "contained" : "outlined"}
-              onClick={proceedToRanking}
-              disabled={selectedNonprofits.length < 2}
-              sx={{
-                flexGrow: 1,
-                borderTopLeftRadius: 0,
-                borderBottomLeftRadius: 0,
-                opacity:
-                  rankingMode === "rank" || selectedNonprofits.length < 2
-                    ? 1
-                    : 0.7,
-              }}
-            >
-              2. Rank Your Choices ({selectedNonprofits.length})
-            </Button>
+        {/* Live ranked list — appears as soon as anything is selected */}
+        {hasSelections && (
+          <Box sx={{ mb: 3 }}>
+            <NonprofitRanker
+              selectedNonprofits={selectedNonprofits}
+              handleDragEnd={handleDragEnd}
+              onRemove={toggleNonprofitSelection}
+            />
           </Box>
-          {rankingMode === "select" && selectedNonprofits.length > 0 && selectedNonprofits.length < 2 && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mt: 1, textAlign: "center" }}
-            >
-              Select at least {2 - selectedNonprofits.length} more nonprofit{2 - selectedNonprofits.length > 1 ? 's' : ''} to continue
-            </Typography>
-          )}
-        </Box>
-
-        {/* Selection Mode */}
-        {rankingMode === "select" && (
-          <NonprofitSelector
-            searchTerm={searchTerm}
-            filteredNonprofits={filteredNonprofits}
-            selectedNonprofits={selectedNonprofits}
-            handleSearchChange={handleSearchChange}
-            toggleNonprofitSelection={toggleNonprofitSelection}
-            clearSearch={clearSearch}
-            proceedToRanking={proceedToRanking}
-          />
         )}
 
-        {/* Ranking Mode */}
-        {rankingMode === "rank" && (
-          <NonprofitRanker
-            selectedNonprofits={selectedNonprofits}
-            handleDragEnd={handleDragEnd}
-          />
-        )}
+        {/* Browse + add (always visible) */}
+        <NonprofitSelector
+          searchTerm={searchTerm}
+          filteredNonprofits={filteredNonprofits}
+          selectedNonprofits={selectedNonprofits}
+          handleSearchChange={handleSearchChange}
+          toggleNonprofitSelection={toggleNonprofitSelection}
+          clearSearch={clearSearch}
+        />
       </Box>
 
       <Box mt={5}>
         <TeamMemberManager
           teamMembers={teamMembers}
           memberInput={memberInput}
-          setMemberInput={setMemberInput}          
+          setMemberInput={setMemberInput}
           handleAddTeamMember={handleAddTeamMember}
           handleRemoveTeamMember={handleRemoveTeamMember}
           slackUsers={slackUsers}
