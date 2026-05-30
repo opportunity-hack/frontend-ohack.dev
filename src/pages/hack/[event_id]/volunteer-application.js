@@ -2841,7 +2841,7 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
         displayIfLoggedOut={
           <RedirectToLogin
-            postLoginRedirectUrl={currentUrl || window.location.href}
+            postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
           />
         }
       >
@@ -2868,7 +2868,7 @@ export async function getServerSideProps(context) {
 
   // Try to fetch event data for better SEO
   try {
-    const apiServerUrl = process.env.NEXT_PUBLIC_REACT_APP_API_SERVER_URL;
+    const apiServerUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
     if (apiServerUrl) {
       const response = await fetch(
         `${apiServerUrl}/api/messages/hackathon/${event_id}`,
