@@ -495,12 +495,19 @@ const HackerApplicationComponent = () => {
           constraints: eventData.constraints || {},
         });
 
-        // Initialize requiredQuestionAnswers array to match questions
+        // Initialize requiredQuestionAnswers to match question count without
+        // clobbering answers already loaded from a previous submission /
+        // localStorage (these effects resolve independently of this one).
         if (requiredQuestions.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            requiredQuestionAnswers: new Array(requiredQuestions.length).fill(null),
-          }));
+          setFormData((prev) => {
+            const existing = prev.requiredQuestionAnswers || [];
+            if (existing.length === requiredQuestions.length) return prev;
+            const filled = new Array(requiredQuestions.length).fill(null);
+            existing.forEach((v, i) => {
+              if (i < filled.length) filled[i] = v;
+            });
+            return { ...prev, requiredQuestionAnswers: filled };
+          });
         }
 
         // If it's an online event, automatically set inPerson to "No"
@@ -687,6 +694,11 @@ const HackerApplicationComponent = () => {
                     state: prevData.state || "",
                     additionalInfo:
                       prevData.additionalInfo || prevData.comments || "",
+                    requiredQuestionAnswers: Array.isArray(
+                      prevData.requiredQuestionAnswers,
+                    )
+                      ? prevData.requiredQuestionAnswers
+                      : [],
                     event_id: event_id,
                   };
                   setIsSelected(prevData.isSelected || false);
