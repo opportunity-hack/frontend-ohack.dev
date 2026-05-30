@@ -34,6 +34,7 @@ const INQUIRY_TYPE_DISPLAY = {
   nonprofit: "Nonprofit Partnership",
   judge: "Judging Opportunity",
   volunteer: "Volunteer Opportunity",
+  volunteer_letter: "Volunteer Letter Request",
   media: "Media Inquiry",
   other: "General Question",
 };

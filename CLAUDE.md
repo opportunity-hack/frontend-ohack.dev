@@ -213,6 +213,14 @@ if (env.TWITTER_API_KEY && env.TWITTER_API_SECRET) {
 3. Add environment variables to `.env`
 4. Update `SUPPORTED_PLATFORMS` in `src/lib/social-media/index.js`
 
+## Volunteer Letter Generator (`/hack/[event_id]/letters`)
+Self-service page where a volunteer answers a branching checklist that *picks* one of four letter types (General Volunteer, SE/OPT, Mentor, Judge), fills details against a live preview, and submits to OHack to review/sign. Auth-gated (`RequiredAuthProvider`, like the application forms) with profile prefill of recipient name/email.
+- Files: page `src/pages/hack/[event_id]/letters.js`; logic/templates in `src/components/Letters/` — `letterConfig.js` (pure: `ORG` constants, `runChecklist(answers)`, `*_FIELDS`, `encode/decodeLetterState`), `LetterChecklist.js` (Q1–Q4 branching UI), `LetterPreview.js` (the print surface; renders all 4 letters).
+- **Decision safety (do not regress):** OPT letter is offered ONLY when Q3=initial post-completion OPT AND all 4 Q4 acks checked. STEM extension → blocked to General; "not sure" → advisory + General; mentor/judge branches never reach OPT. `runChecklist` is unit-coverable in isolation — keep its branch table intact.
+- **Wording:** General + SE/OPT bodies reproduce the two reference `.docx` verbatim (with variable substitution); Mentor/Judge are event-based service confirmations. Every letter carries the guardrail bullets (volunteer not employee; no compensation; no visa sponsorship; no immigration advice/certification) — never add immigration/legal certifications.
+- **Submission reuses `POST /api/contact`** (no backend change) with `inquiryType: "volunteer_letter"`. The message packs a readable summary + a shareable `?d=<base64>` link that re-renders the *filled* letter so the reviewer types the signer block and prints. `volunteer_letter` is mapped in `ContactSubmissionDetailDialog.js` `INQUIRY_TYPE_DISPLAY` (mirror in backend `contact_service.py` for reply threading if needed).
+- **Signer block** (`SIGNER_FIELDS`) is OHack-filled at sign time, left blank by the volunteer. **Print** uses a global `@media print { visibility }` trick (only `#letter-print-root` shows) + `@page { size: Letter; margin: 1in }` — no `react-to-print`. Page is `noindex`. Shareable state via `?d=` follows the "Shareable dialog state" pattern (hydrate-once ref + debounced shallow `router.replace`).
+
 ## Application Forms (`/hack/[event_id]/{judge,mentor,hacker,volunteer}-application.js`)
 Shared scaffolding lives in `src/components/ApplicationForm/`. Use these instead of re-implementing in each form:
 - `PronounsPicker` — chip-based picker with curated pronouns + "Add your own". Stores a comma-joined string (back-compatible with old free-text values). All four forms use it.
