@@ -1,352 +1,267 @@
-import { useState, useMemo } from 'react';
-import { 
-  Grid, 
-  Typography, 
-  Box, 
-  Pagination, 
-  Stack, 
-  Divider, 
-  Alert, 
-  Chip,
-  Button
-} from '@mui/material';
-import ProjectCard from './ProjectCard';
-import FeaturedProjects from './FeaturedProjects/FeaturedProjects';
-import { ProjectSearch, FilterBar } from './filters';
-import { useAuthInfo } from "@propelauth/react";
-import LoginOrRegister from '../LoginOrRegister/LoginOrRegister';
-import InfoIcon from '@mui/icons-material/Info';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import { useState, useMemo } from "react";
+import { Pagination, Box } from "@mui/material";
+import ProjectCard from "./ProjectCard";
+import FeaturedProjects from "./FeaturedProjects/FeaturedProjects";
+import { RefinedRoot, Eyebrow, Arrow } from "../design/refined";
 
-export default function ProjectList({ initialProjects, events }) {
-  const [searchQuery, setSearchQuery] = useState('');
+const PROJECTS_PER_PAGE = 9;
+
+const STATUS_FILTERS = [
+  { value: null, label: "All" },
+  { value: "concept", label: "Concept" },
+  { value: "hackathon", label: "Hackathon" },
+  { value: "post-hackathon", label: "Post-hackathon" },
+  { value: "production", label: "Production" },
+];
+
+const SORT_OPTIONS = [
+  { value: "rank", label: "Most relevant" },
+  { value: "newest", label: "Newest" },
+  { value: "needHelp", label: "Needs help first" },
+  { value: "title", label: "A–Z" },
+];
+
+export default function ProjectList({ initialProjects = [], events }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [status, setStatus] = useState(null);
+  const [sortBy, setSortBy] = useState("rank");
   const [currentPage, setCurrentPage] = useState(1);
-  const projectsPerPage = 9;
-  const [filters, setFilters] = useState({
-    status: null,
-    skills: [],
-    hasHelpers: false,
-    beginnerFriendly: false,
-    highImpact: false,
-    featured: false,
-    sortBy: 'rank'
-  });
-  
-  const { user } = useAuthInfo();
 
-  const filteredProjects = useMemo(() => {
-    return initialProjects.filter(project => {
-      // Apply search filter
-      if (searchQuery) {
-        const searchLower = searchQuery.toLowerCase();
-        const matchesTitle = project.title?.toLowerCase().includes(searchLower);
-        const matchesDesc = project.description?.toLowerCase().includes(searchLower);
-        const matchesSkills = project.skills?.some(skill => skill.toLowerCase().includes(searchLower));
-        
-        if (!(matchesTitle || matchesDesc || matchesSkills)) {
-          return false;
-        }
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return initialProjects.filter((p) => {
+      if (q) {
+        const hit =
+          p.title?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          p.skills?.some((s) => s.toLowerCase().includes(q));
+        if (!hit) return false;
       }
-      
-      // Apply status filter
-      if (filters.status && project.status !== filters.status) {
-        return false;
-      }
-      
-      // Apply helpers filter
-      if (filters.hasHelpers && !project.helping?.length) {
-        return false;
-      }
-      
-      // Apply skills filter
-      if (filters.skills?.length > 0 && !project.skills?.some(skill => 
-        filters.skills.includes(skill))) {
-        return false;
-      }
-      
-      // Apply beginner friendly filter (based on tags or complexity field)
-      if (filters.beginnerFriendly && 
-          !(project.tags?.includes('beginner-friendly') || project.complexity === 'easy')) {
-        return false;
-      }
-      
-      // Apply high impact filter (based on impact field or tag)
-      if (filters.highImpact && 
-          !(project.tags?.includes('high-impact') || project.impact === 'high')) {
-        return false;
-      }
-      
-      // Apply featured filter
-      if (filters.featured && !project.featured) {
-        return false;
-      }
-      
+      if (status && p.status !== status) return false;
       return true;
     });
-  }, [initialProjects, searchQuery, filters]);
+  }, [initialProjects, searchQuery, status]);
 
-  // Apply sorting to filtered projects
-  const sortedProjects = useMemo(() => {
-    return [...filteredProjects].sort((a, b) => {
-      switch(filters.sortBy) {
-        case 'newest':
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
           return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-        case 'oldest':
-          return new Date(a.created_at || 0) - new Date(b.created_at || 0);
-        case 'rank':
-          return (b.rank || 0) - (a.rank || 0);
-        case 'title':
-          return (a.title || '').localeCompare(b.title || '');
-        case 'needHelp':
-          // Projects needing help (no helpers or few helpers) come first
-          const aHelpers = a.helping?.length || 0;
-          const bHelpers = b.helping?.length || 0;
-          return aHelpers - bHelpers;
+        case "title":
+          return (a.title || "").localeCompare(b.title || "");
+        case "needHelp":
+          return (a.helping?.length || 0) - (b.helping?.length || 0);
+        case "rank":
         default:
           return (b.rank || 0) - (a.rank || 0);
       }
     });
-  }, [filteredProjects, filters.sortBy]);
+  }, [filtered, sortBy]);
 
-  // Get current page projects
-  const currentProjects = useMemo(() => {
-    const indexOfLastProject = currentPage * projectsPerPage;
-    const indexOfFirstProject = indexOfLastProject - projectsPerPage;
-    return sortedProjects.slice(indexOfFirstProject, indexOfLastProject);
-  }, [sortedProjects, currentPage, projectsPerPage]);
+  const totalPages = Math.ceil(sorted.length / PROJECTS_PER_PAGE);
+  const pageProjects = useMemo(() => {
+    const end = currentPage * PROJECTS_PER_PAGE;
+    return sorted.slice(end - PROJECTS_PER_PAGE, end);
+  }, [sorted, currentPage]);
 
-  // Calculate pages
-  const totalPages = Math.ceil(sortedProjects.length / projectsPerPage);
-
-  // Handle page change
-  const handlePageChange = (event, value) => {
-    setCurrentPage(value);
-    // Scroll to top on page change
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Get featured projects
-  const featuredProjects = useMemo(() => {
-    // First look for projects explicitly marked as featured
-    const explicitlyFeatured = initialProjects.filter(p => p.featured);
-    
-    if (explicitlyFeatured.length >= 3) {
-      return explicitlyFeatured.slice(0, 3);
-    }
-    
-    // Otherwise, use active projects with highest rank
-    const activeProjects = initialProjects.filter(p => 
-      p.status !== 'production' && p.status !== 'post-hackathon'
-    );
-    
-    return activeProjects
+  const featured = useMemo(() => {
+    const explicit = initialProjects.filter((p) => p.featured);
+    if (explicit.length >= 3) return explicit.slice(0, 3);
+    return [...initialProjects]
+      .filter((p) => p.status !== "production" && p.status !== "post-hackathon")
       .sort((a, b) => (b.rank || 0) - (a.rank || 0))
       .slice(0, 3);
   }, [initialProjects]);
 
-  // Get skill options from all projects
-  const skillOptions = useMemo(() => {
-    const skillSet = new Set();
-    initialProjects.forEach(project => {
-      project.skills?.forEach(skill => skillSet.add(skill));
-    });
-    return Array.from(skillSet).sort();
-  }, [initialProjects]);
-
-  // Handle skill filter changes
-  const handleSkillFilter = (skill) => {
-    const currentSkills = [...filters.skills];
-    const skillIndex = currentSkills.indexOf(skill);
-    
-    if (skillIndex === -1) {
-      currentSkills.push(skill);
-    } else {
-      currentSkills.splice(skillIndex, 1);
-    }
-    
-    setFilters({
-      ...filters,
-      skills: currentSkills
-    });
-    setCurrentPage(1); // Reset to first page when filter changes
-  };
+  const resetPage = () => setCurrentPage(1);
+  const showingFrom = sorted.length === 0 ? 0 : (currentPage - 1) * PROJECTS_PER_PAGE + 1;
+  const showingTo = Math.min(currentPage * PROJECTS_PER_PAGE, sorted.length);
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, mt: { xs: 8, md: 10 } }}>
-      {!user && <LoginOrRegister />}
+    <RefinedRoot>
+      {/* ---------------- HEADER ---------------- */}
+      <section
+        className="ohx-wrap"
+        style={{ paddingTop: "clamp(104px, 13vh, 156px)", paddingBottom: "clamp(28px, 5vh, 52px)" }}
+      >
+        <Eyebrow>
+          <span className="rise" style={{ display: "inline-block" }}>
+            Open source for good
+          </span>
+        </Eyebrow>
+        <h1 className="ohx-display rise" style={{ marginTop: 18, animationDelay: "60ms" }}>
+          Projects worth <span className="ohx-italic">your time.</span>
+        </h1>
+        <p className="ohx-lead rise" style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "54ch" }}>
+          Real software for real nonprofits. Find one that fits your skills, join a team,
+          and ship something that keeps working long after the hackathon ends.
+        </p>
+      </section>
 
-      <Typography variant="h1" component="h1" sx={{ fontSize: { xs: '2rem', md: '2.75rem' }, fontWeight: 700, mb: 3 }}>
-        Projects
-      </Typography>
-
-      <Box sx={{ mb: 5 }}>
-        <Typography variant="h4" gutterBottom>
-          Featured Projects
-        </Typography>
-        <FeaturedProjects projects={featuredProjects} />
-      </Box>
-
-      <Box sx={{ my: 4 }}>
-        <Alert 
-          severity="info" 
-          icon={<VolunteerActivismIcon />}
-          sx={{ mb: 3 }}
-        >
-          Opportunity Hack connects volunteers with nonprofits to create impactful tech solutions. 
-          Find a project that matches your skills and interests to make a difference!
-        </Alert>
-        
-        <ProjectSearch value={searchQuery} onChange={(value) => {
-          setSearchQuery(value);
-          setCurrentPage(1); // Reset to first page when search changes
-        }} />
-        
-        <FilterBar 
-          filters={filters} 
-          onChange={(newFilters) => {
-            setFilters(newFilters);
-            setCurrentPage(1); // Reset to first page when filters change
-          }} 
-        />
-        
-        {filters.skills.length > 0 && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Active Skill Filters:</Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap">
-              {filters.skills.map(skill => (
-                <Chip 
-                  key={skill}
-                  label={skill}
-                  onDelete={() => handleSkillFilter(skill)}
-                  color="primary"
-                />
-              ))}
-              <Button 
-                variant="text" 
-                size="small"
-                onClick={() => setFilters({...filters, skills: []})}
-              >
-                Clear All
-              </Button>
-            </Stack>
-          </Box>
-        )}
-      </Box>
-
-      <Divider sx={{ mb: 3 }} />
-      
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography>
-          Showing {sortedProjects.length === 0 ? 0 : (currentPage - 1) * projectsPerPage + 1}-
-          {Math.min(currentPage * projectsPerPage, sortedProjects.length)} of {sortedProjects.length} projects
-        </Typography>
-        
-        {skillOptions.length > 0 && (
-          <Button 
-            size="small" 
-            startIcon={<InfoIcon />}
-            onClick={() => {
-              const dialog = document.createElement('dialog');
-              dialog.style.padding = '20px';
-              dialog.style.borderRadius = '8px';
-              dialog.style.maxWidth = '80%';
-              dialog.innerHTML = `
-                <h3>Available Skills</h3>
-                <p>Click on a skill to filter projects:</p>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
-                  ${skillOptions.map(skill => 
-                    `<button style="padding: 6px 12px; border-radius: 16px; border: 1px solid #ddd; background: ${filters.skills.includes(skill) ? '#3f51b5' : '#f5f5f5'}; color: ${filters.skills.includes(skill) ? 'white' : 'black'}; cursor: pointer;">${skill}</button>`
-                  ).join('')}
-                </div>
-                <button style="padding: 8px 16px; background: #f5f5f5; border: none; border-radius: 4px; cursor: pointer;">Close</button>
-              `;
-              document.body.appendChild(dialog);
-              
-              const buttons = dialog.querySelectorAll('button');
-              const closeButton = buttons[buttons.length - 1];
-              
-              // Add click handlers for skill buttons
-              for (let i = 0; i < buttons.length - 1; i++) {
-                buttons[i].addEventListener('click', () => {
-                  handleSkillFilter(skillOptions[i]);
-                  buttons[i].style.background = filters.skills.includes(skillOptions[i]) ? '#f5f5f5' : '#3f51b5';
-                  buttons[i].style.color = filters.skills.includes(skillOptions[i]) ? 'black' : 'white';
-                });
-              }
-              
-              closeButton.addEventListener('click', () => {
-                dialog.close();
-                dialog.remove();
-              });
-              
-              dialog.showModal();
-            }}
-          >
-            Browse All Skills
-          </Button>
-        )}
-      </Box>
-
-      {sortedProjects.length > 0 ? (
-        <>
-          <Grid container spacing={3}>
-            {currentProjects.map((project) => (
-              <Grid size={{ xs: 12, md: 6, lg: 4 }} key={project.id}>
-                <ProjectCard
-                  project={project}
-                  hackathons={events}
-                />
-              </Grid>
-            ))}
-          </Grid>
-          
-          {totalPages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination 
-                count={totalPages} 
-                page={currentPage} 
-                onChange={handlePageChange} 
-                color="primary" 
-                size="large"
-                showFirstButton 
-                showLastButton
-              />
-            </Box>
-          )}
-        </>
-      ) : (
-        <Box sx={{ 
-          py: 8, 
-          textAlign: 'center',
-          borderRadius: 2,
-          backgroundColor: 'background.paper',
-          border: '1px dashed',
-          borderColor: 'divider'
-        }}>
-          <Typography variant="h5" gutterBottom>No matching projects found</Typography>
-          <Typography color="text.secondary">
-            Try adjusting your search or filters to find more projects
-          </Typography>
-          <Button 
-            variant="outlined" 
-            sx={{ mt: 2 }}
-            onClick={() => {
-              setSearchQuery('');
-              setFilters({
-                status: null,
-                skills: [],
-                hasHelpers: false,
-                beginnerFriendly: false,
-                highImpact: false,
-                featured: false,
-                sortBy: 'rank'
-              });
-            }}
-          >
-            Clear All Filters
-          </Button>
-        </Box>
+      {/* ---------------- FEATURED ---------------- */}
+      {featured.length > 0 && (
+        <section className="ohx-wrap" style={{ paddingBottom: "clamp(36px, 6vh, 64px)" }}>
+          <Eyebrow style={{ marginBottom: 20 }}>Featured</Eyebrow>
+          <FeaturedProjects projects={featured} />
+        </section>
       )}
-    </Box>
+
+      {/* ---------------- CONTROLS + GRID ---------------- */}
+      <section
+        style={{ background: "var(--surface-2)", borderTop: "1px solid var(--line)" }}
+      >
+        <div className="ohx-wrap" style={{ paddingTop: "clamp(36px, 6vh, 64px)", paddingBottom: "clamp(48px, 8vh, 96px)" }}>
+          <Eyebrow>Browse</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 24 }}>
+            All projects
+          </h2>
+
+          {/* Controls */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 14,
+              marginBottom: 18,
+            }}
+          >
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                resetPage();
+              }}
+              placeholder="Search projects, skills…"
+              aria-label="Search projects"
+              style={{
+                flex: "1 1 260px",
+                minWidth: 0,
+                font: "inherit",
+                fontSize: "0.95rem",
+                color: "var(--ink)",
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
+                borderRadius: 6,
+                padding: "11px 14px",
+                outline: "none",
+              }}
+            />
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <span className="ohx-eyebrow" style={{ fontSize: "0.66rem" }}>
+                Sort
+              </span>
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  resetPage();
+                }}
+                style={{
+                  font: "inherit",
+                  fontSize: "0.9rem",
+                  color: "var(--ink)",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 6,
+                  padding: "10px 12px",
+                  cursor: "pointer",
+                }}
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {/* Status filter as quiet toggle tags */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
+            {STATUS_FILTERS.map((f) => {
+              const active = status === f.value;
+              return (
+                <button
+                  key={f.label}
+                  type="button"
+                  className="ohx-tag"
+                  onClick={() => {
+                    setStatus(f.value);
+                    resetPage();
+                  }}
+                  style={{
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    background: active ? "var(--brand)" : "var(--surface)",
+                    color: active ? "#fff" : "var(--muted)",
+                    borderColor: active ? "var(--brand)" : "var(--line)",
+                  }}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="ohx-faint" style={{ fontSize: "0.85rem", marginBottom: 20 }}>
+            {sorted.length === 0
+              ? "No matching projects"
+              : `Showing ${showingFrom}–${showingTo} of ${sorted.length}`}
+          </p>
+
+          {/* Grid */}
+          {sorted.length > 0 ? (
+            <>
+              <div
+                style={{
+                  display: "grid",
+                  gap: 20,
+                  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+                }}
+              >
+                {pageProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} hackathons={events} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={(e, v) => {
+                      setCurrentPage(v);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    shape="rounded"
+                  />
+                </Box>
+              )}
+            </>
+          ) : (
+            <div className="ohx-card" style={{ padding: "44px 28px", textAlign: "center" }}>
+              <p className="ohx-muted" style={{ margin: 0 }}>
+                Nothing matches those filters.
+              </p>
+              <button
+                type="button"
+                className="ohx-link"
+                style={{ marginTop: 14, background: "none", border: 0, cursor: "pointer", font: "inherit" }}
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatus(null);
+                  setSortBy("rank");
+                  resetPage();
+                }}
+              >
+                Clear filters <Arrow />
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+    </RefinedRoot>
   );
 }

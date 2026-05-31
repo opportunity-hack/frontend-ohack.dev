@@ -47,6 +47,7 @@ import RaffleEntries from './RaffleEntries';
 import CustomSelect from './CustomSelect';
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 import { initFacebookPixel, trackEvent, set } from '../../lib/ga';
+import { RefinedFonts } from "../design/refined";
 import Head from "next/head";
 import Moment from "react-moment";
 import { useRouter } from 'next/router';
@@ -548,8 +549,9 @@ export default function Profile(props) {
       <InnerContainer container>
         <Head>
           <title>Profile - Opportunity Hack Developer Portal</title>
+          <RefinedFonts />
         </Head>
-        
+
         {isLoggedIn ? (
           <ProfileContainer sx={{ width: '100%', px: { xs: 1, sm: 2, md: 4 } }}>
             {/* Header Section */}
@@ -584,14 +586,16 @@ export default function Profile(props) {
                       <Typography
                         variant="h2"
                         sx={{
-                          fontWeight: 600,
-                          fontSize: isMobile ? "1.6rem" : "3rem",
+                          fontFamily: "'Fraunces', Georgia, serif",
+                          fontWeight: 500,
+                          letterSpacing: '-0.015em',
+                          fontSize: isMobile ? "1.7rem" : "3rem",
                           marginBottom: "0.5rem",
                           wordBreak: 'break-word',
                         }}
                       >
                         {user?.firstName} {user?.lastName}{" "}
-                        <VerifiedUserIcon color="success" fontSize={isMobile ? "medium" : "large"} />
+                        <VerifiedUserIcon sx={{ color: "#1B3A6B" }} fontSize={isMobile ? "medium" : "large"} />
                       </Typography>
                       <ProfileDetailText sx={{ fontSize: isMobile ? "0.9rem" : "1.4rem" }}>
                         {user?.email}
@@ -633,12 +637,14 @@ export default function Profile(props) {
                   scrollButtons="auto"
                   allowScrollButtonsMobile
                   aria-label="profile tabs"
-                  sx={{ 
-                    backgroundColor: theme.palette.primary.light,
+                  sx={{
+                    backgroundColor: '#1B3A6B',
                     borderRadius: '8px 8px 0 0',
+                    '& .MuiTabs-indicator': { backgroundColor: '#E2552E', height: 3 },
                     '& .MuiTab-root': {
                       color: theme.palette.common.white,
                       opacity: 0.7,
+                      textTransform: 'none',
                       minWidth: { xs: 60, sm: 90 },
                       px: { xs: 1, sm: 2 },
                       '&.Mui-selected': {

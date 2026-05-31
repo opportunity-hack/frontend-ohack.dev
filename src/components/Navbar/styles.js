@@ -57,47 +57,62 @@ export const NavbarListItem = styled("li")((props) => ({
   },
 }));
 
+// Refined "civic editorial" navbar tokens (matches src/components/design/refined.js)
+const NAV_INK = "#16181D";
+const NAV_BRAND = "#1B3A6B";
+
 export const NavbarButton = styled(Button)({
   textDecoration: "none",
-  fontSize: "0.875rem",
-  fontWeight: 400,
+  fontFamily: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+  fontSize: "0.95rem",
+  fontWeight: 500,
   letterSpacing: "0em",
-  color: "#F0F0F0",
-  transitionDuration: "0.3s",
-  padding: "8px 16px", // Increased padding for better touch targets
+  textTransform: "none",
+  color: NAV_INK,
+  transitionDuration: "0.2s",
+  padding: "8px 14px",
   minWidth: "48px", // Minimum width for touch targets
   minHeight: "48px", // Minimum height for touch targets
-  
+  borderRadius: 6,
+
   "&:hover": {
-    color: "#6a6a6a",
+    color: NAV_BRAND,
+    backgroundColor: "rgba(27,58,107,0.06)",
   },
 });
 export const NavbarLink = styled(Link)({
   textDecoration: "none",
-  fontSize: "1.0rem",
-  fontWeight: 400,
+  fontFamily: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+  fontSize: "0.95rem",
+  fontWeight: 500,
   letterSpacing: "0em",
-  color: "#F0F0F0",
-  transitionDuration: "0.3s",
+  color: NAV_INK,
+  transitionDuration: "0.2s",
   display: "inline-block", // Ensure the link has proper block behavior
-  
+
   "&:hover": {
-    color: "#6a6a6a",
+    color: NAV_BRAND,
   },
 });
 
 export const LoginButton = styled(Button)({
-  borderRadius: "2rem",
-  paddingLeft: "1.5rem",
-  paddingRight: "1.5rem",
+  fontFamily: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+  borderRadius: 5,
+  paddingLeft: "1.15rem",
+  paddingRight: "1.15rem",
   paddingTop: "8px",
   paddingBottom: "8px",
   fontWeight: 600,
-  fontSize: "1.5rem",
+  fontSize: "0.95rem",
   textTransform: "unset !important",
-  backgroundColor: "#003486",
+  backgroundColor: NAV_BRAND,
+  color: "#fff",
   minWidth: "48px", // Minimum width for touch targets
-  minHeight: "48px", // Minimum height for touch targets
+  minHeight: "44px",
+
+  "&:hover": {
+    backgroundColor: "#16315a",
+  },
 });
 
 export const ProfileContainer = styled(Grid)({});

@@ -8,6 +8,7 @@ export default function useHackathonEvents( currentOnly ){
     const { user } = useAuthInfo();
     const { apiServerUrl } = useEnv();
     const [hackathons, setHackathons] = useState([]);
+    const [loading, setLoading] = useState(true);
 
 
     const makeRequest = useCallback(async (options) => {
@@ -81,6 +82,7 @@ export default function useHackathonEvents( currentOnly ){
 
     useEffect(() => {
         const getHackathons = async () => {
+            setLoading(true);
             var config = {
                 url: `${apiServerUrl}/api/messages/hackathons`,
                 method: "GET",
@@ -106,6 +108,7 @@ export default function useHackathonEvents( currentOnly ){
             else {
                 setHackathons([])
             }
+            setLoading(false);
         };
 
         getHackathons();
@@ -115,6 +118,7 @@ export default function useHackathonEvents( currentOnly ){
 
     return {
         hackathons,
+        loading,
         handle_get_hackathon,
         handle_get_hackathon_id,
         handle_problem_statement_to_event_link_update

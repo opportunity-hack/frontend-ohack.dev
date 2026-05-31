@@ -1,1087 +1,372 @@
 import React, { useState, useEffect } from "react";
-import { TitleContainer, LayoutContainer, ProjectsContainer, ButtonBasicStyle } from '../../styles/sponsors/styles';
-import {
-  Grid,
-  Typography,
-  Paper,
-  Avatar,
-  Chip,
-  Box,
-  CardActions,
-  useTheme,
-  useMediaQuery,
-  Alert,
-  Skeleton,
-} from "@mui/material";
-import Button from "@mui/material/Button";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import EventIcon from "@mui/icons-material/Event";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
+import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
+import { Box, Skeleton } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
+import SponsorshipSlider from "../../components/Hackathon/SponsorshipSlider";
+import useHackathonEvents from "../../hooks/use-hackathon-events";
+import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from "../../components/design/refined";
 
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import Head from 'next/head';
-import Image from 'next/image';
-import Link from 'next/link';
-import SponsorshipSlider from '../../components/Hackathon/SponsorshipSlider';
-import useHackathonEvents from '../../hooks/use-hackathon-events';
-// Import sponsorLevels and sponsors from data/sponsorData.js
-const { sponsorLevels, sponsors, calculateSupport } = require('../../data/sponsorData');
+const { sponsorLevels, sponsors, calculateSupport } = require("../../data/sponsorData");
 
-const getContactLink = () => '/contact';
-
-
+const getContactLink = () => "/contact";
 
 const benefitsData = [
-  { benefit: 'Logo on website', innovator: '3 months', changemaker: '6 months', transformer: '1 year', visionary: '2 years' },
-  { benefit: 'Social media promotion', innovator: '1 post', changemaker: '2 posts', transformer: '4 posts', visionary: '6 posts' },
-  { benefit: 'Booth at Sponsor Fair', innovator: '-', changemaker: 'Yes', transformer: 'Yes', visionary: 'Yes' },
-  { benefit: 'Opening/Closing Ceremony', innovator: '-', changemaker: '1 min', transformer: '2 min', visionary: '5 min' },
-  { benefit: 'Judging panel seats', innovator: '1', changemaker: '1', transformer: '2', visionary: '3', 
-    button: <Button variant="outlined" size="small" href="/about/judges">Learn More</Button> },
-  { benefit: 'Mentorship opportunities', innovator: 'Unlimited', changemaker: 'Unlimited', transformer: 'Unlimited', visionary: 'Unlimited', 
-    button: <Button variant="outlined" size="small" href="/about/mentors">Learn More</Button> },
-  { benefit: 'Branded prize category', innovator: '-', changemaker: '-', transformer: '1', visionary: '2' },
-  { benefit: 'Logo on event t-shirts', innovator: 'Small', changemaker: 'Medium', transformer: 'Large', visionary: 'Premium' },
-  { benefit: 'Access to participant resumes', innovator: '-', changemaker: '-', transformer: 'Yes', visionary: 'Yes' },
-  { benefit: 'Sponsored workshop/tech talk', innovator: '-', changemaker: '-', transformer: '30 min', visionary: '1 hour' },
-  { benefit: 'Recruiting/interviews', innovator: '-', changemaker: 'Post-event', transformer: 'During & post', visionary: 'Pre, during & post' },    
+  { benefit: "Logo on website", innovator: "3 months", changemaker: "6 months", transformer: "1 year", visionary: "2 years" },
+  { benefit: "Social media promotion", innovator: "1 post", changemaker: "2 posts", transformer: "4 posts", visionary: "6 posts" },
+  { benefit: "Booth at Sponsor Fair", innovator: "—", changemaker: "Yes", transformer: "Yes", visionary: "Yes" },
+  { benefit: "Opening/closing ceremony", innovator: "—", changemaker: "1 min", transformer: "2 min", visionary: "5 min" },
+  { benefit: "Judging panel seats", innovator: "1", changemaker: "1", transformer: "2", visionary: "3", learn: "/about/judges" },
+  { benefit: "Mentorship opportunities", innovator: "Unlimited", changemaker: "Unlimited", transformer: "Unlimited", visionary: "Unlimited", learn: "/about/mentors" },
+  { benefit: "Branded prize category", innovator: "—", changemaker: "—", transformer: "1", visionary: "2" },
+  { benefit: "Logo on event t-shirts", innovator: "Small", changemaker: "Medium", transformer: "Large", visionary: "Premium" },
+  { benefit: "Access to participant resumes", innovator: "—", changemaker: "—", transformer: "Yes", visionary: "Yes" },
+  { benefit: "Sponsored workshop/tech talk", innovator: "—", changemaker: "—", transformer: "30 min", visionary: "1 hour" },
+  { benefit: "Recruiting/interviews", innovator: "—", changemaker: "Post-event", transformer: "During & post", visionary: "Pre, during & post" },
 ];
 
+const whySponsor = [
+  { title: "Drive social innovation", description: "Your support enables tech solutions that address real challenges nonprofits face, amplifying their impact." },
+  { title: "Engage passionate talent", description: "Connect with skilled developers and innovators committed to using technology for social good." },
+  { title: "Showcase your CSR", description: "Demonstrate your company's commitment to social causes and technology-driven solutions for nonprofits." },
+  { title: "Foster partnerships", description: "Build relationships with nonprofits, tech communities, and socially-conscious people creating change." },
+];
 
+const successStories = [
+  { name: "Matthews Crossing Food Bank", text: "Streamlined donation tracking, saving hundreds of volunteer hours annually.", href: "/about/success-stories#matthews-crossing" },
+  { name: "Zuri's Circle", text: "An event management system that increased volunteer engagement by 40%.", href: "/about/success-stories#zuris-circle" },
+  { name: "Vidyodaya", text: "A modern, user-friendly website that boosted online visibility and donations.", href: "/about/success-stories#vidyodaya" },
+];
 
-export default function SponsorIndexList() {  
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+const engagement = [
+  { title: "Sponsor Fair", description: "Showcase your brand and interact directly with participants at our dedicated Sponsor Fair." },
+  { title: "Tech talks & workshops", description: "Present your latest technologies and share expertise through talks and hands-on workshops." },
+  { title: "Branded challenges", description: "Create a custom challenge using your technologies, with dedicated prizes for the best solutions." },
+];
+
+export default function SponsorIndexList() {
   const [selectedAmount, setSelectedAmount] = useState(0);
-  
-  // Fetch current hackathons
   const { hackathons, loading: hackathonsLoading } = useHackathonEvents("current");
 
   useEffect(() => {
     initFacebookPixel();
   }, []);
 
+  const gaButton = (category, action) => trackEvent(category, action);
+  const hasEvents = hackathons && hackathons.length > 0;
 
-
-  const mobileStyle = { fontSize: '12px' };
-  const desktopStyle = { fontSize: '14px' };
-  const style = isMobile ? mobileStyle : desktopStyle;
-
-  const tableHeaderStyle = { 
-    fontSize: isMobile ? '12px' : '14px', 
-    fontWeight: 'bold', 
-    backgroundColor: '#f0f0f0' 
+  const scrollToOpps = (e) => {
+    if (e) e.preventDefault();
+    document.getElementById("current-opportunities")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const gaButton = (category, action) => {
-    trackEvent( category, action );
-  };
-
-
-  const SponsorCard = ({ sponsor, level }) => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
-    return (
-      <Link href={sponsor.website} passHref>
-        <Paper
-          elevation={3}
-          component="a"
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{
-            p: 2,
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            alignItems: "center",
-            gap: 2,
-            backgroundColor: level.color,
-            transition:
-              "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
-            "&:hover": {
-              transform: "translateY(-5px)",
-              boxShadow: 6,
-              cursor: "pointer",
-            },
-            textDecoration: "none",
-            color: "inherit",
-          }}
-        >
-          <Avatar
-            src={sponsor.logo}
-            alt={sponsor.name}
-            sx={{ width: 80, height: 80, bgcolor: "white" }}
-            variant="rounded"
-          />
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: 1,
-            }}
-          >
-            <Typography variant="h6" noWrap>
-              {sponsor.name}
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              <Chip
-                icon={<AccessTimeIcon />}
-                label={
-                  <span style={{ fontSize: "13px" }}>
-                    {sponsor.hours} hours
-                  </span>
-                }
-                size="small"
-                color="primary"
-              />
-              {sponsor.donations > 0 && (
-                <Chip
-                  icon={<AttachMoneyIcon />}                  
-                  label={
-                    <span style={{ fontSize: "13px" }}>
-                      ${sponsor.donations} donated
-                    </span>
-                  }
-                  size="small"
-                  color="secondary"
-                />
-              )}
-            </Box>
-          </Box>
-        </Paper>
-      </Link>
-    );
-  };
-
-  const getSponsorCard = (level, nextLevelMinSupport) => {
-    const levelSponsors = sponsors.filter((s) => {
-      const totalSupport = calculateSupport(s.hours, s.donations);
-      return (
-        totalSupport >= level.minSupport &&
-        (nextLevelMinSupport ? totalSupport < nextLevelMinSupport : true)
-      );
+  // Current sponsors within a tier (grayscale logos / be-first prompt)
+  const tierSponsors = (level, nextMin) =>
+    sponsors.filter((s) => {
+      const t = calculateSupport(s.hours, s.donations);
+      return t >= level.minSupport && (nextMin ? t < nextMin : true);
     });
 
-    return (
-      <Grid container spacing={isMobile ? 2 : 3}>
-        {levelSponsors.length > 0 ? (
-          levelSponsors.map((sponsor) => (
-            <Grid size={{ xs: 12 }} key={sponsor.name}>
-              <SponsorCard sponsor={sponsor} level={level} />
-            </Grid>
-          ))
-        ) : (
-          <Grid size={{ xs: 12 }}>
-            <Paper
-              sx={{
-                p: 3,
-                textAlign: "center",
-                bgcolor: "#EEEEEE",
-                borderStyle: "dashed",
-                borderColor: "grey.400",
-              }}
-            >
-              <Typography variant="h6" gutterBottom>
-                Be the first {level.name} sponsor!
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Support our mission by volunteering your time or making a
-                donation.
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 2,
-                  flexWrap: "wrap",
-                }}
-              >
-                <Chip
-                  label="Become a Mentor"
-                  component="a"
-                  href="/about/mentors"
-                  clickable
-                />
-                <Chip
-                  label="Become a Judge"
-                  component="a"
-                  href="/about/judges"
-                  clickable
-                />
-                <Chip
-                  label={hackathons && hackathons.length > 0 ? "View Sponsorship Opportunities" : "Contact Us to Sponsor"}
-                  component="a"
-                  href={hackathons && hackathons.length > 0 ? "#current-opportunities" : getContactLink()}
-                  clickable
-                  color="primary"
-                  onClick={hackathons && hackathons.length > 0 ? (e) => {
-                    e.preventDefault();
-                    document.getElementById('current-opportunities')?.scrollIntoView({ 
-                      behavior: 'smooth' 
-                    });
-                  } : undefined}
-                />
-              </Box>
-            </Paper>
-          </Grid>
-        )}
-      </Grid>
-    );
-  };
-
-  // Render current hackathons for sponsorship opportunities
-  const renderCurrentHackathons = () => {
-    if (hackathonsLoading) {
-      return (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h2" component="h2" gutterBottom style={isMobile ? { fontSize: "1.75rem" } : {}}>
-            Current Sponsorship Opportunities
-          </Typography>
-          <Grid container spacing={3}>
-            {[1, 2].map((index) => (
-              <Grid size={{ xs: 12, md: 6 }} key={index}>
-                <Skeleton variant="rectangular" height={200} />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      );
-    }
-
-    if (!hackathons || hackathons.length === 0) {
-      return (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h2" component="h2" gutterBottom style={isMobile ? { fontSize: "1.75rem" } : {}}>
-            Sponsorship Opportunities
-          </Typography>
-          <Paper sx={{ p: 3, textAlign: 'center', bgcolor: '#f5f5f5' }}>
-            <Typography variant="h6" gutterBottom>
-              No active hackathons at the moment
-            </Typography>
-            <Typography variant="body1" paragraph>
-              We're planning our next hackathon! Join our mailing list to be notified about upcoming events and sponsorship opportunities.
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-              <Button
-                variant="contained"
-                color="primary"
-                component={Link}
-                href="/hack"
-              >
-                View Past Events
-              </Button>
-              <Button
-                variant="outlined"
-                color="primary"
-                href={getContactLink()}
-                target="_blank"
-              >
-                Contact Us About Future Sponsorship
-              </Button>
-            </Box>
-          </Paper>
-        </Box>
-      );
-    }
-
-    return (
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h2" component="h2" gutterBottom style={isMobile ? { fontSize: "1.75rem" } : {}}>
-          Current Sponsorship Opportunities
-        </Typography>
-        <Typography variant="body1" paragraph style={style}>
-          Sponsor one of our upcoming hackathons and make a direct impact on nonprofits and the tech community. For the data behind 12 years of OHack — completion rates, recruitment patterns, what works and what doesn{"'"}t — see our <Link href="/12-years-of-social-good" style={{ color: "#0066cc", fontWeight: 600 }}>12-Year Field Report</Link>.
-        </Typography>
-        
-        <Grid container spacing={3}>
-          {hackathons.map((event) => {
-            const eventStartDate = new Date(event.start_date);
-            const eventEndDate = new Date(event.end_date);
-            const formattedStartDate = eventStartDate.toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric'
-            });
-            const formattedEndDate = eventEndDate.toLocaleDateString('en-US', {
-              month: 'long', 
-              day: 'numeric',
-              year: 'numeric'
-            });
-            
-            return (
-              <Grid size={{ xs: 12, md: 6 }} key={event.event_id}>
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      boxShadow: 6
-                    }
-                  }}
-                >
-                  {event.image_url && (
-                    <Box sx={{ position: 'relative', height: 200, overflow: 'hidden' }}>
-                      <Image
-                        src={event.image_url}
-                        alt={event.title}
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </Box>
-                  )}
-                  
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h5" component="h3" gutterBottom>
-                      {event.title}
-                    </Typography>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <EventIcon sx={{ mr: 1, fontSize: 'small', color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {formattedStartDate}
-                        {formattedStartDate !== formattedEndDate && ` - ${formattedEndDate}`}
-                      </Typography>
-                    </Box>
-                    
-                    {event.location && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <LocationOnIcon sx={{ mr: 1, fontSize: 'small', color: 'text.secondary' }} />
-                        <Typography variant="body2" color="text.secondary">
-                          {event.location}
-                        </Typography>
-                      </Box>
-                    )}
-                    
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                      {event.description || "Join us for this impactful hackathon where technology meets social good."}
-                    </Typography>
-                    
-                    {event.nonprofits && event.nonprofits.length > 0 && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        <strong>Benefiting:</strong> {event.nonprofits.length} nonprofit{event.nonprofits.length !== 1 ? 's' : ''}
-                      </Typography>
-                    )}
-                  </CardContent>
-                  
-                  <CardActions sx={{ p: 2, pt: 0 }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      component={Link}
-                      href={`/hack/${event.event_id}/sponsor-application`}
-                      onClick={() => gaButton("button_sponsor_application", `sponsor_${event.event_id}`)}
-                    >
-                      Apply to Sponsor This Event
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-        
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Have questions about sponsorship opportunities?
-          </Typography>
-          <Button
-            variant="outlined"
-            color="primary"
-            href={getContactLink()}
-            target="_blank"
-            onClick={() => gaButton("button_general_contact", "general_sponsor_contact")}
-          >
-            Contact Us for More Information
-          </Button>
-        </Box>
-      </Box>
-    );
-  };
-
   return (
-    <LayoutContainer maxWidth="lg">
+    <>
       <Head>
-        <title>
-          Sponsor a Hackathon for Social Good | Opportunity Hack
-        </title>
-        <meta
-          name="description"
-          content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available."
-        />
-        <meta
-          name="keywords"
-          content="Opportunity Hack, hackathon sponsorship, tech for good, corporate social responsibility, nonprofit tech solutions"
-        />
+        <title>Sponsor a Hackathon for Social Good | Opportunity Hack</title>
+        <meta name="description" content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available." />
+        <meta name="keywords" content="Opportunity Hack, hackathon sponsorship, tech for good, corporate social responsibility, nonprofit tech solutions" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.ohack.dev/sponsor" />
-        <meta
-          property="og:title"
-          content="Sponsor a Hackathon for Social Good | Opportunity Hack"
-        />
-        <meta
-          property="og:description"
-          content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available."
-        />
-        <meta
-          property="og:image"
-          content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"
-        />
+        <meta property="og:title" content="Sponsor a Hackathon for Social Good | Opportunity Hack" />
+        <meta property="og:description" content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available." />
+        <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp" />
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://www.ohack.dev/sponsor" />
-        <meta
-          property="twitter:title"
-          content="Sponsor a Hackathon for Social Good | Opportunity Hack"
-        />
-        <meta
-          property="twitter:description"
-          content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available."
-        />
-        <meta
-          property="twitter:image"
-          content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"
-        />
+        <meta property="twitter:title" content="Sponsor a Hackathon for Social Good | Opportunity Hack" />
+        <meta property="twitter:description" content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available." />
+        <meta property="twitter:image" content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp" />
         <link rel="canonical" href="https://www.ohack.dev/sponsor" />
         <meta name="robots" content="index, follow" />
+        <RefinedFonts />
       </Head>
-      <TitleContainer>
-        <Typography
-          variant="h1"
-          component="h1"
-          gutterBottom
-          style={isMobile ? { fontSize: "2rem" } : {}}
-        >
-          Sponsor Opportunity Hack
-        </Typography>
-        <Typography variant="h5" component="h2" paragraph style={style}>
-          Empower Nonprofits Through Technology
-        </Typography>
-        <Typography variant="body1" paragraph style={style}>
-          Join us in fostering innovation for social good. Your sponsorship
-          fuels creativity, supports nonprofits, and connects you with
-          passionate tech talent dedicated to making a difference.
-        </Typography>
 
-        <Typography variant="h5" gutterBottom>
-          Join us in empowering nonprofits through technology
-        </Typography>
-        {hackathons && hackathons.length > 0 ? (
-          <Button
-            variant="contained"
-            color="secondary"
-            size={isMobile ? "medium" : "large"}
-            href="#current-opportunities"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('current-opportunities')?.scrollIntoView({ 
-                behavior: 'smooth' 
-              });
-            }}
-          >
-            View Sponsorship Opportunities
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            color="secondary"
-            size={isMobile ? "medium" : "large"}
-            href={getContactLink()}
-            target="_blank"
-          >
-            Contact Us About Sponsorship
-          </Button>
-        )}
-        <Typography variant="body1" style={{ marginTop: "1rem" }}>
-          {hackathons && hackathons.length > 0 
-            ? "Multiple sponsorship levels available!" 
-            : "Stay updated on upcoming opportunities!"
-          }
-        </Typography>
-      </TitleContainer>
-
-      {hackathons && hackathons.length > 0 && (
-        <Box mt={3} mb={3} display="flex" justifyContent="center">
-          <Button
-            variant="contained"
-            color="primary"
-            size={isMobile ? "medium" : "large"}
-            component={Link}
-            href={`/hack/${hackathons[0].event_id}`}
-            startIcon={<CalendarTodayIcon />}
-          >
-            View {hackathons[0].title} Details
-          </Button>
-        </Box>
-      )}
-
-      <ProjectsContainer>
-        {/* Current Hackathons Section */}
-        <Box id="current-opportunities" mb={isMobile ? 4 : 6}>
-          {renderCurrentHackathons()}
-        </Box>
-
-        <Box mb={isMobile ? 3 : 6}>
-          <Typography
-            variant="h2"
-            component="h2"
-            gutterBottom
-            style={isMobile ? { fontSize: "1.75rem" } : {}}
-          >
-            About Opportunity Hack
-          </Typography>
-          <Grid container spacing={isMobile ? 2 : 3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="body1" paragraph style={style}>
-                Opportunity Hack is a premier hackathon that brings together
-                talented students and professionals to create innovative
-                solutions for nonprofits. Our upcoming event is scheduled for
-                October 12th & 13th 2024 and will be in-person at ASU in Tempe,
-                Arizona.
-                <br />
-                <Link
-                  href="/hack/2024_fall"
-                  style={{ color: "blue", textDecoration: "underline" }}
-                >
-                  Learn more about our upcoming 2024 Fall Hackathon
-                </Link>
-                <br />
-                <br />
-                Local Arizona companies — see our{" "}
-                <Link
-                  href="/hackathons/arizona"
-                  style={{ color: "blue", textDecoration: "underline" }}
-                >
-                  Arizona hackathons page
-                </Link>{" "}
-                for the local-philanthropy angle.
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                <strong>Key Statistics from 2023:</strong>
-                <ul>
-                  <li>Over 300 participants</li>
-                  <li>25 projects submitted</li>
-                  <li>Local Arizona judges and online judges</li>
-                  <li>
-                    Top 3 teams won cash prizes and follow-up project
-                    opportunities
-                  </li>
-                </ul>
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box
-                sx={{
-                  position: "relative",
-                  width: "100%",
-                  height: isMobile ? "200px" : "300px",
-                }}
-              >
-                <Image
-                  src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp"
-                  alt="Opportunity Hack 2023 Participants"
-                  layout="fill"
-                  objectFit="cover"
-                />
-              </Box>
-              <Typography variant="caption" align="center" style={style}>
-                Opportunity Hack 2023 participants actively engage with Diana
-                Lee Guzman from{" "}
-                <Link
-                  href="https://codingincolor.net/"
-                  style={{ color: "blue", textDecoration: "underline" }}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  passHref
-                >
-                  Coding In Color
-                </Link>
-                , fostering diversity and inclusion in tech
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Box mb={isMobile ? 3 : 6}>
-          <Typography
-            variant="h2"
-            component="h2"
-            gutterBottom
-            style={isMobile ? { fontSize: "1.75rem" } : {}}
-          >
-            Our Mentors
-          </Typography>
-          <Typography variant="body1" paragraph style={style}>
-            Opportunity Hack attracts high-caliber mentors from leading tech
-            companies and universities. In our 2023 event, we had over 30
-            mentors, including professionals from:
-          </Typography>
-          <Grid container spacing={isMobile ? 1 : 2}>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" style={style}>
-                    Tech Giants
-                  </Typography>
-                  <Typography variant="body1" style={style}>
-                    Meta, Spotify, PayPal, eBay
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" style={style}>
-                    Innovative Companies
-                  </Typography>
-                  <Typography variant="body1" style={style}>
-                    Honeywell, World Wide Technology, Pixee
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" style={style}>
-                    Academic Institutions
-                  </Typography>
-                  <Typography variant="body1" style={style}>
-                    Arizona State University, Rutgers, University of Toronto
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-          <Typography variant="body1" paragraph style={style} mt={2}>
-            Our mentors bring expertise in various areas, including:
-          </Typography>
-          <ul style={style}>
-            <li>Front-end and Back-end Development</li>
-            <li>Mobile Development (iOS and Android)</li>
-            <li>Data Science and Machine Learning</li>
-            <li>Cloud Technologies (AWS, Google Cloud, Azure)</li>
-            <li>UX/UI Design</li>
-            <li>Product and Program Management</li>
-            <li>DevOps and GitHub expertise</li>
-          </ul>
-          <Typography variant="body1" paragraph style={style}>
-            As a sponsor, you'll have the opportunity to provide your own or
-            interact with these mentors and the talented participants they
-            guide, providing unique networking and recruitment opportunities.
-          </Typography>
-        </Box>
-
-        <Typography
-          variant="h2"
-          component="h2"
-          gutterBottom
-          style={isMobile ? { fontSize: "1.75rem" } : {}}
-        >
-          Sponsorship Levels & Benefits
-        </Typography>
-        <Grid container spacing={isMobile ? 2 : 3}>
-          {sponsorLevels.map((level, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={level.name}>
-              <Card sx={{ height: "100%", backgroundColor: level.color }}>
-                <CardContent>
-                  <Typography
-                    variant="h4"
-                    component="h3"
-                    gutterBottom
-                    style={isMobile ? { fontSize: "1.5rem" } : {}}
-                  >
-                    {level.name}
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    ${level.minSupport}+ in support or equivalent volunteer
-                    hours
-                  </Typography>
-                  <Typography variant="h6" component="h4" style={style}>
-                    Current Sponsors
-                  </Typography>
-                  {getSponsorCard(level, sponsorLevels[index + 1]?.minSupport)}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        <Box mt={isMobile ? 2 : 3} mb={isMobile ? 3 : 6}>
-          <Typography
-            variant="h2"
-            component="h2"
-            gutterBottom
-            style={isMobile ? { fontSize: "1.75rem" } : {}}
-          >
-            Calculate Your Sponsorship
-          </Typography>
-          <SponsorshipSlider
-            sponsorLevels={sponsorLevels}
-            isMobile={isMobile}
-            setSelectedAmount={setSelectedAmount}
-          />
-
-          <Box mt={2}>
-            {selectedAmount > 0 && (
-              <Typography variant="h6" gutterBottom>
-                Donate ${selectedAmount}:
-              </Typography>
+      <RefinedRoot>
+        {/* HERO */}
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(104px, 13vh, 156px)", paddingBottom: "clamp(28px, 5vh, 48px)" }}>
+          <Eyebrow><span className="rise" style={{ display: "inline-block" }}>Sponsor · partner</span></Eyebrow>
+          <h1 className="ohx-display rise" style={{ marginTop: 18, maxWidth: "16ch", animationDelay: "60ms" }}>
+            Power technology <span className="ohx-italic">for nonprofits.</span>
+          </h1>
+          <p className="ohx-lead rise" style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "60ch" }}>
+            Your sponsorship fuels creativity, supports nonprofits, and connects you with passionate tech
+            talent dedicated to making a difference.
+          </p>
+          <div className="rise" style={{ marginTop: 30, display: "flex", flexWrap: "wrap", gap: 14, animationDelay: "230ms" }}>
+            {hasEvents ? (
+              <a href="#current-opportunities" className="ohx-btn ohx-btn--primary" onClick={scrollToOpps}>View opportunities <Arrow /></a>
+            ) : (
+              <Link href={getContactLink()} className="ohx-btn ohx-btn--primary">Contact us about sponsorship <Arrow /></Link>
             )}
-            <ButtonBasicStyle
-              onClick={() => gaButton("button_donate", "donate")}
-              style={{ color: "white", backgroundColor: "blue" }}
-              target="_blank"
-              href="https://givebutter.com/a5MSes"
-            >
-              Donate Here
-            </ButtonBasicStyle>
-          </Box>
-        </Box>
+            <a href="#sponsorship-levels" className="ohx-btn ohx-btn--ghost" onClick={(e) => { e.preventDefault(); document.getElementById("sponsorship-levels")?.scrollIntoView({ behavior: "smooth" }); }}>See levels &amp; benefits</a>
+          </div>
+        </section>
 
-        <Box mt={isMobile ? 3 : 6}>
-          <Typography
-            variant="h3"
-            component="h3"
-            gutterBottom
-            style={isMobile ? { fontSize: "1.5rem" } : {}}
-          >
-            Sponsorship Benefits
-          </Typography>
-          <TableContainer component={Paper}>
-            <Table
-              aria-label="sponsorship benefits table"
-              size={isMobile ? "small" : "medium"}
-            >
-              <TableHead>
-                <TableRow>
-                  <TableCell style={tableHeaderStyle}>Benefit</TableCell>
-                  {sponsorLevels.map((level) => (
-                    <TableCell
-                      key={level.name}
-                      align="center"
-                      style={{
-                        ...tableHeaderStyle,
-                        backgroundColor: level.color,
-                        color: "black",
-                      }}
-                    >
-                      {level.name}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {benefitsData.map((row) => (
-                  <TableRow key={row.benefit}>
-                    <TableCell component="th" scope="row" style={style}>
-                      {row.benefit}
-                      {row.button && <Box mt={1}>{row.button}</Box>}
-                    </TableCell>
-                    <TableCell align="center" style={style}>
-                      {row.innovator}
-                    </TableCell>
-                    <TableCell align="center" style={style}>
-                      {row.changemaker}
-                    </TableCell>
-                    <TableCell align="center" style={style}>
-                      {row.transformer}
-                    </TableCell>
-                    <TableCell align="center" style={style}>
-                      {row.visionary}
-                    </TableCell>
-                  </TableRow>
+        {/* CURRENT OPPORTUNITIES */}
+        <section id="current-opportunities" style={{ background: "var(--surface-2)", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", scrollMarginTop: 90 }}>
+          <div className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(48px, 7vh, 80px)" }}>
+            <Eyebrow>Current sponsorship opportunities</Eyebrow>
+            <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 10 }}>Sponsor an upcoming hackathon</h2>
+            <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 28, maxWidth: "62ch" }}>
+              Make a direct impact on nonprofits and the tech community. For the data behind 12 years of OHack, see our{" "}
+              <Link href="/12-years-of-social-good" className="ohx-link">12-Year Field Report</Link>.
+            </p>
+            <Box sx={{ minHeight: { xs: 0, md: 200 } }}>
+              {hackathonsLoading ? (
+                <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+                  {[0, 1].map((i) => <Skeleton key={i} variant="rectangular" height={240} sx={{ borderRadius: "8px" }} />)}
+                </div>
+              ) : hasEvents ? (
+                <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
+                  {hackathons.map((event) => {
+                    const s = new Date(event.start_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+                    const e = new Date(event.end_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+                    return (
+                      <div key={event.event_id} className="ohx-card" style={{ background: "var(--surface)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                        {event.image_url && (
+                          <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9" }}>
+                            <Image src={event.image_url} alt={event.title} fill sizes="(max-width: 700px) 100vw, 360px" style={{ objectFit: "cover" }} />
+                          </div>
+                        )}
+                        <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", flex: 1 }}>
+                          <h3 className="ohx-display" style={{ fontSize: "1.25rem" }}>{event.title}</h3>
+                          <p className="ohx-faint" style={{ margin: "8px 0 0", fontSize: "0.85rem" }}>{s}{s !== e ? ` – ${e}` : ""}{event.location ? ` · ${event.location}` : ""}</p>
+                          <p className="ohx-muted" style={{ margin: "12px 0 0", fontSize: "0.93rem", lineHeight: 1.5 }}>
+                            {event.description || "Join us for this impactful hackathon where technology meets social good."}
+                          </p>
+                          {event.nonprofits?.length > 0 && (
+                            <p className="ohx-faint" style={{ margin: "10px 0 0", fontSize: "0.85rem" }}>Benefiting {event.nonprofits.length} nonprofit{event.nonprofits.length !== 1 ? "s" : ""}</p>
+                          )}
+                          <div style={{ marginTop: "auto", paddingTop: 18 }}>
+                            <Link href={`/hack/${event.event_id}/sponsor-application`} className="ohx-btn ohx-btn--primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => gaButton("button_sponsor_application", `sponsor_${event.event_id}`)}>
+                              Apply to sponsor this event
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="ohx-card" style={{ padding: "36px 28px", background: "var(--surface)", textAlign: "center" }}>
+                  <p className="ohx-muted" style={{ margin: "0 0 18px" }}>No active hackathons right now — we&apos;re planning the next one.</p>
+                  <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+                    <Link href="/hack" className="ohx-btn ohx-btn--primary">View past events</Link>
+                    <Link href={getContactLink()} className="ohx-btn ohx-btn--ghost">Contact us about future sponsorship</Link>
+                  </div>
+                </div>
+              )}
+            </Box>
+            <div style={{ marginTop: 24 }}>
+              <Link href={getContactLink()} className="ohx-link" onClick={() => gaButton("button_general_contact", "general_sponsor_contact")}>Questions? Contact us <Arrow /></Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ABOUT */}
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(32px, 5vh, 56px)" }}>
+          <Eyebrow>About Opportunity Hack</Eyebrow>
+          <div style={{ marginTop: 18, display: "grid", gap: "clamp(28px, 5vw, 56px)", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", alignItems: "center" }}>
+            <div>
+              <p className="ohx-muted" style={{ marginTop: 0, lineHeight: 1.65 }}>
+                A premier hackathon bringing together talented students and professionals to build innovative
+                solutions for nonprofits. Local Arizona companies — see our{" "}
+                <Link href="/hackathons/arizona" className="ohx-link">Arizona hackathons page</Link> for the
+                local-philanthropy angle.
+              </p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "18px 0 0", display: "flex", flexDirection: "column", gap: 8 }}>
+                {["Over 300 participants", "25 projects submitted", "Local and online judges", "Top teams won cash prizes and follow-up projects"].map((t) => (
+                  <li key={t} style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
+                    <span style={{ color: "var(--accent)", fontWeight: 700 }}>—</span>
+                    <span className="ohx-muted" style={{ fontSize: "0.96rem" }}>{t}</span>
+                  </li>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+              </ul>
+            </div>
+            <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 3", borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }}>
+              <Image src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp" alt="Opportunity Hack 2023 participants" fill sizes="(max-width: 700px) 100vw, 540px" style={{ objectFit: "cover" }} />
+            </div>
+          </div>
+        </section>
 
-        <Box mt={isMobile ? 3 : 6}>
-          <Typography
-            variant="h3"
-            component="h3"
-            gutterBottom
-            style={isMobile ? { fontSize: "1.5rem" } : {}}
-          >
-            Why Sponsor Opportunity Hack?
-          </Typography>
-          <Grid container spacing={isMobile ? 2 : 3}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography
-                variant="h5"
-                component="h4"
-                gutterBottom
-                style={style}
-              >
-                Drive Social Innovation
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                Your support enables tech solutions that address real challenges
-                faced by nonprofits, amplifying their impact in communities.
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography
-                variant="h5"
-                component="h4"
-                gutterBottom
-                style={style}
-              >
-                Engage with Passionate Talent
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                Connect with skilled developers and innovators who are committed
-                to using technology for social good.
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography
-                variant="h5"
-                component="h4"
-                gutterBottom
-                style={style}
-              >
-                Showcase Corporate Social Responsibility
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                Demonstrate your company's commitment to social causes and
-                technology-driven solutions for nonprofits.
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography
-                variant="h5"
-                component="h4"
-                gutterBottom
-                style={style}
-              >
-                Foster Community Partnerships
-              </Typography>
-              <Typography variant="body1" paragraph style={style}>
-                Build relationships with nonprofits, tech communities, and
-                socially-conscious individuals passionate about creating change.
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Box mt={isMobile ? 3 : 6}>
-          <Typography
-            variant="h3"
-            component="h3"
-            gutterBottom
-            style={isMobile ? { fontSize: "1.5rem" } : {}}
-          >
-            Success Stories
-          </Typography>
-          <Typography variant="body1" paragraph style={style}>
-            Our hackathons have led to impactful solutions for nonprofits. See
-            how your sponsorship can make a real difference:
-          </Typography>
-          <Grid container spacing={isMobile ? 2 : 3}>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography
-                    variant="h5"
-                    component="h4"
-                    gutterBottom
-                    style={style}
-                  >
-                    Matthews Crossing Food Bank
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Streamlined donation tracking system, saving hundreds of
-                    volunteer hours annually.
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <Button
-                    size="small"
-                    component={Link}
-                    href="/about/success-stories#matthews-crossing"
-                  >
-                    Read More
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography
-                    variant="h5"
-                    component="h4"
-                    gutterBottom
-                    style={style}
-                  >
-                    Zuri's Circle
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Developed an event management system, increasing volunteer
-                    engagement by 40%.
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <Button
-                    size="small"
-                    component={Link}
-                    href="/about/success-stories#zuris-circle"
-                  >
-                    Read More
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography
-                    variant="h5"
-                    component="h4"
-                    gutterBottom
-                    style={style}
-                  >
-                    Vidyodaya
-                  </Typography>
-                  <Typography variant="body1" paragraph style={style}>
-                    Created a modern, user-friendly website, boosting online
-                    visibility and donations.
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <Button
-                    size="small"
-                    component={Link}
-                    href="/about/success-stories#vidyodaya"
-                  >
-                    Read More
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          </Grid>
-          <Box mt={2} textAlign="center">
-            <Button
-              variant="contained"
-              color="secondary"
-              size={isMobile ? "medium" : "large"}
-              component={Link}
-              href="/about/success-stories"
-            >
-              Explore All Success Stories
-            </Button>
-          </Box>
-        </Box>
-
-        <Box mt={isMobile ? 3 : 6}>
-          <Typography
-            variant="h3"
-            component="h3"
-            gutterBottom
-            style={isMobile ? { fontSize: "1.5rem" } : {}}
-          >
-            Engagement Opportunities
-          </Typography>
-          <Grid container spacing={isMobile ? 2 : 3}>
+        {/* MENTORS */}
+        <section className="ohx-wrap" style={{ paddingBottom: "clamp(32px, 5vh, 56px)" }}>
+          <Eyebrow>Our mentors</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 10 }}>High-caliber talent in the room</h2>
+          <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 24, maxWidth: "60ch" }}>
+            Our 2023 event drew 30+ mentors from leading tech companies and universities.
+          </p>
+          <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
             {[
-              {
-                title: "Sponsor Fair",
-                description:
-                  "Showcase your brand and interact directly with participants at our dedicated Sponsor Fair.",
-              },
-              {
-                title: "Tech Talks & Workshops",
-                description:
-                  "Present your latest technologies and share your expertise through engaging tech talks and hands-on workshops.",
-              },
-              {
-                title: "Branded Challenges",
-                description:
-                  "Create a custom challenge for participants using your technologies, with dedicated prizes for the best solutions.",
-              },
-            ].map((item, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography
-                      variant="h5"
-                      component="h4"
-                      gutterBottom
-                      style={style}
-                    >
-                      {item.title}
-                    </Typography>
-                    <Typography variant="body1" style={style}>
-                      {item.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+              { t: "Tech giants", d: "Meta, Spotify, PayPal, eBay" },
+              { t: "Innovative companies", d: "Honeywell, World Wide Technology, Pixee" },
+              { t: "Academic institutions", d: "Arizona State University, Rutgers, University of Toronto" },
+            ].map((c) => (
+              <div key={c.t} className="ohx-card" style={{ padding: "22px 24px" }}>
+                <span className="ohx-eyebrow">{c.t}</span>
+                <p style={{ margin: "10px 0 0", fontWeight: 500 }}>{c.d}</p>
+              </div>
             ))}
-          </Grid>
-        </Box>
+          </div>
+          <p className="ohx-muted" style={{ marginTop: 18, maxWidth: "70ch", fontSize: "0.95rem" }}>
+            Expertise spans front-end and back-end, mobile, data science and ML, cloud (AWS / GCP / Azure),
+            UX/UI, product and program management, and DevOps. As a sponsor you can bring your own mentors or
+            engage with these — a unique networking and recruitment opportunity.
+          </p>
+        </section>
 
-        <Box mt={isMobile ? 3 : 6} textAlign="center">
-          <Typography
-            variant="h3"
-            component="h3"
-            gutterBottom
-            style={isMobile ? { fontSize: "1.5rem" } : {}}
-          >
-            Ready to Make a Difference?
-          </Typography>
-          <Typography variant="body1" paragraph style={style}>
-            Your sponsorship can change lives and empower nonprofits through
-            innovative tech solutions. Join us in creating lasting impact!
-          </Typography>
-          {hackathons && hackathons.length > 0 ? (
-            <Button
-              variant="contained"
-              color="primary"
-              size={isMobile ? "medium" : "large"}
-              onClick={() => {
-                document.getElementById('current-opportunities')?.scrollIntoView({ 
-                  behavior: 'smooth' 
-                });
-              }}
-            >
-              View Current Sponsorship Opportunities
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              color="primary"
-              size={isMobile ? "medium" : "large"}
-              target="_blank"
-              href={getContactLink()}
-            >
-              Contact Us About Future Sponsorship
-            </Button>
-          )}
-        </Box>
-      </ProjectsContainer>
-    </LayoutContainer>
+        {/* SPONSORSHIP LEVELS */}
+        <section id="sponsorship-levels" style={{ background: "var(--surface-2)", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", scrollMarginTop: 90 }}>
+          <div className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(48px, 7vh, 80px)" }}>
+            <Eyebrow>Sponsorship levels &amp; benefits</Eyebrow>
+            <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 28 }}>Find your level</h2>
+            <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))" }}>
+              {sponsorLevels.map((level, index) => {
+                const list = tierSponsors(level, sponsorLevels[index + 1]?.minSupport);
+                return (
+                  <div key={level.name} className="ohx-card" style={{ background: "var(--surface)", padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                    <div style={{ height: 4, background: level.color }} />
+                    <div style={{ padding: "22px 22px 24px", display: "flex", flexDirection: "column", flex: 1 }}>
+                      <h3 className="ohx-display" style={{ fontSize: "1.3rem" }}>{level.name}</h3>
+                      <p className="ohx-faint" style={{ margin: "6px 0 16px", fontSize: "0.85rem" }}>${level.minSupport}+ in support or equivalent volunteer hours</p>
+                      <span className="ohx-eyebrow" style={{ fontSize: "0.62rem" }}>Current sponsors</span>
+                      <div className="ohx-sponsors" style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", flex: 1 }}>
+                        {list.length > 0 ? (
+                          list.map((s) => (
+                            <a key={s.name} href={s.website} target="_blank" rel="noopener noreferrer" title={s.name} style={{ display: "inline-flex" }}>
+                              <Image src={s.logo} alt={s.name} width={72} height={32} style={{ width: "auto", height: 28, objectFit: "contain" }} />
+                            </a>
+                          ))
+                        ) : (
+                          <p className="ohx-faint" style={{ margin: 0, fontSize: "0.85rem" }}>Be the first {level.name} sponsor.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Benefits table */}
+            <h3 className="ohx-display" style={{ fontSize: "1.4rem", marginTop: 44, marginBottom: 18 }}>What each level includes</h3>
+            <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: 8, background: "var(--surface)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem", minWidth: 560 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "12px 16px", borderBottom: "1px solid var(--line)", fontFamily: "var(--body)", fontWeight: 600, color: "var(--muted)" }}>Benefit</th>
+                    {sponsorLevels.map((l) => (
+                      <th key={l.name} style={{ padding: "12px 14px", borderBottom: "1px solid var(--line)", borderLeft: "1px solid var(--line)", fontFamily: "var(--display)", fontWeight: 500 }}>
+                        {l.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {benefitsData.map((row) => (
+                    <tr key={row.benefit}>
+                      <td style={{ padding: "11px 16px", borderTop: "1px solid var(--line)" }}>
+                        {row.benefit}
+                        {row.learn && (
+                          <>{" "}<Link href={row.learn} className="ohx-link" style={{ fontSize: "0.78rem" }}>learn more</Link></>
+                        )}
+                      </td>
+                      {["innovator", "changemaker", "transformer", "visionary"].map((k) => (
+                        <td key={k} style={{ padding: "11px 14px", textAlign: "center", borderTop: "1px solid var(--line)", borderLeft: "1px solid var(--line)", color: row[k] === "—" ? "var(--faint)" : "var(--ink)" }}>
+                          {row[k]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Calculator */}
+            <h3 className="ohx-display" style={{ fontSize: "1.4rem", marginTop: 44, marginBottom: 16 }}>Calculate your sponsorship</h3>
+            <div className="ohx-card" style={{ background: "var(--surface)", padding: "24px 26px" }}>
+              <SponsorshipSlider sponsorLevels={sponsorLevels} isMobile={false} setSelectedAmount={setSelectedAmount} />
+              <div style={{ marginTop: 18 }}>
+                {selectedAmount > 0 && <p className="ohx-muted" style={{ margin: "0 0 10px" }}>Donate ${selectedAmount}:</p>}
+                <a className="ohx-btn ohx-btn--primary" href="https://givebutter.com/a5MSes" target="_blank" rel="noopener noreferrer" onClick={() => gaButton("button_donate", "donate")}>
+                  Donate here <Arrow />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* WHY SPONSOR */}
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(32px, 5vh, 56px)" }}>
+          <Eyebrow>Why sponsor</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 28 }}>What you&apos;re part of</h2>
+          <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+            {whySponsor.map((c) => (
+              <div key={c.title} className="ohx-card" style={{ padding: "24px" }}>
+                <h3 className="ohx-display" style={{ fontSize: "1.15rem" }}>{c.title}</h3>
+                <p className="ohx-muted" style={{ margin: "10px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>{c.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SUCCESS STORIES */}
+        <section className="ohx-wrap" style={{ paddingBottom: "clamp(32px, 5vh, 56px)" }}>
+          <Eyebrow>Success stories</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 10 }}>Where sponsorship goes</h2>
+          <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 28, maxWidth: "56ch" }}>
+            Our hackathons have led to lasting solutions for nonprofits.
+          </p>
+          <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+            {successStories.map((s) => (
+              <Link key={s.name} href={s.href} className="ohx-card ohx-card--hover" style={{ padding: "24px", textDecoration: "none", color: "inherit", display: "block" }}>
+                <h3 className="ohx-display" style={{ fontSize: "1.15rem" }}>{s.name}</h3>
+                <p className="ohx-muted" style={{ margin: "10px 0 14px", fontSize: "0.95rem", lineHeight: 1.55 }}>{s.text}</p>
+                <span className="ohx-link" style={{ fontSize: "0.88rem" }}>Read more <Arrow /></span>
+              </Link>
+            ))}
+          </div>
+          <div style={{ marginTop: 24 }}>
+            <Link href="/about/success-stories" className="ohx-link">Explore all success stories <Arrow /></Link>
+          </div>
+        </section>
+
+        {/* ENGAGEMENT */}
+        <section className="ohx-wrap" style={{ paddingBottom: "clamp(40px, 6vh, 64px)" }}>
+          <Eyebrow>Engagement opportunities</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 28 }}>Ways to show up</h2>
+          <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+            {engagement.map((c) => (
+              <div key={c.title} className="ohx-card" style={{ padding: "24px" }}>
+                <h3 className="ohx-display" style={{ fontSize: "1.15rem" }}>{c.title}</h3>
+                <p className="ohx-muted" style={{ margin: "10px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>{c.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section style={{ background: "var(--brand)", color: "#fff" }}>
+          <div className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 88px)", paddingBottom: "clamp(48px, 7vh, 88px)", textAlign: "center" }}>
+            <h2 className="ohx-display" style={{ color: "#fff" }}>Ready to make a difference?</h2>
+            <p style={{ margin: "14px auto 28px", maxWidth: "52ch", color: "rgba(255,255,255,0.85)", fontSize: "1.05rem" }}>
+              Your sponsorship can change lives and empower nonprofits through innovative tech solutions.
+            </p>
+            {hasEvents ? (
+              <a href="#current-opportunities" className="ohx-btn" style={{ background: "#fff", color: "var(--brand)" }} onClick={scrollToOpps}>View current opportunities <Arrow /></a>
+            ) : (
+              <Link href={getContactLink()} className="ohx-btn" style={{ background: "#fff", color: "var(--brand)" }}>Contact us about sponsorship <Arrow /></Link>
+            )}
+          </div>
+        </section>
+      </RefinedRoot>
+    </>
   );
 }

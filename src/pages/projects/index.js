@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
+import { RefinedFonts } from '../../components/design/refined';
 
 const ProjectList = dynamic(() => import('../../components/ProjectList/ProjectList'), {
   ssr: false
@@ -43,6 +44,8 @@ export default function Projects({ projects, hackathons, stats, topNonprofits })
           content={`social impact projects, tech for good, nonprofit tech solutions, volunteer coding, career growth, ${stats.topSkills.join(", ")}`}
         />
         <meta name="robots" content="index, follow" />
+
+        <RefinedFonts />
 
         {/* JSON-LD structured data */}
         <script

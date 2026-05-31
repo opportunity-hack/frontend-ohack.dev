@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import Script from 'next/script';
 import NextLink from 'next/link';
+import { RefinedRoot, RefinedFonts } from '../../components/design/refined';
 import TableOfContents from '../../components/Hackathon/TableOfContents';
 import FloatingNavigation from '../../components/Hackathon/FloatingNavigation';
 
@@ -484,6 +485,7 @@ export default function HackathonEvent({ eventData }) {
         <meta name="description" content={metaDescription} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta charSet="UTF-8" />
+        <RefinedFonts />
 
         {/* Enhanced Open Graph tags */}
         <meta property="og:title" content={metaTitle} />
@@ -567,7 +569,8 @@ export default function HackathonEvent({ eventData }) {
         />
       )}
 
-      <Container maxWidth="lg" component="main">
+      <RefinedRoot>
+        <div className="ohx-wrap" style={{ paddingBottom: "clamp(56px, 9vh, 104px)" }}>
         <HackathonHeader
           title={event.title}
           startDate={event.start_date}
@@ -592,44 +595,13 @@ export default function HackathonEvent({ eventData }) {
         {/* Event recap teaser — only render when photos exist */}
         {Array.isArray(event.event_photos) && event.event_photos.length > 0 && (
           <Box component="section" aria-labelledby="recap-heading" sx={{ mt: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, md: 3 },
-                mb: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 2,
-                backgroundColor: 'background.paper',
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 1,
-                  mb: 1.5,
-                }}
-              >
-                <Typography
-                  id="recap-heading"
-                  variant="h6"
-                  component="h2"
-                  sx={{ fontWeight: 600, m: 0 }}
-                >
-                  Event recap
-                </Typography>
-                <Button
-                  component={NextLink}
-                  href={`/hack/${event_id}/media`}
-                  size="small"
-                  variant="outlined"
-                >
+            <div className="ohx-card" style={{ padding: "22px 24px", marginTop: 8, marginBottom: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+                <span id="recap-heading" className="ohx-eyebrow">Event recap</span>
+                <NextLink href={`/hack/${event_id}/media`} className="ohx-link" style={{ fontSize: "0.9rem" }}>
                   View gallery →
-                </Button>
-              </Box>
+                </NextLink>
+              </div>
               <Box
                 sx={{
                   display: 'grid',
@@ -680,7 +652,7 @@ export default function HackathonEvent({ eventData }) {
                   + {event.event_photos.length - 3} more photo{event.event_photos.length - 3 === 1 ? '' : 's'}
                 </Typography>
               )}
-            </Paper>
+            </div>
           </Box>
         )}
 
@@ -760,12 +732,12 @@ export default function HackathonEvent({ eventData }) {
             <LinksContainer elevation={2} id="build-a-team">
               <Box>
                 {hackathonExpired ? (
-                  <Typography variant="h5" gutterBottom fontWeight="bold">
+                  <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500 }}>
                     Participating Teams
                   </Typography>
                 ) : (
                   <>
-                    <Typography variant="h5" gutterBottom fontWeight="bold">
+                    <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500 }}>
                       Step 3. Build a team
                     </Typography>
 
@@ -785,22 +757,21 @@ export default function HackathonEvent({ eventData }) {
                             href={event.constraints?.team_find_a_team_enabled !== false ? `/hack/${event_id}/findteam` : undefined}
                             disabled={event.constraints?.team_find_a_team_enabled === false}
                             component={event.constraints?.team_find_a_team_enabled !== false ? "a" : "button"}
+                            disableElevation
                             sx={{
-                              py: 2,
+                              py: 2.5,
                               display: "flex",
                               flexDirection: "column",
                               alignItems: "center",
                               justifyContent: "center",
                               height: "100%",
-                              borderRadius: 2,
-                              boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-                              transition:
-                                "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-                              "&:hover": {
-                                transform: event.constraints?.team_find_a_team_enabled !== false ? "translateY(-3px)" : "none",
-                                boxShadow: event.constraints?.team_find_a_team_enabled !== false ? "0 6px 12px rgba(0, 0, 0, 0.15)" : "0 4px 10px rgba(0, 0, 0, 0.1)",
-                              },
-                              opacity: event.constraints?.team_find_a_team_enabled !== false ? 1 : 0.6,
+                              borderRadius: "8px",
+                              textTransform: "none",
+                              boxShadow: "none",
+                              bgcolor: "var(--brand)",
+                              color: "#fff",
+                              "&:hover": { bgcolor: "#16315a", boxShadow: "none" },
+                              opacity: event.constraints?.team_find_a_team_enabled !== false ? 1 : 0.55,
                               cursor: event.constraints?.team_find_a_team_enabled !== false ? 'pointer' : 'not-allowed'
                             }}
                           >
@@ -832,22 +803,23 @@ export default function HackathonEvent({ eventData }) {
                             disabled={event.constraints?.team_creation_enabled === false}
                             component={event.constraints?.team_creation_enabled !== false ? "a" : "button"}
                             sx={{
-                              py: 2,
+                              py: 2.5,
                               display: "flex",
                               flexDirection: "column",
                               alignItems: "center",
                               justifyContent: "center",
                               height: "100%",
-                              borderRadius: 2,
-                              borderWidth: 2,
-                              boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)",
-                              transition:
-                                "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+                              borderRadius: "8px",
+                              textTransform: "none",
+                              borderWidth: 1,
+                              borderColor: "var(--line)",
+                              color: "var(--ink)",
+                              boxShadow: "none",
                               "&:hover": {
-                                transform: event.constraints?.team_creation_enabled !== false ? "translateY(-3px)" : "none",
-                                boxShadow: event.constraints?.team_creation_enabled !== false ? "0 6px 12px rgba(0, 0, 0, 0.1)" : "0 4px 10px rgba(0, 0, 0, 0.05)",
+                                borderColor: event.constraints?.team_creation_enabled !== false ? "var(--ink)" : "var(--line)",
+                                bgcolor: "rgba(0,0,0,0.02)",
                               },
-                              opacity: event.constraints?.team_creation_enabled !== false ? 1 : 0.6,
+                              opacity: event.constraints?.team_creation_enabled !== false ? 1 : 0.55,
                               cursor: event.constraints?.team_creation_enabled !== false ? 'pointer' : 'not-allowed'
                             }}
                           >
@@ -1167,7 +1139,8 @@ export default function HackathonEvent({ eventData }) {
             )}
           </Grid>
         </Grid>
-      </Container>
+        </div>
+      </RefinedRoot>
 
       {/* Floating Navigation Component */}
       <FloatingNavigation isHackathonExpired={hackathonExpired} />

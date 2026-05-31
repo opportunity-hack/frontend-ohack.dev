@@ -1,484 +1,168 @@
-import useNonprofit from "../../hooks/use-nonprofit";
+import { useState, useMemo } from "react";
+import Head from "next/head";
+import Link from "next/link";
 import Moment from "moment";
-
-import Chip from "@mui/material/Chip";
-import BuildIcon from "@mui/icons-material/Build";
-import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-import NonProfitListTile from "../NonProfitListTile/NonProfitListTile";
-import SearchIcon from '@mui/icons-material/Search';
-
-import { useState, useCallback } from "react";
-import { Puff } from "react-loading-icons";
-
-import { NonProfitContainer, NonProfitGrid } from "../../styles/nonprofits/styles";
+import { Box } from "@mui/material";
+import useNonprofit from "../../hooks/use-nonprofit";
 import useProfileApi from "../../hooks/use-profile-api";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-
-import {
-  ContentContainer,
-  InnerContainer,
-} from "../../styles/nonprofits/styles";
-import { Search, SearchIconWrapper, StyledInputBase } from "./styles";
-import { 
-  Typography, 
-  Button, 
-  Box, 
-  Paper, 
-  Alert,
-  Grid,
-  Card,
-  CardContent,
-  Divider,
-  Chip as MuiChip
-} from "@mui/material";
+import NonProfitListTileRefined from "../NonProfitListTile/NonProfitListTileRefined";
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
-import {
-  LaunchRounded,
-  EventRounded,
-  TrendingUpRounded,
-  FavoriteRounded,
-  GroupsRounded,
-  CheckCircleRounded,
-  AccessTimeRounded,
-  RocketLaunchRounded
-} from "@mui/icons-material";
+import { RefinedRoot, RefinedFonts, Eyebrow, Stat, Arrow } from "../design/refined";
 
 function NonProfitList() {
-    let { nonprofits } = useNonprofit();    
-    const { profile } = useProfileApi();
-    const { hackathons: upcomingEvents, loading: loadingEvents } = useHackathonEvents("current");
+  const { nonprofits } = useNonprofit();
+  const { profile } = useProfileApi();
+  const { hackathons: upcomingEvents } = useHackathonEvents("current");
 
-    const [searchString, setSearchString] = useState('');
-    const [needs_help_flag, setNeedsHelpFlag] = useState(true);
-    const [production_flag, setProductionFlag] = useState(false);
+  const [searchString, setSearchString] = useState("");
+  const [needsHelp, setNeedsHelp] = useState(true);
+  const [production, setProduction] = useState(false);
 
-    const showNeedsHelp = (event) => {
-        setNeedsHelpFlag(!needs_help_flag);
-    };
-    
-    const showProduction = (event) => {
-        setProductionFlag(!production_flag);
-    };
+  const filtered = useMemo(() => {
+    if (!nonprofits) return null;
+    if (!searchString) return nonprofits;
+    const q = searchString.toLowerCase();
+    return nonprofits.filter(
+      (n) => n.name?.toLowerCase().includes(q) || n.description?.toLowerCase().includes(q)
+    );
+  }, [nonprofits, searchString]);
 
-    const onChangeSearchHandler = (event) => {
-      setSearchString(event.target.value);
-    }
+  const formatEventDate = (s, e) => {
+    const start = Moment(s);
+    const end = Moment(e);
+    if (start.format("YYYY-MM-DD") === end.format("YYYY-MM-DD")) return start.format("dddd, MMMM Do YYYY");
+    return `${start.format("MMM D")} – ${end.format("MMM D, YYYY")}`;
+  };
 
-    const needsHelpButton = () => {
-        if (needs_help_flag) {
-          return (
-            <Chip
-              icon={<BuildIcon />}
-              color="warning"
-              style={{ fontSize: "1.5rem" }}
-              onClick={showNeedsHelp}
-              onDelete={showNeedsHelp}
-              label="Needs Help"
-            />
-          );
-        } else {
-          return (
-            <Chip
-              icon={<BuildIcon />}
-              color="default"
-              variant="outlined"
-              style={{ fontSize: "1.5rem" }}
-              onClick={showNeedsHelp}
-              label="Needs Help"
-            />
-          );
-        }
-    };
-    
+  const nextEvent = upcomingEvents && upcomingEvents.length > 0 ? upcomingEvents[0] : null;
+  const loading = nonprofits == null;
 
-    const productionButton = () => {
-        if (production_flag) {
-            return (
-            <Chip
-                icon={<WorkspacePremiumIcon />}
-                color="success"
-                style={{ fontSize: "1.5rem", marginLeft: "0.5rem" }}
-                onClick={showProduction}
-                onDelete={showProduction}
-                label="Live"
-            />
-            );
-        } else {
-            return (
-            <Chip
-                icon={<WorkspacePremiumIcon />}
-                color="default"
-                variant="outlined"
-                style={{ fontSize: "1.5rem", marginLeft: "0.5rem" }}
-                onClick={showProduction}
-                label="Live"
-            />
-            );
-        }
-    };
+  return (
+    <>
+      <Head>
+        <RefinedFonts />
+      </Head>
+      <RefinedRoot>
+        {/* HERO */}
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(104px, 13vh, 156px)", paddingBottom: "clamp(28px, 5vh, 44px)" }}>
+          <Eyebrow><span className="rise" style={{ display: "inline-block" }}>Nonprofit projects</span></Eyebrow>
+          <h1 className="ohx-display rise" style={{ marginTop: 18, maxWidth: "17ch", animationDelay: "60ms" }}>
+            Real problems that <span className="ohx-italic">need your help.</span>
+          </h1>
+          <p className="ohx-lead rise" style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "60ch" }}>
+            Browse the nonprofits we&apos;ve worked with and the ones looking for help right now. We hope you
+            find something you&apos;ll love to build.
+          </p>
+        </section>
 
-    const nonProfitList = useCallback(() => {
-      let result = nonprofits;
-      
-      if (result == null || result.length === 0) {
-        return (
-            <p>
-            Loading... <Puff stroke="#0000FF" /> <Puff stroke="#0000FF" />
-            </p>
-        );
-      }
-      
-      if (searchString) {
-        result = result.filter(
-          nonprofit =>
-            nonprofit.name.toLowerCase().includes(searchString.toLowerCase()) ||
-            nonprofit.description.toLowerCase().includes(searchString.toLowerCase()) 
-        );
-
-        if (result == null || result.length === 0) {
-          return (
-            <Typography variant="h3" color="var(--dark-aluminium)">
-              No matching Projects found!
-            </Typography>
-          )
-        }
-      }
-        
-      return result.map((npo) => {                                    
-        return (
-          <NonProfitListTile
-            key={npo.id}     
-            npo={npo}            
-            profile={profile}
-            needs_help_flag={needs_help_flag}
-            production_flag={production_flag}         
-            icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/volunteer_activism/default/48px.svg"
-          />
-        );
-        
-      });
-    }, [nonprofits, needs_help_flag, production_flag, searchString, profile]);
-
-    const formatEventDate = (startDate, endDate) => {
-      const start = Moment(startDate);
-      const end = Moment(endDate);
-      
-      if (start.format('YYYY-MM-DD') === end.format('YYYY-MM-DD')) {
-        return start.format('dddd, MMMM Do YYYY');
-      }
-      
-      return `${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`;
-    };
-
-    return(
-        <ContentContainer container>      
-      <InnerContainer container>
-        <h1 className="content__title">Nonprofit Projects</h1>
-        <div className="content__body">
-          <div className="profile__header">
-            <div className="profile__headline">
-              <h3 className="profile__title">
-                Review our catalog of nonprofit problems that need your help
-              </h3>
-              Here you'll find all nonprofits that we've worked with and those
-              that need help, we hope that you find something that you'll love
-              to work on.
+        {/* TWO PATHS */}
+        <section className="ohx-wrap" style={{ paddingBottom: "clamp(24px, 4vh, 40px)" }}>
+          <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+            <div className="ohx-card rise" style={{ padding: "26px" }}>
+              <span className="ohx-tag ohx-tag--accent">Free service</span>
+              <h2 className="ohx-display" style={{ fontSize: "1.3rem", marginTop: 14 }}>Submit your project</h2>
+              <p className="ohx-muted" style={{ margin: "10px 0 18px", fontSize: "0.95rem", lineHeight: 1.55 }}>
+                Have a nonprofit that needs tech help? Get matched with skilled developers who want to create social impact.
+              </p>
+              <Link href="/nonprofits/apply" className="ohx-btn ohx-btn--primary">Apply now — it&apos;s free <Arrow /></Link>
+            </div>
+            <div className="ohx-card rise" style={{ padding: "26px", animationDelay: "80ms" }}>
+              <span className="ohx-tag">Global events</span>
+              <h2 className="ohx-display" style={{ fontSize: "1.3rem", marginTop: 14 }}>Join upcoming hackathons</h2>
+              <p className="ohx-muted" style={{ margin: "10px 0 18px", fontSize: "0.95rem", lineHeight: 1.55 }}>
+                Take part in our hackathons, where your project could be built by passionate developers in just 48 hours.
+              </p>
+              <Link href="/hack" className="ohx-btn ohx-btn--ghost">View hackathons</Link>
             </div>
           </div>
+          <p className="ohx-muted" style={{ marginTop: 18, fontSize: "0.95rem" }}>
+            New here?{" "}
+            <Link href="/coding-for-nonprofits" className="ohx-link">See how the free software process works <Arrow /></Link>
+          </p>
+          {nextEvent && (
+            <div className="ohx-card" style={{ marginTop: 18, padding: "18px 22px", borderLeft: "3px solid var(--accent)", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+              <div>
+                <span className="ohx-eyebrow">Upcoming hackathon</span>
+                <p style={{ margin: "6px 0 0", fontWeight: 500 }}>{nextEvent.title}</p>
+                <p className="ohx-faint" style={{ margin: "2px 0 0", fontSize: "0.85rem" }}>{formatEventDate(nextEvent.start_date, nextEvent.end_date)}{nextEvent.location ? ` · ${nextEvent.location}` : ""}</p>
+              </div>
+              <Link href={`/hack/${nextEvent.event_id}`} className="ohx-btn ohx-btn--primary" style={{ fontSize: "0.9rem", padding: "0.7em 1.1em" }}>Learn more <Arrow /></Link>
+            </div>
+          )}
+        </section>
 
-          {/* Call to Action Section */}
-          <Box sx={{ mb: 4 }}>
-            <Paper
-              elevation={3}
-              sx={{
-                p: 4,
-                mb: 3,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -30,
-                  right: -30,
-                  opacity: 0.1,
-                  transform: 'rotate(15deg)'
-                }}
-              >
-                <RocketLaunchRounded sx={{ fontSize: 150 }} />
-              </Box>
-              
-              <Typography
-                variant="h4"
-                component="h2"
-                gutterBottom
-                sx={{ fontWeight: 'bold', position: 'relative', zIndex: 1 }}
-              >
-                <FavoriteRounded sx={{ mr: 2, verticalAlign: 'bottom' }} />
-                Ready to Make a Difference?
-              </Typography>
-              
-              <Typography
-                variant="h6"
-                sx={{ mb: 3, opacity: 0.9, position: 'relative', zIndex: 1 }}
-              >
-                🚀 Join our mission to empower nonprofits with technology solutions
-              </Typography>
-              
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Card sx={{ bgcolor: 'rgba(255,255,255,0.95)', height: '100%' }}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <LaunchRounded color="primary" sx={{ mr: 2 }} />
-                        <Typography variant="h6" color="text.primary">
-                          Submit Your Project
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Have a nonprofit that needs tech help? Get matched with skilled 
-                        developers who want to create social impact.
-                      </Typography>
-                      <MuiChip
-                        label="Free Service"
-                        color="success"
-                        size="small"
-                        sx={{ mr: 1 }}
-                      />
-                      <MuiChip
-                        label="Ongoing Support"
-                        color="primary"
-                        size="small"
-                        variant="outlined"
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Card sx={{ bgcolor: 'rgba(255,255,255,0.95)', height: '100%' }}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <EventRounded color="secondary" sx={{ mr: 2 }} />
-                        <Typography variant="h6" color="text.primary">
-                          Join Upcoming Hackathons
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Participate in our global hackathons where your project could 
-                        be built by passionate developers in just 48 hours.
-                      </Typography>
-                      <MuiChip
-                        label="Global Events"
-                        color="info"
-                        size="small"
-                        sx={{ mr: 1 }}
-                      />
-                      <MuiChip
-                        label="Fast Results"
-                        color="warning"
-                        size="small"
-                        variant="outlined"
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  sx={{
-                    bgcolor: 'white',
-                    color: 'primary.main',
-                    '&:hover': { bgcolor: 'grey.100' },
-                    fontWeight: 'bold',
-                    px: 4,
-                    py: 1.5
-                  }}
-                  href="/nonprofits/apply"
-                  startIcon={<LaunchRounded />}
-                >
-                  Apply Now - It's Free!
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  sx={{
-                    borderColor: 'white',
-                    color: 'white',
-                    '&:hover': {
-                      borderColor: 'white',
-                      bgcolor: 'rgba(255,255,255,0.1)'
-                    },
-                    px: 4,
-                    py: 1.5
-                  }}
-                  href="/hack"
-                  startIcon={<EventRounded />}
-                >
-                  View Hackathons
-                </Button>
-              </Box>
-            </Paper>
-
-            {/* How the free software process works */}
-            <Alert severity="info" sx={{ mb: 3 }}>
-              <Typography variant="body1">
-                <strong>How does the free software process work?</strong>{" "}
-                Learn how we match nonprofits with volunteer developers, what kinds of projects we build, and what to expect from application to deployed software.{" "}
-                <Button
-                  variant="outlined"
-                  size="small"
-                  color="info"
-                  href="/coding-for-nonprofits"
-                  sx={{ ml: 1, verticalAlign: 'middle' }}
-                >
-                  How it works
-                </Button>
-              </Typography>
-            </Alert>
-
-            {/* Upcoming Events Preview */}
-            {upcomingEvents && upcomingEvents.length > 0 && (
-              <Alert
-                severity="info"
-                sx={{
-                  mb: 3,
-                  '& .MuiAlert-message': { width: '100%' }
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                  <Box>
-                    <Typography variant="h6" gutterBottom>
-                      <AccessTimeRounded sx={{ mr: 1, verticalAlign: 'bottom' }} />
-                      Upcoming Hackathon Alert!
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>{upcomingEvents[0].title}</strong> - {formatEventDate(upcomingEvents[0].start_date, upcomingEvents[0].end_date)}
-                      <br />
-                      📍 {upcomingEvents[0].location} • Perfect timing to submit your project!
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      href={`/hack/${upcomingEvents[0].event_id}`}
-                      sx={{ minWidth: 120 }}
-                    >
-                      Learn More
-                    </Button>
-                  </Box>
-                </Box>
-              </Alert>
-            )}
-
-            {/* Success Stories Call to Action */}
-            <Paper
-              elevation={2}
-              sx={{
-                p: 3,
-                mb: 3,
-                background: 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -20,
-                  right: -20,
-                  opacity: 0.1,
-                  transform: 'rotate(-15deg)'
-                }}
-              >
-                <TrendingUpRounded sx={{ fontSize: 120 }} />
-              </Box>
-              
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', position: 'relative', zIndex: 1 }}>
-                <CheckCircleRounded sx={{ mr: 1, verticalAlign: 'bottom' }} />
-                Proven Impact: Real Success Stories
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 3, opacity: 0.95, position: 'relative', zIndex: 1 }}>
-                See how our platform has transformed nonprofits worldwide with innovative technology solutions. 
-                From AI-powered adoption systems to automated data management - discover the real impact we're making together.
-              </Typography>
-              
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
-                <MuiChip
-                  label="🏆 200+ nonprofits helped"
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                  size="small"
-                />
-                <MuiChip
-                  label="💰 $2M+ in free development"
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                  size="small"
-                />
-                <MuiChip
-                  label="🌍 50+ countries reached"
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                  size="small"
-                />
-              </Box>
-
-              <Button
-                variant="contained"
-                size="large"
-                sx={{
-                  bgcolor: 'white',
-                  color: 'success.main',
-                  '&:hover': { bgcolor: 'grey.100' },
-                  fontWeight: 'bold',
-                  px: 4,
-                  py: 1.5,
-                  position: 'relative',
-                  zIndex: 1
-                }}
-                href="/about/success-stories"
-                startIcon={<TrendingUpRounded />}
-              >
-                View Success Stories
-              </Button>
-            </Paper>
-          </Box>
-        {/* TODO: Move everything above here and return to pages/nonprofits/index.js  once MUI has been set up to render server side. */}
-        <div className="profile__details">
-            {/* TODO: Get search working to make it easier to search all text for what the user is looking for */}
-          <Search>
-              <SearchIconWrapper>
-                  <SearchIcon style={{ fontSize: "1.75rem" }} />
-              </SearchIconWrapper>
-              <StyledInputBase
-                  style={{ fontSize: "1.75rem" }}
-                  placeholder="Search…"
-                  inputProps={{ 'aria-label': 'search' }}
-                  onChange={onChangeSearchHandler}
-                  value={searchString}
-                  autoFocus={true}
-              />
-          </Search>
-                       
-            {needsHelpButton()}
-            &nbsp;
-            {productionButton()}
-            <NonProfitContainer>
-              <NonProfitGrid>{nonProfitList()}</NonProfitGrid>
-            </NonProfitContainer>
+        {/* IMPACT STRIP */}
+        <section style={{ background: "var(--surface-2)", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
+          <div className="ohx-wrap" style={{ paddingTop: "clamp(36px, 5vh, 56px)", paddingBottom: "clamp(36px, 5vh, 56px)", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(28px, 6vw, 72px)" }}>
+              <Stat value="200+" label="Nonprofits helped" />
+              <Stat value="$2M+" label="In free development" />
+              <Stat value="50+" label="Countries reached" />
+            </div>
+            <Link href="/about/success-stories" className="ohx-link">View success stories <Arrow /></Link>
           </div>
-        {/* TODO: Move everything below here and end of function to pages/nonprofits/index.js once MUI has been set up to render server side. */}
-        </div>
-      </InnerContainer>
+        </section>
 
-      <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/204" github_name="Issue #204" />
-    </ContentContainer>
-    );
+        {/* CATALOG */}
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(40px, 6vh, 64px)", paddingBottom: "clamp(56px, 9vh, 104px)" }}>
+          <Eyebrow>Browse</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 22 }}>The project catalog</h2>
+
+          {/* Controls */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginBottom: 26 }}>
+            <input
+              type="search"
+              value={searchString}
+              onChange={(e) => setSearchString(e.target.value)}
+              placeholder="Search nonprofits…"
+              aria-label="Search nonprofits"
+              style={{ flex: "1 1 260px", minWidth: 0, font: "inherit", fontSize: "0.95rem", color: "var(--ink)", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 6, padding: "11px 14px", outline: "none" }}
+            />
+            {[
+              { label: "Needs help", active: needsHelp, toggle: () => setNeedsHelp((v) => !v) },
+              { label: "Live", active: production, toggle: () => setProduction((v) => !v) },
+            ].map((f) => (
+              <button
+                key={f.label}
+                type="button"
+                className="ohx-tag"
+                onClick={f.toggle}
+                style={{ cursor: "pointer", fontFamily: "inherit", background: f.active ? "var(--brand)" : "var(--surface)", color: f.active ? "#fff" : "var(--muted)", borderColor: f.active ? "var(--brand)" : "var(--line)" }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <p className="ohx-faint">Loading nonprofits…</p>
+          ) : filtered && filtered.length > 0 ? (
+            <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+              {filtered.map((npo, i) => (
+                <NonProfitListTileRefined
+                  key={npo.id}
+                  npo={npo}
+                  profile={profile}
+                  needs_help_flag={needsHelp}
+                  production_flag={production}
+                  delay={Math.min(i, 8) * 50}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="ohx-card" style={{ padding: "40px 28px", textAlign: "center" }}>
+              <p className="ohx-muted" style={{ margin: 0 }}>No matching projects found.</p>
+            </div>
+          )}
+        </section>
+
+        <Box sx={{ px: { xs: 2, md: 0 }, pb: 6 }}>
+          <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/204" github_name="Issue #204" />
+        </Box>
+      </RefinedRoot>
+    </>
+  );
 }
 
 export default NonProfitList;

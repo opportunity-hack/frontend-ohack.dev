@@ -57,7 +57,7 @@ const isValidName = (name) => {
   return true;
 };
 
-const LeadForm = () => {
+const LeadForm = ({ bare = false }) => {
   const { executeRecaptcha } = useGoogleReCaptcha();
 
   useEffect(() => { initFacebookPixel(); }, []);
@@ -208,47 +208,56 @@ const LeadForm = () => {
 
   return (
     <Box
-      sx={{
-        my: { xs: 3, md: 4 },
-        mx: "auto",
-        maxWidth: "560px",
-        borderRadius: "1rem",
-        background: "linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f0ff 100%)",
-        border: "1px solid rgba(0, 0, 0, 0.06)",
-        px: { xs: 2.5, sm: 4 },
-        py: { xs: 3, sm: 3.5 },
-        textAlign: "center",
-      }}
+      sx={
+        bare
+          ? { mx: "auto", maxWidth: "560px", textAlign: "center" }
+          : {
+              my: { xs: 3, md: 4 },
+              mx: "auto",
+              maxWidth: "560px",
+              borderRadius: "1rem",
+              background:
+                "linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f0ff 100%)",
+              border: "1px solid rgba(0, 0, 0, 0.06)",
+              px: { xs: 2.5, sm: 4 },
+              py: { xs: 3, sm: 3.5 },
+              textAlign: "center",
+            }
+      }
     >
-      <NotificationsActiveIcon
-        sx={{
-          fontSize: 36,
-          color: "var(--color3)",
-          mb: 1,
-        }}
-      />
-      <Typography
-        variant="h6"
-        sx={{
-          fontWeight: 700,
-          fontSize: { xs: "1.1rem", sm: "1.25rem" },
-          color: "#1a1a2e",
-          mb: 0.5,
-        }}
-      >
-        Stay in the loop
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{
-          color: "#555",
-          mb: 2.5,
-          fontSize: { xs: "0.85rem", sm: "0.9rem" },
-          lineHeight: 1.5,
-        }}
-      >
-        Get notified about upcoming hackathons, new nonprofit projects, and ways to get involved.
-      </Typography>
+      {!bare && (
+        <>
+          <NotificationsActiveIcon
+            sx={{
+              fontSize: 36,
+              color: "var(--color3)",
+              mb: 1,
+            }}
+          />
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              fontSize: { xs: "1.1rem", sm: "1.25rem" },
+              color: "#1a1a2e",
+              mb: 0.5,
+            }}
+          >
+            Stay in the loop
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "#555",
+              mb: 2.5,
+              fontSize: { xs: "0.85rem", sm: "0.9rem" },
+              lineHeight: 1.5,
+            }}
+          >
+            Get notified about upcoming hackathons, new nonprofit projects, and ways to get involved.
+          </Typography>
+        </>
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* Honeypot field - hidden from users but bots will fill it */}
@@ -391,10 +400,10 @@ const LeadForm = () => {
 // Wrap the default export so consumers (homepage, etc.) get the reCAPTCHA
 // context without having to mount the provider sitewide. This keeps the
 // reCAPTCHA v3 script off of pages that don't render LeadForm.
-export default function LeadFormWithRecaptcha() {
+export default function LeadFormWithRecaptcha({ bare = false }) {
   return (
     <ReCaptchaProvider>
-      <LeadForm />
+      <LeadForm bare={bare} />
     </ReCaptchaProvider>
   );
 }

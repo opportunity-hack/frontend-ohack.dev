@@ -12,3 +12,6 @@ test-results/.last-run.json
 test-scroll-behavior.sh
 .claude/
 .env
+
+# Playwright MCP screenshot/console artifacts
+.playwright-mcp/

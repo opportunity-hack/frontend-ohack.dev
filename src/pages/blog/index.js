@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useEffect } from 'react';
 import * as ga from '../../lib/ga';
 import ScrollTracker from '../../components/ScrollTracker';
+import { RefinedFonts } from '../../components/design/refined';
 
 const Blog = dynamic(
     () => import("../../components/Blog/BlogPage"),
@@ -65,6 +66,7 @@ export default function BlogIndexPage({ posts }) {
           <meta property="og:type" content="website" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:site" content="@opportunityhack" />
+          <RefinedFonts />
           <script type="application/ld+json">
             {`
                     {

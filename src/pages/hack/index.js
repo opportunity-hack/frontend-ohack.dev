@@ -9,6 +9,16 @@ import PreviousHackathonList from '../../components/HackathonList/PreviousHackat
 import HackPageNav from '../../components/HackathonList/HackPageNav';
 import Link from 'next/link';
 import { EventAvailable, Code, Group, EmojiEvents, Gavel, CameraAlt, Business, Policy } from '@mui/icons-material';
+import { RefinedFonts } from '../../components/design/refined';
+
+// Refined "civic editorial" tokens used inline here (this page keeps its
+// bespoke finder structure + HackPageNav, so we harmonize palette/type rather
+// than wrap it in <RefinedRoot>). See docs/refined-design-system.md.
+const RX = {
+  ink: '#16181D', brand: '#1B3A6B', accent: '#E2552E', line: '#E7E1D4',
+  surface2: '#F4F1E9', muted: '#5B6270', paper: '#FBFAF6',
+  display: "'Fraunces', Georgia, serif",
+};
 
 const HackathonIndex = () => {
   const style = { fontSize: '15px' };
@@ -34,11 +44,13 @@ const HackathonIndex = () => {
         overflowX: 'hidden',
         width: '100%',
         maxWidth: '100%',
+        backgroundColor: RX.paper,
       }}
     >
     <LayoutContainer key="hackathons" container>
       <HackPageNav />
       <Head>
+        <RefinedFonts />
         <title>
           Opportunity Hack - Global Hackathons Including Phoenix & ASU Events
         </title>
@@ -90,17 +102,31 @@ const HackathonIndex = () => {
         `}</script>
       </Head>
 
-      <TitleContainer container sx={{ pt: { xs: 2, md: 3 }, pb: { xs: 2, md: 2 } }}>
+      <TitleContainer container sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 2, md: 2 } }}>
+        <Typography
+          sx={{
+            fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+            textTransform: 'uppercase', letterSpacing: '0.22em',
+            fontSize: '0.72rem', fontWeight: 600, color: RX.muted, mb: 1.5,
+          }}
+        >
+          Opportunity Hack · global hackathons
+        </Typography>
         <Typography
           variant="h1"
           component="h1"
           sx={{
-            fontSize: { xs: "1.75rem", sm: "2.25rem", md: "2.5rem" },
-            mb: { xs: 1.5, md: 2 },
-            lineHeight: 1.15,
+            fontFamily: RX.display,
+            fontWeight: 500,
+            letterSpacing: '-0.015em',
+            fontSize: { xs: "2.2rem", sm: "3rem", md: "3.6rem" },
+            mb: { xs: 2, md: 2.5 },
+            lineHeight: 1.05,
+            color: RX.ink,
           }}
         >
-          Hackathons for nonprofits
+          Hackathons{' '}
+          <span style={{ fontStyle: 'italic', color: RX.accent }}>for nonprofits.</span>
         </Typography>
 
         <Box
@@ -116,8 +142,8 @@ const HackathonIndex = () => {
         >
           <Button
             variant="contained"
-            color="primary"
-            size="medium"
+            disableElevation
+            size="large"
             href="#upcoming-events"
             startIcon={<EventAvailable />}
             onClick={(e) => {
@@ -125,18 +151,17 @@ const HackathonIndex = () => {
               track('cta_click', 'view_upcoming_events');
               document.getElementById('upcoming-events')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            sx={{ textTransform: 'none', fontWeight: 600 }}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '5px', bgcolor: RX.brand, '&:hover': { bgcolor: '#16315a' } }}
           >
             See upcoming events
           </Button>
           <Button
             variant="outlined"
-            color="primary"
-            size="medium"
+            size="large"
             href="/signup"
             startIcon={<Group />}
             onClick={() => track('cta_click', 'join_community')}
-            sx={{ textTransform: 'none', fontWeight: 600 }}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '5px', color: RX.ink, borderColor: RX.line, '&:hover': { borderColor: RX.ink, bgcolor: 'rgba(0,0,0,0.02)' } }}
           >
             Join the community
           </Button>
@@ -181,7 +206,7 @@ const HackathonIndex = () => {
           variant="h4"
           component="h2"
           gutterBottom
-          sx={{ textAlign: 'center', mb: 1, fontWeight: 700 }}
+          sx={{ textAlign: 'center', mb: 1, fontFamily: RX.display, fontWeight: 500, letterSpacing: '-0.01em', color: RX.ink }}
         >
           About these events
         </Typography>
@@ -263,23 +288,23 @@ const HackathonIndex = () => {
       </Box>
 
       {/* Support Our Mission Section - Appropriate for secondary audience */}
-      <Paper sx={{ p: 3, mt: 5, bgcolor: 'grey.100', color: 'text.primary', textAlign: 'center', borderTop: '3px solid', borderColor: 'primary.main' }}>
-        <Business color="primary" sx={{ fontSize: 40, mb: 1.5 }} />
-        <Typography variant="h5" gutterBottom>
-          Support Our Mission
+      <Paper elevation={0} sx={{ p: { xs: 4, md: 6 }, mt: 5, bgcolor: RX.brand, color: '#fff', textAlign: 'center', borderRadius: 2 }}>
+        <Typography sx={{ fontFamily: RX.display, fontWeight: 500, fontSize: { xs: '1.6rem', md: '2rem' }, mb: 1.5, color: '#fff' }}>
+          Support our mission
         </Typography>
-        <Typography variant="body2" sx={{ mb: 2.5, maxWidth: '600px', mx: 'auto' }}>
-          Help us continue organizing impactful hackathons. Partner with us to support the next generation of social impact technologists.
+        <Typography variant="body1" sx={{ mb: 3, maxWidth: '600px', mx: 'auto', color: 'rgba(255,255,255,0.85)' }}>
+          Help us keep organizing impactful hackathons. Partner with us to support the next generation of social-impact technologists.
         </Typography>
-        <Button 
-          variant="contained" 
-          size="medium"
+        <Button
+          variant="contained"
+          disableElevation
+          size="large"
           component={Link}
           href="/sponsor"
-          sx={{ textTransform: 'none' }}
+          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '5px', bgcolor: '#fff', color: RX.brand, '&:hover': { bgcolor: '#f0ece2' } }}
           onClick={() => track('cta_click', 'become_sponsor')}
         >
-          Become a Sponsor
+          Become a sponsor
         </Button>
       </Paper>
     </LayoutContainer>

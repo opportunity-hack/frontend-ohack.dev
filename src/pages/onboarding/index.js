@@ -5,27 +5,22 @@ import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import Head from 'next/head';
 import { useCookies, CookiesProvider } from 'react-cookie';
 import {
-  Container,
   Typography,
-  Paper,
   Box,
   Stepper,
   Step,
-  StepLabel,
   Button,
   CircularProgress,
   Alert,
-  Chip,
   StepButton,
-  LinearProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { useAuthInfo } from '@propelauth/react';
+import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from '../../components/design/refined';
 
 // Components
 import WelcomeSection from '../../components/Onboarding/WelcomeSection';
@@ -37,22 +32,6 @@ import MentoringOverview from '../../components/Onboarding/MentoringOverview';
 import OnboardingFAQ from '../../components/Onboarding/OnboardingFAQ';
 import FeedbackSection from '../../components/Onboarding/FeedbackSection';
 import JourneyTracker, { JourneyTypes } from '../../components/JourneyTracker';
-
-// Styled components
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  borderRadius: theme.spacing(2),
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-}));
-
-const AnimatedButton = styled(Button)(({ theme }) => ({
-  transition: "transform 0.2s",
-  "&:hover": {
-    transform: "translateY(-2px)",
-  },
-}));
 
 // Define onboarding steps
 const steps = [
@@ -257,188 +236,87 @@ function OnboardingComponent() {
     );
   }
 
+  const stepperSx = {
+    '& .MuiStepLabel-label': { fontFamily: "'Hanken Grotesk', system-ui, sans-serif", fontSize: '0.92rem', fontWeight: 500, mt: 1, color: '#5B6270' },
+    '& .MuiStepLabel-label.Mui-active': { color: '#1B3A6B', fontWeight: 700 },
+    '& .MuiStepLabel-label.Mui-completed': { color: '#16181D' },
+    '& .MuiStepIcon-root': { color: '#E7E1D4', width: 28, height: 28 },
+    '& .MuiStepIcon-root.Mui-active': { color: '#1B3A6B' },
+    '& .MuiStepIcon-root.Mui-completed': { color: '#1B3A6B' },
+    '& .MuiStepIcon-text': { fill: '#fff' },
+    '& .MuiStepConnector-line': { borderColor: '#E7E1D4' },
+  };
+
   return (
-    <Container maxWidth="lg">
+    <>
       <Head>
         <title>Onboarding | Opportunity Hack</title>
         <meta name="description" content="Welcome to Opportunity Hack! Let's get you onboarded and ready to contribute to our mission." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <RefinedFonts />
       </Head>
 
-      {/* JourneyTracker to track the onboarding progress */}
-      <JourneyTracker 
+      <JourneyTracker
         journey={OnboardingJourney.name}
         step={Object.values(OnboardingJourney.steps)[activeStep]}
         metadata={{ step_number: activeStep + 1, total_steps: steps.length }}
       />
 
-      {/* Onboarding content */}
-      <Box sx={{ pt: { xs: '80px', sm: '100px' }, pb: 4 }}>
-        <Typography variant="h2" align="center" gutterBottom>
-          Member Onboarding
-        </Typography>
+      <RefinedRoot>
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(100px, 12vh, 148px)", paddingBottom: "clamp(48px, 8vh, 96px)" }}>
+          <div style={{ textAlign: "center", marginBottom: 8 }}>
+            <Eyebrow>Welcome aboard</Eyebrow>
+            <h1 className="ohx-display" style={{ marginTop: 8 }}>
+              Member <span className="ohx-italic">onboarding</span>
+            </h1>
+            <p className="ohx-faint" style={{ marginTop: 12, fontSize: "0.9rem" }}>
+              Step {activeStep + 1} of {steps.length} · {completionPercentage}% complete
+            </p>
+          </div>
 
-
-        <StyledPaper>
           {/* Stepper */}
-          <Stepper
-            activeStep={activeStep}
-            alternativeLabel
-            sx={{
-              '& .MuiStepLabel-label': {
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                mt: 1,
-              },
-              '& .MuiStepIcon-root': {
-                width: 30,
-                height: 30,
-                fontSize: '2rem',
-              },
-              '& .MuiSvgIcon-root': {
-                width: 30,
-                height: 30,
-                fontSize: '2rem',
-              },
-              '& .MuiStepConnector-line': {
-                minHeight: 4,
-              },
-              '& .MuiStepLabel-root.Mui-active .MuiStepLabel-label': {
-                color: 'primary.main',
-                fontWeight: 800,
-                fontSize: '1.35rem',
-                textShadow: '0 2px 8px rgba(25, 118, 210, 0.18)',
-                background: 'rgba(25, 118, 210, 0.10)',
-                borderRadius: 8,
-                px: 2,
-                py: 0.5,
-                boxShadow: '0 2px 12px 0 rgba(25, 118, 210, 0.10)',
-                transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-                display: 'inline-block',
-                animation: 'blink 2s infinite',
-              },
-              '& .MuiStepIcon-root.Mui-active': {
-                color: 'primary.main',
-                boxShadow: '0 0 0 6px rgba(25, 118, 210, 0.18)',
-                borderRadius: '50%',
-                background: 'white',
-                transition: 'box-shadow 0.2s, background 0.2s',
-              },
-            }}
-          >
-            {steps.map((label, index) => {
-              const stepProps = {};
-              const labelProps = {
-                sx: {
-                  '& .MuiStepLabel-label': {
-                    fontSize: '1.2rem'
-                  }
-                }
-              };
-
-              // Determine if the step is being completed (visited but not finished and not current)
-              const isBeingCompleted = index <= highestStepReached && !completed[index] && index !== activeStep;
-
-              return (
-                <Step key={label} {...stepProps} completed={completed[index]}>
-                  <StepButton
-                    onClick={() => setActiveStep(index)}
-                    disabled={index > highestStepReached}
-                    sx={{
-                      // Apply highlight if the step is being completed
-                      ...(isBeingCompleted && {
-                        // Only style the icon for visited but uncompleted steps
-                        '& .MuiStepIcon-root': {
-                          color: 'primary.main', // Just keep the blue circle
-                        },
-                        // Remove the background and other highlight styles
-                        '& .MuiStepLabel-label': {
-                          color: 'inherit', // Use default text color
-                          fontWeight: 'normal', // Use normal font weight
-                          background: 'none',
-                          boxShadow: 'none',
-                          px: 0,
-                          py: 0,
-                        }
-                      }),
-                      // Add styles for the currently active step
-                      ...(index === activeStep && {
-                        '& .MuiStepLabel-label': {
-                          color: 'primary.main',
-                          fontWeight: 800,
-                          background: 'rgba(25, 118, 210, 0.10)',
-                          borderRadius: 8,
-                          px: 2,
-                          py: 0.5,
-                          boxShadow: '0 2px 12px 0 rgba(25, 118, 210, 0.10)',
-                          display: 'inline-block',
-                        },
-                        '& .MuiStepIcon-root': {
-                          color: 'primary.main',
-                          boxShadow: '0 0 0 6px rgba(25, 118, 210, 0.18)',
-                          borderRadius: '50%',
-                          background: 'white',
-                        }
-                      }),
-                      // Keep existing styles for completed states as defined in the Stepper sx prop
-                    }}
-                  >{label}</StepButton>
+          <Box className="ohx-card" sx={{ p: { xs: 2, sm: 3 }, mt: 3 }}>
+            <Stepper activeStep={activeStep} alternativeLabel sx={stepperSx}>
+              {steps.map((label, index) => (
+                <Step key={label} completed={completed[index]}>
+                  <StepButton onClick={() => setActiveStep(index)} disabled={index > highestStepReached}>
+                    {label}
+                  </StepButton>
                 </Step>
-              );
-            })}
-          </Stepper>
-        </StyledPaper>
-
-        {/* Step Content */}
-        <Box sx={{ mt: 4, mb: 4 }}>
-          {getStepContent(activeStep)}
-        </Box>
-
-        {/* Error message if any */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Navigation buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-          <Button
-            variant="outlined"
-            disabled={activeStep === 0}
-            onClick={handleBack}
-            size="large"
-            sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
-          >
-            Back
-          </Button>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {activeStep === steps.length - 1 ? (
-              <AnimatedButton
-                variant="contained"
-                color="primary"
-                onClick={handleComplete}
-                disabled={loading}
-                size="large"
-                sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
-              >
-                Complete Onboarding
-                {loading && <CircularProgress size={24} sx={{ ml: 1 }} />}
-              </AnimatedButton>
-            ) : (
-              <AnimatedButton
-                variant="contained"
-                color="primary"
-                onClick={handleNext}
-                size="large"
-                sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
-              >
-                Next
-              </AnimatedButton>
-            )}
+              ))}
+            </Stepper>
           </Box>
-        </Box>
-      </Box>
+
+          {/* Step content */}
+          <Box className="ohx-card" sx={{ mt: 3, p: { xs: 2, sm: 3, md: 4 } }}>
+            {getStepContent(activeStep)}
+          </Box>
+
+          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+
+          {/* Navigation */}
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24, gap: 12 }}>
+            <button
+              type="button"
+              className="ohx-btn ohx-btn--ghost"
+              disabled={activeStep === 0}
+              onClick={handleBack}
+              style={{ opacity: activeStep === 0 ? 0.45 : 1, cursor: activeStep === 0 ? "not-allowed" : "pointer" }}
+            >
+              Back
+            </button>
+            {activeStep === steps.length - 1 ? (
+              <button type="button" className="ohx-btn ohx-btn--primary" onClick={handleComplete} disabled={loading}>
+                Complete onboarding {loading ? <CircularProgress size={18} sx={{ color: "#fff", ml: 0.5 }} /> : <Arrow />}
+              </button>
+            ) : (
+              <button type="button" className="ohx-btn ohx-btn--primary" onClick={handleNext}>
+                Next <Arrow />
+              </button>
+            )}
+          </div>
+        </section>
+      </RefinedRoot>
 
       {/* Congratulatory Dialog */}
       <Dialog
@@ -446,29 +324,37 @@ function OnboardingComponent() {
         onClose={() => router.push('/')}
         aria-labelledby="congratulations-dialog-title"
         aria-describedby="congratulations-dialog-description"
+        slotProps={{ paper: { sx: { borderRadius: 3, p: 1, maxWidth: 460 } } }}
       >
         <DialogTitle id="congratulations-dialog-title">
-          <Typography variant="h4" component="span" color="primary" fontWeight="bold" sx={{ fontSize: '2.5rem' }}>Congratulations!</Typography>
+          <span style={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, fontSize: "2rem", color: "#1B3A6B" }}>Welcome to the community!</span>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText id="congratulations-dialog-description" sx={{ fontSize: '1.3rem' }}>
-            You have successfully completed the Opportunity Hack member onboarding process!
-            Welcome to the community! You're all set to start contributing.
+          <DialogContentText id="congratulations-dialog-description" sx={{ fontSize: '1.05rem' }}>
+            You&apos;ve completed the Opportunity Hack member onboarding — you&apos;re all set to start contributing.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-          <Button 
+          <Button
             onClick={() => router.push('/')}
-            variant="contained"
-            color="primary"
             autoFocus
-            sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}
+            sx={{
+              backgroundColor: '#1B3A6B',
+              color: '#fff',
+              fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '5px',
+              px: 2.5,
+              py: 1.1,
+              '&:hover': { backgroundColor: '#16315a' },
+            }}
           >
-            Go to Home Page
+            Go to home →
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </>
   );
 }
 

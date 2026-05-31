@@ -1,16 +1,8 @@
 import dynamic from "next/dynamic";
+import Head from "next/head";
 import Link from "next/link";
-import {
-    Container,
-    Box,
-    Typography,
-    Paper,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    Button,
-} from "@mui/material";
-import { ExpandMoreRounded, GavelRounded, GroupsRounded } from "@mui/icons-material";
+import { Box } from "@mui/material";
+import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from "../../../components/design/refined";
 
 const Mentorship = dynamic(
     () => import("../../../components/About/Mentorship/Mentorship"),
@@ -32,6 +24,18 @@ const MentorTeamPanelDemo = dynamic(
         ssr: false,
     }
 );
+
+function Disclosure({ summary, children }) {
+    return (
+        <details className="ohx-card" style={{ padding: 0, marginBottom: 12, overflow: "hidden" }}>
+            <summary style={{ listStyle: "none", cursor: "pointer", padding: "18px 22px", fontFamily: "var(--display)", fontSize: "1.05rem", fontWeight: 500, color: "var(--ink)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                {summary}
+                <span className="ohx-faint" style={{ fontSize: "1.4rem", lineHeight: 1, fontFamily: "var(--body)" }}>+</span>
+            </summary>
+            <div style={{ padding: "0 22px 22px" }}>{children}</div>
+        </details>
+    );
+}
 
 // Visible FAQ content — the FAQPage JSON-LD in getStaticProps mirrors this
 // array exactly. Visible UI ↔ schema parity is required for FAQ rich results.
@@ -86,160 +90,68 @@ const FAQ_DATA = [
 export default function Mentors() {
     return (
         <>
-            <Mentorship />
+            <Head>
+                <RefinedFonts />
+            </Head>
+            <RefinedRoot>
+                <Mentorship />
 
-            {/* Your impact, tracked — embedded personal checklist + per-team panel demo */}
-            <Container maxWidth="lg">
-                <Box sx={{ padding: "2rem", mb: 5 }}>
-                    <Typography
-                        variant="overline"
-                        sx={{ color: "primary.main", fontWeight: 700 }}
-                    >
-                        Your impact, tracked
-                    </Typography>
-                    <Typography variant="h2" component="h2" gutterBottom>
-                        A standard process we've built over the years
-                    </Typography>
-                    <Typography
-                        variant="body1"
-                        sx={{
-                            mb: 4,
-                            maxWidth: "780px",
-                            fontSize: "18px",
-                            color: "text.secondary",
-                        }}
-                    >
-                        Mentoring at Opportunity Hack isn't ad-hoc. We give every mentor a
-                        personal preparation checklist <em>and</em> a per-team support panel
-                        that other mentors can see live — so coverage is even, nothing falls
-                        through the cracks, and your contributions are credited publicly to
-                        your name.
-                    </Typography>
+                {/* YOUR IMPACT, TRACKED */}
+                <section style={{ background: "var(--surface-2)", borderTop: "1px solid var(--line)" }}>
+                    <div className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(48px, 7vh, 80px)" }}>
+                        <Eyebrow>Your impact, tracked</Eyebrow>
+                        <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 12 }}>A process we&apos;ve built over the years</h2>
+                        <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 36, maxWidth: "72ch", lineHeight: 1.6 }}>
+                            Mentoring at Opportunity Hack isn&apos;t ad-hoc. Every mentor gets a personal preparation
+                            checklist <em>and</em> a per-team support panel other mentors can see live — so coverage is
+                            even, nothing falls through the cracks, and your contributions are credited publicly to your name.
+                        </p>
 
-                    <Typography variant="h4" component="h3" sx={{ mt: 4, mb: 2 }}>
-                        1. Your personal mentor checklist
-                    </Typography>
-                    <Typography
-                        variant="body1"
-                        sx={{ mb: 3, fontSize: "16px", color: "text.secondary" }}
-                    >
-                        Use this before, during, and after the event to stay on track. The
-                        current phase highlights automatically based on the upcoming event's
-                        schedule.
-                    </Typography>
-                    <Box sx={{ mb: 5 }}>
-                        <MentorChecklist />
-                    </Box>
+                        <h3 className="ohx-display" style={{ fontSize: "1.3rem", marginBottom: 8 }}>1. Your personal mentor checklist</h3>
+                        <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 20, maxWidth: "70ch", fontSize: "0.96rem" }}>
+                            Use this before, during, and after the event to stay on track. The current phase highlights
+                            automatically based on the upcoming event&apos;s schedule.
+                        </p>
+                        <Box sx={{ mb: 6 }}><MentorChecklist /></Box>
 
-                    <Typography variant="h4" component="h3" sx={{ mt: 4, mb: 2 }}>
-                        2. What you'll see on every team's page during the event
-                    </Typography>
-                    <Typography
-                        variant="body1"
-                        sx={{ mb: 3, fontSize: "16px", color: "text.secondary" }}
-                    >
-                        On <code>/hack/&lt;event&gt;/team/&lt;team_id&gt;</code>, every mentor sees a
-                        shared support panel: open concerns owned by a specific mentor so others
-                        don't duplicate effort, a 6-item coverage checklist with attribution, a
-                        4-criterion judging-readiness rubric (worst rating wins, so you coach
-                        the weakest area first), and a public notes feed. Below is a live
-                        preview using sample data.
-                    </Typography>
-                    <Box sx={{ mb: 5 }}>
-                        <MentorTeamPanelDemo />
-                    </Box>
+                        <h3 className="ohx-display" style={{ fontSize: "1.3rem", marginBottom: 8 }}>2. What you&apos;ll see on every team&apos;s page</h3>
+                        <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 20, maxWidth: "70ch", fontSize: "0.96rem" }}>
+                            On <code>/hack/&lt;event&gt;/team/&lt;team_id&gt;</code>, every mentor sees a shared support panel:
+                            open concerns owned by a specific mentor so others don&apos;t duplicate effort, a 6-item coverage
+                            checklist with attribution, a 4-criterion judging-readiness rubric (worst rating wins, so you
+                            coach the weakest area first), and a public notes feed. Live preview below.
+                        </p>
+                        <Box><MentorTeamPanelDemo /></Box>
+                    </div>
+                </section>
 
-                    <Typography variant="h2" component="h2" gutterBottom sx={{ mt: 6 }}>
-                        Frequently Asked Questions for Hackathon Mentors
-                    </Typography>
-                    <Typography
-                        variant="body1"
-                        sx={{
-                            mb: 4,
-                            maxWidth: "700px",
-                            fontSize: "18px",
-                            color: "text.secondary",
-                        }}
-                    >
-                        Common questions from technology professionals considering a
-                        mentor role at Opportunity Hack.
-                    </Typography>
+                {/* FAQ */}
+                <section className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(40px, 6vh, 64px)" }}>
+                    <Eyebrow>FAQ for hackathon mentors</Eyebrow>
+                    <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 28 }}>Questions, answered</h2>
+                    <div style={{ maxWidth: 820 }}>
+                        {FAQ_DATA.map((item, idx) => (
+                            <Disclosure key={idx} summary={item.question}>
+                                <p className="ohx-muted" style={{ margin: 0, fontSize: "0.96rem", lineHeight: 1.7 }}>{item.answer}</p>
+                            </Disclosure>
+                        ))}
+                    </div>
+                </section>
 
-                    {FAQ_DATA.map((item, idx) => (
-                        <Accordion key={idx} sx={{ mb: 1 }}>
-                            <AccordionSummary expandIcon={<ExpandMoreRounded />}>
-                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                    {item.question}
-                                </Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Typography
-                                    variant="body1"
-                                    sx={{ fontSize: "16px", lineHeight: 1.7 }}
-                                >
-                                    {item.answer}
-                                </Typography>
-                            </AccordionDetails>
-                        </Accordion>
-                    ))}
-
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            mt: 5,
-                            p: 4,
-                            textAlign: "center",
-                            bgcolor: "grey.50",
-                            borderRadius: 2,
-                        }}
-                    >
-                        <Typography variant="h5" component="h3" gutterBottom>
-                            Ready to Mentor?
-                        </Typography>
-                        <Typography
-                            variant="body1"
-                            sx={{
-                                mb: 3,
-                                maxWidth: "600px",
-                                mx: "auto",
-                                color: "text.secondary",
-                            }}
-                        >
-                            Apply through any active event above, or browse adjacent
-                            ways to volunteer your senior expertise.
-                        </Typography>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                gap: 2,
-                                justifyContent: "center",
-                                flexWrap: "wrap",
-                            }}
-                        >
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                size="large"
-                                component={Link}
-                                href="/hack"
-                                startIcon={<GroupsRounded />}
-                            >
-                                See Upcoming Hackathons
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                size="large"
-                                component={Link}
-                                href="/hackathon-judge-opportunities"
-                                startIcon={<GavelRounded />}
-                            >
-                                Apply to Judge Instead
-                            </Button>
-                        </Box>
-                    </Paper>
-                </Box>
-            </Container>
+                {/* CTA */}
+                <section className="ohx-wrap" style={{ paddingBottom: "clamp(56px, 9vh, 104px)" }}>
+                    <div className="ohx-card" style={{ padding: "clamp(32px, 5vw, 56px)", textAlign: "center", background: "var(--surface-2)" }}>
+                        <h2 className="ohx-display" style={{ marginBottom: 12 }}>Ready to mentor?</h2>
+                        <p className="ohx-muted" style={{ margin: "0 auto 28px", maxWidth: "54ch" }}>
+                            Apply through any active event above, or browse adjacent ways to volunteer your senior expertise.
+                        </p>
+                        <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+                            <Link href="/hack" className="ohx-btn ohx-btn--primary">See upcoming hackathons <Arrow /></Link>
+                            <Link href="/hackathon-judge-opportunities" className="ohx-btn ohx-btn--ghost">Apply to judge instead</Link>
+                        </div>
+                    </div>
+                </section>
+            </RefinedRoot>
         </>
     );
 }
