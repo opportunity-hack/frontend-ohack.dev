@@ -32,6 +32,7 @@ import {
 import { format, getYear } from 'date-fns';
 import Link from 'next/link';
 import { parseLocalDate, isValidDate } from '../../lib/dateUtils';
+import { stripMarkdown } from '../../lib/textUtils';
 import { useAuthInfo } from '@propelauth/react';
 import ImpactMetrics from '../ImpactMetrics';
 
@@ -59,6 +60,11 @@ function EventFeature(props) {
   
   // TODO: Is the schema on the backend wrong? Or is the schema here wrong?
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
+
+  // Descriptions may contain Markdown. These cards are clamped teasers wrapped
+  // in a single navigation <a>, so strip to clean plain text rather than render
+  // Markdown (which would nest anchors and break the line-clamp).
+  const descriptionText = stripMarkdown(description);
   
   
 
@@ -108,7 +114,7 @@ function EventFeature(props) {
                 lineHeight: 1.4
               }}
             >
-              {description}
+              {descriptionText}
             </Typography>
             
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -144,7 +150,7 @@ function EventFeature(props) {
         <div style={{ cursor: 'pointer', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
           <div style={{ marginBottom: '12px' }}>
             <EventLink variant="h3">{title}</EventLink>
-            <EventText variant="h3">{description}</EventText>
+            <EventText variant="h3">{descriptionText}</EventText>
           </div>
           
           <div style={{ marginBottom: '16px' }}>
