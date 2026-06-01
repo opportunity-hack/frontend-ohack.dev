@@ -32,7 +32,10 @@ import { formatDualTimezone, getEventTimezone, DEFAULT_EVENT_TIMEZONE } from '..
 const TimelineContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
   marginBottom: theme.spacing(3),
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: '#FFFFFF',
+  border: '1px solid var(--line, #E7E1D4)',
+  boxShadow: 'none',
+  borderRadius: 10,
   overflow: 'hidden',
   [theme.breakpoints.up('md')]: {
     padding: theme.spacing(3),
@@ -40,9 +43,11 @@ const TimelineContainer = styled(Paper)(({ theme }) => ({
 }));
 
 const CountdownCard = styled(Card)(({ theme }) => ({
-  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-  color: theme.palette.primary.contrastText,
+  background: 'linear-gradient(135deg, #1B3A6B 0%, #16315a 100%)',
+  color: '#fff',
   marginBottom: theme.spacing(3),
+  borderRadius: 10,
+  boxShadow: 'none',
   overflow: 'visible',
 }));
 
@@ -111,15 +116,16 @@ const EventCard = styled(Card)(({ theme, past, current }) => ({
   marginLeft: theme.spacing(2),
   transition: 'all 0.3s ease',
   cursor: 'pointer',
-  border: current ? `2px solid ${theme.palette.primary.main}` : '1px solid transparent',
-  backgroundColor: past 
-    ? theme.palette.grey[50] 
-    : current 
-      ? theme.palette.primary.light + '10'
-      : theme.palette.background.paper,
+  border: current ? '2px solid #1B3A6B' : '1px solid var(--line, #E7E1D4)',
+  boxShadow: 'none',
+  backgroundColor: past
+    ? '#F4F1E9'
+    : current
+      ? 'rgba(226,85,46,0.06)'
+      : '#FFFFFF',
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
+    boxShadow: '0 14px 30px -22px rgba(22,24,29,0.5)',
   },
   [theme.breakpoints.up('md')]: {
     marginLeft: theme.spacing(3),
@@ -133,12 +139,12 @@ const EventDot = styled(Box)(({ theme, past, current }) => ({
   width: past ? '12px' : current ? '16px' : '12px',
   height: past ? '12px' : current ? '16px' : '12px',
   borderRadius: '50%',
-  backgroundColor: past 
-    ? theme.palette.success.main 
-    : current 
-      ? theme.palette.primary.main 
-      : theme.palette.grey[400],
-  border: `3px solid ${theme.palette.background.default}`,
+  backgroundColor: past
+    ? '#1B3A6B'
+    : current
+      ? '#E2552E'
+      : '#C8C2B4',
+  border: '3px solid #FFFFFF',
   zIndex: 2,
   display: 'flex',
   alignItems: 'center',
@@ -250,7 +256,7 @@ const EventCountdown = ({ countdowns, eventId, eventTimezone }) => {
               <Typography variant="h6" gutterBottom sx={{ opacity: 0.9 }}>
                 Next Event
               </Typography>
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
+              <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500 }}>
                 {nextEvent.name}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
@@ -398,7 +404,7 @@ const EventCountdown = ({ countdowns, eventId, eventTimezone }) => {
     <TimelineContainer elevation={2}>
       <Box mb={3}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-          <Typography variant="h5" gutterBottom fontWeight="bold">
+          <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500 }}>
             Event Timeline
           </Typography>
           <Tooltip title="View Full Agenda" arrow>
@@ -415,10 +421,12 @@ const EventCountdown = ({ countdowns, eventId, eventTimezone }) => {
                 borderRadius: 2,
                 textTransform: 'none',
                 fontSize: '0.8rem',
+                color: '#1B3A6B',
+                borderColor: 'var(--line, #E7E1D4)',
                 '&:hover': {
-                  backgroundColor: theme.palette.primary.main,
-                  color: theme.palette.primary.contrastText,
-                  borderColor: theme.palette.primary.main,
+                  backgroundColor: '#1B3A6B',
+                  color: '#fff',
+                  borderColor: '#1B3A6B',
                 }
               }}
             >
@@ -426,10 +434,10 @@ const EventCountdown = ({ countdowns, eventId, eventTimezone }) => {
             </Button>
           </Tooltip>
         </Box>
-        <LinearProgress 
-          variant="determinate" 
-          value={progress} 
-          sx={{ height: 6, borderRadius: 3 }}
+        <LinearProgress
+          variant="determinate"
+          value={progress}
+          sx={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(27,58,107,0.12)', '& .MuiLinearProgress-bar': { backgroundColor: '#1B3A6B' } }}
         />
         <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
           Event Progress: {Math.round(progress)}%

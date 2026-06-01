@@ -175,10 +175,15 @@ function HackathonList({ compact = false }) {
       direction="column"
       textAlign="center"
     >
-      <SectionTitle variant="h2" component="h2" id="upcoming-events-heading">Upcoming and Current Events</SectionTitle>
-      
-      <Typography variant="body1" color="textSecondary" sx={{ mb: 3, maxWidth: '800px' }}>
-        Join our upcoming hackathons and make a difference! Work with nonprofits to solve real-world challenges using technology.
+      <Typography component="p" sx={{ fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: '0.72rem', fontWeight: 600, color: '#5B6270', mb: 1 }}>
+        What&apos;s next
+      </Typography>
+      <SectionTitle variant="h2" component="h2" id="upcoming-events-heading" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, letterSpacing: '-0.015em', color: '#16181D' }}>
+        Upcoming &amp; current events
+      </SectionTitle>
+
+      <Typography variant="body1" sx={{ mb: 3, maxWidth: '720px', color: '#5B6270' }}>
+        Join an upcoming hackathon and make a difference — work with nonprofits to solve real-world challenges with technology.
       </Typography>
 
       <EmptyGrid>

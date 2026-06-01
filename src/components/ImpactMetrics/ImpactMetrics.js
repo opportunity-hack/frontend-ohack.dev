@@ -266,10 +266,14 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
   }
 
   const MetricCard = ({ title, value, icon, description, isLoading, color = "primary", requiresAuth = false }) => (
-    <Card sx={{ 
-      height: '100%', 
-      transition: 'transform 0.2s', 
-      '&:hover': { transform: 'translateY(-2px)' },
+    <Card elevation={0} sx={{
+      height: '100%',
+      transition: 'transform 0.2s, box-shadow 0.2s',
+      backgroundColor: 'var(--surface-2, #F4F1E9)',
+      border: '1px solid var(--line, #E7E1D4)',
+      boxShadow: 'none',
+      borderRadius: '10px',
+      '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 12px 26px -22px rgba(22,24,29,0.5)' },
       minHeight: compact ? 50 : 120,
       opacity: requiresAuth ? 0.7 : 1
     }}>
@@ -293,9 +297,11 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
             {compact ? 'Login req.' : 'Login required'}
           </Typography>
         ) : (
-          <Typography variant={compact ? "body2" : "h6"} color={`${color}.main`} sx={{ 
-            fontWeight: 'bold', 
-            fontSize: compact ? '0.9rem' : '1.25rem' 
+          <Typography variant={compact ? "body2" : "h6"} sx={{
+            fontFamily: "'Fraunces', Georgia, serif",
+            fontWeight: 500,
+            color: 'var(--brand, #1B3A6B)',
+            fontSize: compact ? '1rem' : '1.45rem'
           }}>
             {value.toLocaleString()}
           </Typography>
@@ -312,8 +318,8 @@ const ImpactMetrics = ({ event_id, eventData, compact = false, minimal = false }
   return (
     <Box sx={{ mt: compact ? 1 : 3, mb: compact ? 0.5 : 2 }}>
       {!compact && (
-        <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'text.primary' }}>
-          🌟 Impact at a Glance
+        <Typography component="p" sx={{ mb: 2, textAlign: 'center', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: 'uppercase', letterSpacing: '0.18em', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted, #5B6270)' }}>
+          Impact at a glance
         </Typography>
       )}
 

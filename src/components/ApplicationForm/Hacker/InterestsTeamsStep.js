@@ -388,30 +388,32 @@ const TeamBrowser = ({
       Find your team
     </Typography>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-      Pick the team you're on from the list below. If your team isn't created
-      yet, type the agreed team name in the field — make sure your teammates
-      use the same name so we can match you up.
+      These are the team codes other registered hackers have already entered for
+      this event. Pick yours from the list to join them. If you're the first on
+      your team, type a new team code below and share it with your teammates so
+      they can pick it here.
     </Typography>
     <TextField
-      label="Search teams"
+      label="Search team codes"
       fullWidth
       size="small"
       value={teamSearch}
       onChange={(e) => setTeamSearch(e.target.value)}
-      placeholder="Filter by team name…"
+      placeholder="Filter by team code…"
       sx={{ mb: 2 }}
       disabled={teamsLoading}
     />
     {teamsLoading && (
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Loading teams…
+        Loading team codes…
       </Typography>
     )}
     {!teamsLoading && eventTeams.length === 0 && (
       <Alert severity="info" sx={{ mb: 2 }}>
         <Typography variant="body2">
-          No teams have been created for this event yet — you'll be among the
-          first. Type your agreed team name below.
+          No team codes have been registered for this event yet — you'll be
+          among the first. Type your team code below and share it with your
+          teammates.
         </Typography>
       </Alert>
     )}
@@ -428,7 +430,7 @@ const TeamBrowser = ({
         {eventTeams
           .filter((t) =>
             teamSearch
-              ? (t.name || "")
+              ? (t.code || "")
                   .toLowerCase()
                   .includes(teamSearch.toLowerCase())
               : true,
@@ -436,15 +438,15 @@ const TeamBrowser = ({
           .map((t) => {
             const selected =
               (formData.teamCode || "").trim().toLowerCase() ===
-              (t.name || "").trim().toLowerCase();
-            const memberCount = Array.isArray(t.users) ? t.users.length : 0;
+              (t.code || "").trim().toLowerCase();
+            const count = t.count || 0;
             return (
               <Box
-                key={t.id || t.name}
+                key={t.code}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
-                    teamCode: t.name || "",
+                    teamCode: t.code || "",
                   }))
                 }
                 sx={{
@@ -456,10 +458,10 @@ const TeamBrowser = ({
                 }}
               >
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {t.name || "(unnamed team)"}
+                  {t.code}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {memberCount} member{memberCount === 1 ? "" : "s"}
+                  {count} hacker{count === 1 ? "" : "s"} registered
                 </Typography>
               </Box>
             );
@@ -467,13 +469,13 @@ const TeamBrowser = ({
       </Box>
     )}
     <TextField
-      label="Team Name"
+      label="Team Code"
       name="teamCode"
       required
       fullWidth
       value={formData.teamCode || ""}
       onChange={handleChange}
-      helperText="Pick a team above to fill this in, or type your agreed team name. Your teammates must enter the exact same name."
+      helperText="Pick a code above to join an existing team, or type a new code and share it with your teammates so they enter the exact same one."
     />
   </Box>
 );

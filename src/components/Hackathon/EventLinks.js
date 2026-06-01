@@ -17,7 +17,10 @@ import useParticipantCounts from '../../hooks/use-participant-counts';
 const LinksContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: "#FFFFFF",
+  border: "1px solid var(--line, #E7E1D4)",
+  boxShadow: "none",
+  borderRadius: 10,
   display: "flex",
   flexDirection: "column",
   height: "100%",
@@ -26,9 +29,9 @@ const LinksContainer = styled(Paper)(({ theme }) => ({
   overflowY: "auto",
 }));
 
-const LinkButton = styled(Button)(({ theme, customcolor }) => ({
-  margin: theme.spacing(1, 0),
-  padding: theme.spacing(1, 2),
+const LinkButton = styled(Button)(({ theme }) => ({
+  margin: theme.spacing(0.75, 0),
+  padding: theme.spacing(1.1, 1.75),
   minWidth: "auto",
   maxWidth: "100%",
   whiteSpace: "normal",
@@ -36,24 +39,43 @@ const LinkButton = styled(Button)(({ theme, customcolor }) => ({
   textAlign: "left",
   justifyContent: "flex-start",
   textTransform: "none",
-  lineHeight: 1.2,
-  fontSize: "1rem",
-  "& .MuiButton-startIcon": {
-    marginRight: theme.spacing(1),
+  lineHeight: 1.3,
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  borderRadius: 8,
+  border: "1px solid var(--line, #E7E1D4)",
+  color: "var(--brand, #1B3A6B)",
+  backgroundColor: "var(--surface, #FFFFFF)",
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: "rgba(27,58,107,0.05)",
+    borderColor: "var(--brand, #1B3A6B)",
+    boxShadow: "none",
   },
+  "& .MuiButton-startIcon": { marginRight: theme.spacing(1), color: "var(--accent, #E2552E)" },
 }));
 
+// Calm uniform application card (replaces the 6 rainbow-colored contained buttons).
 const ApplicationButton = styled(Button)(({ theme }) => ({
-  padding: theme.spacing(1.5, 2),
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[2],
-  transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+  padding: theme.spacing(2),
+  borderRadius: 10,
+  border: "1px solid var(--line, #E7E1D4)",
+  backgroundColor: "var(--surface, #FFFFFF)",
+  color: "var(--ink, #16181D)",
+  textTransform: "none",
+  boxShadow: "none",
+  transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
   "&:hover": {
+    backgroundColor: "var(--surface, #FFFFFF)",
     transform: "translateY(-2px)",
-    boxShadow: theme.shadows[4],
+    boxShadow: "0 14px 30px -24px rgba(22,24,29,0.45)",
+    borderColor: "#d8d1c0",
   },
   "& .MuiButton-startIcon": {
     marginRight: theme.spacing(1.5),
+    color: "var(--accent, #E2552E)",
+    alignSelf: "flex-start",
+    marginTop: 2,
   },
 }));
 
@@ -197,62 +219,30 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
     return (
       <LinksContainer elevation={2} id="applications">
         <Box>
-          <Typography variant="h5" gutterBottom fontWeight="bold">
-            Step 1. Apply to Participate
+          <Typography sx={{ fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted, #5B6270)' }}>
+            Step 1
           </Typography>
-          <Typography variant="body2" color="textSecondary" paragraph>
-            Join the community! Select the role that best matches how you'd like to contribute to this hackathon.
+          <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)', mt: 0.5 }}>
+            Apply to participate
+          </Typography>
+          <Typography variant="body2" paragraph sx={{ color: 'var(--muted, #5B6270)' }}>
+            Join the community! Pick the role that best matches how you&apos;d like to contribute.
           </Typography>
 
           {/* Overall Social Proof Summary */}
           {!countsLoading && Object.values(counts).some(c => c.accepted > 0) && (
-            <Box sx={{
-              mb: 2,
-              p: 1.5,
-              backgroundColor: 'primary.main',
-              borderRadius: 2,
-              border: '2px solid',
-              borderColor: 'primary.dark',
-              boxShadow: 2,
-              background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.9) 0%, rgba(21, 101, 192, 0.9) 100%)',
-              position: 'relative',
-              overflow: 'hidden',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)',
-                backgroundSize: '20px 20px',
-                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                opacity: 0.1,
-                pointerEvents: 'none'
-              }
-            }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: 'common.white',
-                  fontWeight: 700,
-                  fontSize: '0.875rem',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                  position: 'relative',
-                  zIndex: 1
-                }}
-              >
-                🎉 Join {Object.values(counts).reduce((sum, c) => sum + c.accepted, 0)}+ participants already confirmed for this hackathon!
+            <Box sx={{ mb: 2.5, p: 1.5, borderRadius: 2, backgroundColor: 'var(--surface-2, #F4F1E9)', border: '1px solid var(--line, #E7E1D4)', borderLeft: '3px solid var(--accent, #E2552E)' }}>
+              <Typography sx={{ color: 'var(--ink, #16181D)', fontWeight: 600, fontSize: '0.9rem' }}>
+                Join {Object.values(counts).reduce((sum, c) => sum + c.accepted, 0)}+ participants already confirmed for this hackathon.
               </Typography>
             </Box>
           )}
-          
+
           <Grid container spacing={2}>
             {applicationTypes.map((app) => (
               <Grid size={{ xs: 12, sm: 6 }} key={app.type}>
                 <ApplicationButton
-                  variant="contained"
-                  color={app.color}
+                  variant="text"
                   fullWidth
                   startIcon={app.icon}
                   href={app.enabled ? app.link : undefined}
@@ -265,17 +255,17 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                     alignItems: 'flex-start',
                     height: '100%',
                     minHeight: '100px', // Increased to accommodate social proof
-                    opacity: app.enabled ? 1 : 0.6,
+                    opacity: app.enabled ? 1 : 0.55,
                     cursor: app.enabled ? 'pointer' : 'not-allowed',
                     position: 'relative',
                     overflow: 'visible'
                   }}
                 >
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
-                    <Typography variant="subtitle1" component="span" fontWeight="bold">
+                    <Typography component="span" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, fontSize: '1.05rem', color: 'var(--ink, #16181D)' }}>
                       {app.title}
                     </Typography>
-                    <Typography variant="caption" component="span" align="left">
+                    <Typography variant="caption" component="span" align="left" sx={{ color: 'var(--muted, #5B6270)', mt: 0.25 }}>
                       {app.description}
                       {!app.enabled && " (Closed)"}
                       {app.enabled && app.isExternal && " (Opens in new tab)"}
@@ -307,8 +297,8 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
   if (variant === "event-links" && links && links.length > 0) {
     return (
       <LinksContainer elevation={2} id="event-links">
-        <Typography variant="h5" gutterBottom fontWeight="bold">
-          Important Event Links
+        <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)' }}>
+          Important event links
         </Typography>
         <Grid container spacing={2}>
           {links.map((link, index) => (

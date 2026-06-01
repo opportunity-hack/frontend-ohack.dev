@@ -27,7 +27,10 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 const LeaderboardContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: '#FFFFFF',
+  border: '1px solid var(--line, #E7E1D4)',
+  boxShadow: 'none',
+  borderRadius: 10,
   height: '100%',
 }));
 
@@ -35,23 +38,27 @@ const StatBox = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  padding: theme.spacing(1),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.background.paper,
+  gap: theme.spacing(0.5),
+  padding: theme.spacing(2, 1),
+  borderRadius: 10,
+  backgroundColor: 'var(--surface-2, #F4F1E9)',
+  border: '1px solid var(--line, #E7E1D4)',
   marginBottom: theme.spacing(2),
   transition: 'transform 0.2s, box-shadow 0.2s',
   width: '100%',
   overflow: 'hidden',
   '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: theme.shadows[4],
+    transform: 'translateY(-3px)',
+    boxShadow: '0 14px 30px -24px rgba(22,24,29,0.5)',
   },
 }));
 
 const StatValue = styled(Typography)(({ theme }) => ({
-  fontWeight: 'bold',
-  fontSize: '1.5rem',
-  color: theme.palette.primary.main,
+  fontFamily: "'Fraunces', Georgia, serif",
+  fontWeight: 500,
+  fontSize: '1.9rem',
+  lineHeight: 1.05,
+  color: 'var(--brand, #1B3A6B)',
   textAlign: 'center',
   width: '100%',
   whiteSpace: 'nowrap',
@@ -60,8 +67,12 @@ const StatValue = styled(Typography)(({ theme }) => ({
 }));
 
 const StatLabel = styled(Typography)(({ theme }) => ({
-  fontSize: '0.8rem',
-  color: theme.palette.text.secondary,
+  fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+  fontSize: '0.66rem',
+  fontWeight: 600,
+  color: 'var(--muted, #5B6270)',
   textAlign: 'center',
   width: '100%',
   whiteSpace: 'nowrap',
@@ -73,46 +84,58 @@ const AchievementCard = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.background.paper,
+  borderRadius: 10,
+  backgroundColor: '#FFFFFF',
+  border: '1px solid var(--line, #E7E1D4)',
   marginBottom: theme.spacing(2),
-  boxShadow: theme.shadows[1],
-  transition: 'transform 0.2s',
+  boxShadow: 'none',
+  transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
   overflow: 'hidden',
   '&:hover': {
-    transform: 'scale(1.02)',
-    boxShadow: theme.shadows[3],
+    transform: 'translateY(-2px)',
+    boxShadow: '0 14px 30px -24px rgba(22,24,29,0.45)',
+    borderColor: '#d8d1c0',
   },
 }));
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
-    backgroundColor: theme.palette.success.main,
-    color: theme.palette.success.contrastText,
+    backgroundColor: '#1B3A6B',
+    color: '#fff',
   },
 }));
 
 const SectionHeader = styled(Typography)(({ theme }) => ({
-  fontWeight: 'bold',
+  fontFamily: "'Fraunces', Georgia, serif",
+  fontWeight: 500,
+  fontSize: '1.3rem',
   marginTop: theme.spacing(4),
   marginBottom: theme.spacing(2),
   paddingBottom: theme.spacing(1),
-  borderBottom: `1px solid ${theme.palette.divider}`,
+  borderBottom: '1px solid var(--line, #E7E1D4)',
 }));
 
 const OrgBanner = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  backgroundColor: theme.palette.background.paper,
+  backgroundColor: 'var(--surface-2, #F4F1E9)',
+  border: '1px solid var(--line, #E7E1D4)',
   padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
+  borderRadius: 10,
   marginBottom: theme.spacing(3),
-  boxShadow: theme.shadows[1],
+  boxShadow: 'none',
 }));
 
 const LinkButton = styled(Button)(({ theme }) => ({
   marginRight: theme.spacing(1),
-  borderRadius: '20px',
+  borderRadius: 5,
+  textTransform: 'none',
+  fontWeight: 600,
+  backgroundColor: 'var(--brand, #1B3A6B)',
+  color: '#fff',
+  boxShadow: 'none',
+  '&:hover': { backgroundColor: '#16315a', boxShadow: 'none' },
+  '&.Mui-disabled': { backgroundColor: 'rgba(0,0,0,0.12)', color: 'rgba(0,0,0,0.4)' },
 }));
 
 const GitHubChip = styled(Chip)(({ theme }) => ({
@@ -499,7 +522,7 @@ const HackathonLeaderboard = ({
     <LeaderboardContainer elevation={2} id="leaderboard">
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Box>
-          <Typography variant="h5" gutterBottom fontWeight="bold">
+          <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500 }}>
             Hackathon Leaderboard
           </Typography>
           <Typography variant="body2" color="textSecondary" paragraph>
@@ -575,7 +598,7 @@ const HackathonLeaderboard = ({
                   mr: { md: 2 },
                   mb: { xs: 1, md: 0 }
                 }}>
-                  {renderIcon(stat.icon, { fontSize: "large" })}
+                  {renderIcon(stat.icon, { fontSize: "large", sx: { color: "var(--accent, #E2552E)" } })}
                 </Box>
                 <Box sx={{ 
                   display: 'flex', 
@@ -749,10 +772,8 @@ const HackathonLeaderboard = ({
                   }}>
                     <Typography
                       variant="h6"
-                      fontWeight="bold"
-                      color="primary"
                       noWrap
-                      sx={{ fontSize: { xs: '1rem', md: '1.15rem' } }}
+                      sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: "var(--brand, #1B3A6B)", fontSize: { xs: '1.05rem', md: '1.2rem' } }}
                     >
                       {achievement.value}
                     </Typography>

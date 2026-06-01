@@ -167,19 +167,20 @@ const ArtifactListItem = styled(ListItem)({
 const PersonCard = styled(Box)(({ theme, isExpanded }) => ({
   display: "flex",
   flexDirection: "column",
-  borderRadius: theme.shape.borderRadius * 2,
-  border: `1px solid ${theme.palette.divider}`,
-  backgroundColor: theme.palette.background.paper,
-  transition: "border-color 0.2s, box-shadow 0.2s",
+  borderRadius: 10,
+  border: "1px solid var(--line, #E7E1D4)",
+  backgroundColor: "var(--surface, #FFFFFF)",
+  transition: "transform 0.2s, border-color 0.2s, box-shadow 0.2s",
   overflow: "hidden",
   height: "100%",
   "&:hover": {
-    borderColor: theme.palette.primary.light,
-    boxShadow: theme.shadows[2],
+    transform: "translateY(-2px)",
+    borderColor: "#d8d1c0",
+    boxShadow: "0 14px 30px -24px rgba(22,24,29,0.45)",
   },
   ...(isExpanded && {
-    borderColor: theme.palette.primary.main,
-    boxShadow: theme.shadows[3],
+    borderColor: "var(--brand, #1B3A6B)",
+    boxShadow: "0 14px 30px -24px rgba(22,24,29,0.45)",
   }),
 }));
 
@@ -213,9 +214,10 @@ const HeadingContainer = styled(Box)({
 
 const StyledLink = styled(Link)(({ theme }) => ({
   marginLeft: theme.spacing(2),
-  fontSize: "1rem",
-  fontWeight: "normal",
+  fontSize: "0.95rem",
+  fontWeight: 600,
   textDecoration: "none",
+  color: "var(--brand, #1B3A6B)",
   "&:hover": {
     textDecoration: "underline",
   },
@@ -232,18 +234,16 @@ const AvailabilityChip = styled(Chip)(
   ({ theme, isavailablenow, timeofdaycolor }) => ({
     margin: theme.spacing(0.5),
     backgroundColor: isavailablenow
-      ? theme.palette.info.main
+      ? "#1B3A6B"
       : timeofdaycolor || theme.palette.success.light,
-    color: theme.palette.getContrastText(
-      isavailablenow
-        ? theme.palette.info.main
-        : timeofdaycolor || theme.palette.success.light,
-    ),
-    boxShadow: isavailablenow ? theme.shadows[2] : "none",
+    color: isavailablenow
+      ? "#fff"
+      : theme.palette.getContrastText(timeofdaycolor || theme.palette.success.light),
+    boxShadow: "none",
     transition: "all 0.2s ease-in-out",
     "&:hover": {
       backgroundColor: isavailablenow
-        ? theme.palette.info.dark
+        ? "#16315a"
         : timeofdaycolor
           ? alpha(timeofdaycolor, 0.8)
           : theme.palette.success.main,
@@ -267,8 +267,8 @@ const AvailableMentorChip = styled(Chip)(({ theme, isInPerson }) => ({
   padding: theme.spacing(0.5),
   backgroundColor: isInPerson
     ? theme.palette.success.main
-    : theme.palette.info.main,
-  color: theme.palette.success.contrastText,
+    : "#1B3A6B",
+  color: "#fff",
   '& .MuiChip-label': {
     padding: theme.spacing(0.5, 1),
     display: 'flex',
@@ -277,9 +277,9 @@ const AvailableMentorChip = styled(Chip)(({ theme, isInPerson }) => ({
     lineHeight: 1.2,
   },
   "&:hover": {
-    backgroundColor: isInPerson 
+    backgroundColor: isInPerson
       ? theme.palette.success.dark
-      : theme.palette.info.dark,
+      : "#16315a",
     transform: 'translateY(-2px)',
     boxShadow: theme.shadows[4],
   },
@@ -1698,9 +1698,9 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
     <Box sx={{ mt: 4 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, flexWrap: "wrap", gap: 1 }}>
         <HeadingContainer sx={{ mb: 0 }}>
-          <Typography variant="h4">{sectionLabel}</Typography>
+          <Typography variant="h4" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: "var(--ink, #16181D)" }}>{sectionLabel}</Typography>
           <NextLink href={learnMoreHref} passHref>
-            <StyledLink color="secondary" component="a" href={learnMoreHref}>
+            <StyledLink component="a" href={learnMoreHref}>
               (Learn more)
             </StyledLink>
           </NextLink>

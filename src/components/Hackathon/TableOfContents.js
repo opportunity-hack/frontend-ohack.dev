@@ -74,10 +74,10 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
   };
 
   return (
-    <Paper 
-      elevation={3} 
-      sx={{ p: 3, my: 4, borderRadius: 2 }}
-      component="nav" 
+    <Paper
+      elevation={0}
+      sx={{ p: 3, my: 4, borderRadius: '12px', backgroundColor: 'var(--surface, #FFFFFF)', border: '1px solid var(--line, #E7E1D4)', boxShadow: 'none' }}
+      component="nav"
       aria-labelledby="table-of-contents-heading"
     >
       <Typography
@@ -87,9 +87,11 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
         gutterBottom
         align="center"
         sx={{
-          fontSize: { xs: "1.35rem", sm: "1.5rem" },
-          fontWeight: 600,
+          fontFamily: "'Fraunces', Georgia, serif",
+          fontSize: { xs: "1.4rem", sm: "1.6rem" },
+          fontWeight: 500,
           letterSpacing: '-0.01em',
+          color: 'var(--ink, #16181D)',
           marginBottom: 2
         }}
       >
@@ -100,11 +102,10 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
       {eventLinks && eventLinks.length > 0 && (
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-            <LinkIcon color="primary" sx={{ mr: 1 }} />
+            <LinkIcon sx={{ mr: 1, color: 'var(--accent, #E2552E)' }} />
             <Typography
-              variant="h6"
               component="h3"
-              sx={{ fontSize: '1rem', fontWeight: 600 }}
+              sx={{ fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: 'uppercase', letterSpacing: '0.16em', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted, #5B6270)' }}
             >
               Quick Access
             </Typography>
@@ -126,16 +127,19 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
                 target={link.open_new === "True" ? "_blank" : "_self"}
                 rel={link.open_new === "True" ? "noopener noreferrer" : ""}
                 clickable
-                color="primary"
                 variant="outlined"
                 icon={link.open_new === "True" ? <OpenInNewIcon /> : <LinkIcon />}
                 sx={{
                   borderRadius: 2,
-                  fontWeight: 500,
-                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  fontSize: '0.82rem',
+                  color: 'var(--brand, #1B3A6B)',
+                  backgroundColor: 'var(--surface, #FFFFFF)',
+                  borderColor: 'var(--line, #E7E1D4)',
+                  '& .MuiChip-icon': { color: 'var(--accent, #E2552E)' },
                   '&:hover': {
-                    backgroundColor: 'primary.main',
-                    color: 'primary.contrastText',
+                    backgroundColor: 'rgba(27,58,107,0.06)',
+                    borderColor: 'var(--brand, #1B3A6B)',
                   },
                   '&:focus': {
                     outline: '2px solid currentColor',
@@ -151,15 +155,14 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
                 href="#event-links"
                 clickable
                 variant="outlined"
-                color="secondary"
                 sx={{
                   borderRadius: 2,
-                  fontWeight: 500,
-                  fontSize: '0.85rem',
-                  '&:hover': {
-                    backgroundColor: 'secondary.main',
-                    color: 'secondary.contrastText',
-                  }
+                  fontWeight: 600,
+                  fontSize: '0.82rem',
+                  color: 'var(--muted, #5B6270)',
+                  backgroundColor: 'var(--surface-2, #F4F1E9)',
+                  borderColor: 'var(--line, #E7E1D4)',
+                  '&:hover': { backgroundColor: 'rgba(27,58,107,0.06)', borderColor: 'var(--brand, #1B3A6B)' },
                 }}
               />
             )}
@@ -191,36 +194,34 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
             dense
           >
             <Button
-              variant={section.highlight ? "contained" : "outlined"}
-              color={section.highlight ? "secondary" : "primary"}
+              variant="text"
               size="large"
               href={`#${section.id}`}
               onClick={(event) => handleClick(event, section.id, section.name)}
               aria-label={section.ariaLabel}
+              disableElevation
               sx={{
-                borderRadius: 4,
+                borderRadius: 999,
                 textTransform: "none",
-                fontWeight: "bold",
+                fontWeight: 600,
+                fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
                 minWidth: { xs: '120px', sm: '140px' },
-                ...(section.highlight && {
-                  px: 3,
-                  py: 1.5,
-                  animation: "pulse 2s infinite",
-                  "@keyframes pulse": {
-                    "0%": {
-                      boxShadow: "0 0 0 0 rgba(156, 39, 176, 0.7)"
-                    },
-                    "70%": {
-                      boxShadow: "0 0 0 10px rgba(156, 39, 176, 0)"
-                    },
-                    "100%": {
-                      boxShadow: "0 0 0 0 rgba(156, 39, 176, 0)"
+                boxShadow: 'none',
+                ...(section.highlight
+                  ? {
+                      px: 3,
+                      py: 1.25,
+                      backgroundColor: 'var(--brand, #1B3A6B)',
+                      color: '#fff',
+                      border: '1px solid var(--brand, #1B3A6B)',
+                      '&:hover': { backgroundColor: '#16315a', boxShadow: 'none' },
                     }
-                  }
-                }),
-                "&:hover": {
-                  backgroundColor: section.highlight ? "secondary.dark" : "primary.main",
-                },
+                  : {
+                      backgroundColor: 'var(--surface, #FFFFFF)',
+                      color: 'var(--ink, #16181D)',
+                      border: '1px solid var(--line, #E7E1D4)',
+                      '&:hover': { backgroundColor: 'rgba(27,58,107,0.06)', borderColor: 'var(--brand, #1B3A6B)', boxShadow: 'none' },
+                    }),
                 "&:focus": {
                   outline: '2px solid currentColor',
                   outlineOffset: '2px'

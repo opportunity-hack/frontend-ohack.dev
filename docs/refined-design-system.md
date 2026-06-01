@@ -169,30 +169,77 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
       `/profile` editor (logged-in) and the `/hack/[event_id]` event page (see the
       dedicated plan below).
 
-## Plan: `/hack/[event_id]` — the deep, standalone pass
-The event page (`src/pages/hack/[event_id].js`, ~1250 lines) is the highest-traffic,
-most-complex page and got only a light harmonization so far (RefinedFonts + Fraunces
-title). A proper refined pass is its own project. Recommended approach:
-1. **Inventory the sections** (all dynamically imported): `HackathonHeader`, donation
-   progress, `EventCountdown`, stats, `NonprofitList`, `TeamList`, `HackathonResults`,
-   `EventLinks`, `VolunteerList`, `HackathonLeaderboard`, `EventConstraints`,
-   `InteractiveFAQ`, media teaser, planning-budget widget.
-2. **Wrap the page body in one `<RefinedRoot>`** and replace the `Container` chrome +
-   `LinksContainer`/`LoadingPlaceholder` styled bits with `.ohx-*` section frames
-   (`.ohx-wrap`, eyebrow + `.ohx-display` headings, alternating `--surface-2` bands).
-   Keep `TableOfContents`/`FloatingNavigation` + all section anchor IDs intact.
-3. **Refit the header** into a refined event hero: event title (Fraunces) + a compact
-   meta row (date · location · type tags) + the primary apply CTAs as `.ohx-btn`,
-   countdown beside it. This is the single biggest visual win.
-4. **Per-sub-component**, do the same calm-card treatment used elsewhere
-   (`TeamList`, `NonprofitList` cards → `.ohx-card`, quiet `.ohx-tag` instead of
-   colored MUI chips). Do these one at a time, screenshotting each, because several
-   are shared with other routes (e.g. `TeamList`, `HackathonResults`) — verify those
-   other routes after each change or gate the refined styling to this page.
-5. **CWV**: preserve the existing `LoadingPlaceholder` reserved heights and `ssr`
-   dynamic config; don't regress the countdown/LCP.
-Budget it as ~1 focused session; verify with cache-disabled screenshots at desktop +
-390px after each section.
+## `/hack/[event_id]` — masthead-led refined pass (done, phase 1)
+The event page (`src/pages/hack/[event_id].js`) now:
+- Renders its body inside one `<RefinedRoot>` + `.ohx-wrap` (warm paper, fonts,
+  navbar clearance). The old `<Container component="main">` was swapped out;
+  `RefinedRoot` is the `<main>`. All section anchor IDs + `TableOfContents` +
+  `FloatingNavigation` are preserved.
+- **`HackathonHeader` was rebuilt** into a calm editorial masthead (eyebrow →
+  Fraunces title → date·location meta line w/ terracotta icons → muted markdown
+  description → hairline rule), replacing the mint-gradient Paper. **It's
+  scope-independent** — all visuals use inline styles with CSS-var fallbacks
+  (`var(--ink, #16181D)` etc.) so it also looks right on `/hack/[event_id]/agenda`
+  and `/census`, which render it outside a `RefinedRoot`.
+- The page-level markup I own was refined: the "Build a team" buttons (flat navy
+  primary + hairline ghost, no heavy shadows) and the event-recap teaser
+  (`.ohx-card` + eyebrow + `.ohx-link`).
+- **Phase 2 (done) — event-only sub-components refined:** `NonprofitList`
+  (clickable calm cards + Fraunces heading + navy view-toggle + quiet status
+  tags), `EventConstraints` (calm card, Fraunces heading, quiet constraint
+  chips), `DonationProgress` (calm card, navy progress rings, refined CTA,
+  grayscale sponsor strip), `EventCountdown` (navy countdown card instead of the
+  primary→secondary gradient, white-card timeline with navy/terracotta dots,
+  Fraunces headings, navy progress bar + Agenda button). All four are
+  event-page-only, so no cross-route risk.
+- **`TeamList` refined (done).** Turned out to be **event-page-only** (the
+  earlier "shared" hits were substrings — `TeamListSkeleton` in `JudgingRound1`,
+  `isUserInAnyTeamList` in `event-teams`; neither imports the component). So no
+  gating needed. Refined `TeamCard` to a flat hairline card (radius 10, no
+  shadow, hover lift, equal height), Fraunces team name (ink → brand on hover),
+  a refined "Team members" overline label, and a navy Join button. Kept the
+  semantic status chips, demo-video dialog, GitHub stats, and join/leave logic.
+- **`HackathonLeaderboard` refined (done).** Event-only. Restyled the styled
+  primitives: `LeaderboardContainer`/`OrgBanner`/`AchievementCard` → flat hairline
+  cards; `StatBox` → warm `--surface-2` tiles; `StatValue` + per-achievement metric
+  numbers → Fraunces navy; `StatLabel` → uppercase overline; stat icons → terracotta;
+  `SectionHeader` → Fraunces w/ hairline underline; `LinkButton` → squared navy.
+  Small inline achievement icons (person/clock) stay blue — minor data accents.
+- **Phase 3 (done) — the last sub-components, incl. the genuinely shared ones.**
+  Instead of per-route gating (which leaves confusing half-states), the shared
+  components are styled with **inline CSS-var fallbacks** (`var(--ink, #16181D)`
+  etc.) so they render refined whether or not they sit in a `<RefinedRoot>`:
+  - `EventLinks` (event-only) — the 6 rainbow-colored application buttons → one
+    calm uniform card set (white, hairline, terracotta icon, Fraunces title,
+    muted desc); the striped-blue social-proof banner → a calm accent strip;
+    event-links buttons → navy ghost. `full` variant is dead code (event page
+    uses `applications` + `event-links`).
+  - `InteractiveFAQ` (**shared**: event page, `OnboardingFAQ`, `SingleHackathonEvent`)
+    — Fraunces title, hairline search field, flat hairline accordions (no
+    default divider line). Var-fallbacks make it correct on all three.
+  - `HackathonResults` (**shared**: event page + `/hack/[event_id]/results`) —
+    busy gold gradient container → calm `--surface-2` frame; stat tiles → white
+    hairline w/ Fraunces navy numbers; Fraunces headings; **gold/silver/bronze
+    winner medals kept** (semantic + celebratory). Verified on `/results`, which
+    is NOT inside a `RefinedRoot` — fallbacks render correctly.
+  - `VolunteerList` (event-only, 1819 lines) — `PersonCard` → flat hairline card
+    w/ navy hover/expanded border; section heading → Fraunces. Internals/logic
+    untouched.
+- **Final review pass (done) — page chrome + remaining widgets:**
+  - `TableOfContents` — white hairline card, Fraunces title, terracotta
+    quick-access icons, hairline section pills with a **navy active pill** (was
+    magenta `secondary`).
+  - `FloatingNavigation` — the mobile FAB → navy (was bright blue `primary`).
+  - `VolunteerList` — `PersonCard` flat hairline; section heading Fraunces;
+    `StyledLink` "Learn more" → navy (was magenta); availability chips' blue
+    "available now"/"remote" → navy (in-person stays green = semantic).
+  - `MentorAvailability` — Fraunces heading, the blue "total mentors" banner →
+    calm `--surface-2` accent strip, orange Slack button → navy.
+- **Truly nothing left** on the event page except deliberate semantic/data accents
+  (green "available/in-person" chips, the red "Hackathon Ended" team badge,
+  gold/silver/bronze winner medals, a few tiny blue stat-icons + MUI Switch
+  toggles) and `PlanningBudgetEventPageWidget` (only renders behind a planning
+  flag). The event page is fully refined end-to-end, desktop + mobile.
 
 ### Notes for the next pass
 - Pattern is well-established now: copy `Head`/`getStaticProps`/schema verbatim,

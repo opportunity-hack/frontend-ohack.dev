@@ -34,9 +34,10 @@ const ResultsContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   marginTop: theme.spacing(3),
   marginBottom: theme.spacing(2),
-  background: `linear-gradient(135deg, ${alpha(theme.palette.warning.light, 0.15)} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 100%)`,
-  border: `2px solid ${alpha(theme.palette.warning.main, 0.3)}`,
-  borderRadius: theme.shape.borderRadius * 2,
+  backgroundColor: 'var(--surface-2, #F4F1E9)',
+  border: '1px solid var(--line, #E7E1D4)',
+  boxShadow: 'none',
+  borderRadius: 12,
 }));
 
 const StatCard = styled(Box)(({ theme }) => ({
@@ -44,27 +45,30 @@ const StatCard = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   alignItems: 'center',
   padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[1],
-  transition: 'transform 0.2s',
+  borderRadius: 10,
+  backgroundColor: 'var(--surface, #FFFFFF)',
+  border: '1px solid var(--line, #E7E1D4)',
+  boxShadow: 'none',
+  transition: 'transform 0.2s, box-shadow 0.2s',
   '&:hover': {
     transform: 'translateY(-3px)',
-    boxShadow: theme.shadows[3],
+    boxShadow: '0 14px 30px -24px rgba(22,24,29,0.5)',
   },
 }));
 
 const WinnerCard = styled(Paper)(({ theme, bordercolor }) => ({
   padding: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius * 2,
-  border: `2px solid ${bordercolor || theme.palette.divider}`,
+  borderRadius: 12,
+  backgroundColor: 'var(--surface, #FFFFFF)',
+  border: `2px solid ${bordercolor || 'var(--line, #E7E1D4)'}`,
+  boxShadow: 'none',
   transition: 'transform 0.2s, box-shadow 0.2s',
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[6],
+    boxShadow: '0 18px 40px -28px rgba(22,24,29,0.5)',
   },
 }));
 
@@ -211,8 +215,8 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
     <ResultsContainer elevation={3} id="results">
       {/* Header */}
       <Box sx={{ textAlign: 'center', mb: 3 }}>
-        <EmojiEventsIcon sx={{ fontSize: 48, color: 'warning.main', mb: 1 }} aria-hidden="true" />
-        <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
+        <EmojiEventsIcon sx={{ fontSize: 44, color: 'var(--accent, #E2552E)', mb: 1 }} aria-hidden="true" />
+        <Typography variant="h4" component="h2" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)' }}>
           Hackathon Results
         </Typography>
         <Typography variant="body1" color="text.secondary">
@@ -227,7 +231,7 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
             <Grid size={{ xs: 6, sm: 4, md: 3, lg: 'auto' }} key={idx}>
               <StatCard>
                 {item.icon}
-                <Typography variant="h5" fontWeight="bold" color="primary.main">
+                <Typography variant="h5" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--brand, #1B3A6B)' }}>
                   {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -257,7 +261,7 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
       {/* Winners Showcase */}
       {winningTeams.length > 0 ? (
         <>
-          <Typography variant="h5" component="h3" fontWeight="bold" textAlign="center" gutterBottom>
+          <Typography variant="h5" component="h3" textAlign="center" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)' }}>
             Winning Teams
           </Typography>
           <Grid container spacing={3} sx={{ mt: 1 }}>

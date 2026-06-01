@@ -1,75 +1,37 @@
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  Paper,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Button,
-  Chip,
-  Box,
-  ToggleButtonGroup,
-  ToggleButton,
-  CircularProgress,
-} from "@mui/material";
-import { styled } from "@mui/material/styles";
-import Link from "next/link";
-import Image from "next/image";
-import AddIcon from "@mui/icons-material/Add";
+import { Box, ToggleButtonGroup, ToggleButton, CircularProgress } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import Link from "next/link";
+import Image from "next/image";
 import axios from "axios";
 import { normalizeImageUrl } from "../../lib/imageUtils";
 
-const ListContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  backgroundColor: theme.palette.background.default,
-}));
+// Refined nonprofit / project picker for the event page. Lives inside the
+// page's <RefinedRoot>, so it uses the .ohx-* utility classes. Logic (view
+// toggle + project fetch) is unchanged from the original.
 
-const NonprofitCard = styled(Card)(({ theme }) => ({
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
-  transition: "transform 0.15s ease-in-out",
-  "&:hover": { transform: "scale3d(1.02, 1.02, 1)" },
-}));
+const PLACEHOLDER = "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Square.png";
+const PRODUCTION_STATUSES = new Set(["production", "post-hackathon"]);
 
-const ImageContainer = styled(Box)({
-  position: "relative",
-  width: "100%",
-  paddingTop: "56.25%", // 16:9 aspect ratio
-  overflow: "hidden",
-});
-
-const NonprofitContent = styled(CardContent)({
-  flexGrow: 1,
-});
-
-const ProjectCard = styled(Card)(({ theme }) => ({
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
-  transition: "transform 0.15s ease-in-out",
-  "&:hover": { transform: "scale3d(1.02, 1.02, 1)" },
-}));
-
-const EmptyStateContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: theme.spacing(4),
-  textAlign: "center",
-}));
-
-const STATUS_COLORS = {
-  production: "success",
-  "post-hackathon": "info",
-  hackathon: "warning",
-  concept: "default",
-  maintenance: "secondary",
+const toggleSx = {
+  "& .MuiToggleButton-root": {
+    textTransform: "none",
+    border: "1px solid var(--line)",
+    color: "var(--muted)",
+    fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+    fontWeight: 500,
+    px: 1.5,
+    py: 0.6,
+    "&.Mui-selected": {
+      backgroundColor: "var(--brand)",
+      color: "#fff",
+      "&:hover": { backgroundColor: "#16315a" },
+    },
+  },
 };
+
+const clamp = (text, n) => (text && text.length > n ? `${text.substring(0, n)}…` : text);
 
 const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements }) => {
   const [viewMode, setViewMode] = useState(() => {
@@ -81,18 +43,13 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
   const [projects, setProjects] = useState([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
 
-  // Collect all problem statement IDs from nonprofits, with nonprofit context
-  // Map project IDs to their parent nonprofit(s) — a project can belong to multiple nonprofits
   const projectIdMap = useMemo(() => {
     const map = {};
     if (!nonprofits) return map;
     nonprofits.forEach((npo) => {
       (npo.problem_statements || []).forEach((psId) => {
-        // If visibleProblemStatements is set, filter by it
         if (!visibleProblemStatements || visibleProblemStatements.includes(psId)) {
-          if (!map[psId]) {
-            map[psId] = [];
-          }
+          if (!map[psId]) map[psId] = [];
           map[psId].push({ nonprofitId: npo.id, nonprofitName: npo.name });
         }
       });
@@ -100,26 +57,18 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
     return map;
   }, [nonprofits, visibleProblemStatements]);
 
-  // Fetch project details when switching to projects view
   useEffect(() => {
     const projectIds = Object.keys(projectIdMap);
     if (viewMode !== "projects" || projectIds.length === 0) return;
-
-    // Don't refetch if we already have data
     if (projects.length > 0) return;
 
     let cancelled = false;
     const fetchProjects = async () => {
       setProjectsLoading(true);
       try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statements`
-        );
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statements`);
         if (!cancelled && response.data?.problem_statements) {
-          const relevant = response.data.problem_statements.filter(
-            (ps) => projectIds.includes(ps.id)
-          );
-          setProjects(relevant);
+          setProjects(response.data.problem_statements.filter((ps) => projectIds.includes(ps.id)));
         }
       } catch (err) {
         console.error("Error fetching projects for hackathon view:", err);
@@ -134,217 +83,127 @@ const NonprofitList = ({ nonprofits, teams, eventId, visibleProblemStatements })
   const handleViewChange = (_, newView) => {
     if (newView) {
       setViewMode(newView);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("ohack_hackathon_view", newView);
-      }
+      if (typeof window !== "undefined") localStorage.setItem("ohack_hackathon_view", newView);
     }
   };
 
+  const gridStyle = { display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" };
+
   if (!nonprofits || nonprofits.length === 0) {
     return (
-      <ListContainer elevation={2}>
-        <EmptyStateContainer>
-          <Typography variant="h2" component="h2" gutterBottom>
-            No Nonprofits Yet
-          </Typography>
-          <Typography variant="body1" paragraph>
-            Be the first nonprofit to participate in this event!
-          </Typography>
-          <Button
-            component={Link}
-            href="/nonprofits/apply"
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            aria-label="Apply as a nonprofit organization"
-          >
-            Apply as a Nonprofit
-          </Button>
-        </EmptyStateContainer>
-      </ListContainer>
+      <Box component="section" sx={{ my: 4 }}>
+        <div className="ohx-card" style={{ padding: "40px 28px", textAlign: "center" }}>
+          <h2 className="ohx-display" id="nonprofit-section-heading" style={{ fontSize: "1.4rem" }}>No nonprofits yet</h2>
+          <p className="ohx-muted" style={{ margin: "10px 0 18px" }}>Be the first nonprofit to participate in this event.</p>
+          <Link href="/nonprofits/apply" className="ohx-btn ohx-btn--primary">Apply as a nonprofit</Link>
+        </div>
+      </Box>
     );
   }
 
   const renderNonprofitsView = () => (
-    <Grid container spacing={3}>
+    <div style={gridStyle}>
       {nonprofits.map((nonprofit) => (
-        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={nonprofit.id}>
-          <NonprofitCard>
-            <ImageContainer>
-              {nonprofit.image ? (
-                <Image
-                  src={normalizeImageUrl(nonprofit.image) || "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Square.png"}
-                  alt={`${nonprofit.name} logo or image`}
-                  fill
-                  sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
-                  style={{ objectFit: "cover" }}
-                  priority={false}
-                  loading="lazy"
-                />
-              ) : (
-                <Image
-                  src="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Square.png"
-                  alt="Nonprofit placeholder image"
-                  fill
-                  sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
-                  style={{ objectFit: "cover" }}
-                  priority={false}
-                  loading="lazy"
-                />
-              )}
-            </ImageContainer>
-            <NonprofitContent>
-              <Typography
-                gutterBottom
-                variant="h3"
-                component="h3"
-                sx={{
-                  fontSize: { xs: "1.25rem", sm: "1.35rem" },
-                  fontWeight: 600,
-                  lineHeight: 1.3,
-                  marginBottom: 1,
-                }}
-              >
-                {nonprofit.name}
-              </Typography>
-              <Typography variant="body1" color="textSecondary" component="p">
-                {nonprofit.description?.length > 100
-                  ? `${nonprofit.description.substring(0, 100)}...`
-                  : nonprofit.description}
-              </Typography>
-            </NonprofitContent>
-            <Button
-              component={Link}
-              href={`/nonprofit/${nonprofit.id}`}
-              variant="contained"
-              color="primary"
-              fullWidth
-              aria-label={`View ${nonprofit.name} projects and ways to help`}
-            >
-              View Projects & Ways to Help
-            </Button>
-          </NonprofitCard>
-        </Grid>
+        <Link
+          key={nonprofit.id}
+          href={`/nonprofit/${nonprofit.id}`}
+          className="ohx-card ohx-card--hover"
+          style={{ display: "flex", flexDirection: "column", overflow: "hidden", textDecoration: "none", color: "inherit" }}
+          aria-label={`View ${nonprofit.name} projects and ways to help`}
+        >
+          <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "var(--surface-2)" }}>
+            <Image
+              src={normalizeImageUrl(nonprofit.image) || PLACEHOLDER}
+              alt={`${nonprofit.name} logo or image`}
+              fill
+              sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
+              style={{ objectFit: "cover" }}
+              loading="lazy"
+            />
+          </div>
+          <div style={{ padding: "20px 22px 18px", display: "flex", flexDirection: "column", flex: 1 }}>
+            <h3 className="ohx-display" style={{ fontSize: "1.2rem" }}>{nonprofit.name}</h3>
+            <p className="ohx-muted" style={{ margin: "10px 0 0", fontSize: "0.93rem", lineHeight: 1.55 }}>
+              {clamp(nonprofit.description, 110)}
+            </p>
+            <span className="ohx-link" style={{ marginTop: "auto", paddingTop: 16, fontSize: "0.9rem" }}>
+              View projects &amp; ways to help →
+            </span>
+          </div>
+        </Link>
       ))}
-    </Grid>
+    </div>
   );
 
   const renderProjectsView = () => {
     if (projectsLoading) {
       return (
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-          <CircularProgress />
+          <CircularProgress sx={{ color: "#1B3A6B" }} />
         </Box>
       );
     }
-
     if (projects.length === 0) {
-      return (
-        <Typography variant="body1" color="textSecondary" sx={{ p: 2 }}>
-          No projects found for this hackathon.
-        </Typography>
-      );
+      return <p className="ohx-muted" style={{ padding: "8px 0" }}>No projects found for this hackathon.</p>;
     }
-
     return (
-      <Grid container spacing={3}>
+      <div style={gridStyle}>
         {projects.map((project) => {
           const npoInfoList = projectIdMap[project.id] || [];
+          const isLive = PRODUCTION_STATUSES.has(project.status);
           return (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={project.id}>
-              <ProjectCard>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap" }}>
-                    <Chip
-                      label={project.status || "unknown"}
-                      size="small"
-                      color={STATUS_COLORS[project.status] || "default"}
-                    />
-                    {npoInfoList.map((npoInfo) => (
-                      <Chip
-                        key={npoInfo.nonprofitId}
-                        component={Link}
-                        href={`/nonprofit/${npoInfo.nonprofitId}`}
-                        label={npoInfo.nonprofitName}
-                        size="small"
-                        variant="outlined"
-                        clickable
-                      />
-                    ))}
-                  </Box>
-                  <Typography
-                    gutterBottom
-                    variant="h3"
-                    component="h3"
-                    sx={{
-                      fontSize: { xs: "1.25rem", sm: "1.35rem" },
-                      fontWeight: 600,
-                      lineHeight: 1.3,
-                      marginBottom: 1,
-                    }}
-                  >
-                    {project.title}
-                  </Typography>
-                  <Typography variant="body1" color="textSecondary" component="p">
-                    {project.description?.length > 150
-                      ? `${project.description.substring(0, 150)}...`
-                      : project.description}
-                  </Typography>
-                </CardContent>
-                <Button
-                  component={Link}
-                  href={`/project/${project.id}`}
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  aria-label={`View project: ${project.title}`}
-                >
-                  View Project Details
-                </Button>
-              </ProjectCard>
-            </Grid>
+            <div key={project.id} className="ohx-card ohx-card--hover" style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ padding: "22px 22px 18px", display: "flex", flexDirection: "column", flex: 1 }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                  {project.status && (
+                    <span className={`ohx-tag${isLive ? " ohx-tag--accent" : ""}`}>{project.status}</span>
+                  )}
+                  {npoInfoList.map((npoInfo) => (
+                    <Link key={npoInfo.nonprofitId} href={`/nonprofit/${npoInfo.nonprofitId}`} className="ohx-tag" style={{ textDecoration: "none" }}>
+                      {npoInfo.nonprofitName}
+                    </Link>
+                  ))}
+                </div>
+                <h3 className="ohx-display" style={{ fontSize: "1.2rem" }}>{project.title}</h3>
+                <p className="ohx-muted" style={{ margin: "10px 0 0", fontSize: "0.93rem", lineHeight: 1.55 }}>
+                  {clamp(project.description, 150)}
+                </p>
+                <Link href={`/project/${project.id}`} className="ohx-link" style={{ marginTop: "auto", paddingTop: 16, fontSize: "0.9rem" }}>
+                  View project details →
+                </Link>
+              </div>
+            </div>
           );
         })}
-      </Grid>
+      </div>
     );
   };
 
   return (
-    <ListContainer elevation={2}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 1 }}>
-        <Typography
-          variant="h5"
-          id="nonprofit-section-heading"
-          fontWeight="bold"
-        >
-          Step 2. Choose your hackathon project
-        </Typography>
-        <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={handleViewChange}
-          size="small"
-          aria-label="Switch between nonprofits and projects view"
-        >
+    <Box component="section" sx={{ my: { xs: 4, md: 5 } }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, marginBottom: 10 }}>
+        <div>
+          <span className="ohx-eyebrow">Step 2</span>
+          <h2 id="nonprofit-section-heading" className="ohx-display" style={{ fontSize: "clamp(1.5rem, 2.6vw, 2rem)", marginTop: 8 }}>
+            Choose your hackathon project
+          </h2>
+        </div>
+        <ToggleButtonGroup value={viewMode} exclusive onChange={handleViewChange} size="small" aria-label="Switch between nonprofits and projects view" sx={toggleSx}>
           <ToggleButton value="nonprofits" aria-label="View by nonprofit">
-            <BusinessIcon sx={{ mr: 0.5 }} fontSize="small" />
-            Nonprofits
+            <BusinessIcon sx={{ mr: 0.5 }} fontSize="small" /> Nonprofits
           </ToggleButton>
           <ToggleButton value="projects" aria-label="View by project">
-            <AssignmentIcon sx={{ mr: 0.5 }} fontSize="small" />
-            Projects
+            <AssignmentIcon sx={{ mr: 0.5 }} fontSize="small" /> Projects
           </ToggleButton>
         </ToggleButtonGroup>
-      </Box>
-      <Typography variant="body2" color="textSecondary" paragraph>
-        {viewMode === "nonprofits" ? (
-          <strong>Browse by nonprofit organization. Click one to see their specific projects.</strong>
-        ) : (
-          <strong>Browse all projects directly. Each project shows which nonprofit it belongs to.</strong>
-        )}
-      </Typography>
+      </div>
+      <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 24, fontSize: "0.95rem" }}>
+        {viewMode === "nonprofits"
+          ? "Browse by nonprofit organization. Open one to see their specific projects."
+          : "Browse all projects directly. Each shows which nonprofit it belongs to."}
+      </p>
       {viewMode === "nonprofits" ? renderNonprofitsView() : renderProjectsView()}
-    </ListContainer>
+    </Box>
   );
 };
 

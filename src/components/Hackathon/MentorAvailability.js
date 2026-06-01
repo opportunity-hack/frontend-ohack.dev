@@ -433,7 +433,7 @@ const MentorAvailability = ({ volunteers }) => {
   return (
     <StyledPaper elevation={3}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5">
+        <Typography variant="h5" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: "var(--ink, #16181D)" }}>
           Mentor Availability
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -462,9 +462,9 @@ const MentorAvailability = ({ volunteers }) => {
       </Box>
       
       {totalMentors > 0 && (
-        <Box sx={{ mb: 2, p: 1.5, backgroundColor: theme.palette.info.light, borderRadius: 1 }}>
-          <Typography variant="body1" color="info.contrastText">
-            📊 {totalMentors} Total Mentors Available
+        <Box sx={{ mb: 2, p: 1.5, backgroundColor: "var(--surface-2, #F4F1E9)", border: "1px solid var(--line, #E7E1D4)", borderLeft: "3px solid var(--accent, #E2552E)", borderRadius: 2 }}>
+          <Typography variant="body1" sx={{ color: "var(--ink, #16181D)", fontWeight: 600 }}>
+            {totalMentors} total mentors available
           </Typography>
         </Box>
       )}
@@ -472,11 +472,11 @@ const MentorAvailability = ({ volunteers }) => {
       <Box sx={{ textAlign: "center", mt: 2, mb: 2 }}>
         <Button
           variant="contained"
-          color="warning"
+          disableElevation
           href="https://opportunity-hack.slack.com/archives/C01E5CGDQ74"
           target="_blank"
           rel="noopener noreferrer"
-          sx={{ padding: theme.spacing(1, 3) }}
+          sx={{ padding: theme.spacing(1.1, 3), textTransform: "none", fontWeight: 600, borderRadius: "5px", backgroundColor: "var(--brand, #1B3A6B)", color: "#fff", boxShadow: "none", "&:hover": { backgroundColor: "#16315a", boxShadow: "none" } }}
         >
           Join #ask-a-mentor Slack
         </Button>

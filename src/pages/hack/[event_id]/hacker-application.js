@@ -529,32 +529,45 @@ const HackerApplicationComponent = () => {
     fetchEventData();
   }, [event_id, apiServerUrl, setIsLoading, initializeRecaptcha, setFormData]);
 
-  // Fetch teams for this event so hackers can browse and pick the team they're on.
+  // Build the "Find your team" list from the team codes that already-registered
+  // hackers entered for this event. The first hacker on a team types a team code;
+  // everyone after can pick it from this list instead of remembering it. Source is
+  // the `teamCode` column on the volunteers collection (public hacker endpoint).
   useEffect(() => {
     if (!apiServerUrl || !event_id) return;
     let cancelled = false;
-    const fetchTeams = async () => {
+    const fetchTeamCodes = async () => {
       setTeamsLoading(true);
       try {
-        const res = await fetch(`${apiServerUrl}/api/messages/teams`);
-        if (!res.ok) throw new Error(`Failed to load teams: ${res.status}`);
-        const json = await res.json();
-        const all = Array.isArray(json?.teams) ? json.teams : [];
-        const filtered = all.filter(
-          (t) =>
-            t?.active !== false &&
-            (t?.hackathon_event_id === event_id ||
-              t?.eventId === event_id),
+        const res = await fetch(
+          `${apiServerUrl}/api/messages/hackathon/${event_id}/hacker`,
         );
-        if (!cancelled) setEventTeams(filtered);
+        if (!res.ok) throw new Error(`Failed to load hackers: ${res.status}`);
+        const json = await res.json();
+        const hackers = Array.isArray(json?.data) ? json.data : [];
+        // Tally distinct, non-empty team codes (case-insensitive dedupe; keep the
+        // first-seen casing as the display label).
+        const byKey = new Map();
+        for (const h of hackers) {
+          const raw = (h?.teamCode || "").trim();
+          if (!raw) continue;
+          const key = raw.toLowerCase();
+          const existing = byKey.get(key);
+          if (existing) existing.count += 1;
+          else byKey.set(key, { code: raw, count: 1 });
+        }
+        const codes = Array.from(byKey.values()).sort((a, b) =>
+          a.code.localeCompare(b.code, undefined, { sensitivity: "base" }),
+        );
+        if (!cancelled) setEventTeams(codes);
       } catch (err) {
-        console.warn("Could not load teams for event browser:", err);
+        console.warn("Could not load team codes for event browser:", err);
         if (!cancelled) setEventTeams([]);
       } finally {
         if (!cancelled) setTeamsLoading(false);
       }
     };
-    fetchTeams();
+    fetchTeamCodes();
     return () => {
       cancelled = true;
     };

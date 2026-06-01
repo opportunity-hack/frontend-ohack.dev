@@ -1006,10 +1006,20 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
   return (
     <Card
+      elevation={0}
       sx={{
         position: "relative",
-        opacity: isActive ? 1 : 0.7,
-        border: isActive ? "none" : "1px solid #e0e0e0",
+        height: "100%",
+        opacity: isActive ? 1 : 0.72,
+        border: "1px solid var(--line, #E7E1D4)",
+        borderRadius: "10px",
+        boxShadow: "none",
+        transition: "transform .2s ease, box-shadow .2s ease, border-color .2s ease",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          boxShadow: "0 18px 40px -28px rgba(22,24,29,0.45)",
+          borderColor: "#d8d1c0",
+        },
       }}
     >
       {!isActive && (
@@ -1037,11 +1047,12 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
       )}
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
-          <Typography variant="h6" sx={{ mr: 1 }}>
+          <Typography variant="h6" component="h3" sx={{ mr: 1, fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500 }}>
             <Link
               component={NextLink}
               href={`/hack/${event_id}/team/${team?.id}`}
               underline="hover"
+              sx={{ color: "var(--ink, #16181D)", "&:hover": { color: "var(--brand, #1B3A6B)" } }}
             >
               {team?.name}
             </Link>
@@ -1168,8 +1179,11 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
         <Divider sx={{ my: 1 }} />
 
-        <Typography variant="subtitle1" style={{ marginTop: "10px", marginBottom: "8px" }}>
-          Team Members:
+        <Typography
+          variant="subtitle2"
+          sx={{ mt: 1.5, mb: 1, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: "uppercase", letterSpacing: "0.14em", fontSize: "0.66rem", fontWeight: 600, color: "var(--muted, #5B6270)" }}
+        >
+          Team members
         </Typography>
         <Grid container spacing={1}>
           {Array.isArray(team?.users) &&
@@ -1234,10 +1248,10 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                 <Button
                   size="small"
                   variant="outlined"
-                  color="primary"
                   onClick={handleJoinClick}
                   disabled={isLoading || !canJoin}
                   startIcon={isLoading && <CircularProgress size={16} />}
+                  sx={{ textTransform: "none", borderColor: "var(--brand, #1B3A6B)", color: "var(--brand, #1B3A6B)", "&:hover": { borderColor: "#16315a", backgroundColor: "rgba(27,58,107,0.06)" } }}
                 >
                   {isLoading ? "Joining..." : "Join Team"}
                 </Button>

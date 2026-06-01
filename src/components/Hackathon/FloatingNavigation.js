@@ -301,7 +301,6 @@ const FloatingNavigation = ({ isHackathonExpired = false }) => {
             opening always shows the drawer below and never a stack of
             tooltip-only mini-FABs that overlap page content. */}
         <Fab
-          color="primary"
           aria-label="Open page navigation"
           onClick={() => {
             recomputePresentIds();
@@ -313,7 +312,10 @@ const FloatingNavigation = ({ isHackathonExpired = false }) => {
             bottom: 20,
             right: 16,
             zIndex: 1200,
-            boxShadow: 6,
+            boxShadow: "0 10px 30px -10px rgba(22,24,29,0.5)",
+            backgroundColor: "var(--brand, #1B3A6B)",
+            color: "#fff",
+            "&:hover": { backgroundColor: "#16315a" },
           }}
         >
           <MenuIcon />

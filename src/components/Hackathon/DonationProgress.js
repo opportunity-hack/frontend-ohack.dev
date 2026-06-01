@@ -1,44 +1,19 @@
 import React from "react";
-import { Grid, Typography, Paper, Button } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { Box } from "@mui/material";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import Link from "next/link";
 import SponsorMinimal from "../Sponsors/SponsorMinimal";
 
-const ProgressContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  height: "100%", // This ensures the container takes full height of its parent
-  minHeight: "400px", // Adjust this value as needed
-  display: "flex",
-  flexDirection: "column",
-}));
-
-const ProgressItem = styled(Grid)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  marginBottom: theme.spacing(2),
-}));
-
-const StyledCircularProgressbar = styled(CircularProgressbar)({
-  width: "100px",
-  height: "100px",
-});
-
-const ThankYouContainer = styled(Typography)(({ theme }) => ({
-  marginTop: "auto",
-  paddingTop: theme.spacing(2),
-}));
-
+// Refined for the event page (inside <RefinedRoot>): calm card, navy progress
+// rings, refined CTA, and a desaturated sponsor strip.
 const DonationProgress = ({ donationGoals = {}, donationCurrent = {} }) => {
-  const calculatePercentage = (current, goal) => {
+  const pct = (current, goal) => {
     const c = Number(current) || 0;
     const g = Number(goal) || 0;
     return g > 0 ? Math.min((c / g) * 100, 100) : 0;
   };
-
   const fmt = (v) => Number(v) || 0;
-
   const categories = [
     { name: "Food", key: "food" },
     { name: "Prize", key: "prize" },
@@ -46,49 +21,47 @@ const DonationProgress = ({ donationGoals = {}, donationCurrent = {} }) => {
   ];
 
   return (
-    <ProgressContainer elevation={3}>
-      <Typography variant="h5" gutterBottom>
-        Donation Progress
-      </Typography>
-      <Grid container spacing={2} justifyContent="center">
+    <Box className="ohx-card" sx={{ p: { xs: 3, md: 3.5 }, height: "100%", minHeight: 400, display: "flex", flexDirection: "column" }}>
+      <span className="ohx-eyebrow">Support the event</span>
+      <h2 className="ohx-display" style={{ fontSize: "1.4rem", marginTop: 8, marginBottom: 20 }}>Donation progress</h2>
+
+      <div style={{ display: "flex", gap: 16, justifyContent: "space-around", flexWrap: "wrap" }}>
         {categories.map((category) => (
-          <ProgressItem item xs={4} key={category.key}>
-            <Typography variant="subtitle1" gutterBottom>
-              {category.name}
-            </Typography>
-            <StyledCircularProgressbar
-              value={calculatePercentage(
-                donationCurrent[category.key],
-                donationGoals[category.key]
-              )}
-              text={`${calculatePercentage(donationCurrent[category.key], donationGoals[category.key]).toFixed(0)}%`}
-              styles={buildStyles({
-                textSize: "22px",
-                pathColor: "#003486",
-                textColor: "#003486",
-              })}
-            />
-            <Typography variant="body1" style={{ marginTop: "8px" }}>
+          <div key={category.key} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <span className="ohx-eyebrow" style={{ fontSize: "0.62rem" }}>{category.name}</span>
+            <div style={{ width: 92, height: 92 }}>
+              <CircularProgressbar
+                value={pct(donationCurrent[category.key], donationGoals[category.key])}
+                text={`${pct(donationCurrent[category.key], donationGoals[category.key]).toFixed(0)}%`}
+                styles={buildStyles({
+                  textSize: "22px",
+                  pathColor: "#1B3A6B",
+                  textColor: "#16181D",
+                  trailColor: "#EDE8DC",
+                })}
+              />
+            </div>
+            <span className="ohx-faint" style={{ fontSize: "0.82rem" }}>
               ${fmt(donationCurrent[category.key])} / ${fmt(donationGoals[category.key])}
-            </Typography>
-          </ProgressItem>
+            </span>
+          </div>
         ))}
-      </Grid>
-      {donationCurrent && donationCurrent.thank_you && donationCurrent.thank_you.length > 0 && (
-        <ThankYouContainer variant="body1">
-          Special thanks to: {donationCurrent.thank_you} for donating!
-        </ThankYouContainer>
+      </div>
+
+      {donationCurrent?.thank_you?.length > 0 && (
+        <p className="ohx-muted" style={{ marginTop: "auto", paddingTop: 16, fontSize: "0.9rem", fontStyle: "italic" }}>
+          Special thanks to {donationCurrent.thank_you} for donating!
+        </p>
       )}
-      <Button
-        variant="contained"
-        color="primary"
-        href="/sponsor"
-        style={{ marginTop: "16px" }}
-      >
-        Become a Sponsor
-      </Button>
-      <SponsorMinimal />
-    </ProgressContainer>
+
+      <div style={{ marginTop: donationCurrent?.thank_you?.length > 0 ? 12 : "auto", paddingTop: 16 }}>
+        <Link href="/sponsor" className="ohx-btn ohx-btn--primary">Become a sponsor →</Link>
+      </div>
+
+      <Box className="ohx-sponsors" sx={{ mt: 2 }}>
+        <SponsorMinimal />
+      </Box>
+    </Box>
   );
 };
 
