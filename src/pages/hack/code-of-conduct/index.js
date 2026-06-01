@@ -31,7 +31,7 @@ const CORE_VALUES = [
 ];
 
 const ACCOMMODATIONS = [
-  'If you require specific accommodations (assistive technologies, sign language interpreters, mobility assistance, dietary needs), let us know during registration or email accessibility@ohack.org. We’ll do our best to accommodate you.',
+  'If you require specific accommodations (assistive technologies, sign language interpreters, mobility assistance, dietary needs), let us know during registration or via our contact page. We\'ll do our best to accommodate you.',
   'All venues we select are wheelchair accessible, and we provide quiet spaces for participants who need a break from the main event area.',
   'We offer live captioning via YouTube streaming or video uploads to Slack for most presentations, and can provide materials in alternative formats on request.',
   'Our mentors and staff can assist with a range of needs. Don’t hesitate to ask for help or clarification at any time during the event.',
@@ -112,7 +112,7 @@ const CodeOfConduct = () => {
             </div>
             <p className="ohx-faint" style={{ marginTop: 24, marginBottom: 0, fontSize: '0.9rem' }}>
               We’re continuously improving our accessibility. If you have suggestions or feedback,{' '}
-              <a className="ohx-link" href="mailto:accessibility@ohack.org">let us know</a>.
+              <Link className="ohx-link" href="/contact">let us know</Link>.
             </p>
           </div>
         </section>
@@ -160,10 +160,11 @@ const CodeOfConduct = () => {
               If you experience or witness unacceptable behavior, or have any other concerns, please
               report it to the hackathon organizers immediately. All reports are handled with discretion.
             </p>
-            <p className="ohx-muted" style={{ margin: 0, maxWidth: '64ch' }}>
+            <p className="ohx-muted" style={{ margin: '0 0 20px', maxWidth: '64ch' }}>
               Organizers may take any action they deem appropriate, including warning the offender or
               expulsion from the hackathon.
             </p>
+            <Link href="/contact" className="ohx-btn" style={{ display: 'inline-flex' }}>Contact us <Arrow /></Link>
           </div>
         </section>
 
