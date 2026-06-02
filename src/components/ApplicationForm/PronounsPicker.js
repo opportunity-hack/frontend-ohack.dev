@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   Box,
   Chip,
@@ -19,68 +19,56 @@ export const CURATED_PRONOUNS = [
   "Prefer not to say",
 ];
 
-const EXCLUSIVE = "Prefer not to say";
-
 const parsePronouns = (value) => {
-  if (!value) return { selected: [], other: "" };
+  if (!value) return { selected: "", other: "" };
   const raw = Array.isArray(value)
     ? value
     : String(value)
         .split(",")
         .map((t) => t.trim());
   const tokens = raw.map((t) => t.trim()).filter(Boolean);
-  const selected = [];
+  let selected = "";
   const otherTokens = [];
   for (const t of tokens) {
-    if (CURATED_PRONOUNS.includes(t)) selected.push(t);
+    if (!selected && CURATED_PRONOUNS.includes(t)) selected = t;
     else otherTokens.push(t);
   }
-  return { selected, other: otherTokens.join(", ") };
+  return { selected, other: selected ? "" : otherTokens.join(", ") };
 };
 
 const serializePronouns = (selected, other) => {
-  const all = [...selected];
+  if (selected) return selected;
   const trimmedOther = (other || "").trim();
-  if (trimmedOther) all.push(trimmedOther);
-  return all.join(", ");
+  return trimmedOther;
 };
 
 const PronounsPicker = ({
   value,
   onChange,
   label = "Pronouns",
-  helperText = "Select all that apply. Use 'Add your own' if your pronouns aren't listed.",
+  helperText = "Choose one set. Use 'Add your own' if your pronouns aren't listed.",
   required = false,
   showAddYourOwn = true,
 }) => {
   const { selected, other } = useMemo(() => parsePronouns(value), [value]);
   const [showOther, setShowOther] = React.useState(other.length > 0);
 
+  useEffect(() => {
+    setShowOther(other.length > 0);
+  }, [other]);
+
   const emit = (nextSelected, nextOther) => {
     onChange(serializePronouns(nextSelected, nextOther));
   };
 
   const toggle = (option) => {
-    if (option === EXCLUSIVE) {
-      // Choosing "Prefer not to say" clears everything else.
-      const isOn = selected.includes(EXCLUSIVE);
-      const next = isOn ? [] : [EXCLUSIVE];
-      setShowOther(false);
-      emit(next, "");
-      return;
-    }
-    // Choosing any other option also clears "Prefer not to say".
-    const without = selected.filter((s) => s !== EXCLUSIVE);
-    const next = without.includes(option)
-      ? without.filter((s) => s !== option)
-      : [...without, option];
-    emit(next, other);
+    const next = selected === option ? "" : option;
+    setShowOther(false);
+    emit(next, "");
   };
 
   const handleOtherChange = (e) => {
-    // Adding a custom pronoun also clears "Prefer not to say".
-    const without = selected.filter((s) => s !== EXCLUSIVE);
-    emit(without, e.target.value);
+    emit("", e.target.value);
   };
 
   return (
@@ -88,7 +76,7 @@ const PronounsPicker = ({
       <FormLabel sx={{ mb: 1, fontWeight: 500 }}>{label}</FormLabel>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1 }}>
         {CURATED_PRONOUNS.map((option) => {
-          const active = selected.includes(option);
+          const active = selected === option;
           return (
             <Chip
               key={option}
@@ -109,9 +97,10 @@ const PronounsPicker = ({
             onClick={() => {
               const next = !showOther;
               setShowOther(next);
-              if (!next) {
-                const without = selected.filter((s) => s !== EXCLUSIVE);
-                emit(without, "");
+              if (next) {
+                emit("", other);
+              } else {
+                emit(selected, "");
               }
             }}
             sx={{ fontSize: "0.95rem" }}
@@ -125,7 +114,7 @@ const PronounsPicker = ({
           placeholder="e.g. ey/em, fae/faer"
           value={other}
           onChange={handleOtherChange}
-          helperText="Separate multiple sets with commas."
+          helperText="Enter one set of pronouns."
           sx={{ mb: 1 }}
         />
       )}

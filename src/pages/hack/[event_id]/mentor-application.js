@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
@@ -9,7 +10,6 @@ import {
 } from "@propelauth/react";
 import {
   Typography,
-  Container,
   Box,
   TextField,
   Button,
@@ -21,7 +21,6 @@ import {
   Select,
   MenuItem,
   Paper,
-  Divider,
   Alert,
   Link,
   OutlinedInput,
@@ -39,14 +38,19 @@ import Head from "next/head";
 import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
-import LoginOrRegister from "../../../components/LoginOrRegister/LoginOrRegister2";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
-import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
 import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
+import {
+  RefinedRoot,
+  RefinedFonts,
+  Eyebrow,
+  Arrow,
+  Stat,
+} from "../../../components/design/refined";
 import {
   OHackParticipationSelect,
   PronounsPicker,
@@ -58,6 +62,222 @@ import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import RadioIcon from "@mui/material/Radio";
 import { getEventTimezone, getTimezoneAbbreviation } from "../../../lib/timezoneUtils";
+
+const refinedFieldSx = {
+  mb: 3,
+  "& .MuiInputBase-root": {
+    bgcolor: "var(--surface)",
+    color: "var(--ink)",
+    borderRadius: 2,
+  },
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--line)",
+  },
+  "& .MuiInputBase-root:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#d5cdbd",
+  },
+  "& .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--brand)",
+  },
+  "& .MuiInputLabel-root": {
+    color: "var(--muted)",
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "var(--brand)",
+  },
+  "& .MuiFormHelperText-root": {
+    color: "var(--muted)",
+  },
+  "& textarea, & input": {
+    color: "var(--ink)",
+  },
+};
+
+const refinedChoiceSx = {
+  color: "var(--line)",
+  "&.Mui-checked": {
+    color: "var(--brand)",
+  },
+};
+
+const refinedChipSx = {
+  border: "1px solid var(--line)",
+  bgcolor: "var(--surface-2)",
+  color: "var(--ink)",
+  fontWeight: 500,
+  "& .MuiChip-deleteIcon": {
+    color: "var(--muted)",
+  },
+};
+
+const refinedAlertSx = {
+  borderRadius: 2,
+  border: "1px solid var(--line)",
+  bgcolor: "var(--surface-2)",
+  color: "var(--ink)",
+  "& .MuiAlert-icon": {
+    color: "var(--brand)",
+    mt: 0.25,
+  },
+  "& .MuiAlert-message": {
+    width: "100%",
+  },
+};
+
+const refinedInlineLinkSx = {
+  color: "var(--brand)",
+  fontWeight: 600,
+  textDecorationColor: "#d5cdbd",
+  "&:hover": {
+    color: "var(--brand-ink)",
+  },
+};
+
+const refinedCardSx = {
+  border: "1px solid var(--line)",
+  borderRadius: 2,
+  backgroundColor: "var(--surface)",
+  boxShadow: "none",
+};
+
+const refinedSelectMenuProps = {
+  PaperProps: {
+    sx: {
+      mt: 1,
+      borderRadius: 2,
+      border: "1px solid var(--line)",
+      boxShadow: "0 18px 40px -28px rgba(22,24,29,0.45)",
+    },
+  },
+};
+
+const stepTitleSx = {
+  fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+  fontSize: { xs: "1.65rem", sm: "2rem" },
+  fontWeight: 500,
+  letterSpacing: "-0.015em",
+  color: "var(--ink)",
+  mb: 1,
+};
+
+const stepLeadSx = {
+  color: "var(--muted)",
+  maxWidth: "44rem",
+  mb: 3,
+  lineHeight: 1.7,
+};
+
+const infoAlertSx = {
+  ...refinedAlertSx,
+};
+
+const warningAlertSx = {
+  ...refinedAlertSx,
+  borderColor: "#e7d1aa",
+  bgcolor: "#faf3e5",
+  "& .MuiAlert-icon": {
+    color: "#9b5d05",
+    mt: 0.25,
+  },
+};
+
+const successAlertSx = {
+  ...refinedAlertSx,
+  borderColor: "#c5dbc7",
+  bgcolor: "#edf7f0",
+  "& .MuiAlert-icon": {
+    color: "#2f6e50",
+    mt: 0.25,
+  },
+};
+
+const errorAlertSx = {
+  ...refinedAlertSx,
+  borderColor: "#e4c0ba",
+  bgcolor: "#f9efed",
+  "& .MuiAlert-icon": {
+    color: "#b04a36",
+    mt: 0.25,
+  },
+};
+
+const emphasisPanelSx = {
+  p: { xs: 2.5, md: 3 },
+  borderRadius: 2,
+  border: "1px solid var(--line)",
+  backgroundColor: "var(--surface-2)",
+};
+
+const primaryButtonSx = {
+  backgroundColor: "var(--brand)",
+  color: "#fff",
+  fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+  fontWeight: 600,
+  textTransform: "none",
+  borderRadius: "5px",
+  px: 2.75,
+  py: 1.15,
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: "#16315a",
+    boxShadow: "none",
+  },
+  "&.Mui-disabled": {
+    backgroundColor: "rgba(27,58,107,0.35)",
+    color: "rgba(255,255,255,0.72)",
+  },
+};
+
+const ghostButtonSx = {
+  borderColor: "var(--line)",
+  color: "var(--ink)",
+  fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+  fontWeight: 600,
+  textTransform: "none",
+  borderRadius: "5px",
+  px: 2.5,
+  py: 1.05,
+  boxShadow: "none",
+  "&:hover": {
+    borderColor: "var(--ink)",
+    backgroundColor: "rgba(0,0,0,0.02)",
+    boxShadow: "none",
+  },
+};
+
+const mentorStepperSx = {
+  "& .MuiStepLabel-label": {
+    fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+    fontSize: "0.92rem",
+    fontWeight: 500,
+    mt: 1,
+    color: "#5B6270",
+  },
+  "& .MuiStepLabel-label.Mui-active": {
+    color: "#1B3A6B",
+    fontWeight: 700,
+  },
+  "& .MuiStepLabel-label.Mui-completed": {
+    color: "#16181D",
+  },
+  "& .MuiStepIcon-root": {
+    color: "#E7E1D4",
+    width: 28,
+    height: 28,
+  },
+  "& .MuiStepIcon-root.Mui-active": {
+    color: "#1B3A6B",
+  },
+  "& .MuiStepIcon-root.Mui-completed": {
+    color: "#1B3A6B",
+  },
+  "& .MuiStepIcon-text": {
+    fill: "#fff",
+  },
+  "& .MuiStepConnector-line": {
+    borderColor: "#E7E1D4",
+  },
+};
 
 const MentorApplicationComponent = () => {
   const router = useRouter();
@@ -626,14 +846,14 @@ const MentorApplicationComponent = () => {
       return false;
     }
 
-    // Only validate engineering specifics if Software Development is selected
+    // Only validate engineering specifics if Software Engineering is selected
     if (
-      formData.expertise.includes("Software Development") &&
+      formData.expertise.includes("Software Engineering") &&
       (!formData.engineeringSpecifics ||
         formData.engineeringSpecifics.length === 0)
     ) {
       setError(
-        "Please select at least one software engineering specific since you selected Software Development",
+        "Please select at least one software engineering specific since you selected Software Engineering",
       );
       return false;
     }
@@ -1040,9 +1260,16 @@ const MentorApplicationComponent = () => {
   // Render basic information form
   const renderBasicInfoForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Basic Information
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 1</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Basic information
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          Start with the essentials we need to identify your application and
+          introduce you to teams.
+        </Typography>
+      </Box>
 
       <Box sx={{ mb: 3 }}>
         <TextField
@@ -1053,7 +1280,7 @@ const MentorApplicationComponent = () => {
           fullWidth
           value={formData.email}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
 
         <TextField
@@ -1063,15 +1290,17 @@ const MentorApplicationComponent = () => {
           fullWidth
           value={formData.name}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
 
-        <PronounsPicker
-          value={formData.pronouns}
-          onChange={(next) =>
-            setFormData((prev) => ({ ...prev, pronouns: next }))
-          }
-        />
+        <Box sx={{ mb: 3 }}>
+          <PronounsPicker
+            value={formData.pronouns}
+            onChange={(next) =>
+              setFormData((prev) => ({ ...prev, pronouns: next }))
+            }
+          />
+        </Box>
 
         <TextField
           label="What company are you working for?"
@@ -1080,7 +1309,7 @@ const MentorApplicationComponent = () => {
           fullWidth
           value={formData.company}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
 
         <TextField
@@ -1092,7 +1321,7 @@ const MentorApplicationComponent = () => {
           value={formData.bio}
           onChange={handleChange}
           helperText="Tell us a bit about yourself and your professional background"
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
       </Box>
     </Box>
@@ -1101,9 +1330,16 @@ const MentorApplicationComponent = () => {
   // Render skills and experience form
   const renderSkillsAndExperienceForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Profile & Experience
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 2</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Profile and experience
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          Show teams where you can unblock them fastest, whether that is
+          software, product, design, data, or operational guidance.
+        </Typography>
+      </Box>
 
       <Box sx={{ mb: 3 }}>
         <UploadPhoto
@@ -1117,7 +1353,7 @@ const MentorApplicationComponent = () => {
           accessToken={accessToken}
           orgId={user?.orgId}
           userId={user?.userId}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
 
         <TextField
@@ -1127,13 +1363,16 @@ const MentorApplicationComponent = () => {
           fullWidth
           value={formData.linkedin}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
 
         <FormControl
           fullWidth
           required
-          sx={{ mb: formData.expertise.includes("Other") ? 1 : 3 }}
+          sx={{
+            ...refinedFieldSx,
+            mb: formData.expertise.includes("Other") ? 1 : 3,
+          }}
         >
           <InputLabel id="expertise-label">
             What kind of brain power can you help supply us with?
@@ -1144,13 +1383,14 @@ const MentorApplicationComponent = () => {
             multiple
             value={formData.expertise}
             onChange={(e) => customHandleMultiSelectChange(e, "expertise")}
+            MenuProps={refinedSelectMenuProps}
             input={
               <OutlinedInput label="What kind of brain power can you help supply us with?" />
             }
             renderValue={(selected) => (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {selected.map((value) => (
-                  <Chip key={value} label={value} />
+                  <Chip key={value} label={value} sx={refinedChipSx} />
                 ))}
               </Box>
             )}
@@ -1177,13 +1417,13 @@ const MentorApplicationComponent = () => {
             value={formData.otherExpertise}
             onChange={handleChange}
             helperText="Tell us about your specific area of expertise"
-            sx={{ mb: 3 }}
+            sx={refinedFieldSx}
           />
         )}
 
-        {/* Conditional Software Engineering Specifics field that appears when "Software Development" is selected */}
-        {formData.expertise.includes("Software Development") && (
-          <FormControl fullWidth required sx={{ mb: 3 }}>
+        {/* Conditional Software Engineering Specifics field that appears when "Software Engineering" is selected */}
+        {formData.expertise.includes("Software Engineering") && (
+          <FormControl fullWidth required sx={refinedFieldSx}>
             <InputLabel id="engineering-specifics-label">
               Software Engineering Specifics
             </InputLabel>
@@ -1195,11 +1435,12 @@ const MentorApplicationComponent = () => {
               onChange={(e) =>
                 customHandleMultiSelectChange(e, "engineeringSpecifics")
               }
+              MenuProps={refinedSelectMenuProps}
               input={<OutlinedInput label="Software Engineering Specifics" />}
               renderValue={(selected) => (
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                   {selected.map((value) => (
-                    <Chip key={value} label={value} />
+                    <Chip key={value} label={value} sx={refinedChipSx} />
                   ))}
                 </Box>
               )}
@@ -1222,7 +1463,7 @@ const MentorApplicationComponent = () => {
         <OHackParticipationSelect
           value={formData.participationCount}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
       </Box>
     </Box>
@@ -1232,10 +1473,18 @@ const MentorApplicationComponent = () => {
   // Render availability form (replace the old date/slot selection section)
   const renderAvailabilityForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        When can you help mentor? (Select all that apply)
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 2 }}>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 3</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Availability
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          Pick every block where you can proactively help. Teams rely on mentor
+          consistency more than volume, so choose the windows you can actually
+          honor.
+        </Typography>
+      </Box>
+      <Typography variant="body2" sx={{ ...stepLeadSx, fontSize: "0.98rem", mb: 2 }}>
         Select the dates you are available. For each date, pick the time slots
         you can mentor. For long hackathons, use the filter to quickly find your
         dates. All times are in{" "}
@@ -1245,8 +1494,12 @@ const MentorApplicationComponent = () => {
 
       {/* Conditionally show in-person attendance field only for physical events */}
       {!isVirtualEvent() && (
-        <FormControl required component="fieldset" sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
+        <FormControl required component="fieldset" sx={{ ...emphasisPanelSx, mb: 3 }}>
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{ fontWeight: 600, color: "var(--ink)" }}
+          >
             Will you be attending in person at{" "}
             {eventData?.location || "the event location"}?
           </Typography>
@@ -1257,12 +1510,12 @@ const MentorApplicationComponent = () => {
           >
             <FormControlLabel
               value="Yes!"
-              control={<RadioIcon />}
+              control={<RadioIcon sx={refinedChoiceSx} />}
               label="Yes! I'll be there in person"
             />
             <FormControlLabel
               value="No, I'll be virtual"
-              control={<RadioIcon />}
+              control={<RadioIcon sx={refinedChoiceSx} />}
               label="No, I'll be joining virtually"
             />
           </RadioGroup>
@@ -1270,7 +1523,7 @@ const MentorApplicationComponent = () => {
       )}
 
       {/* Location fields - conditional labels and requirements */}
-      <FormControl fullWidth required sx={{ mb: 3 }}>
+      <FormControl fullWidth required sx={refinedFieldSx}>
         <InputLabel id="country-label">
           {isVirtualEvent()
             ? "Which country will you be mentoring from?"
@@ -1284,6 +1537,7 @@ const MentorApplicationComponent = () => {
           name="country"
           value={formData.country}
           onChange={handleChange}
+          MenuProps={refinedSelectMenuProps}
           label={
             isVirtualEvent()
               ? "Which country will you be mentoring from?"
@@ -1307,7 +1561,7 @@ const MentorApplicationComponent = () => {
 
       {/* Only show state dropdown if country is United States */}
       {formData.country === "United States" && (
-        <FormControl fullWidth required sx={{ mb: 3 }}>
+        <FormControl fullWidth required sx={refinedFieldSx}>
           <InputLabel id="state-label">
             {isVirtualEvent()
               ? "Which state will you be mentoring from?"
@@ -1321,6 +1575,7 @@ const MentorApplicationComponent = () => {
             name="state"
             value={formData.state}
             onChange={handleChange}
+            MenuProps={refinedSelectMenuProps}
             label={
               isVirtualEvent()
                 ? "Which state will you be mentoring from?"
@@ -1398,7 +1653,7 @@ const MentorApplicationComponent = () => {
           fullWidth
           value={formData.state}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
       )}
 
@@ -1410,12 +1665,14 @@ const MentorApplicationComponent = () => {
         value={dateFilter}
         onChange={handleDateFilterChange}
         placeholder="Type to filter dates (e.g., 'Monday' or 'Jan')"
-        sx={{ mb: 2 }}
+        sx={refinedFieldSx}
       />
 
       {/* Accordion for each date */}
       {getFilteredDates().length === 0 ? (
-        <Alert severity="info">No dates match your filter.</Alert>
+        <Alert severity="info" sx={infoAlertSx}>
+          No dates match your filter.
+        </Alert>
       ) : (
         <Box>
           {getFilteredDates().map((date) => (
@@ -1423,7 +1680,18 @@ const MentorApplicationComponent = () => {
               key={date}
               expanded={expandedDate === date}
               onChange={handleAccordionChange(date)}
-              sx={{ mb: 2 }}
+              elevation={0}
+              sx={{
+                mb: 2,
+                border: "1px solid var(--line)",
+                borderRadius: "8px !important",
+                backgroundColor: "var(--surface)",
+                boxShadow: "none",
+                overflow: "hidden",
+                "&:before": {
+                  display: "none",
+                },
+              }}
             >
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
@@ -1431,28 +1699,48 @@ const MentorApplicationComponent = () => {
                 id={`panel-${date}-header`}
                 sx={{
                   bgcolor: selectedDates.includes(date)
-                    ? "primary.light"
-                    : "background.paper",
-                  color: selectedDates.includes(date)
-                    ? "white"
-                    : "text.primary",
+                    ? "rgba(27,58,107,0.08)"
+                    : "var(--surface)",
+                  color: "var(--ink)",
+                  borderBottom:
+                    expandedDate === date ? "1px solid var(--line)" : "none",
+                  "& .MuiAccordionSummary-expandIconWrapper": {
+                    color: "var(--brand)",
+                  },
                 }}
               >
                 <Box
-                  sx={{ display: "flex", alignItems: "center", width: "100%" }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    gap: 1.5,
+                    flexWrap: { xs: "wrap", sm: "nowrap" },
+                  }}
                 >
                   <Chip
                     label={date}
-                    color={selectedDates.includes(date) ? "primary" : "default"}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDateToggle(date);
                     }}
-                    sx={{ mr: 2 }}
+                    sx={{
+                      ...refinedChipSx,
+                      mr: { sm: 0.5 },
+                      bgcolor: selectedDates.includes(date)
+                        ? "var(--brand)"
+                        : "var(--surface-2)",
+                      color: selectedDates.includes(date)
+                        ? "#fff"
+                        : "var(--muted)",
+                      borderColor: selectedDates.includes(date)
+                        ? "var(--brand)"
+                        : "var(--line)",
+                    }}
                   />
                   <Typography
                     variant="subtitle1"
-                    sx={{ fontWeight: "bold", flexGrow: 1 }}
+                    sx={{ fontWeight: 600, flexGrow: 1, color: "var(--ink)" }}
                   >
                     {date}
                   </Typography>
@@ -1463,7 +1751,14 @@ const MentorApplicationComponent = () => {
                       e.stopPropagation();
                       handleSelectAllSlotsForDate(date);
                     }}
-                    sx={{ ml: 2 }}
+                    sx={{
+                      ...ghostButtonSx,
+                      minWidth: 0,
+                      px: 1.6,
+                      py: 0.7,
+                      ml: { sm: 1.5 },
+                      fontSize: "0.82rem",
+                    }}
                   >
                     Select All Slots
                   </Button>
@@ -1485,26 +1780,28 @@ const MentorApplicationComponent = () => {
                   {availabilityByDate[date]?.map((slot) => (
                     <Paper
                       key={slot.id}
-                      elevation={
-                        formData.availableDays.includes(slot.id) ? 8 : 1
-                      }
+                      elevation={0}
                       sx={{
-                        p: 2,
+                        ...refinedCardSx,
+                        p: 2.25,
                         cursor: "pointer",
-                        transition: "all 0.2s ease",
+                        transition: "transform .22s ease, box-shadow .22s ease, border-color .22s ease, background-color .22s ease",
                         bgcolor: formData.availableDays.includes(slot.id)
-                          ? "primary.light"
-                          : "background.paper",
-                        color: formData.availableDays.includes(slot.id)
-                          ? "white"
-                          : "text.primary",
-                        borderRadius: 2,
+                          ? "rgba(27,58,107,0.06)"
+                          : "var(--surface)",
+                        color: "var(--ink)",
+                        borderColor: formData.availableDays.includes(slot.id)
+                          ? "var(--brand)"
+                          : "var(--line)",
                         "&:hover": {
                           bgcolor: formData.availableDays.includes(slot.id)
-                            ? "primary.main"
-                            : "action.hover",
-                          transform: "translateY(-4px)",
-                          boxShadow: 6,
+                            ? "rgba(27,58,107,0.08)"
+                            : "var(--surface)",
+                          transform: "translateY(-2px)",
+                          borderColor: formData.availableDays.includes(slot.id)
+                            ? "var(--brand)"
+                            : "#d7cebc",
+                          boxShadow: "0 18px 40px -28px rgba(22,24,29,0.45)",
                         },
                       }}
                       onClick={() => {
@@ -1530,25 +1827,34 @@ const MentorApplicationComponent = () => {
                       >
                         <Typography
                           variant="body1"
-                          sx={{ mb: 1, fontWeight: "bold" }}
+                          sx={{ mb: 1, fontWeight: 600, color: "var(--ink)" }}
                         >
                           {slot.icon} {slot.label}
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ mb: 1, color: "var(--muted)" }}
+                        >
                           {slot.time} {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))}
                         </Typography>
                         <Typography
                           variant="caption"
-                          sx={{ mt: "auto", fontStyle: "italic" }}
+                          sx={{ mt: "auto", fontStyle: "italic", color: "var(--muted)" }}
                         >
                           {slot.energy}
                         </Typography>
                         {formData.availableDays.includes(slot.id) && (
                           <Chip
-                            label="Selected!"
-                            color="success"
+                            label="Selected"
                             size="small"
-                            sx={{ alignSelf: "flex-start", mt: 1 }}
+                            sx={{
+                              ...refinedChipSx,
+                              alignSelf: "flex-start",
+                              mt: 1.25,
+                              bgcolor: "var(--brand)",
+                              color: "#fff",
+                              borderColor: "var(--brand)",
+                            }}
                           />
                         )}
                       </Box>
@@ -1568,9 +1874,10 @@ const MentorApplicationComponent = () => {
           top: isMobile ? undefined : 80,
           zIndex: 10,
           mt: 3,
-          p: 2,
-          bgcolor: "success.light",
-          color: "white",
+          p: 2.5,
+          bgcolor: "var(--surface-2)",
+          color: "var(--ink)",
+          border: "1px solid var(--line)",
           borderRadius: 2,
           display: "flex",
           flexDirection: "column",
@@ -1600,29 +1907,38 @@ const MentorApplicationComponent = () => {
                     ),
                   }));
                 }}
-                color="primary"
-                sx={{ mb: 1 }}
+                sx={{
+                  ...refinedChipSx,
+                  mb: 1,
+                  bgcolor: "var(--surface)",
+                  color: "var(--ink)",
+                }}
               />
             );
           })}
         </Box>
         {formData.availableDays.length > 0 && (
           <Button
-            variant="contained"
-            color="warning"
+            variant="outlined"
             size="small"
             onClick={() => {
               setFormData((prev) => ({ ...prev, availableDays: [] }));
               setSelectedDates([]);
             }}
-            sx={{ mt: 2 }}
+            sx={{
+              ...ghostButtonSx,
+              mt: 1.5,
+              px: 1.6,
+              py: 0.7,
+              fontSize: "0.82rem",
+            }}
           >
             Clear All
           </Button>
         )}
       </Box>
       {formData.availableDays.length === 0 && (
-        <Alert severity="warning" sx={{ mt: 2 }}>
+        <Alert severity="warning" sx={{ ...warningAlertSx, mt: 2 }}>
           Please select at least one time slot when you'll be available to
           mentor.
         </Alert>
@@ -1633,9 +1949,16 @@ const MentorApplicationComponent = () => {
   // Render review form
   const renderReviewForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Review & Submit
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 4</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Review and submit
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          One last pass before you send it. Confirm the expectations, add any
+          final context, and submit for staff review.
+        </Typography>
+      </Box>
 
       <TextField
         label="Any questions or comments for us?"
@@ -1645,7 +1968,7 @@ const MentorApplicationComponent = () => {
         fullWidth
         value={formData.comments}
         onChange={handleChange}
-        sx={{ mb: 4 }}
+        sx={refinedFieldSx}
       />
 
       <FormControlLabel
@@ -1654,18 +1977,18 @@ const MentorApplicationComponent = () => {
             name="proactiveHelpUnderstood"
             checked={!!formData.proactiveHelpUnderstood}
             onChange={handleChange}
-            color="primary"
+            sx={refinedChoiceSx}
             required
           />
         }
         label={
-          <Typography variant="body1">
+          <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
             I understand mentor certificates are awarded for{" "}
             <strong>proactive help</strong> (Slack outreach, code review,
             presentation feedback) — not for showing up.
           </Typography>
         }
-        sx={{ mb: 2, alignItems: "flex-start" }}
+        sx={{ mb: 2, alignItems: "flex-start", color: "var(--ink)" }}
       />
 
       <FormControlLabel
@@ -1674,26 +1997,27 @@ const MentorApplicationComponent = () => {
             name="codeOfConduct"
             checked={formData.codeOfConduct}
             onChange={handleChange}
-            color="primary"
+            sx={refinedChoiceSx}
             required
           />
         }
         label={
-          <Typography variant="body1">
+          <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
             I agree to the{" "}
             <Link
               href="/hack/code-of-conduct"
               target="_blank"
               rel="noopener noreferrer"
+              sx={refinedInlineLinkSx}
             >
               Code of Conduct
             </Link>
           </Typography>
         }
-        sx={{ mb: 2 }}
+        sx={{ mb: 2, color: "var(--ink)" }}
       />
 
-      <Alert severity="info" sx={{ mb: 3 }}>
+      <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
         <Typography variant="body1">
           Your application is <strong>pending review</strong> — our staff
           reviews every mentor application by hand, which can take up to a week.
@@ -1723,62 +2047,114 @@ const MentorApplicationComponent = () => {
   // If form submitted successfully, show success message
   const renderSuccessMessage = () => {
     return (
-      <Container>
+      <RefinedRoot>
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
           <link rel="canonical" href={canonicalUrl} />
+          <meta name="theme-color" content="#1B3A6B" />
         </Head>
 
-        <Box my={8} textAlign="center">
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{ fontSize: "2.5rem", mb: 4, mt: 12 }}
-          >
-            Application Submitted!
-          </Typography>
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(100px, 12vh, 148px)",
+            paddingBottom: "clamp(48px, 8vh, 96px)",
+          }}
+        >
+          <div style={{ maxWidth: 760, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <Eyebrow>Application received</Eyebrow>
+              <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                Application <span className="ohx-italic">submitted.</span>
+              </h1>
+              <p
+                className="ohx-lead"
+                style={{ margin: "16px auto 0", textAlign: "center" }}
+              >
+                Thanks for offering your time and expertise. We have your mentor
+                application and our team will review it by hand.
+              </p>
+            </div>
 
-          <Alert severity="success" sx={{ mb: 2, mx: "auto", maxWidth: 600 }}>
-            <Typography variant="body1">
-              Thanks for applying to mentor at Opportunity Hack — we've received
-              your application.
-            </Typography>
-          </Alert>
+            <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+              <Alert severity="success" sx={{ ...successAlertSx, mb: 2 }}>
+                <Typography variant="body1">
+                  Thanks for applying to mentor at Opportunity Hack — we&apos;ve
+                  received your application.
+                </Typography>
+              </Alert>
 
-          <Alert severity="info" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            <Typography variant="body1">
-              <strong>Your application is pending review.</strong> Our staff
-              reviews every mentor application — this typically takes up to a
-              week. You'll get an email when you're approved or if we have
-              follow-up questions.
-            </Typography>
-          </Alert>
+              <Alert severity="info" sx={{ ...infoAlertSx, mb: 4 }}>
+                <Typography variant="body1">
+                  <strong>Your application is pending review.</strong> Our staff
+                  reviews every mentor application — this typically takes up to a
+                  week. You&apos;ll get an email when you&apos;re approved or if we
+                  have follow-up questions.
+                </Typography>
+              </Alert>
 
-          <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
-            <GiveButterWidget
-              context="success"
-              userId={user?.userId}
-              applicationType="mentor"
-              size="large"
-              onDonationEvent={(eventData) => {
-                // Track mentor application donations
-                console.log("Mentor donation event:", eventData);
-                // You can add additional tracking here
-              }}
-            />
-          </Box>
+              {Boolean(volunteerId) && (
+                <Box
+                  sx={{
+                    ...emphasisPanelSx,
+                    mb: 4,
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <VolunteerCheckInQR
+                    eventId={event_id}
+                    volunteerId={volunteerId}
+                    isSelected={isSelected}
+                    volunteerType="mentor"
+                    name={formData.name}
+                    isSubmitted={true}
+                    qrSize={200}
+                    sx={{ mx: "auto", maxWidth: 500 }}
+                  />
+                </Box>
+              )}
 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push(`/hack/${event_id}`)}
-            sx={{ mt: 2 }}
-          >
-            Return to Hackathon Page
-          </Button>
-        </Box>
-      </Container>
+              <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+                <GiveButterWidget
+                  context="success"
+                  userId={user?.userId}
+                  applicationType="mentor"
+                  size="large"
+                  onDonationEvent={(eventData) => {
+                    console.log("Mentor donation event:", eventData);
+                  }}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 1.5,
+                  justifyContent: "center",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={() => router.push(`/hack/${event_id}`)}
+                  sx={primaryButtonSx}
+                >
+                  Return to hackathon page
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => router.push("/hack")}
+                  sx={ghostButtonSx}
+                >
+                  See upcoming events
+                </Button>
+              </Box>
+            </Box>
+          </div>
+        </section>
+      </RefinedRoot>
     );
   };
 
@@ -1839,7 +2215,7 @@ const MentorApplicationComponent = () => {
 
   const renderApplicationForm = () => {
     return (
-      <Container>
+      <RefinedRoot>
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
@@ -1886,8 +2262,9 @@ const MentorApplicationComponent = () => {
 
           {/* Additional SEO tags */}
           <meta name="application-name" content="Opportunity Hack" />
-          <meta name="theme-color" content="#3f51b5" />
+          <meta name="theme-color" content="#1B3A6B" />
           <meta name="format-detection" content="telephone=no" />
+          <RefinedFonts />
 
           {/* Preconnect to optimize loading */}
           <link
@@ -1915,146 +2292,192 @@ const MentorApplicationComponent = () => {
           onCloseNotification={closeNotification}
         />
 
-        <Box ref={formRef}>
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{ fontSize: "2.5rem", mb: 2, mt: 0 }}
-          >
-            Mentor Application
-          </Typography>
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(100px, 12vh, 148px)",
+            paddingBottom: "clamp(48px, 8vh, 96px)",
+          }}
+        >
+          <Box ref={formRef}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.1fr) 320px" },
+                gap: { xs: 4, lg: 5 },
+                alignItems: "start",
+                mb: 4,
+              }}
+            >
+              <Box>
+                <Eyebrow>
+                  {eventData ? `${eventData.name} · mentor application` : "Mentor application"}
+                </Eyebrow>
+                <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                  Guide teams to <span className="ohx-italic">ship real impact.</span>
+                </h1>
+                <p className="ohx-lead" style={{ marginTop: 16 }}>
+                  Opportunity Hack mentors help teams move through the parts that
+                  usually stall: architecture, scope, polish, and presentation.
+                  This application covers who you are, what you can mentor, and
+                  when you can show up consistently.
+                </p>
 
-          {/* QR Code for Check-in */}
-          <VolunteerCheckInQR
-            eventId={event_id}
-            volunteerId={volunteerId}
-            isSelected={isSelected}
-            volunteerType="mentor"
-            name={formData.name}
-            isSubmitted={true}
-            qrSize={200}
-            sx={{ mx: "auto", maxWidth: 500 }}
-          />
-
-          {isLoading ? (
-            <Box display="flex" justifyContent="center" my={4}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Box>
-              {/* Header section with responsive layout */}
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: { xs: "column", md: "row" },
-                  alignItems: { xs: "flex-start", md: "flex-start" },
-                  gap: 2,
-                  mb: 3,
-                }}
-              >
-                {/* Event info */}
-                <Box sx={{ flex: 1 }}>
-                  {eventData && (
-                    <>
-                      <Typography
-                        variant="h2"
-                        component="h2"
-                        sx={{ fontSize: "1.75rem", mb: 1 }}
-                      >
-                        {eventData.name}
-                      </Typography>
-
-                      <Typography
-                        variant="h3"
-                        component="h3"
-                        sx={{
-                          fontSize: "1.25rem",
-                          mb: 1,
-                          color: "text.secondary",
-                        }}
-                      >
-                        {eventData.location}
-                      </Typography>
-
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          mb: 1,
-                          color: "text.secondary",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                        }}
-                      >
-                        <Box
-                          component="span"
-                          sx={{ display: "inline-flex", alignItems: "center" }}
-                        >
-                          📆 {eventData.formattedStartDate}
-                        </Box>
-                        {eventData.formattedStartDate !==
-                          eventData.formattedEndDate && (
-                          <>
-                            <Box component="span" sx={{ mx: 0.5 }}>
-                              to
-                            </Box>
-                            <Box
-                              component="span"
-                              sx={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                              }}
-                            >
-                              {eventData.formattedEndDate}
-                            </Box>
-                          </>
-                        )}
-                      </Typography>
-                    </>
-                  )}
-                </Box>
-
-                {/* Social proof image */}
                 <Box
                   sx={{
-                    width: { xs: "100%", sm: "180px", md: "220px" },
-                    height: { xs: "140px", sm: "120px", md: "150px" },
-                    borderRadius: 2,
-                    overflow: "hidden",
-                    boxShadow: 2,
-                    flexShrink: 0,
-                    alignSelf: { xs: "center", md: "flex-start" },
-                    maxWidth: "100%",
-                    mt: { xs: 0, md: 1 },
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "repeat(2,minmax(0,1fr))",
+                      sm: "repeat(3,minmax(0,1fr))",
+                    },
+                    gap: 2,
+                    mt: 3,
+                    maxWidth: 540,
                   }}
                 >
-                  <img
-                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp"
-                    alt="Mentors guiding teams at Opportunity Hack"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "block",
-                      objectFit: "cover",
-                    }}
-                  />
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat value={String(steps.length)} label="steps" />
+                  </Box>
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat value="Manual" label="review" />
+                  </Box>
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat value="Flexible" label="availability" />
+                  </Box>
                 </Box>
+
+                {eventData && (
+                  <Box className="ohx-card" sx={{ mt: 3, p: { xs: 2.5, md: 3 } }}>
+                    <Eyebrow>Event details</Eyebrow>
+                    <Typography
+                      component="h2"
+                      sx={{
+                        ...stepTitleSx,
+                        fontSize: { xs: "1.4rem", sm: "1.7rem" },
+                        mt: 1,
+                      }}
+                    >
+                      {eventData.name}
+                    </Typography>
+                    <Typography sx={{ color: "var(--muted)", mb: 1 }}>
+                      {eventData.location}
+                    </Typography>
+                    <Typography sx={{ color: "var(--muted)", lineHeight: 1.7 }}>
+                      {eventData.formattedStartDate}
+                      {eventData.formattedStartDate !== eventData.formattedEndDate
+                        ? ` to ${eventData.formattedEndDate}`
+                        : ""}
+                    </Typography>
+                    {eventData.description && (
+                      <Typography sx={{ color: "var(--muted)", lineHeight: 1.7, mt: 2 }}>
+                        {eventData.description}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
               </Box>
 
-              {/* Add ApplicationNav component */}
-              <ApplicationNav eventId={event_id} currentType="mentor" />
+              <Box className="ohx-card" sx={{ p: 2.25 }}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    width: "100%",
+                    aspectRatio: "16 / 10",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    border: "1px solid var(--line)",
+                    mb: 2,
+                  }}
+                >
+                  <Image
+                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp"
+                    alt="Mentors guiding teams at Opportunity Hack"
+                    fill
+                    sizes="(max-width: 1200px) 100vw, 320px"
+                    style={{ objectFit: "cover" }}
+                  />
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "var(--muted)", lineHeight: 1.7, mb: 1.5 }}
+                >
+                  The strongest mentors do not wait for a ping. They find stuck
+                  teams, give concrete feedback, and stay present through pitch prep.
+                </Typography>
+                <Link
+                  href="/about/mentors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    ...refinedInlineLinkSx,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    "&:hover": {
+                      ...refinedInlineLinkSx["&:hover"],
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  Read the mentor guide <Arrow />
+                </Link>
+              </Box>
+            </Box>
 
-              <Box sx={{ mb: 4 }}>
+            <Box sx={{ mb: 2.5 }}>
+              <ApplicationNav eventId={event_id} currentType="mentor" />
+            </Box>
+
+            {Boolean(volunteerId) && (
+              <Box className="ohx-card" sx={{ p: 3, mb: 3, maxWidth: 560 }}>
+                <Eyebrow>Check-in</Eyebrow>
+                <VolunteerCheckInQR
+                  eventId={event_id}
+                  volunteerId={volunteerId}
+                  isSelected={isSelected}
+                  volunteerType="mentor"
+                  name={formData.name}
+                  isSubmitted={true}
+                  qrSize={200}
+                  sx={{ mx: "auto", maxWidth: 500 }}
+                />
+              </Box>
+            )}
+
+            {isLoading ? (
+              <Box
+                className="ohx-card"
+                sx={{
+                  minHeight: 240,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mt: 3,
+                }}
+              >
+                <CircularProgress sx={{ color: "var(--brand)" }} />
+              </Box>
+            ) : (
+              <Box sx={{ mt: 3 }}>
                 {eventData && eventData.isEventPast ? (
-                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                    <Alert severity="warning" sx={{ mb: 3 }}>
-                      <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                  <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3.5 }, mb: 4 }}>
+                    <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
+                      <Typography
+                        variant="h6"
+                        component="div"
+                        sx={{
+                          mb: 1,
+                          fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                          fontWeight: 500,
+                        }}
+                      >
                         This event has already ended
                       </Typography>
                       <Typography variant="body1">
-                        Applications are no longer being accepted for mentors as
-                        this hackathon has already concluded. Please check our
-                        upcoming events for future mentoring opportunities.
+                        Applications are no longer open for this mentor role.
+                        Please check the upcoming hackathons for the next chance
+                        to jump in.
                       </Typography>
                     </Alert>
 
@@ -2065,7 +2488,6 @@ const MentorApplicationComponent = () => {
                         applicationType="mentor"
                         size="large"
                         onDonationEvent={(eventData) => {
-                          // Track mentor application donations when event ended
                           console.log("Event ended mentor donation event:", eventData);
                         }}
                       />
@@ -2074,132 +2496,117 @@ const MentorApplicationComponent = () => {
                     <Box textAlign="center">
                       <Button
                         variant="contained"
-                        color="primary"
                         onClick={() => router.push("/hack")}
-                        sx={{ mt: 2 }}
+                        sx={primaryButtonSx}
                       >
-                        View Upcoming Events
+                        View upcoming events
                       </Button>
                     </Box>
-                  </Paper>
+                  </Box>
                 ) : (
                   <>
-                    <Stepper
-                      activeStep={activeStep}
-                      alternativeLabel={!isMobile}
-                      orientation={isMobile ? "horizontal" : "horizontal"}
-                      sx={{
-                        mb: 4,
-                        ...(isMobile && {
-                          "& .MuiStepLabel-root": {
-                            padding: "0 4px", // Reduce padding on mobile
-                          },
-                          "& .MuiStepLabel-labelContainer": {
-                            width: "auto", // Let the label container be as small as possible
-                          },
-                          "& .MuiStepLabel-label": {
-                            fontSize: "0.7rem", // Smaller text on mobile
-                            whiteSpace: "nowrap", // Prevent text wrapping
-                          },
-                          "& .MuiSvgIcon-root": {
-                            width: 20, // Smaller icons
-                            height: 20,
-                          },
-                          overflowX: "auto", // Allow horizontal scrolling if needed
-                          "&::-webkit-scrollbar": {
-                            display: "none", // Hide scrollbar on webkit browsers
-                          },
-                          scrollbarWidth: "none", // Hide scrollbar on Firefox
-                        }),
-                      }}
-                    >
-                      {steps.map((label) => (
-                        <Step key={label}>
-                          <StepLabel>
-                            {isMobile
-                              ? // On mobile, show abbreviated labels or just the step number
-                                activeStep === steps.indexOf(label)
-                                ? label
-                                : steps.indexOf(label) + 1
-                              : // On desktop, show full labels
-                                label}
-                          </StepLabel>
-                        </Step>
-                      ))}
-                    </Stepper>
-
-                    <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                      <Typography
-                        variant="h5"
-                        component="h2"
-                        sx={{ fontWeight: 600, mb: 1.5 }}
+                    <Box className="ohx-card" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
+                      <Stepper
+                        activeStep={activeStep}
+                        alternativeLabel={!isMobile}
+                        orientation="horizontal"
+                        sx={{
+                          ...mentorStepperSx,
+                          ...(isMobile && {
+                            overflowX: "auto",
+                            "&::-webkit-scrollbar": {
+                              display: "none",
+                            },
+                            scrollbarWidth: "none",
+                            "& .MuiStep-root": {
+                              minWidth: 92,
+                            },
+                            "& .MuiStepLabel-root": {
+                              px: 0.5,
+                            },
+                            "& .MuiStepLabel-label": {
+                              fontSize: "0.72rem",
+                              whiteSpace: "nowrap",
+                            },
+                            "& .MuiSvgIcon-root": {
+                              width: 20,
+                              height: 20,
+                            },
+                          }),
+                        }}
                       >
-                        Mentor at Opportunity Hack
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
-                        Opportunity Hack exists to help nonprofits ship working
-                        software that makes their mission easier. Mentors are a
-                        huge part of that — when teams get stuck on architecture,
-                        scope, or the last 20% of polish, you're who unblocks
-                        them.
-                      </Typography>
+                        {steps.map((label) => (
+                          <Step key={label}>
+                            <StepLabel>
+                              {isMobile
+                                ? activeStep === steps.indexOf(label)
+                                  ? label
+                                  : steps.indexOf(label) + 1
+                                : label}
+                            </StepLabel>
+                          </Step>
+                        ))}
+                      </Stepper>
+                    </Box>
 
-                      {eventData && eventData.description && (
-                        <Typography variant="body1" sx={{ mb: 3 }}>
-                          <strong>About this event:</strong>{" "}
-                          {eventData.description}
+                    <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3, md: 4 }, mb: 4 }}>
+                      <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
+                        <Eyebrow>What we expect</Eyebrow>
+                        <Typography
+                          component="h2"
+                          sx={{
+                            ...stepTitleSx,
+                            fontSize: { xs: "1.35rem", sm: "1.55rem" },
+                            mt: 1,
+                          }}
+                        >
+                          Mentor with intention
                         </Typography>
-                      )}
-
-                      <Alert severity="warning" sx={{ mb: 3 }}>
                         <Typography
                           variant="body1"
-                          sx={{ fontWeight: 600, mb: 1 }}
+                          sx={{ color: "var(--muted)", mb: 1.25, lineHeight: 1.7 }}
                         >
-                          Mentor certificates are awarded for proactive help —
-                          not attendance.
+                          Mentor certificates are awarded for proactive help — not
+                          attendance. To qualify, expect to:
                         </Typography>
-                        <Typography variant="body1" sx={{ mb: 1 }}>
-                          We're glad to write certificates that vouch for what
-                          you actually did. To qualify, expect to:
-                        </Typography>
-                        <Box component="ul" sx={{ m: 0, pl: 3 }}>
-                          <Typography component="li" variant="body1">
-                            Reach out to teams in Slack proactively (especially
-                            if you're remote) — don't wait to be asked.
+                        <Box component="ul" sx={{ m: 0, pl: 3, color: "var(--ink)" }}>
+                          <Typography component="li" variant="body1" sx={{ mb: 0.75, lineHeight: 1.7 }}>
+                            Reach out to teams in Slack proactively, especially if
+                            you are remote.
                           </Typography>
-                          <Typography component="li" variant="body1">
-                            Review code, point out concrete improvements, and
-                            help teams scope down to something they can finish.
+                          <Typography component="li" variant="body1" sx={{ mb: 0.75, lineHeight: 1.7 }}>
+                            Review code, suggest concrete improvements, and help
+                            teams scope down to something finishable.
                           </Typography>
-                          <Typography component="li" variant="body1">
+                          <Typography component="li" variant="body1" sx={{ mb: 0.75, lineHeight: 1.7 }}>
                             Sit with teams during presentation prep and give
-                            feedback on their pitch.
+                            actionable demo or pitch feedback.
                           </Typography>
-                          <Typography component="li" variant="body1">
-                            Show up consistently — checking in, then
-                            disappearing, isn't enough.
+                          <Typography component="li" variant="body1" sx={{ lineHeight: 1.7 }}>
+                            Show up consistently — a quick check-in without follow
+                            through is not enough.
                           </Typography>
                         </Box>
-                      </Alert>
+                      </Box>
 
-                      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
+                      <Alert severity="info" icon={<InfoIcon />} sx={{ ...infoAlertSx, mb: 4 }}>
                         <Typography variant="body1">
-                          New to mentoring at Opportunity Hack? Check out our{" "}
+                          New to mentoring at Opportunity Hack? Review the{" "}
                           <Link
                             href="/about/mentors"
                             target="_blank"
                             rel="noopener noreferrer"
-                            sx={{ fontWeight: "bold" }}
+                            sx={refinedInlineLinkSx}
                           >
-                            Mentors Guide
+                            mentor guide
                           </Link>{" "}
-                          for the role, expectations, and impact you'll make.
+                          for the role, expectations, and the kind of help teams
+                          remember.
                         </Typography>
                       </Alert>
 
                       {(error || recaptchaError) && (
-                        <Alert severity="error" sx={{ mb: 4 }}>
+                        <Alert severity="error" sx={{ ...errorAlertSx, mb: 4 }}>
                           {error || recaptchaError}
                         </Alert>
                       )}
@@ -2215,7 +2622,9 @@ const MentorApplicationComponent = () => {
                         <Box
                           sx={{
                             display: "flex",
+                            flexDirection: { xs: "column-reverse", sm: "row" },
                             justifyContent: "space-between",
+                            gap: 1.5,
                             mt: 4,
                           }}
                         >
@@ -2223,36 +2632,45 @@ const MentorApplicationComponent = () => {
                             disabled={activeStep === 0 || submitting}
                             onClick={handleBack}
                             variant="outlined"
+                            sx={{
+                              ...ghostButtonSx,
+                              opacity: activeStep === 0 ? 0.45 : 1,
+                            }}
                           >
                             Back
                           </Button>
 
                           <Button
                             variant="contained"
-                            color="primary"
                             onClick={handleNext}
                             disabled={submitting || recaptchaLoading}
+                            sx={primaryButtonSx}
+                            endIcon={
+                              activeStep === steps.length - 1 || submitting || recaptchaLoading
+                                ? null
+                                : <Arrow />
+                            }
                           >
                             {activeStep === steps.length - 1 ? (
                               submitting || recaptchaLoading ? (
-                                <CircularProgress size={24} />
+                                <CircularProgress size={20} sx={{ color: "#fff" }} />
                               ) : (
-                                "Submit Application"
+                                "Submit application"
                               )
                             ) : (
-                              "Next"
+                              "Next step"
                             )}
                           </Button>
                         </Box>
                       </form>
-                    </Paper>
+                    </Box>
                   </>
                 )}
               </Box>
-            </Box>
-          )}
-        </Box>
-      </Container>
+            )}
+          </Box>
+        </section>
+      </RefinedRoot>
     );
   };
 
@@ -2275,6 +2693,7 @@ const MentorApplicationPage = ({ seoMetadata }) => {
     <>
       {/* SEO metadata available to crawlers before authentication */}
       <Head>
+        <RefinedFonts />
         <title>{seoMetadata.title}</title>
         <meta name="description" content={seoMetadata.description} />
         <meta
@@ -2310,7 +2729,7 @@ const MentorApplicationPage = ({ seoMetadata }) => {
         {/* Additional SEO meta tags */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="Opportunity Hack" />
-        <meta name="theme-color" content="#1976d2" />
+        <meta name="theme-color" content="#1B3A6B" />
       </Head>
 
       {/* Structured Data for SEO */}
