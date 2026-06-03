@@ -13,7 +13,6 @@ import {
   Divider,
   Stack,
   Collapse,
-  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -39,21 +38,6 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-const CompactDateCard = styled(Card)(({ theme }) => ({
-  marginBottom: theme.spacing(1),
-  border: `1px solid ${theme.palette.divider}`,
-}));
-
-const TimeSlotCell = styled(TableCell)(({ theme, available }) => ({
-  padding: theme.spacing(0.5, 1),
-  textAlign: 'center',
-  backgroundColor: available > 0 ? theme.palette.success.light : theme.palette.grey[100],
-  color: available > 0 ? theme.palette.success.contrastText : theme.palette.text.secondary,
-  border: `1px solid ${theme.palette.divider}`,
-  fontSize: '0.75rem',
-  minWidth: '60px',
-}));
-
 const MentorCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(1),
   border: `1px solid ${theme.palette.divider}`,
@@ -63,13 +47,50 @@ const MentorCard = styled(Card)(({ theme }) => ({
   }
 }));
 
-const TimeSlotSection = styled(Box)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-  padding: theme.spacing(1.5),
-  backgroundColor: theme.palette.grey[50],
-  borderRadius: theme.spacing(1),
-  border: `1px solid ${theme.palette.divider}`,
+// Sticky first column for the matrix (keeps the date label visible on mobile scroll)
+const DateHeadCell = styled(TableCell)(({ theme }) => ({
+  position: "sticky",
+  left: 0,
+  zIndex: 2,
+  backgroundColor: "var(--surface-2, #F4F1E9)",
+  fontWeight: 700,
+  fontSize: "0.7rem",
+  padding: theme.spacing(0.75, 1),
+  borderRight: `1px solid ${theme.palette.divider}`,
 }));
+
+const DateBodyCell = styled(TableCell)(({ theme }) => ({
+  position: "sticky",
+  left: 0,
+  zIndex: 1,
+  backgroundColor: theme.palette.background.paper,
+  padding: theme.spacing(0.5, 1),
+  borderRight: `1px solid ${theme.palette.divider}`,
+  minWidth: 120,
+}));
+
+// Heat-mapped availability cell — darker green = more mentors
+const MatrixCell = styled(TableCell, {
+  shouldForwardProp: (prop) => prop !== "count",
+})(({ theme, count }) => {
+  let backgroundColor = theme.palette.grey[50];
+  let color = theme.palette.text.disabled;
+  if (count > 0) {
+    const intensity = Math.min(count, 5);
+    backgroundColor = `rgba(27, 94, 32, ${0.1 + intensity * 0.13})`;
+    color = intensity >= 3 ? "#fff" : theme.palette.success.dark;
+  }
+  return {
+    textAlign: "center",
+    fontWeight: 700,
+    fontSize: "0.8rem",
+    padding: theme.spacing(0.75, 0.5),
+    backgroundColor,
+    color,
+    borderLeft: `1px solid ${theme.palette.divider}`,
+    minWidth: 40,
+  };
+});
 
 const MentorAvailability = ({ volunteers }) => {
   const theme = useTheme();
@@ -329,103 +350,183 @@ const MentorAvailability = ({ volunteers }) => {
     return uniqueMentors.size;
   }, [volunteers]);
 
-  const renderMentorCard = (mentor) => (
-    <MentorCard key={mentor.id} variant="outlined">
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+  // Mentor-centric roster: dedupe each mentor across the whole event and
+  // collect WHICH days/periods they're available (date -> Set(periodKey)).
+  const mentorRoster = useMemo(() => {
+    const roster = new Map();
+    sortedDates.forEach((date) => {
+      const dayData = dateGroups[date];
+      if (!dayData) return;
+      timePeriods.forEach((period) => {
+        const slot = dayData[period.key];
+        slot.mentorList.forEach((m) => {
+          if (!roster.has(m.id)) {
+            roster.set(m.id, {
+              id: m.id,
+              name: m.name,
+              isInPerson: m.isInPerson,
+              expertise: m.expertise,
+              company: m.company,
+              isCheckedIn: m.isCheckedIn,
+              availability: new Map(), // date -> Set(periodKey)
+              slotCount: 0,
+            });
+          }
+          const entry = roster.get(m.id);
+          if (!entry.availability.has(date)) entry.availability.set(date, new Set());
+          entry.availability.get(date).add(period.key);
+          entry.slotCount += 1;
+        });
+      });
+    });
+    // Sort: checked-in first, then in-person, then most available, then name.
+    return Array.from(roster.values()).sort((a, b) => {
+      if (a.isCheckedIn !== b.isCheckedIn) return a.isCheckedIn ? -1 : 1;
+      if (a.isInPerson !== b.isInPerson) return a.isInPerson ? -1 : 1;
+      if (b.slotCount !== a.slotCount) return b.slotCount - a.slotCount;
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [dateGroups, sortedDates, timePeriods]);
+
+  // Small emoji pill for a single time period (used in roster availability rows)
+  const renderPeriodPill = (period, key) => (
+    <Tooltip key={key} title={period.name} arrow>
+      <Box
+        component="span"
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.25,
+          px: 0.75,
+          py: 0.25,
+          borderRadius: "999px",
+          backgroundColor: "var(--surface-2, #F4F1E9)",
+          border: "1px solid var(--line, #E7E1D4)",
+          fontSize: "0.65rem",
+          lineHeight: 1.2,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span style={{ fontSize: "0.8rem" }}>{period.emoji}</span>
+        {!isMobile && <span>{period.short}</span>}
+      </Box>
+    </Tooltip>
+  );
+
+  const renderMentorRosterCard = (mentor) => (
+    <MentorCard key={mentor.id} variant="outlined" sx={{ height: "100%" }}>
+      <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 }, display: "flex", flexDirection: "column", height: "100%" }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
           <Badge
             overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             badgeContent={
               mentor.isCheckedIn ? (
-                <CheckCircleIcon 
-                  sx={{ 
-                    color: theme.palette.success.main, 
-                    fontSize: '16px',
-                    backgroundColor: 'white',
-                    borderRadius: '50%'
-                  }} 
+                <CheckCircleIcon
+                  sx={{
+                    color: theme.palette.success.main,
+                    fontSize: "16px",
+                    backgroundColor: "white",
+                    borderRadius: "50%",
+                  }}
                 />
               ) : null
             }
           >
-            <Avatar 
-              sx={{ 
-                width: 32, 
-                height: 32, 
+            <Avatar
+              sx={{
+                width: 40,
+                height: 40,
                 bgcolor: mentor.isInPerson ? theme.palette.primary.main : theme.palette.secondary.main,
-                fontSize: '0.875rem'
+                fontSize: "1rem",
               }}
             >
               {getMentorInitials(mentor.name)}
             </Avatar>
           </Badge>
-          
+
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {mentor.name}
-                {mentor.isCheckedIn && (
-                  <Chip
-                    label="Checked In"
-                    size="small"
-                    color="success"
-                    variant="filled"
-                    sx={{ ml: 1, fontSize: '0.6rem', height: '18px' }}
-                  />
-                )}
-              </Typography>
-              <Tooltip title={mentor.isInPerson ? "Available In-Person" : "Available Remote"}>
-                <Chip
-                  icon={mentor.isInPerson ? <GroupsIcon /> : <ComputerIcon />}
-                  label={mentor.isInPerson ? "In-Person" : "Remote"}
-                  size="small"
-                  color={mentor.isInPerson ? "primary" : "secondary"}
-                  variant="outlined"
-                />
-              </Tooltip>
-            </Box>
-            
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+              {mentor.name}
+            </Typography>
             {mentor.company && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
                 {mentor.company}
               </Typography>
             )}
-            
-            {mentor.expertise && mentor.expertise.length > 0 && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {mentor.expertise.slice(0, isMobile ? 2 : 4).map((skill, idx) => (
-                  <Chip
-                    key={idx}
-                    label={skill}
-                    size="small"
-                    variant="outlined"
-                    sx={{ 
-                      fontSize: '0.65rem',
-                      height: '20px',
-                      '& .MuiChip-label': { px: 1 }
-                    }}
-                  />
-                ))}
-                {mentor.expertise.length > (isMobile ? 2 : 4) && (
-                  <Tooltip title={mentor.expertise.slice(isMobile ? 2 : 4).join(', ')}>
-                    <Chip
-                      label={`+${mentor.expertise.length - (isMobile ? 2 : 4)}`}
-                      size="small"
-                      variant="filled"
-                      color="info"
-                      sx={{ 
-                        fontSize: '0.65rem',
-                        height: '20px',
-                        '& .MuiChip-label': { px: 1 }
-                      }}
-                    />
-                  </Tooltip>
-                )}
-              </Box>
-            )}
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+              <Chip
+                icon={mentor.isInPerson ? <GroupsIcon /> : <ComputerIcon />}
+                label={mentor.isInPerson ? "In-Person" : "Remote"}
+                size="small"
+                color={mentor.isInPerson ? "primary" : "secondary"}
+                variant="outlined"
+                sx={{ height: 20, fontSize: "0.65rem" }}
+              />
+              {mentor.isCheckedIn && (
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label="Checked in"
+                  size="small"
+                  color="success"
+                  variant="filled"
+                  sx={{ height: 20, fontSize: "0.65rem" }}
+                />
+              )}
+            </Box>
           </Box>
         </Box>
+
+        {mentor.expertise && mentor.expertise.length > 0 && (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}>
+            {mentor.expertise.slice(0, isMobile ? 3 : 5).map((skill, idx) => (
+              <Chip
+                key={idx}
+                label={skill}
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: "0.65rem", height: "20px", "& .MuiChip-label": { px: 1 } }}
+              />
+            ))}
+            {mentor.expertise.length > (isMobile ? 3 : 5) && (
+              <Tooltip title={mentor.expertise.slice(isMobile ? 3 : 5).join(", ")} arrow>
+                <Chip
+                  label={`+${mentor.expertise.length - (isMobile ? 3 : 5)}`}
+                  size="small"
+                  variant="filled"
+                  color="info"
+                  sx={{ fontSize: "0.65rem", height: "20px", "& .MuiChip-label": { px: 1 } }}
+                />
+              </Tooltip>
+            )}
+          </Box>
+        )}
+
+        <Divider sx={{ my: 1 }} />
+
+        <Typography
+          variant="overline"
+          sx={{ color: "text.secondary", lineHeight: 1.2, fontSize: "0.6rem", letterSpacing: "0.06em" }}
+        >
+          Available
+        </Typography>
+        <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+          {Array.from(mentor.availability.entries()).map(([date, periodKeys]) => (
+            <Box key={date} sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 600, color: "var(--ink, #16181D)", minWidth: 88 }}
+              >
+                {date}
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {timePeriods
+                  .filter((p) => periodKeys.has(p.key))
+                  .map((p) => renderPeriodPill(p, `${date}-${p.key}`))}
+              </Box>
+            </Box>
+          ))}
+        </Stack>
       </CardContent>
     </MentorCard>
   );
@@ -488,193 +589,168 @@ const MentorAvailability = ({ volunteers }) => {
             {showPastDates ? 'No mentor availability data yet' : 'No upcoming mentor availability'}
           </Typography>
         </Box>
-      ) : (
-        <Stack spacing={compactView ? 0.5 : 1}>
-          {sortedDates.map((date) => {
-            const dayData = dateGroups[date];
-            const hasAnyAvailability = timePeriods.some(period => dayData[period.key].total > 0);
-            
-            if (!hasAnyAvailability) return null;
-            
-            const isExpanded = expandedDates.has(date);
-            const totalSlots = timePeriods.reduce((sum, period) => sum + dayData[period.key].total, 0);
-            const uniqueMentorCount = dayData.uniqueMentors.size;
-            const checkedInCount = Array.from(dayData.uniqueMentors).filter(mentorId => 
-              dayData.mentorDetails.get(mentorId)?.isCheckedIn
-            ).length;
-            const isPast = isPastDate(date);
-            
-            return (
-              <CompactDateCard key={date} elevation={1} sx={{ opacity: isPast ? 0.7 : 1 }}>
-                <CardContent sx={{ p: compactView ? 1.5 : 2, '&:last-child': { pb: compactView ? 1.5 : 2 } }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant={compactView ? "body1" : "h6"} color="primary">
-                        {isPast && '⏰ '}{date}
-                      </Typography>
-                      <Chip 
-                        label={`${uniqueMentorCount} mentor${uniqueMentorCount !== 1 ? 's' : ''}`} 
-                        size="small" 
-                        color="primary" 
-                        variant="outlined"
-                      />
-                      {checkedInCount > 0 && (
-                        <Chip 
-                          icon={<CheckCircleIcon />}
-                          label={`${checkedInCount} checked in`} 
-                          size="small" 
-                          color="success" 
-                          variant="outlined"
-                        />
-                      )}
-                      {totalSlots !== uniqueMentorCount && (
-                        <Chip 
-                          label={`${totalSlots} slots`} 
-                          size="small" 
-                          color="secondary" 
-                          variant="outlined"
-                        />
-                      )}
-                    </Box>
-                    <IconButton
-                      onClick={() => toggleDateExpansion(date)}
-                      size="small"
+      ) : compactView ? (
+        // Compact MATRIX: one table, dates as rows × time periods as columns.
+        // Heat-mapped cells show unique mentors; click a row to reveal names.
+        <>
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={{ borderColor: "var(--line, #E7E1D4)" }}
+          >
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <DateHeadCell>Date</DateHeadCell>
+                  {timePeriods.map((period) => (
+                    <TableCell
+                      key={period.key}
+                      align="center"
+                      sx={{ p: 0.5, fontWeight: 700, fontSize: "0.65rem", lineHeight: 1.1 }}
                     >
-                      {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </IconButton>
-                  </Box>
-                  
-                  {compactView ? (
-                    // Compact horizontal view
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            {timePeriods.map((period) => (
-                              <TableCell key={period.key} align="center" sx={{ p: 0.5, fontSize: '0.7rem' }}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                  <span>{period.emoji}</span>
-                                  <span>{isMobile ? period.short : period.name}</span>
-                                </Box>
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow>
-                            {timePeriods.map((period) => {
-                              const slotData = dayData[period.key];
-                              const uniqueInPeriod = slotData.mentors.size;
-                              return (
-                                <TimeSlotCell
-                                  key={period.key}
-                                  available={uniqueInPeriod}
-                                >
-                                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.25 }}>
-                                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                                      {uniqueInPeriod || '-'}
-                                    </Typography>
-                                    {slotData.total > uniqueInPeriod && (
-                                      <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.6 }}>
-                                        ({slotData.total} slots)
-                                      </Typography>
-                                    )}
-                                    {uniqueInPeriod > 0 && !isMobile && (
-                                      <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
-                                        {slotData.inPerson > 0 && `👥${slotData.inPerson}`}
-                                        {slotData.inPerson > 0 && slotData.remote > 0 && ' '}
-                                        {slotData.remote > 0 && `💻${slotData.remote}`}
-                                        {slotData.checkedIn > 0 && ` ✅${slotData.checkedIn}`}
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                </TimeSlotCell>
-                              );
-                            })}
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : (
-                    // Enhanced expanded view with mentor details
-                    <Box>
-                      {timePeriods.map((period) => {
-                        const slotData = dayData[period.key];
-                        if (slotData.mentorList.length === 0) return null;
-                        
-                        return (
-                          <TimeSlotSection key={period.key}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <span>{period.emoji}</span>
-                                {period.name}
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                        <span style={{ fontSize: "1rem" }}>{period.emoji}</span>
+                        <span>{isMobile ? period.short : period.name}</span>
+                      </Box>
+                    </TableCell>
+                  ))}
+                  <TableCell align="center" sx={{ p: 0.5, fontWeight: 700, fontSize: "0.65rem" }}>
+                    Mentors
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedDates.map((date) => {
+                  const dayData = dateGroups[date];
+                  const hasAnyAvailability = timePeriods.some((period) => dayData[period.key].total > 0);
+                  if (!hasAnyAvailability) return null;
+
+                  const isExpanded = expandedDates.has(date);
+                  const uniqueMentorCount = dayData.uniqueMentors.size;
+                  const checkedInCount = Array.from(dayData.uniqueMentors).filter((mentorId) =>
+                    dayData.mentorDetails.get(mentorId)?.isCheckedIn
+                  ).length;
+                  const isPast = isPastDate(date);
+
+                  return (
+                    <React.Fragment key={date}>
+                      <TableRow
+                        hover
+                        onClick={() => toggleDateExpansion(date)}
+                        sx={{ cursor: "pointer", opacity: isPast ? 0.6 : 1 }}
+                      >
+                        <DateBodyCell>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            {isExpanded ? (
+                              <ExpandLessIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                            ) : (
+                              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                            )}
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                                {isPast && "⏰ "}
+                                {date}
                               </Typography>
-                              <Chip
-                                label={`${slotData.mentors.size} mentor${slotData.mentors.size !== 1 ? 's' : ''}`}
-                                size="small"
-                                color="primary"
-                                variant="outlined"
-                              />
-                              {slotData.checkedIn > 0 && (
-                                <Chip
-                                  icon={<CheckCircleIcon />}
-                                  label={`${slotData.checkedIn} checked in`}
-                                  size="small"
-                                  color="success"
-                                  variant="outlined"
-                                />
-                              )}
-                              {slotData.inPerson > 0 && (
-                                <Chip
-                                  icon={<GroupsIcon />}
-                                  label={`${slotData.inPerson} in-person`}
-                                  size="small"
-                                  color="primary"
-                                  variant="outlined"
-                                />
-                              )}
-                              {slotData.remote > 0 && (
-                                <Chip
-                                  icon={<ComputerIcon />}
-                                  label={`${slotData.remote} remote`}
-                                  size="small"
-                                  color="secondary"
-                                  variant="outlined"
-                                />
+                              {checkedInCount > 0 && (
+                                <Typography variant="caption" color="success.main" sx={{ fontSize: "0.6rem" }}>
+                                  ✅ {checkedInCount} checked in
+                                </Typography>
                               )}
                             </Box>
-                            
-                            <Grid container spacing={1}>
-                              {slotData.mentorList.map((mentor, idx) => (
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`${mentor.id}-${idx}`}>
-                                  {renderMentorCard(mentor)}
-                                </Grid>
-                              ))}
-                            </Grid>
-                          </TimeSlotSection>
-                        );
-                      })}
-                    </Box>
-                  )}
-                  
-                  <Collapse in={isExpanded}>
-                    <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        Legend: 👥 In-Person • 💻 Remote • ✅ Checked In • Numbers show unique mentors • "s" = total slots
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Available mentors: {Array.from(dayData.uniqueMentors).map(mentorId => {
-                          const details = dayData.mentorDetails.get(mentorId);
-                          return details?.name || mentorId;
-                        }).join(', ')}
-                      </Typography>
-                    </Box>
-                  </Collapse>
-                </CardContent>
-              </CompactDateCard>
-            );
-          })}
-        </Stack>
+                          </Box>
+                        </DateBodyCell>
+                        {timePeriods.map((period) => {
+                          const slotData = dayData[period.key];
+                          const uniqueInPeriod = slotData.mentors.size;
+                          const tip =
+                            uniqueInPeriod > 0
+                              ? `${period.name}: ${uniqueInPeriod} mentor${uniqueInPeriod !== 1 ? "s" : ""}` +
+                                (slotData.inPerson > 0 ? ` · 👥 ${slotData.inPerson} in-person` : "") +
+                                (slotData.remote > 0 ? ` · 💻 ${slotData.remote} remote` : "") +
+                                (slotData.checkedIn > 0 ? ` · ✅ ${slotData.checkedIn} checked in` : "")
+                              : `${period.name}: no mentors`;
+                          return (
+                            <Tooltip key={period.key} title={tip} arrow>
+                              <MatrixCell count={uniqueInPeriod}>
+                                {uniqueInPeriod || ""}
+                              </MatrixCell>
+                            </Tooltip>
+                          );
+                        })}
+                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: "0.85rem" }}>
+                          {uniqueMentorCount}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell colSpan={timePeriods.length + 2} sx={{ p: 0, border: 0 }}>
+                          <Collapse in={isExpanded} unmountOnExit>
+                            <Box sx={{ p: 1.5, backgroundColor: "var(--surface-2, #F4F1E9)" }}>
+                              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                                {Array.from(dayData.uniqueMentors).map((mentorId) => {
+                                  const d = dayData.mentorDetails.get(mentorId);
+                                  if (!d) return null;
+                                  const tipText =
+                                    (d.company ? `${d.company} · ` : "") +
+                                    (d.expertise?.length ? d.expertise.join(", ") : "No skills listed");
+                                  return (
+                                    <Tooltip key={mentorId} title={tipText} arrow>
+                                      <Chip
+                                        size="small"
+                                        variant="outlined"
+                                        color={d.isInPerson ? "primary" : "secondary"}
+                                        avatar={
+                                          <Avatar
+                                            sx={{
+                                              bgcolor: d.isInPerson
+                                                ? theme.palette.primary.main
+                                                : theme.palette.secondary.main,
+                                              fontSize: "0.6rem",
+                                            }}
+                                          >
+                                            {getMentorInitials(d.name)}
+                                          </Avatar>
+                                        }
+                                        label={
+                                          <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.4 }}>
+                                            {d.name}
+                                            {d.isInPerson ? (
+                                              <GroupsIcon sx={{ fontSize: "0.85rem" }} />
+                                            ) : (
+                                              <ComputerIcon sx={{ fontSize: "0.85rem" }} />
+                                            )}
+                                            {d.isCheckedIn && (
+                                              <CheckCircleIcon sx={{ fontSize: "0.85rem", color: "success.main" }} />
+                                            )}
+                                          </Box>
+                                        }
+                                      />
+                                    </Tooltip>
+                                  );
+                                })}
+                              </Box>
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+            Numbers = unique mentors available · 👥 in-person · 💻 remote · ✅ checked in · tap a date for names
+          </Typography>
+        </>
+      ) : (
+        // Detailed view: one card per mentor (deduped) with their availability windows.
+        <Grid container spacing={2}>
+          {mentorRoster.map((mentor) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={mentor.id}>
+              {renderMentorRosterCard(mentor)}
+            </Grid>
+          ))}
+        </Grid>
       )}
     </StyledPaper>
   );

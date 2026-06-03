@@ -164,6 +164,31 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
       free-hosting callout).
 - [x] `/praise` — refined hero + how-to callout + footer CTA; the `PraiseBoard` feed
       component keeps its own (colorful) styling.
+- [x] `/myfeedback` — full rewrite (editorial hero, navy CircularProgress overall-score
+      ring with Fraunces number, hairline `Accordion` skill groups w/ navy `LinearProgress`
+      bars, `.ohx-card` feedback entries w/ `.ohx-tag` chips, share-link card w/ themed
+      `TextField` + navy copy button). Loading/empty/error states refined too. All
+      data-fetch + `aggregateFeedback` logic unchanged.
+- [x] `/feedback/[userid]` (`GiveFeedback`, `ssr:false`) — full rewrite (hero w/ italic
+      terracotta recipient name, person `.ohx-card`, `Section`-framed form: navy-themed
+      MUI `Select`/`Radio`/`Checkbox`, navy `Slider`s per the scope convention, themed
+      textareas, native `.ohx-btn--primary` submit, calm success/error strips). Also fixed
+      a pre-existing hooks-order bug (the `if (!user)` early return sat before `useEffect`)
+      by moving all hooks above the guard. Submit/validation logic unchanged.
+- [x] `/hack/[event_id]/team/[team_id]` — full rewrite + **deep-linkable Table of Contents**.
+      Editorial masthead (event eyebrow, Fraunces team name, quiet status/`.ohx-tag` chips
+      — winning status → `--accent`, nonprofit/created meta line). Two-column layout: content
+      + a **sticky TOC rail** (right on desktop, scrollable pill row on top on mobile) that
+      lists only the sections that actually render and highlights the active one on scroll
+      (`IntersectionObserver`, `rootMargin -96px/-55%`). Each section is an `<section id>`
+      with `scrollMarginTop: 96` and a hover-reveal `#` anchor that copies a deep link;
+      TOC clicks smooth-scroll + `history.replaceState(#id)`; a mount effect honors an
+      incoming `#hash`. Sections: `mentor-support` (when event started), `completion`
+      (winning teams), `links`, `demo`, `problems`, `members`. Links → `.ohx-card--hover`
+      tiles (terracotta icons), demo/problems/members → hairline `.ohx-card`s, actions →
+      `.ohx-btn`. The embedded `MentorTeamPanel` + `TeamCompletionChecklist` widgets keep
+      their own styling (wrapped only in an anchored `headed={false}` section). All data
+      fetching + `getStaticProps`/`getStaticPaths` unchanged.
 - [ ] (later) remaining pages — application forms, `/nonprofit/[id]`, `/project/[id]`,
       `/about/why`, `/about/hearts`, `/contact`, etc. Deeper passes wanted on the own
       `/profile` editor (logged-in) and the `/hack/[event_id]` event page (see the

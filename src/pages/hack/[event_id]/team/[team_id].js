@@ -4,32 +4,23 @@ import Head from "next/head";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
 import {
-  Container,
-  Typography,
   Box,
-  Card,
-  CardContent,
   Grid,
-  Button,
   CircularProgress,
-  Chip,
-  Divider,
   Avatar,
-  Link,
-  Paper,
-  Alert,
   Skeleton,
 } from "@mui/material";
 import {
-  ArrowBack as BackIcon,
   GitHub as GitHubIcon,
   VideoLibrary as VideoIcon,
   Group as GroupIcon,
   Launch as LaunchIcon,
-  CalendarToday as CalendarIcon,
+  Link as LinkIcon,
+  CheckRounded as CheckRoundedIcon,
 } from "@mui/icons-material";
 import { FaSlack, FaHeart } from "react-icons/fa";
 import { isWinningStatus } from "../../../../constants/teamStatus";
+import { RefinedFonts, RefinedRoot, Eyebrow } from "../../../../components/design/refined";
 
 const VideoDisplay = dynamic(
   () => import("../../../../components/VideoDisplay/VideoDisplay"),
@@ -53,6 +44,22 @@ const TeamCompletionChecklist = dynamic(
 );
 
 const COMPLETION_VISIBLE_STATUSES = new Set(["DEPLOYED", "NONPROFIT_SIGNOFF"]);
+const SCROLL_OFFSET = 96; // clears the 64px fixed navbar + breathing room
+
+// Lightweight refined shell used by loading / error / content states.
+const Shell = ({ children, maxWidth = 1120 }) => (
+  <RefinedRoot>
+    <Head>
+      <RefinedFonts />
+    </Head>
+    <Box
+      className="ohx-wrap"
+      sx={{ maxWidth, pt: "clamp(96px, 12vh, 150px)", pb: { xs: 8, md: 12 } }}
+    >
+      {children}
+    </Box>
+  </RefinedRoot>
+);
 
 export default function TeamDetailPage({ teamData, eventData, problemStatementsData, nonprofitName: initialNonprofitName }) {
   const router = useRouter();
@@ -63,6 +70,8 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
   const [error, setError] = useState(null);
   const [problemStatements, setProblemStatements] = useState(problemStatementsData || []);
   const [nonprofitName, setNonprofitName] = useState(initialNonprofitName || null);
+  const [activeId, setActiveId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     if (!event_id || !team_id) return;
@@ -132,32 +141,99 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
     }
   };
 
+  // Sync the active TOC entry with scroll position. Queries the DOM directly so
+  // it doesn't need the (conditionally-computed) section list — works for
+  // whatever sections actually rendered.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const els = Array.from(document.querySelectorAll("[data-team-section]"));
+    if (els.length === 0) return;
+    setActiveId((cur) => cur || els[0].id);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveId(visible[0].target.id);
+      },
+      { rootMargin: `-${SCROLL_OFFSET}px 0px -55% 0px`, threshold: 0 }
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [team, event, problemStatements]);
+
+  // Honor a deep link (#section) once data has rendered.
+  useEffect(() => {
+    if (!team || typeof window === "undefined") return;
+    const hash = window.location.hash?.slice(1);
+    if (!hash) return;
+    const el = document.getElementById(hash);
+    if (el) requestAnimationFrame(() => el.scrollIntoView());
+  }, [team]);
+
+  const handleJump = (e, id) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+      window.history.replaceState(null, "", `#${id}`);
+      setActiveId(id);
+    }
+  };
+
+  const copySectionLink = (e, id) => {
+    e.preventDefault();
+    window.history.replaceState(null, "", `#${id}`);
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(`${window.location.origin}${window.location.pathname}#${id}`)
+        .catch(() => {});
+    }
+    setCopiedId(id);
+    setActiveId(id);
+    setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1600);
+  };
+
   if (loading) {
     return (
-      <Container maxWidth="md" sx={{ py: 8, textAlign: "center" }}>
-        <CircularProgress />
-        <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
-          Loading team details...
-        </Typography>
-      </Container>
+      <Shell maxWidth={760}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+            minHeight: "40vh",
+          }}
+        >
+          <CircularProgress sx={{ color: "var(--brand)" }} />
+          <Box sx={{ color: "var(--muted)" }}>Loading team details…</Box>
+        </Box>
+      </Shell>
     );
   }
 
   if (error || !team) {
     return (
-      <Container maxWidth="md" sx={{ py: 8 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error || "Team not found"}
-        </Alert>
-        <Button
-          component={NextLink}
-          href={`/hack/${event_id}`}
-          startIcon={<BackIcon />}
-          variant="outlined"
+      <Shell maxWidth={760}>
+        <Box
+          sx={{
+            p: 3,
+            mb: 3,
+            borderRadius: 2,
+            bgcolor: "var(--accent-soft)",
+            border: "1px solid #f3d3c7",
+            color: "#b23a18",
+            fontWeight: 600,
+          }}
         >
-          Back to Event
-        </Button>
-      </Container>
+          {error || "Team not found"}
+        </Box>
+        <NextLink href={`/hack/${event_id}`} className="ohx-btn ohx-btn--ghost">
+          ← Back to event
+        </NextLink>
+      </Shell>
     );
   }
 
@@ -173,12 +249,83 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
     const start = new Date(event.start_date);
     return !Number.isNaN(start.getTime()) && start <= new Date();
   })();
+  const hasLinks = !!(team.slack_channel || hasGithubLinks || team.devpost_link);
+  const winning = isWinningStatus(team.status);
+
+  // Build the TOC from the sections that actually render.
+  const sections = [];
+  if (eventHasStarted) sections.push({ id: "mentor-support", name: "Mentor support" });
+  if (showCompletionChecklist) sections.push({ id: "completion", name: "Project completion" });
+  if (hasLinks) sections.push({ id: "links", name: "Links & resources" });
+  if (team.demo_video_url) sections.push({ id: "demo", name: "Demo video" });
+  if (problemStatements.length > 0)
+    sections.push({
+      id: "problems",
+      name: problemStatements.length > 1 ? "Problem statements" : "Problem statement",
+    });
+  sections.push({ id: "members", name: "Team members" });
 
   const pageTitle = `${teamName} | ${eventName} | Opportunity Hack`;
   const pageDescription = `Team ${teamName} participating in ${eventName}. ${memberCount} member${memberCount !== 1 ? "s" : ""}.`;
 
+  // A section wrapper: anchor id + scroll offset + (optional) Fraunces heading
+  // with a hover-reveal copy-link affordance.
+  const SectionBlock = ({ id, title, icon, headed = true, children }) => (
+    <Box
+      component="section"
+      id={id}
+      data-team-section
+      sx={{ scrollMarginTop: `${SCROLL_OFFSET}px`, mb: { xs: 4.5, md: 6 } }}
+    >
+      {headed && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            mb: 2.5,
+            "&:hover .team-anchor": { opacity: 1 },
+          }}
+        >
+          {icon}
+          <Box
+            component="h2"
+            className="ohx-display"
+            sx={{ fontSize: "clamp(1.4rem, 2.6vw, 1.9rem)", color: "var(--ink)", m: 0 }}
+          >
+            {title}
+          </Box>
+          <Box
+            component="a"
+            href={`#${id}`}
+            onClick={(e) => copySectionLink(e, id)}
+            className="team-anchor"
+            aria-label={`Copy link to ${title}`}
+            title="Copy link to this section"
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              textDecoration: "none",
+              color: copiedId === id ? "var(--brand)" : "var(--faint)",
+              opacity: { xs: 1, md: 0 },
+              transition: "opacity .2s ease, color .2s ease",
+              "&:hover": { color: "var(--brand)" },
+            }}
+          >
+            {copiedId === id ? (
+              <CheckRoundedIcon sx={{ fontSize: 18 }} />
+            ) : (
+              <LinkIcon sx={{ fontSize: 18 }} />
+            )}
+          </Box>
+        </Box>
+      )}
+      {children}
+    </Box>
+  );
+
   return (
-    <>
+    <RefinedRoot>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -192,315 +339,462 @@ export default function TeamDetailPage({ teamData, eventData, problemStatementsD
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
+        <RefinedFonts />
       </Head>
 
-      <Container maxWidth="md" sx={{ py: 4, mt: 5 }}>
+      <Box
+        className="ohx-wrap"
+        sx={{ maxWidth: 1120, pt: "clamp(96px, 12vh, 150px)", pb: { xs: 8, md: 12 } }}
+      >
         {/* Back navigation */}
-        <Button
-          component={NextLink}
+        <NextLink
           href={`/hack/${event_id}`}
-          startIcon={<BackIcon />}
-          sx={{ mb: 3 }}
+          className="ohx-link"
+          style={{ fontSize: "0.92rem", marginBottom: 24, display: "inline-flex" }}
         >
-          Back to {eventName}
-        </Button>
+          ← Back to {eventName}
+        </NextLink>
 
-        {/* Team Header */}
-        <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <GroupIcon sx={{ fontSize: 32, mr: 1.5, color: "primary.main" }} />
-            <Box>
-              <Typography variant="h4" component="h1">
-                {teamName}
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
-                <Chip
-                  label={isActive ? "Active" : "Inactive"}
-                  color={isActive ? "success" : "default"}
-                  size="small"
-                />
-                {team.status && (
-                  <Chip
-                    label={team.status}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                )}
-                <Chip
-                  label={`${memberCount} member${memberCount !== 1 ? "s" : ""}`}
-                  size="small"
-                  variant="outlined"
-                />
+        {/* Masthead */}
+        <Box component="header" className="rise" sx={{ mb: { xs: 4, md: 5 } }}>
+          <Eyebrow>{eventName}</Eyebrow>
+          <Box
+            component="h1"
+            className="ohx-display"
+            sx={{ mt: 1.5, mb: 2, fontSize: "clamp(2.2rem, 5.4vw, 4rem)" }}
+          >
+            {teamName}
+          </Box>
+
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+            <span
+              className="ohx-tag"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: isActive ? "#3a7d44" : "var(--faint)",
+                }}
+              />
+              {isActive ? "Active" : "Inactive"}
+            </span>
+            {team.status && (
+              <span className={`ohx-tag${winning ? " ohx-tag--accent" : ""}`}>
+                {team.status}
+              </span>
+            )}
+            <span className="ohx-tag">
+              {memberCount} member{memberCount !== 1 ? "s" : ""}
+            </span>
+          </Box>
+
+          {/* Meta line */}
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: { xs: 1, sm: 3 },
+              color: "var(--muted)",
+              fontSize: "0.92rem",
+            }}
+          >
+            {(nonprofitName || team.selected_nonprofit_id) && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <FaHeart style={{ color: "var(--accent)", fontSize: 13 }} />
+                <span>
+                  <Box component="span" sx={{ color: "var(--ink)", fontWeight: 600 }}>
+                    Nonprofit:
+                  </Box>{" "}
+                  {nonprofitName || team.selected_nonprofit_id}
+                </span>
               </Box>
+            )}
+            {team.created && (
+              <span>Created {new Date(team.created).toLocaleDateString()}</span>
+            )}
+          </Box>
+
+          <hr className="ohx-rule" style={{ marginTop: 24 }} />
+        </Box>
+
+        {/* Two-column: content + sticky TOC rail (rail on the right on desktop,
+            on top on mobile so it stays the first thing you can link from). */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row-reverse" },
+            alignItems: "flex-start",
+            gap: { xs: 3, md: 5 },
+          }}
+        >
+          {/* TOC */}
+          <Box
+            component="nav"
+            aria-label="On this page"
+            className="ohx-card"
+            sx={{
+              flexShrink: 0,
+              width: { xs: "100%", md: 232 },
+              p: { xs: 1.5, md: 2.5 },
+              position: { md: "sticky" },
+              top: { md: `${SCROLL_OFFSET}px` },
+              boxSizing: "border-box",
+            }}
+          >
+            <Box
+              className="ohx-eyebrow"
+              sx={{ mb: { xs: 1, md: 1.5 }, px: { xs: 0.5, md: 0 } }}
+            >
+              On this page
+            </Box>
+            <Box
+              component="ul"
+              sx={{
+                listStyle: "none",
+                m: 0,
+                p: 0,
+                display: "flex",
+                flexDirection: { xs: "row", md: "column" },
+                gap: 0.5,
+                overflowX: { xs: "auto", md: "visible" },
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              {sections.map((s) => {
+                const active = activeId === s.id;
+                return (
+                  <Box component="li" key={s.id} sx={{ flexShrink: 0 }}>
+                    <Box
+                      component="a"
+                      href={`#${s.id}`}
+                      onClick={(e) => handleJump(e, s.id)}
+                      aria-current={active ? "true" : undefined}
+                      sx={{
+                        display: "block",
+                        textDecoration: "none",
+                        whiteSpace: "nowrap",
+                        fontFamily: "var(--body)",
+                        fontWeight: 600,
+                        fontSize: "0.86rem",
+                        lineHeight: 1.3,
+                        borderRadius: "6px",
+                        px: 1.25,
+                        py: 0.85,
+                        transition: "background-color .18s ease, color .18s ease",
+                        color: active ? "#fff" : "var(--muted)",
+                        backgroundColor: active ? "var(--brand)" : "transparent",
+                        "&:hover": {
+                          color: active ? "#fff" : "var(--ink)",
+                          backgroundColor: active
+                            ? "var(--brand)"
+                            : "rgba(27,58,107,0.06)",
+                        },
+                      }}
+                    >
+                      {s.name}
+                    </Box>
+                  </Box>
+                );
+              })}
             </Box>
           </Box>
 
-          {/* Event context */}
-          <Typography variant="body2" color="textSecondary">
-            Participating in{" "}
-            <Link component={NextLink} href={`/hack/${event_id}`}>
-              {eventName}
-            </Link>
-          </Typography>
+          {/* Content column */}
+          <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
+            {/* Mentor Support — visible to everyone once the event has started */}
+            {eventHasStarted && (
+              <SectionBlock id="mentor-support" headed={false}>
+                <MentorTeamPanel
+                  team={team}
+                  event={event}
+                  eventId={event_id}
+                  onTeamUpdate={(updated) => setTeam(updated)}
+                />
+              </SectionBlock>
+            )}
 
-          {/* Nonprofit */}
-          {(nonprofitName || team.selected_nonprofit_id) && (
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-              <FaHeart style={{ marginRight: 8, color: "#e91e63", fontSize: 14 }} />
-              <Typography variant="body2" color="textSecondary">
-                <strong>Nonprofit:</strong>{" "}
-                {nonprofitName || team.selected_nonprofit_id}
-              </Typography>
-            </Box>
-          )}
+            {/* Project Completion (winning teams only) */}
+            {showCompletionChecklist && (
+              <SectionBlock id="completion" headed={false}>
+                <TeamCompletionChecklist
+                  team={team}
+                  eventId={event_id}
+                  onTeamUpdate={(updated) => setTeam(updated)}
+                />
+              </SectionBlock>
+            )}
 
-          {/* Created date */}
-          {team.created && (
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-              <CalendarIcon sx={{ fontSize: 14, mr: 1, color: "text.secondary" }} />
-              <Typography variant="caption" color="textSecondary">
-                Created: {new Date(team.created).toLocaleDateString()}
-              </Typography>
-            </Box>
-          )}
-        </Paper>
+            {/* Links & resources */}
+            {hasLinks && (
+              <SectionBlock
+                id="links"
+                title="Links & resources"
+                icon={<LaunchIcon sx={{ color: "var(--accent)", fontSize: 24 }} />}
+              >
+                <Grid container spacing={2}>
+                  {team.slack_channel && (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box
+                        component="a"
+                        href={`https://opportunity-hack.slack.com/app_redirect?channel=${team.slack_channel}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ohx-card ohx-card--hover"
+                        sx={linkTileSx}
+                      >
+                        <FaSlack style={{ fontSize: 22, color: "var(--accent)" }} />
+                        <Box sx={{ minWidth: 0 }}>
+                          <Box sx={linkTileLabelSx}>Slack channel</Box>
+                          <Box sx={linkTileValueSx}>#{team.slack_channel}</Box>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  )}
+                  {hasGithubLinks && (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box
+                        component="a"
+                        href={team.github_links[0].link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ohx-card ohx-card--hover"
+                        sx={linkTileSx}
+                      >
+                        <GitHubIcon sx={{ fontSize: 22, color: "var(--ink)" }} />
+                        <Box sx={{ minWidth: 0 }}>
+                          <Box sx={linkTileLabelSx}>GitHub repository</Box>
+                          <Box sx={linkTileValueSx}>View code</Box>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  )}
+                  {team.devpost_link && (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Box
+                        component="a"
+                        href={team.devpost_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ohx-card ohx-card--hover"
+                        sx={linkTileSx}
+                      >
+                        <LaunchIcon sx={{ fontSize: 22, color: "var(--accent)" }} />
+                        <Box sx={{ minWidth: 0 }}>
+                          <Box sx={linkTileLabelSx}>DevPost submission</Box>
+                          <Box sx={linkTileValueSx}>View submission</Box>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  )}
+                </Grid>
+              </SectionBlock>
+            )}
 
-        {/* Mentor Support Panel — visible to everyone once the event has started */}
-        {eventHasStarted && (
-          <MentorTeamPanel
-            team={team}
-            event={event}
-            eventId={event_id}
-            onTeamUpdate={(updated) => setTeam(updated)}
-          />
-        )}
+            {/* Demo Video */}
+            {team.demo_video_url && (
+              <SectionBlock
+                id="demo"
+                title="Demo video"
+                icon={<VideoIcon sx={{ color: "var(--accent)", fontSize: 24 }} />}
+              >
+                <Box className="ohx-card" sx={{ p: { xs: 1.5, md: 2 } }}>
+                  <VideoDisplay url={team.demo_video_url} title={`${teamName} Demo`} />
+                </Box>
+              </SectionBlock>
+            )}
 
-        {/* Project Completion Checklist (winning teams only) */}
-        {showCompletionChecklist && (
-          <TeamCompletionChecklist
-            team={team}
-            eventId={event_id}
-            onTeamUpdate={(updated) => setTeam(updated)}
-          />
-        )}
-
-        {/* Team Links */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          {/* Slack Channel */}
-          {team.slack_channel && (
-            <Grid item xs={12} sm={6} md={4}>
-              <Card variant="outlined" sx={{ height: "100%" }}>
-                <CardContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <FaSlack style={{ fontSize: 20, color: "#4A154B" }} />
-                  <Box>
-                    <Typography variant="body2" color="textSecondary">
-                      Slack Channel
-                    </Typography>
-                    <Link
-                      href={`https://opportunity-hack.slack.com/app_redirect?channel=${team.slack_channel}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="body2"
+            {/* Problem Statements */}
+            {problemStatements.length > 0 && (
+              <SectionBlock
+                id="problems"
+                title={
+                  problemStatements.length > 1
+                    ? "Problem statements"
+                    : "Problem statement"
+                }
+                icon={<FaHeart style={{ color: "var(--accent)", fontSize: 18 }} />}
+              >
+                <Box className="ohx-card" sx={{ p: { xs: 2.5, md: 3.5 } }}>
+                  {problemStatements.map((ps, index) => (
+                    <Box
+                      key={ps.id || index}
+                      sx={{
+                        mb:
+                          index < problemStatements.length - 1 ? 3 : 0,
+                        pb:
+                          index < problemStatements.length - 1 ? 3 : 0,
+                        borderBottom:
+                          index < problemStatements.length - 1
+                            ? "1px solid var(--line)"
+                            : "none",
+                      }}
                     >
-                      #{team.slack_channel}
-                    </Link>
+                      <Box
+                        className="ohx-display"
+                        sx={{ fontSize: "1.2rem", color: "var(--ink)", mb: 0.5 }}
+                      >
+                        {ps.title || "Untitled Problem Statement"}
+                      </Box>
+                      {ps.description && (
+                        <Box sx={{ color: "var(--muted)", lineHeight: 1.6 }}>
+                          {ps.description.length > 300
+                            ? `${ps.description.substring(0, 300)}…`
+                            : ps.description}
+                        </Box>
+                      )}
+                      {ps.id && (
+                        <Box sx={{ mt: 1 }}>
+                          <NextLink href={`/project/${ps.id}`} className="ohx-link">
+                            View full project details
+                            <span className="ohx-arrow" aria-hidden="true">
+                              →
+                            </span>
+                          </NextLink>
+                        </Box>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              </SectionBlock>
+            )}
+
+            {/* Team Members */}
+            <SectionBlock
+              id="members"
+              title={`Team members (${memberCount})`}
+              icon={<GroupIcon sx={{ color: "var(--accent)", fontSize: 24 }} />}
+            >
+              <Box className="ohx-card" sx={{ p: { xs: 2.5, md: 3.5 } }}>
+                {memberCount > 0 ? (
+                  <Grid container spacing={2}>
+                    {team.users.map((user, index) => {
+                      const isObject = typeof user === "object" && user !== null;
+                      const displayName = isObject
+                        ? user.name || user.nickname || `Team member #${index + 1}`
+                        : `Team member #${index + 1}`;
+                      const profileImage = isObject ? user.profile_image : null;
+                      const dbId = isObject ? user.id : user;
+                      const key = dbId || `member-${index}`;
+
+                      const tileInner = (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            textAlign: "center",
+                            p: 1.5,
+                            borderRadius: 2,
+                            transition: "background-color 150ms ease",
+                            "&:hover": dbId
+                              ? { backgroundColor: "var(--surface-2)" }
+                              : {},
+                          }}
+                        >
+                          <Avatar
+                            src={profileImage}
+                            alt={displayName}
+                            sx={{
+                              width: 60,
+                              height: 60,
+                              mb: 1,
+                              border: "1px solid var(--line)",
+                            }}
+                          >
+                            {displayName?.[0] || "?"}
+                          </Avatar>
+                          <Box
+                            sx={{
+                              fontSize: "0.9rem",
+                              fontWeight: 600,
+                              color: "var(--ink)",
+                              maxWidth: "100%",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {displayName}
+                          </Box>
+                        </Box>
+                      );
+
+                      return (
+                        <Grid size={{ xs: 6, sm: 4, md: 3 }} key={key}>
+                          {dbId ? (
+                            <NextLink
+                              href={`/profile/${dbId}`}
+                              style={{ textDecoration: "none", color: "inherit" }}
+                            >
+                              {tileInner}
+                            </NextLink>
+                          ) : (
+                            tileInner
+                          )}
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                ) : (
+                  <Box sx={{ color: "var(--muted)" }}>
+                    No members yet. Be the first to join!
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {/* GitHub Repository */}
-          {hasGithubLinks && (
-            <Grid item xs={12} sm={6} md={4}>
-              <Card variant="outlined" sx={{ height: "100%" }}>
-                <CardContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <GitHubIcon sx={{ fontSize: 20 }} />
-                  <Box>
-                    <Typography variant="body2" color="textSecondary">
-                      GitHub Repository
-                    </Typography>
-                    <Link
-                      href={team.github_links[0].link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="body2"
-                    >
-                      View Code
-                    </Link>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {/* DevPost Link */}
-          {team.devpost_link && (
-            <Grid item xs={12} sm={6} md={4}>
-              <Card variant="outlined" sx={{ height: "100%" }}>
-                <CardContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <LaunchIcon sx={{ fontSize: 20, color: "#003E54" }} />
-                  <Box>
-                    <Typography variant="body2" color="textSecondary">
-                      DevPost Submission
-                    </Typography>
-                    <Link
-                      href={team.devpost_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="body2"
-                    >
-                      View Submission
-                    </Link>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
-
-        {/* Demo Video Embed */}
-        {team.demo_video_url && (
-          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <VideoIcon sx={{ fontSize: 20, color: "#FF0000", mr: 1 }} />
-              <Typography variant="h6">Demo Video</Typography>
-            </Box>
-            <VideoDisplay
-              url={team.demo_video_url}
-              title={`${teamName} Demo`}
-            />
-          </Paper>
-        )}
-
-        {/* Problem Statements */}
-        {problemStatements.length > 0 && (
-          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <FaHeart style={{ marginRight: 8, color: "#e91e63", fontSize: 18 }} />
-              <Typography variant="h6">
-                Problem Statement{problemStatements.length > 1 ? "s" : ""}
-              </Typography>
-            </Box>
-            {problemStatements.map((ps, index) => (
-              <Box key={ps.id || index} sx={{ ml: 1, mb: index < problemStatements.length - 1 ? 2 : 0 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  {ps.title || "Untitled Problem Statement"}
-                </Typography>
-                {ps.description && (
-                  <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
-                    {ps.description.length > 300
-                      ? `${ps.description.substring(0, 300)}...`
-                      : ps.description}
-                  </Typography>
-                )}
-                {ps.id && (
-                  <Link
-                    component={NextLink}
-                    href={`/project/${ps.id}`}
-                    variant="body2"
-                    sx={{ mt: 0.5, display: "inline-block" }}
-                  >
-                    View full project details →
-                  </Link>
                 )}
               </Box>
-            ))}
-          </Paper>
-        )}
+            </SectionBlock>
 
-        {/* Team Members */}
-        <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            <GroupIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-            Team Members ({memberCount})
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          {memberCount > 0 ? (
-            <Grid container spacing={2}>
-              {team.users.map((user, index) => {
-                const isObject = typeof user === "object" && user !== null;
-                const displayName = isObject
-                  ? user.name || user.nickname || `Team member #${index + 1}`
-                  : `Team member #${index + 1}`;
-                const profileImage = isObject ? user.profile_image : null;
-                const dbId = isObject ? user.id : user;
-                const key = dbId || `member-${index}`;
-
-                const tileInner = (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      textAlign: "center",
-                      p: 1,
-                      borderRadius: 1,
-                      transition: "background-color 150ms ease",
-                      "&:hover": dbId ? { backgroundColor: "rgba(0,0,0,0.04)" } : {},
-                    }}
-                  >
-                    <Avatar
-                      src={profileImage}
-                      alt={displayName}
-                      sx={{ width: 56, height: 56, mb: 1 }}
-                    >
-                      {displayName?.[0] || "?"}
-                    </Avatar>
-                    <Typography variant="body2" noWrap sx={{ maxWidth: "100%" }}>
-                      {displayName}
-                    </Typography>
-                  </Box>
-                );
-
-                return (
-                  <Grid item xs={6} sm={4} md={3} key={key}>
-                    {dbId ? (
-                      <Link
-                        component={NextLink}
-                        href={`/profile/${dbId}`}
-                        underline="none"
-                        color="inherit"
-                      >
-                        {tileInner}
-                      </Link>
-                    ) : (
-                      tileInner
-                    )}
-                  </Grid>
-                );
-              })}
-            </Grid>
-          ) : (
-            <Typography variant="body2" color="textSecondary">
-              No members yet. Be the first to join!
-            </Typography>
-          )}
-        </Paper>
-
-        {/* Actions */}
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <Button
-            component={NextLink}
-            href={`/hack/${event_id}/findteam`}
-            variant="contained"
-            color="primary"
-          >
-            Find a Team
-          </Button>
-          <Button
-            component={NextLink}
-            href={`/hack/${event_id}`}
-            variant="outlined"
-          >
-            View All Teams
-          </Button>
+            {/* Actions */}
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <NextLink
+                href={`/hack/${event_id}/findteam`}
+                className="ohx-btn ohx-btn--primary"
+              >
+                Find a team
+              </NextLink>
+              <NextLink
+                href={`/hack/${event_id}`}
+                className="ohx-btn ohx-btn--ghost"
+              >
+                View all teams
+              </NextLink>
+            </Box>
+          </Box>
         </Box>
-      </Container>
-    </>
+      </Box>
+    </RefinedRoot>
   );
 }
+
+// Shared sx for the link tiles in the "Links & resources" section.
+const linkTileSx = {
+  display: "flex",
+  alignItems: "center",
+  gap: 1.25,
+  p: 2,
+  height: "100%",
+  textDecoration: "none",
+  boxSizing: "border-box",
+};
+const linkTileLabelSx = {
+  fontFamily: "var(--body)",
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
+  fontSize: "0.62rem",
+  fontWeight: 600,
+  color: "var(--muted)",
+};
+const linkTileValueSx = {
+  fontWeight: 600,
+  color: "var(--brand)",
+  fontSize: "0.95rem",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
 
 // Helper to fetch problem statement details from IDs
 async function fetchProblemStatementDetails(problemStatementIds) {
