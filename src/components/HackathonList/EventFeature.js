@@ -4,6 +4,7 @@ import { Typography, Box, Chip, Card, CardContent } from "@mui/material";
 import { format, getYear } from 'date-fns';
 import Link from 'next/link';
 import { parseLocalDate, isValidDate } from '../../lib/dateUtils';
+import { stripMarkdown } from '../../lib/textUtils';
 import ImpactMetrics from '../ImpactMetrics';
 
 // Refined "civic editorial" tokens with fallbacks — /hack loads the webfonts
