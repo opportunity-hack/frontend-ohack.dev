@@ -136,6 +136,7 @@ const MediaPage = ({ eventData }) => {
 
   const instagramPosts = socialPosts.filter((p) => p.platform === "instagram");
   const otherSocialPosts = socialPosts.filter((p) => p.platform !== "instagram");
+  const activePhoto = photos[carouselIndex] || photos[0] || null;
 
   if (router.isFallback) {
     return (
@@ -280,7 +281,27 @@ const MediaPage = ({ eventData }) => {
             <Typography variant="h5" component="h2" sx={{ fontWeight: 600, mb: 2 }}>
               Photo gallery
             </Typography>
-            <Paper variant="outlined" sx={{ p: { xs: 1, md: 2 }, backgroundColor: "#000" }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: { xs: 1, md: 2 },
+                backgroundColor: "#000",
+                "& .carousel .slide": {
+                  backgroundColor: "transparent",
+                },
+                "& .carousel .slider-wrapper": {
+                  borderRadius: 1,
+                  pb: photos.length > 1 ? 5 : 0,
+                },
+                "& .carousel .control-dots": {
+                  bottom: photos.length > 1 ? 16 : 0,
+                  margin: 0,
+                },
+                "& .carousel .thumbs-wrapper": {
+                  margin: photos.length > 1 ? "12px 0 0" : 0,
+                },
+              }}
+            >
               <Carousel
                 showArrows
                 showIndicators={photos.length > 1}
@@ -315,21 +336,21 @@ const MediaPage = ({ eventData }) => {
                         }}
                       />
                     </Box>
-                    {(photo.caption || photo.credit) && (
-                      <Box sx={{ p: 1.5, color: "#fff", textAlign: "center" }}>
-                        {photo.caption && (
-                          <Typography variant="body2">{photo.caption}</Typography>
-                        )}
-                        {photo.credit && (
-                          <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            Photo: {photo.credit}
-                          </Typography>
-                        )}
-                      </Box>
-                    )}
                   </Box>
                 ))}
               </Carousel>
+              {(activePhoto?.caption || activePhoto?.credit) && (
+                <Box sx={{ px: { xs: 1, md: 0.5 }, pt: 2, color: "#fff", textAlign: "center" }}>
+                  {activePhoto.caption && (
+                    <Typography variant="body2">{activePhoto.caption}</Typography>
+                  )}
+                  {activePhoto.credit && (
+                    <Typography variant="caption" sx={{ opacity: 0.8, display: "block", mt: 0.5 }}>
+                      Photo: {activePhoto.credit}
+                    </Typography>
+                  )}
+                </Box>
+              )}
             </Paper>
           </Box>
         )}
