@@ -41,13 +41,14 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import BatchEmailService from '../../lib/batchEmailService';
 import {
-  MESSAGE_TEMPLATES,
   filterTemplatesByType,
+  getTemplateById,
   prepareTemplateMessage,
   detectPlaceholders,
   PLACEHOLDER_LABELS
 } from '../../lib/messageTemplates';
 import useSavedPlaceholders from '../../hooks/use-saved-placeholders';
+import useEmailTemplates from '../../hooks/use-email-templates';
 
 const StyledDialog = styled(Dialog)(({ theme}) => ({
   '& .MuiDialog-paper': {
@@ -99,6 +100,14 @@ const BatchEmailDialog = ({
 
   const { savedValues, saveValues, clearValues, hasSavedValues } = useSavedPlaceholders(eventId, selectedTemplate?.id);
 
+  // Admin-managed templates from the backend (falls back to the hardcoded
+  // set while loading / on error). Only fetched once the dialog is open.
+  const { templates } = useEmailTemplates({ accessToken, orgId, enabled: open });
+
+  // Tracks the last auto-applied denial message so that the async template
+  // load doesn't clobber text the admin already started editing.
+  const autoAppliedMessageRef = React.useRef(null);
+
   // Filter eligible users when volunteers change based on context
   const allEligibleUsers = isSelectedUsers
     ? BatchEmailService.filterEligibleUsers(volunteers)
@@ -109,7 +118,7 @@ const BatchEmailDialog = ({
   const recipientType = BatchEmailService.getRecipientType(volunteerType);
 
   // Get filtered templates based on volunteer type using shared utility
-  const filteredTemplates = filterTemplatesByType(volunteerType);
+  const filteredTemplates = filterTemplatesByType(volunteerType, templates);
 
   useEffect(() => {
     // Reset state when dialog opens/closes
@@ -127,13 +136,20 @@ const BatchEmailDialog = ({
       setDetectedPlaceholders([]);
       setRestoredFromSaved(false);
       setRemovedEmails(new Set());
+      autoAppliedMessageRef.current = null;
     } else if (!isSelectedUsers) {
       // Auto-suggest the appropriate denial template for not-selected users
       const templateId = volunteerType === 'judge' || volunteerType === 'judges'
         ? 'judge_application_denied'
         : 'application_denied';
-      const denialTemplate = MESSAGE_TEMPLATES.DENIAL.templates.find(t => t.id === templateId);
-      if (denialTemplate) {
+      // Prefer the admin-managed version; fall back to the hardcoded one
+      const denialTemplate = getTemplateById(templateId, templates) || getTemplateById(templateId);
+      // When the server templates finish loading this effect re-runs — only
+      // re-apply if the admin hasn't already modified the message text.
+      const untouched =
+        autoAppliedMessageRef.current === null ||
+        messageText === autoAppliedMessageRef.current;
+      if (denialTemplate && untouched) {
         setSelectedTemplate(denialTemplate);
         // Use shared utility to prepare template message with placeholder replacements
         // Note: [VOLUNTEER_ID] and [VOLUNTEER_TYPE] will be replaced per-user when emails are sent
@@ -168,10 +184,14 @@ const BatchEmailDialog = ({
         }
 
         setMessageText(message);
+        autoAppliedMessageRef.current = message;
         setCurrentStep(1); // Skip template selection and go to review step
       }
     }
-  }, [open, isSelectedUsers, eventId, volunteerType, recipientType]);
+    // messageText intentionally omitted: the untouched-guard reads it via
+    // closure and re-running this effect per keystroke would be wasteful.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isSelectedUsers, eventId, volunteerType, recipientType, templates]);
 
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template);

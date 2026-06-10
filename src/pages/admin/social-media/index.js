@@ -1,52 +1,26 @@
-import React, { useState, useCallback } from 'react';
-import { Typography, Alert } from '@mui/material';
-import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
+// Legacy route — social media posting now lives at
+// /admin/communication?tab=social. Forwarding to keep old bookmarks working.
 
-import SocialMediaManagement from '../../../components/admin/SocialMediaManagement';
-import AdminPage from '../../../components/admin/AdminPage';
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import { Box, CircularProgress } from "@mui/material";
 
-const SocialMediaAdminPage = withRequiredAuthInfo(({ userClass }) => {
-  const { accessToken } = useAuthInfo();
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-  
-  const org = userClass.getOrgByName("Opportunity Hack Org");
-  const orgId = org.orgId;
-  const isAdmin = org.hasPermission("volunteer.admin");
+const SocialMediaRedirect = () => {
+  const router = useRouter();
 
-  const handleSnackbarClose = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  if (!isAdmin) {
-    return (
-      <AdminPage title="Social Media Management" isAdmin={false}>
-        <Typography>You do not have permission to view this page.</Typography>
-      </AdminPage>
-    );
-  }
-
-  const handleSnackbar = useCallback((message, severity) => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
+  useEffect(() => {
+    if (!router.isReady) return;
+    router.replace({
+      pathname: "/admin/communication",
+      query: { ...router.query, tab: "social" },
     });
-  }, []);
+  }, [router.isReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <AdminPage
-      title="Social Media Management"
-      isAdmin={isAdmin}
-      snackbar={snackbar}
-      onSnackbarClose={handleSnackbarClose}
-    >
-      <SocialMediaManagement onSnackbar={handleSnackbar} />
-    </AdminPage>
+    <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+      <CircularProgress />
+    </Box>
   );
-});
+};
 
-export default SocialMediaAdminPage;
+export default SocialMediaRedirect;

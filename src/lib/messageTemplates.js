@@ -279,15 +279,44 @@ export const replacePlaceholders = (message, { eventId, volunteerId, volunteerTy
 };
 
 /**
+ * Convert the flat template array returned by the backend
+ * (GET /api/messages/admin/templates) into the MESSAGE_TEMPLATES grouped shape
+ * so existing consumers (filterTemplatesByType, template pickers) work
+ * unchanged. Archived templates are excluded.
+ *
+ * @param {Array} templateList - [{ id, title, category_key, category, applicable_roles, message, icon, status }]
+ * @returns {Object} { CATEGORY_KEY: { category, templates: [...] } }
+ */
+export const groupTemplatesByCategory = (templateList) => {
+  const grouped = {};
+  (templateList || []).forEach((t) => {
+    if (t.status === 'archived') return;
+    const key = t.category_key || 'CUSTOM';
+    if (!grouped[key]) {
+      grouped[key] = { category: t.category || 'Custom', templates: [] };
+    }
+    grouped[key].templates.push({
+      id: t.id,
+      title: t.title,
+      applicableRoles: t.applicable_roles || [],
+      message: t.message,
+      icon: t.icon || '✉️',
+    });
+  });
+  return grouped;
+};
+
+/**
  * Filter templates by volunteer type
  *
  * @param {string} volunteerType - The type of volunteer to filter templates for
+ * @param {Object} [templates] - Templates object in MESSAGE_TEMPLATES shape (defaults to the hardcoded fallback)
  * @returns {Object} Filtered templates object with only applicable templates
  */
-export const filterTemplatesByType = (volunteerType) => {
+export const filterTemplatesByType = (volunteerType, templates = MESSAGE_TEMPLATES) => {
   const filteredCategories = {};
 
-  Object.entries(MESSAGE_TEMPLATES).forEach(([categoryKey, category]) => {
+  Object.entries(templates).forEach(([categoryKey, category]) => {
     const filteredTemplates = category.templates.filter(template =>
       template.applicableRoles.includes(volunteerType)
     );
@@ -307,10 +336,11 @@ export const filterTemplatesByType = (volunteerType) => {
  * Get a specific template by ID
  *
  * @param {string} templateId - The ID of the template to retrieve
+ * @param {Object} [templates] - Templates object in MESSAGE_TEMPLATES shape (defaults to the hardcoded fallback)
  * @returns {Object|null} The template object or null if not found
  */
-export const getTemplateById = (templateId) => {
-  for (const category of Object.values(MESSAGE_TEMPLATES)) {
+export const getTemplateById = (templateId, templates = MESSAGE_TEMPLATES) => {
+  for (const category of Object.values(templates)) {
     const template = category.templates.find(t => t.id === templateId);
     if (template) {
       return template;

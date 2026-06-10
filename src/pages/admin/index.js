@@ -100,9 +100,9 @@ const adminPages = [
     icon: <GiftIcon fontSize="large" style={{ color: "#ff9800" }} />
   },
   {
-    path: "/admin/social-media",
-    label: "Social Media",
-    description: "Post news to Threads and other social platforms",
+    path: "/admin/communication",
+    label: "Communication",
+    description: "Email templates with version history + social media posting",
     icon: <ShareIcon fontSize="large" style={{ color: "#1DA1F2" }} />
   },
   {

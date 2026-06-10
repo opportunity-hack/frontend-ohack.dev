@@ -131,8 +131,8 @@ const adminPages = [
     icon: <TimeIcon style={{ color: "#9c27b0" }} />
   },  
   {
-    path: "/admin/social-media",
-    label: "Social Media",
+    path: "/admin/communication",
+    label: "Communication",
     icon: <ShareIcon style={{ color: "#1DA1F2" }} />
   },
   {
