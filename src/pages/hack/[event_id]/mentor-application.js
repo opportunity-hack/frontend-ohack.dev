@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
-import { initFacebookPixel, trackEvent } from '../../../lib/ga';
+import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -61,7 +61,11 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import RadioIcon from "@mui/material/Radio";
-import { getEventTimezone, getTimezoneAbbreviation } from "../../../lib/timezoneUtils";
+import ReactMarkdown from "react-markdown";
+import {
+  getEventTimezone,
+  getTimezoneAbbreviation,
+} from "../../../lib/timezoneUtils";
 
 const refinedFieldSx = {
   mb: 3,
@@ -165,6 +169,58 @@ const stepLeadSx = {
   maxWidth: "44rem",
   mb: 3,
   lineHeight: 1.7,
+};
+
+const eventMarkdownSx = {
+  color: "var(--muted)",
+  lineHeight: 1.75,
+  mt: 2,
+  "& p": {
+    my: 1.5,
+  },
+  "& h1, & h2, & h3, & h4": {
+    fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+    fontWeight: 500,
+    letterSpacing: "-0.015em",
+    color: "var(--ink)",
+    mt: 3,
+    mb: 1,
+  },
+  "& h1": {
+    fontSize: "1.4rem",
+  },
+  "& h2": {
+    fontSize: "1.25rem",
+  },
+  "& h3, & h4": {
+    fontSize: "1.1rem",
+  },
+  "& ul, & ol": {
+    my: 1.5,
+    pl: 3,
+  },
+  "& li": {
+    mb: 0.6,
+  },
+  "& a": {
+    color: "var(--brand)",
+    fontWeight: 600,
+    textDecorationColor: "#d5cdbd",
+  },
+  "& a:hover": {
+    color: "var(--brand-ink)",
+  },
+  "& strong": {
+    color: "var(--ink)",
+  },
+  "& code": {
+    bgcolor: "var(--surface-2)",
+    px: 0.5,
+    py: 0.1,
+    borderRadius: 0.75,
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+    fontSize: "0.95em",
+  },
 };
 
 const infoAlertSx = {
@@ -530,7 +586,8 @@ const MentorApplicationComponent = () => {
         }
 
         // Redirect to external application URL if configured
-        const externalUrl = eventData.constraints?.application_mentor_external_url;
+        const externalUrl =
+          eventData.constraints?.application_mentor_external_url;
         if (externalUrl) {
           window.location.href = externalUrl;
           return;
@@ -902,7 +959,15 @@ const MentorApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
-      trackEvent({ action: 'mentor_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'mentor_application' } });
+      trackEvent({
+        action: "mentor_app_step",
+        params: {
+          event_label: steps[activeStep + 1],
+          step: activeStep + 2,
+          event_id,
+          page: "mentor_application",
+        },
+      });
       // Scroll to top of form for better UX
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -915,7 +980,15 @@ const MentorApplicationComponent = () => {
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
-    trackEvent({ action: 'mentor_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'mentor_application' } });
+    trackEvent({
+      action: "mentor_app_step_back",
+      params: {
+        event_label: steps[activeStep - 1],
+        step: activeStep,
+        event_id,
+        page: "mentor_application",
+      },
+    });
     // Scroll to top of form for better UX
     if (formRef?.current) {
       formRef.current.scrollIntoView({
@@ -1207,7 +1280,14 @@ const MentorApplicationComponent = () => {
       }
 
       setSuccess(true);
-      trackEvent({ action: 'mentor_app_submit', params: { event_label: 'success', event_id, page: 'mentor_application' } });
+      trackEvent({
+        action: "mentor_app_submit",
+        params: {
+          event_label: "success",
+          event_id,
+          page: "mentor_application",
+        },
+      });
       // Scroll to top of form to show "Application Submitted!" message
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1217,7 +1297,14 @@ const MentorApplicationComponent = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
-      trackEvent({ action: 'mentor_app_submit_error', params: { event_label: err.message, event_id, page: 'mentor_application' } });
+      trackEvent({
+        action: "mentor_app_submit_error",
+        params: {
+          event_label: err.message,
+          event_id,
+          page: "mentor_application",
+        },
+      });
       setError(
         err.message || "Failed to submit your application. Please try again.",
       );
@@ -1484,7 +1571,10 @@ const MentorApplicationComponent = () => {
           honor.
         </Typography>
       </Box>
-      <Typography variant="body2" sx={{ ...stepLeadSx, fontSize: "0.98rem", mb: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{ ...stepLeadSx, fontSize: "0.98rem", mb: 2 }}
+      >
         Select the dates you are available. For each date, pick the time slots
         you can mentor. For long hackathons, use the filter to quickly find your
         dates. All times are in{" "}
@@ -1494,7 +1584,11 @@ const MentorApplicationComponent = () => {
 
       {/* Conditionally show in-person attendance field only for physical events */}
       {!isVirtualEvent() && (
-        <FormControl required component="fieldset" sx={{ ...emphasisPanelSx, mb: 3 }}>
+        <FormControl
+          required
+          component="fieldset"
+          sx={{ ...emphasisPanelSx, mb: 3 }}
+        >
           <Typography
             variant="subtitle1"
             gutterBottom
@@ -1785,7 +1879,8 @@ const MentorApplicationComponent = () => {
                         ...refinedCardSx,
                         p: 2.25,
                         cursor: "pointer",
-                        transition: "transform .22s ease, box-shadow .22s ease, border-color .22s ease, background-color .22s ease",
+                        transition:
+                          "transform .22s ease, box-shadow .22s ease, border-color .22s ease, background-color .22s ease",
                         bgcolor: formData.availableDays.includes(slot.id)
                           ? "rgba(27,58,107,0.06)"
                           : "var(--surface)",
@@ -1835,11 +1930,19 @@ const MentorApplicationComponent = () => {
                           variant="body2"
                           sx={{ mb: 1, color: "var(--muted)" }}
                         >
-                          {slot.time} {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))}
+                          {slot.time}{" "}
+                          {getTimezoneAbbreviation(
+                            new Date(),
+                            getEventTimezone(eventData),
+                          )}
                         </Typography>
                         <Typography
                           variant="caption"
-                          sx={{ mt: "auto", fontStyle: "italic", color: "var(--muted)" }}
+                          sx={{
+                            mt: "auto",
+                            fontStyle: "italic",
+                            color: "var(--muted)",
+                          }}
                         >
                           {slot.energy}
                         </Typography>
@@ -2088,9 +2191,9 @@ const MentorApplicationComponent = () => {
               <Alert severity="info" sx={{ ...infoAlertSx, mb: 4 }}>
                 <Typography variant="body1">
                   <strong>Your application is pending review.</strong> Our staff
-                  reviews every mentor application — this typically takes up to a
-                  week. You&apos;ll get an email when you&apos;re approved or if we
-                  have follow-up questions.
+                  reviews every mentor application — this typically takes up to
+                  a week. You&apos;ll get an email when you&apos;re approved or
+                  if we have follow-up questions.
                 </Typography>
               </Alert>
 
@@ -2303,7 +2406,10 @@ const MentorApplicationComponent = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.1fr) 320px" },
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  lg: "minmax(0, 1.1fr) 320px",
+                },
                 gap: { xs: 4, lg: 5 },
                 alignItems: "start",
                 mb: 4,
@@ -2311,16 +2417,19 @@ const MentorApplicationComponent = () => {
             >
               <Box>
                 <Eyebrow>
-                  {eventData ? `${eventData.name} · mentor application` : "Mentor application"}
+                  {eventData
+                    ? `${eventData.name} · mentor application`
+                    : "Mentor application"}
                 </Eyebrow>
                 <h1 className="ohx-display" style={{ marginTop: 8 }}>
-                  Guide teams to <span className="ohx-italic">ship real impact.</span>
+                  Guide teams to{" "}
+                  <span className="ohx-italic">ship real impact.</span>
                 </h1>
                 <p className="ohx-lead" style={{ marginTop: 16 }}>
-                  Opportunity Hack mentors help teams move through the parts that
-                  usually stall: architecture, scope, polish, and presentation.
-                  This application covers who you are, what you can mentor, and
-                  when you can show up consistently.
+                  Opportunity Hack mentors help teams move through the parts
+                  that usually stall: architecture, scope, polish, and
+                  presentation. This application covers who you are, what you
+                  can mentor, and when you can show up consistently.
                 </p>
 
                 <Box
@@ -2347,7 +2456,10 @@ const MentorApplicationComponent = () => {
                 </Box>
 
                 {eventData && (
-                  <Box className="ohx-card" sx={{ mt: 3, p: { xs: 2.5, md: 3 } }}>
+                  <Box
+                    className="ohx-card"
+                    sx={{ mt: 3, p: { xs: 2.5, md: 3 } }}
+                  >
                     <Eyebrow>Event details</Eyebrow>
                     <Typography
                       component="h2"
@@ -2364,14 +2476,15 @@ const MentorApplicationComponent = () => {
                     </Typography>
                     <Typography sx={{ color: "var(--muted)", lineHeight: 1.7 }}>
                       {eventData.formattedStartDate}
-                      {eventData.formattedStartDate !== eventData.formattedEndDate
+                      {eventData.formattedStartDate !==
+                      eventData.formattedEndDate
                         ? ` to ${eventData.formattedEndDate}`
                         : ""}
                     </Typography>
                     {eventData.description && (
-                      <Typography sx={{ color: "var(--muted)", lineHeight: 1.7, mt: 2 }}>
-                        {eventData.description}
-                      </Typography>
+                      <Box sx={eventMarkdownSx}>
+                        <ReactMarkdown>{eventData.description}</ReactMarkdown>
+                      </Box>
                     )}
                   </Box>
                 )}
@@ -2402,7 +2515,8 @@ const MentorApplicationComponent = () => {
                   sx={{ color: "var(--muted)", lineHeight: 1.7, mb: 1.5 }}
                 >
                   The strongest mentors do not wait for a ping. They find stuck
-                  teams, give concrete feedback, and stay present through pitch prep.
+                  teams, give concrete feedback, and stay present through pitch
+                  prep.
                 </Typography>
                 <Link
                   href="/about/mentors"
@@ -2461,7 +2575,10 @@ const MentorApplicationComponent = () => {
             ) : (
               <Box sx={{ mt: 3 }}>
                 {eventData && eventData.isEventPast ? (
-                  <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3.5 }, mb: 4 }}>
+                  <Box
+                    className="ohx-card"
+                    sx={{ p: { xs: 2.5, sm: 3.5 }, mb: 4 }}
+                  >
                     <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
                       <Typography
                         variant="h6"
@@ -2481,14 +2598,19 @@ const MentorApplicationComponent = () => {
                       </Typography>
                     </Alert>
 
-                    <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+                    <Box
+                      sx={{ mb: 4, display: "flex", justifyContent: "center" }}
+                    >
                       <GiveButterWidget
                         context="event-ended"
                         userId={user?.userId}
                         applicationType="mentor"
                         size="large"
                         onDonationEvent={(eventData) => {
-                          console.log("Event ended mentor donation event:", eventData);
+                          console.log(
+                            "Event ended mentor donation event:",
+                            eventData,
+                          );
                         }}
                       />
                     </Box>
@@ -2505,7 +2627,10 @@ const MentorApplicationComponent = () => {
                   </Box>
                 ) : (
                   <>
-                    <Box className="ohx-card" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
+                    <Box
+                      className="ohx-card"
+                      sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}
+                    >
                       <Stepper
                         activeStep={activeStep}
                         alternativeLabel={!isMobile}
@@ -2549,7 +2674,10 @@ const MentorApplicationComponent = () => {
                       </Stepper>
                     </Box>
 
-                    <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3, md: 4 }, mb: 4 }}>
+                    <Box
+                      className="ohx-card"
+                      sx={{ p: { xs: 2.5, sm: 3, md: 4 }, mb: 4 }}
+                    >
                       <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
                         <Eyebrow>What we expect</Eyebrow>
                         <Typography
@@ -2564,32 +2692,59 @@ const MentorApplicationComponent = () => {
                         </Typography>
                         <Typography
                           variant="body1"
-                          sx={{ color: "var(--muted)", mb: 1.25, lineHeight: 1.7 }}
+                          sx={{
+                            color: "var(--muted)",
+                            mb: 1.25,
+                            lineHeight: 1.7,
+                          }}
                         >
-                          Mentor certificates are awarded for proactive help — not
-                          attendance. To qualify, expect to:
+                          Mentor certificates are awarded for proactive help —
+                          not attendance. To qualify, expect to:
                         </Typography>
-                        <Box component="ul" sx={{ m: 0, pl: 3, color: "var(--ink)" }}>
-                          <Typography component="li" variant="body1" sx={{ mb: 0.75, lineHeight: 1.7 }}>
-                            Reach out to teams in Slack proactively, especially if
-                            you are remote.
+                        <Box
+                          component="ul"
+                          sx={{ m: 0, pl: 3, color: "var(--ink)" }}
+                        >
+                          <Typography
+                            component="li"
+                            variant="body1"
+                            sx={{ mb: 0.75, lineHeight: 1.7 }}
+                          >
+                            Reach out to teams in Slack proactively, especially
+                            if you are remote.
                           </Typography>
-                          <Typography component="li" variant="body1" sx={{ mb: 0.75, lineHeight: 1.7 }}>
+                          <Typography
+                            component="li"
+                            variant="body1"
+                            sx={{ mb: 0.75, lineHeight: 1.7 }}
+                          >
                             Review code, suggest concrete improvements, and help
                             teams scope down to something finishable.
                           </Typography>
-                          <Typography component="li" variant="body1" sx={{ mb: 0.75, lineHeight: 1.7 }}>
+                          <Typography
+                            component="li"
+                            variant="body1"
+                            sx={{ mb: 0.75, lineHeight: 1.7 }}
+                          >
                             Sit with teams during presentation prep and give
                             actionable demo or pitch feedback.
                           </Typography>
-                          <Typography component="li" variant="body1" sx={{ lineHeight: 1.7 }}>
-                            Show up consistently — a quick check-in without follow
-                            through is not enough.
+                          <Typography
+                            component="li"
+                            variant="body1"
+                            sx={{ lineHeight: 1.7 }}
+                          >
+                            Show up consistently — a quick check-in without
+                            follow through is not enough.
                           </Typography>
                         </Box>
                       </Box>
 
-                      <Alert severity="info" icon={<InfoIcon />} sx={{ ...infoAlertSx, mb: 4 }}>
+                      <Alert
+                        severity="info"
+                        icon={<InfoIcon />}
+                        sx={{ ...infoAlertSx, mb: 4 }}
+                      >
                         <Typography variant="body1">
                           New to mentoring at Opportunity Hack? Review the{" "}
                           <Link
@@ -2646,14 +2801,19 @@ const MentorApplicationComponent = () => {
                             disabled={submitting || recaptchaLoading}
                             sx={primaryButtonSx}
                             endIcon={
-                              activeStep === steps.length - 1 || submitting || recaptchaLoading
-                                ? null
-                                : <Arrow />
+                              activeStep === steps.length - 1 ||
+                              submitting ||
+                              recaptchaLoading ? null : (
+                                <Arrow />
+                              )
                             }
                           >
                             {activeStep === steps.length - 1 ? (
                               submitting || recaptchaLoading ? (
-                                <CircularProgress size={20} sx={{ color: "#fff" }} />
+                                <CircularProgress
+                                  size={20}
+                                  sx={{ color: "#fff" }}
+                                />
                               ) : (
                                 "Submit application"
                               )
@@ -2819,7 +2979,10 @@ const MentorApplicationPage = ({ seoMetadata }) => {
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
         displayIfLoggedOut={
           <RedirectToLogin
-            postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
+            postLoginRedirectUrl={
+              currentUrl ||
+              (typeof window !== "undefined" ? window.location.href : undefined)
+            }
           />
         }
       >

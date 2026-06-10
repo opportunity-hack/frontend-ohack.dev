@@ -56,6 +56,7 @@ import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
 import useProfileApi from "../../../hooks/use-profile-api";
 import UploadPhoto from "../../../components/UploadPhoto";
+import ReactMarkdown from "react-markdown";
 import {
   OHackParticipationSelect,
   PronounsPicker,
@@ -68,6 +69,37 @@ import {
   GroupsRounded,
   CheckCircleRounded,
 } from "@mui/icons-material";
+
+const eventDescriptionMarkdownSx = {
+  mb: 3,
+  "& p": {
+    my: 1.25,
+    lineHeight: 1.7,
+  },
+  "& p:first-of-type": {
+    mt: 0,
+  },
+  "& p:last-child": {
+    mb: 0,
+  },
+  "& ul, & ol": {
+    my: 1.25,
+    pl: 3,
+  },
+  "& li": {
+    mb: 0.5,
+  },
+  "& h1, & h2, & h3, & h4": {
+    mt: 2.5,
+    mb: 1,
+    lineHeight: 1.3,
+    fontWeight: 600,
+  },
+  "& a": {
+    color: "primary.main",
+    textDecoration: "underline",
+  },
+};
 
 const JudgeApplicationComponent = () => {
   const router = useRouter();
@@ -2366,10 +2398,12 @@ const JudgeApplicationComponent = () => {
                     </Typography>
 
                     {eventData && eventData.description && (
-                      <Typography variant="body1" sx={{ mb: 3 }}>
-                        <strong>About this event:</strong>{" "}
-                        {eventData.description}
-                      </Typography>
+                      <Box sx={eventDescriptionMarkdownSx}>
+                        <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
+                          About this event
+                        </Typography>
+                        <ReactMarkdown>{eventData.description}</ReactMarkdown>
+                      </Box>
                     )}
 
                     <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
