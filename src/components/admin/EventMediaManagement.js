@@ -24,6 +24,7 @@ import {
 import {
   ArrowDownward as ArrowDownIcon,
   ArrowUpward as ArrowUpIcon,
+  Article as ArticleIcon,
   CloudUpload as UploadIcon,
   Delete as DeleteIcon,
   Image as ImageIcon,
@@ -35,9 +36,30 @@ import {
 } from "@mui/icons-material";
 
 const PLATFORMS = [
-  { value: "linkedin", label: "LinkedIn", host: "linkedin.com", icon: LinkedInIcon },
-  { value: "instagram", label: "Instagram", host: "instagram.com", icon: InstagramIcon },
-  { value: "threads", label: "Threads", host: "threads.net", icon: ThreadsIcon },
+  {
+    value: "linkedin",
+    label: "LinkedIn",
+    host: "linkedin.com",
+    icon: LinkedInIcon,
+  },
+  {
+    value: "instagram",
+    label: "Instagram",
+    host: "instagram.com",
+    icon: InstagramIcon,
+  },
+  {
+    value: "threads",
+    label: "Threads",
+    host: "threads.net",
+    icon: ThreadsIcon,
+  },
+  {
+    value: "article",
+    label: "News article",
+    icon: ArticleIcon,
+    placeholder: "https://www.ohack.dev/blog/...",
+  },
 ];
 
 const platformByValue = (value) => PLATFORMS.find((p) => p.value === value);
@@ -46,10 +68,22 @@ const isHostMatch = (urlString, platform) => {
   if (!urlString) return false;
   try {
     const u = new URL(urlString);
+    if (u.protocol !== "http:" && u.protocol !== "https:") {
+      return false;
+    }
+
+    if (platform === "article") {
+      return true;
+    }
+
     const host = u.hostname.replace(/^www\./, "").toLowerCase();
     if (platform === "threads") {
-      return host === "threads.net" || host.endsWith(".threads.net") ||
-             host === "threads.com" || host.endsWith(".threads.com");
+      return (
+        host === "threads.net" ||
+        host.endsWith(".threads.net") ||
+        host === "threads.com" ||
+        host.endsWith(".threads.com")
+      );
     }
     const expected = platformByValue(platform)?.host;
     return !!expected && (host === expected || host.endsWith(`.${expected}`));
@@ -69,7 +103,10 @@ const EventMediaManagement = ({
 }) => {
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+  const [uploadProgress, setUploadProgress] = useState({
+    current: 0,
+    total: 0,
+  });
   const [uploadError, setUploadError] = useState("");
 
   const canUpload = !!eventId && !!accessToken && !!orgId;
@@ -93,7 +130,7 @@ const EventMediaManagement = ({
             authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
       const json = await res.json();
       if (!json.success) {
@@ -101,7 +138,7 @@ const EventMediaManagement = ({
       }
       return json.url;
     },
-    [accessToken, orgId, directory]
+    [accessToken, orgId, directory],
   );
 
   const handleFiles = useCallback(
@@ -109,14 +146,20 @@ const EventMediaManagement = ({
       const files = Array.from(fileList || []);
       if (!files.length) return;
 
-      const allowed = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+      const allowed = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
       const valid = files.filter((f) => {
         if (!allowed.includes(f.type)) {
           setUploadError(`${f.name}: not a supported image type`);
           return false;
         }
-        if (f.size > 10 * 1024 * 1024) {
-          setUploadError(`${f.name}: exceeds 10MB`);
+        if (f.size > 20 * 1024 * 1024) {
+          setUploadError(`${f.name}: exceeds 20MB`);
           return false;
         }
         return true;
@@ -144,7 +187,7 @@ const EventMediaManagement = ({
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
-    [uploadOne, onPhotosChange, photos]
+    [uploadOne, onPhotosChange, photos],
   );
 
   const updatePhoto = (index, patch) => {
@@ -172,7 +215,9 @@ const EventMediaManagement = ({
   };
 
   const updateSocialPost = (index, patch) => {
-    const next = socialPosts.map((p, i) => (i === index ? { ...p, ...patch } : p));
+    const next = socialPosts.map((p, i) =>
+      i === index ? { ...p, ...patch } : p,
+    );
     onSocialPostsChange(next);
   };
 
@@ -186,14 +231,15 @@ const EventMediaManagement = ({
         Event Photos
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Photos appear on <code>/hack/{eventId || "[event_id]"}/media</code> and a small
-        teaser strip on the event page. Files are uploaded to{" "}
+        Photos appear on <code>/hack/{eventId || "[event_id]"}/media</code> and
+        a small teaser strip on the event page. Files are uploaded to{" "}
         <code>cdn.ohack.dev/hackathons/{eventId || "[event_id]"}/photos/</code>.
       </Typography>
 
       {!eventId && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Set the Event ID on the Basic Info tab and save before uploading photos.
+          Set the Event ID on the Basic Info tab and save before uploading
+          photos.
         </Alert>
       )}
 
@@ -214,7 +260,9 @@ const EventMediaManagement = ({
           opacity: canUpload ? 1 : 0.6,
           cursor: canUpload && !isUploading ? "pointer" : "not-allowed",
         }}
-        onClick={() => canUpload && !isUploading && fileInputRef.current?.click()}
+        onClick={() =>
+          canUpload && !isUploading && fileInputRef.current?.click()
+        }
         onDragOver={(e) => {
           if (canUpload && !isUploading) e.preventDefault();
         }}
@@ -255,7 +303,8 @@ const EventMediaManagement = ({
               Drop images here or click to browse
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              JPG, PNG, GIF, WebP up to 10MB each. You can select multiple at once.
+              JPG, PNG, GIF, WebP up to 10MB each. You can select multiple at
+              once.
             </Typography>
             <Button
               variant="contained"
@@ -271,7 +320,11 @@ const EventMediaManagement = ({
       </Paper>
 
       {uploadError && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setUploadError("")}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          onClose={() => setUploadError("")}
+        >
           {uploadError}
         </Alert>
       )}
@@ -293,7 +346,9 @@ const EventMediaManagement = ({
                     size="small"
                     label="Caption"
                     value={photo.caption || ""}
-                    onChange={(e) => updatePhoto(index, { caption: e.target.value })}
+                    onChange={(e) =>
+                      updatePhoto(index, { caption: e.target.value })
+                    }
                     sx={{ mb: 1 }}
                   />
                   <TextField
@@ -301,9 +356,16 @@ const EventMediaManagement = ({
                     size="small"
                     label="Photo credit"
                     value={photo.credit || ""}
-                    onChange={(e) => updatePhoto(index, { credit: e.target.value })}
+                    onChange={(e) =>
+                      updatePhoto(index, { credit: e.target.value })
+                    }
                   />
-                  <Stack direction="row" spacing={0.5} justifyContent="space-between" sx={{ mt: 1 }}>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    justifyContent="space-between"
+                    sx={{ mt: 1 }}
+                  >
                     <Stack direction="row" spacing={0.5}>
                       <Tooltip title="Move earlier">
                         <span>
@@ -348,11 +410,12 @@ const EventMediaManagement = ({
       <Divider sx={{ my: 3 }} />
 
       <Typography variant="subtitle1" gutterBottom>
-        Social Posts
+        Social Posts & News
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Link to LinkedIn, Instagram, or Threads posts about this event. Instagram posts
-        embed inline; LinkedIn and Threads render as link cards.
+        Link to LinkedIn, Instagram, or Threads posts, plus news articles about
+        this event. Instagram posts embed inline; LinkedIn, Threads, and
+        articles render as link cards.
       </Typography>
 
       <Stack spacing={2}>
@@ -369,13 +432,19 @@ const EventMediaManagement = ({
                     <Select
                       label="Platform"
                       value={post.platform}
-                      onChange={(e) => updateSocialPost(index, { platform: e.target.value })}
+                      onChange={(e) =>
+                        updateSocialPost(index, { platform: e.target.value })
+                      }
                     >
                       {PLATFORMS.map((p) => {
                         const Icon = p.icon;
                         return (
                           <MenuItem key={p.value} value={p.value}>
-                            <Stack direction="row" spacing={1} alignItems="center">
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              alignItems="center"
+                            >
                               <Icon fontSize="small" />
                               <span>{p.label}</span>
                             </Stack>
@@ -389,19 +458,30 @@ const EventMediaManagement = ({
                   <TextField
                     fullWidth
                     size="small"
-                    label="Post URL"
-                    placeholder={`https://www.${platform.host}/...`}
+                    label={
+                      platform.value === "article" ? "Article URL" : "Post URL"
+                    }
+                    placeholder={
+                      platform.placeholder || `https://www.${platform.host}/...`
+                    }
                     value={post.url || ""}
-                    onChange={(e) => updateSocialPost(index, { url: e.target.value })}
+                    onChange={(e) =>
+                      updateSocialPost(index, { url: e.target.value })
+                    }
                     error={!urlValid}
                     helperText={
                       !urlValid
-                        ? `URL host should match ${platform.label}`
+                        ? platform.value === "article"
+                          ? "Enter a full http(s) article URL"
+                          : `URL host should match ${platform.label}`
                         : " "
                     }
                     InputProps={{
                       startAdornment: (
-                        <PlatformIcon sx={{ mr: 1, color: "text.secondary" }} fontSize="small" />
+                        <PlatformIcon
+                          sx={{ mr: 1, color: "text.secondary" }}
+                          fontSize="small"
+                        />
                       ),
                     }}
                   />
@@ -410,14 +490,20 @@ const EventMediaManagement = ({
                     size="small"
                     label="Caption (optional)"
                     value={post.caption || ""}
-                    onChange={(e) => updateSocialPost(index, { caption: e.target.value })}
+                    onChange={(e) =>
+                      updateSocialPost(index, { caption: e.target.value })
+                    }
                     sx={{ mt: 1 }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 2 }}>
-                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    justifyContent="flex-end"
+                  >
                     {post.url && urlValid && (
-                      <Tooltip title="Open post in new tab">
+                      <Tooltip title="Open link in new tab">
                         <IconButton
                           size="small"
                           component="a"
@@ -429,7 +515,7 @@ const EventMediaManagement = ({
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title="Remove post">
+                    <Tooltip title="Remove link">
                       <IconButton
                         size="small"
                         color="error"
@@ -453,7 +539,7 @@ const EventMediaManagement = ({
         variant="outlined"
         size="small"
       >
-        Add social post
+        Add social or article link
       </Button>
     </Box>
   );

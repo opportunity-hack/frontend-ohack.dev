@@ -21,6 +21,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import {
   ArrowBack as ArrowBackIcon,
+  Article as ArticleIcon,
   Instagram as InstagramIcon,
   LinkedIn as LinkedInIcon,
   AlternateEmail as ThreadsIcon,
@@ -32,24 +33,41 @@ import { Carousel } from "react-responsive-carousel";
 
 const InstagramEmbed = dynamic(
   () => import("react-social-media-embed").then((m) => m.InstagramEmbed),
-  { ssr: false }
+  { ssr: false },
 );
 
 const PLATFORM_META = {
   linkedin: {
     label: "LinkedIn",
+    cardTitle: "LinkedIn post",
+    emptyDescription: "View this LinkedIn post about the event.",
+    buttonLabel: "Open post",
     icon: LinkedInIcon,
     color: "#0a66c2",
   },
   instagram: {
     label: "Instagram",
+    cardTitle: "Instagram post",
+    emptyDescription: "View this Instagram post about the event.",
+    buttonLabel: "Open post",
     icon: InstagramIcon,
     color: "#e4405f",
   },
   threads: {
     label: "Threads",
+    cardTitle: "Threads post",
+    emptyDescription: "View this Threads post about the event.",
+    buttonLabel: "Open post",
     icon: ThreadsIcon,
     color: "#000000",
+  },
+  article: {
+    label: "News article",
+    cardTitle: "News article",
+    emptyDescription: "Read this news article about the event.",
+    buttonLabel: "Read article",
+    icon: ArticleIcon,
+    color: "#7a4d21",
   },
 };
 
@@ -57,13 +75,21 @@ const SocialPostCard = ({ post }) => {
   const meta = PLATFORM_META[post.platform] || PLATFORM_META.linkedin;
   const Icon = meta.icon;
   return (
-    <Card variant="outlined" sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <Card
+      variant="outlined"
+      sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+    >
       <CardActionArea
         component="a"
         href={post.url}
         target="_blank"
         rel="noopener noreferrer"
-        sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "stretch" }}
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+        }}
       >
         <Box
           sx={{
@@ -78,7 +104,7 @@ const SocialPostCard = ({ post }) => {
         >
           <Icon />
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-            {meta.label} post
+            {meta.cardTitle}
           </Typography>
         </Box>
         <CardContent sx={{ flex: 1 }}>
@@ -88,7 +114,7 @@ const SocialPostCard = ({ post }) => {
             </Typography>
           ) : (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              View this {meta.label} post about the event.
+              {meta.emptyDescription}
             </Typography>
           )}
           <Typography
@@ -111,7 +137,7 @@ const SocialPostCard = ({ post }) => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Open post
+          {meta.buttonLabel}
         </Button>
       </Box>
     </Card>
@@ -124,21 +150,29 @@ const MediaPage = ({ eventData }) => {
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   const photos = useMemo(() => {
-    const list = Array.isArray(eventData?.event_photos) ? eventData.event_photos : [];
+    const list = Array.isArray(eventData?.event_photos)
+      ? eventData.event_photos
+      : [];
     return list.filter((p) => p && typeof p.url === "string" && p.url);
   }, [eventData]);
 
   const socialPosts = useMemo(() => {
-    const list = Array.isArray(eventData?.social_posts) ? eventData.social_posts : [];
+    const list = Array.isArray(eventData?.social_posts)
+      ? eventData.social_posts
+      : [];
     return list.filter(
-      (p) => p && PLATFORM_META[p.platform] && typeof p.url === "string" && p.url
+      (p) =>
+        p && PLATFORM_META[p.platform] && typeof p.url === "string" && p.url,
     );
   }, [eventData]);
 
   const instagramPosts = socialPosts.filter((p) => p.platform === "instagram");
-  const otherSocialPosts = socialPosts.filter((p) => p.platform !== "instagram");
+  const otherSocialPosts = socialPosts.filter(
+    (p) => p.platform !== "instagram",
+  );
   const activePhoto = photos[carouselIndex] || photos[0] || null;
-  const activePhotoNumber = photos.length > 0 ? Math.min(carouselIndex + 1, photos.length) : 0;
+  const activePhotoNumber =
+    photos.length > 0 ? Math.min(carouselIndex + 1, photos.length) : 0;
   const activePhotoCaption = activePhoto?.caption?.trim() || "";
   const activePhotoCredit = activePhoto?.credit?.trim() || "";
 
@@ -153,7 +187,9 @@ const MediaPage = ({ eventData }) => {
   if (!eventData) {
     return (
       <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography variant="h4" align="center">Event not found</Typography>
+        <Typography variant="h4" align="center">
+          Event not found
+        </Typography>
       </Container>
     );
   }
@@ -163,7 +199,9 @@ const MediaPage = ({ eventData }) => {
   const description = `Photos and social media coverage from ${eventTitle}, an Opportunity Hack event.`;
 
   const ogImage =
-    photos[0]?.url || eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
+    photos[0]?.url ||
+    eventData.image_url ||
+    "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
 
   const structuredData = [
     {
@@ -177,9 +215,24 @@ const MediaPage = ({ eventData }) => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: "https://ohack.dev/" },
-        { "@type": "ListItem", position: 2, name: "Hackathons", item: "https://ohack.dev/hack" },
-        { "@type": "ListItem", position: 3, name: eventTitle, item: `https://ohack.dev/hack/${event_id}` },
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://ohack.dev/",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Hackathons",
+          item: "https://ohack.dev/hack",
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: eventTitle,
+          item: `https://ohack.dev/hack/${event_id}`,
+        },
         { "@type": "ListItem", position: 4, name: "Media", item: pageUrl },
       ],
     },
@@ -204,13 +257,19 @@ const MediaPage = ({ eventData }) => {
         <meta name="description" content={description} />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={pageUrl} />
-        <meta property="og:title" content={`${eventTitle} – Photos & Social Media`} />
+        <meta
+          property="og:title"
+          content={`${eventTitle} – Photos & Social Media`}
+        />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={pageUrl} />
         <meta property="og:image" content={ogImage} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${eventTitle} – Photos & Social Media`} />
+        <meta
+          name="twitter:title"
+          content={`${eventTitle} – Photos & Social Media`}
+        />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImage} />
         {structuredData.map((sd, i) => (
@@ -248,7 +307,10 @@ const MediaPage = ({ eventData }) => {
               />
             )}
             {socialPosts.length > 0 && (
-              <Chip label={`${socialPosts.length} social post${socialPosts.length === 1 ? "" : "s"}`} size="small" />
+              <Chip
+                label={`${socialPosts.length} social/news link${socialPosts.length === 1 ? "" : "s"}`}
+                size="small"
+              />
             )}
           </Stack>
         </Stack>
@@ -257,7 +319,11 @@ const MediaPage = ({ eventData }) => {
           <Typography variant="overline" color="text.secondary">
             Event recap
           </Typography>
-          <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
+          <Typography
+            variant="h3"
+            component="h1"
+            sx={{ fontWeight: 700, mb: 1 }}
+          >
             {eventTitle}
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -267,14 +333,20 @@ const MediaPage = ({ eventData }) => {
 
         {!hasContent && (
           <Paper variant="outlined" sx={{ p: 6, textAlign: "center" }}>
-            <PhotoLibraryIcon sx={{ fontSize: 56, color: "text.secondary", mb: 1 }} />
+            <PhotoLibraryIcon
+              sx={{ fontSize: 56, color: "text.secondary", mb: 1 }}
+            />
             <Typography variant="h6" gutterBottom>
               No photos yet
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Check back after the event for photos and highlights.
             </Typography>
-            <Button component={NextLink} href={`/hack/${event_id}`} variant="contained">
+            <Button
+              component={NextLink}
+              href={`/hack/${event_id}`}
+              variant="contained"
+            >
               Back to event
             </Button>
           </Paper>
@@ -282,7 +354,11 @@ const MediaPage = ({ eventData }) => {
 
         {photos.length > 0 && (
           <Box sx={{ mb: 6 }}>
-            <Typography variant="h5" component="h2" sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant="h5"
+              component="h2"
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               Photo gallery
             </Typography>
             <Paper
@@ -309,7 +385,8 @@ const MediaPage = ({ eventData }) => {
                   backgroundColor: alpha("#000", 0.42),
                   backdropFilter: "blur(6px)",
                   opacity: 1,
-                  transition: "background-color 160ms ease, transform 160ms ease",
+                  transition:
+                    "background-color 160ms ease, transform 160ms ease",
                   zIndex: 2,
                 },
                 "& .carousel.carousel-slider .control-arrow:hover": {
@@ -337,9 +414,10 @@ const MediaPage = ({ eventData }) => {
                   boxShadow: "none",
                   backgroundColor: alpha("#fff", 0.45),
                 },
-                "& .carousel .control-dots .dot.selected, & .carousel .control-dots .dot:hover": {
-                  backgroundColor: "#fff",
-                },
+                "& .carousel .control-dots .dot.selected, & .carousel .control-dots .dot:hover":
+                  {
+                    backgroundColor: "#fff",
+                  },
               }}
             >
               <Carousel
@@ -354,7 +432,10 @@ const MediaPage = ({ eventData }) => {
                 dynamicHeight={false}
               >
                 {photos.map((photo, idx) => (
-                  <Box key={`${photo.url}-${idx}`} sx={{ backgroundColor: "#000" }}>
+                  <Box
+                    key={`${photo.url}-${idx}`}
+                    sx={{ backgroundColor: "#000" }}
+                  >
                     <Box
                       sx={{
                         position: "relative",
@@ -381,10 +462,21 @@ const MediaPage = ({ eventData }) => {
               </Carousel>
 
               {photos.length > 1 && (
-                <Box sx={{ display: { xs: "none", md: "block" }, px: { md: 0.5 }, pt: 2 }}>
+                <Box
+                  sx={{
+                    display: { xs: "none", md: "block" },
+                    px: { md: 0.5 },
+                    pt: 2,
+                  }}
+                >
                   <Typography
                     variant="overline"
-                    sx={{ display: "block", mb: 1, color: alpha("#fff", 0.68), letterSpacing: "0.08em" }}
+                    sx={{
+                      display: "block",
+                      mb: 1,
+                      color: alpha("#fff", 0.68),
+                      letterSpacing: "0.08em",
+                    }}
                   >
                     Browse photos
                   </Typography>
@@ -417,7 +509,10 @@ const MediaPage = ({ eventData }) => {
                             borderRadius: 1.5,
                             p: 0,
                             overflow: "hidden",
-                            backgroundColor: alpha("#fff", isActive ? 0.08 : 0.03),
+                            backgroundColor: alpha(
+                              "#fff",
+                              isActive ? 0.08 : 0.03,
+                            ),
                             boxShadow: isActive
                               ? `0 0 0 1px ${alpha("#fff", 0.26)}`
                               : "none",
@@ -446,7 +541,10 @@ const MediaPage = ({ eventData }) => {
                           >
                             <img
                               src={photo.url}
-                              alt={photo.caption || `${eventTitle} thumbnail ${idx + 1}`}
+                              alt={
+                                photo.caption ||
+                                `${eventTitle} thumbnail ${idx + 1}`
+                              }
                               loading="lazy"
                               style={{
                                 position: "absolute",
@@ -471,7 +569,8 @@ const MediaPage = ({ eventData }) => {
                     p: { xs: 2, md: 2.5 },
                     borderRadius: 2,
                     border: `1px solid ${alpha("#fff", 0.12)}`,
-                    background: "linear-gradient(180deg, rgba(20,24,32,0.86) 0%, rgba(8,10,15,0.98) 100%)",
+                    background:
+                      "linear-gradient(180deg, rgba(20,24,32,0.86) 0%, rgba(8,10,15,0.98) 100%)",
                   }}
                 >
                   <Stack
@@ -483,7 +582,12 @@ const MediaPage = ({ eventData }) => {
                     <Box sx={{ minWidth: 0 }}>
                       <Typography
                         variant="overline"
-                        sx={{ display: "block", mb: 0.5, color: alpha("#fff", 0.72), letterSpacing: "0.08em" }}
+                        sx={{
+                          display: "block",
+                          mb: 0.5,
+                          color: alpha("#fff", 0.72),
+                          letterSpacing: "0.08em",
+                        }}
                       >
                         Photo {activePhotoNumber} of {photos.length}
                       </Typography>
@@ -500,7 +604,8 @@ const MediaPage = ({ eventData }) => {
                           overflowWrap: "anywhere",
                         }}
                       >
-                        {activePhotoCaption || `Event gallery image from ${eventTitle}`}
+                        {activePhotoCaption ||
+                          `Event gallery image from ${eventTitle}`}
                       </Typography>
                     </Box>
                     {activePhoto?.url && (
@@ -541,7 +646,11 @@ const MediaPage = ({ eventData }) => {
                     >
                       <Typography
                         variant="overline"
-                        sx={{ color: alpha("#fff", 0.7), letterSpacing: "0.08em", lineHeight: 1.2 }}
+                        sx={{
+                          color: alpha("#fff", 0.7),
+                          letterSpacing: "0.08em",
+                          lineHeight: 1.2,
+                        }}
                       >
                         Photo credit
                       </Typography>
@@ -567,14 +676,25 @@ const MediaPage = ({ eventData }) => {
         {socialPosts.length > 0 && (
           <Box>
             <Divider sx={{ mb: 3 }} />
-            <Typography variant="h5" component="h2" sx={{ fontWeight: 600, mb: 2 }}>
-              On social media
+            <Typography
+              variant="h5"
+              component="h2"
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              On social media and in the news
             </Typography>
 
             {otherSocialPosts.length > 0 && (
-              <Grid container spacing={2} sx={{ mb: instagramPosts.length > 0 ? 4 : 0 }}>
+              <Grid
+                container
+                spacing={2}
+                sx={{ mb: instagramPosts.length > 0 ? 4 : 0 }}
+              >
                 {otherSocialPosts.map((post, idx) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`${post.url}-${idx}`}>
+                  <Grid
+                    size={{ xs: 12, sm: 6, md: 4 }}
+                    key={`${post.url}-${idx}`}
+                  >
                     <SocialPostCard post={post} />
                   </Grid>
                 ))}
@@ -599,7 +719,11 @@ const MediaPage = ({ eventData }) => {
                           <Typography
                             variant="caption"
                             color="text.secondary"
-                            sx={{ display: "block", textAlign: "center", mt: 1 }}
+                            sx={{
+                              display: "block",
+                              textAlign: "center",
+                              mt: 1,
+                            }}
                           >
                             {post.caption}
                           </Typography>
@@ -614,7 +738,11 @@ const MediaPage = ({ eventData }) => {
         )}
 
         <Box sx={{ mt: 6, textAlign: "center" }}>
-          <Link component={NextLink} href={`/hack/${event_id}`} underline="hover">
+          <Link
+            component={NextLink}
+            href={`/hack/${event_id}`}
+            underline="hover"
+          >
             ← Back to {eventTitle}
           </Link>
         </Box>
@@ -626,7 +754,7 @@ const MediaPage = ({ eventData }) => {
 export async function getStaticProps({ params }) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${params.event_id}`
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${params.event_id}`,
     );
     const data = await res.json();
     return {
@@ -645,7 +773,7 @@ export async function getStaticProps({ params }) {
 export async function getStaticPaths() {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/all`
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/all`,
     );
     const hackathons = await res.json();
     const paths = hackathons.map((event) => ({
