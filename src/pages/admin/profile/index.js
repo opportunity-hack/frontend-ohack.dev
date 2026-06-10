@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  useDeferredValue,
+} from "react";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import { useRouter } from "next/router";
 import { debounce } from "lodash";
@@ -268,6 +275,12 @@ const SETUP_DISMISS_KEY = "ohack.adminProfile.setupHelpDismissed";
 const VIEW_MODE_KEY = "ohack.adminProfile.viewMode";
 const LIST_TOAST_KEY = "ohack.adminProfile.listToastSeen";
 
+// Render cap: filtering runs across the full dataset (~3.5k profiles), but only
+// this many rows mount in the DOM. Rendering everything at once froze the page
+// on load and on every keystroke.
+const INITIAL_VISIBLE_ROWS = 100;
+const VISIBLE_ROWS_STEP = 200;
+
 const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
   const router = useRouter();
@@ -288,6 +301,12 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   const [statsOpen, setStatsOpen] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [expandedCards, setExpandedCards] = useState(() => new Set());
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_ROWS);
+
+  // Keystrokes update `filter` (and the TextField) immediately; the expensive
+  // filter + list re-render tracks this deferred copy at low priority.
+  const deferredFilter = useDeferredValue(filter);
+  const isFilterPending = filter !== deferredFilter;
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org?.hasPermission("profile.admin");
@@ -512,11 +531,11 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
     return "Incomplete";
   };
 
-  // --- Filter + sort ---
+  // --- Filter + sort (keyed on the deferred filter so typing stays smooth) ---
   const processedProfiles = useMemo(() => {
     let filtered = profiles;
-    if (filter) {
-      const q = filter.toLowerCase();
+    if (deferredFilter) {
+      const q = deferredFilter.toLowerCase();
       filtered = filtered.filter(
         (p) =>
           p.email_address?.toLowerCase().includes(q) ||
@@ -580,12 +599,17 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
       return 0;
     });
     return arr;
-  }, [profiles, filter, sortBy, sortOrder]);
+  }, [profiles, deferredFilter, sortBy, sortOrder]);
+
+  // Reset the render cap whenever the result set changes shape.
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE_ROWS);
+  }, [deferredFilter, sortBy, sortOrder, viewMode]);
 
   // --- Best-match detection ---
   const bestMatch = useMemo(() => {
-    if (!filter || processedProfiles.length === 0) return null;
-    const q = filter.trim().toLowerCase();
+    if (!deferredFilter || processedProfiles.length === 0) return null;
+    const q = deferredFilter.trim().toLowerCase();
     if (!q) return null;
     if (processedProfiles.length === 1) return processedProfiles[0];
     const exact = processedProfiles.find(
@@ -602,7 +626,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
       if (emailMatches.length === 1) return emailMatches[0];
     }
     return null;
-  }, [filter, processedProfiles]);
+  }, [deferredFilter, processedProfiles]);
 
   // --- Aggregate stats (memoized so we don't re-walk the array on every render) ---
   const stats = useMemo(() => {
@@ -669,6 +693,13 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   const matchCount = processedProfiles.length;
   const hasQuery = !!filter;
   const isDefaultSort = sortBy === "last_login" && sortOrder === "desc";
+
+  // Only mount the top slice — the full match count still reflects everything.
+  const visibleProfiles =
+    matchCount > visibleCount
+      ? processedProfiles.slice(0, visibleCount)
+      : processedProfiles;
+  const hiddenCount = matchCount - visibleProfiles.length;
 
   // The "matches pills" strip — shown when 2..5 results to help disambiguate
   // without scrolling.
@@ -808,9 +839,11 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
           >
             {loading
               ? "Loading users…"
-              : hasQuery
-                ? `Showing ${matchCount.toLocaleString()} of ${totalUsers.toLocaleString()}`
-                : `${totalUsers.toLocaleString()} users`}
+              : isFilterPending
+                ? "Filtering…"
+                : hasQuery
+                  ? `Showing ${matchCount.toLocaleString()} of ${totalUsers.toLocaleString()}`
+                  : `${totalUsers.toLocaleString()} users`}
           </Typography>
 
           {hasQuery && (
@@ -1015,7 +1048,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
           {bestMatch && (
             <BestMatchHero
               user={bestMatch}
-              query={filter}
+              query={deferredFilter}
               calculateProfileCompleteness={calculateProfileCompleteness}
               getCompletenessColor={getCompletenessColor}
               getCompletenessLabel={getCompletenessLabel}
@@ -1066,8 +1099,8 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
           <Box component="section" aria-label="Search results">
             {viewMode === "list" ? (
               <CompactList
-                profiles={processedProfiles}
-                filter={filter}
+                profiles={visibleProfiles}
+                filter={deferredFilter}
                 isMobile={isMobile}
                 bestMatchId={bestMatch?.id}
                 calculateProfileCompleteness={calculateProfileCompleteness}
@@ -1078,8 +1111,8 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
               />
             ) : (
               <CardGrid
-                profiles={processedProfiles}
-                filter={filter}
+                profiles={visibleProfiles}
+                filter={deferredFilter}
                 bestMatchId={bestMatch?.id}
                 expandedCards={expandedCards}
                 toggleCardExpand={toggleCardExpand}
@@ -1091,6 +1124,42 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
               />
             )}
           </Box>
+
+          {/* Render-cap footer */}
+          {hiddenCount > 0 && (
+            <Paper
+              variant="outlined"
+              sx={{
+                mt: 2,
+                px: 2,
+                py: 1.5,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.5,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Showing first {visibleProfiles.length.toLocaleString()} of{" "}
+                {matchCount.toLocaleString()} — refine your search, or
+              </Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setVisibleCount((c) => c + VISIBLE_ROWS_STEP)}
+              >
+                Show {Math.min(VISIBLE_ROWS_STEP, hiddenCount).toLocaleString()} more
+              </Button>
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => setVisibleCount(matchCount)}
+              >
+                Show all {matchCount.toLocaleString()}
+              </Button>
+            </Paper>
+          )}
         </>
       )}
     </AdminPage>

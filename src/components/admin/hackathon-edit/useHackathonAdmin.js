@@ -51,16 +51,32 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
   const [dirtySections, setDirtySections] = useState(new Set());
   const saveTimerRef = useRef(null);
   const inflightRef = useRef(null);
+  // PropelAuth mints a fresh accessToken when the tab regains focus. Requests
+  // read the token through refs so fetch/patch callbacks stay identity-stable
+  // across token rotation — otherwise the load effect refires, flips
+  // `loading`, unmounts the whole section tree behind the page spinner, and
+  // clobbers unsaved draft edits.
+  const accessTokenRef = useRef(accessToken);
+  accessTokenRef.current = accessToken;
+  const orgIdRef = useRef(orgId);
+  orgIdRef.current = orgId;
+  const loadedEventIdRef = useRef(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_SERVER_URL;
 
   const fetchHackathon = useCallback(async () => {
-    if (!isAdmin || !eventId || !accessToken) return;
+    if (!isAdmin || !eventId || !accessTokenRef.current) return;
+    // Switching to a different event: drop the stale draft so the page shows
+    // the loader instead of the previous event's data.
+    if (loadedEventIdRef.current !== eventId) {
+      setDraft(null);
+      setCommitted(null);
+    }
     setLoading(true);
     setLoadError(null);
     try {
       const res = await fetch(`${apiBase}/api/messages/hackathons`, {
-        headers: buildHeaders(accessToken, orgId),
+        headers: buildHeaders(accessTokenRef.current, orgIdRef.current),
       });
       if (!res.ok) throw new Error(`Failed to load hackathons (${res.status})`);
       const data = await res.json();
@@ -92,17 +108,21 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       };
       setDraft(normalized);
       setCommitted(cloneDeep(normalized));
+      loadedEventIdRef.current = eventId;
     } catch (err) {
       console.error("Hackathon load failed:", err);
       setLoadError(err.message || "Failed to load");
     } finally {
       setLoading(false);
     }
-  }, [apiBase, eventId, accessToken, orgId, isAdmin]);
+  }, [apiBase, eventId, isAdmin]);
 
+  // Keyed on token *presence*, not value — a rotated token must not reload.
+  const hasToken = !!accessToken;
   useEffect(() => {
+    if (!hasToken) return;
     fetchHackathon();
-  }, [fetchHackathon]);
+  }, [fetchHackathon, hasToken]);
 
   // Push a PATCH with the given payload. Returns the saved hackathon.
   const pushPatch = useCallback(
@@ -113,7 +133,7 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       inflightRef.current = myToken;
       const res = await fetch(`${apiBase}/api/messages/hackathon`, {
         method: "PATCH",
-        headers: buildHeaders(accessToken, orgId),
+        headers: buildHeaders(accessTokenRef.current, orgIdRef.current),
         body: JSON.stringify(payload),
       });
       if (inflightRef.current !== myToken) return null;
@@ -123,7 +143,7 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       }
       return payload;
     },
-    [apiBase, accessToken, orgId]
+    [apiBase]
   );
 
   // Build a payload that contains the committed state plus only the keys not

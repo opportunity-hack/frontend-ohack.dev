@@ -91,7 +91,9 @@ const AdminHackathonEditPage = () => {
         onSnackbarClose={() => setSnackbar((s) => ({ ...s, open: false }))}
         isAdmin={isAdmin}
       >
-        {admin.loading ? (
+        {/* Blocking spinner only before first load — a background refetch
+            must not unmount the layout (and the embedded workbenches). */}
+        {admin.loading && !admin.hackathon ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
             <CircularProgress />
           </Box>
