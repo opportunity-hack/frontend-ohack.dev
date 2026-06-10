@@ -18,6 +18,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import {
   ArrowBack as ArrowBackIcon,
   Instagram as InstagramIcon,
@@ -137,6 +138,9 @@ const MediaPage = ({ eventData }) => {
   const instagramPosts = socialPosts.filter((p) => p.platform === "instagram");
   const otherSocialPosts = socialPosts.filter((p) => p.platform !== "instagram");
   const activePhoto = photos[carouselIndex] || photos[0] || null;
+  const activePhotoNumber = photos.length > 0 ? Math.min(carouselIndex + 1, photos.length) : 0;
+  const activePhotoCaption = activePhoto?.caption?.trim() || "";
+  const activePhotoCredit = activePhoto?.credit?.trim() || "";
 
   if (router.isFallback) {
     return (
@@ -285,27 +289,63 @@ const MediaPage = ({ eventData }) => {
               variant="outlined"
               sx={{
                 p: { xs: 1, md: 2 },
-                backgroundColor: "#000",
+                backgroundColor: "#05070a",
+                color: "#fff",
+                borderColor: alpha("#fff", 0.12),
+                overflow: "hidden",
                 "& .carousel .slide": {
                   backgroundColor: "transparent",
+                },
+                "& .carousel.carousel-slider .control-arrow": {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  top: "50%",
+                  width: { xs: 40, md: 48 },
+                  height: { xs: 40, md: 48 },
+                  marginTop: 0,
+                  transform: "translateY(-50%)",
+                  borderRadius: "999px",
+                  backgroundColor: alpha("#000", 0.42),
+                  backdropFilter: "blur(6px)",
+                  opacity: 1,
+                  transition: "background-color 160ms ease, transform 160ms ease",
+                  zIndex: 2,
+                },
+                "& .carousel.carousel-slider .control-arrow:hover": {
+                  backgroundColor: alpha("#000", 0.62),
+                },
+                "& .carousel.carousel-slider .control-prev.control-arrow": {
+                  left: { xs: 8, md: 16 },
+                },
+                "& .carousel.carousel-slider .control-next.control-arrow": {
+                  right: { xs: 8, md: 16 },
                 },
                 "& .carousel .slider-wrapper": {
                   borderRadius: 1,
                   pb: photos.length > 1 ? 5 : 0,
                 },
                 "& .carousel .control-dots": {
-                  bottom: photos.length > 1 ? 16 : 0,
+                  display: photos.length > 1 ? "block" : "none",
+                  bottom: 16,
                   margin: 0,
                 },
-                "& .carousel .thumbs-wrapper": {
-                  margin: photos.length > 1 ? "12px 0 0" : 0,
+                "& .carousel .control-dots .dot": {
+                  width: 10,
+                  height: 10,
+                  margin: "0 6px",
+                  boxShadow: "none",
+                  backgroundColor: alpha("#fff", 0.45),
+                },
+                "& .carousel .control-dots .dot.selected, & .carousel .control-dots .dot:hover": {
+                  backgroundColor: "#fff",
                 },
               }}
             >
               <Carousel
                 showArrows
                 showIndicators={photos.length > 1}
-                showThumbs={photos.length > 1}
+                showThumbs={false}
                 showStatus={false}
                 infiniteLoop
                 useKeyboardArrows
@@ -339,18 +379,187 @@ const MediaPage = ({ eventData }) => {
                   </Box>
                 ))}
               </Carousel>
-              {(activePhoto?.caption || activePhoto?.credit) && (
-                <Box sx={{ px: { xs: 1, md: 0.5 }, pt: 2, color: "#fff", textAlign: "center" }}>
-                  {activePhoto.caption && (
-                    <Typography variant="body2">{activePhoto.caption}</Typography>
-                  )}
-                  {activePhoto.credit && (
-                    <Typography variant="caption" sx={{ opacity: 0.8, display: "block", mt: 0.5 }}>
-                      Photo: {activePhoto.credit}
-                    </Typography>
-                  )}
+
+              {photos.length > 1 && (
+                <Box sx={{ display: { xs: "none", md: "block" }, px: { md: 0.5 }, pt: 2 }}>
+                  <Typography
+                    variant="overline"
+                    sx={{ display: "block", mb: 1, color: alpha("#fff", 0.68), letterSpacing: "0.08em" }}
+                  >
+                    Browse photos
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 1,
+                      overflowX: "auto",
+                      pb: 1,
+                      pr: 0.5,
+                      scrollbarWidth: "thin",
+                      scrollSnapType: "x proximity",
+                    }}
+                  >
+                    {photos.map((photo, idx) => {
+                      const isActive = idx === carouselIndex;
+
+                      return (
+                        <Box
+                          key={`${photo.url}-thumb-${idx}`}
+                          component="button"
+                          type="button"
+                          onClick={() => setCarouselIndex(idx)}
+                          aria-label={`View photo ${idx + 1}`}
+                          aria-current={isActive ? "true" : undefined}
+                          sx={{
+                            flex: "0 0 auto",
+                            width: 112,
+                            border: `1px solid ${isActive ? alpha("#fff", 0.88) : alpha("#fff", 0.18)}`,
+                            borderRadius: 1.5,
+                            p: 0,
+                            overflow: "hidden",
+                            backgroundColor: alpha("#fff", isActive ? 0.08 : 0.03),
+                            boxShadow: isActive
+                              ? `0 0 0 1px ${alpha("#fff", 0.26)}`
+                              : "none",
+                            cursor: "pointer",
+                            scrollSnapAlign: "start",
+                            transition:
+                              "border-color 160ms ease, background-color 160ms ease, transform 160ms ease",
+                            "&:hover": {
+                              borderColor: alpha("#fff", 0.52),
+                              backgroundColor: alpha("#fff", 0.06),
+                              transform: "translateY(-1px)",
+                            },
+                            "&:focus-visible": {
+                              outline: `2px solid ${alpha("#fff", 0.92)}`,
+                              outlineOffset: 2,
+                            },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              position: "relative",
+                              width: "100%",
+                              aspectRatio: "16 / 10",
+                              backgroundColor: "#000",
+                            }}
+                          >
+                            <img
+                              src={photo.url}
+                              alt={photo.caption || `${eventTitle} thumbnail ${idx + 1}`}
+                              loading="lazy"
+                              style={{
+                                position: "absolute",
+                                inset: 0,
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
                 </Box>
               )}
+
+              <Box sx={{ px: { xs: 1, md: 0.5 }, pt: 2 }}>
+                <Box
+                  aria-live="polite"
+                  sx={{
+                    p: { xs: 2, md: 2.5 },
+                    borderRadius: 2,
+                    border: `1px solid ${alpha("#fff", 0.12)}`,
+                    background: "linear-gradient(180deg, rgba(20,24,32,0.86) 0%, rgba(8,10,15,0.98) 100%)",
+                  }}
+                >
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={2}
+                    alignItems={{ xs: "flex-start", md: "center" }}
+                    justifyContent="space-between"
+                  >
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography
+                        variant="overline"
+                        sx={{ display: "block", mb: 0.5, color: alpha("#fff", 0.72), letterSpacing: "0.08em" }}
+                      >
+                        Photo {activePhotoNumber} of {photos.length}
+                      </Typography>
+                      <Typography
+                        variant={activePhotoCaption ? "h6" : "body1"}
+                        component="p"
+                        sx={{
+                          fontSize: activePhotoCaption
+                            ? { xs: "1rem", sm: "1.125rem" }
+                            : undefined,
+                          fontWeight: activePhotoCaption ? 600 : 500,
+                          lineHeight: 1.45,
+                          color: alpha("#fff", activePhotoCaption ? 1 : 0.88),
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {activePhotoCaption || `Event gallery image from ${eventTitle}`}
+                      </Typography>
+                    </Box>
+                    {activePhoto?.url && (
+                      <Button
+                        component="a"
+                        href={activePhoto.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="outlined"
+                        size="small"
+                        endIcon={<OpenInNewIcon fontSize="small" />}
+                        sx={{
+                          flexShrink: 0,
+                          color: "#fff",
+                          borderColor: alpha("#fff", 0.28),
+                          textTransform: "none",
+                          "&:hover": {
+                            borderColor: "#fff",
+                            backgroundColor: alpha("#fff", 0.08),
+                          },
+                        }}
+                      >
+                        Open full photo
+                      </Button>
+                    )}
+                  </Stack>
+
+                  {activePhotoCredit && (
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1}
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      sx={{
+                        mt: 1.75,
+                        pt: 1.5,
+                        borderTop: `1px solid ${alpha("#fff", 0.1)}`,
+                      }}
+                    >
+                      <Typography
+                        variant="overline"
+                        sx={{ color: alpha("#fff", 0.7), letterSpacing: "0.08em", lineHeight: 1.2 }}
+                      >
+                        Photo credit
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: alpha("#fff", 0.94),
+                          fontWeight: 500,
+                          lineHeight: 1.5,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {activePhotoCredit}
+                      </Typography>
+                    </Stack>
+                  )}
+                </Box>
+              </Box>
             </Paper>
           </Box>
         )}
