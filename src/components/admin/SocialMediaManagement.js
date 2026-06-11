@@ -91,6 +91,8 @@ const SocialMediaManagement = ({ onSnackbar }) => {
   const [selectedSlackUsers, setSelectedSlackUsers] = useState(new Set());
   const [slackSearchFilter, setSlackSearchFilter] = useState('');
   const [showSlackBrowser, setShowSlackBrowser] = useState(false);
+  const [slackPasteInput, setSlackPasteInput] = useState('');
+  const [slackPasteFeedback, setSlackPasteFeedback] = useState(null);
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -342,6 +344,37 @@ const SocialMediaManagement = ({ onSnackbar }) => {
     return [...new Set(emails)]; // Remove duplicates
   };
 
+  const normalizeSlackLookupToken = (value) => {
+    if (!value) return '';
+
+    let normalized = value.trim().replace(/^['"]+|['"]+$/g, '');
+    if (!normalized) return '';
+
+    const slackMentionMatch = normalized.match(/^<@([A-Z0-9]+)>$/i);
+    if (slackMentionMatch) {
+      return slackMentionMatch[1].toLowerCase();
+    }
+
+    const embeddedEmailMatch = normalized.match(/<?([^\s<>]+@[^\s<>]+)>?/);
+    if (embeddedEmailMatch) {
+      return embeddedEmailMatch[1].toLowerCase();
+    }
+
+    normalized = normalized.replace(/^@/, '');
+    return normalized.toLowerCase();
+  };
+
+  const parseSlackLookupInput = (text) => {
+    if (!text) return [];
+
+    return [...new Set(
+      text
+        .split(/[\n,;]+/)
+        .map(token => token.trim())
+        .filter(Boolean)
+    )];
+  };
+
   const parseCsvFile = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -466,6 +499,100 @@ const SocialMediaManagement = ({ onSnackbar }) => {
         user.email?.toLowerCase().includes(searchTerm)
       )
     );
+  };
+
+  const handlePasteSelectSlackUsers = () => {
+    const rawTokens = parseSlackLookupInput(slackPasteInput);
+
+    if (rawTokens.length === 0) {
+      onSnackbar?.('Paste at least one Slack email, @handle, real name, or Slack ID', 'warning');
+      return;
+    }
+
+    const lookup = new Map();
+
+    slackUsers
+      .filter(user => user.email)
+      .forEach((user) => {
+        const keys = [user.id, user.name, user.real_name, user.email]
+          .map(normalizeSlackLookupToken)
+          .filter(Boolean);
+
+        [...new Set(keys)].forEach((key) => {
+          if (!lookup.has(key)) {
+            lookup.set(key, []);
+          }
+
+          const matches = lookup.get(key);
+          if (!matches.find(match => match.id === user.id)) {
+            matches.push(user);
+          }
+        });
+      });
+
+    const matchedIds = new Set();
+    const unmatchedTokens = [];
+    const ambiguousTokens = [];
+    let alreadySelectedCount = 0;
+
+    rawTokens.forEach((token) => {
+      const normalizedToken = normalizeSlackLookupToken(token);
+      if (!normalizedToken) {
+        return;
+      }
+
+      const matches = lookup.get(normalizedToken) || [];
+
+      if (matches.length === 0) {
+        unmatchedTokens.push(token);
+        return;
+      }
+
+      if (matches.length > 1) {
+        ambiguousTokens.push(token);
+        return;
+      }
+
+      const matchedUser = matches[0];
+      if (selectedSlackUsers.has(matchedUser.id) || matchedIds.has(matchedUser.id)) {
+        alreadySelectedCount += 1;
+      }
+
+      matchedIds.add(matchedUser.id);
+    });
+
+    if (matchedIds.size > 0) {
+      setSelectedSlackUsers((prev) => new Set([...prev, ...matchedIds]));
+    }
+
+    const remainingTokens = [...ambiguousTokens, ...unmatchedTokens];
+    setSlackPasteInput(remainingTokens.join('\n'));
+    setSlackPasteFeedback({
+      requestedCount: rawTokens.length,
+      matchedCount: matchedIds.size,
+      alreadySelectedCount,
+      unmatchedTokens,
+      ambiguousTokens,
+    });
+
+    if (matchedIds.size === 0) {
+      onSnackbar?.('No Slack users matched the pasted list', 'warning');
+      return;
+    }
+
+    const messageParts = [`Matched ${matchedIds.size} Slack user${matchedIds.size === 1 ? '' : 's'}`];
+
+    if (alreadySelectedCount > 0) {
+      messageParts.push(`${alreadySelectedCount} already selected`);
+    }
+    if (ambiguousTokens.length > 0) {
+      messageParts.push(`${ambiguousTokens.length} ambiguous`);
+    }
+    if (unmatchedTokens.length > 0) {
+      messageParts.push(`${unmatchedTokens.length} not found`);
+    }
+
+    onSnackbar?.(messageParts.join(' · '), unmatchedTokens.length > 0 || ambiguousTokens.length > 0 ? 'warning' : 'success');
   };
 
   const getSelectedUsers = () => {
@@ -1224,6 +1351,78 @@ user@domain.org; admin@site.net"
             >
               Clear All
             </Button>
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Paste Slack users
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Paste one item per line or comma-separated. Match by email, Slack @handle,
+              real name, or Slack user ID.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <TextField
+                multiline
+                minRows={3}
+                maxRows={6}
+                placeholder={'jane@example.com\n@johnsmith\nU123ABC45\nJane Doe'}
+                value={slackPasteInput}
+                onChange={(e) => setSlackPasteInput(e.target.value)}
+                sx={{ flexGrow: 1, minWidth: 280 }}
+              />
+              <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'row', sm: 'column' } }}>
+                <Button
+                  variant="contained"
+                  onClick={handlePasteSelectSlackUsers}
+                  disabled={!slackPasteInput.trim()}
+                >
+                  Select Matches
+                </Button>
+                <Button
+                  variant="text"
+                  color="inherit"
+                  onClick={() => {
+                    setSlackPasteInput('');
+                    setSlackPasteFeedback(null);
+                  }}
+                  disabled={!slackPasteInput && !slackPasteFeedback}
+                >
+                  Clear Paste
+                </Button>
+              </Box>
+            </Box>
+
+            {slackPasteFeedback && (
+              <Alert
+                severity={
+                  slackPasteFeedback.unmatchedTokens.length > 0 || slackPasteFeedback.ambiguousTokens.length > 0
+                    ? 'warning'
+                    : 'success'
+                }
+                sx={{ mt: 1.5 }}
+              >
+                <Typography variant="body2">
+                  Matched <strong>{slackPasteFeedback.matchedCount}</strong> of{' '}
+                  <strong>{slackPasteFeedback.requestedCount}</strong> pasted entries.
+                  {slackPasteFeedback.alreadySelectedCount > 0 && (
+                    <> {slackPasteFeedback.alreadySelectedCount} were already selected.</>
+                  )}
+                </Typography>
+                {slackPasteFeedback.ambiguousTokens.length > 0 && (
+                  <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                    Ambiguous: {slackPasteFeedback.ambiguousTokens.slice(0, 5).join(', ')}
+                    {slackPasteFeedback.ambiguousTokens.length > 5 ? '…' : ''}
+                  </Typography>
+                )}
+                {slackPasteFeedback.unmatchedTokens.length > 0 && (
+                  <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                    Not found: {slackPasteFeedback.unmatchedTokens.slice(0, 5).join(', ')}
+                    {slackPasteFeedback.unmatchedTokens.length > 5 ? '…' : ''}
+                  </Typography>
+                )}
+              </Alert>
+            )}
           </Box>
 
           {/* Users List */}

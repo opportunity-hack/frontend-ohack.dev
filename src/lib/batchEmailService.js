@@ -7,9 +7,11 @@
  * - Email-only recipients: /api/admin/email/send
  */
 
-import { replacePlaceholders } from './messageTemplates';
+import { replacePlaceholders } from "./messageTemplates";
 
 class BatchEmailService {
+  static MAX_PARALLEL_SENDS = 8;
+
   constructor(apiServerUrl, accessToken, orgId) {
     this.apiServerUrl = apiServerUrl;
     this.accessToken = accessToken;
@@ -26,16 +28,16 @@ class BatchEmailService {
    * @returns {Promise<{success: boolean, error?: string}>}
    */
   async sendEmailToUser(user, message, subject, recipientType, eventId) {
+    const isEmailOnlyRecipient =
+      !user.id || user.source === "custom" || user.source === "csv";
+
     try {
       // Use shared utility to replace placeholders in message
       const processedMessage = replacePlaceholders(message, {
         eventId: eventId,
         volunteerId: user.id,
-        volunteerType: recipientType
+        volunteerType: recipientType,
       });
-
-      // Determine if this is a user with an ID (registered user) or email-only recipient
-      const isEmailOnlyRecipient = !user.id || user.source === 'custom' || user.source === 'csv';
 
       let endpoint, requestBody;
 
@@ -47,8 +49,8 @@ class BatchEmailService {
           message: processedMessage,
           subject: subject,
           recipient_type: recipientType,
-          name: user.name || user.email || 'Recipient',
-          volunteer_id: user.id || null
+          name: user.name || user.email || "Recipient",
+          volunteer_id: user.id || null,
         };
       } else {
         // Use user ID endpoint for registered users
@@ -59,16 +61,16 @@ class BatchEmailService {
           recipient_type: recipientType,
           recipient_id: user.id,
           email: user.email,
-          name: user.name || user.email || 'Recipient'
+          name: user.name || user.email || "Recipient",
         };
       }
 
       const response = await fetch(endpoint, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json',
-          'X-Org-Id': this.orgId,
+          Authorization: `Bearer ${this.accessToken}`,
+          "Content-Type": "application/json",
+          "X-Org-Id": this.orgId,
         },
         body: JSON.stringify(requestBody),
       });
@@ -78,26 +80,29 @@ class BatchEmailService {
         return {
           success: data.success || true,
           data,
-          endpoint: isEmailOnlyRecipient ? 'email-only' : 'user-id'
+          endpoint: isEmailOnlyRecipient ? "email-only" : "user-id",
         };
       } else {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        const errorMessage =
+          errorData.message ||
+          errorData.error ||
+          `HTTP ${response.status}: ${response.statusText}`;
 
         // Add context about which endpoint was used for better debugging
-        const contextualError = `${errorMessage} (via ${isEmailOnlyRecipient ? 'email-only' : 'user-ID'} endpoint)`;
+        const contextualError = `${errorMessage} (via ${isEmailOnlyRecipient ? "email-only" : "user-ID"} endpoint)`;
 
         return {
           success: false,
           error: contextualError,
-          endpoint: isEmailOnlyRecipient ? 'email-only' : 'user-id'
+          endpoint: isEmailOnlyRecipient ? "email-only" : "user-id",
         };
       }
     } catch (error) {
       return {
         success: false,
-        error: `${error.message || 'Network error occurred'} (${isEmailOnlyRecipient ? 'email-only' : 'user-ID'} endpoint)`,
-        endpoint: isEmailOnlyRecipient ? 'email-only' : 'user-id'
+        error: `${error.message || "Network error occurred"} (${isEmailOnlyRecipient ? "email-only" : "user-ID"} endpoint)`,
+        endpoint: isEmailOnlyRecipient ? "email-only" : "user-id",
       };
     }
   }
@@ -112,55 +117,102 @@ class BatchEmailService {
    * @param {Function} onProgress - Callback for progress updates
    * @returns {Promise<{results: Array, summary: Object}>}
    */
-  async sendBatchEmails(users, message, subject, recipientType, eventId, onProgress = () => {}) {
-    const results = [];
+  async sendBatchEmails(
+    users,
+    message,
+    subject,
+    recipientType,
+    eventId,
+    onProgress = () => {},
+  ) {
+    const results = new Array(users.length);
     const summary = {
       total: users.length,
       successful: 0,
       failed: 0,
-      errors: []
+      errors: [],
     };
 
-    for (let i = 0; i < users.length; i++) {
-      const user = users[i];
-      
-      // Update progress
+    if (users.length === 0) {
       onProgress({
-        current: i + 1,
-        total: users.length,
-        currentUser: user.name || user.email || user.id,
-        percentage: Math.round(((i + 1) / users.length) * 100)
+        current: 0,
+        total: 0,
+        currentUser: null,
+        percentage: 100,
+        inFlight: 0,
+        concurrency: 0,
       });
-
-      const result = await this.sendEmailToUser(user, message, subject, recipientType, eventId);
-      
-      const userResult = {
-        user: user,
-        success: result.success,
-        error: result.error,
-        data: result.data,
-        endpoint: result.endpoint // Track which endpoint was used
-      };
-
-      results.push(userResult);
-
-      if (result.success) {
-        summary.successful++;
-      } else {
-        summary.failed++;
-        summary.errors.push({
-          user: user.name || user.email || user.id,
-          error: result.error
-        });
-      }
-
-      // Small delay to avoid overwhelming the API
-      if (i < users.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      return { results: [], summary };
     }
 
-    return { results, summary };
+    const concurrency = Math.min(
+      BatchEmailService.MAX_PARALLEL_SENDS,
+      users.length,
+    );
+    let nextIndex = 0;
+    let completed = 0;
+    let inFlight = 0;
+
+    const reportProgress = (user) => {
+      onProgress({
+        current: completed,
+        total: users.length,
+        currentUser: user?.name || user?.email || user?.id || null,
+        percentage: Math.round((completed / users.length) * 100),
+        inFlight,
+        concurrency,
+      });
+    };
+
+    const worker = async () => {
+      while (true) {
+        const index = nextIndex;
+        if (index >= users.length) {
+          return;
+        }
+
+        nextIndex += 1;
+        const user = users[index];
+        inFlight += 1;
+
+        const result = await this.sendEmailToUser(
+          user,
+          message,
+          subject,
+          recipientType,
+          eventId,
+        );
+
+        const userResult = {
+          user,
+          success: result.success,
+          error: result.error,
+          data: result.data,
+          endpoint: result.endpoint,
+        };
+
+        results[index] = userResult;
+        completed += 1;
+        inFlight -= 1;
+
+        if (result.success) {
+          summary.successful += 1;
+        } else {
+          summary.failed += 1;
+          summary.errors.push({
+            user: user.name || user.email || user.id,
+            error: result.error,
+          });
+        }
+
+        reportProgress(user);
+      }
+    };
+
+    reportProgress();
+    await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+    return { results: results.filter(Boolean), summary };
   }
 
   /**
@@ -169,11 +221,12 @@ class BatchEmailService {
    * @returns {Array} Filtered users ready for email sending
    */
   static filterEligibleUsers(users) {
-    return users.filter(user =>
-      (user.isSelected !== undefined ? user.isSelected : true) && // Default to selected for community members
-      user.email &&
-      user.email.trim() !== '' &&
-      user.id // Must have an ID for the API endpoint
+    return users.filter(
+      (user) =>
+        (user.isSelected !== undefined ? user.isSelected : true) && // Default to selected for community members
+        user.email &&
+        user.email.trim() !== "" &&
+        user.id, // Must have an ID for the API endpoint
     );
   }
 
@@ -183,11 +236,9 @@ class BatchEmailService {
    * @returns {Array} Filtered users ready for rejection email sending
    */
   static filterNotSelectedUsers(users) {
-    return users.filter(user => 
-      !user.isSelected && 
-      user.email && 
-      user.email.trim() !== '' &&
-      user.id // Must have an ID for the API endpoint
+    return users.filter(
+      (user) =>
+        !user.isSelected && user.email && user.email.trim() !== "" && user.id, // Must have an ID for the API endpoint
     );
   }
 
@@ -197,20 +248,20 @@ class BatchEmailService {
    * @returns {string} Error message if invalid, empty string if valid
    */
   static validateMessage(message) {
-    if (!message || typeof message !== 'string') {
-      return 'Message content is required';
+    if (!message || typeof message !== "string") {
+      return "Message content is required";
     }
-    
+
     const trimmedMessage = message.trim();
     if (trimmedMessage.length === 0) {
-      return 'Message cannot be empty';
+      return "Message cannot be empty";
     }
-    
+
     if (trimmedMessage.length > 10000) {
-      return 'Message is too long (max 10,000 characters)';
+      return "Message is too long (max 10,000 characters)";
     }
-    
-    return '';
+
+    return "";
   }
 
   /**
@@ -219,20 +270,20 @@ class BatchEmailService {
    * @returns {string} Error message if invalid, empty string if valid
    */
   static validateSubject(subject) {
-    if (!subject || typeof subject !== 'string') {
-      return 'Subject is required';
+    if (!subject || typeof subject !== "string") {
+      return "Subject is required";
     }
-    
+
     const trimmedSubject = subject.trim();
     if (trimmedSubject.length === 0) {
-      return 'Subject cannot be empty';
+      return "Subject cannot be empty";
     }
-    
+
     if (trimmedSubject.length > 200) {
-      return 'Subject is too long (max 200 characters)';
+      return "Subject is too long (max 200 characters)";
     }
-    
-    return '';
+
+    return "";
   }
 
   /**
@@ -242,14 +293,14 @@ class BatchEmailService {
    */
   static getRecipientType(volunteerType) {
     const typeMap = {
-      'mentors': 'mentor',
-      'judges': 'judge',
-      'volunteers': 'volunteer',
-      'hackers': 'hacker',
-      'sponsors': 'sponsor',
-      'community members': 'community',
-      'community': 'community',
-      'slack': 'community'
+      mentors: "mentor",
+      judges: "judge",
+      volunteers: "volunteer",
+      hackers: "hacker",
+      sponsors: "sponsor",
+      "community members": "community",
+      community: "community",
+      slack: "community",
     };
 
     return typeMap[volunteerType] || volunteerType;
