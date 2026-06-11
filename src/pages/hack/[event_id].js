@@ -32,7 +32,7 @@ const HackathonHeader = dynamic(
       <Box
         sx={{
           minHeight: "220px",
-          background: "linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)",
+          background: "#f5f2ea",
           borderRadius: "4px",
           mb: 3,
           mt: 5,
@@ -426,7 +426,9 @@ export default function HackathonEvent({ eventData }) {
       : "TBA";
 
   const metaTitle = `${eventTitle} - ${eventLocation} | Opportunity Hack`;
-  const metaDescription = `Join ${eventTitle} hackathon in ${eventLocation} from ${eventStartDate} to ${eventEndDate}. Apply as a hacker, volunteer, mentor, judge, or sponsor. Build technology solutions for nonprofits and make a positive impact. Register now!`;
+  const metaDescription = hackathonExpired
+    ? `${eventTitle} in ${eventLocation} — see winning teams, project results, and the impact achieved at this Opportunity Hack event.`
+    : `Join ${eventTitle} hackathon in ${eventLocation} from ${eventStartDate} to ${eventEndDate}. Apply as a hacker, volunteer, mentor, judge, or sponsor. Build technology solutions for nonprofits and make a positive impact. Register now!`;
 
   const metaImage =
     event?.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp";
@@ -497,7 +499,7 @@ export default function HackathonEvent({ eventData }) {
         url: applicationUrls.hacker,
         description:
           "Apply to participate as a hacker and build solutions for nonprofits",
-        startDate: eventStartDate,
+        startDate: event.start_date,
         location: {
           "@type": "Place",
           name: eventLocation,
@@ -513,7 +515,7 @@ export default function HackathonEvent({ eventData }) {
         url: applicationUrls.judge,
         description:
           "Apply to judge hackathon projects and mentor participants",
-        startDate: eventStartDate,
+        startDate: event.start_date,
         location: {
           "@type": "Place",
           name: eventLocation,
@@ -528,7 +530,7 @@ export default function HackathonEvent({ eventData }) {
         name: "Mentor Registration",
         url: applicationUrls.mentor,
         description: "Apply to mentor teams and share your expertise",
-        startDate: eventStartDate,
+        startDate: event.start_date,
         location: {
           "@type": "Place",
           name: eventLocation,
@@ -543,7 +545,7 @@ export default function HackathonEvent({ eventData }) {
         name: "Volunteer Registration",
         url: applicationUrls.volunteer,
         description: "Apply to volunteer and help make the event successful",
-        startDate: eventStartDate,
+        startDate: event.start_date,
         location: {
           "@type": "Place",
           name: eventLocation,
@@ -558,7 +560,7 @@ export default function HackathonEvent({ eventData }) {
         name: "Sponsor Registration",
         url: applicationUrls.sponsor,
         description: "Apply to sponsor the event and support tech for good",
-        startDate: eventStartDate,
+        startDate: event.start_date,
         location: {
           "@type": "Place",
           name: eventLocation,
@@ -640,8 +642,6 @@ export default function HackathonEvent({ eventData }) {
         />
         <meta property="og:site_name" content="Opportunity Hack" />
         <meta property="og:locale" content="en_US" />
-        <meta property="og:updated_time" content={new Date().toISOString()} />
-
         {/* Enhanced Twitter Card tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@OpportunityHack" />
@@ -1213,7 +1213,7 @@ export default function HackathonEvent({ eventData }) {
                   )}
 
                   <TeamList
-                    teams={event.teams?.sort((a, b) => {
+                    teams={[...(event.teams || [])].sort((a, b) => {
                       // Sort active teams first, inactive teams last
                       const aActive =
                         a?.active === "True" || a?.active === true;
@@ -1222,7 +1222,7 @@ export default function HackathonEvent({ eventData }) {
 
                       if (aActive && !bActive) return -1;
                       if (!aActive && bActive) return 1;
-                      return 0; // Keep original order for teams with same active status
+                      return 0;
                     })}
                     event_id={event_id}
                     id={event.id}
@@ -1561,29 +1561,24 @@ export default function HackathonEvent({ eventData }) {
 }
 
 export async function getStaticProps({ params }) {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${params.event_id}`,
-    );
-    const data = await res.json();
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${params.event_id}`,
+  );
 
-    return {
-      props: {
-        eventData: data,
-      },
-      // Re-generate at most once per minute
-      revalidate: 60,
-    };
-  } catch (error) {
-    console.error("Error fetching hackathon data:", error);
-    return {
-      props: {
-        eventData: null,
-      },
-      // Re-generate at most once per minute
-      revalidate: 60,
-    };
+  if (res.status === 404) {
+    return { notFound: true, revalidate: 60 };
   }
+
+  if (!res.ok) {
+    // Rethrow so ISR keeps serving the last good version instead of caching an error
+    throw new Error(`Backend returned ${res.status} for event ${params.event_id}`);
+  }
+
+  const data = await res.json();
+  return {
+    props: { eventData: data },
+    revalidate: 60,
+  };
 }
 
 export async function getStaticPaths() {
@@ -1605,7 +1600,6 @@ export async function getStaticPaths() {
     // Get data.hackathons if it exists, otherwise use data directly
     const hackathons = data.hackathons;
 
-    console.log("Fetched hackathons:", hackathons);
     if (!hackathons || !Array.isArray(hackathons)) {
       console.error("Invalid hackathon data format:", hackathons);
       return {

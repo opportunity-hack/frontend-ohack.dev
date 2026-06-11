@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import NextLink from "next/link";
 import {
   Typography,
@@ -819,7 +819,6 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
         }
 
         const data = await response.json();
-        console.log("GitHub stats data:", data);
         setGithubData(data);
         
         // Pass stats back to parent component
@@ -941,10 +940,30 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, hackerStatus, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo, event_id }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, hackerStatus, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo, event_id, onVisible }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const cardRef = useRef(null);
+  const visibilityFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!onVisible) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !visibilityFiredRef.current) {
+          visibilityFiredRef.current = true;
+          onVisible(team);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onVisible, team]);
   
   // Check if this team's button is currently loading
   const isLoading = loadingTeamId === team?.id;
@@ -1006,6 +1025,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
   return (
     <Card
+      ref={cardRef}
       elevation={0}
       sx={{
         position: "relative",
@@ -1442,7 +1462,6 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
         );
         if (response.ok) {
           const data = await response.json();
-          console.log("User profile:", data);
           setUserProfile(data.text);
         } else {
           throw new Error("Failed to fetch user profile");
@@ -1528,15 +1547,62 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
     }
   }, [event_id, accessToken]);
 
+  const fetchedTeamProfilesRef = useRef(new Set());
+
+  const fetchTeamProfiles = useCallback(async (team) => {
+    if (!team?.id || !accessToken) return;
+    if (fetchedTeamProfilesRef.current.has(team.id)) return;
+    fetchedTeamProfilesRef.current.add(team.id);
+
+    const userIds = Array.isArray(team.users)
+      ? team.users.filter((u) => typeof u === "string" && u)
+      : [];
+    if (!userIds.length) return;
+
+    const profileMap = {};
+    await Promise.all(
+      userIds.map(async (userId) => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (!response.ok) return;
+          const data = await response.json();
+          const profile = data.text || data;
+          if (profile) {
+            profile.user_id = userId;
+            profileMap[userId] = profile;
+          }
+        } catch {
+          // silently ignore per-user failures
+        }
+      })
+    );
+
+    if (!Object.keys(profileMap).length) return;
+
+    setTeamData((prev) =>
+      prev.map((t) =>
+        t.id === team.id
+          ? {
+              ...t,
+              users: Array.isArray(t.users)
+                ? t.users.map((u) =>
+                    typeof u === "string" ? profileMap[u] || { user_id: u } : u
+                  )
+                : t.users,
+            }
+          : t
+      )
+    );
+  }, [accessToken]);
+
   useEffect(() => {
     fetchUserProfile();
     fetchHackerStatus();
     fetchNonprofits();
-    // Fetch detailed profiles for team members
-    if (teams && teams.length > 0) {
-      fetchTeamMemberProfiles(teams);
-    }
-  }, [teams, fetchUserProfile, fetchHackerStatus, fetchTeamMemberProfiles, fetchNonprofits]);
+  }, [fetchUserProfile, fetchHackerStatus, fetchNonprofits]);
 
   const handleJoinTeam = async (teamId) => {
     try {
@@ -1708,6 +1774,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
               onCopyGithubUsername={handleCopyGithubUsername}
               onPlayVideo={handlePlayVideo}
               event_id={event_id}
+              onVisible={isLoggedIn ? fetchTeamProfiles : undefined}
             />
           </Grid>        
         ))}

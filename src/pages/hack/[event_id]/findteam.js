@@ -1681,7 +1681,7 @@ const FindTeam = () => {
       authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
       displayIfLoggedOut={
         <RedirectToLogin
-          postLoginRedirectUrl={currentUrl || window.location.href}
+          postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
         />
       }
     >
