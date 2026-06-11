@@ -135,46 +135,11 @@ function relativeTime(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
-export default function TeamCompletionChecklist({ team, eventId, onTeamUpdate }) {
-  const { user, accessToken, isLoggedIn } = useAuthInfo();
+export default function TeamCompletionChecklist({ team, eventId, onTeamUpdate, isOnTeam = false, membershipChecked = false }) {
+  const { accessToken } = useAuthInfo();
 
   const checklist = team?.completion_checklist || {};
   const isComplete = team?.completion_status === "complete";
-
-  // Membership must come from the server: the public team payload
-  // intentionally omits `propel_id` (PII), and user docs have an OAuth-shaped
-  // `user_id` that PropelAuth's `user.userId` can't be compared to directly.
-  // GET /api/team/<event_id>/me returns the teams the caller is on for the event.
-  const [membershipChecked, setMembershipChecked] = useState(false);
-  const [isOnTeam, setIsOnTeam] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!isLoggedIn || !accessToken || !eventId || !team?.id) {
-      setIsOnTeam(false);
-      setMembershipChecked(!!eventId);
-      return undefined;
-    }
-    setMembershipChecked(false);
-    fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${eventId}/me`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-      .then((r) => (r.ok ? r.json() : { teams: [] }))
-      .then((data) => {
-        if (cancelled) return;
-        const myTeams = Array.isArray(data?.teams) ? data.teams : [];
-        setIsOnTeam(myTeams.some((t) => t?.id === team.id));
-        setMembershipChecked(true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setIsOnTeam(false);
-        setMembershipChecked(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoggedIn, accessToken, eventId, team?.id]);
 
   const doneCount = useMemo(
     () => COMPLETION_ITEMS.reduce((acc, it) => acc + (checklist[it.slug]?.done ? 1 : 0), 0),

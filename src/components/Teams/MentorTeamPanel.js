@@ -6,7 +6,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Alert,
-  AlertTitle,
   Avatar,
   Box,
   Button,
@@ -62,6 +61,7 @@ import {
   consensusForCriterion,
   relativeTime,
 } from "./mentorCoverage";
+import { parseLocalDate } from "../../lib/dateUtils";
 
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
 
@@ -240,10 +240,6 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
   const [noteDraft, setNoteDraft] = useState("");
   const noteFieldRef = useRef(null);
 
-  // rating note inline
-  const [ratingNoteOpen, setRatingNoteOpen] = useState(null); // { criterion, score }
-  const [ratingNoteText, setRatingNoteText] = useState("");
-
   // -- mentor self-check
   useEffect(() => {
     let cancelled = false;
@@ -298,13 +294,17 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
 
   const eventEnded = useMemo(() => {
     if (!event?.end_date) return false;
-    const end = new Date(event.end_date);
-    return !Number.isNaN(end.getTime()) && end < new Date();
+    const end = parseLocalDate(event.end_date);
+    if (Number.isNaN(end.getTime())) return false;
+    // Treat the event as ended only after the end of the local end date.
+    end.setHours(23, 59, 59, 999);
+    return end < new Date();
   }, [event?.end_date]);
   const daysSinceEnd = useMemo(() => {
     if (!event?.end_date) return null;
-    const end = new Date(event.end_date);
+    const end = parseLocalDate(event.end_date);
     if (Number.isNaN(end.getTime())) return null;
+    end.setHours(23, 59, 59, 999);
     const ms = Date.now() - end.getTime();
     return Math.floor(ms / 86400000);
   }, [event?.end_date]);
