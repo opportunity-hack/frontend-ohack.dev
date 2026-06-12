@@ -75,9 +75,7 @@ const StatLabel = styled(Typography)(({ theme }) => ({
   color: 'var(--muted, #5B6270)',
   textAlign: 'center',
   width: '100%',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
+  overflowWrap: 'break-word',
 }));
 
 const AchievementCard = styled(Box)(({ theme }) => ({
@@ -585,44 +583,44 @@ const HackathonLeaderboard = ({
               placement="top"
             >
               <StatBox sx={{
-                flexDirection: { xs: 'column', md: 'row' },
-                justifyContent: { md: 'flex-start' },
-                alignItems: { xs: 'center', md: 'center' },
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
                 height: '100%',
                 px: { xs: 1, md: 2 },
                 py: { xs: 1.5, md: 1.5 }
               }}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  mr: { md: 2 },
-                  mb: { xs: 1, md: 0 }
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mb: 1
                 }}>
                   {renderIcon(stat.icon, { fontSize: "large", sx: { color: "var(--accent, #E2552E)" } })}
                 </Box>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: { xs: 'column', md: 'column' },
-                  alignItems: { xs: 'center', md: 'flex-start' },
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
                   justifyContent: 'center',
-                  width: '100%'
+                  width: '100%',
+                  minWidth: 0
                 }}>
-                  <StatValue 
-                    variant="h4" 
-                    sx={{ 
-                      fontSize: { xs: '1.3rem', md: '1.3rem' },
-                      textAlign: { xs: 'center', md: 'left' },
+                  <StatValue
+                    variant="h4"
+                    sx={{
+                      fontSize: '1.3rem',
+                      textAlign: 'center',
                       lineHeight: 1.2
                     }}
                   >
                     {stat.value.toLocaleString()}
                   </StatValue>
-                  <StatLabel 
-                    variant="subtitle2" 
+                  <StatLabel
+                    variant="subtitle2"
                     title={stat.stat}
-                    sx={{ 
-                      mt: { xs: 0.2, md: 0.2 },
-                      textAlign: { xs: 'center', md: 'left' },
+                    sx={{
+                      mt: 0.2,
+                      textAlign: 'center',
                       maxWidth: '100%',
                       lineHeight: 1.2,
                       fontSize: '0.75rem'
