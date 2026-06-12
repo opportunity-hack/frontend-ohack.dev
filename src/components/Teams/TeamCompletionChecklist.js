@@ -136,7 +136,7 @@ function relativeTime(iso) {
 }
 
 export default function TeamCompletionChecklist({ team, eventId, onTeamUpdate, isOnTeam = false, membershipChecked = false }) {
-  const { accessToken } = useAuthInfo();
+  const { accessToken, isLoggedIn } = useAuthInfo();
 
   const checklist = team?.completion_checklist || {};
   const isComplete = team?.completion_status === "complete";
