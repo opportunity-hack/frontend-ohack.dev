@@ -662,7 +662,7 @@ const MentorCheckinPage = () => {
   const pageDescription = eventData
     ? `Check in as a mentor for ${eventData.name} in ${eventData.location}. Help teams of technologists create solutions for nonprofits and make a real impact.`
     : "Check in as a mentor for our social good hackathon. Help teams of technologists create solutions for nonprofits and make a real impact.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/mentor-checkin`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/mentor-checkin`;
 
   // Simplify how we display mentor profile data by creating a helper function
   const renderMentorProfile = (mentor) => {

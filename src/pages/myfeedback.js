@@ -132,7 +132,7 @@ const SeoHead = () => (
       name="keywords"
       content="developer feedback, coding assessment, software development feedback, tech skills evaluation, developer performance, coding portfolio feedback"
     />
-    <link rel="canonical" href="https://ohack.dev/myfeedback" />
+    <link rel="canonical" href="https://www.ohack.dev/myfeedback" />
     <meta
       property="og:title"
       content="Developer Feedback Dashboard - Opportunity Hack"
@@ -141,7 +141,7 @@ const SeoHead = () => (
       property="og:description"
       content="View your personalized developer feedback, performance metrics, and skill assessments from Opportunity Hack projects."
     />
-    <meta property="og:url" content="https://ohack.dev/myfeedback" />
+    <meta property="og:url" content="https://www.ohack.dev/myfeedback" />
     <meta property="og:type" content="website" />
     <meta name="robots" content="index, follow" />
     <RefinedFonts />
@@ -154,7 +154,7 @@ const SeoHead = () => (
           name: "Developer Feedback Dashboard",
           description:
             "View your personalized developer feedback, performance metrics, and skill assessments from Opportunity Hack projects.",
-          url: "https://ohack.dev/myfeedback",
+          url: "https://www.ohack.dev/myfeedback",
           applicationCategory: "DeveloperTools",
           provider: {
             "@type": "Organization",

@@ -40,7 +40,7 @@ export default function PraiseDetailPage({ title, openGraphData, praiseData }) {
                     />
                 ))}
                 <meta name="robots" content="index, follow" />
-                <link rel="canonical" href={`https://ohack.dev/praise/${id}`} />
+                <link rel="canonical" href={`https://www.ohack.dev/praise/${id}`} />
             </Head>
 
             <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -166,7 +166,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                     },
                     {
                         property: 'og:url',
-                        content: `https://ohack.dev/praise/${params.id}`,
+                        content: `https://www.ohack.dev/praise/${params.id}`,
                         key: 'ogurl',
                     },
                     {

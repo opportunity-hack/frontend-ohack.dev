@@ -387,7 +387,7 @@ export default function TeamDetailPage({
   const pageDescription = nonprofitName
     ? `Team ${teamName} is building for ${nonprofitName} at ${eventName}. ${memberCount} member${memberCount !== 1 ? "s" : ""}.`
     : `Team ${teamName} participating in ${eventName}. ${memberCount} member${memberCount !== 1 ? "s" : ""}.`;
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/team/${team_id}`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/team/${team_id}`;
 
   return (
     <RefinedRoot>

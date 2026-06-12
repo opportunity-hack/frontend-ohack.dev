@@ -2226,7 +2226,7 @@ const VolunteerApplicationComponent = () => {
   const pageDescription = eventData
     ? `Join our volunteer team for ${eventData.name} in ${eventData.location} from ${eventData.formattedStartDate} to ${eventData.formattedEndDate}. Help run an impactful hackathon where developers create technology solutions for nonprofits. Volunteer as a mentor, judge, or event organizer.`
     : "Volunteer for Opportunity Hack hackathon! Help run events where developers create technology solutions for nonprofits. Join as a mentor, judge, or organizer and make a real impact in the tech for good community.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/volunteer-application`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/volunteer-application`;
   const imageUrl =
     eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
 
@@ -2252,7 +2252,7 @@ const VolunteerApplicationComponent = () => {
         organizer: {
           "@type": "Organization",
           name: "Opportunity Hack",
-          url: "https://ohack.dev",
+          url: "https://www.ohack.dev",
         },
         offers: {
           "@type": "Offer",
@@ -2271,19 +2271,19 @@ const VolunteerApplicationComponent = () => {
               "@type": "ListItem",
               position: 1,
               name: "Home",
-              item: "https://ohack.dev/",
+              item: "https://www.ohack.dev/",
             },
             {
               "@type": "ListItem",
               position: 2,
               name: "Hackathons",
-              item: "https://ohack.dev/hack",
+              item: "https://www.ohack.dev/hack",
             },
             {
               "@type": "ListItem",
               position: 3,
               name: eventData.name,
-              item: `https://ohack.dev/hack/${event_id}`,
+              item: `https://www.ohack.dev/hack/${event_id}`,
             },
             {
               "@type": "ListItem",
@@ -2802,7 +2802,7 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
             isPartOf: {
               "@type": "WebSite",
               name: "Opportunity Hack",
-              url: "https://ohack.dev",
+              url: "https://www.ohack.dev",
             },
             breadcrumb: {
               "@type": "BreadcrumbList",
@@ -2811,19 +2811,19 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
                   "@type": "ListItem",
                   position: 1,
                   name: "Home",
-                  item: "https://ohack.dev",
+                  item: "https://www.ohack.dev",
                 },
                 {
                   "@type": "ListItem",
                   position: 2,
                   name: "Hackathons",
-                  item: "https://ohack.dev/hack",
+                  item: "https://www.ohack.dev/hack",
                 },
                 {
                   "@type": "ListItem",
                   position: 3,
                   name: seoMetadata.eventName,
-                  item: `https://ohack.dev/hack/${event_id}`,
+                  item: `https://www.ohack.dev/hack/${event_id}`,
                 },
                 {
                   "@type": "ListItem",
@@ -2896,7 +2896,7 @@ export async function getServerSideProps(context) {
       "Apply to volunteer at our hackathon event. Help support teams building tech solutions for nonprofits and make a difference in your community.",
     eventName: "Opportunity Hack",
     location: "Tempe, Arizona",
-    canonicalUrl: `https://ohack.dev/hack/${event_id}/volunteer-application`,
+    canonicalUrl: `https://www.ohack.dev/hack/${event_id}/volunteer-application`,
     imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
   };
 
@@ -2917,7 +2917,7 @@ export async function getServerSideProps(context) {
             description: `Apply to volunteer at ${eventData.title} in ${eventData.location || "Tempe, Arizona"}. Help support teams building innovative tech solutions for nonprofits.`,
             eventName: eventData.title,
             location: eventData.location || "Tempe, Arizona",
-            canonicalUrl: `https://ohack.dev/hack/${event_id}/volunteer-application`,
+            canonicalUrl: `https://www.ohack.dev/hack/${event_id}/volunteer-application`,
             imageUrl:
               eventData.image_url ||
               "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",

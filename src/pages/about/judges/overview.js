@@ -565,13 +565,13 @@ export const getStaticProps = async () => {
         {
           name: "url",
           property: "url",
-          content: "https://ohack.dev/about/judges/overview",
+          content: "https://www.ohack.dev/about/judges/overview",
           key: "url"
         },
         {
           name: "og:url",
           property: "og:url", 
-          content: "https://ohack.dev/about/judges/overview",
+          content: "https://www.ohack.dev/about/judges/overview",
           key: "ogurl"
         },
         {
@@ -664,9 +664,9 @@ export const getStaticProps = async () => {
         "@graph": [
           {
             "@type": "Organization",
-            "@id": "https://ohack.dev/#organization",
+            "@id": "https://www.ohack.dev/#organization",
             "name": "Opportunity Hack",
-            "url": "https://ohack.dev",
+            "url": "https://www.ohack.dev",
             "logo": {
               "@type": "ImageObject",
               "url": "https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
@@ -678,7 +678,7 @@ export const getStaticProps = async () => {
           },
           {
             "@type": "VideoObject",
-            "@id": "https://ohack.dev/about/judges/overview#main-video",
+            "@id": "https://www.ohack.dev/about/judges/overview#main-video",
             "name": title,
             "description": description,
             "thumbnailUrl": [
@@ -703,7 +703,7 @@ export const getStaticProps = async () => {
             "publisher": {
               "@type": "Organization",
               "name": "Opportunity Hack",
-              "url": "https://ohack.dev",
+              "url": "https://www.ohack.dev",
               "logo": {
                 "@type": "ImageObject",
                 "url": "https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
@@ -712,13 +712,13 @@ export const getStaticProps = async () => {
             "creator": {
               "@type": "Organization",
               "name": "Opportunity Hack",
-              "url": "https://ohack.dev"
+              "url": "https://www.ohack.dev"
             }
           },
           {
             "@type": "WebPage",
-            "@id": "https://ohack.dev/about/judges/overview#webpage",
-            "url": "https://ohack.dev/about/judges/overview",
+            "@id": "https://www.ohack.dev/about/judges/overview#webpage",
+            "url": "https://www.ohack.dev/about/judges/overview",
             "name": title,
             "description": description,
             "primaryImageOfPage": {
@@ -727,15 +727,15 @@ export const getStaticProps = async () => {
             },
             "isPartOf": {
               "@type": "WebSite",
-              "@id": "https://ohack.dev/#website"
+              "@id": "https://www.ohack.dev/#website"
             },
             "mainEntity": {
               "@type": "VideoObject",
-              "@id": "https://ohack.dev/about/judges/overview#main-video"
+              "@id": "https://www.ohack.dev/about/judges/overview#main-video"
             },
             "mainContentOfPage": {
               "@type": "VideoObject",
-              "@id": "https://ohack.dev/about/judges/overview#main-video"
+              "@id": "https://www.ohack.dev/about/judges/overview#main-video"
             },
             "specialty": "Video Guide",
             "about": {
@@ -751,25 +751,25 @@ export const getStaticProps = async () => {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Home",
-                "item": "https://ohack.dev"
+                "item": "https://www.ohack.dev"
               },
               {
                 "@type": "ListItem",
                 "position": 2, 
                 "name": "About",
-                "item": "https://ohack.dev/about"
+                "item": "https://www.ohack.dev/about"
               },
               {
                 "@type": "ListItem",
                 "position": 3,
                 "name": "Judges", 
-                "item": "https://ohack.dev/about/judges"
+                "item": "https://www.ohack.dev/about/judges"
               },
               {
                 "@type": "ListItem",
                 "position": 4,
                 "name": "Overview",
-                "item": "https://ohack.dev/about/judges/overview"
+                "item": "https://www.ohack.dev/about/judges/overview"
               }
             ]
           }

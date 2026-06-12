@@ -76,7 +76,7 @@ export default function VidyodayaSuccessStory() {
         <meta property="og:type" content="article" />
         <meta
           property="og:url"
-          content="https://ohack.dev/success-stories/vidyodaya-website-modernization"
+          content="https://www.ohack.dev/success-stories/vidyodaya-website-modernization"
         />
         <meta
           property="og:image"

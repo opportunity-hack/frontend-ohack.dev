@@ -251,8 +251,8 @@ export default function SuccessStories() {
         <meta property="og:title" content="Opportunity Hack: Transforming Nonprofits through Technology" />
         <meta property="og:description" content="See how developers, designers, and tech companies are making a real-world impact through Opportunity Hack. Join us in using technology for social good." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/about/success-stories" />
-        <meta property="og:image" content="https://ohack.dev/images/opportunity-hack-success-banner.jpg" />
+        <meta property="og:url" content="https://www.ohack.dev/about/success-stories" />
+        <meta property="og:image" content="https://www.ohack.dev/images/opportunity-hack-success-banner.jpg" />
         <RefinedFonts />
       </Head>
 

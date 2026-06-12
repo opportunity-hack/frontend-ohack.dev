@@ -76,8 +76,8 @@ export default function OpportunityHackProcess() {
         <meta property="og:title" content="Opportunity Hack: Bridging Nonprofits and Tech Innovators" />
         <meta property="og:description" content="Join Opportunity Hack to use your tech skills for social good. Whether you're a nonprofit, developer, designer, or sponsor, learn how you can make a difference." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/about/process" />
-        <meta property="og:image" content="https://ohack.dev/images/opportunity-hack-banner.jpg" />
+        <meta property="og:url" content="https://www.ohack.dev/about/process" />
+        <meta property="og:image" content="https://www.ohack.dev/images/opportunity-hack-banner.jpg" />
         <RefinedFonts />
       </Head>
 

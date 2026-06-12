@@ -1644,7 +1644,7 @@ const SponsorApplicationComponent = () => {
   const pageDescription = eventData
     ? `Sponsor ${eventData.name} in ${eventData.location} from ${eventData.formattedStartDate} to ${eventData.formattedEndDate}. Support developers creating technology solutions for nonprofits. Join leading companies making a real impact through tech sponsorship. Multiple sponsorship tiers available.`
     : "Sponsor Opportunity Hack hackathon! Support developers creating technology solutions for nonprofits. Join leading companies making a real impact through tech sponsorship. Choose from multiple sponsorship tiers to fit your budget and goals.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/sponsor-application`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/sponsor-application`;
 
   const imageUrl = "https://cdn.ohack.dev/ohack.dev/2023_hackathon_5.webp";
 
@@ -1668,7 +1668,7 @@ const SponsorApplicationComponent = () => {
           organizer: {
             "@type": "Organization",
             name: "Opportunity Hack",
-            url: "https://ohack.dev",
+            url: "https://www.ohack.dev",
           },
           sponsor: {
             "@type": "Organization",
@@ -1682,19 +1682,19 @@ const SponsorApplicationComponent = () => {
               "@type": "ListItem",
               position: 1,
               name: "Home",
-              item: "https://ohack.dev/",
+              item: "https://www.ohack.dev/",
             },
             {
               "@type": "ListItem",
               position: 2,
               name: "Hackathons",
-              item: "https://ohack.dev/hack",
+              item: "https://www.ohack.dev/hack",
             },
             {
               "@type": "ListItem",
               position: 3,
               name: eventData.name,
-              item: `https://ohack.dev/hack/${event_id}`,
+              item: `https://www.ohack.dev/hack/${event_id}`,
             },
             {
               "@type": "ListItem",
@@ -2198,7 +2198,7 @@ const SponsorApplicationPage = ({ seoMetadata }) => {
             isPartOf: {
               "@type": "WebSite",
               name: "Opportunity Hack",
-              url: "https://ohack.dev",
+              url: "https://www.ohack.dev",
             },
             breadcrumb: {
               "@type": "BreadcrumbList",
@@ -2207,19 +2207,19 @@ const SponsorApplicationPage = ({ seoMetadata }) => {
                   "@type": "ListItem",
                   position: 1,
                   name: "Home",
-                  item: "https://ohack.dev",
+                  item: "https://www.ohack.dev",
                 },
                 {
                   "@type": "ListItem",
                   position: 2,
                   name: "Hackathons",
-                  item: "https://ohack.dev/hack",
+                  item: "https://www.ohack.dev/hack",
                 },
                 {
                   "@type": "ListItem",
                   position: 3,
                   name: seoMetadata.eventName,
-                  item: `https://ohack.dev/hack/${event_id}`,
+                  item: `https://www.ohack.dev/hack/${event_id}`,
                 },
                 {
                   "@type": "ListItem",
@@ -2250,7 +2250,7 @@ const SponsorApplicationPage = ({ seoMetadata }) => {
               organizer: {
                 "@type": "Organization",
                 name: "Opportunity Hack",
-                url: "https://ohack.dev",
+                url: "https://www.ohack.dev",
               },
               sponsor: {
                 "@type": "Organization",
@@ -2295,7 +2295,7 @@ export async function getServerSideProps(context) {
       "Partner with us to sponsor our hackathon. Support innovators building tech solutions for nonprofits and showcase your company's commitment to social impact.",
     eventName: "Opportunity Hack",
     location: "Tempe, Arizona",
-    canonicalUrl: `https://ohack.dev/hack/${event_id}/sponsor-application`,
+    canonicalUrl: `https://www.ohack.dev/hack/${event_id}/sponsor-application`,
     imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
   };
 
@@ -2316,7 +2316,7 @@ export async function getServerSideProps(context) {
             description: `Partner with us to sponsor ${eventData.title} in ${eventData.location || "Tempe, Arizona"}. Support innovators building tech solutions for nonprofits and social good.`,
             eventName: eventData.title,
             location: eventData.location || "Tempe, Arizona",
-            canonicalUrl: `https://ohack.dev/hack/${event_id}/sponsor-application`,
+            canonicalUrl: `https://www.ohack.dev/hack/${event_id}/sponsor-application`,
             imageUrl:
               eventData.image_url ||
               "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",

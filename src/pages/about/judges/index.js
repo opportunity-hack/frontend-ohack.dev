@@ -370,6 +370,11 @@ const AboutJudges = () => {
               <span className="ohx-eyebrow">Practice total</span>
               <p className="ohx-display" style={{ fontSize: "2rem", margin: "6px 0 0" }}>{totalScore}<span className="ohx-faint" style={{ fontSize: "1.1rem" }}> / 40</span></p>
             </div>
+            <p style={{ marginTop: 20, fontSize: "0.95rem" }}>
+              <Link href="/hackathon-judging-criteria" className="ohx-link">
+                See the full judging criteria &amp; scorecard →
+              </Link>
+            </p>
 
             {/* Special category */}
             <h3 className="ohx-display" style={{ fontSize: "1.3rem", marginTop: 40, marginBottom: 12 }}>Special category prizes</h3>
@@ -438,8 +443,8 @@ export const getStaticProps = async () => {
         { name: "image", property: "og:image", content: "https://cdn.ohack.dev/ohack.dev/judge_1.jpg", key: "ognameimage" },
         { property: "og:image:width", content: "1200", key: "ogimagewidth" },
         { property: "og:image:height", content: "630", key: "ogimageheight" },
-        { name: "url", property: "url", content: "https://ohack.dev/about/judges", key: "url" },
-        { name: "og:url", property: "og:url", content: "https://ohack.dev/about/judges", key: "ogurl" },
+        { name: "url", property: "url", content: "https://www.ohack.dev/about/judges", key: "url" },
+        { name: "og:url", property: "og:url", content: "https://www.ohack.dev/about/judges", key: "ogurl" },
         { name: "twitter:card", property: "twitter:card", content: "summary_large_image", key: "twittercard" },
         { name: "twitter:site", property: "twitter:site", content: "@opportunityhack", key: "twittersite" },
         { name: "twitter:title", property: "twitter:title", content: title, key: "twittertitle" },

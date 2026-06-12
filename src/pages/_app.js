@@ -8,6 +8,10 @@ import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import theme from "../assets/theme";
 import { ShoppingCartProvider } from "../context/ShoppingCartContext";
+// Static import: SSR-safe (only registers axios interceptors in useEffect).
+// IMPORTANT: must NOT be dynamic(ssr:false) — that disables SSR for the entire
+// tree (empty <body>, empty titles, CWV collapse; June 2026 incident).
+import AxiosWrapper from '../components/axios-wrapper';
 
 // Placeholder heights tuned to match the rendered NavBar/Footer so the shell
 // doesn't shift when these chunks load (major source of site-wide CLS).
@@ -17,11 +21,6 @@ const FooterPlaceholder = () => (
 );
 
 // NOTE: Load dynamics below static imports to avoid eslint errors.
-
-const AxiosWrapper = dynamic(() => import('../components/axios-wrapper'), {
-  ssr: false,
-  loading: () => null
-})
 
 // SSR the NavBar shell so the layout above the fold is stable before hydration.
 // Auth-dependent avatar/login toggle is now wrapped in a fixed-width slot
@@ -71,7 +70,7 @@ export default function MyApp({ Component, pageProps }) {
           <link rel="canonical" href={pageProps.canonical} />
         )}
 
-        <title>{pageProps.title}</title>
+        {pageProps.title && <title>{pageProps.title}</title>}
 
         {pageProps.structuredData && (
           <script

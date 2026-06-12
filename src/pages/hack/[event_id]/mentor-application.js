@@ -1320,7 +1320,7 @@ const MentorApplicationComponent = () => {
   const pageDescription = eventData
     ? `Mentor developers at ${eventData.name} in ${eventData.location} from ${eventData.formattedStartDate} to ${eventData.formattedEndDate}. Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship.`
     : "Mentor developers at Opportunity Hack hackathon! Share your expertise and guide teams creating technology solutions for nonprofits. Join industry experts making a real impact through mentorship and tech for good.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/mentor-application`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/mentor-application`;
 
   const seoImageUrl = "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp";
 
@@ -2281,7 +2281,7 @@ const MentorApplicationComponent = () => {
           organizer: {
             "@type": "Organization",
             name: "Opportunity Hack",
-            url: "https://ohack.dev",
+            url: "https://www.ohack.dev",
           },
         },
         breadcrumb: {
@@ -2291,19 +2291,19 @@ const MentorApplicationComponent = () => {
               "@type": "ListItem",
               position: 1,
               name: "Home",
-              item: "https://ohack.dev/",
+              item: "https://www.ohack.dev/",
             },
             {
               "@type": "ListItem",
               position: 2,
               name: "Hackathons",
-              item: "https://ohack.dev/hack",
+              item: "https://www.ohack.dev/hack",
             },
             {
               "@type": "ListItem",
               position: 3,
               name: eventData.name,
-              item: `https://ohack.dev/hack/${event_id}`,
+              item: `https://www.ohack.dev/hack/${event_id}`,
             },
             {
               "@type": "ListItem",
@@ -2906,7 +2906,7 @@ const MentorApplicationPage = ({ seoMetadata }) => {
             isPartOf: {
               "@type": "WebSite",
               name: "Opportunity Hack",
-              url: "https://ohack.dev",
+              url: "https://www.ohack.dev",
             },
             breadcrumb: {
               "@type": "BreadcrumbList",
@@ -2915,19 +2915,19 @@ const MentorApplicationPage = ({ seoMetadata }) => {
                   "@type": "ListItem",
                   position: 1,
                   name: "Home",
-                  item: "https://ohack.dev/",
+                  item: "https://www.ohack.dev/",
                 },
                 {
                   "@type": "ListItem",
                   position: 2,
                   name: "Hackathons",
-                  item: "https://ohack.dev/hack",
+                  item: "https://www.ohack.dev/hack",
                 },
                 {
                   "@type": "ListItem",
                   position: 3,
                   name: seoMetadata.eventName,
-                  item: `https://ohack.dev/hack/${event_id}`,
+                  item: `https://www.ohack.dev/hack/${event_id}`,
                 },
                 {
                   "@type": "ListItem",
@@ -3003,7 +3003,7 @@ export async function getServerSideProps(context) {
       "Apply to mentor teams at our hackathon. Guide developers building tech solutions for nonprofits and help create meaningful social impact.",
     eventName: "Opportunity Hack",
     location: "Tempe, Arizona",
-    canonicalUrl: `https://ohack.dev/hack/${event_id}/mentor-application`,
+    canonicalUrl: `https://www.ohack.dev/hack/${event_id}/mentor-application`,
     imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
   };
 
@@ -3024,7 +3024,7 @@ export async function getServerSideProps(context) {
             description: `Apply to mentor teams at ${eventData.title} in ${eventData.location || "Tempe, Arizona"}. Guide developers building innovative tech solutions for nonprofits.`,
             eventName: eventData.title,
             location: eventData.location || "Tempe, Arizona",
-            canonicalUrl: `https://ohack.dev/hack/${event_id}/mentor-application`,
+            canonicalUrl: `https://www.ohack.dev/hack/${event_id}/mentor-application`,
             imageUrl:
               eventData.image_url ||
               "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",

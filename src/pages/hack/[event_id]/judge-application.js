@@ -1902,18 +1902,18 @@ const JudgeApplicationComponent = () => {
   const pageDescription = eventData
     ? `Apply to judge ${eventData.name} in ${eventData.location}. Evaluate innovative tech solutions for nonprofits and help select winning projects that make real impact.`
     : "Apply to judge our tech for good hackathon. Evaluate innovative solutions for nonprofits and help select winning projects that make real social impact.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/judge-application`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/judge-application`;
 
   const imageUrl =
     eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
 
   // Breadcrumb items for structured data
   const breadcrumbItems = [
-    { name: "Home", url: "https://ohack.dev" },
-    { name: "Hackathons", url: "https://ohack.dev/hack" },
+    { name: "Home", url: "https://www.ohack.dev" },
+    { name: "Hackathons", url: "https://www.ohack.dev/hack" },
     {
       name: eventData?.name || "Hackathon Event",
-      url: `https://ohack.dev/hack/${event_id}`,
+      url: `https://www.ohack.dev/hack/${event_id}`,
     },
     {
       name: "Judge Application",
@@ -1931,7 +1931,7 @@ const JudgeApplicationComponent = () => {
     isPartOf: {
       "@type": "WebSite",
       name: "Opportunity Hack",
-      url: "https://ohack.dev",
+      url: "https://www.ohack.dev",
     },
     breadcrumb: {
       "@type": "BreadcrumbList",
@@ -2587,7 +2587,7 @@ const JudgeApplicationPage = ({ seoMetadata }) => {
             isPartOf: {
               "@type": "WebSite",
               name: "Opportunity Hack",
-              url: "https://ohack.dev",
+              url: "https://www.ohack.dev",
             },
             breadcrumb: {
               "@type": "BreadcrumbList",
@@ -2596,19 +2596,19 @@ const JudgeApplicationPage = ({ seoMetadata }) => {
                   "@type": "ListItem",
                   position: 1,
                   name: "Home",
-                  item: "https://ohack.dev",
+                  item: "https://www.ohack.dev",
                 },
                 {
                   "@type": "ListItem",
                   position: 2,
                   name: "Hackathons",
-                  item: "https://ohack.dev/hack",
+                  item: "https://www.ohack.dev/hack",
                 },
                 {
                   "@type": "ListItem",
                   position: 3,
                   name: seoMetadata.eventName,
-                  item: `https://ohack.dev/hack/${event_id}`,
+                  item: `https://www.ohack.dev/hack/${event_id}`,
                 },
                 {
                   "@type": "ListItem",
@@ -2681,7 +2681,7 @@ export async function getServerSideProps(context) {
       "Apply to judge our tech for good hackathon. Evaluate innovative solutions for nonprofits and help select winning projects that make real social impact.",
     eventName: "Opportunity Hack",
     location: "Tempe, Arizona",
-    canonicalUrl: `https://ohack.dev/hack/${event_id}/judge-application`,
+    canonicalUrl: `https://www.ohack.dev/hack/${event_id}/judge-application`,
     imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
   };
 
@@ -2702,7 +2702,7 @@ export async function getServerSideProps(context) {
             description: `Apply to judge ${eventData.title} in ${eventData.location || "Tempe, Arizona"}. Evaluate innovative tech solutions for nonprofits and help select winning projects that make real impact.`,
             eventName: eventData.title,
             location: eventData.location || "Tempe, Arizona",
-            canonicalUrl: `https://ohack.dev/hack/${event_id}/judge-application`,
+            canonicalUrl: `https://www.ohack.dev/hack/${event_id}/judge-application`,
             imageUrl:
               eventData.image_url ||
               "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",

@@ -49,7 +49,7 @@ export default function BlogIndexPage({ posts }) {
             name="keywords"
             content="opportunity hack blog, tech for nonprofits, coding for good, social impact technology, nonprofit tech solutions, volunteer tech projects, tech volunteering, social good coding"
           />
-          <link rel="canonical" href="https://ohack.dev/blog" />
+          <link rel="canonical" href="https://www.ohack.dev/blog" />
           <meta
             property="og:title"
             content="OHack Blog - Tech for Social Good | Opportunity Hack"
@@ -62,7 +62,7 @@ export default function BlogIndexPage({ posts }) {
             property="og:image"
             content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp"
           />
-          <meta property="og:url" content="https://ohack.dev/blog" />
+          <meta property="og:url" content="https://www.ohack.dev/blog" />
           <meta property="og:type" content="website" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:site" content="@opportunityhack" />
@@ -74,10 +74,10 @@ export default function BlogIndexPage({ posts }) {
                         "@type": "Blog",
                         "name": "Opportunity Hack Blog",
                         "description": "Technology insights, success stories, and updates from Opportunity Hack's mission to create tech solutions for nonprofits.",
-                        "url": "https://ohack.dev/blog",
+                        "url": "https://www.ohack.dev/blog",
                         "mainEntityOfPage": {
                             "@type": "WebPage",
-                            "@id": "https://ohack.dev/blog"
+                            "@id": "https://www.ohack.dev/blog"
                         },
                         "publisher": {
                             "@type": "Organization",

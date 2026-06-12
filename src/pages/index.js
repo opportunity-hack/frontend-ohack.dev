@@ -292,6 +292,12 @@ export default function Home() {
                   <button type="button" className="ohx-link" style={{ background: "none", border: 0, cursor: "pointer", font: "inherit", padding: 0 }} onClick={joinSlack}>
                     Join our Slack <Arrow />
                   </button>
+                  <Link href="/hackathon-for-social-good" className="ohx-link">
+                    About our hackathons <Arrow />
+                  </Link>
+                  <Link href="/hackathons/arizona" className="ohx-link">
+                    Arizona events <Arrow />
+                  </Link>
                 </div>
               </div>
 

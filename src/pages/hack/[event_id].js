@@ -433,13 +433,18 @@ export default function HackathonEvent({ eventData }) {
   const metaImage =
     event?.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp";
 
+  // Use the canonical event ID from the data (not the requested slug) so alias
+  // URLs like /hack/fall-2025 canonicalize to the correct /hack/2025_fall form.
+  const canonicalEventId = event?.event_id || event_id;
+  const canonicalUrl = `https://www.ohack.dev/hack/${canonicalEventId}`;
+
   // Application URLs for structured data and SEO
   const applicationUrls = {
-    hacker: `https://ohack.dev/hack/${event_id}/hacker-application`,
-    judge: `https://ohack.dev/hack/${event_id}/judge-application`,
-    sponsor: `https://ohack.dev/hack/${event_id}/sponsor-application`,
-    mentor: `https://ohack.dev/hack/${event_id}/mentor-application`,
-    volunteer: `https://ohack.dev/hack/${event_id}/volunteer-application`,
+    hacker: `https://www.ohack.dev/hack/${canonicalEventId}/hacker-application`,
+    judge: `https://www.ohack.dev/hack/${canonicalEventId}/judge-application`,
+    sponsor: `https://www.ohack.dev/hack/${canonicalEventId}/sponsor-application`,
+    mentor: `https://www.ohack.dev/hack/${canonicalEventId}/mentor-application`,
+    volunteer: `https://www.ohack.dev/hack/${canonicalEventId}/volunteer-application`,
   };
 
   // Enhanced structured data with application links
@@ -463,16 +468,16 @@ export default function HackathonEvent({ eventData }) {
       },
     },
     image: [metaImage],
-    url: `https://ohack.dev/hack/${event_id}`,
+    url: canonicalUrl,
     organizer: {
       "@type": "Organization",
       name: "Opportunity Hack",
-      url: "https://ohack.dev",
+      url: "https://www.ohack.dev",
       logo: "https://cdn.ohack.dev/ohack.dev/logo.png",
     },
     offers: {
       "@type": "Offer",
-      url: `https://ohack.dev/hack/${event_id}`,
+      url: canonicalUrl,
       price: "0",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
@@ -582,19 +587,19 @@ export default function HackathonEvent({ eventData }) {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://ohack.dev",
+        item: "https://www.ohack.dev",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Hackathons",
-        item: "https://ohack.dev/hack",
+        item: "https://www.ohack.dev/hack",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: eventTitle,
-        item: `https://ohack.dev/hack/${event_id}`,
+        item: canonicalUrl,
       },
     ],
   };
@@ -633,7 +638,7 @@ export default function HackathonEvent({ eventData }) {
         <meta property="og:type" content="website" />
         <meta
           property="og:url"
-          content={`https://ohack.dev/hack/${event_id}`}
+          content={canonicalUrl}
         />
         <meta property="og:image" content={metaImage} />
         <meta
@@ -684,7 +689,7 @@ export default function HackathonEvent({ eventData }) {
         <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
 
         {/* Canonical URL */}
-        <link rel="canonical" href={`https://ohack.dev/hack/${event_id}`} />
+        <link rel="canonical" href={canonicalUrl} />
 
         {/* Alternate URLs for applications */}
         <link
@@ -753,6 +758,29 @@ export default function HackathonEvent({ eventData }) {
             location={event.location}
             description={event.description}
           />
+
+          {/* Expired-event recapture band — links to upcoming events so
+              the 13k+ impressions on past event pages convert to engagement */}
+          {hackathonExpired && (
+            <div
+              style={{
+                margin: "16px 0",
+                padding: "12px 20px",
+                background: "var(--surface-2, #f5f2ea)",
+                borderTop: "1px solid var(--line, #E7E1D4)",
+                borderBottom: "1px solid var(--line, #E7E1D4)",
+                textAlign: "center",
+                fontSize: "0.95rem",
+                color: "var(--ink, #16181D)",
+              }}
+              role="note"
+            >
+              This event has ended.{" "}
+              <NextLink href="/hack" className="ohx-link" style={{ fontWeight: 600 }}>
+                See upcoming hackathons →
+              </NextLink>
+            </div>
+          )}
 
           {hackathonExpired && (
             <section id="results" aria-labelledby="results-heading">
@@ -1575,6 +1603,9 @@ export async function getStaticProps({ params }) {
   }
 
   const data = await res.json();
+  // Backend returns 200 + {} for unknown event IDs; treat as a real 404
+  // so Next.js serves the built-in 404 page rather than an empty-event shell.
+  if (!data || !data.id) return { notFound: true, revalidate: 60 };
   return {
     props: { eventData: data },
     revalidate: 60,

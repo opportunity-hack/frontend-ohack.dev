@@ -69,13 +69,13 @@ export const getStaticProps = async () => {
         {
           name: "url",
           property: "url",
-          content: "https://ohack.dev/community-champions",
+          content: "https://www.ohack.dev/community-champions",
           key: "url",
         },
         {
           name: "og:url",
           property: "og:url",
-          content: "https://ohack.dev/community-champions",
+          content: "https://www.ohack.dev/community-champions",
           key: "ogurl",
         },
         {
@@ -133,9 +133,9 @@ export const getStaticProps = async () => {
         "@graph": [
           {
             "@type": "Organization",
-            "@id": "https://ohack.dev/#organization",
+            "@id": "https://www.ohack.dev/#organization",
             name: "Opportunity Hack",
-            url: "https://ohack.dev",
+            url: "https://www.ohack.dev",
             logo: {
               "@type": "ImageObject",
               url: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp",
@@ -149,13 +149,13 @@ export const getStaticProps = async () => {
           },
           {
             "@type": "WebPage",
-            "@id": "https://ohack.dev/community-champions#webpage",
-            url: "https://ohack.dev/community-champions",
+            "@id": "https://www.ohack.dev/community-champions#webpage",
+            url: "https://www.ohack.dev/community-champions",
             name: title,
             description: description,
             isPartOf: {
               "@type": "WebSite",
-              "@id": "https://ohack.dev/#website",
+              "@id": "https://www.ohack.dev/#website",
             },
             about: {
               "@type": "Organization",
@@ -171,13 +171,13 @@ export const getStaticProps = async () => {
                 "@type": "ListItem",
                 position: 1,
                 name: "Home",
-                item: "https://ohack.dev",
+                item: "https://www.ohack.dev",
               },
               {
                 "@type": "ListItem",
                 position: 2,
                 name: "Community Champions",
-                item: "https://ohack.dev/community-champions",
+                item: "https://www.ohack.dev/community-champions",
               },
             ],
           },

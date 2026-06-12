@@ -144,7 +144,7 @@ export default function CartPage() {
           content="Review your Opportunity Hack merchandise cart and proceed to checkout. All proceeds support nonprofits through technology."
         />
         <meta name="robots" content="noindex, follow" />
-        <link rel="canonical" href="https://ohack.dev/store/cart" />
+        <link rel="canonical" href="https://www.ohack.dev/store/cart" />
 
         {/* Open Graph */}
         <meta
@@ -156,7 +156,7 @@ export default function CartPage() {
           content="Review your cart and checkout. All proceeds support nonprofits through technology."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/store/cart" />
+        <meta property="og:url" content="https://www.ohack.dev/store/cart" />
         <meta property="og:site_name" content="Opportunity Hack" />
       </Head>
 

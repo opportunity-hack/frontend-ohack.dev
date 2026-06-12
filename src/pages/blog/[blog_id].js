@@ -74,7 +74,7 @@ export default function BlogPostPage({ title, openGraphData, blogData }) {
         );
     }
 
-    const canonicalUrl = blogData?.seo?.canonical || `https://ohack.dev/blog/${blog_id}`;
+    const canonicalUrl = blogData?.seo?.canonical || `https://www.ohack.dev/blog/${blog_id}`;
     const datePublished = blogData?.published_at || blogData?.slack_ts_human_readable || new Date().toISOString();
     const dateModified = blogData?.last_updated || datePublished;
     const ogImage = openGraphData?.find((og) => og.property === "og:image")?.content || "";
@@ -200,7 +200,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
           blogPost.featured_image ||
           blogPost.image ||
           "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp";
-        const canonicalUrl = seo.canonical || `https://ohack.dev/blog/${params.blog_id}`;
+        const canonicalUrl = seo.canonical || `https://www.ohack.dev/blog/${params.blog_id}`;
         const publishedTime = blogPost.published_at || blogPost.slack_ts_human_readable || new Date().toISOString();
         const authorName = blogPost.author?.name || 'Opportunity Hack';
         

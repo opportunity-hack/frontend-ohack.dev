@@ -58,17 +58,17 @@ const NonprofitGrants = () => {
   return (
     <>
       <Head>
-        <title>Free Software Grants for Nonprofits | Opportunity Hack</title>
-        <meta name="description" content="Discover free software development grants for nonprofits. Opportunity Hack connects 501(c)(3) organizations with volunteer developers who build custom tech solutions at no cost." />
-        <meta name="keywords" content="nonprofit grants, free grants, nonprofit funding, charity grants, NGO grants, technology grants, nonprofit tech, Opportunity Hack" />
-        <meta property="og:title" content="Free Software Grants for Nonprofits | Opportunity Hack" />
-        <meta property="og:description" content="Discover free software development grants for nonprofits. Opportunity Hack connects 501(c)(3) organizations with volunteer developers who build custom tech solutions at no cost." />
+        <title>Free Software Development for Nonprofits (a Grant Alternative) | Opportunity Hack</title>
+        <meta name="description" content="Not a cash grant — something better. Opportunity Hack connects 501(c)(3) nonprofits with volunteer developers who build free, custom software. No cost, no strings. Apply to get matched with a team." />
+        <meta name="keywords" content="nonprofit grants, free software for nonprofits, nonprofit technology funding, grant alternative, free custom software, nonprofit tech development, Opportunity Hack" />
+        <meta property="og:title" content="Free Software Development for Nonprofits (a Grant Alternative) | Opportunity Hack" />
+        <meta property="og:description" content="Not a cash grant — something better. Volunteer developers build free custom software for your nonprofit. No cost to your organization." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/nonprofit-grants" />
+        <meta property="og:url" content="https://www.ohack.dev/nonprofit-grants" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Free Software Grants for Nonprofits | Opportunity Hack" />
-        <meta name="twitter:description" content="Discover free software development grants for nonprofits. Opportunity Hack connects 501(c)(3) organizations with volunteer developers who build custom tech solutions at no cost." />
-        <link rel="canonical" href="https://ohack.dev/nonprofit-grants" />
+        <meta name="twitter:title" content="Free Software Development for Nonprofits (a Grant Alternative) | Opportunity Hack" />
+        <meta name="twitter:description" content="Not a cash grant — something better. Volunteer developers build free custom software for your nonprofit. No cost to your organization." />
+        <link rel="canonical" href="https://www.ohack.dev/nonprofit-grants" />
       </Head>
 
       <Navbar />

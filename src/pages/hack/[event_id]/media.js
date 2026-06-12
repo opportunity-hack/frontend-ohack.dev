@@ -195,7 +195,7 @@ const MediaPage = ({ eventData }) => {
   }
 
   const eventTitle = eventData.title || `Event ${event_id}`;
-  const pageUrl = `https://ohack.dev/hack/${event_id}/media`;
+  const pageUrl = `https://www.ohack.dev/hack/${event_id}/media`;
   const description = `Photos and social media coverage from ${eventTitle}, an Opportunity Hack event.`;
 
   const ogImage =
@@ -219,19 +219,19 @@ const MediaPage = ({ eventData }) => {
           "@type": "ListItem",
           position: 1,
           name: "Home",
-          item: "https://ohack.dev/",
+          item: "https://www.ohack.dev/",
         },
         {
           "@type": "ListItem",
           position: 2,
           name: "Hackathons",
-          item: "https://ohack.dev/hack",
+          item: "https://www.ohack.dev/hack",
         },
         {
           "@type": "ListItem",
           position: 3,
           name: eventTitle,
-          item: `https://ohack.dev/hack/${event_id}`,
+          item: `https://www.ohack.dev/hack/${event_id}`,
         },
         { "@type": "ListItem", position: 4, name: "Media", item: pageUrl },
       ],

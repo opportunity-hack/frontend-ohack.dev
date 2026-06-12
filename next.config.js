@@ -38,7 +38,33 @@ module.exports = {
   // Redirects: deprecated paths → canonical
   async redirects() {
     return [
-      // judge-keyword variants → canonical
+      // Redirect non-www frontend subdomain → www (canonical host).
+      // frontend.ohack.dev is indexed in GSC but should not be.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "frontend.ohack.dev" }],
+        destination: "https://www.ohack.dev/:path*",
+        permanent: true,
+      },
+
+      // judge-keyword doorway pages → canonical landing page.
+      // These 3 pages were deleted (June 2026); 301s preserve their link equity.
+      {
+        source: "/hackathon-judge",
+        destination: "/hackathon-judge-opportunities",
+        permanent: true,
+      },
+      {
+        source: "/hackathon-judging",
+        destination: "/hackathon-judge-opportunities",
+        permanent: true,
+      },
+      {
+        source: "/hackathon-judging-opportunities",
+        destination: "/hackathon-judge-opportunities",
+        permanent: true,
+      },
+      // Pre-existing legacy variants
       {
         source: "/judge-a-hackathon",
         destination: "/hackathon-judge-opportunities",
@@ -50,11 +76,17 @@ module.exports = {
         permanent: true,
       },
 
-      // Hackathon event slug normalisation: YYYY_season → season-YYYY
-      // (Google treats hyphens as word separators; underscores are not split.
-      //  season-first matches how users search: "fall 2026 hackathon".)
-      // Two rules per pattern: bare URL + any sub-paths (:path* is 1+).
-      
+      // Legacy event slug aliases: season-YYYY → YYYY_season (years ≤ 2025 only).
+      // GSC data: /hack/2025_fall has 13k impressions; /hack/fall-2025 is a
+      // soft-404 with 118 impressions. 2026+ events use dash IDs natively.
+      // Generated as a static list because Next.js path-to-regexp cannot put two
+      // named params in a destination without literal text between them.
+      ...['fall','spring','summer','winter'].flatMap(season =>
+        ['2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'].flatMap(year => [
+          { source: `/hack/${season}-${year}`, destination: `/hack/${year}_${season}`, permanent: true },
+          { source: `/hack/${season}-${year}/:path*`, destination: `/hack/${year}_${season}/:path*`, permanent: true },
+        ])
+      ),
     ];
   },
 

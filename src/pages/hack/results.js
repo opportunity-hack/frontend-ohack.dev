@@ -22,7 +22,7 @@ const HackathonFunnel = dynamic(
 );
 
 const AggregateResultsPage = ({ funnel }) => {
-  const pageUrl = 'https://ohack.dev/hack/results';
+  const pageUrl = 'https://www.ohack.dev/hack/results';
   const eventsTotal = funnel?.events_total || 0;
   const eventsWithWinners = funnel?.events_with_winners || 0;
   const totalRegistered = funnel?.summary?.registered || 0;
@@ -44,8 +44,8 @@ const AggregateResultsPage = ({ funnel }) => {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ohack.dev/' },
-        { '@type': 'ListItem', position: 2, name: 'Hackathons', item: 'https://ohack.dev/hack' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.ohack.dev/' },
+        { '@type': 'ListItem', position: 2, name: 'Hackathons', item: 'https://www.ohack.dev/hack' },
         { '@type': 'ListItem', position: 3, name: 'Results', item: pageUrl },
       ],
     },

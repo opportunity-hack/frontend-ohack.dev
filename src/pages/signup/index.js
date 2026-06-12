@@ -96,12 +96,12 @@ export default function Signup() {
           content="Sign up for Opportunity Hack's community. Connect with developers, collaborate on nonprofit projects, and make a positive impact through technology."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/signup" />
+        <meta property="og:url" content="https://www.ohack.dev/signup" />
         <meta
           property="og:image"
           content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_3.webp"
         />
-        <link rel="canonical" href="https://ohack.dev/signup" />
+        <link rel="canonical" href="https://www.ohack.dev/signup" />
       </Head>
       <StyledBox>
         <Grid container mt={10} spacing={4} alignItems="center">

@@ -92,7 +92,7 @@ export default function StorePage() {
     "@type": "ItemList",
     name: "Opportunity Hack Store",
     description: STORE_DESCRIPTION,
-    url: "https://ohack.dev/store",
+    url: "https://www.ohack.dev/store",
     numberOfItems: products.length,
     itemListElement: products.map((product, index) => ({
       "@type": "ListItem",
@@ -101,8 +101,8 @@ export default function StorePage() {
         "@type": "Product",
         name: product.name,
         description: product.description,
-        image: `https://ohack.dev${product.image}`,
-        url: `https://ohack.dev/store/products/${product.id}`,
+        image: `https://www.ohack.dev${product.image}`,
+        url: `https://www.ohack.dev/store/products/${product.id}`,
         offers: {
           "@type": "Offer",
           price: product.price.toFixed(2),
@@ -122,7 +122,7 @@ export default function StorePage() {
     "@type": "WebPage",
     name: "Opportunity Hack Store",
     description: STORE_DESCRIPTION,
-    url: "https://ohack.dev/store",
+    url: "https://www.ohack.dev/store",
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -130,20 +130,20 @@ export default function StorePage() {
           "@type": "ListItem",
           position: 1,
           name: "Home",
-          item: "https://ohack.dev",
+          item: "https://www.ohack.dev",
         },
         {
           "@type": "ListItem",
           position: 2,
           name: "Store",
-          item: "https://ohack.dev/store",
+          item: "https://www.ohack.dev/store",
         },
       ],
     },
     isPartOf: {
       "@type": "WebSite",
       name: "Opportunity Hack",
-      url: "https://ohack.dev",
+      url: "https://www.ohack.dev",
     },
   };
 
@@ -160,7 +160,7 @@ export default function StorePage() {
           content="Opportunity Hack store, nonprofit merchandise, tech for good apparel, hackathon t-shirt, coding for good, social impact gifts, charity store"
         />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://ohack.dev/store" />
+        <link rel="canonical" href="https://www.ohack.dev/store" />
 
         {/* Open Graph */}
         <meta
@@ -169,7 +169,7 @@ export default function StorePage() {
         />
         <meta property="og:description" content={STORE_DESCRIPTION} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/store" />
+        <meta property="og:url" content="https://www.ohack.dev/store" />
         <meta
           property="og:image"
           content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp"

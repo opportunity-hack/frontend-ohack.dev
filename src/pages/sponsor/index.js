@@ -71,18 +71,18 @@ export default function SponsorIndexList() {
   return (
     <>
       <Head>
-        <title>Sponsor a Hackathon for Social Good | Opportunity Hack</title>
-        <meta name="description" content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available." />
-        <meta name="keywords" content="Opportunity Hack, hackathon sponsorship, tech for good, corporate social responsibility, nonprofit tech solutions" />
+        <title>Hackathon Sponsorship — Sponsor Tech for Good | Opportunity Hack</title>
+        <meta name="description" content="Sponsor Opportunity Hack and reach 500+ skilled engineers passionate about social good. 501(c)(3) tax-deductible. Sponsorship tiers from $500. Connect your brand with developers building free software for nonprofits." />
+        <meta name="keywords" content="hackathon sponsorship, companies sponsoring hackathons, tech for good sponsorship, corporate social responsibility, nonprofit tech, 501c3" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.ohack.dev/sponsor" />
-        <meta property="og:title" content="Sponsor a Hackathon for Social Good | Opportunity Hack" />
-        <meta property="og:description" content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available." />
+        <meta property="og:title" content="Hackathon Sponsorship — Sponsor Tech for Good | Opportunity Hack" />
+        <meta property="og:description" content="Sponsor Opportunity Hack and reach 500+ skilled engineers passionate about social good. 501(c)(3) tax-deductible. Sponsorship tiers from $500. Connect your brand with developers building free software for nonprofits." />
         <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp" />
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://www.ohack.dev/sponsor" />
-        <meta property="twitter:title" content="Sponsor a Hackathon for Social Good | Opportunity Hack" />
-        <meta property="twitter:description" content="Power tech innovation for nonprofits. Sponsor Opportunity Hack to connect with developer talent, support social-good engineering, and transform communities. Multiple sponsorship tiers available." />
+        <meta property="twitter:title" content="Hackathon Sponsorship — Sponsor Tech for Good | Opportunity Hack" />
+        <meta property="twitter:description" content="Sponsor Opportunity Hack and reach 500+ skilled engineers passionate about social good. 501(c)(3) tax-deductible. Sponsorship tiers from $500." />
         <meta property="twitter:image" content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp" />
         <link rel="canonical" href="https://www.ohack.dev/sponsor" />
         <meta name="robots" content="index, follow" />

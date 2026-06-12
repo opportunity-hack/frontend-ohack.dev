@@ -482,12 +482,12 @@ function Apply({ title, description, openGraphData }) {
               "@type": "WebPage",
               "name": "Nonprofit and Social Good Project Application - Opportunity Hack",
               "description": "Submit your nonprofit project or social good idea for free software development support. Opportunity Hack connects innovators with skilled volunteers to create tech solutions for social impact.",
-              "url": "https://ohack.dev/nonprofits/apply",
+              "url": "https://www.ohack.dev/nonprofits/apply",
               "potentialAction": {
                 "@type": "ApplyAction",
                 "target": {
                   "@type": "EntryPoint",
-                  "urlTemplate": "https://ohack.dev/nonprofits/apply",
+                  "urlTemplate": "https://www.ohack.dev/nonprofits/apply",
                   "actionPlatform": [
                     "http://schema.org/DesktopWebPlatform",
                     "http://schema.org/MobileWebPlatform"
@@ -1132,7 +1132,7 @@ export async function getStaticProps() {
         {
           name: "image",
           property: "og:image",
-          content: "https://ohack.dev/OHack_NonProfit_Application.png",
+          content: "https://www.ohack.dev/OHack_NonProfit_Application.png",
           key: "ognameimage"
         },
         {
@@ -1148,13 +1148,13 @@ export async function getStaticProps() {
         {
           name: "url",
           property: "url",
-          content: "https://ohack.dev/nonprofits/apply",
+          content: "https://www.ohack.dev/nonprofits/apply",
           key: "url"
         },
         {
           name: "org:url",
           property: "org:url",
-          content: "https://ohack.dev/nonprofits/apply",
+          content: "https://www.ohack.dev/nonprofits/apply",
           key: "ogurl"
         },
         {
@@ -1184,7 +1184,7 @@ export async function getStaticProps() {
         {
           name: "twitter:image",
           property: "twitter:image",
-          content: "https://ohack.dev/OHack_NonProfit_Application.png",
+          content: "https://www.ohack.dev/OHack_NonProfit_Application.png",
           key: "twitterimage"
         },
         {

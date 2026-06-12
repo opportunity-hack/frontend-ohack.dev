@@ -15,7 +15,7 @@ const organizationSchema = {
   "@type": "Organization",
   name: "Opportunity Hack",
   alternateName: "OHack",
-  url: "https://ohack.dev",
+  url: "https://www.ohack.dev",
   description:
     "Harness the power of code for social good, fostering an inclusive society and championing impactful, sustainable change through technology volunteering and hackathons since 2013.",
   foundingDate: "2013",
@@ -155,11 +155,11 @@ export default function AboutUsPage() {
         <meta name="keywords" content="Opportunity Hack, social good, non-profit technology, tech volunteering, coding for good, social impact, inclusive society, sustainable change, effective altruism, hackathon, technology for nonprofits" />
         <meta name="author" content="Opportunity Hack" />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://ohack.dev/about" />
+        <link rel="canonical" href="https://www.ohack.dev/about" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="About Opportunity Hack | Coding for Social Good Since 2013" />
         <meta property="og:description" content="Founded in 2013, Opportunity Hack harnesses the power of code for social good. Learn about our mission, founders, board members, and join our community of tech volunteers making sustainable change." />
-        <meta property="og:url" content="https://ohack.dev/about" />
+        <meta property="og:url" content="https://www.ohack.dev/about" />
         <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp" />
         <meta property="og:image:alt" content="Opportunity Hack team working together at hackathon event" />
         <meta property="og:image:width" content="1200" />
@@ -184,7 +184,7 @@ export default function AboutUsPage() {
               "@context": "https://schema.org",
               "@type": "AboutPage",
               mainEntity: { "@type": "Organization", name: "Opportunity Hack" },
-              url: "https://ohack.dev/about",
+              url: "https://www.ohack.dev/about",
               description: "Learn about Opportunity Hack's mission, history, founders, and commitment to using technology for social good.",
             }),
           }}
@@ -435,8 +435,8 @@ export const getStaticProps = async () => {
         { name: "image", property: "og:image", content: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_6.webp", key: "ognameimage" },
         { property: "og:image:width", content: "1200", key: "ogimagewidth" },
         { property: "og:image:height", content: "630", key: "ogimageheight" },
-        { name: "url", property: "url", content: "https://ohack.dev/about", key: "url" },
-        { name: "og:url", property: "og:url", content: "https://ohack.dev/about", key: "ogurl" },
+        { name: "url", property: "url", content: "https://www.ohack.dev/about", key: "url" },
+        { name: "og:url", property: "og:url", content: "https://www.ohack.dev/about", key: "ogurl" },
         { name: "twitter:card", property: "twitter:card", content: "summary_large_image", key: "twittercard" },
         { name: "twitter:site", property: "twitter:site", content: "@opportunityhack", key: "twittersite" },
         { name: "twitter:title", property: "twitter:title", content: title, key: "twittertitle" },
@@ -450,9 +450,9 @@ export const getStaticProps = async () => {
         "@graph": [
           {
             "@type": "Organization",
-            "@id": "https://ohack.dev/#organization",
+            "@id": "https://www.ohack.dev/#organization",
             name: "Opportunity Hack",
-            url: "https://ohack.dev",
+            url: "https://www.ohack.dev",
             logo: { "@type": "ImageObject", url: "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Dark_Blue.png" },
             sameAs: [
               "https://twitter.com/opportunityhack",
@@ -474,11 +474,11 @@ export const getStaticProps = async () => {
           },
           {
             "@type": "WebPage",
-            "@id": "https://ohack.dev/about#webpage",
-            url: "https://ohack.dev/about",
+            "@id": "https://www.ohack.dev/about#webpage",
+            url: "https://www.ohack.dev/about",
             name: title,
             description: description,
-            isPartOf: { "@type": "WebSite", "@id": "https://ohack.dev/#website" },
+            isPartOf: { "@type": "WebSite", "@id": "https://www.ohack.dev/#website" },
             about: {
               "@type": "Organization",
               name: "Opportunity Hack",
@@ -488,14 +488,14 @@ export const getStaticProps = async () => {
           {
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Home", item: "https://ohack.dev" },
-              { "@type": "ListItem", position: 2, name: "About", item: "https://ohack.dev/about" },
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://www.ohack.dev" },
+              { "@type": "ListItem", position: 2, name: "About", item: "https://www.ohack.dev/about" },
             ],
           },
           {
             "@type": "AboutPage",
             mainEntity: { "@type": "Organization", name: "Opportunity Hack" },
-            url: "https://ohack.dev/about",
+            url: "https://www.ohack.dev/about",
             description: "Learn about Opportunity Hack's mission, history, founders, and commitment to using technology for social good.",
           },
         ],

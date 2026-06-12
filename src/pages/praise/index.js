@@ -32,10 +32,10 @@ const PraisePage = () => {
         <meta property="og:title" content="OHack Community Praise Board" />
         <meta property="og:description" content="Celebrating the amazing contributions of our OHack community members." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/praise" />
+        <meta property="og:url" content="https://www.ohack.dev/praise" />
         <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp" />
         <meta name="twitter:card" content="summary_large_image" />
-        <link rel="canonical" href="https://ohack.dev/praise" />
+        <link rel="canonical" href="https://www.ohack.dev/praise" />
         <RefinedFonts />
         <script type="application/ld+json">{`
           {
@@ -43,7 +43,7 @@ const PraisePage = () => {
             "@type": "WebPage",
             "name": "Community Praise Board",
             "description": "View praises and recognition for the outstanding contributions of our community members at Opportunity Hack.",
-            "url": "https://ohack.dev/praise",
+            "url": "https://www.ohack.dev/praise",
             "mainEntity": { "@type": "ItemList", "itemListElement": [ { "@type": "ListItem", "position": 1, "name": "Community Praises" } ] }
           }
         `}</script>

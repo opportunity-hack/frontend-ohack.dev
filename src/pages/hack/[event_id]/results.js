@@ -58,7 +58,7 @@ const ResultsPage = ({ eventData, funnel }) => {
   }
 
   const eventTitle = eventData.title || `Event ${event_id}`;
-  const pageUrl = `https://ohack.dev/hack/${event_id}/results`;
+  const pageUrl = `https://www.ohack.dev/hack/${event_id}/results`;
   const winnerCount = funnel?.winners?.won_prize || 0;
   const description =
     winnerCount > 0
@@ -81,13 +81,13 @@ const ResultsPage = ({ eventData, funnel }) => {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ohack.dev/' },
-        { '@type': 'ListItem', position: 2, name: 'Hackathons', item: 'https://ohack.dev/hack' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.ohack.dev/' },
+        { '@type': 'ListItem', position: 2, name: 'Hackathons', item: 'https://www.ohack.dev/hack' },
         {
           '@type': 'ListItem',
           position: 3,
           name: eventTitle,
-          item: `https://ohack.dev/hack/${event_id}`,
+          item: `https://www.ohack.dev/hack/${event_id}`,
         },
         { '@type': 'ListItem', position: 4, name: 'Results', item: pageUrl },
       ],

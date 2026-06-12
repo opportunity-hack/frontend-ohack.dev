@@ -401,13 +401,13 @@ export const getStaticProps = async () => {
                 {
                     name: "url",
                     property: "url",
-                    content: "https://ohack.dev/volunteer",
+                    content: "https://www.ohack.dev/volunteer",
                     key: "url"
                 },
                 {
                     name: "og:url",
                     property: "og:url",
-                    content: "https://ohack.dev/volunteer",
+                    content: "https://www.ohack.dev/volunteer",
                     key: "ogurl"
                 },
                 {
@@ -458,9 +458,9 @@ export const getStaticProps = async () => {
                 "@graph": [
                     {
                         "@type": "Organization",
-                        "@id": "https://ohack.dev/#organization",
+                        "@id": "https://www.ohack.dev/#organization",
                         "name": "Opportunity Hack",
-                        "url": "https://ohack.dev",
+                        "url": "https://www.ohack.dev",
                         "logo": {
                             "@type": "ImageObject",
                             "url": "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp"
@@ -472,13 +472,13 @@ export const getStaticProps = async () => {
                     },
                     {
                         "@type": "WebPage",
-                        "@id": "https://ohack.dev/volunteer#webpage",
-                        "url": "https://ohack.dev/volunteer",
+                        "@id": "https://www.ohack.dev/volunteer#webpage",
+                        "url": "https://www.ohack.dev/volunteer",
                         "name": title,
                         "description": description,
                         "isPartOf": {
                             "@type": "WebSite",
-                            "@id": "https://ohack.dev/#website"
+                            "@id": "https://www.ohack.dev/#website"
                         },
                         "about": {
                             "@type": "VolunteerEvent",
@@ -493,13 +493,13 @@ export const getStaticProps = async () => {
                                 "@type": "ListItem",
                                 "position": 1,
                                 "name": "Home",
-                                "item": "https://ohack.dev"
+                                "item": "https://www.ohack.dev"
                             },
                             {
                                 "@type": "ListItem",
                                 "position": 2,
                                 "name": "Volunteer",
-                                "item": "https://ohack.dev/volunteer"
+                                "item": "https://www.ohack.dev/volunteer"
                             }
                         ]
                     },

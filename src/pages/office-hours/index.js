@@ -277,7 +277,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
             "organizer": {
                 "@type": "Organization",
                 "name": "Opportunity Hack",
-                "url": "https://ohack.dev"
+                "url": "https://www.ohack.dev"
             }
         }
     };
@@ -306,7 +306,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                 { name: "twitter:creator", content: "@opportunityhack", key: "twittercreator" },
                 { name: "twitter:site", content: "@opportunityhack", key: "twittersite" },
                 // Additional social sharing optimizations
-                { property: "og:url", content: "https://ohack.dev/office-hours", key: "ogurl" },
+                { property: "og:url", content: "https://www.ohack.dev/office-hours", key: "ogurl" },
                 { property: "og:image:alt", content: "Opportunity Hack Developer Office Hours - Code for Social Good", key: "ogimagealt" }
             ],
             // Add structured data for search engines

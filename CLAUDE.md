@@ -90,6 +90,7 @@ Removing any of these and a section that contains wide intrinsic min-content (e.
 
 Patterns that must stay in place to keep Google Search Console CWV green:
 
+- **`AxiosWrapper` in `_app.js` MUST stay as a plain static import** — `dynamic(ssr:false)` there disables SSR for the entire app tree (empty `<body>`, empty titles, CWV collapse; June 2026 incident). The placeholder invariants below only work because the full tree SSRs; nothing above `NavBar` in `_app.js` may be `ssr: false`.
 - `NavBar` and `Footer` are `ssr: true` in `_app.js`; their loading placeholders in `_app.js` match the rendered heights (NavBar 64px, Footer 760px/560px mobile/desktop). Don't flip them back to `ssr: false`.
 - The auth-reactive right side of `Navbar.js` (Log In button ↔ Avatar) must stay inside the fixed-width slot (`minWidth: { xs: 56, md: 140 }`). Adding content there requires keeping both branches the same width.
 - `HeartsLeaderboard` reserves `minHeight: { xs: 128, md: 172 }` in both its loading placeholder on `pages/index.js` and in the component's empty state — don't return `null` from it.
@@ -549,6 +550,16 @@ After the archive, `#about-events` combines:
 - Uses `useHackathonEvents("current")` and `useHackathonEvents("previous")` with `isArizonaLocation()` filter (AZ_LOCATION_PATTERNS constant at top of file).
 - Structured data: WebPage + BreadcrumbList + Event (Fall 2026 ASU with GeoCoordinates) + FAQPage.
 - Internal links from: `pages/index.js` (pillar links section), `pages/hack/index.js` (inside `HackathonStoryStrip`, not as a top-level Alert), `pages/sponsor/index.js` (About section).
+
+## SEO infrastructure (June 2026)
+
+- **`/server-sitemap.xml`** (`src/pages/server-sitemap.xml.js`) is the server-side sitemap for dynamic routes — `/hack/{event_id}`, `/nonprofit/{id}`, `/blog/{id}`. Referenced in `next-sitemap.config.js` `additionalSitemaps`. It fetches from the API at request time with a 1-hour CDN cache (`s-maxage=3600`).
+- **Canonical host is `www.ohack.dev`**. All `rel="canonical"`, `og:url`, and structured-data URLs in `src/pages/**` must use `https://www.ohack.dev/...`. `frontend.ohack.dev` 301s to www via `next.config.js`. Never hardcode bare `https://ohack.dev/` (without www) — GSC indexed the non-www host and we redirected it all away.
+- **`/hack/[event_id]` canonical slug:** use `event?.event_id || event_id` (the backend's canonical ID), not the raw `params.event_id` (which could be an alias). `canonicalUrl` is computed once and used for canonical, og:url, structured data, and breadcrumbs.
+- **Soft-404 guard in `getStaticProps`:** backend returns `200 + {}` for unknown event IDs. The guard `if (!data || !data.id) return { notFound: true }` converts these to real 404s.
+- **P3 judge-page consolidation:** `/hackathon-judge`, `/hackathon-judging`, `/hackathon-judging-opportunities` were deleted and 301-redirected to `/hackathon-judge-opportunities` (the canonical, kept). Entries removed from `next-sitemap.config.js` exclude list.
+- **Legacy event slug 301s** in `next.config.js`: `season-YYYY → YYYY_season` for years ≤ 2025 (2026+ events natively use `season-YYYY` IDs). Generated as a flat array since Next.js path-to-regexp can't put two named params in a destination without literal text between them.
+- **Homepage pillar links** in `src/pages/index.js`: "For developers & volunteers" block now links to `/hackathon-for-social-good` and `/hackathons/arizona` in addition to `/projects` and Slack.
 
 ## Gotchas (load-bearing — every one of these has bitten us)
 

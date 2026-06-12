@@ -42,8 +42,8 @@ export default function SavingOneLifeSuccessStory() {
         <meta property="og:title" content="Saving One Life: Innovating Animal Adoption with AI | Opportunity Hack" />
         <meta property="og:description" content="See how tech volunteers created an AI-enhanced adoption process for Saving One Life, streamlining animal rescue operations and exploring innovative solutions." />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content="https://ohack.dev/success-stories/saving-one-life-adoption-innovation" />
-        <meta property="og:image" content="https://ohack.dev/images/saving-one-life-banner.jpg" />
+        <meta property="og:url" content="https://www.ohack.dev/success-stories/saving-one-life-adoption-innovation" />
+        <meta property="og:image" content="https://www.ohack.dev/images/saving-one-life-banner.jpg" />
       </Head>
 
       <Container maxWidth="lg">

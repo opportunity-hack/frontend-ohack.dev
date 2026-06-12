@@ -113,7 +113,7 @@ const WhyPage = () => {
             __html: JSON.stringify(pageData.structuredData),
           }}
         />
-        <link rel="canonical" href={`https://ohack.dev/about/why/${title}`} />
+        <link rel="canonical" href={`https://www.ohack.dev/about/why/${title}`} />
       </Head>
 
       <LayoutContainer key="why" container>

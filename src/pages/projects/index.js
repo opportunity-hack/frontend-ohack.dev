@@ -9,7 +9,7 @@ const ProjectList = dynamic(() => import('../../components/ProjectList/ProjectLi
 export default function Projects({ projects, hackathons, stats, topNonprofits }) {
   const title = "Open Source Projects for Social Impact | Opportunity Hack";
   const metaDescription = `Join our community of ${stats.volunteers}+ volunteers working on ${stats.total} open source projects to empower nonprofits. Accelerate your career while making a lasting impact with projects using ${stats.topSkills.join(', ')} and more.`;
-  const canonicalUrl = "https://ohack.dev/projects";
+  const canonicalUrl = "https://www.ohack.dev/projects";
 
   return (
     <>
@@ -61,7 +61,7 @@ export default function Projects({ projects, hackathons, stats, topNonprofits })
               mainEntity: {
                 "@type": "Organization",
                 name: "Opportunity Hack",
-                url: "https://ohack.dev",
+                url: "https://www.ohack.dev",
                 logo: "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Dark_Blue.png",
                 description:
                   "Empowering students, professionals, and nonprofits to collaboratively create sustainable tech solutions that drive social impact and foster learning.",
@@ -80,11 +80,11 @@ export default function Projects({ projects, hackathons, stats, topNonprofits })
                 description: project.description,
                 keywords: project.skills?.join(", ") || "",
                 status: project.status,
-                url: `https://ohack.dev/project/${project.id}`,
+                url: `https://www.ohack.dev/project/${project.id}`,
                 provider: {
                   "@type": "Organization",
                   name: "Opportunity Hack",
-                  url: "https://ohack.dev",
+                  url: "https://www.ohack.dev",
                 },
                 audience: {
                   "@type": "Audience",

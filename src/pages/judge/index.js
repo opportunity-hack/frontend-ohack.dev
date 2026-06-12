@@ -96,7 +96,7 @@ const JudgeDashboard = withRequiredAuthInfo(({ userClass }) => {
         <meta name="keywords" content="judge dashboard, hackathon judging, nonprofit technology evaluation, scoring criteria, judge tutorial" />
         <meta property="og:title" content="Judge Dashboard - Evaluate Hackathon Projects | Opportunity Hack" />
         <meta property="og:description" content="Access your judge assignments and evaluate innovative nonprofit technology solutions. Complete dashboard tutorial available to guide you through Round 1 and Round 2 judging." />
-        <meta property="og:url" content="https://ohack.dev/judge" />
+        <meta property="og:url" content="https://www.ohack.dev/judge" />
         <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/judge_1.jpg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Judge Dashboard - Evaluate Hackathon Projects | Opportunity Hack" />

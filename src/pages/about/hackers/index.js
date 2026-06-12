@@ -301,8 +301,8 @@ export const getStaticProps = async () => {
         { name: "image", property: "og:image", content: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp", key: "ognameimage" },
         { property: "og:image:width", content: "1200", key: "ogimagewidth" },
         { property: "og:image:height", content: "630", key: "ogimageheight" },
-        { name: "url", property: "url", content: "https://ohack.dev/about/hackers", key: "url" },
-        { name: "og:url", property: "og:url", content: "https://ohack.dev/about/hackers", key: "ogurl" },
+        { name: "url", property: "url", content: "https://www.ohack.dev/about/hackers", key: "url" },
+        { name: "og:url", property: "og:url", content: "https://www.ohack.dev/about/hackers", key: "ogurl" },
         { name: "twitter:card", property: "twitter:card", content: "summary_large_image", key: "twittercard" },
         { name: "twitter:site", property: "twitter:site", content: "@opportunityhack", key: "twittersite" },
         { name: "twitter:title", property: "twitter:title", content: title, key: "twittertitle" },
@@ -316,19 +316,19 @@ export const getStaticProps = async () => {
         "@graph": [
           {
             "@type": "Organization",
-            "@id": "https://ohack.dev/#organization",
+            "@id": "https://www.ohack.dev/#organization",
             "name": "Opportunity Hack",
-            "url": "https://ohack.dev",
+            "url": "https://www.ohack.dev",
             "logo": { "@type": "ImageObject", "url": "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp" },
             "sameAs": ["https://twitter.com/opportunityhack", "https://github.com/opportunity-hack"],
           },
           {
             "@type": "WebPage",
-            "@id": "https://ohack.dev/about/hackers#webpage",
-            "url": "https://ohack.dev/about/hackers",
+            "@id": "https://www.ohack.dev/about/hackers#webpage",
+            "url": "https://www.ohack.dev/about/hackers",
             "name": title,
             "description": description,
-            "isPartOf": { "@type": "WebSite", "@id": "https://ohack.dev/#website" },
+            "isPartOf": { "@type": "WebSite", "@id": "https://www.ohack.dev/#website" },
             "about": {
               "@type": "EducationalOrganization",
               "name": "Opportunity Hack Hacker Program",
@@ -338,9 +338,9 @@ export const getStaticProps = async () => {
           {
             "@type": "BreadcrumbList",
             "itemListElement": [
-              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ohack.dev" },
-              { "@type": "ListItem", "position": 2, "name": "About", "item": "https://ohack.dev/about" },
-              { "@type": "ListItem", "position": 3, "name": "Hackers", "item": "https://ohack.dev/about/hackers" },
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ohack.dev" },
+              { "@type": "ListItem", "position": 2, "name": "About", "item": "https://www.ohack.dev/about" },
+              { "@type": "ListItem", "position": 3, "name": "Hackers", "item": "https://www.ohack.dev/about/hackers" },
             ],
           },
         ],

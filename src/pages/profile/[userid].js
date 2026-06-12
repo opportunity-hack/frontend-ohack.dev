@@ -14,7 +14,7 @@ const PublicProfileComponent = dynamic(
   }
 );
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ohack.dev";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ohack.dev";
 const FALLBACK_OG_IMAGE = "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp";
 
 function buildDescription(profile) {

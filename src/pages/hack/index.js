@@ -74,7 +74,7 @@ const HackathonIndex = () => {
           property="og:image"
           content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
         />
-        <meta property="og:url" content="https://ohack.dev/hack" />
+        <meta property="og:url" content="https://www.ohack.dev/hack" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
@@ -84,7 +84,7 @@ const HackathonIndex = () => {
           name="twitter:description"
           content="Join tech volunteers to create solutions for nonprofits at our global hackathons."
         />
-        <link rel="canonical" href="https://ohack.dev/hack" />
+        <link rel="canonical" href="https://www.ohack.dev/hack" />
         <script type="application/ld+json">{`
           {
             "@context": "https://schema.org",
@@ -92,11 +92,11 @@ const HackathonIndex = () => {
             "name": "Opportunity Hack Global Hackathons",
             "description": "Opportunity Hack hosts impactful hackathons globally where tech volunteers create solutions for nonprofits.",
             "image": "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
-            "url": "https://ohack.dev/hack",
+            "url": "https://www.ohack.dev/hack",
             "organizer": {
               "@type": "Organization",
               "name": "Opportunity Hack",
-              "url": "https://ohack.dev"
+              "url": "https://www.ohack.dev"
             }
           }
         `}</script>

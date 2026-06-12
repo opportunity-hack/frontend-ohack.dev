@@ -125,9 +125,9 @@ export default function ProductDetailPage() {
     });
   };
 
-  const productUrl = `https://ohack.dev/store/products/${product.id}`;
+  const productUrl = `https://www.ohack.dev/store/products/${product.id}`;
   const productImage = product.image
-    ? `https://ohack.dev${product.image}`
+    ? `https://www.ohack.dev${product.image}`
     : "https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp";
 
   const productSchema = {
@@ -140,7 +140,7 @@ export default function ProductDetailPage() {
     brand: {
       "@type": "Organization",
       name: "Opportunity Hack",
-      url: "https://ohack.dev",
+      url: "https://www.ohack.dev",
     },
     offers: {
       "@type": "Offer",
@@ -164,13 +164,13 @@ export default function ProductDetailPage() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://ohack.dev",
+        item: "https://www.ohack.dev",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Store",
-        item: "https://ohack.dev/store",
+        item: "https://www.ohack.dev/store",
       },
       {
         "@type": "ListItem",

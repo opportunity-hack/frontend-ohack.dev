@@ -71,7 +71,7 @@ export async function getStaticProps() {
       metaKeywords:
         "volunteer tracking, volunteer time tracking, volunteer hours tracker, volunteer management, community service tracking, nonprofit volunteer tracking, volunteer hour management, volunteer time management system",
       ogImage: "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp",
-      canonicalUrl: "https://ohack.dev/volunteer/track",
+      canonicalUrl: "https://www.ohack.dev/volunteer/track",
     },
   };
 }
