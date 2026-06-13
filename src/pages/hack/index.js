@@ -20,7 +20,7 @@ const RX = {
   display: "'Fraunces', Georgia, serif",
 };
 
-const HackathonIndex = () => {
+const HackathonIndex = ({ nextEvent }) => {
   const style = { fontSize: '15px' };
 
   useEffect(() => { initFacebookPixel(); }, []);
@@ -85,21 +85,10 @@ const HackathonIndex = () => {
           content="Join tech volunteers to create solutions for nonprofits at our global hackathons."
         />
         <link rel="canonical" href="https://www.ohack.dev/hack" />
-        <script type="application/ld+json">{`
-          {
-            "@context": "https://schema.org",
-            "@type": "Event",
-            "name": "Opportunity Hack Global Hackathons",
-            "description": "Opportunity Hack hosts impactful hackathons globally where tech volunteers create solutions for nonprofits.",
-            "image": "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
-            "url": "https://www.ohack.dev/hack",
-            "organizer": {
-              "@type": "Organization",
-              "name": "Opportunity Hack",
-              "url": "https://www.ohack.dev"
-            }
-          }
-        `}</script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildEventSchema(nextEvent)) }}
+        />
       </Head>
 
       <TitleContainer container sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 2, md: 2 } }}>
@@ -313,3 +302,90 @@ const HackathonIndex = () => {
 };
 
 export default HackathonIndex;
+
+// Build Event schema from the next upcoming hackathon returned by getStaticProps.
+// Falls back gracefully when the API is unavailable at build time.
+function buildEventSchema(event) {
+  const isVirtual = !event?.location ||
+    /online|virtual/i.test(event.location);
+
+  // Date-only strings from the API (e.g. "2026-11-14") get a time appended so
+  // Google sees a full ISO datetime rather than a bare date.
+  const startDate = event?.start_date
+    ? (event.start_date.includes('T') ? event.start_date : `${event.start_date}T09:00:00`)
+    : null;
+  const endDate = event?.end_date
+    ? (event.end_date.includes('T') ? event.end_date : `${event.end_date}T18:00:00`)
+    : null;
+
+  const eventUrl = event?.event_id
+    ? `https://www.ohack.dev/hack/${event.event_id}`
+    : 'https://www.ohack.dev/hack';
+
+  const location = isVirtual
+    ? [{ '@type': 'VirtualLocation', url: eventUrl }]
+    : [
+        { '@type': 'VirtualLocation', url: eventUrl },
+        { '@type': 'Place', name: event.location },
+      ];
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event?.title || 'Opportunity Hack Global Hackathons',
+    description: event?.description ||
+      'Opportunity Hack hosts impactful hackathons globally where tech volunteers create solutions for nonprofits.',
+    image: event?.image_url || 'https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp',
+    url: eventUrl,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: isVirtual
+      ? 'https://schema.org/OnlineEventAttendanceMode'
+      : 'https://schema.org/MixedEventAttendanceMode',
+    location,
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+      url: eventUrl,
+      availability: 'https://schema.org/InStock',
+    },
+    organizer: {
+      '@type': 'Organization',
+      name: 'Opportunity Hack',
+      url: 'https://www.ohack.dev',
+    },
+  };
+
+  if (startDate) schema.startDate = startDate;
+  if (endDate) schema.endDate = endDate;
+
+  return schema;
+}
+
+export async function getStaticProps() {
+  const API_URL = process.env.NEXT_PUBLIC_API_SERVER_URL;
+  let nextEvent = null;
+  try {
+    const res = await fetch(`${API_URL}/api/messages/hackathons?current=true`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const hackathons = data.hackathons || data || [];
+      const today = new Date().toISOString().slice(0, 10);
+      // Prefer future events; fall back to most-recent past event.
+      const upcoming = hackathons
+        .filter(h => h.start_date >= today)
+        .sort((a, b) => a.start_date.localeCompare(b.start_date));
+      nextEvent = upcoming[0] ||
+        hackathons.sort((a, b) => b.start_date.localeCompare(a.start_date))[0] ||
+        null;
+    }
+  } catch (_) {
+    // API unavailable at build time — schema will render without dates.
+  }
+  return {
+    props: { nextEvent },
+    revalidate: 3600,
+  };
+}
