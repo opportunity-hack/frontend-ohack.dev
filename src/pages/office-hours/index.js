@@ -1,316 +1,420 @@
-import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
-import { Typography, Grid, Button, Box, Skeleton } from '@mui/material';
-import InsertInvitationIcon from '@mui/icons-material/InsertInvitation';
-import AppleIcon from '@mui/icons-material/Apple';
-import GoogleIcon from '@mui/icons-material/Google';
-import { LayoutContainer, InnerContainer, SlackSignupContainer, SlackLink } from "../../components/OfficeHours/styles";
-import InfoIcon from '@mui/icons-material/Info';
-import dynamic from 'next/dynamic';
+import React, { useEffect } from "react";
+import Head from "next/head";
+import dynamic from "next/dynamic";
+import {
+  CalendarMonthRounded,
+  ForumRounded,
+  HelpOutlineRounded,
+} from "@mui/icons-material";
+import { initFacebookPixel } from "../../lib/ga";
+import {
+  RefinedRoot,
+  RefinedFonts,
+  Eyebrow,
+  Arrow,
+} from "../../components/design/refined";
 
-export default function OfficeHoursPage({ title, openGraphData }) {
-    const style = { fontSize: '16px' };
-    const notificationEmail = 'officehours@ohack.org';
-    const [isLoading, setIsLoading] = useState(true);
+const SLACK_HUDDLE_URL =
+  "https://opportunity-hack.slack.com/archives/C1Q6YHXQU";
+const CAL_EMBED_SRC =
+  "https://calendar.google.com/calendar/embed?src=c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com";
+const CAL_ICAL_URL =
+  "https://calendar.google.com/calendar/ical/c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com/public/basic.ics";
 
-    const LoginOrRegister = dynamic(() => import('../../components/LoginOrRegister/LoginOrRegister2'), { ssr: false });
-    const InstagramEmbed = dynamic(() => import('react-social-media-embed').then(mod => mod.InstagramEmbed), { ssr: false });
+const WHAT_TO_EXPECT = [
+  {
+    title: "Get unstuck, fast",
+    desc: "Bring a bug, a design question, or a blank screen. We'll work through it with you live.",
+  },
+  {
+    title: "All experience levels",
+    desc: "Students, bootcamp grads, and seasoned engineers all drop in. No question is too basic.",
+  },
+  {
+    title: "Real nonprofit projects",
+    desc: "Guidance on the actual code you're writing for the nonprofits we support.",
+  },
+];
 
-    useEffect(() => {
-        const initFacebookPixel = async () => {
-            const ReactPixelModule = await import('react-facebook-pixel');
-            const options = {
-                autoConfig: true,
-                debug: false,
-            };
-            const advancedMatching = undefined;
-            ReactPixelModule.default.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, advancedMatching, options);
-        };
-        initFacebookPixel();
+export default function OfficeHoursPage({ title, openGraphData, structuredData }) {
+  // Instagram embed genuinely needs the client; keep it lazy + SSR-off.
+  const InstagramEmbed = dynamic(
+    () => import("react-social-media-embed").then((mod) => mod.InstagramEmbed),
+    { ssr: false }
+  );
 
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 1000);
+  useEffect(() => {
+    // Idempotent shared helper (see CLAUDE.md CWV rule) — never call
+    // ReactPixel.init directly.
+    initFacebookPixel();
+  }, []);
 
-        return () => clearTimeout(timer);
-    }, []);
+  return (
+    <>
+      <Head>
+        <title>{title}</title>
+        {openGraphData.map((og) => (
+          <meta key={og.key} {...og} />
+        ))}
+        <link rel="canonical" href="https://www.ohack.dev/office-hours" />
+        {structuredData && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: structuredData }}
+          />
+        )}
+        <RefinedFonts />
+      </Head>
 
-    const generateICSContent = (isFirstWeek) => {
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() + (5 + 7 - startDate.getDay()) % 7);
-        if (!isFirstWeek) startDate.setDate(startDate.getDate() + 7);
-
-        const formatDate = (date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}${month}${day}`;
-        };
-
-        const startTime = isFirstWeek ? '120000' : '150000';
-        const endTime = isFirstWeek ? '130000' : '160000';
-
-        return `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Opportunity Hack//NONSGML Office Hours//EN
-BEGIN:VEVENT
-DTSTART;TZID=America/Los_Angeles:${formatDate(startDate)}T${startTime}
-DTEND;TZID=America/Los_Angeles:${formatDate(startDate)}T${endTime}
-RRULE:FREQ=WEEKLY;INTERVAL=2
-SUMMARY:Opportunity Hack Office Hours
-DESCRIPTION:Join us for weekly office hours to discuss your nonprofit coding projects!
-LOCATION:Slack huddle in #general channel https://opportunity-hack.slack.com/archives/C1Q6YHXQU
-ATTENDEE:mailto:${notificationEmail}
-END:VEVENT
-END:VCALENDAR`;
-    };
-
-    const downloadICS = (isFirstWeek) => {
-        const icsContent = generateICSContent(isFirstWeek);
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.setAttribute('download', `OpportunityHack_OfficeHours_${isFirstWeek ? '10am' : '2pm'}_PST.ics`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const CalendarOptions = ({ isFirstWeek }) => (
-        <Box mt={2}>
-            <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<AppleIcon />}
-                onClick={() => downloadICS(isFirstWeek)}
-                fullWidth
-                sx={{ mb: 1 }}
+      <RefinedRoot>
+        {/* HERO */}
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(104px, 13vh, 156px)",
+            paddingBottom: "clamp(28px, 5vh, 44px)",
+          }}
+        >
+          <Eyebrow>
+            <span className="rise" style={{ display: "inline-block" }}>
+              Free developer office hours
+            </span>
+          </Eyebrow>
+          <h1
+            className="ohx-display rise"
+            style={{ marginTop: 18, maxWidth: "16ch", animationDelay: "60ms" }}
+          >
+            Get unstuck on your{" "}
+            <span className="ohx-italic">nonprofit project.</span>
+          </h1>
+          <p
+            className="ohx-lead rise"
+            style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "60ch" }}
+          >
+            Every Friday we open a Slack huddle in{" "}
+            <strong>#general</strong> for anyone writing code for the nonprofits
+            we support. Drop in for guidance, a second pair of eyes, or just to
+            think out loud.
+          </p>
+          <div
+            className="rise"
+            style={{
+              marginTop: 30,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 14,
+              animationDelay: "230ms",
+            }}
+          >
+            <a
+              href={SLACK_HUDDLE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ohx-btn ohx-btn--primary"
             >
-                Apple Calendar / Outlook (PST)
-            </Button>
-            <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<GoogleIcon />}
-                href={isFirstWeek 
-                    ? "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=bXZ0bmRrZDdlMGlxMDZwYWJrZ3M4N2gzZWxfMjAyNDExMjJUMjAwMDAwWiBjXzE1YzZmMjVkZGM2MTEwODFhMWM1OWVmOTE3YzY0N2ZiNDhhNThhZTcxNjkxNmM1NzkyZWVkZTZhMjIzNmVkMTBAZw&tmsrc=c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com&scp=ALL"
-                    : "https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=Y3BoMzBwajRjcGltYWI5a2Nvc202YjlrNzBwbTRiOW9jNWkzYWI5aTZrcmppZHBnY2tvMzRwOW42NF8yMDI0MTEyOVQyMjAwMDBaIGNfMTVjNmYyNWRkYzYxMTA4MWExYzU5ZWY5MTdjNjQ3ZmI0OGE1OGFlNzE2OTE2YzU3OTJlZWRlNmEyMjM2ZWQxMEBn&tmsrc=c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com&scp=ALL"
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                fullWidth
+              Join the Slack huddle <Arrow />
+            </a>
+            <a
+              href="https://slack.com/features/huddles"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ohx-btn ohx-btn--ghost"
             >
-                Google Calendar (PST)
-            </Button>
-        </Box>
-    );
+              <HelpOutlineRounded fontSize="small" /> What's a Slack huddle?
+            </a>
+          </div>
+          <hr
+            className="ohx-rule rise"
+            style={{ marginTop: 44, animationDelay: "320ms" }}
+          />
+          <p
+            className="ohx-muted rise"
+            style={{
+              marginTop: 22,
+              animationDelay: "380ms",
+              fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <CalendarMonthRounded fontSize="small" style={{ color: "var(--accent)" }} />
+            Every Friday, 12–1pm PT
+          </p>
+        </section>
 
-    return (
-        <LayoutContainer container>
-            <Head>
-                <title>{title}</title>
-                {openGraphData.map((og) => (
-                    <meta key={og.key} {...og} />
-                ))}
-                <style>{`
-                    body {
-                        overflow-y: scroll;
-                    }
-                `}</style>
-            </Head>
-            <InnerContainer container>
-                <SlackSignupContainer>
-                    <Typography variant="h1" component="h1" gutterBottom>Free Developer Office Hours</Typography>
-                    {isLoading ? (
-                        <Skeleton variant="text" width="100%" height={40} />
-                    ) : (
-                        <Typography variant="body1" style={style} paragraph>
-                            We provide weekly office hours using a <SlackLink target="_blank" href="https://opportunity-hack.slack.com/archives/C1Q6YHXQU">Slack huddle in #general</SlackLink> for anyone volunteering to write code for any nonprofit we support at Opportunity Hack.
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                startIcon={<InfoIcon />}
-                                href="https://slack.com/features/huddles"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                sx={{ ml: 1, verticalAlign: 'middle' }}
-                            >
-                                What's a Slack Huddle?
-                            </Button>
-                        </Typography>
-                    )}
-                    {isLoading ? (
-                        <Skeleton variant="text" width="100%" height={40} />
-                    ) : (
-                        <Typography variant="body1" style={style} paragraph>
-                            Whether you're a student, bootcamp graduate, or experienced developer looking to give back, our office hours are the perfect opportunity to get guidance, share ideas, and make a real impact through coding. 
-                            Since most of the people who volunteer with Opportunity Hack are working professionals, we host our office hours during our lunch break on Fridays from 12pm - 1pm PST.
-                        </Typography>
-                    )}
-                    
-                    <Typography variant="h4" mt={4} mb={2}>Office Hours Schedule</Typography>
-                    {isLoading ? (
-                        <Skeleton variant="rectangular" width="100%" height={400} />
-                    ) : (
-                        <>
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="body1" style={style}>
-                                    • Every Friday @ 12pm - 1pm PST                                   
-                                </Typography>
-                            </Box>
-                            <Box sx={{ 
-                                width: '100%',
-                                height: '600px',
-                                mb: 4,
-                                overflow: 'hidden',
-                                position: 'relative'
-                            }}>
-                                <iframe 
-                                    src="https://calendar.google.com/calendar/embed?src=c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com"
-                                    style={{
-                                        border: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0
-                                    }}
-                                    frameBorder="0"
-                                    scrolling="no"
-                                />
-                            </Box>
-                            <Box mt={2}>
-                                <Button
-                                    variant="outlined"
-                                    color="secondary"
-                                    startIcon={<InsertInvitationIcon />}
-                                    href="https://calendar.google.com/calendar/ical/c_15c6f25ddc611081a1c59ef917c647fb48a58ae716916c5792eede6a2236ed10%40group.calendar.google.com/public/basic.ics"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    fullWidth
-                                    sx={{ mb: 1 }}
-                                >
-                                    Subscribe to Calendar (iCal)
-                                </Button>
-                            </Box>
-                        </>
-                    )}
-                    
-                    {isLoading ? (
-                        <Skeleton variant="text" width="100%" height={60} sx={{ mt: 4 }} />
-                    ) : (
-                        <Typography variant="body1" style={style} mt={4}>
-                            Can't make it to our scheduled times? Don't worry! Reach out in the Slack channel, and we'll do our best to accommodate your schedule.
-                        </Typography>
-                    )}
+        {/* WHAT TO EXPECT */}
+        <section
+          style={{
+            background: "var(--surface-2)",
+            borderTop: "1px solid var(--line)",
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          <div
+            className="ohx-wrap"
+            style={{
+              paddingTop: "clamp(48px, 7vh, 80px)",
+              paddingBottom: "clamp(48px, 7vh, 80px)",
+            }}
+          >
+            <Eyebrow>What to expect</Eyebrow>
+            <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 10 }}>
+              Show up with anything.
+            </h2>
+            <p
+              className="ohx-muted"
+              style={{ marginTop: 0, marginBottom: 28, maxWidth: "56ch" }}
+            >
+              Most of our volunteers are working professionals, so we host during
+              the Friday lunch break — informal, friendly, and useful.
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gap: 20,
+                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              }}
+            >
+              {WHAT_TO_EXPECT.map((item) => (
+                <div
+                  key={item.title}
+                  className="ohx-card"
+                  style={{ padding: 24, background: "var(--surface)" }}
+                >
+                  <h3 className="ohx-display" style={{ fontSize: "1.2rem" }}>
+                    {item.title}
+                  </h3>
+                  <p
+                    className="ohx-muted"
+                    style={{
+                      margin: "8px 0 0",
+                      fontSize: "0.95rem",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {item.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                     <Box mt={4} mb={4}>
-                        {isLoading ? (
-                            <Skeleton variant="rectangular" width={200} height={40} />
-                        ) : (
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                startIcon={<InsertInvitationIcon />}
-                                href="https://opportunity-hack.slack.com/archives/C1Q6YHXQU"
-                                target="_blank"
-                            >
-                                Join Slack Channel
-                            </Button>
-                        )}
-                    </Box>
+        {/* SCHEDULE */}
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(48px, 7vh, 80px)",
+            paddingBottom: "clamp(40px, 6vh, 64px)",
+          }}
+        >
+          <Eyebrow>The schedule</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 24 }}>
+            Add it to your calendar.
+          </h2>
 
-                    <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        width: '100%', 
-                        maxWidth: '500px', 
-                        margin: '30px auto',
-                        height: '500px'
-                    }}>
-                        {isLoading ? (
-                            <Skeleton variant="rectangular" width="100%" height="100%" />
-                        ) : (
-                            <InstagramEmbed 
-                                url="https://www.instagram.com/p/CqFz5PWB9Og/" 
-                                width="100%"
-                                height="100%"
-                            />
-                        )}
-                    </Box>
+          <div
+            className="ohx-card"
+            style={{ padding: 8, overflow: "hidden", lineHeight: 0 }}
+          >
+            <div
+              style={{
+                width: "100%",
+                height: "clamp(460px, 60vh, 600px)",
+                position: "relative",
+              }}
+            >
+              <iframe
+                title="Opportunity Hack office hours calendar"
+                src={CAL_EMBED_SRC}
+                style={{
+                  border: 0,
+                  width: "100%",
+                  height: "100%",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  borderRadius: 6,
+                }}
+                loading="lazy"
+              />
+            </div>
+          </div>
 
-                    <LoginOrRegister introText="Ready to make an impact? Join our community today!" previousPage={"/office-hours"} />
-                </SlackSignupContainer>
-            </InnerContainer>
-        </LayoutContainer>
-    );
+          <div
+            style={{
+              marginTop: 20,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 14,
+            }}
+          >
+            <a
+              href={CAL_ICAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ohx-btn ohx-btn--ghost"
+            >
+              <CalendarMonthRounded fontSize="small" /> Subscribe (iCal)
+            </a>
+            <a
+              href={SLACK_HUDDLE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ohx-btn ohx-btn--ghost"
+            >
+              <ForumRounded fontSize="small" /> Open #general in Slack
+            </a>
+          </div>
+
+          <p className="ohx-muted" style={{ marginTop: 22, maxWidth: "60ch" }}>
+            Can't make the scheduled time? Reach out in the Slack channel and
+            we'll do our best to find a slot that works for you.
+          </p>
+        </section>
+
+        {/* SOCIAL PROOF */}
+        <section
+          style={{
+            background: "var(--surface-2)",
+            borderTop: "1px solid var(--line)",
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          <div
+            className="ohx-wrap"
+            style={{
+              paddingTop: "clamp(48px, 7vh, 80px)",
+              paddingBottom: "clamp(48px, 7vh, 80px)",
+            }}
+          >
+            <Eyebrow>From the community</Eyebrow>
+            <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 24 }}>
+              See what it's like.
+            </h2>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                width: "100%",
+                maxWidth: 500,
+                margin: "0 auto",
+                minHeight: 500,
+              }}
+            >
+              <InstagramEmbed
+                url="https://www.instagram.com/p/CqFz5PWB9Og/"
+                width="100%"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section style={{ background: "var(--brand)", color: "#fff" }}>
+          <div
+            className="ohx-wrap"
+            style={{
+              paddingTop: "clamp(44px, 6vh, 72px)",
+              paddingBottom: "clamp(44px, 6vh, 72px)",
+              textAlign: "center",
+            }}
+          >
+            <h2 className="ohx-display" style={{ color: "#fff" }}>
+              Ready to make an impact?
+            </h2>
+            <p
+              style={{
+                margin: "14px auto 28px",
+                maxWidth: "48ch",
+                color: "rgba(255,255,255,0.85)",
+                fontSize: "1.05rem",
+              }}
+            >
+              Join the community, then drop into office hours any Friday. We'd
+              love to help you ship something that matters.
+            </p>
+            <a
+              href={SLACK_HUDDLE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ohx-btn"
+              style={{ background: "#fff", color: "var(--brand)" }}
+            >
+              Join us on Slack <Arrow />
+            </a>
+          </div>
+        </section>
+      </RefinedRoot>
+    </>
+  );
 }
 
 export const getStaticProps = async ({ params = {} } = {}) => {
-    const title = "Code for Social Good: Free Developer Office Hours | Opportunity Hack";
-    const metaDescription = 'Join our free weekly developer office hours to code for social good. Get mentorship, improve your coding skills, and help nonprofits. Perfect for students, bootcamp graduates, and experienced developers looking to make a social impact through technology.';
-    const image = "https://cdn.ohack.dev/ohack.dev/officehours.webp";
-    
-    // Schema.org structured data for events
-    const structuredData = {
-        "@context": "https://schema.org",
-        "@type": "Schedule",
-        "scheduleTimezone": "America/Phoenix",
-        "eventSchedule": {
-            "@type": "Schedule",
-            "byDay": ["Friday"],
-            "startTime": "12:00",
-            "endTime": "15:00",
-            "repeatFrequency": "P1W",
-            "scheduleTimezone": "America/Phoenix"
-        },
-        "subEvent": {
-            "@type": "Event",
-            "name": "Opportunity Hack Developer Office Hours",
-            "description": "Free mentorship and guidance for developers working on nonprofit projects",
-            "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD"
-            },
-            "organizer": {
-                "@type": "Organization",
-                "name": "Opportunity Hack",
-                "url": "https://www.ohack.dev"
-            }
-        }
-    };
+  const title =
+    "Code for Social Good: Free Developer Office Hours | Opportunity Hack";
+  const metaDescription =
+    "Join our free weekly developer office hours to code for social good. Get mentorship, improve your coding skills, and help nonprofits. Perfect for students, bootcamp graduates, and experienced developers looking to make a social impact through technology.";
+  const image = "https://cdn.ohack.dev/ohack.dev/officehours.webp";
 
-    return {
-        props: {
-            title,
-            openGraphData: [
-                { name: "title", content: title, key: "title" },
-                { property: "og:title", content: title, key: "ogtitle" },
-                { name: "description", content: metaDescription, key: "desc" },
-                { property: "og:description", content: metaDescription, key: "ogdesc" },
-                { property: "og:type", content: "website", key: "website" },
-                { property: "og:image", content: image, key: "ogimage" },
-                { property: "twitter:image", content: image, key: "twitterimage" },
-                { property: "og:site_name", content: "Opportunity Hack Developer Portal", key: "ogsitename" },
-                { property: "twitter:card", content: "summary_large_image", key: "twittercard" },
-                { property: "twitter:domain", content: "ohack.dev", key: "twitterdomain" },
-                { property: "twitter:label1", value: "Free Developer Office Hours", key: "twitterlabel1" },
-                { property: "twitter:data1", value: "Every Friday - Learn, Code, Make Impact", key: "twitterdata1" },
-                // Additional meta tags for better SEO
-                { name: "keywords", content: "code for social good, developer mentorship, nonprofit coding, tech volunteering, learn to code, social impact coding, free developer help, programming mentorship, tech for good, coding office hours", key: "keywords" },
-                { name: "author", content: "Opportunity Hack", key: "author" },
-                { property: "article:publisher", content: "https://www.linkedin.com/company/opportunity-hack", key: "publisher" },
-                { property: "og:locale", content: "en_US", key: "locale" },
-                { name: "twitter:creator", content: "@opportunityhack", key: "twittercreator" },
-                { name: "twitter:site", content: "@opportunityhack", key: "twittersite" },
-                // Additional social sharing optimizations
-                { property: "og:url", content: "https://www.ohack.dev/office-hours", key: "ogurl" },
-                { property: "og:image:alt", content: "Opportunity Hack Developer Office Hours - Code for Social Good", key: "ogimagealt" }
-            ],
-            // Add structured data for search engines
-            structuredData: JSON.stringify(structuredData)
-        },
-    };
+  // Schema.org structured data for events
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Schedule",
+    scheduleTimezone: "America/Phoenix",
+    eventSchedule: {
+      "@type": "Schedule",
+      byDay: ["Friday"],
+      startTime: "12:00",
+      endTime: "15:00",
+      repeatFrequency: "P1W",
+      scheduleTimezone: "America/Phoenix",
+    },
+    subEvent: {
+      "@type": "Event",
+      name: "Opportunity Hack Developer Office Hours",
+      description:
+        "Free mentorship and guidance for developers working on nonprofit projects",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      organizer: {
+        "@type": "Organization",
+        name: "Opportunity Hack",
+        url: "https://www.ohack.dev",
+      },
+    },
+  };
+
+  return {
+    props: {
+      title,
+      openGraphData: [
+        { name: "title", content: title, key: "title" },
+        { property: "og:title", content: title, key: "ogtitle" },
+        { name: "description", content: metaDescription, key: "desc" },
+        { property: "og:description", content: metaDescription, key: "ogdesc" },
+        { property: "og:type", content: "website", key: "website" },
+        { property: "og:image", content: image, key: "ogimage" },
+        { property: "twitter:image", content: image, key: "twitterimage" },
+        { property: "og:site_name", content: "Opportunity Hack Developer Portal", key: "ogsitename" },
+        { property: "twitter:card", content: "summary_large_image", key: "twittercard" },
+        { property: "twitter:domain", content: "ohack.dev", key: "twitterdomain" },
+        { property: "twitter:label1", value: "Free Developer Office Hours", key: "twitterlabel1" },
+        { property: "twitter:data1", value: "Every Friday - Learn, Code, Make Impact", key: "twitterdata1" },
+        { name: "keywords", content: "code for social good, developer mentorship, nonprofit coding, tech volunteering, learn to code, social impact coding, free developer help, programming mentorship, tech for good, coding office hours", key: "keywords" },
+        { name: "author", content: "Opportunity Hack", key: "author" },
+        { property: "article:publisher", content: "https://www.linkedin.com/company/opportunity-hack", key: "publisher" },
+        { property: "og:locale", content: "en_US", key: "locale" },
+        { name: "twitter:creator", content: "@opportunityhack", key: "twittercreator" },
+        { name: "twitter:site", content: "@opportunityhack", key: "twittersite" },
+        { property: "og:url", content: "https://www.ohack.dev/office-hours", key: "ogurl" },
+        { property: "og:image:alt", content: "Opportunity Hack Developer Office Hours - Code for Social Good", key: "ogimagealt" },
+      ],
+      structuredData: JSON.stringify(structuredData),
+    },
+  };
 };

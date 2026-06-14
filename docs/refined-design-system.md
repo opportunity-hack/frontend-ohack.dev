@@ -144,6 +144,13 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
 - [x] `/about/completion` — `ProjectCompletion` rewritten (numbered DoD checklist).
 - [x] `/about/success-stories` — rewritten to refined story cards (data array
       kept verbatim); video + CTA refined.
+- [x] `/signup` — full rewrite (editorial hero w/ italic "code for good", quiet
+      stat row, "What you get" benefit cards on a `--surface-2` band, numbered
+      "How to join" steps beside the framed `join_slack_1.png` screenshot, navy
+      final-CTA band). Primary CTA is now a real `<a href={slackSignupUrl}
+      target="_blank">` (dropped the JS `router.push`/`window.open` branch);
+      `handleSignupClick` only fires the `CompleteRegistration` GA event. `Head`
+      kept verbatim (www canonical + OG intact) + `<RefinedFonts/>`.
 - [x] `/onboarding` — refined chrome (hero, navy-themed MUI `Stepper`, step-content
       card, refined nav buttons, dialog). The step-content sub-components
       (`WelcomeSection` etc.) keep their own styling; note `WelcomeSection` has its
@@ -189,6 +196,34 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
       `.ohx-btn`. The embedded `MentorTeamPanel` + `TeamCompletionChecklist` widgets keep
       their own styling (wrapped only in an anchored `headed={false}` section). All data
       fetching + `getStaticProps`/`getStaticPaths` unchanged.
+- [x] `/hack/request` (Host an Opportunity Hack) — page rewritten (campus-led
+      editorial hero → "how hosting works" 3-step band → benefit cards → framed
+      form → "who hosts" w/ Cal Poly Humboldt → navy soft-CTA band; canonical +
+      OG + `RefinedFonts` added). **`HackathonRequestForm` flow improved for the
+      dominant student persona** while preserving the `formData` contract (admin
+      `HackathonRequestDetailDialog` + edit page depend on it): org type is now
+      selectable cards defaulting to **university** (was corporate); the **$5k
+      budget minimum was removed** (slider min `$0`, never blocks submit) and
+      reframed as optional "funding you have access to"; the donation-% ask is
+      **corporate-only** (forced to 0 at submit otherwise); phone is optional; a
+      "~25 participants" option was added; the rainbow Papers (`#f5f9ff`/`#f7f7ff`/
+      `#f5fff5`/`#fff5f5`) became calm `--surface-2` hairline cards; all controls
+      are navy/terracotta via a scoped MUI `ThemeProvider` (`createTheme(base, …)`)
+      + Fraunces step headings. **Step-change scroll fix:** `handleNext`/`handleBack`
+      now `scrollIntoView` a `formTopRef` on the outer Paper (with
+      `scrollMarginTop:88`) instead of `window.scrollTo(0,0)` — the old behavior
+      overshot to the page top now that the form sits below the hero. Edit page
+      `/hack/request/[request_id]` wrapped in `RefinedRoot`+`RefinedFonts` chrome
+      (noindex); the form's own ThemeProvider keeps it consistent there too.
+- [x] `/office-hours` — full rewrite (editorial hero w/ italic "nonprofit project",
+      "what to expect" cards, framed Google Calendar embed + iCal/Slack ghost CTAs,
+      Instagram embed kept `ssr:false`, navy final CTA). Also: now **renders the
+      JSON-LD** `structuredData` (the old page passed it as a prop but never
+      emitted it), switched FB pixel to the idempotent `initFacebookPixel` from
+      `lib/ga` (was calling `ReactPixel.init` directly — CWV rule violation),
+      removed the artificial 1s `setIsLoading` skeleton delay (hurt LCP) and the
+      dead `CalendarOptions`/`generateICSContent` code, added canonical. The old
+      `LoginOrRegister` banner was replaced by the navy Slack CTA band.
 - [ ] (later) remaining pages — application forms, `/nonprofit/[id]`, `/project/[id]`,
       `/about/why`, `/about/hearts`, `/contact`, etc. Deeper passes wanted on the own
       `/profile` editor (logged-in) and the `/hack/[event_id]` event page (see the
