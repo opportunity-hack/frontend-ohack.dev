@@ -106,11 +106,32 @@ const ParticipantsSection = ({ admin }) => {
             checked={!!constraints.application_hacker_enabled}
             onChange={(v) => setConstraint("application_hacker_enabled", v)}
           >
-            <ExternalUrlField
-              label="External hacker application URL"
-              value={constraints.application_hacker_external_url}
-              onChange={(v) => setConstraint("application_hacker_external_url", v)}
-            />
+            <Stack spacing={2}>
+              <ExternalUrlField
+                label="External hacker application URL"
+                value={constraints.application_hacker_external_url}
+                onChange={(v) => setConstraint("application_hacker_external_url", v)}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!constraints.application_hacker_force_open}
+                    onChange={(e) => setConstraint("application_hacker_force_open", e.target.checked)}
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Force applications open (override deadline)
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Bypasses the automatic "applications closed" cutoff (3 days before start)
+                      and the "event ended" wall. Turn off after accepting late entries.
+                    </Typography>
+                  </Box>
+                }
+              />
+            </Stack>
           </ToggleRow>
 
           <ToggleRow
