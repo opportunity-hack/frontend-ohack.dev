@@ -132,10 +132,16 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
 - [x] `/profile/[userid]` (public) — `PublicProfile` rewritten; the page wrapper
       was simplified to drop a redundant ThemeProvider + stray blue placeholder
       bands (global `_app` already provides nav/footer).
-- [x] `/profile` (own, authenticated editor) — **chrome-only facelift**: refined
-      fonts, Fraunces on the name, navy tab strip w/ terracotta indicator. The
-      tabbed edit form itself was left intact (couldn't be visually verified
-      logged-out; deliberately conservative).
+- [x] `/profile` (own, authenticated editor) — **full refined pass**: editorial
+      masthead (avatar + Fraunces h1 + meta line + "View public profile" ohx-btn,
+      no elevation Paper), hairline sticky tab strip (navy selected label, terracotta
+      underline indicator, `position:sticky` under 64px navbar), scoped
+      `ThemeProvider(createTheme)` recolors all MUI controls navy/terracotta in one
+      place, `PanelHeader` (Eyebrow + h2 + lead) on every tab, privacy legend once
+      on Basic Info tab, hairline `<hr class="ohx-rule">` separators in Volunteer
+      History, Giveaway Entries uses `.ohx-card` (removed tinted Paper), refined
+      logged-out gate. All form logic, handlers, debouncing, GA, hash-tab sync, and
+      privacy toggles preserved byte-for-byte.
 - [x] Mobile NavBar — centered logo (was hidden on mobile), hamburger pinned
       left, refined wider dropdown (warm paper, rounded, tracked section labels,
       left-aligned Hanken items).
