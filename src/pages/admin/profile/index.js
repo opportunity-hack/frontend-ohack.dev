@@ -252,6 +252,20 @@ function QuickActions({ user, onCopy, dense }) {
           </IconButton>
         </Tooltip>
       )}
+      {user.linkedin_url && (
+        <Tooltip title="Open LinkedIn">
+          <IconButton
+            size={size}
+            component="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            href={user.linkedin_url}
+            aria-label="Open LinkedIn"
+          >
+            <LinkedInIcon sx={{ fontSize, color: "#0A66C2" }} />
+          </IconButton>
+        </Tooltip>
+      )}
       <Tooltip title="View volunteer record">
         <span>
           <IconButton
@@ -302,6 +316,7 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   const [showSetup, setShowSetup] = useState(false);
   const [expandedCards, setExpandedCards] = useState(() => new Set());
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_ROWS);
+  const [linkedInOnly, setLinkedInOnly] = useState(false);
 
   // Keystrokes update `filter` (and the TextField) immediately; the expensive
   // filter + list re-render tracks this deferred copy at low priority.
@@ -534,6 +549,9 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
   // --- Filter + sort (keyed on the deferred filter so typing stays smooth) ---
   const processedProfiles = useMemo(() => {
     let filtered = profiles;
+    if (linkedInOnly) {
+      filtered = filtered.filter((p) => !!p.linkedin_url);
+    }
     if (deferredFilter) {
       const q = deferredFilter.toLowerCase();
       filtered = filtered.filter(
@@ -599,12 +617,12 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
       return 0;
     });
     return arr;
-  }, [profiles, deferredFilter, sortBy, sortOrder]);
+  }, [profiles, deferredFilter, sortBy, sortOrder, linkedInOnly]);
 
   // Reset the render cap whenever the result set changes shape.
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_ROWS);
-  }, [deferredFilter, sortBy, sortOrder, viewMode]);
+  }, [deferredFilter, sortBy, sortOrder, viewMode, linkedInOnly]);
 
   // --- Best-match detection ---
   const bestMatch = useMemo(() => {
@@ -867,6 +885,17 @@ const AdminProfilePage = withRequiredAuthInfo(({ userClass }) => {
               }}
             />
           )}
+
+          <Chip
+            size="small"
+            icon={<LinkedInIcon sx={{ fontSize: 14, color: linkedInOnly ? "#fff" : "#0A66C2" }} />}
+            label="Has LinkedIn"
+            color={linkedInOnly ? "primary" : "default"}
+            variant={linkedInOnly ? "filled" : "outlined"}
+            onClick={() => setLinkedInOnly((v) => !v)}
+            onDelete={linkedInOnly ? () => setLinkedInOnly(false) : undefined}
+            sx={{ cursor: "pointer" }}
+          />
 
           <Box sx={{ flex: 1 }} />
 

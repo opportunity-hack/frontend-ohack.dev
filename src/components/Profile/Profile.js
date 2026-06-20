@@ -64,6 +64,33 @@ import {
 
 
 
+// Normalizes whatever the user typed into a canonical LinkedIn profile URL.
+// Handles: bare username, /in/slug, linkedin.com/in/slug, full https URL.
+function normalizeLinkedInUrl(raw) {
+  const s = (raw || "").trim();
+  if (!s) return "";
+
+  // Already a full valid LinkedIn URL — ensure https + www + trailing slash
+  const inMatch = s.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([^/?#\s]+)\/?/i);
+  if (inMatch) {
+    return `https://www.linkedin.com/in/${inMatch[1]}/`;
+  }
+
+  // Bare slug with no domain (no dots, no slashes → treat as username)
+  if (!s.includes(".") && !s.includes("/")) {
+    return `https://www.linkedin.com/in/${s}/`;
+  }
+
+  // Relative path like "in/gregvannoni" or "/in/gregvannoni"
+  const relMatch = s.match(/^\/?in\/([^/?#\s]+)/i);
+  if (relMatch) {
+    return `https://www.linkedin.com/in/${relMatch[1]}/`;
+  }
+
+  // Can't normalize — return as-is so we don't silently corrupt unexpected input
+  return s;
+}
+
 // Tab panel component for displaying tab content
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -398,17 +425,16 @@ export default function Profile(props) {
   };
 
   const handleLinkedInChange = (event) => {
-    // Call the API to save the user's profile
-    console.log("Save to backend", event.target.value);
-
-    const onComplete = () => {
-      console.log("LinkedIn updated");
-    };
-
     setLinkedInUrl(event.target.value);
+  };
 
-    update_profile_metadata({ linkedin_url: event.target.value }, onComplete);
-  }
+  const handleLinkedInBlur = () => {
+    const normalized = normalizeLinkedInUrl(linkedInUrl);
+    if (normalized !== linkedInUrl) {
+      setLinkedInUrl(normalized);
+    }
+    update_profile_metadata({ linkedin_url: normalized }, () => {});
+  };
 
   const handleInstagramChange = (event) => {
     // Call the API to save the user's profile
@@ -806,11 +832,14 @@ export default function Profile(props) {
                         <TextField
                           id="linkedin"
                           onChange={handleLinkedInChange}
+                          onBlur={handleLinkedInBlur}
                           label="LinkedIn Profile URL"
                           value={linkedInUrl || ""}
                           fullWidth
                           variant="outlined"
-                          InputLabelProps={{ shrink: Boolean(linkedInUrl) }}
+                          placeholder="gregvannoni or linkedin.com/in/gregvannoni"
+                          InputLabelProps={{ shrink: true }}
+                          helperText="Enter your username, linkedin.com/in/… or a full URL — we'll format it automatically"
                         />
                       </FormControl>
                       <Box sx={{ mt: 0.75 }}>
