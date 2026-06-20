@@ -586,10 +586,11 @@ const HackerApplicationComponent = () => {
 
         // Check if event is in the past (with 1-day buffer for end date)
         const now = Moment().tz(eventTz);
-        const isEventPast = endDate.clone().add(1, "day").isBefore(now);
+        const forceOpen = eventData.constraints?.application_hacker_force_open === true;
+        const isEventPast = !forceOpen && endDate.clone().add(1, "day").isBefore(now);
 
         // Check if applications are closed (deadline has passed)
-        const isApplicationsClosed = now.isAfter(applicationDeadline);
+        const isApplicationsClosed = !forceOpen && now.isAfter(applicationDeadline);
 
         // Check if event is online/virtual
         const isOnlineEvent = ["Virtual", "Global", "Online"].some((term) =>
