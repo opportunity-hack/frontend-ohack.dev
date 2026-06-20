@@ -264,6 +264,36 @@ const emphasisPanelSx = {
   backgroundColor: "var(--surface-2)",
 };
 
+// Shown alongside the check-in QR (selected mentors only). The QR is for
+// in-person check-in at the venue; remote/virtual mentors should instead check
+// in online via /hack/<event>/mentor-checkin so teams know they're available.
+const RemoteCheckInNote = ({ eventId, isVirtual, sx = {} }) => (
+  <Box
+    sx={{
+      mt: 2,
+      p: { xs: 1.75, sm: 2 },
+      borderRadius: 2,
+      border: "1px solid var(--line)",
+      backgroundColor: "var(--surface)",
+      ...sx,
+    }}
+  >
+    <Typography variant="body2" sx={{ fontWeight: 700, color: "var(--ink)", mb: 0.5 }}>
+      {isVirtual
+        ? "💻 Mentoring remotely? You don't need the QR code."
+        : "📍 The QR code is for in-person check-in."}
+    </Typography>
+    <Typography variant="body2" sx={{ color: "var(--muted)", lineHeight: 1.6 }}>
+      {isVirtual
+        ? "Check in online so teams know you're available in Slack — "
+        : "Joining virtually instead? Check in online so teams know you're available — "}
+      <Link href={`/hack/${eventId}/mentor-checkin`} sx={refinedInlineLinkSx}>
+        open mentor check-in →
+      </Link>
+    </Typography>
+  </Box>
+);
+
 const primaryButtonSx = {
   backgroundColor: "var(--brand)",
   color: "#fff",
@@ -2197,13 +2227,14 @@ const MentorApplicationComponent = () => {
                 </Typography>
               </Alert>
 
-              {Boolean(volunteerId) && (
+              {Boolean(volunteerId) && isSelected && (
                 <Box
                   sx={{
                     ...emphasisPanelSx,
                     mb: 4,
                     display: "flex",
-                    justifyContent: "center",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
                   <VolunteerCheckInQR
@@ -2215,6 +2246,11 @@ const MentorApplicationComponent = () => {
                     isSubmitted={true}
                     qrSize={200}
                     sx={{ mx: "auto", maxWidth: 500 }}
+                  />
+                  <RemoteCheckInNote
+                    eventId={event_id}
+                    isVirtual={formData.inPerson === "No, I'll be virtual"}
+                    sx={{ width: "100%", maxWidth: 500 }}
                   />
                 </Box>
               )}
@@ -2543,7 +2579,7 @@ const MentorApplicationComponent = () => {
               <ApplicationNav eventId={event_id} currentType="mentor" />
             </Box>
 
-            {Boolean(volunteerId) && (
+            {Boolean(volunteerId) && isSelected && (
               <Box className="ohx-card" sx={{ p: 3, mb: 3, maxWidth: 560 }}>
                 <Eyebrow>Check-in</Eyebrow>
                 <VolunteerCheckInQR
@@ -2555,6 +2591,10 @@ const MentorApplicationComponent = () => {
                   isSubmitted={true}
                   qrSize={200}
                   sx={{ mx: "auto", maxWidth: 500 }}
+                />
+                <RemoteCheckInNote
+                  eventId={event_id}
+                  isVirtual={formData.inPerson === "No, I'll be virtual"}
                 />
               </Box>
             )}

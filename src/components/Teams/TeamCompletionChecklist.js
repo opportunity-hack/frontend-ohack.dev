@@ -51,7 +51,8 @@ const Confetti = dynamic(() => import("react-confetti"), {
 
 // Canonical 8-item Definition of Done. Wording mirrors /about/completion;
 // `slug` MUST match backend COMPLETION_ITEMS in api/teams/teams_service.py.
-const COMPLETION_ITEMS = [
+// Exported so the team-page summary card computes progress from one source.
+export const COMPLETION_ITEMS = [
   {
     slug: "deployed",
     label: "Deployed",
@@ -101,7 +102,8 @@ const COMPLETION_ITEMS = [
     blurb: "Repo is public under MIT.",
   },
 ];
-const TOTAL = COMPLETION_ITEMS.length;
+export const COMPLETION_TOTAL = COMPLETION_ITEMS.length;
+const TOTAL = COMPLETION_TOTAL;
 
 const pizzazPop = keyframes`
   0%   { transform: scale(1); }

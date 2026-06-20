@@ -8,7 +8,6 @@ import {
   Grid,
   CircularProgress,
   Avatar,
-  Skeleton,
 } from "@mui/material";
 import {
   GitHub as GitHubIcon,
@@ -24,30 +23,17 @@ import {
   getWinningStatus,
   isJoiningDisabled,
   TEAM_STATUS_OPTIONS,
-} from "../../../../constants/teamStatus";
-import { parseLocalDate } from "../../../../lib/dateUtils";
-import { RefinedFonts, RefinedRoot, Eyebrow } from "../../../../components/design/refined";
-import useTeamMembership from "../../../../hooks/use-team-membership";
+} from "../../../../../constants/teamStatus";
+import { parseLocalDate } from "../../../../../lib/dateUtils";
+import { RefinedFonts, RefinedRoot, Eyebrow } from "../../../../../components/design/refined";
+import useTeamMembership from "../../../../../hooks/use-team-membership";
+import TeamBreadcrumbs from "../../../../../components/Teams/TeamBreadcrumbs";
+import TeamMentorSummaryCard from "../../../../../components/Teams/TeamMentorSummaryCard";
+import TeamCompletionSummaryCard from "../../../../../components/Teams/TeamCompletionSummaryCard";
 
 const VideoDisplay = dynamic(
-  () => import("../../../../components/VideoDisplay/VideoDisplay"),
+  () => import("../../../../../components/VideoDisplay/VideoDisplay"),
   { ssr: false }
-);
-
-const MentorTeamPanel = dynamic(
-  () => import("../../../../components/Teams/MentorTeamPanel"),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={420} sx={{ mb: 3, borderRadius: 1 }} />,
-  }
-);
-
-const TeamCompletionChecklist = dynamic(
-  () => import("../../../../components/Teams/TeamCompletionChecklist"),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={520} sx={{ mb: 3, borderRadius: 1 }} />,
-  }
 );
 
 const COMPLETION_VISIBLE_STATUSES = new Set(["DEPLOYED", "NONPROFIT_SIGNOFF"]);
@@ -411,14 +397,11 @@ export default function TeamDetailPage({
         className="ohx-wrap"
         sx={{ maxWidth: 1120, pt: "clamp(96px, 12vh, 150px)", pb: { xs: 8, md: 12 } }}
       >
-        {/* Back navigation */}
-        <NextLink
-          href={`/hack/${event_id}`}
-          className="ohx-link"
-          style={{ fontSize: "0.92rem", marginBottom: 24, display: "inline-flex" }}
-        >
-          ← Back to {eventName}
-        </NextLink>
+        {/* Breadcrumb trail — the spine shared by /mentor and /completion */}
+        <TeamBreadcrumbs
+          items={[{ name: eventName, href: `/hack/${event_id}` }]}
+          current={teamName}
+        />
 
         {/* Masthead */}
         <Box component="header" className="rise" sx={{ mb: { xs: 4, md: 5 } }}>
@@ -614,28 +597,18 @@ export default function TeamDetailPage({
 
           {/* Content column */}
           <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
-            {/* Mentor Support — visible to everyone once the event has started */}
+            {/* Mentor Support — compact summary; full panel lives at /mentor */}
             {eventHasStarted && (
               <SectionBlock id="mentor-support" headed={false} copiedId={copiedId} onCopyLink={copySectionLink}>
-                <MentorTeamPanel
-                  team={team}
-                  event={event}
-                  eventId={event_id}
-                  onTeamUpdate={(updated) => setTeam(updated)}
-                />
+                <TeamMentorSummaryCard team={team} eventId={event_id} teamId={team.id} />
               </SectionBlock>
             )}
 
-            {/* Project Completion (winning teams only) */}
+            {/* Project Completion (winning teams only) — compact summary; full
+                checklist lives at /completion */}
             {showCompletionChecklist && (
               <SectionBlock id="completion" headed={false} copiedId={copiedId} onCopyLink={copySectionLink}>
-                <TeamCompletionChecklist
-                  team={team}
-                  eventId={event_id}
-                  onTeamUpdate={(updated) => setTeam(updated)}
-                  isOnTeam={isOnTeam}
-                  membershipChecked={membershipChecked}
-                />
+                <TeamCompletionSummaryCard team={team} eventId={event_id} teamId={team.id} />
               </SectionBlock>
             )}
 

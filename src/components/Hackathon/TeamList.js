@@ -172,11 +172,11 @@ const MentorSupportSummary = ({ team, eventId }) => {
         {eventId && team?.id && (
           <Link
             component={NextLink}
-            href={`/hack/${eventId}/team/${team.id}`}
+            href={`/hack/${eventId}/team/${team.id}/mentor`}
             variant="caption"
             sx={{ ml: 'auto' }}
           >
-            Details →
+            Mentor details →
           </Link>
         )}
       </Box>

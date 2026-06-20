@@ -2,29 +2,20 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthInfo } from '@propelauth/react';
 import {
-  Typography,
-  Container,
   Box,
-  Button,
-  Paper,
   CircularProgress,
   Alert,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Divider,
   Chip,
-  useTheme,
-  useMediaQuery,
   Snackbar,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  DialogContentText
+  DialogContentText,
+  Button,
 } from '@mui/material';
 import Head from 'next/head';
+import NextLink from 'next/link';
 import { useEnv } from '../../../context/env.context';
 import LoginOrRegister from '../../../components/LoginOrRegister/LoginOrRegister2';
 import axios from 'axios';
@@ -33,15 +24,15 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import HourglassFullIcon from '@mui/icons-material/HourglassFull';
 import SlackIcon from '@mui/icons-material/Chat';
 import InfoIcon from '@mui/icons-material/Info';
-import Link from 'next/link';
+import { RefinedFonts, RefinedRoot, Eyebrow } from '../../../components/design/refined';
+import TeamBreadcrumbs from '../../../components/Teams/TeamBreadcrumbs';
+import MentorTeamsTable from '../../../components/Mentor/MentorTeamsTable';
 
 const MentorCheckinPage = () => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
   const { apiServerUrl } = useEnv();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // State variables
   const [isLoading, setIsLoading] = useState(true);
@@ -58,9 +49,13 @@ const MentorCheckinPage = () => {
   const [showPreviousSlots, setShowPreviousSlots] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmCheckoutDialogOpen, setConfirmCheckoutDialogOpen] = useState(false);
+  // One-stop-shop: all teams for this event (from the single-event endpoint,
+  // which returns full team docs incl. mentor_* fields + enriched users[]).
+  const [teams, setTeams] = useState([]);
+  const [nonprofits, setNonprofits] = useState([]);
 
   // Helper function to check if a time slot is current
-  const isCurrentTimeSlot = (slot) => {    
+  const isCurrentTimeSlot = (slot) => {
     if (!slot || !slot.time) return false;
 
     const now = new Date();
@@ -70,7 +65,7 @@ const MentorCheckinPage = () => {
     // Parse the time range directly from the time property
     const timeRange = slot.time;
     const [startTimeStr, endTimeStr] = timeRange.split(' - ');
-    
+
     // Remove timezone from end time if present
     const cleanEndTimeStr = endTimeStr.replace(/\s+[A-Z]+$/, '');
 
@@ -79,13 +74,6 @@ const MentorCheckinPage = () => {
     const endTime = parseTimeString(cleanEndTimeStr, month, day);
 
     if (!startTime || !endTime) return false;
-    
-    console.log('Time range:', {
-      now,
-      startTime, 
-      endTime, 
-      isInRange: now >= startTime && now <= endTime
-    });
 
     return now >= startTime && now <= endTime;
   };
@@ -119,27 +107,25 @@ const MentorCheckinPage = () => {
 
   // Helper function to compare Month/Day only
   const compareDatesDayMonthOnly = (date1, date2) => {
-    // Get the month (0-indexed) and day of the month for both dates
     const month1 = date1.getMonth();
     const day1 = date1.getDate();
     const month2 = date2.getMonth();
     const day2 = date2.getDate();
-  
-    // Compare month and day
+
     if (month1 === month2 && day1 === day2) {
-      return 0; // Dates are the same day and month
+      return 0;
     } else if (month1 < month2 || (month1 === month2 && day1 < day2)) {
-      return -1; // date1 is earlier in the year (day and month) than date2
+      return -1;
     } else {
-      return 1; // date1 is later in the year (day and month) than date2
+      return 1;
     }
-  }
+  };
 
   // Compare month and day of Date to current time
   const isDateInThePast = (date1) => {
     const currDate = new Date();
-    return compareDatesDayMonthOnly(date1, currDate) >= 0
-  }
+    return compareDatesDayMonthOnly(date1, currDate) >= 0;
+  };
 
   // Fetch event data and mentor data
   useEffect(() => {
@@ -157,8 +143,6 @@ const MentorCheckinPage = () => {
         }
 
         const eventData = await eventResponse.json();
-
-        console.log('Event data:', eventData);
 
         if (!eventData || !eventData.start_date || !eventData.end_date) {
           throw new Error('Invalid event data received');
@@ -193,6 +177,10 @@ const MentorCheckinPage = () => {
           image: eventData.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
         });
 
+        // Capture all teams + nonprofits for the one-stop-shop table.
+        setTeams(Array.isArray(eventData.teams) ? eventData.teams : []);
+        setNonprofits(Array.isArray(eventData.nonprofits) ? eventData.nonprofits : []);
+
         // If user is logged in, fetch mentor data
         if (isLoggedIn && user && accessToken) {
           try {
@@ -210,7 +198,6 @@ const MentorCheckinPage = () => {
             const mentor = mentorResponse.data?.data;
 
             if (mentor) {
-              console.log('Mentor data:', mentor);
               setMentorData(mentor);
 
               // Parse availability slots from the mentor data
@@ -230,37 +217,37 @@ const MentorCheckinPage = () => {
                 const slots = availabilityArray.map(slotText => {
                   // Make sure slotText is properly cleaned and formatted
                   const cleanSlotText = slotText.trim();
-                  
+
                   // Initialize with defaults
                   let dayName = '';
                   let datePart = '';
                   let timePart = '';
                   let timeRange = '';
-                  
+
                   // Check if the format is like "Oct 11: ☀️ Morning (9am - 12pm PST)"
                   if (cleanSlotText.includes(':')) {
                     [datePart, timePart] = cleanSlotText.split(':').map(part => part?.trim());
-                    
+
                     // Extract the time range from parentheses if available
                     const timeMatch = timePart ? timePart.match(/\((.*?)\)/) : null;
                     timeRange = timeMatch ? timeMatch[1] : '';
-                    
+
                     // If datePart contains month and day (e.g., "Oct 11")
                     if (/[A-Za-z]+\s+\d+/.test(datePart)) {
                       // Try to extract the day of week from this date
                       const dateObj = new Date();
                       const monthName = datePart.split(' ')[0];
                       const day = parseInt(datePart.split(' ')[1], 10);
-                      
+
                       // Set the month
                       const months = {
                         'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
                         'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
                       };
-                      
+
                       dateObj.setMonth(months[monthName] || 0);
                       dateObj.setDate(day);
-                      
+
                       // Get the day of week
                       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                       dayName = days[dateObj.getDay()];
@@ -269,19 +256,14 @@ const MentorCheckinPage = () => {
                     // Format is likely just a day name like "Friday" or "Saturday"
                     datePart = cleanSlotText;
                     dayName = cleanSlotText;
-                    
-                    // For simple day names, we leave time and timePeriod empty
-                    // This is expected behavior as these slots don't have specific times
                   }
-                  
+
                   // If we still don't have a dayName but have a datePart, try to extract dayName
                   if (!dayName && datePart) {
-                    // Check if datePart is already a day name
                     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                     if (dayNames.includes(datePart)) {
                       dayName = datePart;
                     } else {
-                      // Extract first word as a potential day name
                       dayName = datePart.split(' ')[0];
                     }
                   }
@@ -302,48 +284,34 @@ const MentorCheckinPage = () => {
 
                 // Sort slots similar to MentorAvailability.js
                 const sortedSlots = validSlots.sort((a, b) => {
-                  // Define day of week order for sorting
                   const dayOrder = {
-                    "Sunday": 0,
-                    "Monday": 1,
-                    "Tuesday": 2,
-                    "Wednesday": 3,
-                    "Thursday": 4,
-                    "Friday": 5,
-                    "Saturday": 6
+                    "Sunday": 0, "Monday": 1, "Tuesday": 2, "Wednesday": 3,
+                    "Thursday": 4, "Friday": 5, "Saturday": 6
                   };
 
-                  // First try to sort by date if it's in "Mon DD" format
                   const datePatternA = a.date.match(/([A-Za-z]+)\s+(\d+)/);
                   const datePatternB = b.date.match(/([A-Za-z]+)\s+(\d+)/);
-                  
+
                   if (datePatternA && datePatternB) {
-                    // Get month number
                     const monthOrder = {
                       "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
                       "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
                     };
 
-                    const monthA = datePatternA[1];
-                    const monthB = datePatternB[1];
-                    const monthOrderA = monthOrder[monthA] || 0;
-                    const monthOrderB = monthOrder[monthB] || 0;
+                    const monthOrderA = monthOrder[datePatternA[1]] || 0;
+                    const monthOrderB = monthOrder[datePatternB[1]] || 0;
 
                     if (monthOrderA !== monthOrderB) {
                       return monthOrderA - monthOrderB;
                     }
 
-                    // Compare day numbers
                     const dayA = parseInt(datePatternA[2], 10);
                     const dayB = parseInt(datePatternB[2], 10);
 
                     if (dayA !== dayB) {
                       return dayA - dayB;
                     }
-                    
-                    // If dates are the same, continue to time period sorting
                   } else {
-                    // If not in month/day format, try day of week
                     const dayOrderA = dayOrder[a.dayName] || 99;
                     const dayOrderB = dayOrder[b.dayName] || 99;
 
@@ -352,17 +320,11 @@ const MentorCheckinPage = () => {
                     }
                   }
 
-                  // If same date or day, sort by time period
                   const timeOrderMap = {
-                    "Early Morning": 1,
-                    "Morning": 2,
-                    "Afternoon": 3,
-                    "Evening": 4,
-                    "Night": 5,
-                    "Late Night": 6
+                    "Early Morning": 1, "Morning": 2, "Afternoon": 3,
+                    "Evening": 4, "Night": 5, "Late Night": 6
                   };
 
-                  // Try to extract time period names
                   const timeA = a.timePeriod.match(/(?:🌅|☀️|🏙️|🌆|🌃|🌙)\s*(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/);
                   const timeB = b.timePeriod.match(/(?:🌅|☀️|🏙️|🌆|🌃|🌙)\s*(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/);
 
@@ -377,7 +339,6 @@ const MentorCheckinPage = () => {
 
                 // Filter out general day entries (like "Friday") if we have more specific entries for the same day
                 const filteredSlots = (() => {
-                  // Group slots by day of week
                   const slotsByDay = {};
                   sortedSlots.forEach(slot => {
                     if (!slotsByDay[slot.dayName]) {
@@ -385,84 +346,64 @@ const MentorCheckinPage = () => {
                     }
                     slotsByDay[slot.dayName].push(slot);
                   });
-                  
-                  // For each day, check if we have specific time slots and general day slots
+
                   const result = [];
                   Object.entries(slotsByDay).forEach(([dayName, daySlots]) => {
-                    // Check if we have specific time slots for this day
                     const hasSpecificTimeSlots = daySlots.some(slot => slot.time && slot.time.trim() !== '');
-                    
-                    // If we have specific time slots, filter out general day entries
+
                     if (hasSpecificTimeSlots) {
-                      // Add only the specific time slots
                       daySlots.forEach(slot => {
                         if (slot.time && slot.time.trim() !== '') {
                           result.push(slot);
                         }
                       });
                     } else {
-                      // If we don't have specific time slots, just add the first general day entry
-                      // to avoid duplicates like "Friday, Friday"
                       result.push(daySlots[0]);
                     }
                   });
-                  
+
                   return result.sort((a, b) => {
-                    // Re-sort to maintain the original sort order
                     const dayOrder = {
-                      "Sunday": 0,
-                      "Monday": 1,
-                      "Tuesday": 2,
-                      "Wednesday": 3,
-                      "Thursday": 4,
-                      "Friday": 5,
-                      "Saturday": 6
+                      "Sunday": 0, "Monday": 1, "Tuesday": 2, "Wednesday": 3,
+                      "Thursday": 4, "Friday": 5, "Saturday": 6
                     };
-                    
+
                     const dayOrderA = dayOrder[a.dayName] || 99;
                     const dayOrderB = dayOrder[b.dayName] || 99;
-                    
+
                     if (dayOrderA !== dayOrderB) {
                       return dayOrderA - dayOrderB;
                     }
-                    
-                    // If same day, put specific time slots before general day slots
+
                     if (a.time && !b.time) return -1;
                     if (!a.time && b.time) return 1;
-                    
-                    // Then sort by time period if both have times
+
                     if (a.time && b.time) {
                       const timeOrderMap = {
-                        "Early Morning": 1,
-                        "Morning": 2,
-                        "Afternoon": 3,
-                        "Evening": 4,
-                        "Night": 5,
-                        "Late Night": 6
+                        "Early Morning": 1, "Morning": 2, "Afternoon": 3,
+                        "Evening": 4, "Night": 5, "Late Night": 6
                       };
-                      
+
                       const timeA = a.timePeriod.match(/(?:🌅|☀️|🏙️|🌆|🌃|🌙)\s*(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/);
                       const timeB = b.timePeriod.match(/(?:🌅|☀️|🏙️|🌆|🌃|🌙)\s*(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/);
-                      
+
                       const timePeriodA = timeA ? timeA[1] : "";
                       const timePeriodB = timeB ? timeB[1] : "";
-                      
+
                       const timeOrderA = timeOrderMap[timePeriodA] || 99;
                       const timeOrderB = timeOrderMap[timePeriodB] || 99;
-                      
+
                       return timeOrderA - timeOrderB;
                     }
-                    
+
                     return 0;
                   });
                 })();
 
-                console.log('Sorted availability slots:', filteredSlots);
                 setAvailabilitySlots(filteredSlots);
 
                 // Check if any slot is current
                 const currentSlot = filteredSlots.find(slot => isCurrentTimeSlot(slot));
-                console.log('aCurrent active slot:', currentSlot);
                 if (currentSlot) {
                   setCurrentActiveSlot(currentSlot);
                 }
@@ -478,7 +419,6 @@ const MentorCheckinPage = () => {
                 }
               });
 
-              console.log('Check-in status:', checkinStatusResponse.data.data);
               if (checkinStatusResponse.data && checkinStatusResponse.data.data.isCheckedIn) {
                 setCheckedIn(true);
               }
@@ -517,47 +457,37 @@ const MentorCheckinPage = () => {
       groups[date].push(slot);
     });
 
-    // Create a properly sorted version of the groups
     const sortedGroups = {};
-    
-    // Sort the date keys
+
     const sortedDateKeys = Object.keys(groups).sort((a, b) => {
-      // Extract month and day from dates like "Oct 11"
       const datePatternA = a.match(/([A-Za-z]+)\s+(\d+)/);
       const datePatternB = b.match(/([A-Za-z]+)\s+(\d+)/);
-      
+
       if (datePatternA && datePatternB) {
-        // Get month number
         const monthOrder = {
           "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
           "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
         };
 
-        const monthA = datePatternA[1];
-        const monthB = datePatternB[1];
-        const monthOrderA = monthOrder[monthA] || 0;
-        const monthOrderB = monthOrder[monthB] || 0;
+        const monthOrderA = monthOrder[datePatternA[1]] || 0;
+        const monthOrderB = monthOrder[datePatternB[1]] || 0;
 
         if (monthOrderA !== monthOrderB) {
           return monthOrderA - monthOrderB;
         }
 
-        // Compare day numbers
         const dayA = parseInt(datePatternA[2], 10);
         const dayB = parseInt(datePatternB[2], 10);
         return dayA - dayB;
       }
-      
-      // Fallback to alphabetical sorting for dates that don't match the pattern
+
       return a.localeCompare(b);
     });
-    
-    // Reconstruct the object with sorted keys
+
     sortedDateKeys.forEach(key => {
       sortedGroups[key] = groups[key];
     });
 
-    console.log('Grouped availability slots:', sortedGroups);
     return sortedGroups;
   }, [availabilitySlots]);
 
@@ -664,130 +594,127 @@ const MentorCheckinPage = () => {
     : "Check in as a mentor for our social good hackathon. Help teams of technologists create solutions for nonprofits and make a real impact.";
   const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/mentor-checkin`;
 
-  // Simplify how we display mentor profile data by creating a helper function
+  // Refined mentor profile card
   const renderMentorProfile = (mentor) => {
     if (!mentor) return null;
 
     return (
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          <strong>Name:</strong> {mentor.name}
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          <strong>Email:</strong> {mentor.email}
-        </Typography>
-        {mentor.company && (
-          <Typography variant="body1" sx={{ mb: 1 }}>
-            <strong>Company:</strong> {mentor.company}
-          </Typography>
-        )}
-
-        <Divider sx={{ my: 2 }} />
-
-        <Typography variant="body2" sx={{ mb: 1 }}>
-          <strong>Expertise:</strong>
-        </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-          {mentor.expertise?.split(', ').map((skill, index) => (
-            <Chip key={index} label={skill} size="small" />
-          ))}
+      <Box className="ohx-card" sx={{ p: { xs: 2, md: 2.5 } }}>
+        <Box className="ohx-eyebrow" sx={{ mb: 1.5 }}>Your profile</Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1.5 }}>
+          <Box sx={{ fontWeight: 600, color: 'var(--ink)' }}>{mentor.name}</Box>
+          <Box sx={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{mentor.email}</Box>
+          {mentor.company && (
+            <Box sx={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{mentor.company}</Box>
+          )}
         </Box>
 
-        {mentor.engineeringSpecifics && (
+        {mentor.expertise && (
           <>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Software Specialties:</strong>
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {mentor.engineeringSpecifics.map((specialty, index) => (
-                <Chip key={index} label={specialty} size="small" color="primary" variant="outlined" />
+            <Box sx={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, color: 'var(--faint)', mb: 0.75 }}>
+              Expertise
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: mentor.engineeringSpecifics ? 1.5 : 0 }}>
+              {mentor.expertise.split(', ').map((skill, index) => (
+                <span key={index} className="ohx-tag">{skill}</span>
               ))}
             </Box>
           </>
         )}
-      </Paper>
+
+        {mentor.engineeringSpecifics && (
+          <>
+            <Box sx={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, color: 'var(--faint)', mb: 0.75 }}>
+              Software specialties
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+              {mentor.engineeringSpecifics.map((specialty, index) => (
+                <span key={index} className="ohx-tag ohx-tag--accent">{specialty}</span>
+              ))}
+            </Box>
+          </>
+        )}
+      </Box>
     );
   };
+
+  // ---- Refined shell wrapper for the simple gate states ----
+  const Shell = ({ children, maxWidth = 1200 }) => (
+    <RefinedRoot>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        <RefinedFonts />
+      </Head>
+      <Box className="ohx-wrap" sx={{ maxWidth, pt: 'clamp(96px, 12vh, 150px)', pb: { xs: 8, md: 12 } }}>
+        {children}
+      </Box>
+    </RefinedRoot>
+  );
 
   // If user is not logged in, show login prompt
   if (!isLoggedIn) {
     return (
-      <Container>
-        <Head>
-          <title>{pageTitle}</title>
-          <meta name="description" content={pageDescription} />
-          <link rel="canonical" href={canonicalUrl} />
-        </Head>
-
-        <Box my={8} textAlign="center">
-          <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4, mt: 12 }}>
-            Mentor Check-in
-          </Typography>
-
-          <Alert severity="info" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
-            Please log in to access the mentor check-in page.
-          </Alert>
-
-          <LoginOrRegister
-            introText="You need to be logged in to check in as a mentor."
-            previousPage={`/hack/${event_id}/mentor-checkin`}
-          />
+      <Shell maxWidth={760}>
+        <Eyebrow>Mentors</Eyebrow>
+        <Box component="h1" className="ohx-display" sx={{ mt: 1.5, mb: 2, fontSize: 'clamp(2.2rem, 5vw, 3.4rem)' }}>
+          Mentor check-in
         </Box>
-      </Container>
+        <Box className="ohx-lead" sx={{ mb: 3 }}>
+          Log in to check in, see which teams need help, and jump into a team's mentor panel.
+        </Box>
+        <LoginOrRegister
+          introText="You need to be logged in to check in as a mentor."
+          previousPage={`/hack/${event_id}/mentor-checkin`}
+        />
+      </Shell>
     );
   }
 
   // If loading, show loading state
   if (isLoading) {
     return (
-      <Container>
-        <Head>
-          <title>{pageTitle}</title>
-          <meta name="description" content={pageDescription} />
-          <link rel="canonical" href={canonicalUrl} />
-        </Head>
-
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress />
+      <Shell maxWidth={760}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: '40vh' }}>
+          <CircularProgress sx={{ color: 'var(--brand)' }} />
+          <Box sx={{ color: 'var(--muted)' }}>Loading mentor check-in…</Box>
         </Box>
-      </Container>
+      </Shell>
     );
   }
 
   // If user is not a registered mentor, show application prompt
   if (!mentorData) {
     return (
-      <Container>
-        <Head>
-          <title>{pageTitle}</title>
-          <meta name="description" content={pageDescription} />
-          <link rel="canonical" href={canonicalUrl} />
-        </Head>
-
-        <Box my={8} textAlign="center">
-          <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4, mt: 12 }}>
-            Mentor Check-in
-          </Typography>
-
-          <Alert severity="warning" sx={{ mb: 4, mx: 'auto', maxWidth: 600 }}>
-            You are not registered as a mentor for this event.
-          </Alert>
-
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push(`/hack/${event_id}/mentor-application`)}
-            sx={{ mt: 2 }}
-          >
-            Apply to be a Mentor
-          </Button>
+      <Shell maxWidth={760}>
+        <TeamBreadcrumbs
+          items={[{ name: eventData?.name || event_id, href: `/hack/${event_id}` }]}
+          current="Mentor check-in"
+        />
+        <Eyebrow>Mentors</Eyebrow>
+        <Box component="h1" className="ohx-display" sx={{ mt: 1.5, mb: 2, fontSize: 'clamp(2.2rem, 5vw, 3.4rem)' }}>
+          Mentor check-in
         </Box>
-      </Container>
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          You are not registered as a mentor for this event.
+        </Alert>
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+          <NextLink href={`/hack/${event_id}/mentor-application`} className="ohx-btn ohx-btn--primary">
+            Apply to be a mentor
+          </NextLink>
+          <NextLink href={`/hack/${event_id}`} className="ohx-btn ohx-btn--ghost">
+            Back to event
+          </NextLink>
+        </Box>
+      </Shell>
     );
   }
 
+  const eventName = eventData?.name || event_id;
+
   return (
-    <Container>
+    <RefinedRoot>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -796,463 +723,291 @@ const MentorCheckinPage = () => {
           content="hackathon mentor, mentor check-in, tech for good, nonprofit hackathon, opportunity hack, mentorship, volunteer, tech mentoring"
         />
         <link rel="canonical" href={canonicalUrl} />
-
-        {/* Open Graph tags */}
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalUrl} />
-        <meta
-          property="og:image"
-          content={eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"}
-        />
+        <meta property="og:image" content={eventData?.image || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"} />
+        <RefinedFonts />
       </Head>
 
-      <Box sx={{ py: 4 }}>
-        <Typography variant="h1" component="h1" sx={{ fontSize: '2.5rem', mb: 4 }}>
-          Mentor Check-in
-        </Typography>
+      <Box className="ohx-wrap" sx={{ maxWidth: 1200, pt: 'clamp(96px, 12vh, 150px)', pb: { xs: 8, md: 12 } }}>
+        <TeamBreadcrumbs
+          items={[{ name: eventName, href: `/hack/${event_id}` }]}
+          current="Mentor check-in"
+        />
 
-        {eventData && (
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h2" component="h2" sx={{ fontSize: '1.75rem', mb: 1 }}>
-              {eventData.name}
-            </Typography>
-
-            <Typography variant="h3" component="h3" sx={{ fontSize: '1.25rem', mb: 1, color: 'text.secondary' }}>
-              {eventData.location}
-            </Typography>
-
-            <Typography
-              variant="subtitle1"
-              sx={{
-                mb: 2,
-                color: "text.secondary",
-                display: "flex",
-                alignItems: "center",
-                gap: 1
-              }}
-            >
-              <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-                📆 {eventData.formattedStartDate}
-              </Box>
-              {eventData.formattedStartDate !== eventData.formattedEndDate && (
-                <>
-                  <Box component="span" sx={{ mx: 0.5 }}>to</Box>
-                  <Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-                    {eventData.formattedEndDate}
-                  </Box>
-                </>
-              )}
-            </Typography>
+        {/* Masthead */}
+        <Box component="header" className="rise" sx={{ mb: { xs: 4, md: 5 } }}>
+          <Eyebrow>
+            {eventName}
+            {eventData?.formattedStartDate ? ` · ${eventData.formattedStartDate}` : ''}
+          </Eyebrow>
+          <Box component="h1" className="ohx-display" sx={{ mt: 1.5, mb: 2, fontSize: 'clamp(2.2rem, 5.4vw, 4rem)' }}>
+            Mentor check-in
           </Box>
-        )}
+          <Box className="ohx-lead">
+            Tell teams you're available, scan who needs help, and jump straight into a team's mentor panel — all in one place.
+          </Box>
+          <hr className="ohx-rule" style={{ marginTop: 24 }} />
+        </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 4 }}>
-            {error}
-          </Alert>
-        )}
+        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
 
-        {success && (
-          <Alert severity="success" sx={{ mb: 4 }}>
-            {success}
-          </Alert>
-        )}
+        {/* Check-in band — the primary action */}
+        <Box
+          className="ohx-card"
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            mb: { xs: 4, md: 5 },
+            borderLeft: `3px solid ${checkedIn ? '#3a7d44' : 'var(--brand)'}`,
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: { md: 'center' },
+            justifyContent: 'space-between',
+            gap: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+            {checkedIn
+              ? <CheckCircleOutlineIcon sx={{ fontSize: 38, color: '#3a7d44' }} />
+              : <CancelOutlinedIcon sx={{ fontSize: 38, color: 'var(--faint)' }} />}
+            <Box>
+              <Box className="ohx-display" sx={{ fontSize: '1.3rem', color: 'var(--ink)' }}>
+                {checkedIn ? 'You are checked in' : 'You are not checked in'}
+              </Box>
+              <Box sx={{ color: 'var(--muted)', fontSize: '0.92rem', mt: 0.25, maxWidth: '52ch' }}>
+                {checkedIn
+                  ? 'Teams have been notified in #ask-a-mentor that you are available.'
+                  : 'Checking in posts to #ask-a-mentor so teams know you can help.'}
+              </Box>
+            </Box>
+          </Box>
+          <Box
+            component="button"
+            type="button"
+            onClick={checkedIn ? handleCheckoutClick : handleCheckinClick}
+            disabled={isSubmitting}
+            className={`ohx-btn ${checkedIn ? 'ohx-btn--ghost' : 'ohx-btn--primary'}`}
+            sx={{ flexShrink: 0, opacity: isSubmitting ? 0.7 : 1 }}
+          >
+            {isSubmitting ? <CircularProgress size={18} sx={{ color: 'inherit' }} /> : <SlackIcon sx={{ fontSize: 18 }} />}
+            {checkedIn ? 'Check out & notify teams' : 'Check in & notify teams'}
+          </Box>
+        </Box>
 
-        <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="h5" component="h3" gutterBottom>
-                Mentor Status
-              </Typography>
+        {/* ===== The one-stop-shop: all teams ===== */}
+        <Box component="section" sx={{ mb: { xs: 5, md: 6 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, flexWrap: 'wrap', mb: 0.5 }}>
+            <Box component="h2" className="ohx-display" sx={{ fontSize: 'clamp(1.5rem, 2.8vw, 2rem)', color: 'var(--ink)', m: 0 }}>
+              Teams at a glance
+            </Box>
+            <Box className="ohx-tag">{teams.length} team{teams.length === 1 ? '' : 's'}</Box>
+          </Box>
+          <Box className="ohx-muted" sx={{ mb: 2.5, maxWidth: '70ch' }}>
+            Every team for this event with mentor coverage, open flags, and last-touch so you can find who needs help. Open a team's mentor panel to mark coverage, raise a flag, or leave a note.
+          </Box>
+          <MentorTeamsTable teams={teams} eventId={event_id} nonprofits={nonprofits} />
+        </Box>
 
-              <Card
-                elevation={3}
-                sx={{
-                  mb: 3,
-                  backgroundColor: checkedIn ? 'success.light' : 'background.paper',
-                  color: checkedIn ? 'white' : 'text.primary'
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    {checkedIn ? (
-                      <CheckCircleOutlineIcon sx={{ fontSize: 40, mr: 1 }} />
-                    ) : (
-                      <CancelOutlinedIcon sx={{ fontSize: 40, mr: 1 }} />
-                    )}
-                    <Typography variant="h6">
-                      {checkedIn ? 'Currently Checked In' : 'Not Checked In'}
-                    </Typography>
-                  </Box>
+        {/* ===== Secondary: your shift (availability) + profile ===== */}
+        <Box
+          component="section"
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: { xs: 3, md: 4 },
+            mb: { xs: 5, md: 6 },
+          }}
+        >
+          <Box>
+            <Box component="h2" className="ohx-display" sx={{ fontSize: '1.4rem', color: 'var(--ink)', mb: 2 }}>
+              Your availability
+            </Box>
 
-                  <Typography variant="body1">
-                    {checkedIn
-                      ? 'You are currently available to mentor teams. Teams have been notified in the #ask-a-mentor Slack channel that you are available.'
-                      : 'You are not currently checked in as a mentor. Checking in will send a message to the #ask-a-mentor Slack channel to notify teams that you are available.'}
-                  </Typography>
-
-                  {!checkedIn && (
-                    <Alert severity="info" sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <SlackIcon sx={{ mr: 1, color: 'info.main' }} />
-                        <Typography variant="body2">
-                          Checking in sends an automatic notification to <strong>#ask-a-mentor</strong> on Slack
-                        </Typography>
-                      </Box>
-                    </Alert>
-                  )}
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
-                  {checkedIn ? (
-                    <Button
-                      variant="contained"
-                      color="error"
-                      onClick={handleCheckoutClick}
-                      disabled={isSubmitting}
-                      startIcon={isSubmitting ? <CircularProgress size={20} /> : <SlackIcon />}
-                    >
-                      Check Out & Notify Teams
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      onClick={handleCheckinClick}
-                      disabled={isSubmitting}
-                      startIcon={isSubmitting ? <CircularProgress size={20} /> : <SlackIcon />}
-                    >
-                      Check In & Notify Teams
-                    </Button>
-                  )}
-                </CardActions>
-              </Card>
-
-              <Typography variant="h6" gutterBottom>
-                Your Profile
-              </Typography>
-
-              {renderMentorProfile(mentorData)}
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="h5" component="h3" gutterBottom>
-                Your Availability
-              </Typography>
-
-              {Object.keys(groupedAvailabilitySlots).length > 0 ? (                
-                <Box>
-                {!showPreviousSlots && Object.entries(groupedAvailabilitySlots).filter(([date, _]) => (isDateInThePast(new Date(date)))).length > 0 && (
-                  <Button
-                    variant="text"
-                    color="primary"
+            {Object.keys(groupedAvailabilitySlots).length > 0 ? (
+              <Box>
+                {!showPreviousSlots && Object.entries(groupedAvailabilitySlots).filter(([date]) => isDateInThePast(new Date(date))).length > 0 && (
+                  <Box
+                    component="button"
+                    type="button"
                     onClick={() => setShowPreviousSlots(true)}
+                    className="ohx-link"
+                    sx={{ background: 'none', border: 'none', cursor: 'pointer', p: 0, mb: 1.5, fontSize: '0.88rem' }}
                   >
-                    Show Previous Slots
-                  </Button>
+                    Show previous slots
+                  </Box>
                 )}
-                {Object.entries(groupedAvailabilitySlots).filter(([date, _]) => (showPreviousSlots || isDateInThePast(new Date(date)))).map(([date, slots]) => {
-                  return (
-                    <Paper key={date} elevation={2} sx={{ mb: 3, overflow: 'hidden' }}>
-                      <Box sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.contrastText',
-                        px: 2,
-                        py: 1.5
-                      }}>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {date}
-                        </Typography>
+                {Object.entries(groupedAvailabilitySlots)
+                  .filter(([date]) => showPreviousSlots || isDateInThePast(new Date(date)))
+                  .map(([date, slots]) => (
+                    <Box key={date} className="ohx-card" sx={{ mb: 2, overflow: 'hidden' }}>
+                      <Box sx={{ px: 2, py: 1.25, borderBottom: '1px solid var(--line)', bgcolor: 'var(--surface-2)' }}>
+                        <Box sx={{ fontWeight: 600, color: 'var(--ink)' }}>{date}</Box>
                       </Box>
-
-                      <Box sx={{ p: 1 }}>
+                      <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
                         {slots.map((slot) => {
                           const isCurrent = currentActiveSlot && currentActiveSlot.displayText === slot.displayText;
-                          console.log('Slot:', slot, 'isCurrent:', isCurrent);
-                          console.log('Current active slot:', currentActiveSlot);
-
                           return (
-                            <Card
+                            <Box
                               key={slot.id}
-                              elevation={isCurrent ? 2 : 0}
                               sx={{
-                                mb: 1,
-                                borderLeft: isCurrent ? '4px solid green' : 'none',
-                                bgcolor: isCurrent ? 'rgba(76, 175, 80, 0.08)' : 'background.paper'
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                px: 1.25, py: 1, borderRadius: '6px',
+                                borderLeft: isCurrent ? '3px solid #3a7d44' : '3px solid transparent',
+                                bgcolor: isCurrent ? 'rgba(58,125,68,0.08)' : 'transparent',
                               }}
                             >
-                              <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <Typography variant="body2">
-                                    {slot.timePeriod}
-                                  </Typography>
-                                  {isCurrent && (
-                                    <Chip
-                                      icon={<HourglassFullIcon />}
-                                      label="Current"
-                                      color="success"
-                                      size="small"
-                                      sx={{ height: '24px', '& .MuiChip-label': { px: 1 } }}
-                                    />
-                                  )}
-                                </Box>
-                              </CardContent>
-                            </Card>
+                              <Box sx={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{slot.timePeriod}</Box>
+                              {isCurrent && (
+                                <Chip icon={<HourglassFullIcon />} label="Now" color="success" size="small" sx={{ height: 24 }} />
+                              )}
+                            </Box>
                           );
                         })}
                       </Box>
-                    </Paper>
-                  )})}
-                  {!currentActiveSlot && (
-                    <Alert severity="info" sx={{ mt: 2 }}>
-                      None of your registered time slots are currently active. You can still check in if you're available to mentor outside your scheduled times.
-                    </Alert>
-                  )}
-                </Box>
-              ) : (
-                <Alert severity="warning" sx={{ mb: 3 }}>
-                  No availability slots found. Please update your mentor application with your availability.
-                </Alert>
-              )}
-
-              <Box sx={{ mt: 4 }}>
-                <Typography variant="h6" gutterBottom>
-                  Need to Change Your Availability?
-                </Typography>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => router.push(`/hack/${event_id}/mentor-application`)}
-                  sx={{ mr: 2 }}
-                >
-                  Update Mentor Application
-                </Button>
+                    </Box>
+                  ))}
+                {!currentActiveSlot && (
+                  <Alert severity="info" sx={{ mt: 1 }}>
+                    None of your registered time slots are active right now. You can still check in if you're available outside your scheduled times.
+                  </Alert>
+                )}
               </Box>
-            </Grid>
-          </Grid>
-        </Paper>
+            ) : (
+              <Alert severity="warning">
+                No availability slots found. Please update your mentor application with your availability.
+              </Alert>
+            )}
 
-        {/* Confirmation Dialog */}
-        <Dialog
-          open={confirmDialogOpen}
-          onClose={handleCancelCheckin}
-          aria-labelledby="checkin-confirm-dialog-title"
-          aria-describedby="checkin-confirm-dialog-description"
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle id="checkin-confirm-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SlackIcon color="primary" />
-            Confirm Mentor Check-in
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="checkin-confirm-dialog-description">
-              Are you ready to check in as a mentor? This action will:
-            </DialogContentText>
-            <Box sx={{ mt: 2, pl: 2 }}>
-              <Typography variant="body2" component="div" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                <SlackIcon sx={{ mr: 1, fontSize: 16, color: 'primary.main' }} />
-                Send an automatic message to <strong>#ask-a-mentor</strong> on Slack
-              </Typography>
-              <Typography variant="body2" component="div" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                <InfoIcon sx={{ mr: 1, fontSize: 16, color: 'primary.main' }} />
-                Notify all teams that you are available to help
-              </Typography>
-              <Typography variant="body2" component="div" sx={{ display: 'flex', alignItems: 'center' }}>
-                <CheckCircleOutlineIcon sx={{ mr: 1, fontSize: 16, color: 'primary.main' }} />
-                Mark you as "Available" in the mentor system
-              </Typography>
+            <Box sx={{ mt: 2.5 }}>
+              <NextLink href={`/hack/${event_id}/mentor-application`} className="ohx-btn ohx-btn--ghost">
+                Update mentor application
+              </NextLink>
             </Box>
-            <Alert severity="info" sx={{ mt: 3 }}>
-              <Typography variant="body2">
-                Teams will be able to see your availability and reach out through Slack channels like <strong>#ask-a-mentor</strong> and <strong>#help</strong>.
-              </Typography>
-            </Alert>
-          </DialogContent>
-          <DialogActions sx={{ p: 3, pt: 1 }}>
-            <Button onClick={handleCancelCheckin} color="inherit">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmCheckin}
-              variant="contained"
-              color="success"
-              startIcon={<SlackIcon />}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Checking In...' : 'Check In & Send Notification'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Check-out Confirmation Dialog */}
-        <Dialog
-          open={confirmCheckoutDialogOpen}
-          onClose={handleCancelCheckout}
-          aria-labelledby="checkout-confirm-dialog-title"
-          aria-describedby="checkout-confirm-dialog-description"
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle id="checkout-confirm-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SlackIcon color="error" />
-            Confirm Mentor Check-out
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="checkout-confirm-dialog-description">
-              Are you ready to check out as a mentor? This action will:
-            </DialogContentText>
-            <Box sx={{ mt: 2, pl: 2 }}>
-              <Typography variant="body2" component="div" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                <SlackIcon sx={{ mr: 1, fontSize: 16, color: 'error.main' }} />
-                Send an automatic message to <strong>#ask-a-mentor</strong> on Slack
-              </Typography>
-              <Typography variant="body2" component="div" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                <InfoIcon sx={{ mr: 1, fontSize: 16, color: 'error.main' }} />
-                Notify all teams that you are no longer available
-              </Typography>
-              <Typography variant="body2" component="div" sx={{ display: 'flex', alignItems: 'center' }}>
-                <CancelOutlinedIcon sx={{ mr: 1, fontSize: 16, color: 'error.main' }} />
-                Mark you as "Unavailable" in the mentor system
-              </Typography>
-            </Box>
-            <Alert severity="warning" sx={{ mt: 3 }}>
-              <Typography variant="body2">
-                Teams will be notified that you are no longer available for mentoring. You can check back in anytime if you become available again.
-              </Typography>
-            </Alert>
-          </DialogContent>
-          <DialogActions sx={{ p: 3, pt: 1 }}>
-            <Button onClick={handleCancelCheckout} color="inherit">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmCheckout}
-              variant="contained"
-              color="error"
-              startIcon={<SlackIcon />}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Checking Out...' : 'Check Out & Send Notification'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h5" gutterBottom>
-            Mentor Guidelines
-          </Typography>
-
-          <Typography variant="body1" paragraph>
-            As a mentor, your role is crucial in supporting teams and ensuring the success of this hackathon.
-            Here are some key guidelines to keep in mind:
-          </Typography>
-
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box>
-                <Typography variant="h6" gutterBottom>
-                  Do:
-                </Typography>
-                <ul>
-                  <li>Check in when you arrive to notify teams you're available in <strong>#ask-a-mentor</strong></li>
-                  <li>Be approachable and open to questions from all teams</li>
-                  <li>Provide guidance rather than solutions</li>
-                  <li>Share your expertise when asked</li>
-                  <li>Help teams prioritize features and scope their projects</li>
-                  <li>Monitor <strong>#ask-a-mentor</strong> and <strong>#help</strong> Slack channels for questions</li>
-                  <li>Check out when you leave so teams know you're no longer available</li>
-                </ul>
-              </Box>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box>
-                <Typography variant="h6" gutterBottom>
-                  Don't:
-                </Typography>
-                <ul>
-                  <li>Take over implementation of code or design</li>
-                  <li>Favor certain teams over others</li>
-                  <li>Spend excessive time with a single team</li>
-                  <li>Impose your ideas on teams</li>
-                  <li>Forget to check out when you leave</li>
-                </ul>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: 4 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Team Pairing Options
-          </Typography>
-          <Typography variant="body1" paragraph>
-            As a mentor, you have two approaches to helping teams:
-          </Typography>
-
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper elevation={1} sx={{ p: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <SlackIcon />
-                  General Mentoring
-                </Typography>
-                <Typography variant="body2" paragraph>
-                  Stay flexible and help any team that asks questions in <strong>#ask-a-mentor</strong> or <strong>#help</strong> channels.
-                  This approach allows you to assist multiple teams with quick questions and provides broad support.
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Best for:</strong> Experienced mentors who want maximum flexibility and enjoy variety in their interactions.
-                </Typography>
-              </Paper>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper elevation={1} sx={{ p: 3, bgcolor: 'secondary.light', color: 'secondary.contrastText' }}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <InfoIcon />
-                  Team-Specific Mentoring
-                </Typography>
-                <Typography variant="body2" paragraph>
-                  Choose to work closely with one specific team throughout the hackathon. This allows for deeper collaboration
-                  and more comprehensive guidance on their project.
-                </Typography>
-                <Typography variant="body2">
-                  <strong>How to pair:</strong> Either ask to be matched with a team or find a team you want to work with,
-                  then mention your preference in our <strong>private mentor Slack channel</strong>.
-                </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-
-          <Alert severity="info" sx={{ mt: 3 }}>
-            <Typography variant="body2">
-              <strong>Note:</strong> You can switch between these approaches during the event. Many mentors start with general
-              mentoring and then focus on specific teams that need more intensive support.
-            </Typography>
-          </Alert>
-
-          <Box sx={{ mt: 4, p: 3, bgcolor: 'rgba(0, 0, 0, 0.03)', borderRadius: 2, textAlign: 'center' }}>
-            <Typography variant="h6" gutterBottom>
-              Want to learn more about being an effective mentor?
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Visit our comprehensive mentor resource page to discover different mentorship roles, best practices, and tips for making a meaningful impact.
-            </Typography>
-            <Button
-              component={Link}
-              href="/about/mentors"
-              variant="contained"
-              color="primary"
-              sx={{ mt: 1 }}
-            >
-              Mentor Resources
-            </Button>
           </Box>
-        </Paper>
+
+          <Box>
+            <Box component="h2" className="ohx-display" sx={{ fontSize: '1.4rem', color: 'var(--ink)', mb: 2 }}>
+              You
+            </Box>
+            {renderMentorProfile(mentorData)}
+          </Box>
+        </Box>
+
+        {/* ===== Guidelines (condensed) ===== */}
+        <Box component="section" className="ohx-card" sx={{ p: { xs: 2.5, md: 3.5 } }}>
+          <Box component="h2" className="ohx-display" sx={{ fontSize: '1.4rem', color: 'var(--ink)', mb: 2 }}>
+            Mentor guidelines
+          </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: { xs: 3, sm: 4 } }}>
+            <Box>
+              <Box className="ohx-eyebrow" sx={{ mb: 1, color: '#3a7d44' }}>Do</Box>
+              <Box component="ul" sx={{ m: 0, pl: 2.5, color: 'var(--muted)', '& li': { mb: 0.75, lineHeight: 1.5 } }}>
+                <li>Check in so teams see you're available in <strong>#ask-a-mentor</strong></li>
+                <li>Use the table above to find teams with open flags or no recent touch</li>
+                <li>Provide guidance rather than writing their code</li>
+                <li>Help teams scope and prioritize features</li>
+                <li>Check out when you leave</li>
+              </Box>
+            </Box>
+            <Box>
+              <Box className="ohx-eyebrow" sx={{ mb: 1, color: 'var(--accent)' }}>Don't</Box>
+              <Box component="ul" sx={{ m: 0, pl: 2.5, color: 'var(--muted)', '& li': { mb: 0.75, lineHeight: 1.5 } }}>
+                <li>Take over implementation of code or design</li>
+                <li>Favor certain teams over others</li>
+                <li>Spend the whole event with a single team</li>
+                <li>Impose your ideas on teams</li>
+                <li>Forget to check out</li>
+              </Box>
+            </Box>
+          </Box>
+          <hr className="ohx-rule" style={{ margin: '24px 0' }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ color: 'var(--muted)', maxWidth: '60ch' }}>
+              New to mentoring, or want tips on running a great shift? Our mentor resources cover roles, best practices, and team-pairing approaches.
+            </Box>
+            <NextLink href="/about/mentors" className="ohx-btn ohx-btn--ghost">
+              Mentor resources
+            </NextLink>
+          </Box>
+        </Box>
       </Box>
+
+      {/* Check-in Confirmation Dialog */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={handleCancelCheckin}
+        aria-labelledby="checkin-confirm-dialog-title"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="checkin-confirm-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <SlackIcon color="primary" />
+          Confirm mentor check-in
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>Are you ready to check in as a mentor? This will:</DialogContentText>
+          <Box sx={{ mt: 2, pl: 2 }}>
+            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <SlackIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+              <span>Send a message to <strong>#ask-a-mentor</strong> on Slack</span>
+            </Box>
+            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <InfoIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+              <span>Notify teams that you are available to help</span>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CheckCircleOutlineIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+              <span>Mark you as "Available" in the mentor system</span>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 1 }}>
+          <Button onClick={handleCancelCheckin} color="inherit">Cancel</Button>
+          <Button onClick={handleConfirmCheckin} variant="contained" color="success" startIcon={<SlackIcon />} disabled={isSubmitting}>
+            {isSubmitting ? 'Checking in…' : 'Check in & send notification'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Check-out Confirmation Dialog */}
+      <Dialog
+        open={confirmCheckoutDialogOpen}
+        onClose={handleCancelCheckout}
+        aria-labelledby="checkout-confirm-dialog-title"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="checkout-confirm-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <SlackIcon color="error" />
+          Confirm mentor check-out
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>Are you ready to check out as a mentor? This will:</DialogContentText>
+          <Box sx={{ mt: 2, pl: 2 }}>
+            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <SlackIcon sx={{ fontSize: 16, color: 'error.main' }} />
+              <span>Send a message to <strong>#ask-a-mentor</strong> on Slack</span>
+            </Box>
+            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <InfoIcon sx={{ fontSize: 16, color: 'error.main' }} />
+              <span>Notify teams that you are no longer available</span>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CancelOutlinedIcon sx={{ fontSize: 16, color: 'error.main' }} />
+              <span>Mark you as "Unavailable" in the mentor system</span>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 1 }}>
+          <Button onClick={handleCancelCheckout} color="inherit">Cancel</Button>
+          <Button onClick={handleConfirmCheckout} variant="contained" color="error" startIcon={<SlackIcon />} disabled={isSubmitting}>
+            {isSubmitting ? 'Checking out…' : 'Check out & send notification'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbarOpen}
@@ -1260,7 +1015,7 @@ const MentorCheckinPage = () => {
         onClose={handleSnackbarClose}
         message={snackbarMessage}
       />
-    </Container>
+    </RefinedRoot>
   );
 };
 

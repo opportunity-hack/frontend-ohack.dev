@@ -87,6 +87,17 @@ module.exports = {
           { source: `/hack/${season}-${year}/:path*`, destination: `/hack/${year}_${season}/:path*`, permanent: true },
         ])
       ),
+
+      // Short alias: /hack/<event>/mentor → the mentor check-in one-stop-shop.
+      // `:event_id` matches a single segment, so this never collides with the
+      // team-level /hack/<event>/team/<team_id>/mentor sub-page. Temporary (307):
+      // it's an operational, auth-gated page (no SEO value) and the alias may
+      // evolve, so we avoid browsers hard-caching a 308.
+      {
+        source: "/hack/:event_id/mentor",
+        destination: "/hack/:event_id/mentor-checkin",
+        permanent: false,
+      },
     ];
   },
 
