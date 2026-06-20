@@ -15,7 +15,6 @@ import PraisesSection from "./Sections/PraisesSection";
 import FeedbackSection from "./Sections/FeedbackSection";
 import HeartsExplainer from "./Sections/HeartsExplainer";
 import LinkedInShareButton from "../share/LinkedInShareButton";
-import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
 import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from "../design/refined";
 
 const educationLabels = {
@@ -155,7 +154,7 @@ const PublicProfile = () => {
               </div>
             </div>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <Link href={feedbackUrl} className="ohx-btn ohx-btn--primary">Send feedback <Arrow /></Link>
+              <Link href={feedbackUrl} className="ohx-btn ohx-btn--primary">Send feedback <Arrow /></Link>              
               <LinkedInShareButton variant="profile" url={profilePath} label={`Share ${profile?.name || "this profile"} to LinkedIn`} />
             </div>
           </div>
@@ -227,17 +226,16 @@ const PublicProfile = () => {
                 <div className="ohx-card" style={{ padding: "24px", position: "sticky", top: 90 }}>
                   <h2 className="ohx-display" style={{ fontSize: "1.15rem", marginBottom: 16 }}>Connect &amp; engage</h2>
                   <Link href={feedbackUrl} className="ohx-btn ohx-btn--ghost" style={{ width: "100%", justifyContent: "center", marginBottom: 18 }}>Send feedback</Link>
+                  <Link href="/praise" className="ohx-btn ohx-btn--ghost" style={{ width: "100%", justifyContent: "center", marginBottom: 18 }}>Praise</Link>
                   <hr className="ohx-rule" />
                   <p className="ohx-muted" style={{ margin: "18px 0", fontSize: "0.92rem" }}>Want to get involved with Opportunity Hack?</p>
                   <Link href="/volunteer" className="ohx-btn ohx-btn--primary" style={{ width: "100%", justifyContent: "center", marginBottom: 12 }}>Become a volunteer <Arrow /></Link>
-                  <Link href="/projects" className="ohx-link" style={{ fontSize: "0.9rem" }}>View current projects <Arrow /></Link>
+                  <Link href="/projects" className="ohx-link" style={{ display: "inline-flex", marginBottom: 8, fontSize: "0.9rem" }}>View current projects <Arrow /></Link>                  
                 </div>
               </aside>
           </Box>
 
-          <Box sx={{ mt: 5 }}>
-            <HelpUsBuildOHack github_link="https://github.com/opportunity-hack/frontend-ohack.dev/issues/195" github_name="Issue #195" />
-          </Box>
+        
         </section>
       </RefinedRoot>
     </>
