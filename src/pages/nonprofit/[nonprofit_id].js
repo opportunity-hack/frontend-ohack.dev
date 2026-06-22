@@ -75,8 +75,6 @@ export const getStaticProps = async ({ params = {} } = {}) => {
         }
     }
 
-    console.log("problemStatements", problemStatements);
-
     var title = "Nonprofit: " + nonprofit.name;
     var metaDescription = '';
 
@@ -90,9 +88,7 @@ export const getStaticProps = async ({ params = {} } = {}) => {
         problemStatements != null &&
         problemStatements.length > 0
     ) {
-        problemStatements.forEach((ps) => {                        
-            console.log("----->", ps) ;
-
+        problemStatements.forEach((ps) => {
             metaDescription +=
                 ps.title + ' | ' + ps.status + ': ' + ps.description + ' ';
 

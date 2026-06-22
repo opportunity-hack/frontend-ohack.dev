@@ -230,10 +230,26 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
       removed the artificial 1s `setIsLoading` skeleton delay (hurt LCP) and the
       dead `CalendarOptions`/`generateICSContent` code, added canonical. The old
       `LoginOrRegister` banner was replaced by the navy Slack CTA band.
-- [ ] (later) remaining pages — application forms, `/nonprofit/[id]`, `/project/[id]`,
-      `/about/why`, `/about/hearts`, `/contact`, etc. Deeper passes wanted on the own
-      `/profile` editor (logged-in) and the `/hack/[event_id]` event page (see the
-      dedicated plan below).
+- [x] `/nonprofit/[nonprofit_id]` + `/project/[project_id]` — **full refined pass**:
+      `NonProfit.js` rewritten (editorial masthead with eyebrow → Fraunces h1, `.ohx-lead`
+      description, meta row as `.ohx-tag`/`.ohx-link`s for project count + website + Slack
+      channel + contacts; drop gradient `TitleBanner`/`TitleContainer`, use `RefinedRoot`
+      + `.ohx-wrap`). `Project.js` rewritten (same `RefinedRoot` chrome, soft breadcrumb
+      "← All nonprofit projects", calm auth gate as `.ohx-card`). Shared `ProblemStatement.js`
+      completely restyled (removed purple gradient `HeroSection`, gradient `ModernProjectCard`
+      + `MetricCard` + `StatusChip` + `SectionCard`/`SectionHeader` + `HelpToggle` + CTA
+      `ActionButton` gradients; replaced with: calm `--surface-2` header band, `.ohx-tag`
+      status chips, Fraunces navy metric tiles, `.ohx-eyebrow` description header, navy
+      `FormControlLabel` help toggle, `.ohx-btn` CTAs, hairline `.ohx-card` section blocks).
+      **`headingLevel` prop** added to `ProblemStatement` (`"h1"` on project page,
+      `"h2"` on nonprofit page with N cards — fixes the N×h1 violation). `MaterialUISwitch`
+      hoisted to module scope (navy checked state). `www.ohack.dev` canonical added to both
+      pages; `NonProfit.js` og:url/twitter:url fixed from bare `ohack.dev` to www. Two
+      `console.log` calls removed from `getStaticProps`. `styles/nonprofit/styles.js` is
+      now orphaned — left in place.
+- [ ] (later) remaining pages — application forms, `/about/why`, `/about/hearts`,
+      `/contact`, etc. Deeper passes wanted on the own `/profile` editor (logged-in)
+      and the `/hack/[event_id]` event page (see the dedicated plan below).
 
 ## `/hack/[event_id]` — masthead-led refined pass (done, phase 1)
 The event page (`src/pages/hack/[event_id].js`) now:

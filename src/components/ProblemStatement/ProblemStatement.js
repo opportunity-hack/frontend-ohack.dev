@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 
 // MUI Components
 import Tooltip from "@mui/material/Tooltip";
-import Chip from "@mui/material/Chip";
 import BuildIcon from "@mui/icons-material/Build";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import TagIcon from "@mui/icons-material/Tag";
@@ -10,40 +9,22 @@ import Switch from "@mui/material/Switch";
 import Stack from "@mui/material/Stack";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { styled } from "@mui/material/styles";
-import Divider from '@mui/material/Divider';
 import SupportIcon from "@mui/icons-material/Support";
-import Badge from "@mui/material/Badge";
-import { LoginButton } from "../Navbar/styles";
 import ArticleIcon from "@mui/icons-material/Article";
-import Button from "@mui/material/Button";
 import DeveloperModeIcon from "@mui/icons-material/DeveloperMode";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import NotesIcon from '@mui/icons-material/Notes'; 
 import EventIcon from "@mui/icons-material/Event";
 import CodeIcon from "@mui/icons-material/Code";
-import useMediaQuery from '@mui/material/useMediaQuery';
+import useMediaQuery from "@mui/material/useMediaQuery";
 import Link from "next/link";
-import Grid from '@mui/material/Grid';
-import CircularProgress from '@mui/material/CircularProgress';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Container from '@mui/material/Container';
-import Collapse from '@mui/material/Collapse';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import Fade from '@mui/material/Fade';
-import Zoom from '@mui/material/Zoom';
-import { useTheme } from '@mui/material/styles';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import LaunchIcon from '@mui/icons-material/Launch';
-import ShareIcon from '@mui/icons-material/Share';
-import StarIcon from '@mui/icons-material/Star';
-import PeopleIcon from '@mui/icons-material/People';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import ReactMarkdown from 'react-markdown';
-
+import Grid from "@mui/material/Grid";
+import Collapse from "@mui/material/Collapse";
+import { useTheme } from "@mui/material/styles";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import ReactMarkdown from "react-markdown";
 
 // Imported Components
 import useProfileApi from "../../hooks/use-profile-api";
@@ -54,172 +35,82 @@ import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 import useProblemstatements from "../../hooks/use-problem-statements";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
 import useProjectNonprofit from "../../hooks/use-project-nonprofit";
-import {useRedirectFunctions} from "@propelauth/react";
-import { trackEvent, initFacebookPixel } from '../../lib/ga';
-import { 
-  ProjectCard,
-  ProjectDescText,
-  ShortDescText,
-  TitleStyled,
-  ReferencesStyled,
-  YearStyled,
-  AccordionButton,
-} from "./styles";
+import { useRedirectFunctions } from "@propelauth/react";
+import { trackEvent, initFacebookPixel } from "../../lib/ga";
 import Events from "../Events/Events";
 import ReferenceItem from "../ReferenceItem/ReferenceItem";
-import ProblemStatementContent from "../ProblemStatementContent/ProblemStatementContent";
 import { HelpDialog, UnhelpDialog } from "../HelpDialog/HelpDialog";
 
-// Modern styled components for engagement-driven UX
-const ModernProjectCard = styled(Card)(({ theme, status }) => ({
-  position: 'relative',
-  marginBottom: theme.spacing(4),
-  borderRadius: theme.spacing(3),
-  background: status === 'production' 
-    ? 'linear-gradient(135deg, #e8f5e8 0%, #f0fdf4 100%)'
-    : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-  border: `1px solid ${status === 'production' ? '#22c55e20' : '#e2e8f0'}`,
-  overflow: 'hidden',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+// Navy-branded help toggle switch — hoisted so it isn't re-created on every render
+const MaterialUISwitch = styled(Switch)({
+  width: 70,
+  height: 38,
+  padding: 7,
+  "& .MuiSwitch-switchBase": {
+    margin: 1,
+    padding: 0,
+    transform: "translateX(6px)",
+    "&.Mui-checked": {
+      color: "#fff",
+      transform: "translateX(26px)",
+      "& .MuiSwitch-thumb:before": {
+        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+          "#fff"
+        )}" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>')`,
+      },
+      "& + .MuiSwitch-track": {
+        opacity: 1,
+        backgroundColor: "#1B3A6B",
+      },
+    },
   },
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    background: status === 'production'
-      ? 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)'
-      : 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)',
-  }
-}));
+  "& .MuiSwitch-thumb": {
+    backgroundColor: "#fff",
+    width: 32,
+    height: 32,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+    "&:before": {
+      content: "''",
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      left: 0,
+      top: 0,
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+      backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+        "#64748b"
+      )}" d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>')`,
+    },
+  },
+  "& .MuiSwitch-track": {
+    opacity: 1,
+    backgroundColor: "#E7E1D4",
+    borderRadius: 20,
+  },
+});
 
-const HeroSection = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(4),
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  color: 'white',
-  borderRadius: `${theme.spacing(3)} ${theme.spacing(3)} 0 0`,
-  position: 'relative',
-  overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'url("data:image/svg+xml,%3Csvg width=\\"20\\" height=\\"20\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cdefs%3E%3Cpattern id=\\"grid\\" width=\\"20\\" height=\\"20\\" patternUnits=\\"userSpaceOnUse\\"%3E%3Cpath d=\\"M 20 0 L 0 0 0 20\\" fill=\\"none\\" stroke=\\"%23ffffff\\" stroke-width=\\"0.5\\" opacity=\\"0.1\\"%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect width=\\"100%25\\" height=\\"100%25\\" fill=\\"url(%23grid)\\" %2F%3E%3C%2Fsvg%3E")',
-  }
-}));
-
-const MetricCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2.5),
-  textAlign: 'center',
-  background: 'linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)',
-  border: '1px solid rgba(0,0,0,0.06)',
-  borderRadius: theme.spacing(2),
-  transition: 'all 0.3s ease',
-  cursor: 'pointer',
-  '&:hover': {
-    transform: 'translateY(-2px) scale(1.02)',
-    boxShadow: '0 8px 25px rgba(0,0,0,0.12)',
-    borderColor: theme.palette.primary.main
-  }
-}));
-
-const ActionButton = styled(Button)(({ theme, variant: buttonVariant }) => ({
-  borderRadius: theme.spacing(4),
-  textTransform: 'none',
-  fontWeight: 600,
-  fontSize: '1rem',
-  padding: theme.spacing(1.5, 4),
-  minHeight: 48,
-  boxShadow: buttonVariant === 'contained' ? '0 4px 14px rgba(0,0,0,0.1)' : 'none',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  position: 'relative',
-  overflow: 'hidden',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: buttonVariant === 'contained' ? '0 8px 25px rgba(0,0,0,0.15)' : '0 4px 14px rgba(0,0,0,0.1)',
-  }
-}));
-
-const StatusChip = styled(Chip)(({ theme, chipstatus }) => ({
-  fontWeight: 600,
-  fontSize: '0.875rem',
-  padding: theme.spacing(0.5, 1),
-  background: chipstatus === 'production'
-    ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
-    : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-  color: 'white',
-  border: 'none',
-  '& .MuiChip-icon': {
-    color: 'white'
-  }
-}));
-
-const SectionCard = styled(Card)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
-  borderRadius: theme.spacing(2),
-  border: '1px solid #e2e8f0',
-  background: '#ffffff',
-  transition: 'all 0.2s ease',
-  '&:hover': {
-    borderColor: theme.palette.primary.main + '40',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-  }
-}));
-
-const SectionHeader = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2, 3),
-  background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-  borderBottom: '1px solid #e2e8f0',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  cursor: 'pointer',
-  transition: 'all 0.2s ease',
-  '&:hover': {
-    background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
-  }
-}));
-
-const HelpToggle = styled(FormControlLabel)(({ theme }) => ({
-  margin: 0,
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(2),
-  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-  border: '2px solid #e2e8f0',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    borderColor: theme.palette.primary.main,
-    transform: 'translateY(-2px)',
-    boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
-  }
-}));
-
-export default function ProblemStatement({ problem_statement_id, user, npo_id }) {
+export default function ProblemStatement({
+  problem_statement_id,
+  user,
+  npo_id,
+  headingLevel = "h1",
+}) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isLargeScreen = useMediaQuery('(min-width: 768px)');
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const { redirectToLoginPage } = useRedirectFunctions();
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
   const { handle_join_team, handle_unjoin_a_team } = useTeams();
 
-  // Resolve parent nonprofit(s) when npo_id is not provided (direct project page visit)
-  // A project can belong to multiple nonprofits
-  const { nonprofits: resolvedNonprofits } = useProjectNonprofit(problem_statement_id, npo_id);
+  const { nonprofits: resolvedNonprofits } = useProjectNonprofit(
+    problem_statement_id,
+    npo_id
+  );
   const effectiveNpoId = npo_id || resolvedNonprofits[0]?.id;
-  
-  // States
-  const [hackathonEvents, setHackathonEvents] = useState([]);  
+
+  const [hackathonEvents, setHackathonEvents] = useState([]);
   const [teamSuggestions, setTeamSuggestions] = useState(null);
   const [hackathonEventsLoaded, setHackathonEventsLoaded] = useState(false);
   const [hackathonEventsError, setHackathonEventsError] = useState(false);
@@ -230,82 +121,30 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const [open, setOpen] = useState(false);
   const [openUnhelp, setOpenUnhelp] = useState(false);
   const [help_checked, setHelpedChecked] = useState("");
-  const [helpingType, setHelpingType] = useState("");  
+  const [helpingType, setHelpingType] = useState("");
   const [expanded, setExpanded] = useState("Events");
-  const [tabValue, setTabValue] = useState('Events');
-  const [expandedSection, setExpandedSection] = useState('references'); // Default to events expanded
+  const [tabValue, setTabValue] = useState("Events");
+  const [expandedSection, setExpandedSection] = useState("references");
   const { get_user_by_id, profile, handle_help_toggle } = useProfileApi();
   const [helperProfiles, setHelperProfiles] = useState({});
   const [isCheckingHelperStatus, setIsCheckingHelperStatus] = useState(false);
 
-  // Helper function to toggle sections
   const handleSectionToggle = (section) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
-
-  // Modern styled switch for the help toggle
-  const MaterialUISwitch = styled(Switch)(({ theme }) => ({
-    width: 70,
-    height: 38,
-    padding: 7,
-    "& .MuiSwitch-switchBase": {
-      margin: 1,
-      padding: 0,
-      transform: "translateX(6px)",
-      "&.Mui-checked": {
-        color: "#fff",
-        transform: "translateX(26px)",
-        "& .MuiSwitch-thumb:before": {
-          backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
-            "#fff"
-          )}" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>')`,
-        },
-        "& + .MuiSwitch-track": {
-          opacity: 1,
-          backgroundColor: "#22c55e",
-        },
-      },
-    },
-    "& .MuiSwitch-thumb": {
-      backgroundColor: "#fff",
-      width: 32,
-      height: 32,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-      "&:before": {
-        content: "''",
-        position: "absolute",
-        width: "100%",
-        height: "100%",
-        left: 0,
-        top: 0,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
-          "#64748b"
-        )}" d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>')`,
-      },
-    },
-    "& .MuiSwitch-track": {
-      opacity: 1,
-      backgroundColor: "#e2e8f0",
-      borderRadius: 20,
-    },
-  }));
 
   // Initialize Facebook Pixel
   useEffect(() => {
     initFacebookPixel();
   }, []);
 
-  // Generate team name suggestions and fetch hackathon events - FIXED: removed unstable dependencies
-  useEffect(() => {  
-    // Fetch hackathon events
+  useEffect(() => {
     if (problem_statement?.events?.length > 0) {
       const eventsData = [];
       const promises = [];
-      
-      problem_statement.events.forEach((id) => {        
-        const promise = new Promise((resolve, reject) => {          
+
+      problem_statement.events.forEach((id) => {
+        const promise = new Promise((resolve, reject) => {
           handle_get_hackathon_id(id, (hackathonEvent) => {
             if (hackathonEvent) {
               eventsData.push(hackathonEvent);
@@ -317,9 +156,9 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         });
         promises.push(promise);
       });
-      
+
       Promise.all(promises)
-        .then(() => {          
+        .then(() => {
           setHackathonEvents(eventsData);
           setHackathonEventsLoaded(true);
         })
@@ -328,13 +167,12 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         });
     }
   }, [problem_statement_id, problem_statement?.events]);
-  
-  // Get user details for team members - FIXED: removed unstable dependencies
+
   useEffect(() => {
     if (teams?.length > 0) {
       const userDetailsMap = {};
       const promises = [];
-      
+
       teams.forEach((team) => {
         team.users?.forEach((user_id) => {
           promises.push(
@@ -344,7 +182,7 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           );
         });
       });
-      
+
       Promise.all(promises)
         .then(() => {
           setUserDetails(userDetailsMap);
@@ -356,68 +194,70 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     }
   }, [teams]);
 
-  // Fetch and store profiles for all helpers - FIXED: removed unstable dependencies
   useEffect(() => {
     if (problem_statement?.helping?.length > 0) {
       setIsCheckingHelperStatus(true);
       const helperProfileMap = {};
       const fetchPromises = [];
-      
-      problem_statement.helping.forEach(helper => {
+
+      problem_statement.helping.forEach((helper) => {
         if (helper.user) {
-          const fetchPromise = fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${helper.user}/profile`)
-            .then(response => {
-              if (!response.ok) throw new Error('Failed to fetch helper profile');
+          const fetchPromise = fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${helper.user}/profile`
+          )
+            .then((response) => {
+              if (!response.ok) throw new Error("Failed to fetch helper profile");
               return response.json();
             })
-            .then(data => {
+            .then((data) => {
               helperProfileMap[helper.user] = data;
               return data;
             })
-            .catch(error => {
-              console.error(`Error fetching helper profile for user ${helper.user}:`, error);
+            .catch((error) => {
+              console.error(
+                `Error fetching helper profile for user ${helper.user}:`,
+                error
+              );
               return null;
             });
-          
+
           fetchPromises.push(fetchPromise);
         }
       });
-      
+
       Promise.all(fetchPromises)
         .then(() => {
           setHelperProfiles(helperProfileMap);
           setIsCheckingHelperStatus(false);
         })
-        .catch(error => {
-          console.error('Error fetching helper profiles:', error);
+        .catch((error) => {
+          console.error("Error fetching helper profiles:", error);
           setIsCheckingHelperStatus(false);
         });
     }
   }, [problem_statement?.helping]);
 
-  // Check if current user is helping with this project
   useEffect(() => {
     if (
-      !isCheckingHelperStatus && 
-      problem_statement?.helping?.length > 0 && 
-      user && 
+      !isCheckingHelperStatus &&
+      problem_statement?.helping?.length > 0 &&
+      user &&
       Object.keys(helperProfiles).length > 0
     ) {
-      // Find if current user is in the helpers list
-      const currentUserHelper = problem_statement.helping.find(helper => {
-        // If we have the helper's profile and it has a propel_id
-        if (helper.user && helperProfiles[helper.user] && helperProfiles[helper.user].propel_id) {
-          // Check if the propel_id matches the current user's ID
+      const currentUserHelper = problem_statement.helping.find((helper) => {
+        if (
+          helper.user &&
+          helperProfiles[helper.user] &&
+          helperProfiles[helper.user].propel_id
+        ) {
           return helperProfiles[helper.user].propel_id === user.userId;
         }
-        // Fallback to the old method for backward compatibility
         return helper.slack_user === profile?.user_id;
       });
-      
+
       if (currentUserHelper) {
         setHelpedChecked("checked");
         setHelpingType(currentUserHelper.type);
-        console.log(`User is helping as ${currentUserHelper.type}`);
       } else {
         setHelpedChecked("");
         setHelpingType("");
@@ -425,7 +265,6 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
     }
   }, [problem_statement, user, profile, helperProfiles, isCheckingHelperStatus]);
 
-  // Event handlers
   const handleChange = (panel) => (event, isExpanded) => {
     const params = {
       action_name: isExpanded ? "open" : "close",
@@ -433,15 +272,14 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
       npo_id: effectiveNpoId,
       problem_statement_id: problem_statement?.id,
       problem_statement_title: problem_statement?.title,
-      user_id: user?.userId
+      user_id: user?.userId,
     };
-
-    trackEvent({
-      action: "problem_statement_accordion",
-      params: params
-    });
-    
+    trackEvent({ action: "problem_statement_accordion", params: params });
     setExpanded(isExpanded ? panel : false);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
   };
 
   const handleClickOpen = (event) => {
@@ -453,8 +291,8 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           problem_statement_id: problem_statement?.id,
           problem_statement_title: problem_statement?.title,
           npo_id: effectiveNpoId,
-          user_id: user?.userId
-        }
+          user_id: user?.userId,
+        },
       });
     } else {
       setOpenUnhelp(true);
@@ -464,41 +302,30 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           problem_statement_id: problem_statement?.id,
           problem_statement_title: problem_statement?.title,
           npo_id: effectiveNpoId,
-          user_id: user?.userId
-        }
+          user_id: user?.userId,
+        },
       });
     }
   };
 
   const handleLeavingTeam = (teamId) => {
     handle_unjoin_a_team(teamId, handleTeamLeavingResponse);
-
-    trackEvent({
-      action: "team_left",
-      params: { team_id: teamId }
-    });
+    trackEvent({ action: "team_left", params: { team_id: teamId } });
   };
 
   const handleJoiningTeam = (teamId) => {
     handle_join_team(teamId, handleTeamLeavingResponse);
-
-    trackEvent({
-      action: "team_joined",
-      params: { team_id: teamId }
-    });
+    trackEvent({ action: "team_joined", params: { team_id: teamId } });
   };
 
   const handleTeamLeavingResponse = () => {
     trackEvent({
       action: "Team Left",
-      params: {
-        category: "Team",
-        label: "Team",
-      }
+      params: { category: "Team", label: "Team" },
     });
   };
-  
-  const handleClose = (helperType) => {    
+
+  const handleClose = (helperType) => {
     trackEvent({
       action: "Helping: User Finalized Start Helping",
       params: {
@@ -508,20 +335,13 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         problem_statement_title: problem_statement?.title,
         npo_id: effectiveNpoId,
         user_id: user?.userId,
-        mentor_or_hacker: helperType
-      }
+        mentor_or_hacker: helperType,
+      },
     });
-
     setOpen(false);
     setHelpedChecked("checked");
     setHelpingType(helperType);
-    // FIXED: Use correct parameter order
-    handle_help_toggle(
-      "helping",
-      problem_statement.id,
-      helperType,
-      effectiveNpoId
-    );
+    handle_help_toggle("helping", problem_statement.id, helperType, effectiveNpoId);
   };
 
   const handleCancel = () => {
@@ -533,10 +353,9 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         problem_statement_id: problem_statement?.id,
         problem_statement_title: problem_statement?.title,
         npo_id: effectiveNpoId,
-        user_id: user?.userId
-      }
+        user_id: user?.userId,
+      },
     });
-
     setOpen(false);
     setHelpedChecked("");
     setHelpingType("");
@@ -551,81 +370,74 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         problem_statement_id: problem_statement?.id,
         problem_statement_title: problem_statement?.title,
         npo_id: effectiveNpoId,
-        user_id: user?.userId
-      }
+        user_id: user?.userId,
+      },
     });
-
     setOpenUnhelp(false);
     setHelpedChecked("");
     setHelpingType("");
-    // FIXED: Use correct parameter order
     handle_help_toggle("not_helping", problem_statement.id, "", effectiveNpoId);
   };
 
   const handleCloseUnhelpCancel = () => {
     trackEvent({
       action: "Helping: User Canceled Stop Helping",
-      params: {
-        category: "Helping",
-        label: "Helping"
-      }
+      params: { category: "Helping", label: "Helping" },
     });
-
     setOpenUnhelp(false);
   };
 
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-
   function getWordStr(str) {
-    if(str != null && str.length > 0 && typeof str === "string") {
+    if (str != null && str.length > 0 && typeof str === "string") {
       return str.split(/\s+/).slice(0, 30).join(" ");
     } else {
       return "";
     }
   }
 
-  // If problem_statement isn't loaded yet, don't try to render the component
   if (!problem_statement) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
-        <CircularProgress />
-      </Box>
+      <div
+        className="ohx-card"
+        style={{ padding: "32px 24px", textAlign: "center", minHeight: 120 }}
+      >
+        <p className="ohx-muted" style={{ margin: 0 }}>
+          Loading project…
+        </p>
+      </div>
     );
   }
 
-  // Count team and helper stats
-  const teamCounter = teams.filter(team => team.problem_statements?.includes(problem_statement_id)).length;
-  const teamText = `There ${teamCounter === 1 ? "is" : "are"} ${teamCounter} team${teamCounter === 1 ? "" : "s"} working on this`;
-  
-  // Count helpers using the correct field: problem_statement.helping
+  const teamCounter = teams.filter((team) =>
+    team.problem_statements?.includes(problem_statement_id)
+  ).length;
+  const teamText = `There ${teamCounter === 1 ? "is" : "are"} ${teamCounter} team${
+    teamCounter === 1 ? "" : "s"
+  } working on this`;
+
   let countOfHackers = 0;
   let countOfMentors = 0;
   if (problem_statement.helping?.length > 0) {
     problem_statement.helping.forEach((help) => {
-      if (help.type === "mentor") {
-        countOfMentors++;
-      } else if (help.type === "hacker") {
-        countOfHackers++;
-      }
+      if (help.type === "mentor") countOfMentors++;
+      else if (help.type === "hacker") countOfHackers++;
     });
   }
 
   const totalContributors = countOfHackers + countOfMentors;
   const eventsCount = hackathonEvents.length;
-  const hackersPlural = countOfHackers === 1 ? "" : "s";
-  const hackersVerb = countOfHackers === 1 ? "is" : "are";
-  const mentorsVerb = countOfMentors === 1 ? "is" : "are";
-  
-  // Calculate engagement level for visual indicators
+
   const getEngagementLevel = () => {
-    if (totalContributors >= 10 || eventsCount >= 3) return 'high';
-    if (totalContributors >= 5 || eventsCount >= 2) return 'medium'; 
-    return 'low';
+    if (totalContributors >= 10 || eventsCount >= 3) return "high";
+    if (totalContributors >= 5 || eventsCount >= 2) return "medium";
+    return "low";
   };
-  
-  // Enhanced status component with modern design
+
+  const copyProjectLink = "project/" + problem_statement.id;
+
+  // Dynamic heading element driven by headingLevel prop
+  const TitleTag = headingLevel;
+
   const renderStatus = () => {
     if (problem_statement.status === "production") {
       return (
@@ -634,93 +446,94 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
           arrow
           placement="top"
         >
-          <StatusChip 
-            chipstatus="production"
-            icon={<WorkspacePremiumIcon />} 
-            label="🚀 Live in Production" 
-          />
-        </Tooltip>
-      );
-    } else {
-      return (
-        <Tooltip
-          title="This project needs your help to reach completion!"
-          arrow
-          placement="top"
-        >
-          <StatusChip 
-            chipstatus="development"
-            icon={<BuildIcon />} 
-            label="🔧 Needs Help" 
-          />
+          <span className="ohx-tag">
+            <WorkspacePremiumIcon
+              sx={{ fontSize: 13, verticalAlign: "middle", mr: 0.5 }}
+            />
+            Live
+          </span>
         </Tooltip>
       );
     }
+    return (
+      <Tooltip
+        title="This project needs your help to reach completion!"
+        arrow
+        placement="top"
+      >
+        <span className="ohx-tag ohx-tag--accent">
+          <BuildIcon sx={{ fontSize: 13, verticalAlign: "middle", mr: 0.5 }} />
+          Needs Help
+        </span>
+      </Tooltip>
+    );
   };
 
-  // Modern help toggle and call-to-action components
   const renderHelpToggle = () => {
-    if (!user) {
-      return (
-        <HelpToggle
-          control={
-            <Tooltip
-              title="Sign in to join this project and make an impact!"
-              arrow
-              placement="top"
-            >
-              <MaterialUISwitch disabled />
-            </Tooltip>
-          }
-          label={
-            <Box sx={{ ml: 2 }}>
-              <Typography variant="body1" fontWeight={600} color="text.secondary">
-                🔐 Sign in to help
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Join {totalContributors} contributors making impact
-              </Typography>
+    const labelBox = !user ? (
+      <Box sx={{ ml: 2 }}>
+        <Typography variant="body1" fontWeight={600} color="text.secondary">
+          Sign in to help
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Join {totalContributors} contributors making impact
+        </Typography>
+      </Box>
+    ) : (
+      <Box sx={{ ml: 2 }}>
+        <Typography variant="body1" fontWeight={600}>
+          {help_checked === "checked" ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {helpingType === "hacker" ? (
+                <DeveloperModeIcon sx={{ fontSize: 18 }} />
+              ) : (
+                <SupportIcon sx={{ fontSize: 18 }} />
+              )}
+              {helpingType === "hacker" ? "Hacking" : "Mentoring"}
             </Box>
-          }
-          labelPlacement="end"
-        />
-      );
-    }
+          ) : (
+            "Want to help?"
+          )}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {help_checked === "checked"
+            ? "You're part of the solution!"
+            : "Join the community of changemakers"}
+        </Typography>
+      </Box>
+    );
 
     return (
-      <HelpToggle
+      <FormControlLabel
+        sx={{
+          m: 0,
+          p: 2,
+          border: "1px solid var(--line)",
+          borderRadius: 2,
+          background: "var(--surface)",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
         control={
           <Tooltip
-            title={help_checked === "checked" ? "You're making a difference! Click to stop helping" : "Join this project and start making impact!"}
+            title={
+              !user
+                ? "Sign in to join this project and make an impact!"
+                : help_checked === "checked"
+                ? "You're helping! Click to stop"
+                : "Join this project!"
+            }
             arrow
             placement="top"
           >
-            <MaterialUISwitch 
-              checked={help_checked === "checked"} 
-              onChange={handleClickOpen}
+            <MaterialUISwitch
+              disabled={!user}
+              checked={help_checked === "checked"}
+              onChange={!user ? undefined : handleClickOpen}
             />
           </Tooltip>
         }
-        label={
-          <Box sx={{ ml: 2 }}>
-            <Typography variant="body1" fontWeight={600}>
-              {help_checked === "checked" ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {helpingType === "hacker" ? <DeveloperModeIcon /> : <SupportIcon />}
-                  {helpingType === "hacker" ? "🚀 Hacking" : "🎯 Mentoring"}
-                </Box>
-              ) : (
-                "❤️ Want to help?"
-              )}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {help_checked === "checked" 
-                ? "You're part of the solution!" 
-                : "Join the community of changemakers"
-              }
-            </Typography>
-          </Box>
-        }
+        label={labelBox}
         labelPlacement="end"
       />
     );
@@ -729,432 +542,427 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
   const renderCallToAction = () => {
     if (!user) {
       return (
-        <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mt: 3 }}>
-          <ActionButton
-            component={Link}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 12,
+            marginTop: 24,
+          }}
+        >
+          <Link
             href={`/signup?previousPage=/nonprofit/${effectiveNpoId}`}
-            variant="contained"
-            size="large"
-            fullWidth={isMobile}
-            startIcon={<StarIcon />}
-            sx={{ 
-              background: 'linear-gradient(45deg, #667eea 0%, #764ba2 100%)',
-              color: 'white'
-            }}
+            className="ohx-btn ohx-btn--primary"
           >
-            🚀 Join the Impact
-          </ActionButton>
-          <ActionButton
-            variant="outlined"
-            size="large"
-            fullWidth={isMobile}
-            onClick={() => redirectToLoginPage({
-              postLoginRedirectUrl: window.location.href
-            })}
-            startIcon={<LaunchIcon />}
+            Join the Impact
+          </Link>
+          <button
+            className="ohx-btn ohx-btn--ghost"
+            onClick={() =>
+              redirectToLoginPage({
+                postLoginRedirectUrl: window.location.href,
+              })
+            }
           >
             Sign In
-          </ActionButton>
-        </Stack>
+          </button>
+        </div>
       );
     }
 
     return (
-      <Stack direction={isMobile ? 'column' : 'row'} spacing={2} alignItems="center" sx={{ mt: 3 }}>
+      <div
+        style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 24 }}
+      >
         {problem_statement.slack_channel && (
-          <ActionButton
-            component="a"
+          <a
             href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`}
             target="_blank"
             rel="noopener noreferrer"
-            variant="contained"
-            startIcon={<TagIcon />}
-            sx={{ 
-              background: 'linear-gradient(45deg, #4ade80 0%, #22c55e 100%)',
-              color: 'white'
-            }}
+            className="ohx-btn ohx-btn--primary"
           >
-            Join #{problem_statement.slack_channel}
-          </ActionButton>
+            <TagIcon sx={{ fontSize: 16 }} /> Join #
+            {problem_statement.slack_channel}
+          </a>
         )}
-        <ActionButton
-          variant="outlined"
-          startIcon={<ShareIcon />}
+        <button
+          className="ohx-btn ohx-btn--ghost"
           onClick={() => {
             navigator.share?.({
               title: problem_statement.title,
               text: `Check out this impactful project: ${problem_statement.title}`,
-              url: window.location.href
+              url: window.location.href,
             }) || navigator.clipboard.writeText(window.location.href);
           }}
         >
           Share Project
-        </ActionButton>
-      </Stack>
+        </button>
+      </div>
     );
   };
 
-  const copyProjectLink = "project/" + problem_statement.id;
+  const sectionHeaderStyle = {
+    padding: "14px 20px",
+    background: "var(--surface-2)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    cursor: "pointer",
+    userSelect: "none",
+  };
 
+  const renderSection = (id, icon, label, content) => (
+    <div className="ohx-card" style={{ overflow: "hidden" }}>
+      <div
+        onClick={() => handleSectionToggle(id)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={expandedSection === id}
+        aria-controls={`${id}-content`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleSectionToggle(id);
+          }
+        }}
+        style={{
+          ...sectionHeaderStyle,
+          borderBottom:
+            expandedSection === id ? "1px solid var(--line)" : "none",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {icon}
+          <span
+            style={{
+              fontWeight: 600,
+              fontSize: "0.95rem",
+              color: "var(--ink)",
+            }}
+          >
+            {label}
+          </span>
+        </div>
+        <ExpandMoreIcon
+          sx={{
+            fontSize: 20,
+            color: "var(--muted)",
+            transform:
+              expandedSection === id ? "rotate(180deg)" : "none",
+            transition: "transform 0.25s",
+          }}
+        />
+      </div>
+      <Collapse in={expandedSection === id}>
+        <div id={`${id}-content`} style={{ padding: "16px 20px" }}>
+          {content}
+        </div>
+      </Collapse>
+    </div>
+  );
+
+  const metricTiles = [
+    {
+      icon: <DeveloperModeIcon sx={{ fontSize: 20, color: "var(--accent)" }} />,
+      count: countOfHackers,
+      label: `Developer${countOfHackers === 1 ? "" : "s"}`,
+    },
+    {
+      icon: <SupportIcon sx={{ fontSize: 20, color: "var(--accent)" }} />,
+      count: countOfMentors,
+      label: `Mentor${countOfMentors === 1 ? "" : "s"}`,
+    },
+    {
+      icon: <EventIcon sx={{ fontSize: 20, color: "var(--muted)" }} />,
+      count: eventsCount,
+      label: `Event${eventsCount === 1 ? "" : "s"}`,
+    },
+  ];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 2 }}>
-      <Fade in timeout={800}>
-        <ModernProjectCard status={problem_statement.status}>
-          {/* Hero Section */}
-          <HeroSection>
-            <Box sx={{ position: 'relative', zIndex: 1 }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
-                {renderStatus()}
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <CopyToClipboardButton location={copyProjectLink} />
-                  {problem_statement.first_thought_of && (
-                    <Chip 
-                      label={`Since ${problem_statement.first_thought_of}`} 
-                      size="small" 
-                      sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                    />
-                  )}
-                </Stack>
-              </Stack>
-              
-              <Typography 
-                variant="h3" 
-                component="h1" 
-                sx={{ 
-                  fontWeight: 700, 
-                  mb: 2, 
-                  color: 'white',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
+    <div
+      className="ohx-card"
+      style={{ marginBottom: 32, overflow: "hidden" }}
+    >
+      {/* Header band */}
+      <div
+        style={{
+          padding: isMobile ? "20px 18px 18px" : "28px 32px 24px",
+          background: "var(--surface-2)",
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
+        {/* Top row: status + copy + since */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: 8,
+            marginBottom: 14,
+          }}
+        >
+          {renderStatus()}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <CopyToClipboardButton location={copyProjectLink} />
+            {problem_statement.first_thought_of && (
+              <span className="ohx-tag">
+                Since {problem_statement.first_thought_of}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Title */}
+        <TitleTag
+          className="ohx-display"
+          style={{
+            fontSize: "clamp(1.3rem, 3vw, 1.9rem)",
+            marginBottom: 12,
+            lineHeight: 1.15,
+          }}
+        >
+          {problem_statement.title}
+        </TitleTag>
+
+        {/* Nonprofit attribution — only on direct project page visits */}
+        {!npo_id && resolvedNonprofits.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 6,
+              marginBottom: 12,
+            }}
+          >
+            {resolvedNonprofits.map((npo) => (
+              <Link
+                key={npo.id}
+                href={`/nonprofit/${npo.id}`}
+                className="ohx-tag"
+                style={{ textDecoration: "none", color: "inherit" }}
               >
-                {problem_statement.title}
-              </Typography>
+                {npo.name}
+              </Link>
+            ))}
+          </div>
+        )}
 
-              {/* Nonprofit attribution - only show on direct project page visits */}
-              {!npo_id && resolvedNonprofits.length > 0 && (
-                <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
-                  {resolvedNonprofits.map((npo) => (
-                    <Chip
-                      key={npo.id}
-                      component={Link}
-                      href={`/nonprofit/${npo.id}`}
-                      label={`Project by ${npo.name}`}
-                      clickable
-                      size="small"
-                      sx={{
-                        bgcolor: 'rgba(255,255,255,0.2)',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
-                        fontWeight: 600,
-                      }}
-                    />
-                  ))}
-                </Stack>
-              )}
+        <SkillSet Skills={problem_statement.skills} />
 
-              <SkillSet Skills={problem_statement.skills} />
-              
-              <Box sx={{ mt: 3 }}>
-                <ProjectProgress state={problem_statement.status} />
-              </Box>
-            </Box>
-          </HeroSection>
+        <div style={{ marginTop: 14 }}>
+          <ProjectProgress state={problem_statement.status} />
+        </div>
+      </div>
 
-          <CardContent sx={{ p: 4 }}>
-            {/* Engagement Metrics */}
-            <Grid container spacing={isMobile ? 2 : 3} sx={{ mb: 4 }}>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Zoom in timeout={600} style={{ transitionDelay: '200ms' }}>
-                  <MetricCard>
-                    <Stack alignItems="center" spacing={1}>
-                      <Badge badgeContent={countOfHackers} color="primary" max={99}>
-                        <DeveloperModeIcon color="primary" sx={{ fontSize: isMobile ? 28 : 32 }} />
-                      </Badge>
-                      <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700}>
-                        {countOfHackers}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" textAlign="center">
-                        Developer{countOfHackers === 1 ? '' : 's'}
-                      </Typography>
-                    </Stack>
-                  </MetricCard>
-                </Zoom>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Zoom in timeout={600} style={{ transitionDelay: '400ms' }}>
-                  <MetricCard>
-                    <Stack alignItems="center" spacing={1}>
-                      <Badge badgeContent={countOfMentors} color="secondary" max={99}>
-                        <SupportIcon color="secondary" sx={{ fontSize: isMobile ? 28 : 32 }} />
-                      </Badge>
-                      <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700}>
-                        {countOfMentors}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" textAlign="center">
-                        Mentor{countOfMentors === 1 ? '' : 's'}
-                      </Typography>
-                    </Stack>
-                  </MetricCard>
-                </Zoom>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Zoom in timeout={600} style={{ transitionDelay: '600ms' }}>
-                  <MetricCard>
-                    <Stack alignItems="center" spacing={1}>
-                      <EventIcon color="action" sx={{ fontSize: isMobile ? 28 : 32 }} />
-                      <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700}>
-                        {eventsCount}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" textAlign="center">
-                        Event{eventsCount === 1 ? '' : 's'}
-                      </Typography>
-                    </Stack>
-                  </MetricCard>
-                </Zoom>
-              </Grid>
-            </Grid>
-
-            {/* Project Description */}
-            <Box
-              sx={{
-                mb: 4,
-                p: 3,
-                backgroundColor: '#f8fafc',
-                borderRadius: 2,
-                border: '1px solid #e2e8f0'
+      {/* Body */}
+      <div style={{ padding: isMobile ? "20px 18px" : "28px 32px" }}>
+        {/* Metric tiles */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: isMobile ? 8 : 14,
+            marginBottom: 28,
+          }}
+        >
+          {metricTiles.map(({ icon, count, label }, i) => (
+            <div
+              key={i}
+              style={{
+                padding: "16px 10px",
+                textAlign: "center",
+                background: "var(--surface-2)",
+                border: "1px solid var(--line)",
+                borderRadius: 8,
               }}
             >
-              <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <NotesIcon color="primary" />
-                Project Description
-              </Typography>
-              <Box sx={{
-                '& p': { marginBottom: 2 },
-                '& ul, & ol': { paddingLeft: 3, marginBottom: 2 },
-                '& h1, & h2, & h3, & h4, & h5, & h6': { marginTop: 2, marginBottom: 1, fontWeight: 600 },
-                '& blockquote': {
-                  borderLeft: '4px solid #e2e8f0',
-                  paddingLeft: 2,
-                  marginLeft: 0,
-                  fontStyle: 'italic',
-                  backgroundColor: '#f1f5f9',
-                  padding: 2,
-                  borderRadius: 1
-                },
-                '& code': {
-                  backgroundColor: '#f1f5f9',
-                  padding: '2px 6px',
-                  borderRadius: 1,
-                  fontSize: '0.9em'
-                },
-                '& pre': {
-                  backgroundColor: '#f1f5f9',
-                  padding: 2,
-                  borderRadius: 1,
-                  overflow: 'auto'
-                }
-              }}>
-                <ReactMarkdown>{problem_statement.description}</ReactMarkdown>
-              </Box>
-            </Box>
+              <div style={{ marginBottom: 6 }}>{icon}</div>
+              <div
+                className="ohx-display"
+                style={{
+                  fontSize: "clamp(1.3rem, 2.4vw, 1.8rem)",
+                  color: "var(--brand)",
+                  lineHeight: 1,
+                }}
+              >
+                {count}
+              </div>
+              <p className="ohx-eyebrow" style={{ marginTop: 4, fontSize: "0.66rem" }}>
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
 
-            {/* Help Toggle */}
-            <Box sx={{ mb: 4 }}>
-              {renderHelpToggle()}
-            </Box>
+        {/* Project description */}
+        <div style={{ marginBottom: 28 }}>
+          <p className="ohx-eyebrow" style={{ marginBottom: 10 }}>
+            Project Description
+          </p>
+          <Box
+            sx={{
+              "& p": { marginBottom: 2 },
+              "& ul, & ol": { paddingLeft: 3, marginBottom: 2 },
+              "& h1, & h2, & h3, & h4, & h5, & h6": {
+                marginTop: 2,
+                marginBottom: 1,
+                fontWeight: 600,
+              },
+              "& blockquote": {
+                borderLeft: "4px solid var(--line)",
+                paddingLeft: 2,
+                marginLeft: 0,
+                fontStyle: "italic",
+                background: "var(--surface-2)",
+                padding: 2,
+                borderRadius: 1,
+              },
+              "& code": {
+                background: "var(--surface-2)",
+                padding: "2px 6px",
+                borderRadius: 1,
+                fontSize: "0.9em",
+              },
+              "& pre": {
+                background: "var(--surface-2)",
+                padding: 2,
+                borderRadius: 1,
+                overflow: "auto",
+              },
+            }}
+          >
+            <ReactMarkdown>{problem_statement.description}</ReactMarkdown>
+          </Box>
+        </div>
 
-            {/* Call to Action */}
-            {renderCallToAction()}
+        {/* Help toggle */}
+        <div style={{ marginBottom: 28 }}>{renderHelpToggle()}</div>
 
-            <Divider sx={{ my: 4 }} />
+        {/* CTA */}
+        {renderCallToAction()}
 
-            {/* Expandable Sections */}
-            <Stack spacing={3}>
+        <hr className="ohx-rule" style={{ margin: "28px 0" }} />
 
-              {/* Reference Documents */}
-              {problem_statement.references?.length > 0 && (
-                <SectionCard>
-                  <SectionHeader
-                    onClick={() => handleSectionToggle('references')}
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={expandedSection === 'references'}
-                    aria-controls="references-content"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleSectionToggle('references');
-                      }
-                    }}
-                  >
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <ArticleIcon color="primary" />
-                      <Typography variant="h6" fontWeight={600}>
-                        Reference Documents ({problem_statement.references.length})
-                      </Typography>
-                    </Stack>
-                    <IconButton
-                      aria-label={expandedSection === 'references' ? 'Collapse reference documents' : 'Expand reference documents'}
-                    >
-                      <ExpandMoreIcon
-                        sx={{
-                          transform: expandedSection === 'references' ? 'rotate(180deg)' : 'none',
-                          transition: 'transform 0.3s'
-                        }}
-                      />
-                    </IconButton>
-                  </SectionHeader>
-                  <Collapse in={expandedSection === 'references'}>
-                    <Box id="references-content" sx={{ p: 3 }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        📚 Review these documents to understand the problem better. Most are collaborative Google docs!
-                      </Typography>
-                      <Stack spacing={2}>
-                        {problem_statement.references.map((reference, index) => (
-                          <ReferenceItem key={index} reference={reference} />
-                        ))}
-                      </Stack>
-                    </Box>
-                  </Collapse>
-                </SectionCard>
-              )}
-
-              {/* GitHub Repositories */}
-              {problem_statement.github?.length > 0 && (
-                <SectionCard>
-                  <SectionHeader
-                    onClick={() => handleSectionToggle('github')}
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={expandedSection === 'github'}
-                    aria-controls="github-content"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleSectionToggle('github');
-                      }
-                    }}
-                  >
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <GitHubIcon color="primary" />
-                      <Typography variant="h6" fontWeight={600}>
-                        Code & Tasks ({problem_statement.github.length} repos)
-                      </Typography>
-                    </Stack>
-                    <IconButton
-                      aria-label={expandedSection === 'github' ? 'Collapse code repositories' : 'Expand code repositories'}
-                    >
-                      <ExpandMoreIcon
-                        sx={{
-                          transform: expandedSection === 'github' ? 'rotate(180deg)' : 'none',
-                          transition: 'transform 0.3s'
-                        }}
-                      />
-                    </IconButton>
-                  </SectionHeader>
-                  <Collapse in={expandedSection === 'github'}>
-                    <Box id="github-content" sx={{ p: 3 }}>
-                      <Grid container spacing={2}>
-                        {problem_statement.github.map((repo, index) => (
-                          <Grid size={{ xs: 12, sm: 6 }} key={index}>
-                            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                                {repo.name}
-                              </Typography>
-                              <Stack direction="row" spacing={1}>
-                                <ActionButton
-                                  size="small"
-                                  variant="outlined"
-                                  startIcon={<CodeIcon />}
-                                  href={repo.link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  component="a"
-                                >
-                                  Code
-                                </ActionButton>
-                                <ActionButton
-                                  size="small"
-                                  variant="outlined"
-                                  startIcon={<AssignmentIcon />}
-                                  href={`${repo.link}/issues`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  component="a"
-                                >
-                                  Issues
-                                </ActionButton>
-                              </Stack>
-                            </Paper>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Box>
-                  </Collapse>
-                </SectionCard>
-              )}
-
-              {/* Events & Teams */}
-              <SectionCard>
-                <SectionHeader
-                  onClick={() => handleSectionToggle('events')}
-                  role="button"
-                  tabIndex={0}
-                  aria-expanded={expandedSection === 'events'}
-                  aria-controls="events-content"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSectionToggle('events');
-                    }
-                  }}
+        {/* Collapsible sections */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {problem_statement.references?.length > 0 &&
+            renderSection(
+              "references",
+              <ArticleIcon sx={{ fontSize: 17, color: "var(--brand)" }} />,
+              `Reference Documents (${problem_statement.references.length})`,
+              <>
+                <p
+                  className="ohx-muted"
+                  style={{ fontSize: "0.9rem", marginBottom: 14 }}
                 >
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <PeopleIcon color="primary" />
-                    <Typography variant="h6" fontWeight={600}>
-                      Events & Teams ({eventsCount} events)
-                    </Typography>
-                  </Stack>
-                  <IconButton
-                    aria-label={expandedSection === 'events' ? 'Collapse events and teams' : 'Expand events and teams'}
-                  >
-                    <ExpandMoreIcon
-                      sx={{
-                        transform: expandedSection === 'events' ? 'rotate(180deg)' : 'none',
-                        transition: 'transform 0.3s'
-                      }}
-                    />
-                  </IconButton>
-                </SectionHeader>
-                <Collapse in={expandedSection === 'events'}>
-                  <Box id="events-content" sx={{ p: 3 }}>
-                    {hackathonEventsLoaded ? (
-                      <Events
-                        key={problem_statement.id}
-                        teams={teams}
-                        userDetails={userDetails}
-                        events={hackathonEvents}
-                        onTeamLeave={handleLeavingTeam}
-                        onTeamJoin={handleJoiningTeam}
-                        user={profile}
-                        problemStatementId={problem_statement.id}
-                        isHelping={help_checked}
-                      />
-                    ) : (
-                      <Box display="flex" justifyContent="center" p={3}>
-                        <CircularProgress />
-                      </Box>
-                    )}
-                  </Box>
-                </Collapse>
-              </SectionCard>
-            </Stack>
-          </CardContent>
-        </ModernProjectCard>
-      </Fade>
+                  Review these documents to understand the problem better.
+                </p>
+                <Stack spacing={2}>
+                  {problem_statement.references.map((reference, index) => (
+                    <ReferenceItem key={index} reference={reference} />
+                  ))}
+                </Stack>
+              </>
+            )}
 
-      {/* Help Dialogs */}
+          {problem_statement.github?.length > 0 &&
+            renderSection(
+              "github",
+              <GitHubIcon sx={{ fontSize: 17, color: "var(--brand)" }} />,
+              `Code & Tasks (${problem_statement.github.length} repos)`,
+              <Grid container spacing={2}>
+                {problem_statement.github.map((repo, index) => (
+                  <Grid size={{ xs: 12, sm: 6 }} key={index}>
+                    <div
+                      className="ohx-card"
+                      style={{ padding: "14px 16px" }}
+                    >
+                      <p
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "0.95rem",
+                          marginBottom: 10,
+                          color: "var(--ink)",
+                        }}
+                      >
+                        {repo.name}
+                      </p>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <a
+                          href={repo.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ohx-btn ohx-btn--ghost"
+                          style={{
+                            fontSize: "0.82rem",
+                            padding: "0.5em 0.9em",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <CodeIcon sx={{ fontSize: 13 }} /> Code
+                        </a>
+                        <a
+                          href={`${repo.link}/issues`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ohx-btn ohx-btn--ghost"
+                          style={{
+                            fontSize: "0.82rem",
+                            padding: "0.5em 0.9em",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <AssignmentIcon sx={{ fontSize: 13 }} /> Issues
+                        </a>
+                      </div>
+                    </div>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+
+          {renderSection(
+            "events",
+            <EventIcon sx={{ fontSize: 17, color: "var(--brand)" }} />,
+            `Events & Teams (${eventsCount} event${eventsCount === 1 ? "" : "s"})`,
+            hackathonEventsLoaded ? (
+              <Events
+                key={problem_statement.id}
+                teams={teams}
+                userDetails={userDetails}
+                events={hackathonEvents}
+                onTeamLeave={handleLeavingTeam}
+                onTeamJoin={handleJoiningTeam}
+                user={profile}
+                problemStatementId={problem_statement.id}
+                isHelping={help_checked}
+              />
+            ) : (
+              <p
+                className="ohx-muted"
+                style={{ textAlign: "center", padding: "20px 0", margin: 0 }}
+              >
+                Loading events…
+              </p>
+            )
+          )}
+        </div>
+      </div>
+
+      {/* Help dialogs */}
       <HelpDialog
         open={open}
         onClose={handleClose}
@@ -1162,12 +970,11 @@ export default function ProblemStatement({ problem_statement_id, user, npo_id })
         onHelp={handleClose}
         onCancel={handleCancel}
       />
-
       <UnhelpDialog
         open={openUnhelp}
         onClose={handleCloseUnhelp}
         onCancel={handleCloseUnhelpCancel}
       />
-    </Container>
+    </div>
   );
 }
