@@ -278,7 +278,10 @@ const RemoteCheckInNote = ({ eventId, isVirtual, sx = {} }) => (
       ...sx,
     }}
   >
-    <Typography variant="body2" sx={{ fontWeight: 700, color: "var(--ink)", mb: 0.5 }}>
+    <Typography
+      variant="body2"
+      sx={{ fontWeight: 700, color: "var(--ink)", mb: 0.5 }}
+    >
       {isVirtual
         ? "💻 Mentoring remotely? You don't need the QR code."
         : "📍 The QR code is for in-person check-in."}
@@ -385,6 +388,9 @@ const MentorApplicationComponent = () => {
   // Use ref to store uploaded photo URL to avoid race conditions
   const uploadedPhotoUrlRef = useRef("");
 
+  // Scroll target so step navigation lands on the step fields, not the page hero
+  const stepContentRef = useRef(null);
+
   // Prevent duplicate confirmation dialogs
   const confirmationShownRef = useRef(false);
 
@@ -414,6 +420,9 @@ const MentorApplicationComponent = () => {
     otherExpertise: "", // New field for "Other" option
     participationCount: "",
     engineeringSpecifics: [],
+    aiTools: [], // AI coding tools the mentor uses
+    otherAiTools: "", // Free text for "Other" AI tool
+    aiToolsExperience: "", // Self-described experience level with AI tools
     availableDays: [],
     country: "",
     state: "",
@@ -484,6 +493,30 @@ const MentorApplicationComponent = () => {
     "Cybersecurity",
     "Database Management",
     "Other", // Option to specify custom expertise
+  ];
+
+  // AI coding tools mentors might use day-to-day. Helps us understand how much
+  // AI-assisted development experience our mentors can share with teams.
+  const aiToolOptions = [
+    "Claude (claude.ai)",
+    "Claude Code",
+    "ChatGPT",
+    "OpenAI Codex / Codex CLI",
+    "GitHub Copilot",
+    "Cursor",
+    "Windsurf",
+    "Google Gemini",
+    "Other",
+  ];
+
+  // Self-described experience level with AI tools (includes a "don't use" option
+  // so we can tell a skipped answer apart from an intentional "none yet").
+  const aiToolsExperienceOptions = [
+    "I use AI tools daily in my workflow",
+    "I use them regularly",
+    "I use them occasionally",
+    "I'm just starting to explore them",
+    "I don't use AI tools yet",
   ];
 
   // Function to generate time slots based on event dates - moved outside useEffect to avoid recreating on each render
@@ -769,6 +802,10 @@ const MentorApplicationComponent = () => {
                 )
                   .split(", ")
                   .filter(Boolean),
+                aiTools: (prevData.aiToolsUsed || "")
+                  .split(", ")
+                  .filter(Boolean),
+                aiToolsExperience: prevData.aiToolsExperience || "",
                 availableDays: matchedSlotIds,
                 country: prevData.country || "",
                 state: prevData.state || "",
@@ -858,6 +895,14 @@ const MentorApplicationComponent = () => {
         otherExpertise: "",
       }));
     }
+
+    // Clear otherAiTools when Other is removed from aiTools
+    if (fieldName === "aiTools" && !event.target.value.includes("Other")) {
+      setFormData((prev) => ({
+        ...prev,
+        otherAiTools: "",
+      }));
+    }
   };
 
   // Handle file selection for photo upload
@@ -945,6 +990,13 @@ const MentorApplicationComponent = () => {
       return false;
     }
 
+    // Require an AI tools experience level so we always have this signal for
+    // mentor selection ("I don't use AI tools yet" is a valid answer).
+    if (!formData.aiToolsExperience) {
+      setError("Please tell us about your experience with AI tools");
+      return false;
+    }
+
     setError("");
     return true;
   };
@@ -998,13 +1050,13 @@ const MentorApplicationComponent = () => {
           page: "mentor_application",
         },
       });
-      // Scroll to top of form for better UX
-      if (formRef?.current) {
-        formRef.current.scrollIntoView({
+      // Bring the new step's fields into view (not the page hero)
+      requestAnimationFrame(() => {
+        stepContentRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
-      }
+      });
     }
   };
 
@@ -1019,13 +1071,13 @@ const MentorApplicationComponent = () => {
         page: "mentor_application",
       },
     });
-    // Scroll to top of form for better UX
-    if (formRef?.current) {
-      formRef.current.scrollIntoView({
+    // Bring the new step's fields into view (not the page hero)
+    requestAnimationFrame(() => {
+      stepContentRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-    }
+    });
   };
 
   // Toggle between month view and date view
@@ -1242,6 +1294,16 @@ const MentorApplicationComponent = () => {
           : formData.expertise.join(", "),
         // Convert array values to strings for API submission
         softwareEngineeringSpecifics: formData.engineeringSpecifics.join(", "),
+        // AI tools - join selected tools, swapping "Other" for the free-text value
+        aiToolsUsed: formData.aiTools.includes("Other")
+          ? [
+              ...formData.aiTools.filter((t) => t !== "Other"),
+              formData.otherAiTools,
+            ]
+              .filter(Boolean)
+              .join(", ")
+          : formData.aiTools.join(", "),
+        aiToolsExperience: formData.aiToolsExperience,
         // Map available days to their display text
         availability: formData.availableDays
           .map(
@@ -1582,6 +1644,96 @@ const MentorApplicationComponent = () => {
           onChange={handleChange}
           sx={refinedFieldSx}
         />
+
+        {/* AI tools experience — helps us pair mentors with teams using AI
+            assistants and understand the AI-dev guidance our mentors can give */}
+        <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
+          <Eyebrow>AI tools</Eyebrow>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600, color: "var(--ink)", mt: 1, mb: 0.5 }}
+          >
+            Which AI tools do you use?
+          </Typography>
+          <Typography variant="body2" sx={{ color: "var(--muted)", mb: 2 }}>
+            Many teams now build with AI assistants like Claude, Claude Code,
+            and Codex. Telling us what you use helps us understand the
+            AI-assisted development experience you can share.
+          </Typography>
+
+          <FormControl
+            fullWidth
+            sx={{
+              ...refinedFieldSx,
+              mb: formData.aiTools.includes("Other") ? 1 : 2.5,
+            }}
+          >
+            <InputLabel id="ai-tools-label">AI tools you use</InputLabel>
+            <Select
+              labelId="ai-tools-label"
+              id="ai-tools"
+              multiple
+              value={formData.aiTools}
+              onChange={(e) => customHandleMultiSelectChange(e, "aiTools")}
+              MenuProps={refinedSelectMenuProps}
+              input={<OutlinedInput label="AI tools you use" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} sx={refinedChipSx} />
+                  ))}
+                </Box>
+              )}
+            >
+              {aiToolOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  <Checkbox checked={formData.aiTools.indexOf(option) > -1} />
+                  <ListItemText primary={option} />
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>
+              Select any AI tools you regularly use (optional)
+            </FormHelperText>
+          </FormControl>
+
+          {/* Conditional text field that appears when "Other" is selected */}
+          {formData.aiTools.includes("Other") && (
+            <TextField
+              label="Which other AI tool(s)?"
+              name="otherAiTools"
+              fullWidth
+              value={formData.otherAiTools}
+              onChange={handleChange}
+              helperText="Tell us about the other AI tools you use"
+              sx={{ ...refinedFieldSx, mb: 2.5 }}
+            />
+          )}
+
+          <FormControl fullWidth required sx={{ ...refinedFieldSx, mb: 0 }}>
+            <InputLabel id="ai-experience-label">
+              How would you describe your experience with AI tools?
+            </InputLabel>
+            <Select
+              labelId="ai-experience-label"
+              id="ai-experience"
+              name="aiToolsExperience"
+              value={formData.aiToolsExperience}
+              onChange={handleChange}
+              MenuProps={refinedSelectMenuProps}
+              label="How would you describe your experience with AI tools?"
+            >
+              {aiToolsExperienceOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>
+              Required — we review this when selecting mentors
+            </FormHelperText>
+          </FormControl>
+        </Box>
       </Box>
     </Box>
   );
@@ -2812,7 +2964,12 @@ const MentorApplicationComponent = () => {
                           handleSubmit();
                         }}
                       >
-                        {getStepContent(activeStep)}
+                        <Box
+                          ref={stepContentRef}
+                          sx={{ scrollMarginTop: "96px" }}
+                        >
+                          {getStepContent(activeStep)}
+                        </Box>
 
                         <Box
                           sx={{
