@@ -32,7 +32,7 @@ const MentorCheckinPage = () => {
   const router = useRouter();
   const { event_id } = router.query;
   const { isLoggedIn, user, accessToken } = useAuthInfo();
-  const { apiServerUrl } = useEnv();
+  const { apiServerUrl, slackSignupUrl } = useEnv();
 
   // State variables
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +44,7 @@ const MentorCheckinPage = () => {
   const [checkedIn, setCheckedIn] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [slackNotificationSent, setSlackNotificationSent] = useState(null);
   const [availabilitySlots, setAvailabilitySlots] = useState([]);
   const [currentActiveSlot, setCurrentActiveSlot] = useState(null);
   const [showPreviousSlots, setShowPreviousSlots] = useState(false);
@@ -522,7 +523,13 @@ const MentorCheckinPage = () => {
       if (response.data) {
         setCheckedIn(true);
         setSuccess('You have successfully checked in as a mentor!');
-        setSnackbarMessage('Checked in successfully! A message has been sent to #ask-a-mentor on Slack notifying teams that you are available.');
+        const notified = response.data.slackNotificationSent;
+        setSlackNotificationSent(notified);
+        if (notified) {
+          setSnackbarMessage('Checked in! Teams in #ask-a-mentor on Slack have been notified you are available.');
+        } else {
+          setSnackbarMessage('Checked in! See below for how to be announced in #ask-a-mentor.');
+        }
         setSnackbarOpen(true);
       }
     } catch (err) {
@@ -754,6 +761,16 @@ const MentorCheckinPage = () => {
 
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
+        {slackNotificationSent === false && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            <strong>Your check-in was not announced in #ask-a-mentor</strong> because we could not find a
+            Slack account matching your application email. To be reachable by teams:{' '}
+            <a href={slackSignupUrl} target="_blank" rel="noopener noreferrer">
+              join our Slack workspace
+            </a>{' '}
+            using the same email address, then check in again.
+          </Alert>
+        )}
 
         {/* Check-in band — the primary action */}
         <Box
