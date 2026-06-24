@@ -15,15 +15,27 @@ import {
   ButtonGroup,
   Checkbox,
   FormControlLabel,
-  Divider
+  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Check as CheckIcon,
   Close as CloseIcon,
   FilterList as FilterIcon,
-  Sort as SortIcon
+  Sort as SortIcon,
+  ExpandMore as ExpandMoreIcon,
+  LinkedIn as LinkedInIcon,
 } from '@mui/icons-material';
 import ApplicationReviewCard from './ApplicationReviewCard';
+
+const getLinkedInUrl = (app) => {
+  const raw = app.linkedin || app.linkedinProfile || app.linkedinUrl || '';
+  return raw ? (raw.startsWith('http') ? raw : `https://${raw}`) : null;
+};
 
 const ApplicationReviewList = ({
   applications = [],
@@ -52,8 +64,11 @@ const ApplicationReviewList = ({
   onSortOrderChange,
   onShowBatchActionsChange
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedApplications, setSelectedApplications] = useState(new Set());
-  
+  const [linkedInFilter, setLinkedInFilter] = useState('all'); // 'all' | 'has' | 'missing'
+
   // Use controlled props if provided, otherwise fall back to local state
   const [localFilter, setLocalFilter] = useState('');
   const [localStatusFilter, setLocalStatusFilter] = useState('all');
@@ -185,6 +200,15 @@ const ApplicationReviewList = ({
       }
     }
 
+    // Apply LinkedIn filter
+    if (linkedInFilter !== 'all') {
+      if (linkedInFilter === 'has') {
+        filtered = filtered.filter(app => !!getLinkedInUrl(app));
+      } else if (linkedInFilter === 'missing') {
+        filtered = filtered.filter(app => !getLinkedInUrl(app));
+      }
+    }
+
     // Apply sorting
     filtered.sort((a, b) => {
       let aValue = a[currentSortBy];
@@ -205,7 +229,7 @@ const ApplicationReviewList = ({
     });
 
     return filtered;
-  }, [applications, currentFilter, currentStatusFilter, currentInPersonFilter, currentCheckedInFilter, currentSortBy, currentSortOrder, applicationType]);
+  }, [applications, currentFilter, currentStatusFilter, currentInPersonFilter, currentCheckedInFilter, linkedInFilter, currentSortBy, currentSortOrder, applicationType]);
 
   // Handle individual application actions
   const handleApprove = useCallback(async (application) => {
@@ -343,126 +367,140 @@ const ApplicationReviewList = ({
         </Grid>
       </Paper>
 
-      {/* Filters and Controls */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <TextField
-              fullWidth
-              label="Search applications"
-              variant="outlined"
-              value={currentFilter}
-              onChange={(e) => handleFilterChange(e.target.value)}
-              placeholder="Name, email, organization..."
-              size="small"
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={currentStatusFilter}
-                onChange={(e) => handleStatusFilterChange(e.target.value)}
-                label="Status"
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="approved">Approved</MenuItem>
-                {/* Additional status options for judges */}
-                {applicationType === 'judge' && [
-                  <MenuItem key="denied" value="denied">Denied</MenuItem>,
-                  <MenuItem key="verified_travel" value="verified_travel">Verified Travel</MenuItem>,
-                  <MenuItem key="confirmed" value="confirmed">Confirmed</MenuItem>,
-                  <MenuItem key="withdrew" value="withdrew">Withdrew</MenuItem>,
-                  <MenuItem key="no_show" value="no_show">No Show</MenuItem>
-                ]}
-              </Select>
-            </FormControl>
-          </Grid>
+      {/* Filters and Controls — collapsed accordion on mobile, plain Paper on desktop */}
+      {(() => {
+        const filterGridItems = (
+          <>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                fullWidth
+                label="Search applications"
+                variant="outlined"
+                value={currentFilter}
+                onChange={(e) => handleFilterChange(e.target.value)}
+                placeholder="Name, email, organization..."
+                size="small"
+              />
+            </Grid>
 
-          {/* Checked In Filter - Show for all volunteer types */}
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Checked In</InputLabel>
-              <Select
-                value={currentCheckedInFilter}
-                onChange={(e) => handleCheckedInFilterChange(e.target.value)}
-                label="Checked In"
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="yes">Checked In</MenuItem>
-                <MenuItem value="no">Not Checked In</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* In Person Filter - Only show for judges */}
-          {applicationType === 'judge' && (
             <Grid size={{ xs: 12, sm: 2 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>In Person</InputLabel>
+                <InputLabel>Status</InputLabel>
                 <Select
-                  value={currentInPersonFilter}
-                  onChange={(e) => handleInPersonFilterChange(e.target.value)}
-                  label="In Person"
+                  value={currentStatusFilter}
+                  onChange={(e) => handleStatusFilterChange(e.target.value)}
+                  label="Status"
                 >
                   <MenuItem value="all">All</MenuItem>
-                  <MenuItem value="yes">In Person</MenuItem>
-                  <MenuItem value="no">Remote</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="approved">Approved</MenuItem>
+                  {applicationType === 'judge' && [
+                    <MenuItem key="denied" value="denied">Denied</MenuItem>,
+                    <MenuItem key="verified_travel" value="verified_travel">Verified Travel</MenuItem>,
+                    <MenuItem key="confirmed" value="confirmed">Confirmed</MenuItem>,
+                    <MenuItem key="withdrew" value="withdrew">Withdrew</MenuItem>,
+                    <MenuItem key="no_show" value="no_show">No Show</MenuItem>
+                  ]}
                 </Select>
               </FormControl>
             </Grid>
-          )}
 
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Sort by</InputLabel>
-              <Select
-                value={currentSortBy}
-                onChange={(e) => handleSortByChange(e.target.value)}
-                label="Sort by"
-              >
-                <MenuItem value="timestamp">Date</MenuItem>
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="email">Email</MenuItem>
-                <MenuItem value="experienceLevel">Experience</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Checked In</InputLabel>
+                <Select
+                  value={currentCheckedInFilter}
+                  onChange={(e) => handleCheckedInFilterChange(e.target.value)}
+                  label="Checked In"
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="yes">Checked In</MenuItem>
+                  <MenuItem value="no">Not Checked In</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <ButtonGroup size="small" fullWidth>
-              <Button
-                variant={currentSortOrder === 'asc' ? 'contained' : 'outlined'}
-                onClick={() => handleSortOrderChange('asc')}
-              >
-                A-Z
-              </Button>
-              <Button
-                variant={currentSortOrder === 'desc' ? 'contained' : 'outlined'}
-                onClick={() => handleSortOrderChange('desc')}
-              >
-                Z-A
-              </Button>
-            </ButtonGroup>
-          </Grid>
+            {applicationType === 'judge' && (
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>In Person</InputLabel>
+                  <Select
+                    value={currentInPersonFilter}
+                    onChange={(e) => handleInPersonFilterChange(e.target.value)}
+                    label="In Person"
+                  >
+                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="yes">In Person</MenuItem>
+                    <MenuItem value="no">Remote</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={currentShowBatchActions}
-                  onChange={(e) => handleShowBatchActionsChange(e.target.checked)}
-                />
-              }
-              label="Batch Actions"
-            />
-          </Grid>
-        </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>LinkedIn</InputLabel>
+                <Select
+                  value={linkedInFilter}
+                  onChange={(e) => setLinkedInFilter(e.target.value)}
+                  label="LinkedIn"
+                  startAdornment={<LinkedInIcon sx={{ mr: 0.5, color: '#0077b5', fontSize: '1rem' }} />}
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="has">Has LinkedIn</MenuItem>
+                  <MenuItem value="missing">No LinkedIn</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-        {/* Batch Actions */}
-        {currentShowBatchActions && (
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Sort by</InputLabel>
+                <Select
+                  value={currentSortBy}
+                  onChange={(e) => handleSortByChange(e.target.value)}
+                  label="Sort by"
+                >
+                  <MenuItem value="timestamp">Date</MenuItem>
+                  <MenuItem value="name">Name</MenuItem>
+                  <MenuItem value="email">Email</MenuItem>
+                  <MenuItem value="experienceLevel">Experience</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <ButtonGroup size="small" fullWidth>
+                <Button
+                  variant={currentSortOrder === 'asc' ? 'contained' : 'outlined'}
+                  onClick={() => handleSortOrderChange('asc')}
+                >
+                  A-Z
+                </Button>
+                <Button
+                  variant={currentSortOrder === 'desc' ? 'contained' : 'outlined'}
+                  onClick={() => handleSortOrderChange('desc')}
+                >
+                  Z-A
+                </Button>
+              </ButtonGroup>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={currentShowBatchActions}
+                    onChange={(e) => handleShowBatchActionsChange(e.target.checked)}
+                  />
+                }
+                label="Batch Actions"
+              />
+            </Grid>
+          </>
+        );
+
+        const batchActionsBlock = currentShowBatchActions && (
           <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
               <FormControlLabel
@@ -475,7 +513,6 @@ const ApplicationReviewList = ({
                 }
                 label={`Select All (${selectedApplications.size} selected)`}
               />
-              
               {selectedApplications.size > 0 && (
                 <>
                   <Button
@@ -502,8 +539,37 @@ const ApplicationReviewList = ({
               )}
             </Box>
           </Box>
-        )}
-      </Paper>
+        );
+
+        if (isMobile) {
+          const hasActiveFilters = !!(currentFilter || currentStatusFilter !== 'all' || currentCheckedInFilter !== 'all' || linkedInFilter !== 'all');
+          return (
+            <Accordion sx={{ mb: 3 }} defaultExpanded={false}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FilterIcon fontSize="small" />
+                  <Typography variant="body2">Filters &amp; Sort</Typography>
+                  {hasActiveFilters && <Chip label="Active" size="small" color="primary" />}
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2} alignItems="center">
+                  {filterGridItems}
+                </Grid>
+                {batchActionsBlock}
+              </AccordionDetails>
+            </Accordion>
+          );
+        }
+        return (
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Grid container spacing={2} alignItems="center">
+              {filterGridItems}
+            </Grid>
+            {batchActionsBlock}
+          </Paper>
+        );
+      })()}
 
       {/* Results Summary */}
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
@@ -546,6 +612,16 @@ const ApplicationReviewList = ({
             variant="outlined"
           />
         )}
+
+        {linkedInFilter !== 'all' && (
+          <Chip
+            icon={<LinkedInIcon sx={{ fontSize: '0.9rem !important', color: '#0077b5 !important' }} />}
+            label={linkedInFilter === 'has' ? 'Has LinkedIn' : 'No LinkedIn'}
+            onDelete={() => setLinkedInFilter('all')}
+            size="small"
+            variant="outlined"
+          />
+        )}
       </Box>
 
       {/* Applications List */}
@@ -557,7 +633,7 @@ const ApplicationReviewList = ({
               : 'No applications match your current filters'
             }
           </Typography>
-          {currentFilter || currentStatusFilter !== 'all' || currentInPersonFilter !== 'all' || currentCheckedInFilter !== 'all' ? (
+          {currentFilter || currentStatusFilter !== 'all' || currentInPersonFilter !== 'all' || currentCheckedInFilter !== 'all' || linkedInFilter !== 'all' ? (
             <Button
               variant="outlined"
               onClick={() => {
@@ -565,6 +641,7 @@ const ApplicationReviewList = ({
                 handleStatusFilterChange('all');
                 handleInPersonFilterChange('all');
                 handleCheckedInFilterChange('all');
+                setLinkedInFilter('all');
               }}
               sx={{ mt: 2 }}
             >
