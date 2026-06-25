@@ -855,6 +855,18 @@ const HackerApplicationComponent = () => {
                       ? prevData.requiredQuestionAnswers
                       : [],
                     event_id: event_id,
+                    stripePaymentIntentId:
+                      prevData.stripe_payment_intent_id ||
+                      prevData.stripePaymentIntentId ||
+                      "",
+                    depositAmountCents:
+                      prevData.deposit_amount_cents ??
+                      prevData.depositAmountCents ??
+                      null,
+                    depositDisposition:
+                      prevData.deposit_disposition ||
+                      prevData.depositDisposition ||
+                      "refund",
                   };
                   setIsSelected(prevData.isSelected || false);
                   setVolunteerId(prevData.id || null);
