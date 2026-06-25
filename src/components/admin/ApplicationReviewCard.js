@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Image from "next/image";
+import NextLink from "next/link";
 import {
   Card,
   CardContent,
@@ -31,7 +32,15 @@ import {
   LocationOn as LocationIcon,
   Edit as EditIcon,
   Gavel as StatusIcon,
+  OpenInNew as OpenInNewIcon,
 } from "@mui/icons-material";
+
+// Resolve LinkedIn URL from any of the field names forms use
+const getLinkedInUrl = (app) => {
+  const raw = app.linkedin || app.linkedinProfile || app.linkedinUrl || '';
+  if (!raw) return null;
+  return raw.startsWith('http') ? raw : `https://${raw}`;
+};
 
 const ApplicationReviewCard = ({
   application,
@@ -425,28 +434,65 @@ const ApplicationReviewCard = ({
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
+            alignItems: "flex-start",
             justifyContent: "space-between",
             mb: 2,
+            flexWrap: "wrap",
+            gap: 1,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", minWidth: 0 }}>
             <Avatar
-              src={application.photoUrl}
-              sx={{ mr: 2, bgcolor: "primary.main", width: 48, height: 48 }}
+              src={application.profile_image || application.photoUrl}
+              sx={{ mr: 2, bgcolor: "primary.main", width: 48, height: 48, flexShrink: 0 }}
             >
               <PersonIcon />
             </Avatar>
-            <Box>
-              <Typography variant="h6" component="h3">
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h6" component="h3" sx={{ wordBreak: 'break-word' }}>
                 {application.name || "No name provided"}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {config.title}
               </Typography>
+              {/* LinkedIn + OHack profile quick-access chips */}
+              <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                {(() => {
+                  const liUrl = getLinkedInUrl(application);
+                  return liUrl ? (
+                    <Chip
+                      icon={<LinkedInIcon sx={{ fontSize: '0.9rem !important' }} />}
+                      label="LinkedIn"
+                      size="small"
+                      component="a"
+                      href={liUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      clickable
+                      sx={{ bgcolor: '#0077b5', color: '#fff', '& .MuiChip-icon': { color: '#fff' } }}
+                    />
+                  ) : (
+                    <Chip label="No LinkedIn" size="small" variant="outlined" sx={{ opacity: 0.5 }} />
+                  );
+                })()}
+                {application.user_db_id && (
+                  <Chip
+                    icon={<OpenInNewIcon sx={{ fontSize: '0.9rem !important' }} />}
+                    label="OHack profile"
+                    size="small"
+                    component={NextLink}
+                    href={`/profile/${application.user_db_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    clickable
+                    variant="outlined"
+                    color="primary"
+                  />
+                )}
+              </Box>
             </Box>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
             {/* Show status for judges, or approval status for others */}
             {applicationType === "judge" && application.status ? (
               <Chip {...getStatusChipConfig(application.status)} size="small" />
@@ -962,7 +1008,7 @@ const ApplicationReviewCard = ({
                               };
 
                               return (
-                                <Box>
+                                <Box sx={{ overflowX: 'auto' }}>
                                   {/* Summary stats */}
                                   <Box
                                     sx={{
@@ -1204,11 +1250,66 @@ const ApplicationReviewCard = ({
               )}
             </Grid>
           </Box>
+
+          {/* All submitted fields — shows anything the applicant filled in that isn't already displayed above */}
+          {(() => {
+            const alreadyRendered = new Set([
+              ...config.primaryFields,
+              ...config.secondaryFields,
+              ...config.additionalFields,
+              'name', 'photoUrl', 'status', 'timestamp', 'event_id',
+              // internal / audit fields never shown to reviewers
+              'id', 'user_id', 'user_db_id', 'propel_id', 'slack_user_id',
+              'volunteer_type', 'isSelected', 'created_by', 'created_timestamp',
+              'updated_by', 'updated_timestamp', 'sent_emails', 'certificates',
+              'profile_image', 'checkedIn', 'checkedInBy', 'checkedInAt',
+              'checkInTime', 'checkInTimeList', 'isCheckedIn', 'timeSlot',
+            ]);
+            const extraEntries = Object.entries(application).filter(([key, val]) => {
+              if (alreadyRendered.has(key)) return false;
+              if (val === null || val === undefined || val === '') return false;
+              if (Array.isArray(val) && val.length === 0) return false;
+              return true;
+            });
+            if (extraEntries.length === 0) return null;
+            return (
+              <Box sx={{ mt: 2 }}>
+                <Divider sx={{ mb: 2 }} />
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  All Submitted Fields
+                </Typography>
+                <Grid container spacing={2}>
+                  {extraEntries.map(([key, val]) => {
+                    const isLink = ['linkedin', 'linkedinProfile', 'linkedinUrl', 'github', 'portfolio', 'website'].includes(key);
+                    const displayVal = Array.isArray(val)
+                      ? val.join(', ')
+                      : typeof val === 'object'
+                      ? JSON.stringify(val)
+                      : String(val);
+                    return (
+                      <Grid size={{ xs: 12, sm: 6 }} key={key}>
+                        <Typography variant="body2" color="text.secondary">
+                          {getFieldLabel(key)}
+                        </Typography>
+                        <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                          {isLink && val ? (
+                            <Link href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noopener noreferrer">
+                              {displayVal}
+                            </Link>
+                          ) : displayVal}
+                        </Typography>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </Box>
+            );
+          })()}
         </Collapse>
       </CardContent>
 
       {/* Action buttons */}
-      <CardActions sx={{ justifyContent: "space-between", p: 2 }}>
+      <CardActions sx={{ justifyContent: "space-between", p: 2, flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' }, gap: { xs: 1, sm: 0 } }}>
         <Button
           variant="outlined"
           startIcon={<EditIcon />}

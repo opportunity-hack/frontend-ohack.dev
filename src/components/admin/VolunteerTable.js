@@ -39,8 +39,9 @@ import { styled } from "@mui/system";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
-import { Email as EmailIcon, VolunteerActivism as CertificateIcon } from '@mui/icons-material';
+import { Email as EmailIcon, VolunteerActivism as CertificateIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
+import NextLink from 'next/link';
 import HackerDepositChip from "./HackerDepositChip";
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
@@ -1531,7 +1532,7 @@ const VolunteerTable = ({
                 {/* Header Row */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Avatar
-                    src={volunteer.photoUrl}
+                    src={volunteer.profile_image || volunteer.photoUrl}
                     alt={volunteer.name}
                     sx={{ width: 40, height: 40, mr: 2 }}
                   >
@@ -1657,7 +1658,7 @@ const VolunteerTable = ({
 
               {/* Actions */}
               <CardActions sx={{ pt: 0, px: 2, pb: 2 }}>
-                <Box sx={{ display: 'flex', gap: 0.5, width: '100%' }}>
+                <Box sx={{ display: 'flex', gap: 0.5, width: '100%', alignItems: 'center' }}>
                   <Tooltip title="Edit">
                     <IconButton
                       onClick={() => onEditVolunteer(volunteer)}
@@ -1678,7 +1679,20 @@ const VolunteerTable = ({
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Box sx={{ flex: 1 }} /> {/* Spacer */}
+                  {volunteer.user_db_id && (
+                    <Tooltip title="View OHack profile">
+                      <IconButton
+                        component={NextLink}
+                        href={`/profile/${volunteer.user_db_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="small"
+                      >
+                        <OpenInNewIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <Box sx={{ flex: 1 }} />
                   {volunteer.email && (
                     <Button
                       size="small"
@@ -1949,7 +1963,7 @@ const VolunteerTable = ({
                 <StyledTableCell data-label="Actions">
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
                     <Tooltip title="Edit">
-                      <IconButton 
+                      <IconButton
                         onClick={() => onEditVolunteer(volunteer)}
                         size="small"
                       >
@@ -1958,12 +1972,26 @@ const VolunteerTable = ({
                     </Tooltip>
                     {onMessageVolunteer && (
                       <Tooltip title="Send Message">
-                        <IconButton 
+                        <IconButton
                           onClick={() => onMessageVolunteer(volunteer)}
                           size="small"
                           color="primary"
                         >
                           <FaPaperPlane size={12} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {volunteer.user_db_id && (
+                      <Tooltip title="View OHack profile">
+                        <IconButton
+                          component={NextLink}
+                          href={`/profile/${volunteer.user_db_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          size="small"
+                          color="default"
+                        >
+                          <OpenInNewIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     )}
