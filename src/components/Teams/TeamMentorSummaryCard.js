@@ -2,8 +2,8 @@ import React from "react";
 import NextLink from "next/link";
 import { Box } from "@mui/material";
 import {
-  MENTOR_COVERAGE_ITEMS,
   MENTOR_COVERAGE_TOTAL,
+  coverageDoneCount,
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
@@ -24,10 +24,7 @@ const SCORE_DOT_COLORS = { green: "#3a7d44", yellow: "#c77d1a", red: "#c0392b" }
  */
 export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
   const checklist = team?.mentor_checklist || {};
-  const doneCount = MENTOR_COVERAGE_ITEMS.reduce(
-    (acc, it) => acc + (checklist[it.slug]?.done ? 1 : 0),
-    0
-  );
+  const doneCount = coverageDoneCount(checklist);
   const openFlags = Number(team?.mentor_open_flag_count || 0);
   const lastTouchedAt = team?.mentor_last_touched_at;
   const lastTouchedBy = team?.mentor_last_touched_by_name;

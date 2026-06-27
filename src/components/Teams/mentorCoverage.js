@@ -41,6 +41,54 @@ export const MENTOR_COVERAGE_ITEMS = [
 
 export const MENTOR_COVERAGE_TOTAL = MENTOR_COVERAGE_ITEMS.length;
 
+// Each coverage item wants independent sign-off from this many distinct mentors
+// (and we cap there — no point pestering a team for more). An item only counts
+// as "covered" once it reaches this many checks. Keep in lockstep with the
+// backend COVERAGE_TARGET_MENTORS in api/mentors/mentors_service.py.
+export const COVERAGE_TARGET_MENTORS = 3;
+
+// Normalize a mentor_checklist[slug] entry into an array of per-mentor checks:
+//   [{ propel_id, name, checked_at }]  (oldest first)
+// Tolerates the legacy single-mentor shape ({ done, checked_by_propel_id,
+// checked_by_name, checked_at }) so old data renders until a mentor migrates it.
+export function coverageChecks(entry) {
+  if (!entry || typeof entry !== "object") return [];
+  if (entry.checks && typeof entry.checks === "object") {
+    return Object.entries(entry.checks)
+      .filter(([, v]) => v && typeof v === "object")
+      .map(([propel_id, v]) => ({
+        propel_id,
+        name: v.name,
+        checked_at: v.checked_at,
+      }))
+      .sort((a, b) => (a.checked_at || "").localeCompare(b.checked_at || ""));
+  }
+  if (entry.done) {
+    return [
+      {
+        propel_id: entry.checked_by_propel_id || "_legacy",
+        name: entry.checked_by_name,
+        checked_at: entry.checked_at,
+      },
+    ];
+  }
+  return [];
+}
+
+// An item counts toward the X/6 total once COVERAGE_TARGET_MENTORS mentors signed off.
+export function coverageItemCovered(entry) {
+  return coverageChecks(entry).length >= COVERAGE_TARGET_MENTORS;
+}
+
+// Count of fully-covered items across the whole checklist object.
+export function coverageDoneCount(checklist) {
+  const c = checklist || {};
+  return MENTOR_COVERAGE_ITEMS.reduce(
+    (acc, it) => acc + (coverageItemCovered(c[it.slug]) ? 1 : 0),
+    0
+  );
+}
+
 // Judging rubric mentors use to coach teams. The labels and blurbs mirror
 // /about/judges#judging-criteria. Accessibility is a separate "special
 // category" prize on the judges page but mentors still need to coach for it.

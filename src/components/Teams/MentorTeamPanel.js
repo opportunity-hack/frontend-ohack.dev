@@ -39,6 +39,8 @@ import { useTheme } from "@mui/material/styles";
 import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UncheckedIcon,
+  AddCircleOutline as AddCheckIcon,
+  LockOutlined as LockIcon,
   EmojiPeople as MentorIcon,
   Schedule as ScheduleIcon,
   Flag as FlagIcon,
@@ -55,6 +57,9 @@ import {
 import {
   MENTOR_COVERAGE_ITEMS,
   MENTOR_COVERAGE_TOTAL,
+  COVERAGE_TARGET_MENTORS,
+  coverageChecks,
+  coverageDoneCount,
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
@@ -229,7 +234,6 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
   );
 
   // confirm / dialog state
-  const [confirmUncheck, setConfirmUncheck] = useState(null); // { slug, existing }
   const [raiseFlagOpen, setRaiseFlagOpen] = useState(false);
   const [raiseFlagSeverity, setRaiseFlagSeverity] = useState("needs_attention");
   const [raiseFlagBody, setRaiseFlagBody] = useState("");
@@ -282,10 +286,7 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")),
     [flagsAll]
   );
-  const doneCount = MENTOR_COVERAGE_ITEMS.reduce(
-    (acc, it) => acc + (checklist[it.slug]?.done ? 1 : 0),
-    0
-  );
+  const doneCount = coverageDoneCount(checklist);
   const ratingsByMentor = useMemo(
     () => latestRatingsByMentor(team?.mentor_ratings),
     [team?.mentor_ratings]
@@ -353,6 +354,8 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
   );
 
   // -- handlers
+  // `done` here means "add MY check" (true) or "clear MY check" (false) — the
+  // backend only ever touches the calling mentor's own check on the item.
   const toggleCoverage = async (slug, done) => {
     setPendingSlug(slug);
     try {
@@ -361,7 +364,7 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         done,
       });
       updateTeamFromResponse(data);
-      showSnack(done ? "Coverage marked complete" : "Coverage cleared");
+      showSnack(done ? "Your check added" : "Your check cleared");
     } catch (e) {
       showSnack(e.message || "Couldn't update coverage", "error");
     } finally {
@@ -369,20 +372,18 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
     }
   };
 
+  // Click adds your check if you haven't signed off; clicking your own check
+  // clears it. Items already at the mentor cap (and not yours) are locked.
   const handleCoverageClick = (item) => {
-    const existing = checklist[item.slug];
-    if (existing?.done) {
-      setConfirmUncheck({ slug: item.slug, existing });
+    const checks = coverageChecks(checklist[item.slug]);
+    const mine = checks.some((c) => c.propel_id === myPropelId);
+    if (mine) {
+      toggleCoverage(item.slug, false);
+    } else if (checks.length >= COVERAGE_TARGET_MENTORS) {
+      // Fully covered by other mentors — nothing to do.
     } else {
       toggleCoverage(item.slug, true);
     }
-  };
-
-  const confirmUncheckAndRun = async () => {
-    if (!confirmUncheck) return;
-    const slug = confirmUncheck.slug;
-    setConfirmUncheck(null);
-    await toggleCoverage(slug, false);
   };
 
   const postNote = async () => {
@@ -484,12 +485,15 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
     }
   };
 
-  // -- "I'm here now" check-in (toggles intro_made if not already, otherwise just adds a note)
+  // -- "I'm here now" check-in (adds my intro_made check if room, else just a note)
   const checkInNow = async () => {
-    if (!checklist["intro_made"]?.done) {
+    const introChecks = coverageChecks(checklist["intro_made"]);
+    const mineIntro = introChecks.some((c) => c.propel_id === myPropelId);
+    const introFull = introChecks.length >= COVERAGE_TARGET_MENTORS;
+    if (!mineIntro && !introFull) {
       await toggleCoverage("intro_made", true);
     } else {
-      // Add an implicit note
+      // Already signed off (or item full) — fall back to dropping a note.
       setNoteDraft((d) => d || "Stopped by to check on the team.");
       // Scroll to composer
       setTimeout(() => noteFieldRef.current?.focus?.(), 50);
@@ -601,7 +605,7 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         sx={{
           height: 8,
           borderRadius: 4,
-          mb: 1.5,
+          mb: 1,
           backgroundColor: "rgba(0,0,0,0.06)",
           "& .MuiLinearProgress-bar": {
             background:
@@ -611,60 +615,115 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
           },
         }}
       />
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+        Each item wants sign-off from {COVERAGE_TARGET_MENTORS} different mentors — check
+        the ones you&apos;ve personally covered. An item turns green once{" "}
+        {COVERAGE_TARGET_MENTORS} mentors have it. You can clear your own check anytime.
+      </Typography>
       <List disablePadding>
         {MENTOR_COVERAGE_ITEMS.map((item, idx) => {
-          const state = checklist[item.slug] || {};
-          const done = !!state.done;
+          const checks = coverageChecks(checklist[item.slug]);
+          const count = checks.length;
+          const mine = checks.some((c) => c.propel_id === myPropelId);
+          const covered = count >= COVERAGE_TARGET_MENTORS;
+          const lockedForMe = covered && !mine;
           const isPending = pendingSlug === item.slug;
+          const clickable = canInteract && !isPending && (mine || !covered);
+
+          const countChip = (
+            <Chip
+              size="small"
+              variant={covered ? "filled" : "outlined"}
+              color={covered ? "success" : count > 0 ? "primary" : "default"}
+              label={
+                covered
+                  ? `${count}/${COVERAGE_TARGET_MENTORS} ✓`
+                  : `${count}/${COVERAGE_TARGET_MENTORS}`
+              }
+            />
+          );
+
           return (
             <React.Fragment key={item.slug}>
               {idx > 0 && <Divider component="li" />}
               <ListItem
-                onClick={canInteract && !isPending ? () => handleCoverageClick(item) : undefined}
+                onClick={clickable ? () => handleCoverageClick(item) : undefined}
                 sx={{
                   py: 1.25,
-                  cursor: canInteract && !isPending ? "pointer" : "default",
-                  backgroundColor: done ? "rgba(76,175,80,0.07)" : "transparent",
+                  cursor: clickable ? "pointer" : "default",
+                  backgroundColor: covered
+                    ? "rgba(76,175,80,0.07)"
+                    : count > 0
+                    ? "rgba(72,219,251,0.05)"
+                    : "transparent",
                   alignItems: "flex-start",
-                  "&:hover": canInteract && !isPending ? { backgroundColor: "rgba(72,219,251,0.07)" } : {},
+                  "&:hover": clickable ? { backgroundColor: "rgba(72,219,251,0.1)" } : {},
                 }}
                 secondaryAction={
-                  done && state.checked_by_name ? (
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      color="success"
-                      label={`${state.checked_by_name} · ${relativeTime(state.checked_at)}`}
-                    />
-                  ) : null
+                  lockedForMe ? (
+                    <Tooltip title={`Fully covered by ${COVERAGE_TARGET_MENTORS} mentors`}>
+                      {countChip}
+                    </Tooltip>
+                  ) : (
+                    countChip
+                  )
                 }
               >
                 <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}>
                   {isPending ? (
                     <CircularProgress size={20} />
-                  ) : done ? (
-                    <CheckCircleIcon sx={{ color: "success.main" }} />
+                  ) : mine ? (
+                    <Tooltip title="You checked this — tap to clear your check">
+                      <CheckCircleIcon sx={{ color: "success.main" }} />
+                    </Tooltip>
+                  ) : lockedForMe ? (
+                    <LockIcon sx={{ color: "success.light" }} />
+                  ) : canInteract ? (
+                    <AddCheckIcon sx={{ color: "primary.main" }} />
                   ) : (
-                    <UncheckedIcon sx={{ color: canInteract ? "primary.main" : "action.disabled" }} />
+                    <UncheckedIcon sx={{ color: "action.disabled" }} />
                   )}
                 </ListItemIcon>
                 <ListItemText
                   primary={
                     <Typography
                       variant="subtitle2"
-                      sx={{ fontWeight: 600, mr: { xs: 0, md: 12 } }}
+                      sx={{ fontWeight: 600, mr: { xs: 5, md: 9 } }}
                     >
                       {item.label}
                     </Typography>
                   }
                   secondary={
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", mt: 0.25 }}
-                    >
-                      {item.blurb}
-                    </Typography>
+                    <Box component="span" sx={{ display: "block", mt: 0.25 }}>
+                      <Typography variant="caption" color="text.secondary" component="span" sx={{ display: "block" }}>
+                        {item.blurb}
+                      </Typography>
+                      {count > 0 && (
+                        <Typography
+                          variant="caption"
+                          component="span"
+                          sx={{ display: "block", mt: 0.5, color: "text.secondary" }}
+                        >
+                          {checks
+                            .map(
+                              (c) =>
+                                `${c.propel_id === myPropelId ? "You" : c.name || "A mentor"}${
+                                  c.checked_at ? ` · ${relativeTime(c.checked_at)}` : ""
+                                }`
+                            )
+                            .join("  ·  ")}
+                        </Typography>
+                      )}
+                      {canInteract && !mine && !covered && (
+                        <Typography
+                          variant="caption"
+                          component="span"
+                          sx={{ display: "block", mt: 0.25, color: "primary.main", fontWeight: 600 }}
+                        >
+                          + Add your check
+                        </Typography>
+                      )}
+                    </Box>
                   }
                 />
               </ListItem>
@@ -946,28 +1005,6 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
       )}
 
       {/* --- Dialogs --- */}
-
-      <Dialog
-        open={!!confirmUncheck}
-        onClose={() => setConfirmUncheck(null)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Clear this coverage item?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This will remove{" "}
-            <strong>{confirmUncheck?.existing?.checked_by_name || "the previous mentor"}'s</strong>{" "}
-            mark on this item. Useful if the situation has changed.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmUncheck(null)}>Cancel</Button>
-          <Button color="warning" variant="contained" onClick={confirmUncheckAndRun}>
-            Clear it
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Dialog
         open={raiseFlagOpen}

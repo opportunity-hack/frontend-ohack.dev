@@ -9,18 +9,15 @@ import {
 } from "../../constants/teamStatus";
 import { statusLabel } from "../Teams/teamPageData";
 import {
-  MENTOR_COVERAGE_ITEMS,
   MENTOR_COVERAGE_TOTAL,
+  coverageDoneCount,
   relativeTime,
 } from "../Teams/mentorCoverage";
 
 // ---- derive one team's mentor-relevant signals from the raw team doc -------
 function deriveTeam(team, nonprofitMap) {
   const checklist = team?.mentor_checklist || {};
-  const coverage = MENTOR_COVERAGE_ITEMS.reduce(
-    (acc, it) => acc + (checklist[it.slug]?.done ? 1 : 0),
-    0
-  );
+  const coverage = coverageDoneCount(checklist);
   const openFlags =
     team?.mentor_open_flag_count != null
       ? Number(team.mentor_open_flag_count)
@@ -101,7 +98,7 @@ function CoverageCell({ d }) {
   return (
     <span
       className={`ohx-tag${full ? " ohx-tag--accent" : ""}`}
-      title={`${d.coverage} of ${MENTOR_COVERAGE_TOTAL} coverage items checked`}
+      title={`${d.coverage} of ${MENTOR_COVERAGE_TOTAL} coverage items fully covered (3 mentors each)`}
     >
       {d.coverage}/{MENTOR_COVERAGE_TOTAL}
     </span>

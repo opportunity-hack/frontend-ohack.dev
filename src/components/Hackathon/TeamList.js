@@ -55,8 +55,8 @@ import { isHackathonExpired } from '../../lib/dateUtils';
 import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
 import VideoDisplay from '../VideoDisplay/VideoDisplay';
 import {
-  MENTOR_COVERAGE_ITEMS,
   MENTOR_COVERAGE_TOTAL,
+  coverageDoneCount,
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
@@ -138,10 +138,7 @@ const JudgingReadinessStrip = ({ team }) => {
  */
 const MentorSupportSummary = ({ team, eventId }) => {
   const checklist = team?.mentor_checklist || {};
-  const doneCount = MENTOR_COVERAGE_ITEMS.reduce(
-    (acc, it) => acc + (checklist[it.slug]?.done ? 1 : 0),
-    0
-  );
+  const doneCount = coverageDoneCount(checklist);
   const openFlags = Number(team?.mentor_open_flag_count || 0);
   const lastTouchedAt = team?.mentor_last_touched_at;
   const lastTouchedBy = team?.mentor_last_touched_by_name;

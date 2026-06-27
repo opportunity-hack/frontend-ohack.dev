@@ -16,30 +16,26 @@ const DEMO_TEAM = {
   mentor_last_touched_at: minutesAgo(42),
   mentor_last_touched_by_name: "Sai M.",
   mentor_open_flag_count: 1,
+  // Per-mentor coverage: each item collects sign-off from up to 3 mentors.
+  // intro_made is fully covered (3/3); the rest show partial coverage.
   mentor_checklist: {
     intro_made: {
-      done: true,
-      checked_at: hoursAgo(20),
-      checked_by_propel_id: "demo-priya",
-      checked_by_name: "Priya R.",
+      checks: {
+        "demo-priya": { name: "Priya R.", checked_at: hoursAgo(20) },
+        "demo-greg": { name: "Greg V.", checked_at: hoursAgo(6) },
+        "demo-sai": { name: "Sai M.", checked_at: minutesAgo(42) },
+      },
     },
     scope_reviewed: {
-      done: true,
-      checked_at: hoursAgo(18),
-      checked_by_propel_id: "demo-priya",
-      checked_by_name: "Priya R.",
+      checks: {
+        "demo-priya": { name: "Priya R.", checked_at: hoursAgo(18) },
+        "demo-greg": { name: "Greg V.", checked_at: hoursAgo(5) },
+      },
     },
     architecture_discussed: {
-      done: true,
-      checked_at: hoursAgo(6),
-      checked_by_propel_id: "demo-greg",
-      checked_by_name: "Greg V.",
-    },
-    repo_health_checked: {
-      done: true,
-      checked_at: hoursAgo(4),
-      checked_by_propel_id: "demo-greg",
-      checked_by_name: "Greg V.",
+      checks: {
+        "demo-greg": { name: "Greg V.", checked_at: hoursAgo(6) },
+      },
     },
   },
   mentor_flags: [
