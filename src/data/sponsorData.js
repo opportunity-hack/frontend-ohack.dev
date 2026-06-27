@@ -62,6 +62,27 @@ export const sponsors = [
     donations: 2000,
     website: "https://thebuzzeatery.com/",
   },
+  {
+    name: "GoDaddy",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/godaddy.webp",
+    hours: 72,
+    donations: 0,
+    website: "https://godaddy.com",
+  },
+  {
+    name: "Microchip",
+    logo: "https://cdn.ohack.dev/sponsors/1774211236001_mchp-logo-vertical-4c.png",
+    hours: 36,
+    donations: 0,
+    website: "https://www.microchip.com",
+  },
+  {
+    name: "IQVIA",
+    logo: "https://cdn.ohack.dev/ohack.dev/sponsors/iqvia.webp",
+    hours: 22,
+    donations: 0,
+    website: "https://www.iqvia.com",
+  }
 ];
 
 export const calculateSupport = (hours, donations) => hours * 100 + donations;

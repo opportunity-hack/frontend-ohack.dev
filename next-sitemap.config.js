@@ -54,6 +54,7 @@ module.exports = {
       path.includes("judge") ||
       path.includes("mentor") ||
       path.includes("sponsor") ||
+      path.includes("recruit") ||
       path.includes("hackathon") ||
       path.includes("social-good") ||
       path.includes("nonprofits")

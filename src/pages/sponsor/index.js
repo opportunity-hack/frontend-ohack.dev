@@ -108,6 +108,10 @@ export default function SponsorIndexList() {
             )}
             <a href="#sponsorship-levels" className="ohx-btn ohx-btn--ghost" onClick={(e) => { e.preventDefault(); document.getElementById("sponsorship-levels")?.scrollIntoView({ behavior: "smooth" }); }}>See levels &amp; benefits</a>
           </div>
+          <p className="ohx-muted rise" style={{ marginTop: 18, fontSize: "0.95rem", animationDelay: "300ms" }}>
+            Hiring engineers, PMs, or designers?{" "}
+            <Link href="/recruit-tech-talent" className="ohx-link">Recruit tech talent at Opportunity Hack <Arrow /></Link>
+          </p>
         </section>
 
         {/* CURRENT OPPORTUNITIES */}

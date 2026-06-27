@@ -81,6 +81,14 @@ const INQUIRY_TYPES = [
     linkText: "Sponsorship Details",
   },
   {
+    value: "recruit",
+    label: "Recruiting / Hiring Talent",
+    description:
+      "Hire engineers, PMs, TPMs & designers who ship real software. Sponsor for résumé access & on-site recruiting",
+    link: "/sponsor",
+    linkText: "See Sponsorship & Résumé Access",
+  },
+  {
     value: "nonprofit",
     label: "Nonprofit Information",
     description: "Information for nonprofits interested in participating",

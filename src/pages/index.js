@@ -365,9 +365,12 @@ export default function Home() {
               />
             ))}
           </div>
-          <div style={{ marginTop: 32 }}>
+          <div style={{ marginTop: 32, display: "flex", flexWrap: "wrap", gap: 24, justifyContent: "center" }}>
             <Link href="/sponsor" className="ohx-link">
               Become a sponsor <Arrow />
+            </Link>
+            <Link href="/recruit-tech-talent" className="ohx-link">
+              Hiring? Recruit tech talent <Arrow />
             </Link>
           </div>
         </section>
