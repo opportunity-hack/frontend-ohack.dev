@@ -723,3 +723,11 @@ React.useEffect(() => {
 ```
 
 For social-unfurl-quality previews (Slack, Twitter, LinkedIn) the URL also needs an SSR route that emits per-item OG meta tags — query-param-based opens won't unfurl. See `src/pages/hack/[event_id]/plan/c/[card_id].js` for the pattern (separate SSR route with `getServerSideProps`, fetches the item server-side, emits `og:title` / `og:description` / `og:image`, then re-renders the parent page with the dialog pre-opened).
+
+## Event Feedback Surveys (`/hack/[event_id]/survey` and `/hack/[event_id]/feedback`)
+
+Post/live-event feedback for selected volunteers + nonprofit partners. Both routes render the same `src/components/Survey/EventSurvey.js` (`dynamic` `ssr:false`, wrapped in `ReCaptchaProvider`); `feedback.js` is just an alias of `survey.js` (passes `source="feedback"`). Distinct from `/feedback/[userid]` (peer feedback) and the backend `feedback` collection — this writes the backend `surveys` collection.
+
+- **Question catalog** is pure data in `src/components/Survey/surveyQuestions.js`: `SURVEY_QUESTIONS` + `getSurveyQuestions(role, mode)`. 4 universal (+ the `role` selector, handled in the component, = 5) then per-role blocks (hacker 15 / mentor 5 / judge 6 / nonprofit 6 / volunteer 4). Each question has `roles` (`"all"` or array), `mode` (`live|post|both`), `type`, optional `showIf(answers, mode)`. Answer IDs are stable across modes (`first_timer`, `mentor_unreachable` intentionally shared) so live + post merge. Composite types (`scale_text`, `yesno_text`) store `{ value, note }`.
+- **Flow**: component reads `GET /api/surveys/<event_id>/context` (mode + eligible roles + `requires_captcha` + `already_submitted`) using the PropelAuth token when present, then `POST /api/surveys/<event_id>/responses`. Only currently-visible (showIf-passing) answers are sent, so switching role doesn't carry stale answers. `role` is stored top-level and mirrored into `answers.role`.
+- **Auth/CAPTCHA**: not gated by `RequiredAuthProvider` — nonprofits/anonymous can submit. Logged-in `isSelected` volunteers are trusted (no CAPTCHA); everyone else gets an invisible reCAPTCHA v3 token (`useRecaptcha`). Mode `upcoming` shows a "not started yet" card; `live`→"how's it going", `post`→"how was your experience". Pages are `noindex`. Backend computes mode (timezone-aware) — the frontend does NOT recompute dates.
