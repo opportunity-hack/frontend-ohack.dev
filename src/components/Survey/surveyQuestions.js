@@ -121,9 +121,12 @@ export const SURVEY_QUESTIONS = [
     id: "hacker_onboarding",
     roles: ["hacker"],
     mode: "post",
-    type: "scale",
+    type: "scale_text",
     label: "How was onboarding (Slack / GitHub / DevPost / check-in)?",
     scaleLabels: RATING,
+    // Only ask "what went wrong" when the score isn't positive (1–3).
+    noteWhen: (v) => typeof v === "number" && v <= 3,
+    textLabel: "What could be improved?",
   },
   {
     id: "first_timer",

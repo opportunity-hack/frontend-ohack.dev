@@ -172,22 +172,32 @@ function QuestionField({ q, mode, value, onChange }) {
     case "text":
       control = <TextInput value={value ?? ""} onChange={onChange} placeholder={q.placeholder} />;
       break;
-    case "scale_text":
+    case "scale_text": {
+      const scaleVal = composite ? value.value ?? null : null;
+      // `noteWhen` (e.g. onboarding) reveals the text box only on low scores;
+      // without it the note is always shown.
+      const showNote = !q.noteWhen || q.noteWhen(scaleVal);
       control = (
         <div style={{ display: "grid", gap: 12 }}>
           <ScaleInput
-            value={composite ? value.value : null}
-            onChange={(v) => onChange({ value: v, note: composite ? value.note || "" : "" })}
+            value={scaleVal}
+            onChange={(v) => {
+              const keepNote = !q.noteWhen || q.noteWhen(v);
+              onChange({ value: v, note: keepNote && composite ? value.note || "" : "" });
+            }}
             labels={q.scaleLabels}
           />
-          <TextInput
-            value={composite ? value.note || "" : ""}
-            onChange={(t) => onChange({ value: composite ? value.value ?? null : null, note: t })}
-            placeholder={q.textLabel}
-          />
+          {showNote && (
+            <TextInput
+              value={composite ? value.note || "" : ""}
+              onChange={(t) => onChange({ value: scaleVal, note: t })}
+              placeholder={q.textLabel}
+            />
+          )}
         </div>
       );
       break;
+    }
     case "yesno_text":
       control = (
         <div style={{ display: "grid", gap: 12 }}>
@@ -279,12 +289,6 @@ export default function EventSurvey({ source = "survey" }) {
           setLoadError(data.error || "Could not load the feedback form.");
         } else {
           setCtx(data);
-          setRole((prev) => {
-            if (prev) return prev;
-            if (data.primary_role) return data.primary_role;
-            if (!data.logged_in) return "nonprofit";
-            return "";
-          });
         }
       })
       .catch((err) => {
@@ -302,6 +306,14 @@ export default function EventSurvey({ source = "survey" }) {
       cancelled = true;
     };
   }, [eventId, isLoggedIn, accessToken]);
+
+  // Keep the selected role within what the user is allowed to submit. A logged-in
+  // volunteer can only choose a role they're isSelected for; everyone else → nonprofit.
+  useEffect(() => {
+    if (!ctx) return;
+    const allowed = ctx.allowed_roles?.length ? ctx.allowed_roles : ["nonprofit"];
+    setRole((prev) => (allowed.includes(prev) ? prev : ctx.primary_role || allowed[0] || ""));
+  }, [ctx]);
 
   const visibleQuestions = useMemo(() => {
     if (!role || !mode) return [];
@@ -445,6 +457,12 @@ export default function EventSurvey({ source = "survey" }) {
   const isGuest = !ctx?.logged_in;
   const loggedInNotEligible = ctx?.logged_in && ctx?.eligible === false;
 
+  // You may only give feedback for the role you were selected for; nonprofits
+  // (and anyone not on the volunteer list) get the nonprofit form.
+  const allowedRoleValues = ctx?.allowed_roles?.length ? ctx.allowed_roles : ["nonprofit"];
+  const allowedRoleOptions = ROLE_OPTIONS.filter((r) => allowedRoleValues.includes(r.value));
+  const fixedRole = allowedRoleOptions.length === 1 ? allowedRoleOptions[0] : null;
+
   return (
     <Shell>
       <header style={{ maxWidth: 680, margin: "0 auto 28px" }}>
@@ -473,23 +491,53 @@ export default function EventSurvey({ source = "survey" }) {
       </header>
 
       <div style={{ maxWidth: 680, margin: "0 auto", display: "grid", gap: 16 }}>
-        {/* Universal: role */}
+        {/* Universal: role — limited to the role(s) you're selected for */}
         <div className="ohx-card" style={{ padding: "20px 22px", display: "grid", gap: 12 }}>
           <label style={{ fontWeight: 600, fontSize: "1.05rem" }}>
-            What's your role today?<span style={{ color: "var(--accent)" }}> *</span>
+            {fixedRole ? "You're giving feedback as" : "What's your role today?"}
+            <span style={{ color: "var(--accent)" }}> *</span>
           </label>
-          <ChoiceInput
-            options={ROLE_OPTIONS.map((r) => r.label)}
-            value={ROLE_OPTIONS.find((r) => r.value === role)?.label ?? null}
-            onChange={(label) => {
-              const found = ROLE_OPTIONS.find((r) => r.label === label);
-              setRole(found ? found.value : "");
-            }}
-          />
+
+          {fixedRole ? (
+            <div>
+              <span
+                style={{
+                  display: "inline-block",
+                  fontWeight: 600,
+                  padding: "0.45em 0.9em",
+                  borderRadius: 4,
+                  background: "var(--brand)",
+                  color: "#fff",
+                }}
+              >
+                {fixedRole.label}
+              </span>
+            </div>
+          ) : (
+            <>
+              <ChoiceInput
+                options={allowedRoleOptions.map((r) => r.label)}
+                value={allowedRoleOptions.find((r) => r.value === role)?.label ?? null}
+                onChange={(label) => {
+                  const found = allowedRoleOptions.find((r) => r.label === label);
+                  setRole(found ? found.value : "");
+                }}
+              />
+              <div style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
+                You were selected for more than one role — pick the one you're giving feedback as.
+              </div>
+            </>
+          )}
+
           {loggedInNotEligible && (
             <div style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
-              We collect feedback from selected volunteers and nonprofit partners. If you took part
-              and don't see your role marked, just pick it above — your response still counts.
+              You're not listed as a selected volunteer for this event, so this form is for our
+              nonprofit partners. If that's not right, reach out to the organizers.
+            </div>
+          )}
+          {isGuest && (
+            <div style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
+              Nonprofit partner feedback — no login needed.
             </div>
           )}
         </div>
