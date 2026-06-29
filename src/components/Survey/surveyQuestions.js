@@ -240,7 +240,7 @@ export const SURVEY_QUESTIONS = [
     roles: ["mentor"],
     mode: "both",
     type: "scale",
-    label: "Were your responsibilities and on-call expectations clear?",
+    label: "Were your responsibilities and time commitments clear?",
     scaleLabels: RATING,
   },
   {
