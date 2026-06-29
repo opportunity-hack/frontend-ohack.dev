@@ -28,6 +28,7 @@ import { parseLocalDate } from "../../../../../lib/dateUtils";
 import { RefinedFonts, RefinedRoot, Eyebrow } from "../../../../../components/design/refined";
 import useTeamMembership from "../../../../../hooks/use-team-membership";
 import TeamBreadcrumbs from "../../../../../components/Teams/TeamBreadcrumbs";
+import SurveyCTA from "../../../../../components/Survey/SurveyCTA";
 import TeamMentorSummaryCard from "../../../../../components/Teams/TeamMentorSummaryCard";
 import TeamCompletionSummaryCard from "../../../../../components/Teams/TeamCompletionSummaryCard";
 
@@ -485,6 +486,13 @@ export default function TeamDetailPage({
 
           <hr className="ohx-rule" style={{ marginTop: 24 }} />
         </Box>
+
+        <SurveyCTA
+          eventId={event_id}
+          startDate={event?.start_date}
+          endDate={event?.end_date}
+          timezone={event?.timezone}
+        />
 
         {/* Member nudge — one combined notice for missing links */}
         {showMemberNudge && (

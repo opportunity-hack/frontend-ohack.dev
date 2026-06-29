@@ -36,6 +36,7 @@ import NonprofitSelectionStep from "../../../components/TeamCreation/NonprofitSe
 import ConfirmationSummary from "../../../components/TeamCreation/ConfirmationSummary";
 import TeamStatusPanel from "../../../components/TeamCreation/TeamStatusPanel";
 import { RefinedRoot, RefinedFonts } from "../../../components/design/refined";
+import SurveyCTA from "../../../components/Survey/SurveyCTA";
 
 const steps = [
   "Team Details",
@@ -761,6 +762,13 @@ const ManageTeamComponent = () => {
             {!myTeams || myTeams.length === 0 ? "Create a team" : "Your team"}
           </h1>
         </Box>
+
+        <SurveyCTA
+          eventId={event_id}
+          startDate={event?.start_date}
+          endDate={event?.end_date}
+          timezone={event?.timezone}
+        />
 
         {/* Team Status Hub */}
         <div id="team-hub">
