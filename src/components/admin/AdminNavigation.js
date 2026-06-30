@@ -42,6 +42,7 @@ import {
   ContactMail as ContactMailIcon,
   Storefront as StorefrontIcon,
   Article as ArticleIcon,
+  Feedback as FeedbackIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -88,6 +89,11 @@ const adminPages = [
     path: "/admin/hackathon-requests",
     label: "Hackathon Requests",
     icon: <RequestIcon style={{ color: "#e91e63" }} />
+  },
+  {
+    path: "/admin/feedback",
+    label: "Feedback",
+    icon: <FeedbackIcon style={{ color: "#7b1fa2" }} />
   },
   {
     path: "/admin/contact",

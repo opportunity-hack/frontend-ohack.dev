@@ -246,6 +246,29 @@ const Card = ({ children, style }) => (
   </div>
 );
 
+// Module scope: a Shell defined inside EventSurvey would be a new component type
+// on every render, remounting the whole form (and dropping textarea focus mid-type).
+function Shell({ eventTitle, children }) {
+  return (
+    <RefinedRoot>
+      <Head>
+        <title>
+          {eventTitle ? `Feedback · ${eventTitle}` : "Event feedback"} — Opportunity Hack
+        </title>
+        <meta name="robots" content="noindex" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <RefinedFonts />
+      </Head>
+      <div
+        className="ohx-wrap"
+        style={{ paddingTop: "clamp(80px, 12vh, 110px)", paddingBottom: 72 }}
+      >
+        {children}
+      </div>
+    </RefinedRoot>
+  );
+}
+
 /**
  * Event feedback survey. Renders at /hack/[event_id]/survey and /feedback.
  * Public route: logged-in selected volunteers are verified server-side and
@@ -382,27 +405,9 @@ export default function EventSurvey({ source = "survey" }) {
 
   // ----------------------------------------------------------------- rendering
 
-  const head = (
-    <Head>
-      <title>{eventTitle ? `Feedback · ${eventTitle}` : "Event feedback"} — Opportunity Hack</title>
-      <meta name="robots" content="noindex" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <RefinedFonts />
-    </Head>
-  );
-
-  const Shell = ({ children }) => (
-    <RefinedRoot>
-      {head}
-      <div className="ohx-wrap" style={{ paddingTop: "clamp(80px, 12vh, 110px)", paddingBottom: 72 }}>
-        {children}
-      </div>
-    </RefinedRoot>
-  );
-
   if (loading) {
     return (
-      <Shell>
+      <Shell eventTitle={eventTitle}>
         <div style={{ display: "flex", justifyContent: "center", padding: 64 }}>
           <CircularProgress sx={{ color: "var(--brand)" }} />
         </div>
@@ -412,7 +417,7 @@ export default function EventSurvey({ source = "survey" }) {
 
   if (loadError) {
     return (
-      <Shell>
+      <Shell eventTitle={eventTitle}>
         <Card>
           <h1 className="ohx-display" style={{ fontSize: "1.6rem" }}>Feedback</h1>
           <p className="ohx-muted" style={{ marginTop: 12 }}>{loadError}</p>
@@ -423,7 +428,7 @@ export default function EventSurvey({ source = "survey" }) {
 
   if (mode === "upcoming") {
     return (
-      <Shell>
+      <Shell eventTitle={eventTitle}>
         <Card style={{ textAlign: "center" }}>
           <p className="ohx-eyebrow">{eventTitle}</p>
           <h1 className="ohx-display" style={{ fontSize: "1.8rem", marginTop: 8 }}>
@@ -439,7 +444,7 @@ export default function EventSurvey({ source = "survey" }) {
 
   if (submitted) {
     return (
-      <Shell>
+      <Shell eventTitle={eventTitle}>
         <Card style={{ textAlign: "center" }}>
           <p className="ohx-eyebrow">{eventTitle}</p>
           <h1 className="ohx-display" style={{ fontSize: "2rem", marginTop: 8 }}>
@@ -464,7 +469,7 @@ export default function EventSurvey({ source = "survey" }) {
   const fixedRole = allowedRoleOptions.length === 1 ? allowedRoleOptions[0] : null;
 
   return (
-    <Shell>
+    <Shell eventTitle={eventTitle}>
       <header style={{ maxWidth: 680, margin: "0 auto 28px" }}>
         <p className="ohx-eyebrow">
           {eventTitle ? `${eventTitle} · ` : ""}
