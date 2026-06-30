@@ -46,6 +46,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
+import SurveyCTA from "../../../components/Survey/SurveyCTA";
 import LoginOrRegister from "../../../components/LoginOrRegister/LoginOrRegister2";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
@@ -2162,6 +2163,15 @@ const JudgeApplicationComponent = () => {
         >
           Judge Application
         </Typography>
+
+        {/* Feedback CTA — selected judges, once the event is live or ended */}
+        {isSelected && (
+          <SurveyCTA
+            eventId={event_id}
+            startDate={eventData?.startDate}
+            endDate={eventData?.endDate}
+          />
+        )}
 
         {/* QR Code for Check-in */}
         <VolunteerCheckInQR

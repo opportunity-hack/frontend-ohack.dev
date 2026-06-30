@@ -29,6 +29,7 @@ import {
   Dashboard as DashboardIcon,
   Share as ShareIcon,
   Article as ArticleIcon,
+  Feedback as FeedbackIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -110,6 +111,12 @@ const adminPages = [
     label: "Blog",
     description: "Write, edit, and manage blog posts with markdown + SEO",
     icon: <ArticleIcon fontSize="large" style={{ color: "#093170" }} />
+  },
+  {
+    path: "/admin/feedback",
+    label: "Feedback",
+    description: "Review event surveys, peer feedback, and onboarding feedback",
+    icon: <FeedbackIcon fontSize="large" style={{ color: "#7b1fa2" }} />
   },
 ];
 

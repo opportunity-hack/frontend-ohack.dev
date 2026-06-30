@@ -20,6 +20,7 @@ import {
 import Script from "next/script";
 import NextLink from "next/link";
 import { RefinedRoot, RefinedFonts } from "../../components/design/refined";
+import SurveyCTA from "../../components/Survey/SurveyCTA";
 import TableOfContents from "../../components/Hackathon/TableOfContents";
 import FloatingNavigation from "../../components/Hackathon/FloatingNavigation";
 
@@ -757,6 +758,15 @@ export default function HackathonEvent({ eventData }) {
             endDate={event.end_date}
             location={event.location}
             description={event.description}
+          />
+
+          {/* Feedback CTA — visible once the event is live or has ended.
+              Reaches everyone who lands here, including nonprofit partners. */}
+          <SurveyCTA
+            eventId={event.event_id || event_id}
+            startDate={event.start_date}
+            endDate={event.end_date}
+            timezone={event.timezone}
           />
 
           {/* Expired-event recapture band — links to upcoming events so

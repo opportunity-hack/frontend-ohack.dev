@@ -27,6 +27,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { RefinedFonts, RefinedRoot, Eyebrow } from '../../../components/design/refined';
 import TeamBreadcrumbs from '../../../components/Teams/TeamBreadcrumbs';
 import MentorTeamsTable from '../../../components/Mentor/MentorTeamsTable';
+import SurveyCTA from '../../../components/Survey/SurveyCTA';
 
 const MentorCheckinPage = () => {
   const router = useRouter();
@@ -758,6 +759,12 @@ const MentorCheckinPage = () => {
           </Box>
           <hr className="ohx-rule" style={{ marginTop: 24 }} />
         </Box>
+
+        <SurveyCTA
+          eventId={event_id}
+          startDate={eventData?.startDate}
+          endDate={eventData?.endDate}
+        />
 
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
