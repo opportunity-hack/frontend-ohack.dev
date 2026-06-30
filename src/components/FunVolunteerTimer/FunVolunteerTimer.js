@@ -1,81 +1,94 @@
-import React, { useState, useEffect } from "react";
-import { Box, Typography, keyframes } from "@mui/material";
-import { styled } from "@mui/system";
+import React from "react";
 
-const pulse = keyframes`
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-`;
+// Refined navy progress ring for the live volunteering session.
+// Self-contained with CSS-var fallbacks so it renders correctly inside a
+// <RefinedRoot> (navy + warm hairline) and on plain surfaces alike.
+//
+// The ring FILLS as elapsed time grows toward the committed total. The headline
+// is the time volunteered so far (actual time) — that's what we want people to
+// watch — with the remaining time as a quiet caption underneath.
 
-const TimerContainer = styled(Box)(({ theme }) => ({
-  position: "relative",
-  width: "200px",
-  height: "200px",
-  margin: "20px auto",
-  animation: `${pulse} 2s infinite ease-in-out`,
-}));
-
-const CircularProgress = styled("div")(({ theme, percentage }) => ({
-  position: "absolute",
-  height: "100%",
-  width: "100%",
-  borderRadius: "50%",
-  background: `conic-gradient(
-    ${theme.palette.primary.main} ${percentage}%,
-    ${theme.palette.grey[300]} ${percentage}%
-  )`,
-  transition: "all 0.5s ease",
-}));
-
-const InnerCircle = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  top: "10%",
-  left: "10%",
-  right: "10%",
-  bottom: "10%",
-  borderRadius: "50%",
-  background: theme.palette.background.paper,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexDirection: "column",
-}));
+const formatTime = (seconds) => {
+  const s = Math.max(0, Math.floor(seconds || 0));
+  const hours = Math.floor(s / 3600);
+  const minutes = Math.floor((s % 3600) / 60);
+  const secs = s % 60;
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
 
 const FunVolunteerTimer = ({ timeLeft, totalTime }) => {
-  const [percentage, setPercentage] = useState(100);
+  const total = totalTime > 0 ? totalTime : 1;
+  const elapsed = Math.min(total, Math.max(0, total - timeLeft));
+  const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+  const isComplete = timeLeft <= 0;
 
-  useEffect(() => {
-    setPercentage((timeLeft / totalTime) * 100);
-  }, [timeLeft, totalTime]);
-
-  const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+  const brand = "var(--brand, #1B3A6B)";
+  const track = "var(--line, #E7E1D4)";
 
   return (
-    <TimerContainer>
-      <CircularProgress percentage={percentage} />
-      <InnerCircle>
-        <Typography variant="h4" color="primary" fontWeight="bold">
-          {formatTime(timeLeft)}
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          Time Left
-        </Typography>
-      </InnerCircle>
-    </TimerContainer>
+    <div
+      style={{
+        position: "relative",
+        width: 220,
+        height: 220,
+        margin: "8px auto 0",
+      }}
+      role="timer"
+      aria-label={`${formatTime(elapsed)} volunteered of ${formatTime(total)} committed`}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: "50%",
+          background: `conic-gradient(${brand} ${pct}%, ${track} ${pct}%)`,
+          transition: "background 0.6s ease",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: "11%",
+          borderRadius: "50%",
+          background: "var(--surface, #ffffff)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 2,
+        }}
+      >
+        <span
+          className="ohx-eyebrow"
+          style={{ letterSpacing: "0.16em", fontSize: "0.6rem" }}
+        >
+          {isComplete ? "Complete" : "Volunteered"}
+        </span>
+        <span
+          className="ohx-display"
+          style={{
+            fontSize: "2.1rem",
+            fontWeight: 500,
+            color: brand,
+            lineHeight: 1.05,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {formatTime(elapsed)}
+        </span>
+        <span
+          style={{
+            fontSize: "0.78rem",
+            color: "var(--muted, #5B6270)",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {isComplete ? "Goal reached 🎉" : `${formatTime(timeLeft)} left`}
+        </span>
+      </div>
+    </div>
   );
 };
 

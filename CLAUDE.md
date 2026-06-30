@@ -278,6 +278,21 @@ if (env.TWITTER_API_KEY && env.TWITTER_API_SECRET) {
 3. Add environment variables to `.env`
 4. Update `SUPPORTED_PLATFORMS` in `src/lib/social-media/index.js`
 
+## Volunteer Time Tracking (`/volunteer/track`)
+
+Refined rewrite (`RefinedRoot` + `.ohx-*`, navy/terracotta, native form controls — no MUI for inputs). Page is wrapped in `withAuthInfo` (client-rendered), which has two load-bearing consequences:
+
+- **Fonts are injected via `useEffect`, NOT `<RefinedFonts/>`.** On this page `next/head` silently drops the Google Fonts `<link>`s (the `<Head>` lives in the client-rendered withAuthInfo subtree next to the JSON-LD `<script>` + meta). A one-time effect appends the Fraunces/Hanken stylesheet to `document.head` (guarded by `#ohx-refined-fonts`). Don't revert to `<RefinedFonts/>` here — it renders as serif fallback.
+- **Verify with cache disabled** (Next 16 dev stale-chunk gotcha) — a plain reload serves old JS and the change looks like it didn't apply.
+
+**Tracking model = two numbers: committed vs actively-tracked.**
+- **Live session** (`FunVolunteerTimer`) is **wall-clock based**. Start POSTs `{commitmentHours, reason}` and persists `{startEpoch, commitmentHours, reason}` to `localStorage["volunteeringSession"]`. Elapsed = `now − startEpoch`, **capped at the committed total** (prevents overnight runaway) — survives refresh/background tabs (was `setTimeout` tick-counting, which throttled in bg tabs and lost the session on refresh via a stale-`isVolunteering` save). Auto-finalizes (POST `finalHours`) when elapsed hits the commitment; manual "End" POSTs elapsed. Legacy `localStorage["volunteeringState"]` is cleared on load.
+- **Manual log** ("Log time you already did"): POSTs `{commitmentHours:h, finalHours:h, reason, manual:true, timestamp}` — one entry carrying BOTH so both totals + the table row reflect it (`manual` tag shown). Backdates via `timestamp`.
+- Date range uses native `<input type=date>`; fetch normalizes to start-of-day/**end-of-day** ISO so the selected end day is inclusive (the old MUI DatePicker sent local-midnight → UTC, excluding same-day sessions).
+- `FunVolunteerTimer` ring shows elapsed filling toward the commitment; `VolunteerStatsTable` is a hairline day-grouped table. Both use CSS-var fallbacks so they render refined inside `RefinedRoot`. On-theme `Toast` (not MUI Snackbar); single inline error (no Alert+Snackbar duplicate).
+
+**Backend** (`backend-ohack.dev/services/users_service.py`): `save_volunteering_time`/`get_volunteering_time` go through `_resolve_and_ensure_user()` which **lazily creates the `users` doc** — new users with no profile doc previously 404'd on both read and write (the "Failed to load your volunteer data" bug + couldn't start a session). `get_volunteering_time` returns `([],0,0)` (never None/404) and filters in ONE pass (an entry may carry `commitmentHours`, `finalHours`, or both — no duplicate table rows).
+
 ## Volunteer Letter Generator (`/hack/[event_id]/letters`)
 
 Self-service page where a volunteer answers a branching checklist that _picks_ one of four letter types (General Volunteer, SE/OPT, Mentor, Judge), fills details against a live preview, and submits to OHack to review/sign. Auth-gated (`RequiredAuthProvider`, like the application forms) with profile prefill of recipient name/email.
