@@ -25,6 +25,7 @@ import Image from "next/image";
 import Head from "next/head";
 import { useEnv } from "../../context/env.context";
 import { TIERS, getTierForHearts } from "../../lib/heartTiers";
+import { trackEvent } from "../../lib/ga";
 
 export default function CommunityChampions() {
   const { apiServerUrl } = useEnv();
@@ -32,6 +33,22 @@ export default function CommunityChampions() {
   const [search, setSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table");
+
+  useEffect(() => {
+    trackEvent({
+      action: "community_champions_view_mode",
+      params: { view_mode: "table", interaction: "page_load" },
+    });
+  }, []);
+
+  const handleViewModeChange = (_, val) => {
+    if (!val || val === viewMode) return;
+    setViewMode(val);
+    trackEvent({
+      action: "community_champions_view_mode",
+      params: { view_mode: val, interaction: "toggle" },
+    });
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -295,7 +312,7 @@ export default function CommunityChampions() {
             <ToggleButtonGroup
               value={viewMode}
               exclusive
-              onChange={(_, val) => val && setViewMode(val)}
+              onChange={handleViewModeChange}
               size="small"
               aria-label="Community champions display mode"
               sx={{
