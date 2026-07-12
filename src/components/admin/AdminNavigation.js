@@ -43,6 +43,7 @@ import {
   Storefront as StorefrontIcon,
   Article as ArticleIcon,
   Feedback as FeedbackIcon,
+  SmartToy as SmartToyIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -145,6 +146,11 @@ const adminPages = [
     path: "/admin/blog",
     label: "Blog",
     icon: <ArticleIcon style={{ color: "#093170" }} />
+  },
+  {
+    path: "/admin/praise-bot",
+    label: "Praise Bot",
+    icon: <SmartToyIcon style={{ color: "#611f69" }} />
   },
   // {
   //   path: "/admin/store",

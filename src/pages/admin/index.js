@@ -30,6 +30,7 @@ import {
   Share as ShareIcon,
   Article as ArticleIcon,
   Feedback as FeedbackIcon,
+  SmartToy as SmartToyIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -117,6 +118,12 @@ const adminPages = [
     label: "Feedback",
     description: "Review event surveys, peer feedback, and onboarding feedback",
     icon: <FeedbackIcon fontSize="large" style={{ color: "#7b1fa2" }} />
+  },
+  {
+    path: "/admin/praise-bot",
+    label: "Praise Bot",
+    description: "Configure GitHub digests, mentor rollups, calendar reminders, and community features for the Slack bot",
+    icon: <SmartToyIcon fontSize="large" style={{ color: "#611f69" }} />
   },
 ];
 
