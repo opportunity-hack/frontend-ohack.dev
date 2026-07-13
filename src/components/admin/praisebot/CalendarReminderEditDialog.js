@@ -105,13 +105,13 @@ const CalendarReminderEditDialog = ({ open, onClose, reminder, onSave }) => {
             />
           </Box>
           <TextField
-            label="Public Google Calendar ID"
+            label="Public Google Calendar ID or share link"
             value={form.calendar_id}
             onChange={(e) => set("calendar_id")(e.target.value)}
             error={Boolean(errors.calendar_id)}
             helperText={
               errors.calendar_id ||
-              "e.g. c_…@group.calendar.google.com — the calendar must be public (read via its ICS feed)"
+              "Paste the calendar ID (c_…@group.calendar.google.com) or any Google Calendar share/embed/ICS link — the ID is extracted on save. The calendar must be public."
             }
           />
           <TextField
