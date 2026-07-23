@@ -435,6 +435,9 @@ export default function ProblemStatement({
 
   const copyProjectLink = "project/" + problem_statement.id;
 
+  // Live projects don't need new volunteers; maintenance-status projects still do.
+  const isProduction = problem_statement.status === "production";
+
   // Dynamic heading element driven by headingLevel prop
   const TitleTag = headingLevel;
 
@@ -844,8 +847,11 @@ export default function ProblemStatement({
           </Box>
         </div>
 
-        {/* Help toggle */}
-        <div style={{ marginBottom: 28 }}>{renderHelpToggle()}</div>
+        {/* Help toggle — hidden on production projects, except for existing
+            helpers so they can still toggle themselves off */}
+        {(!isProduction || help_checked === "checked") && (
+          <div style={{ marginBottom: 28 }}>{renderHelpToggle()}</div>
+        )}
 
         {/* CTA */}
         {renderCallToAction()}
