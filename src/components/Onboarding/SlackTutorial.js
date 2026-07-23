@@ -32,7 +32,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { useEnv } from '../../context/env.context';
 
 // Styled components
 const TabContent = styled(Box)(({ theme }) => ({
@@ -70,6 +69,38 @@ const StepNumber = styled(Box)(({ theme }) => ({
   fontFamily: 'system-ui, Arial, sans-serif',
 }));
 
+import StepHeader from './StepHeader';
+
+const NAVY = '#1B3A6B';
+
+// Real workspace channels with their Slack deep links.
+const KEY_CHANNELS = [
+  {
+    name: '#introductions',
+    url: 'https://opportunity-hack.slack.com/archives/C01EY49JV8U',
+    description:
+      'Say hello and tell the community who you are. The next step of this onboarding helps you write a great introduction.'
+  },
+  {
+    name: '#ask-a-mentor',
+    url: 'https://opportunity-hack.slack.com/archives/C01E5CGDQ74',
+    description:
+      'Stuck on anything technical — code, architecture, tooling? Ask here any time and experienced mentors will help.'
+  },
+  {
+    name: '#random',
+    url: 'https://opportunity-hack.slack.com/archives/C06BRHRS5BQ',
+    description:
+      'Off-topic chat, wins, memes, and getting to know the people behind the projects.'
+  },
+  {
+    name: '#npo-… project channels',
+    url: null,
+    description:
+      "Every nonprofit project has its own #npo- channel — that's where you ask for details about the project and find people to team up with. Find the channel on the project's page at ohack.dev/projects."
+  }
+];
+
 /**
  * TabPanel component for the tutorial tabs
  */
@@ -96,8 +127,6 @@ function TabPanel(props) {
 const SlackTutorial = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [praiseBotExpanded, setPraiseBotExpanded] = useState(false);
-  const { slackSignupUrl } = useEnv();
-
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
@@ -108,15 +137,75 @@ const SlackTutorial = () => {
 
   return (
     <Box>
-      {/* Header */}
-      <Box mb={3} textAlign="center">
-        <Typography variant="h2" component="h1" gutterBottom sx={{ fontSize: '2.5rem' }}>
-          Using Slack Effectively
+      <StepHeader
+        title="Using Slack Effectively"
+        subtitle="Where the community collaborates — and how to plug in"
+      />
+
+      {/* Two accounts — the gotcha that trips up most new members */}
+      <Paper
+        elevation={0}
+        sx={{ p: 3, mb: 4, borderRadius: 2, border: `1px solid ${NAVY}`, backgroundColor: 'rgba(27, 58, 107, 0.04)' }}
+      >
+        <Typography variant="h4" gutterBottom sx={{ fontSize: '1.7rem', fontWeight: 'bold' }}>
+          First things first: you need two (free) accounts
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary" sx={{ fontSize: '1.55rem' }}>
-          Master the essential features of our primary communication tool
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.15rem' }}>
+          This trips up most new members. Your <strong>ohack.dev account</strong> (most people create
+          it with their Google account) and our <strong>Slack workspace</strong> are separate things —
+          creating one does not create the other. ohack.dev is where you apply to events, manage your
+          team, and track volunteer hours; Slack is where the day-to-day collaboration actually
+          happens. You&apos;ll want both.
         </Typography>
-        <Divider sx={{ mt: 2, mb: 3 }} />
+        <Grid container spacing={2} sx={{ mb: 1 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
+              <strong>1. ohack.dev account</strong> — the Log In button at the top right of this page.
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
+              <strong>2. Slack account</strong> — if you don&apos;t have one yet, our signup guide
+              walks you through joining step by step.
+            </Typography>
+          </Grid>
+        </Grid>
+        <Button
+          href="/signup"
+          variant="contained"
+          sx={{ mt: 1, fontSize: '1.05rem', textTransform: 'none', backgroundColor: NAVY, '&:hover': { backgroundColor: '#16315a' } }}
+        >
+          Join our Slack — step-by-step guide
+        </Button>
+      </Paper>
+
+      {/* Key channels */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" gutterBottom sx={{ fontSize: '1.7rem' }}>
+          Channels to join first
+        </Typography>
+        <Grid container spacing={2}>
+          {KEY_CHANNELS.map((channel) => (
+            <Grid size={{ xs: 12, sm: 6 }} key={channel.name}>
+              <Paper
+                elevation={0}
+                sx={{ p: 2.5, height: '100%', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}
+              >
+                <Typography variant="h6" sx={{ fontSize: '1.2rem', fontWeight: 'bold', fontFamily: 'monospace', color: NAVY }}>
+                  {channel.name}
+                </Typography>
+                <Typography variant="body1" sx={{ fontSize: '1.05rem', mt: 0.5, mb: channel.url ? 1 : 0 }}>
+                  {channel.description}
+                </Typography>
+                {channel.url && (
+                  <Link href={channel.url} target="_blank" rel="noopener noreferrer" sx={{ fontSize: '1rem', fontWeight: 600, color: NAVY }}>
+                    Open in Slack →
+                  </Link>
+                )}
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
 
       {/* Introduction */}
@@ -125,19 +214,15 @@ const SlackTutorial = () => {
           Why We Use Slack
         </Typography>
         <Typography variant="body1" paragraph sx={{ fontSize: '1.25rem' }}>
-          Slack is our central hub for communication at Opportunity Hack. It's where you'll connect with team members, 
-          get updates about events, find projects to work on, ask for help, and much more. Understanding how to use Slack 
+          Slack is our central hub for communication at Opportunity Hack. It's where you'll connect with team members,
+          get updates about events, find projects to work on, ask for help, and much more. Understanding how to use Slack
           effectively will help you get the most out of your experience with our community.
         </Typography>
-        <Alert severity="info" sx={{ mt: 2 }}>
-          <Typography variant="body1" sx={{ fontSize: '1.2rem' }}>
-            Not on our Slack workspace yet?{' '}
-            <Link href={slackSignupUrl} target="_blank" rel="noopener noreferrer">
-              <b>Join now</b>
-            </Link>
-            {' '}to start connecting with the community.
-          </Typography>
-        </Alert>
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.25rem' }}>
+          One more reason to work in public channels rather than DMs: they become a visible record of how you
+          communicate and collaborate. A recruiter reviewing your Opportunity Hack portfolio can see not just your
+          code on GitHub, but how you asked questions, unblocked teammates, and coordinated a project to the finish.
+        </Typography>
       </Paper>
 
       {/* Tutorial tabs */}
@@ -195,9 +280,9 @@ const SlackTutorial = () => {
                 </ListItem>
                 <ListItem alignItems="flex-start">
                   <StepNumber>3</StepNumber>
-                  <ListItemText 
-                    primary="Join key channels" 
-                    secondary="Start with #general, #introductions, and #help. Then explore more specialized channels based on your interests and skills."
+                  <ListItemText
+                    primary="Join key channels"
+                    secondary="Start with #introductions, #ask-a-mentor, and #random (see 'Channels to join first' above). Then join the #npo- channels for the projects you care about."
                     primaryTypographyProps={{ fontSize: '1.3rem' }}
                     secondaryTypographyProps={{ fontSize: '1.15rem' }}
                   />
@@ -364,27 +449,27 @@ const SlackTutorial = () => {
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><TagIcon /></ListItemIcon>
-                  <ListItemText 
-                    primary="help" 
-                    secondary="Ask questions and get support" 
+                  <ListItemText
+                    primary="ask-a-mentor"
+                    secondary="Get help with code and technical challenges from experienced mentors"
                     primaryTypographyProps={{ fontSize: '1.5rem' }}
                     secondaryTypographyProps={{ fontSize: '1.25rem' }}
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><TagIcon /></ListItemIcon>
-                  <ListItemText 
-                    primary="team-formation" 
-                    secondary="Find projects to work on or team members" 
+                  <ListItemText
+                    primary="random"
+                    secondary="Off-topic chat and getting to know the community"
                     primaryTypographyProps={{ fontSize: '1.5rem' }}
                     secondaryTypographyProps={{ fontSize: '1.25rem' }}
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><TagIcon /></ListItemIcon>
-                  <ListItemText 
-                    primary="ask-a-mentor" 
-                    secondary="Get help with code and technical challenges" 
+                  <ListItemText
+                    primary="npo-… (one per project)"
+                    secondary="Ask for project details and find people to team up with — linked from each project page"
                     primaryTypographyProps={{ fontSize: '1.5rem' }}
                     secondaryTypographyProps={{ fontSize: '1.25rem' }}
                   />
@@ -996,13 +1081,11 @@ const SlackTutorial = () => {
         <Typography variant="h6" gutterBottom sx={{ fontSize: '1.35rem' }}>
           Ready to dive in?
         </Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
+        <Button
+          variant="contained"
+          color="primary"
           size="large"
-          href={slackSignupUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/signup"
           sx={{ mt: 1, fontSize: '1.15rem' }}
         >
           Join Our Slack Community

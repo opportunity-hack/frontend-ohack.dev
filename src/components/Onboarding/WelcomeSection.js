@@ -1,8 +1,9 @@
 import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
+import Link from 'next/link';
+import {
+  Box,
+  Typography,
+  Paper,
   Grid,
   Card,
   CardContent,
@@ -11,7 +12,7 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText 
+  ListItemText
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -20,15 +21,15 @@ import CodeIcon from '@mui/icons-material/Code';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import HandshakeIcon from '@mui/icons-material/Handshake';
 import { useAuthInfo } from '@propelauth/react';
+import StepHeader from './StepHeader';
 
 const BenefitCard = styled(Card)(({ theme }) => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
-  transition: 'transform 0.3s, box-shadow 0.3s',
+  transition: 'border-color 0.2s',
   '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 12px 20px rgba(0, 0, 0, 0.1)'
+    borderColor: '#1B3A6B'
   }
 }));
 
@@ -71,20 +72,14 @@ const WelcomeSection = () => {
   return (
     <Box>
       {/* Welcome header with personalized greeting */}
-      <Box mb={4} textAlign="center">
-        <Typography variant="h3" component="h1" gutterBottom>
-          Welcome to Opportunity Hack
-          {!isLoading && user && user.firstName ? `, ${user.firstName}!` : '!'}
-        </Typography>
-        <Typography variant="h5" color="textSecondary" gutterBottom sx={{ fontSize: '2rem' }}>
-          Where technology meets social impact
-        </Typography>
-        <Divider sx={{ mt: 2, mb: 3, mx: 'auto', width: '70%' }} />
-        <Typography variant="body1" paragraph sx={{ maxWidth: '700px', mx: 'auto', fontSize: '1.35rem' }}>
-          Thank you for joining our community of technologists dedicated to creating sustainable solutions for nonprofits.
-          This onboarding will help you understand our mission, get connected with the community, and start making an impact.
-        </Typography>
-      </Box>
+      <StepHeader
+        title={`Welcome to Opportunity Hack${!isLoading && user && user.firstName ? `, ${user.firstName}!` : '!'}`}
+        subtitle="Where technology meets social impact"
+      />
+      <Typography variant="body1" paragraph sx={{ maxWidth: '700px', mx: 'auto', mb: 4, fontSize: '1.2rem', textAlign: 'center' }}>
+        Thank you for joining our community of technologists dedicated to creating sustainable solutions for nonprofits.
+        This onboarding will help you understand our mission, get connected with the community, and start making an impact.
+      </Typography>
 
       {/* Key benefits */}
       <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
@@ -121,6 +116,32 @@ const WelcomeSection = () => {
         ))}
       </Grid>
 
+      {/* Social proof — the praise board */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          mb: 4,
+          borderRadius: 2,
+          border: '1px solid #1B3A6B',
+          backgroundColor: 'rgba(27, 58, 107, 0.04)',
+          textAlign: 'center'
+        }}
+      >
+        <Typography variant="h6" gutterBottom sx={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+          Don't just take our word for it 💙
+        </Typography>
+        <Typography variant="body1" sx={{ fontSize: '1.2rem', maxWidth: '700px', mx: 'auto' }}>
+          Our{' '}
+          <Link href="/praise" style={{ color: '#1B3A6B', fontWeight: 600 }}>
+            praise board
+          </Link>{' '}
+          is a live feed of community members publicly recognizing each other's work — mentors
+          thanking hackers, teammates celebrating teammates. That's the community you're joining,
+          and once you're in, your work gets recognized the same way.
+        </Typography>
+      </Paper>
+
       {/* What to expect in this onboarding */}
       <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
         <Typography variant="h5" gutterBottom sx={{ fontSize: '2rem' }}>
@@ -129,9 +150,10 @@ const WelcomeSection = () => {
         <List>
           {[
             'Learn about our mission and core values',
-            'Discover key Slack channels and community resources',
-            'Introduce yourself to the community',
-            'Find a buddy to help guide your first steps',
+            "See how a project goes from a nonprofit's problem to production software",
+            'Find the role that fits you — hacker, mentor, judge, or volunteer',
+            'Get a tour of ohack.dev and what to do first on the site',
+            'Get set up on Slack and introduce yourself to the community',
             'Get answers to frequently asked questions',
             'Provide feedback to help us improve'
           ].map((item, index) => (

@@ -20,15 +20,56 @@ import {
   DialogActions
 } from '@mui/material';
 import { useAuthInfo } from '@propelauth/react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from '../../components/design/refined';
+
+const FRAUNCES = "'Fraunces', Georgia, serif";
+const HANKEN = "'Hanken Grotesk', system-ui, -apple-system, sans-serif";
+
+// Scoped theme for the step content so every step's MUI internals match the
+// RefinedRoot tokens: Fraunces headings, Hanken body, navy/terracotta,
+// flat hairline surfaces instead of elevation shadows.
+const onboardingTheme = createTheme({
+  palette: {
+    primary: { main: '#1B3A6B', dark: '#16315a' },
+    secondary: { main: '#E2552E' },
+    text: { primary: '#16181D', secondary: '#5B6270' },
+    divider: '#E7E1D4',
+  },
+  typography: {
+    fontFamily: HANKEN,
+    h1: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h2: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h3: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h4: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h5: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h6: { fontFamily: FRAUNCES, fontWeight: 560 },
+    button: { textTransform: 'none', fontWeight: 600 },
+  },
+  shape: { borderRadius: 8 },
+  components: {
+    MuiPaper: {
+      defaultProps: { elevation: 0 },
+      styleOverrides: {
+        root: { boxShadow: 'none', border: '1px solid #E7E1D4', backgroundImage: 'none' },
+      },
+    },
+    MuiCard: {
+      styleOverrides: { root: { boxShadow: 'none', border: '1px solid #E7E1D4' } },
+    },
+    MuiButton: { styleOverrides: { root: { borderRadius: 6 } } },
+    MuiTab: { styleOverrides: { root: { textTransform: 'none', fontWeight: 600 } } },
+  },
+});
 
 // Components
 import WelcomeSection from '../../components/Onboarding/WelcomeSection';
 import MissionOverview from '../../components/Onboarding/MissionOverview';
+import HowItWorksSection from '../../components/Onboarding/HowItWorksSection';
+import RolesSection from '../../components/Onboarding/RolesSection';
+import WebsiteTourSection from '../../components/Onboarding/WebsiteTourSection';
 import IntroductionPrompt from '../../components/Onboarding/IntroductionPrompt';
 import SlackTutorial from '../../components/Onboarding/SlackTutorial';
-import JudgingOverview from '../../components/Onboarding/JudgingOverview';
-import MentoringOverview from '../../components/Onboarding/MentoringOverview';
 import OnboardingFAQ from '../../components/Onboarding/OnboardingFAQ';
 import FeedbackSection from '../../components/Onboarding/FeedbackSection';
 import JourneyTracker, { JourneyTypes } from '../../components/JourneyTracker';
@@ -37,24 +78,27 @@ import JourneyTracker, { JourneyTypes } from '../../components/JourneyTracker';
 const steps = [
   'Welcome',
   'Our Mission',
-  'Introduce Yourself',
+  'How It Works',
+  'Get Involved',
+  'Using the Site',
   'Slack Tutorial',
-  'Judging Overview',
-  'Mentoring',
+  'Introduce Yourself',
   'FAQs',
   'Feedback'
 ];
 
 // Create an Onboarding journey in JourneyTracker
+// Keys map to steps[] by index — keep the two arrays in the same order.
 const OnboardingJourney = {
   name: 'onboarding',
   steps: {
     START_ONBOARDING: 'start_onboarding',
     VIEW_MISSION: 'view_mission',
-    COMPLETE_INTRODUCTION: 'complete_introduction',
+    VIEW_HOW_IT_WORKS: 'view_how_it_works',
+    VIEW_ROLES: 'view_roles',
+    VIEW_WEBSITE_TOUR: 'view_website_tour',
     COMPLETE_TUTORIAL: 'complete_tutorial',
-    VIEW_JUDGING: 'view_judging',
-    VIEW_MENTORING: 'view_mentoring',
+    COMPLETE_INTRODUCTION: 'complete_introduction',
     READ_FAQ: 'read_faq',
     PROVIDE_FEEDBACK: 'provide_feedback',
     COMPLETE_ONBOARDING: 'complete_onboarding'
@@ -211,16 +255,18 @@ function OnboardingComponent() {
       case 1:
         return <MissionOverview />;
       case 2:
-        return <IntroductionPrompt />;
+        return <HowItWorksSection />;
       case 3:
-        return <SlackTutorial />;
+        return <RolesSection />;
       case 4:
-        return <JudgingOverview />;
+        return <WebsiteTourSection />;
       case 5:
-        return <MentoringOverview />;
+        return <SlackTutorial />;
       case 6:
-        return <OnboardingFAQ />;
+        return <IntroductionPrompt />;
       case 7:
+        return <OnboardingFAQ />;
+      case 8:
         return <FeedbackSection />;
       default:
         return 'Unknown step';
@@ -289,7 +335,9 @@ function OnboardingComponent() {
 
           {/* Step content */}
           <Box className="ohx-card" sx={{ mt: 3, p: { xs: 2, sm: 3, md: 4 } }}>
-            {getStepContent(activeStep)}
+            <ThemeProvider theme={onboardingTheme}>
+              {getStepContent(activeStep)}
+            </ThemeProvider>
           </Box>
 
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}

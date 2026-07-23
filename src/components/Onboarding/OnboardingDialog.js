@@ -152,7 +152,7 @@ const OnboardingDialog = () => {
             </li>
             <li style={{ position: 'relative', paddingLeft: '20px' }}>
               <span style={{ position: 'absolute', left: 0, top: 0 }}>•</span>
-              Finding a buddy to guide you
+              Ways to get involved — hacker, mentor, judge, or volunteer
             </li>
             <li style={{ position: 'relative', paddingLeft: '20px' }}>
               <span style={{ position: 'absolute', left: 0, top: 0 }}>•</span>
