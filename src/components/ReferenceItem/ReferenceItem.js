@@ -1,89 +1,90 @@
-import React from 'react';
-import Button from "@mui/material/Button";
+import React from "react";
 import ArticleIcon from "@mui/icons-material/Article";
-import SmartDisplayIcon from '@mui/icons-material/SmartDisplay';
-import CoPresentIcon from '@mui/icons-material/CoPresent';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import SmartDisplayIcon from "@mui/icons-material/SmartDisplay";
+import CoPresentIcon from "@mui/icons-material/CoPresent";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import VideoDisplay from "../VideoDisplay/VideoDisplay";
 
-function getIconForReferenceLinkOrName(link, name) {
-  const documentExtensions = [".pdf", ".doc", ".docx"];
-  for (const extension of documentExtensions) {
-      if (link.endsWith(extension)) {
-          return <ArticleIcon />;
-      }
-  }
+// Only ever rendered inside ProblemStatement (which is always inside a
+// RefinedRoot), so scoped .ohx-* classes are safe here.
 
-  const documentPlatforms = ["docs.google.com"]; 
-  for (const platform of documentPlatforms) {
-      if (link.includes(platform)) {
-          return <ArticleIcon />;
-      }
-  }
+const getReferenceMeta = (link = "", name = "") => {
+  const l = link.toLowerCase();
+  const n = name.toLowerCase();
 
-  // If YouTube is in the name or video is in the name
-  const videoIconText = ["youtube", "video"];
-  const videoIconLink = ["youtube.com", "vimeo.com"];
-  if (videoIconText.some((text) => name.toLowerCase().includes(text)) || videoIconLink.some((text) => link.includes(text))) {
-      return <SmartDisplayIcon />;
+  if (l.includes("github.com")) return { Icon: GitHubIcon, kind: "GitHub" };
+  if (
+    l.endsWith(".pptx") ||
+    l.includes("slides.google.com") ||
+    l.includes("docs.google.com/presentation")
+  ) {
+    return { Icon: CoPresentIcon, kind: "Slides" };
   }
-
-  // If .pptx or slides.google.com, use a presentation icon
-  const presentationExtensions = [".pptx"];
-  for (const extension of presentationExtensions) {
-      if (link.endsWith(extension)) {
-          return <CoPresentIcon />;
-      }
+  if (
+    [".pdf", ".doc", ".docx"].some((ext) => l.endsWith(ext)) ||
+    l.includes("docs.google.com")
+  ) {
+    return { Icon: ArticleIcon, kind: "Document" };
   }
-
-  const presentationPlatforms = ["slides.google.com"];
-  for (const platform of presentationPlatforms) {
-      if (link.includes(platform)) {
-          return <CoPresentIcon />;
-      }
+  if (
+    ["youtube", "video"].some((text) => n.includes(text)) ||
+    ["youtube.com", "vimeo.com"].some((host) => l.includes(host))
+  ) {
+    return { Icon: SmartDisplayIcon, kind: "Video" };
   }
+  return { Icon: OpenInNewIcon, kind: "Link" };
+};
 
-  // Handle github name or link
-  const githubPlatforms = ["github.com"];
-  for (const platform of githubPlatforms) {
-      if (link.includes(platform)) {
-          return <GitHubIcon />;
-      }
-  }
-
-  // Default to a link icon
-  return <OpenInNewIcon />;
-}
+const isVideoUrl = (url) =>
+  url &&
+  (url.includes("youtube.com") ||
+    url.includes("youtu.be") ||
+    url.includes("vimeo.com") ||
+    url.includes("loom.com") ||
+    url.includes("drive.google.com/file"));
 
 const ReferenceItem = ({ reference }) => {
-  const isVideoUrl = (url) => {
-    return url && (
-      url.includes('youtube.com') || 
-      url.includes('youtu.be') ||
-      url.includes('vimeo.com') ||
-      url.includes('loom.com') ||
-      url.includes('drive.google.com/file')
-    );
-  };
-
   if (reference.link && isVideoUrl(reference.link)) {
     return <VideoDisplay url={reference.link} title={reference.name} />;
   }
 
+  const { Icon, kind } = getReferenceMeta(reference.link, reference.name);
+
   return (
-    <Button
-      key={reference.name}
-      variant="outlined"
+    <a
       href={reference.link}
       target="_blank"
       rel="noopener noreferrer"
-      style={{ margin: "0.5rem", fontSize: '13px' }}
+      className="ohx-card ohx-card--hover"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 16px",
+        textDecoration: "none",
+      }}
     >
-      {getIconForReferenceLinkOrName(reference.link, reference.name)}
-      &nbsp;
-      {reference.name}
-    </Button>
+      <Icon sx={{ fontSize: 18, color: "var(--brand, #1B3A6B)", flexShrink: 0 }} />
+      <span
+        style={{
+          flex: 1,
+          minWidth: 0,
+          fontWeight: 600,
+          fontSize: "0.92rem",
+          color: "var(--ink, #16181D)",
+          overflowWrap: "anywhere",
+        }}
+      >
+        {reference.name}
+      </span>
+      <span className="ohx-tag" style={{ fontSize: "0.7rem", flexShrink: 0 }}>
+        {kind}
+      </span>
+      <OpenInNewIcon
+        sx={{ fontSize: 14, color: "var(--muted, #5B6270)", flexShrink: 0 }}
+      />
+    </a>
   );
 };
 
