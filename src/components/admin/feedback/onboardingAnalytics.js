@@ -22,12 +22,17 @@ export const CLEAR_EASE = new Set(["Very easy", "Mostly clear"]);
 export const CONFUSING_EASE = new Set(["Somewhat confusing", "Very difficult"]);
 
 // The fixed onboarding-topic options (stable order for the frequency bar).
+// Current options first (mirrors FeedbackSection topicOptions), then legacy
+// options kept so pre-July-2026 responses still chart.
 export const USEFUL_TOPICS = [
   "Mission Overview",
-  "Introduction Guide",
+  "How It Works",
+  "Ways to Get Involved",
+  "Website Tour",
   "Slack Tutorial",
-  "Buddy System",
+  "Introduction Guide",
   "FAQ Section",
+  "Buddy System",
 ];
 
 const TS_PREFIX = "__Timestamp__";

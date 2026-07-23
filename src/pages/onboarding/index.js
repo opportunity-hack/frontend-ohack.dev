@@ -20,15 +20,56 @@ import {
   DialogActions
 } from '@mui/material';
 import { useAuthInfo } from '@propelauth/react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from '../../components/design/refined';
+
+const FRAUNCES = "'Fraunces', Georgia, serif";
+const HANKEN = "'Hanken Grotesk', system-ui, -apple-system, sans-serif";
+
+// Scoped theme for the step content so every step's MUI internals match the
+// RefinedRoot tokens: Fraunces headings, Hanken body, navy/terracotta,
+// flat hairline surfaces instead of elevation shadows.
+const onboardingTheme = createTheme({
+  palette: {
+    primary: { main: '#1B3A6B', dark: '#16315a' },
+    secondary: { main: '#E2552E' },
+    text: { primary: '#16181D', secondary: '#5B6270' },
+    divider: '#E7E1D4',
+  },
+  typography: {
+    fontFamily: HANKEN,
+    h1: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h2: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h3: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h4: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h5: { fontFamily: FRAUNCES, fontWeight: 560 },
+    h6: { fontFamily: FRAUNCES, fontWeight: 560 },
+    button: { textTransform: 'none', fontWeight: 600 },
+  },
+  shape: { borderRadius: 8 },
+  components: {
+    MuiPaper: {
+      defaultProps: { elevation: 0 },
+      styleOverrides: {
+        root: { boxShadow: 'none', border: '1px solid #E7E1D4', backgroundImage: 'none' },
+      },
+    },
+    MuiCard: {
+      styleOverrides: { root: { boxShadow: 'none', border: '1px solid #E7E1D4' } },
+    },
+    MuiButton: { styleOverrides: { root: { borderRadius: 6 } } },
+    MuiTab: { styleOverrides: { root: { textTransform: 'none', fontWeight: 600 } } },
+  },
+});
 
 // Components
 import WelcomeSection from '../../components/Onboarding/WelcomeSection';
 import MissionOverview from '../../components/Onboarding/MissionOverview';
+import HowItWorksSection from '../../components/Onboarding/HowItWorksSection';
+import RolesSection from '../../components/Onboarding/RolesSection';
+import WebsiteTourSection from '../../components/Onboarding/WebsiteTourSection';
 import IntroductionPrompt from '../../components/Onboarding/IntroductionPrompt';
 import SlackTutorial from '../../components/Onboarding/SlackTutorial';
-import JudgingOverview from '../../components/Onboarding/JudgingOverview';
-import MentoringOverview from '../../components/Onboarding/MentoringOverview';
 import OnboardingFAQ from '../../components/Onboarding/OnboardingFAQ';
 import FeedbackSection from '../../components/Onboarding/FeedbackSection';
 import JourneyTracker, { JourneyTypes } from '../../components/JourneyTracker';
@@ -37,24 +78,27 @@ import JourneyTracker, { JourneyTypes } from '../../components/JourneyTracker';
 const steps = [
   'Welcome',
   'Our Mission',
-  'Introduce Yourself',
+  'How It Works',
+  'Get Involved',
+  'Using the Site',
   'Slack Tutorial',
-  'Judging Overview',
-  'Mentoring',
+  'Introduce Yourself',
   'FAQs',
   'Feedback'
 ];
 
 // Create an Onboarding journey in JourneyTracker
+// Keys map to steps[] by index — keep the two arrays in the same order.
 const OnboardingJourney = {
   name: 'onboarding',
   steps: {
     START_ONBOARDING: 'start_onboarding',
     VIEW_MISSION: 'view_mission',
-    COMPLETE_INTRODUCTION: 'complete_introduction',
+    VIEW_HOW_IT_WORKS: 'view_how_it_works',
+    VIEW_ROLES: 'view_roles',
+    VIEW_WEBSITE_TOUR: 'view_website_tour',
     COMPLETE_TUTORIAL: 'complete_tutorial',
-    VIEW_JUDGING: 'view_judging',
-    VIEW_MENTORING: 'view_mentoring',
+    COMPLETE_INTRODUCTION: 'complete_introduction',
     READ_FAQ: 'read_faq',
     PROVIDE_FEEDBACK: 'provide_feedback',
     COMPLETE_ONBOARDING: 'complete_onboarding'
@@ -71,8 +115,18 @@ function OnboardingComponent() {
   const [error, setError] = useState('');
   const [openCongratulatoryDialog, setOpenCongratulatoryDialog] = useState(false);
   const [cookies, setCookie] = useCookies(['onboarding_visited']);
-  
+  const stepperScrollRef = React.useRef(null);
+
   useEffect(() => { initFacebookPixel(); }, []);
+
+  // On narrow screens the 9-step stepper overflows horizontally — keep the
+  // active step scrolled into view.
+  useEffect(() => {
+    const el = stepperScrollRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+    const ratio = steps.length > 1 ? activeStep / (steps.length - 1) : 0;
+    el.scrollTo({ left: ratio * (el.scrollWidth - el.clientWidth), behavior: 'smooth' });
+  }, [activeStep]);
 
   useEffect(() => {
     const ONBOARDING_VISITED_COOKIE = "onboarding_visited";
@@ -211,16 +265,18 @@ function OnboardingComponent() {
       case 1:
         return <MissionOverview />;
       case 2:
-        return <IntroductionPrompt />;
+        return <HowItWorksSection />;
       case 3:
-        return <SlackTutorial />;
+        return <RolesSection />;
       case 4:
-        return <JudgingOverview />;
+        return <WebsiteTourSection />;
       case 5:
-        return <MentoringOverview />;
+        return <SlackTutorial />;
       case 6:
-        return <OnboardingFAQ />;
+        return <IntroductionPrompt />;
       case 7:
+        return <OnboardingFAQ />;
+      case 8:
         return <FeedbackSection />;
       default:
         return 'Unknown step';
@@ -274,9 +330,13 @@ function OnboardingComponent() {
             </p>
           </div>
 
-          {/* Stepper */}
-          <Box className="ohx-card" sx={{ p: { xs: 2, sm: 3 }, mt: 3 }}>
-            <Stepper activeStep={activeStep} alternativeLabel sx={stepperSx}>
+          {/* Stepper — horizontally scrollable on narrow screens (9 steps don't fit) */}
+          <Box
+            ref={stepperScrollRef}
+            className="ohx-card"
+            sx={{ p: { xs: 1.5, sm: 3 }, mt: 3, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}
+          >
+            <Stepper activeStep={activeStep} alternativeLabel sx={{ ...stepperSx, minWidth: { xs: 720, md: 0 } }}>
               {steps.map((label, index) => (
                 <Step key={label} completed={completed[index]}>
                   <StepButton onClick={() => setActiveStep(index)} disabled={index > highestStepReached}>
@@ -289,7 +349,9 @@ function OnboardingComponent() {
 
           {/* Step content */}
           <Box className="ohx-card" sx={{ mt: 3, p: { xs: 2, sm: 3, md: 4 } }}>
-            {getStepContent(activeStep)}
+            <ThemeProvider theme={onboardingTheme}>
+              {getStepContent(activeStep)}
+            </ThemeProvider>
           </Box>
 
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}

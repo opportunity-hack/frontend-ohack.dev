@@ -21,6 +21,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useAuthInfo } from '@propelauth/react';
 import { useEnv } from '../../context/env.context';
+import StepHeader from './StepHeader';
 
 const IntroCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -171,16 +172,10 @@ const IntroductionPrompt = () => {
 
   return (
     <Box>
-      {/* Header */}
-      <Box mb={3} textAlign="center">
-        <Typography variant="h3" component="h1" gutterBottom sx={{ fontSize: '2.5rem' }}>
-          Introduce Yourself
-        </Typography>
-        <Typography variant="subtitle1" color="textSecondary" sx={{ fontSize: '1.7rem' }}>
-          Share your background and interests with the community
-        </Typography>
-        <Divider sx={{ mt: 2, mb: 3 }} />
-      </Box>
+      <StepHeader
+        title="Introduce Yourself"
+        subtitle="Share your background and interests with the community"
+      />
 
       {/* Introduction guidance */}
       <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
