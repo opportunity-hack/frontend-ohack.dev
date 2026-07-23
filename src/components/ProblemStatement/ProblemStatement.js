@@ -29,7 +29,6 @@ import ReactMarkdown from "react-markdown";
 // Imported Components
 import useProfileApi from "../../hooks/use-profile-api";
 import ProjectProgress from "../ProjectProgress/ProjectProgress";
-import useTeams from "../../hooks/use-teams";
 import SkillSet from "../skill-set";
 import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 import useProblemstatements from "../../hooks/use-problem-statements";
@@ -239,7 +238,6 @@ export default function ProblemStatement({
   const { redirectToLoginPage } = useRedirectFunctions();
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
-  const { handle_join_team, handle_unjoin_a_team } = useTeams();
 
   const { nonprofits: resolvedNonprofits } = useProjectNonprofit(
     problem_statement_id,
@@ -248,13 +246,8 @@ export default function ProblemStatement({
   const effectiveNpoId = npo_id || resolvedNonprofits[0]?.id;
 
   const [hackathonEvents, setHackathonEvents] = useState([]);
-  const [teamSuggestions, setTeamSuggestions] = useState(null);
   const [hackathonEventsLoaded, setHackathonEventsLoaded] = useState(false);
   const [hackathonEventsError, setHackathonEventsError] = useState(false);
-  const [teams, setTeams] = useState([]);
-  const [userDetails, setUserDetails] = useState(null);
-  const [userLoaded, setUserLoaded] = useState(false);
-  const [userError, setUserError] = useState(false);
   const [open, setOpen] = useState(false);
   const [openUnhelp, setOpenUnhelp] = useState(false);
   const [help_checked, setHelpedChecked] = useState("");
@@ -262,7 +255,7 @@ export default function ProblemStatement({
   const [expanded, setExpanded] = useState("Events");
   const [tabValue, setTabValue] = useState("Events");
   const [expandedSection, setExpandedSection] = useState("references");
-  const { get_user_by_id, profile, handle_help_toggle } = useProfileApi();
+  const { profile, handle_help_toggle } = useProfileApi();
   const [helperProfiles, setHelperProfiles] = useState({});
   const [isCheckingHelperStatus, setIsCheckingHelperStatus] = useState(false);
 
@@ -315,32 +308,6 @@ export default function ProblemStatement({
         });
     }
   }, [problem_statement_id, problem_statement?.events]);
-
-  useEffect(() => {
-    if (teams?.length > 0) {
-      const userDetailsMap = {};
-      const promises = [];
-
-      teams.forEach((team) => {
-        team.users?.forEach((user_id) => {
-          promises.push(
-            get_user_by_id(user_id, (user) => {
-              userDetailsMap[user_id] = user;
-            })
-          );
-        });
-      });
-
-      Promise.all(promises)
-        .then(() => {
-          setUserDetails(userDetailsMap);
-          setUserLoaded(true);
-        })
-        .catch(() => {
-          setUserError(true);
-        });
-    }
-  }, [teams]);
 
   useEffect(() => {
     if (problem_statement?.helping?.length > 0) {
@@ -470,9 +437,12 @@ export default function ProblemStatement({
   // with no problem_statements data (avoids claiming repos from a sibling
   // project of a multi-project nonprofit). Dedupe by normalized link — a
   // team repo matching a project-level repo just adds attribution.
-  const codeRepos = useMemo(() => {
-    if (!problem_statement) return [];
+  // Also groups the matched teams per event for the Events & Teams section.
+  const { repos: codeRepos, teamsByEvent: projectTeamsByEvent } =
+    useMemo(() => {
+    if (!problem_statement) return { repos: [], teamsByEvent: {} };
     const map = new Map();
+    const teamsByEvent = {};
 
     const rawGithub = problem_statement.github;
     const projectLevel = Array.isArray(rawGithub)
@@ -509,6 +479,10 @@ export default function ProblemStatement({
             : team.selected_nonprofit_id &&
               npoIds.has(team.selected_nonprofit_id);
         if (!matches) return;
+        if (event.event_id) {
+          if (!teamsByEvent[event.event_id]) teamsByEvent[event.event_id] = [];
+          teamsByEvent[event.event_id].push(team);
+        }
         (team.github_links || []).forEach((gl) => {
           const link = typeof gl === "string" ? gl : gl?.link;
           if (!link) return;
@@ -538,7 +512,7 @@ export default function ProblemStatement({
       });
     });
 
-    return Array.from(map.values());
+    return { repos: Array.from(map.values()), teamsByEvent };
   }, [problem_statement, teamRepoEvents, resolvedNonprofits]);
 
   // Only fetch issue data once the Code & Tasks section scrolls near
@@ -667,23 +641,6 @@ export default function ProblemStatement({
     }
   };
 
-  const handleLeavingTeam = (teamId) => {
-    handle_unjoin_a_team(teamId, handleTeamLeavingResponse);
-    trackEvent({ action: "team_left", params: { team_id: teamId } });
-  };
-
-  const handleJoiningTeam = (teamId) => {
-    handle_join_team(teamId, handleTeamLeavingResponse);
-    trackEvent({ action: "team_joined", params: { team_id: teamId } });
-  };
-
-  const handleTeamLeavingResponse = () => {
-    trackEvent({
-      action: "Team Left",
-      params: { category: "Team", label: "Team" },
-    });
-  };
-
   const handleClose = (helperType) => {
     trackEvent({
       action: "Helping: User Finalized Start Helping",
@@ -766,13 +723,6 @@ export default function ProblemStatement({
       </div>
     );
   }
-
-  const teamCounter = teams.filter((team) =>
-    team.problem_statements?.includes(problem_statement_id)
-  ).length;
-  const teamText = `There ${teamCounter === 1 ? "is" : "are"} ${teamCounter} team${
-    teamCounter === 1 ? "" : "s"
-  } working on this`;
 
   let countOfHackers = 0;
   let countOfMentors = 0;
@@ -1405,14 +1355,8 @@ export default function ProblemStatement({
             hackathonEventsLoaded ? (
               <Events
                 key={problem_statement.id}
-                teams={teams}
-                userDetails={userDetails}
                 events={hackathonEvents}
-                onTeamLeave={handleLeavingTeam}
-                onTeamJoin={handleJoiningTeam}
-                user={profile}
-                problemStatementId={problem_statement.id}
-                isHelping={help_checked}
+                teamsByEvent={projectTeamsByEvent}
               />
             ) : (
               <p
