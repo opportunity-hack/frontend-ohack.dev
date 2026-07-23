@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 
 // MUI Components
 import Tooltip from "@mui/material/Tooltip";
@@ -29,7 +29,6 @@ import ReactMarkdown from "react-markdown";
 // Imported Components
 import useProfileApi from "../../hooks/use-profile-api";
 import ProjectProgress from "../ProjectProgress/ProjectProgress";
-import useTeams from "../../hooks/use-teams";
 import SkillSet from "../skill-set";
 import CopyToClipboardButton from "../buttons/CopyToClipboardButton";
 import useProblemstatements from "../../hooks/use-problem-statements";
@@ -90,6 +89,143 @@ const MaterialUISwitch = styled(Switch)({
   },
 });
 
+// --- Code & Tasks helpers (module scope — see SectionBlock remount lesson) ---
+const normalizeRepoLink = (link) =>
+  (link || "").trim().replace(/\/+$/, "").toLowerCase();
+
+const parseGithubRepo = (link) => {
+  const match = /github\.com\/([^/]+)\/([^/#?]+)/i.exec(link || "");
+  return match
+    ? { org: match[1], repo: match[2].replace(/\.git$/i, "") }
+    : null;
+};
+
+const repoNameFromLink = (link) => {
+  const gh = parseGithubRepo(link);
+  return gh ? gh.repo : link;
+};
+
+// One repository card: name, team attribution, live issue chips, top open
+// issues, and the Code / Issues deep-links. Module scope so it never remounts
+// on parent state ticks (issue data arriving, help toggle, etc.).
+const RepoCard = ({ repo, issueData, onLinkClick }) => {
+  const repoButtonStyle = {
+    fontSize: "0.82rem",
+    padding: "0.5em 0.9em",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+  };
+
+  return (
+    <div
+      className="ohx-card"
+      style={{ padding: "14px 16px", height: "100%", boxSizing: "border-box" }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+          marginBottom: repo.builtBy.length > 0 ? 4 : 10,
+        }}
+      >
+        <p
+          style={{
+            fontWeight: 600,
+            fontSize: "0.95rem",
+            margin: 0,
+            color: "var(--ink)",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {repo.name}
+        </p>
+        {issueData && (
+          <span className="ohx-tag" style={{ fontSize: "0.7rem" }}>
+            {issueData.open} open
+            {issueData.closed > 0 ? ` · ${issueData.closed} closed` : ""}
+          </span>
+        )}
+      </div>
+
+      {repo.builtBy.length > 0 && (
+        <p className="ohx-muted" style={{ fontSize: "0.8rem", margin: "0 0 10px" }}>
+          Built by{" "}
+          {repo.builtBy.map((b) => `${b.team} (${b.event})`).join(", ")}
+        </p>
+      )}
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <a
+          href={repo.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ohx-btn ohx-btn--ghost"
+          style={repoButtonStyle}
+          onClick={() => onLinkClick?.("code", repo.link)}
+        >
+          <CodeIcon sx={{ fontSize: 13 }} /> Code
+        </a>
+        <a
+          href={`${repo.link}/issues`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ohx-btn ohx-btn--ghost"
+          style={repoButtonStyle}
+          onClick={() => onLinkClick?.("issues", repo.link)}
+        >
+          <AssignmentIcon sx={{ fontSize: 13 }} /> Issues
+        </a>
+      </div>
+
+      {issueData?.topOpen?.length > 0 && (
+        <ul
+          style={{
+            listStyle: "none",
+            padding: 0,
+            margin: "12px 0 0",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          {issueData.topOpen.map((issue) => (
+            <li
+              key={issue.number}
+              style={{
+                fontSize: "0.85rem",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              <a
+                className="ohx-link"
+                href={`${repo.link}/issues/${issue.number}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => onLinkClick?.("issue_detail", repo.link)}
+              >
+                #{issue.number} {issue.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {issueData && issueData.open === 0 && (
+        <p className="ohx-muted" style={{ fontSize: "0.82rem", margin: "12px 0 0" }}>
+          No open issues yet — that's your opening. Pull the code, run it, and
+          write the first tickets like a product manager. Closed tickets are
+          public credit for the work.
+        </p>
+      )}
+    </div>
+  );
+};
+
 export default function ProblemStatement({
   problem_statement_id,
   user,
@@ -102,7 +238,6 @@ export default function ProblemStatement({
   const { redirectToLoginPage } = useRedirectFunctions();
   const { problem_statement } = useProblemstatements(problem_statement_id);
   const { handle_get_hackathon_id } = useHackathonEvents();
-  const { handle_join_team, handle_unjoin_a_team } = useTeams();
 
   const { nonprofits: resolvedNonprofits } = useProjectNonprofit(
     problem_statement_id,
@@ -111,13 +246,8 @@ export default function ProblemStatement({
   const effectiveNpoId = npo_id || resolvedNonprofits[0]?.id;
 
   const [hackathonEvents, setHackathonEvents] = useState([]);
-  const [teamSuggestions, setTeamSuggestions] = useState(null);
   const [hackathonEventsLoaded, setHackathonEventsLoaded] = useState(false);
   const [hackathonEventsError, setHackathonEventsError] = useState(false);
-  const [teams, setTeams] = useState([]);
-  const [userDetails, setUserDetails] = useState(null);
-  const [userLoaded, setUserLoaded] = useState(false);
-  const [userError, setUserError] = useState(false);
   const [open, setOpen] = useState(false);
   const [openUnhelp, setOpenUnhelp] = useState(false);
   const [help_checked, setHelpedChecked] = useState("");
@@ -125,9 +255,20 @@ export default function ProblemStatement({
   const [expanded, setExpanded] = useState("Events");
   const [tabValue, setTabValue] = useState("Events");
   const [expandedSection, setExpandedSection] = useState("references");
-  const { get_user_by_id, profile, handle_help_toggle } = useProfileApi();
+  const { profile, handle_help_toggle } = useProfileApi();
   const [helperProfiles, setHelperProfiles] = useState({});
   const [isCheckingHelperStatus, setIsCheckingHelperStatus] = useState(false);
+
+  // Code & Tasks: lazy live GitHub issue data, keyed by normalized repo link
+  const [codeSectionVisible, setCodeSectionVisible] = useState(false);
+  const [repoIssueData, setRepoIssueData] = useState({});
+  const issuesRequestedRef = useRef(new Set());
+  const codeSectionRef = useRef(null);
+  // Enriched event data (full team docs) for team-repo derivation — the
+  // page's own event fetch uses the by-doc-id route whose teams[] are bare
+  // id strings, so we need the enriched by-event_id getter for github_links
+  const [teamRepoEvents, setTeamRepoEvents] = useState([]);
+  const [teamRepoEventsChecked, setTeamRepoEventsChecked] = useState(false);
 
   const handleSectionToggle = (section) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -167,32 +308,6 @@ export default function ProblemStatement({
         });
     }
   }, [problem_statement_id, problem_statement?.events]);
-
-  useEffect(() => {
-    if (teams?.length > 0) {
-      const userDetailsMap = {};
-      const promises = [];
-
-      teams.forEach((team) => {
-        team.users?.forEach((user_id) => {
-          promises.push(
-            get_user_by_id(user_id, (user) => {
-              userDetailsMap[user_id] = user;
-            })
-          );
-        });
-      });
-
-      Promise.all(promises)
-        .then(() => {
-          setUserDetails(userDetailsMap);
-          setUserLoaded(true);
-        })
-        .catch(() => {
-          setUserError(true);
-        });
-    }
-  }, [teams]);
 
   useEffect(() => {
     if (problem_statement?.helping?.length > 0) {
@@ -265,6 +380,224 @@ export default function ProblemStatement({
     }
   }, [problem_statement, user, profile, helperProfiles, isCheckingHelperStatus]);
 
+  // Fetch enriched event data (with full team docs) once the by-id events
+  // have loaded and given us the event_id slugs. The enriched endpoint is
+  // backend-cached (10-min TTL) and shared with the event page, so this is
+  // usually a cache hit.
+  useEffect(() => {
+    if (!problem_statement) return undefined;
+    if (!problem_statement.events?.length) {
+      setTeamRepoEventsChecked(true);
+      return undefined;
+    }
+    if (!hackathonEventsLoaded && !hackathonEventsError) return undefined;
+
+    const slugs = [
+      ...new Set(
+        hackathonEvents.map((event) => event?.event_id).filter(Boolean)
+      ),
+    ];
+    if (slugs.length === 0) {
+      setTeamRepoEventsChecked(true);
+      return undefined;
+    }
+
+    let cancelled = false;
+    Promise.all(
+      slugs.map(async (slug) => {
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${encodeURIComponent(slug)}`
+          );
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (error) {
+          return null;
+        }
+      })
+    ).then((results) => {
+      if (cancelled) return;
+      setTeamRepoEvents(results.filter((r) => r && Array.isArray(r.teams)));
+      setTeamRepoEventsChecked(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    problem_statement,
+    hackathonEvents,
+    hackathonEventsLoaded,
+    hackathonEventsError,
+  ]);
+
+  // Merge repos from the problem statement itself with repos from the
+  // hackathon teams that built it. Team linkage prefers the team's own
+  // problem_statements list; the nonprofit fallback only applies to teams
+  // with no problem_statements data (avoids claiming repos from a sibling
+  // project of a multi-project nonprofit). Dedupe by normalized link — a
+  // team repo matching a project-level repo just adds attribution.
+  // Also groups the matched teams per event for the Events & Teams section.
+  const { repos: codeRepos, teamsByEvent: projectTeamsByEvent } =
+    useMemo(() => {
+    if (!problem_statement) return { repos: [], teamsByEvent: {} };
+    const map = new Map();
+    const teamsByEvent = {};
+
+    const rawGithub = problem_statement.github;
+    const projectLevel = Array.isArray(rawGithub)
+      ? rawGithub
+      : typeof rawGithub === "string" && rawGithub.trim()
+      ? [{ link: rawGithub.trim() }]
+      : [];
+    projectLevel.forEach((entry) => {
+      const link = typeof entry === "string" ? entry : entry?.link;
+      if (!link) return;
+      const key = normalizeRepoLink(link);
+      if (!map.has(key)) {
+        map.set(key, {
+          name:
+            (typeof entry === "object" && entry?.name) ||
+            repoNameFromLink(link),
+          link,
+          isProjectRepo: true,
+          builtBy: [],
+        });
+      }
+    });
+
+    const npoIds = new Set(resolvedNonprofits.map((n) => n.id));
+    teamRepoEvents.forEach((event) => {
+      (event?.teams || []).forEach((team) => {
+        if (!team) return;
+        const psIds = (team.problem_statements || [])
+          .map((p) => (typeof p === "string" ? p : p?.id))
+          .filter(Boolean);
+        const matches =
+          psIds.length > 0
+            ? psIds.includes(problem_statement.id)
+            : team.selected_nonprofit_id &&
+              npoIds.has(team.selected_nonprofit_id);
+        if (!matches) return;
+        if (event.event_id) {
+          if (!teamsByEvent[event.event_id]) teamsByEvent[event.event_id] = [];
+          teamsByEvent[event.event_id].push(team);
+        }
+        (team.github_links || []).forEach((gl) => {
+          const link = typeof gl === "string" ? gl : gl?.link;
+          if (!link) return;
+          const key = normalizeRepoLink(link);
+          const attribution = {
+            team: team.name,
+            event: event.title || event.event_id,
+          };
+          if (map.has(key)) {
+            const existing = map.get(key);
+            if (
+              team.name &&
+              !existing.builtBy.some((b) => b.team === team.name)
+            ) {
+              existing.builtBy.push(attribution);
+            }
+          } else {
+            map.set(key, {
+              name:
+                (typeof gl === "object" && gl?.name) || repoNameFromLink(link),
+              link,
+              isProjectRepo: false,
+              builtBy: team.name ? [attribution] : [],
+            });
+          }
+        });
+      });
+    });
+
+    return { repos: Array.from(map.values()), teamsByEvent };
+  }, [problem_statement, teamRepoEvents, resolvedNonprofits]);
+
+  // Only fetch issue data once the Code & Tasks section scrolls near
+  // (same fire-once IntersectionObserver pattern as TeamList's TeamCard)
+  useEffect(() => {
+    if (codeSectionVisible) return undefined;
+    const node = codeSectionRef.current;
+    if (!node) return undefined;
+    if (typeof IntersectionObserver === "undefined") {
+      setCodeSectionVisible(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setCodeSectionVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [codeSectionVisible, problem_statement]);
+
+  // Batched issue fetch through the backend proxy — dedupe via ref,
+  // Promise.all, ONE setState (never per-repo setState)
+  useEffect(() => {
+    if (!codeSectionVisible || codeRepos.length === 0) return undefined;
+    const pending = codeRepos.filter((repo) => {
+      const gh = parseGithubRepo(repo.link);
+      return gh && !issuesRequestedRef.current.has(normalizeRepoLink(repo.link));
+    });
+    if (pending.length === 0) return undefined;
+    pending.forEach((repo) =>
+      issuesRequestedRef.current.add(normalizeRepoLink(repo.link))
+    );
+
+    let cancelled = false;
+    Promise.all(
+      pending.map(async (repo) => {
+        const gh = parseGithubRepo(repo.link);
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues?org=${encodeURIComponent(
+              gh.org
+            )}&repo=${encodeURIComponent(gh.repo)}&state=all`
+          );
+          if (!res.ok) return null;
+          const data = await res.json();
+          if (!data?.success || !Array.isArray(data.issues)) return null;
+          const openIssues = data.issues.filter(
+            (issue) => issue.state === "open"
+          );
+          return [
+            normalizeRepoLink(repo.link),
+            {
+              open: openIssues.length,
+              closed: data.issues.length - openIssues.length,
+              topOpen: openIssues.slice(0, 5).map((issue) => ({
+                number: issue.issue_number,
+                title: issue.title,
+              })),
+            },
+          ];
+        } catch (error) {
+          return null; // swallow — static links still render
+        }
+      })
+    ).then((entries) => {
+      if (cancelled) return;
+      const valid = entries.filter(Boolean);
+      if (valid.length > 0) {
+        setRepoIssueData((prev) => ({
+          ...prev,
+          ...Object.fromEntries(valid),
+        }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [codeSectionVisible, codeRepos]);
+
   const handleChange = (panel) => (event, isExpanded) => {
     const params = {
       action_name: isExpanded ? "open" : "close",
@@ -306,23 +639,6 @@ export default function ProblemStatement({
         },
       });
     }
-  };
-
-  const handleLeavingTeam = (teamId) => {
-    handle_unjoin_a_team(teamId, handleTeamLeavingResponse);
-    trackEvent({ action: "team_left", params: { team_id: teamId } });
-  };
-
-  const handleJoiningTeam = (teamId) => {
-    handle_join_team(teamId, handleTeamLeavingResponse);
-    trackEvent({ action: "team_joined", params: { team_id: teamId } });
-  };
-
-  const handleTeamLeavingResponse = () => {
-    trackEvent({
-      action: "Team Left",
-      params: { category: "Team", label: "Team" },
-    });
   };
 
   const handleClose = (helperType) => {
@@ -408,13 +724,6 @@ export default function ProblemStatement({
     );
   }
 
-  const teamCounter = teams.filter((team) =>
-    team.problem_statements?.includes(problem_statement_id)
-  ).length;
-  const teamText = `There ${teamCounter === 1 ? "is" : "are"} ${teamCounter} team${
-    teamCounter === 1 ? "" : "s"
-  } working on this`;
-
   let countOfHackers = 0;
   let countOfMentors = 0;
   if (problem_statement.helping?.length > 0) {
@@ -437,6 +746,27 @@ export default function ProblemStatement({
 
   // Live projects don't need new volunteers; maintenance-status projects still do.
   const isProduction = problem_statement.status === "production";
+
+  // Code & Tasks tiers: project-level repos are canonical; team-built repos
+  // from hackathons follow under their own quiet label
+  const projectRepos = codeRepos.filter((repo) => repo.isProjectRepo);
+  const teamRepos = codeRepos.filter((repo) => !repo.isProjectRepo);
+
+  // Unique per problem statement — nonprofit pages render one
+  // ProblemStatement per project, so a fixed id would collide
+  const codeSectionId = `code-and-tasks-${problem_statement.id}`;
+
+  const handleRepoLinkClick = (kind, repoLink) => {
+    trackEvent({
+      action: "project_repo_click",
+      params: {
+        kind,
+        repo: repoLink,
+        problem_statement_id: problem_statement?.id,
+        npo_id: effectiveNpoId,
+      },
+    });
+  };
 
   // Dynamic heading element driven by headingLevel prop
   const TitleTag = headingLevel;
@@ -721,6 +1051,18 @@ export default function ProblemStatement({
                 Since {problem_statement.first_thought_of}
               </span>
             )}
+            {codeRepos.length > 0 && (
+              <a
+                href={`#${codeSectionId}`}
+                className="ohx-tag"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <GitHubIcon
+                  sx={{ fontSize: 13, verticalAlign: "middle", mr: 0.5 }}
+                />
+                {codeRepos.length} repo{codeRepos.length === 1 ? "" : "s"} ↓
+              </a>
+            )}
           </div>
         </div>
 
@@ -847,6 +1189,132 @@ export default function ProblemStatement({
           </Box>
         </div>
 
+        {/* Code & Tasks — always visible, right after the problem: where the
+            code lives and what work remains (GitHub Issues). Never collapse
+            or hide this section — burying it was the discoverability bug. */}
+        <div
+          id={codeSectionId}
+          ref={codeSectionRef}
+          style={{ marginBottom: 28, scrollMarginTop: 96 }}
+        >
+          <p className="ohx-eyebrow" style={{ marginBottom: 10 }}>
+            Code &amp; Tasks
+          </p>
+          {codeRepos.length > 0 ? (
+            <>
+              <p
+                className="ohx-muted"
+                style={{ fontSize: "0.9rem", marginBottom: 14 }}
+              >
+                The remaining work is tracked as public GitHub Issues. Open a
+                repo, read the README, then pick an open issue — closed issues
+                are public credit for your contribution.
+              </p>
+              {projectRepos.length > 0 && (
+                <Grid container spacing={2}>
+                  {projectRepos.map((repo) => (
+                    <Grid size={{ xs: 12, sm: 6 }} key={repo.link}>
+                      <RepoCard
+                        repo={repo}
+                        issueData={repoIssueData[normalizeRepoLink(repo.link)]}
+                        onLinkClick={handleRepoLinkClick}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+              {teamRepos.length > 0 && (
+                <>
+                  <p
+                    className="ohx-eyebrow"
+                    style={{
+                      margin:
+                        projectRepos.length > 0 ? "18px 0 10px" : "0 0 10px",
+                      fontSize: "0.66rem",
+                    }}
+                  >
+                    {projectRepos.length > 0
+                      ? "More repos from hackathon teams"
+                      : "Built by teams at our hackathons"}
+                  </p>
+                  <Grid container spacing={2}>
+                    {teamRepos.map((repo) => (
+                      <Grid size={{ xs: 12, sm: 6 }} key={repo.link}>
+                        <RepoCard
+                          repo={repo}
+                          issueData={
+                            repoIssueData[normalizeRepoLink(repo.link)]
+                          }
+                          onLinkClick={handleRepoLinkClick}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </>
+              )}
+            </>
+          ) : (
+            <div
+              className="ohx-card"
+              style={{ padding: "16px 20px", background: "var(--surface-2)" }}
+            >
+              {problem_statement.events?.length > 0 &&
+              !teamRepoEventsChecked ? (
+                <p className="ohx-muted" style={{ margin: 0 }}>
+                  Checking hackathon teams for code repositories…
+                </p>
+              ) : (
+                <>
+                  <p
+                    style={{
+                      fontWeight: 600,
+                      margin: "0 0 6px",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    Where&rsquo;s the code?
+                  </p>
+                  <p
+                    className="ohx-muted"
+                    style={{ fontSize: "0.9rem", margin: "0 0 12px" }}
+                  >
+                    No repository is linked to this project yet. Code from
+                    hackathon builds usually lives with the team that made it —
+                    check the event page
+                    {hackathonEvents.length === 1 ? "" : "s"} below, or ask in
+                    the project&rsquo;s Slack channel.
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {hackathonEvents.map((event) => (
+                      <Link
+                        key={event.event_id}
+                        href={`/hack/${event.event_id}`}
+                        className="ohx-btn ohx-btn--ghost"
+                        style={{ fontSize: "0.82rem", padding: "0.5em 0.9em" }}
+                      >
+                        <EventIcon sx={{ fontSize: 13, mr: 0.5 }} />
+                        {event.title || event.event_id}
+                      </Link>
+                    ))}
+                    {problem_statement.slack_channel && (
+                      <a
+                        href={`https://opportunity-hack.slack.com/app_redirect?channel=${problem_statement.slack_channel}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ohx-btn ohx-btn--ghost"
+                        style={{ fontSize: "0.82rem", padding: "0.5em 0.9em" }}
+                      >
+                        <TagIcon sx={{ fontSize: 13 }} />
+                        {problem_statement.slack_channel}
+                      </a>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Help toggle — hidden on production projects, except for existing
             helpers so they can still toggle themselves off */}
         {(!isProduction || help_checked === "checked") && (
@@ -880,66 +1348,6 @@ export default function ProblemStatement({
               </>
             )}
 
-          {problem_statement.github?.length > 0 &&
-            renderSection(
-              "github",
-              <GitHubIcon sx={{ fontSize: 17, color: "var(--brand)" }} />,
-              `Code & Tasks (${problem_statement.github.length} repos)`,
-              <Grid container spacing={2}>
-                {problem_statement.github.map((repo, index) => (
-                  <Grid size={{ xs: 12, sm: 6 }} key={index}>
-                    <div
-                      className="ohx-card"
-                      style={{ padding: "14px 16px" }}
-                    >
-                      <p
-                        style={{
-                          fontWeight: 600,
-                          fontSize: "0.95rem",
-                          marginBottom: 10,
-                          color: "var(--ink)",
-                        }}
-                      >
-                        {repo.name}
-                      </p>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <a
-                          href={repo.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ohx-btn ohx-btn--ghost"
-                          style={{
-                            fontSize: "0.82rem",
-                            padding: "0.5em 0.9em",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <CodeIcon sx={{ fontSize: 13 }} /> Code
-                        </a>
-                        <a
-                          href={`${repo.link}/issues`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ohx-btn ohx-btn--ghost"
-                          style={{
-                            fontSize: "0.82rem",
-                            padding: "0.5em 0.9em",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <AssignmentIcon sx={{ fontSize: 13 }} /> Issues
-                        </a>
-                      </div>
-                    </div>
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-
           {renderSection(
             "events",
             <EventIcon sx={{ fontSize: 17, color: "var(--brand)" }} />,
@@ -947,14 +1355,8 @@ export default function ProblemStatement({
             hackathonEventsLoaded ? (
               <Events
                 key={problem_statement.id}
-                teams={teams}
-                userDetails={userDetails}
                 events={hackathonEvents}
-                onTeamLeave={handleLeavingTeam}
-                onTeamJoin={handleJoiningTeam}
-                user={profile}
-                problemStatementId={problem_statement.id}
-                isHelping={help_checked}
+                teamsByEvent={projectTeamsByEvent}
               />
             ) : (
               <p
