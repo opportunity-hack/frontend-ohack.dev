@@ -570,13 +570,13 @@ export const getStaticProps = async () => {
         {
           name: "url",
           property: "url",
-          content: "https://ohack.dev/about/mentors/overview",
+          content: "https://www.ohack.dev/about/mentors/overview",
           key: "url"
         },
         {
           name: "og:url",
           property: "og:url",
-          content: "https://ohack.dev/about/mentors/overview",
+          content: "https://www.ohack.dev/about/mentors/overview",
           key: "ogurl"
         },
         {
@@ -669,9 +669,9 @@ export const getStaticProps = async () => {
         "@graph": [
           {
             "@type": "Organization",
-            "@id": "https://ohack.dev/#organization",
+            "@id": "https://www.ohack.dev/#organization",
             "name": "Opportunity Hack",
-            "url": "https://ohack.dev",
+            "url": "https://www.ohack.dev",
             "logo": {
               "@type": "ImageObject",
               "url": "https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp"
@@ -701,17 +701,17 @@ export const getStaticProps = async () => {
           },
           {
             "@type": "WebPage",
-            "@id": "https://ohack.dev/about/mentors/overview#webpage",
-            "url": "https://ohack.dev/about/mentors/overview",
+            "@id": "https://www.ohack.dev/about/mentors/overview#webpage",
+            "url": "https://www.ohack.dev/about/mentors/overview",
             "name": title,
             "description": description,
             "isPartOf": {
               "@type": "WebSite",
-              "@id": "https://ohack.dev/#website"
+              "@id": "https://www.ohack.dev/#website"
             },
             "mainEntity": {
               "@type": "VideoObject",
-              "@id": "https://ohack.dev/about/mentors/overview#video"
+              "@id": "https://www.ohack.dev/about/mentors/overview#video"
             }
           },
           {
@@ -721,25 +721,25 @@ export const getStaticProps = async () => {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Home",
-                "item": "https://ohack.dev"
+                "item": "https://www.ohack.dev"
               },
               {
                 "@type": "ListItem",
                 "position": 2,
                 "name": "About",
-                "item": "https://ohack.dev/about"
+                "item": "https://www.ohack.dev/about"
               },
               {
                 "@type": "ListItem",
                 "position": 3,
                 "name": "Mentors",
-                "item": "https://ohack.dev/about/mentors"
+                "item": "https://www.ohack.dev/about/mentors"
               },
               {
                 "@type": "ListItem",
                 "position": 4,
                 "name": "Overview",
-                "item": "https://ohack.dev/about/mentors/overview"
+                "item": "https://www.ohack.dev/about/mentors/overview"
               }
             ]
           }

@@ -1,0 +1,761 @@
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Avatar,
+  AvatarGroup,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControlLabel,
+  IconButton,
+  LinearProgress,
+  List,
+  ListItem,
+  ListItemText,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { Archive, AttachFile, Close, Delete, Link as LinkIcon, PersonAdd, PersonRemove } from "@mui/icons-material";
+import { Snackbar } from "@mui/material";
+import ReactMarkdown from "react-markdown";
+import PlanningPublicNotice from "./PlanningPublicNotice";
+import PlanningCardKindRenderer from "./PlanningCardKindRenderer";
+import NextLink from "next/link";
+import { CARD_STATUSES, statusMeta } from "../../lib/planningStatus";
+import MentionTextField, { MentionRenderer } from "./MentionTextField";
+
+const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB
+
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
+function slugifyFilename(name) {
+  const ext = name.split(".").pop().toLowerCase();
+  const base = name
+    .slice(0, name.lastIndexOf("."))
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 60);
+  return `${base}.${ext}`;
+}
+
+export default function PlanningCardDialog({
+  card: initialCard,
+  comments: initialComments = [],
+  labels = [],
+  users = {},
+  myId = null,
+  canWrite,
+  canComment,
+  eventId,
+  onClose,
+  onUpdate,
+  onArchive,
+  onCreateComment,
+  onDeleteComment,
+  onCreateLabel,
+}) {
+  const [card, setCard] = useState(initialCard);
+  const [comments, setComments] = useState(initialComments);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [title, setTitle] = useState(initialCard.title);
+  const [description, setDescription] = useState(initialCard.description || "");
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [commentBody, setCommentBody] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const [budgetEditing, setBudgetEditing] = useState(false);
+  const [budgetAmount, setBudgetAmount] = useState(
+    initialCard.budget ? (initialCard.budget.amount_cents / 100).toString() : ""
+  );
+  const [budgetBucket, setBudgetBucket] = useState(initialCard.budget?.bucket || "food");
+  const [budgetState, setBudgetState] = useState(initialCard.budget?.state || "estimated");
+  const [budgetVendor, setBudgetVendor] = useState(initialCard.budget?.vendor || "");
+  const [budgetError, setBudgetError] = useState("");
+
+  const cardPermalink = typeof window !== "undefined" && eventId && card?.id
+    ? `${window.location.origin}/hack/${eventId}/plan/c/${card.id}`
+    : "";
+
+  async function copyLink() {
+    if (!cardPermalink) return;
+    try {
+      await navigator.clipboard.writeText(cardPermalink);
+      setLinkCopied(true);
+    } catch {
+      // Older browsers / non-https — fall back to selecting the text
+      const ta = document.createElement("textarea");
+      ta.value = cardPermalink;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); setLinkCopied(true); } catch {}
+      document.body.removeChild(ta);
+    }
+  }
+
+  // Sync updates back
+  useEffect(() => { setCard(initialCard); }, [initialCard]);
+  useEffect(() => { setComments(initialComments); }, [initialComments]);
+  useEffect(() => {
+    // Reset budget edit buffer when the live card budget changes (poll/save)
+    setBudgetAmount(initialCard.budget ? (initialCard.budget.amount_cents / 100).toString() : "");
+    setBudgetBucket(initialCard.budget?.bucket || "food");
+    setBudgetState(initialCard.budget?.state || "estimated");
+    setBudgetVendor(initialCard.budget?.vendor || "");
+  }, [initialCard.budget]);
+
+  async function saveTitle() {
+    const t = title.trim();
+    if (t && t !== card.title) {
+      const result = await onUpdate({ title: t });
+      if (result?.conflict) {
+        alert("Another editor updated this card. Please reload.");
+      }
+    }
+    setEditingTitle(false);
+  }
+
+  async function saveDescription() {
+    if (description !== card.description) {
+      await onUpdate({ description });
+    }
+    setEditingDesc(false);
+  }
+
+  async function saveBudget(overrides = {}) {
+    const rawAmount = overrides.amount !== undefined ? overrides.amount : budgetAmount;
+    // Empty amount = no-op (haven't typed anything yet), not an error.
+    if (rawAmount === "" || rawAmount === null || rawAmount === undefined) {
+      setBudgetError("");
+      return;
+    }
+    const amountNum = parseFloat(rawAmount);
+    if (!Number.isFinite(amountNum) || amountNum < 0) {
+      setBudgetError("Enter a valid amount (0 or more)");
+      return;
+    }
+    if (amountNum > 1_000_000) {
+      setBudgetError("Maximum $1,000,000");
+      return;
+    }
+    setBudgetError("");
+    const existing = card.budget;
+    const payload = {
+      amount_cents: Math.round(amountNum * 100),
+      bucket: overrides.bucket ?? budgetBucket,
+      state: overrides.state ?? budgetState,
+      vendor: (overrides.vendor ?? budgetVendor).trim() || null,
+      // Backend re-stores invoice_url from the incoming payload — preserve it
+      // so saves from this editor don't nuke a URL set elsewhere.
+      invoice_url: existing?.invoice_url ?? null,
+    };
+    const unchanged =
+      existing &&
+      existing.amount_cents === payload.amount_cents &&
+      existing.bucket === payload.bucket &&
+      existing.state === payload.state &&
+      (existing.vendor || null) === payload.vendor;
+    if (unchanged) return;
+    const result = await onUpdate({ budget: payload });
+    if (result?.conflict) {
+      setBudgetError("Another editor updated this card. Please reload.");
+    }
+  }
+
+  async function clearBudget() {
+    setBudgetError("");
+    setBudgetEditing(false);
+    await onUpdate({ budget: null });
+  }
+
+  async function handleChecklistToggle(clIdx, itemIdx, done) {
+    const updated = card.checklists.map((cl, ci) =>
+      ci !== clIdx
+        ? cl
+        : {
+            ...cl,
+            items: cl.items.map((it, ii) =>
+              ii !== itemIdx ? it : { ...it, done }
+            ),
+          }
+    );
+    await onUpdate({ checklists: updated });
+    setCard((prev) => ({ ...prev, checklists: updated }));
+  }
+
+  async function handleCommentSubmit() {
+    if (!commentBody.trim()) return;
+    setSubmittingComment(true);
+    const result = await onCreateComment(commentBody.trim());
+    if (result?.ok) {
+      setComments((prev) => [...prev, result.data]);
+      setCommentBody("");
+    }
+    setSubmittingComment(false);
+  }
+
+  async function handleFileUpload(file) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setUploadError("Only PNG, JPG, WebP, and GIF images are supported in v1.");
+      return;
+    }
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      setUploadError("File too large (max 10 MB).");
+      return;
+    }
+    if ((card.attachments || []).length >= 20) {
+      setUploadError("Maximum 20 attachments per card.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadError("");
+    const form = new FormData();
+    form.append("file", file);
+    form.append("directory", `hackathons/${eventId}/planning/cards/${card.id}`);
+    form.append("filename", slugifyFilename(file.name));
+
+    try {
+      const res = await fetch(`${API}/api/messages/upload-image`, {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const { url } = await res.json();
+      const newAttachment = {
+        id: crypto.randomUUID(),
+        url,
+        name: file.name,
+        size: file.size,
+        content_type: file.type,
+        uploaded_at: new Date().toISOString(),
+      };
+      const updatedAttachments = [...(card.attachments || []), newAttachment];
+      await onUpdate({ attachments: updatedAttachments });
+      setCard((prev) => ({ ...prev, attachments: updatedAttachments }));
+    } catch (e) {
+      setUploadError(e.message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const cardLabels = (card.labels || [])
+    .map((lid) => labels.find((l) => l.id === lid))
+    .filter(Boolean);
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="md" fullWidth scroll="paper">
+      <DialogTitle sx={{ pr: 6 }}>
+        {editingTitle && canWrite ? (
+          <TextField
+            autoFocus
+            fullWidth
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={saveTitle}
+            onKeyDown={(e) => { if (e.key === "Enter") saveTitle(); }}
+            size="small"
+          />
+        ) : (
+          <Typography
+            variant="h6"
+            onClick={() => canWrite && setEditingTitle(true)}
+            sx={{ cursor: canWrite ? "pointer" : "default" }}
+          >
+            {card.title}
+          </Typography>
+        )}
+        {cardLabels.map((l) => (
+          <Chip
+            key={l.id}
+            label={l.name}
+            size="small"
+            sx={{ bgcolor: l.color, ml: 0.5 }}
+          />
+        ))}
+        {/* Copy link → permalink that unfurls with the card title/desc on Slack/Twitter/LinkedIn */}
+        <Tooltip title="Copy link to this card">
+          <IconButton
+            onClick={copyLink}
+            size="small"
+            sx={{ position: "absolute", top: 8, right: 44 }}
+          >
+            <LinkIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <IconButton onClick={onClose} size="small" sx={{ position: "absolute", top: 8, right: 8 }}>
+          <Close />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        {/* Single, compact public-data notice. Inline hints replace the older
+            full-width Alerts that used to repeat next to attachments + comments. */}
+        <PlanningPublicNotice compact />
+
+        {/* Status + Assignees row — primary metadata, prominent placement */}
+        <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+          {/* Status selector */}
+          <Box sx={{ minWidth: 200 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+              Status
+            </Typography>
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+              {CARD_STATUSES.map((s) => {
+                const selected = card.status === s.id;
+                return (
+                  <Chip
+                    key={s.id}
+                    label={s.label}
+                    size="small"
+                    clickable={canWrite}
+                    onClick={canWrite ? () => onUpdate({ status: selected ? null : s.id }) : undefined}
+                    sx={{
+                      bgcolor: selected ? s.color : "transparent",
+                      color: selected ? "#fff" : "text.primary",
+                      border: "1px solid",
+                      borderColor: selected ? s.color : "divider",
+                      fontWeight: selected ? 600 : 400,
+                      "&:hover": canWrite
+                        ? { bgcolor: selected ? s.color : "action.hover", opacity: selected ? 0.85 : 1 }
+                        : {},
+                    }}
+                  />
+                );
+              })}
+              {!canWrite && !card.status && (
+                <Typography variant="caption" color="text.secondary">
+                  No status set
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Assignees */}
+          <Box sx={{ minWidth: 200, flex: 1 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+              Assignees
+            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+              <AvatarGroup
+                max={6}
+                sx={{ "& .MuiAvatar-root": { width: 32, height: 32, fontSize: "0.85rem" } }}
+              >
+                {(card.assignees || []).map((id) => {
+                  const profile = users[id] || {};
+                  const displayName = profile.name || profile.nickname || "Loading…";
+                  const profileHref = profile.db_id ? `/profile/${profile.db_id}` : null;
+                  const tooltip = (
+                    <Box sx={{ p: 0.5 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{displayName}</Typography>
+                      {profileHref && (
+                        <Typography variant="caption" color="inherit" sx={{ opacity: 0.8 }}>
+                          Click to view profile
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                  const avatar = (
+                    <Avatar src={profile.profile_image} alt={displayName}>
+                      {displayName.charAt(0).toUpperCase()}
+                    </Avatar>
+                  );
+                  return (
+                    <Tooltip key={id} title={tooltip} arrow>
+                      {profileHref ? (
+                        <Box
+                          component={NextLink}
+                          href={profileHref}
+                          sx={{ display: "inline-flex", textDecoration: "none" }}
+                        >
+                          {avatar}
+                        </Box>
+                      ) : (
+                        avatar
+                      )}
+                    </Tooltip>
+                  );
+                })}
+              </AvatarGroup>
+              {(card.assignees || []).length === 0 && (
+                <Typography variant="caption" color="text.secondary">
+                  Nobody owns this card yet
+                </Typography>
+              )}
+              {/* Self-assign button — gated to editors since the backend PATCH requires write perm */}
+              {myId && canWrite && (() => {
+                const isMe = (card.assignees || []).includes(myId);
+                return (
+                  <Button
+                    size="small"
+                    variant={isMe ? "outlined" : "contained"}
+                    color={isMe ? "inherit" : "primary"}
+                    startIcon={isMe ? <PersonRemove fontSize="small" /> : <PersonAdd fontSize="small" />}
+                    onClick={() => {
+                      const next = isMe
+                        ? (card.assignees || []).filter((id) => id !== myId)
+                        : [...(card.assignees || []), myId];
+                      onUpdate({ assignees: next });
+                    }}
+                  >
+                    {isMe ? "Unassign me" : "Assign me"}
+                  </Button>
+                );
+              })()}
+            </Stack>
+          </Box>
+        </Stack>
+
+        {/* Live data strip for non-freetext kinds */}
+        {card.kind && card.kind !== "freetext" && (
+          <Box sx={{ mb: 2 }}>
+            <PlanningCardKindRenderer card={card} eventId={eventId} />
+          </Box>
+        )}
+
+        {/* Description */}
+        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+          Description
+        </Typography>
+        {editingDesc && canWrite ? (
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            minRows={4}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={saveDescription}
+            sx={{
+              mb: 2,
+              // Force theme-aware input colors — without these, the underlying
+              // textarea inherits browser defaults (white bg, dark text) which
+              // is unreadable inside the dialog when planning dark mode is on.
+              "& .MuiInputBase-root": {
+                bgcolor: "background.paper",
+                color: "text.primary",
+              },
+              "& textarea": {
+                color: "text.primary",
+              },
+            }}
+          />
+        ) : (
+          <Box
+            onClick={() => canWrite && setEditingDesc(true)}
+            sx={{
+              mb: 2,
+              p: 1,
+              borderRadius: 1,
+              minHeight: 60,
+              cursor: canWrite ? "pointer" : "default",
+              bgcolor: "action.hover",
+              "&:hover": canWrite ? { bgcolor: "action.selected" } : {},
+            }}
+          >
+            {card.description ? (
+              <ReactMarkdown>{card.description}</ReactMarkdown>
+            ) : (
+              <Typography color="text.secondary" variant="body2">
+                {canWrite ? "Click to add a description…" : "No description."}
+              </Typography>
+            )}
+          </Box>
+        )}
+
+        {/* Checklists */}
+        {(card.checklists || []).map((cl, clIdx) => (
+          <Box key={cl.id || clIdx} sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+              ☑ {cl.title}
+              <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                {cl.items.filter((i) => i.done).length}/{cl.items.length}
+              </Typography>
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={cl.items.length > 0 ? (cl.items.filter((i) => i.done).length / cl.items.length) * 100 : 0}
+              sx={{ mb: 1, borderRadius: 1 }}
+            />
+            {cl.items.map((item, itemIdx) => (
+              <FormControlLabel
+                key={item.id || itemIdx}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={!!item.done}
+                    disabled={!canWrite}
+                    onChange={(e) => handleChecklistToggle(clIdx, itemIdx, e.target.checked)}
+                  />
+                }
+                label={item.text}
+                sx={{ display: "block" }}
+              />
+            ))}
+          </Box>
+        ))}
+
+        {/* Budget — feeds the public event-page widget when admin enables it */}
+        {(card.budget || canWrite) && (
+          <Box sx={{ mb: 2 }}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Budget
+              </Typography>
+              {card.budget && canWrite && !budgetEditing && (
+                <Button size="small" onClick={() => setBudgetEditing(true)} sx={{ textTransform: "none", py: 0 }}>
+                  Edit
+                </Button>
+              )}
+            </Stack>
+
+            {!canWrite && card.budget && (
+              <Chip
+                label={`$${(card.budget.amount_cents / 100).toFixed(0)} · ${card.budget.bucket} · ${card.budget.state}${card.budget.vendor ? ` · ${card.budget.vendor}` : ""}`}
+                size="small"
+                color={card.budget.state === "paid" ? "success" : card.budget.state === "committed" ? "warning" : "default"}
+              />
+            )}
+
+            {canWrite && !card.budget && !budgetEditing && (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setBudgetEditing(true)}
+                sx={{ textTransform: "none" }}
+              >
+                + Add budget
+              </Button>
+            )}
+
+            {canWrite && card.budget && !budgetEditing && (
+              <Chip
+                label={`$${(card.budget.amount_cents / 100).toFixed(0)} · ${card.budget.bucket} · ${card.budget.state}${card.budget.vendor ? ` · ${card.budget.vendor}` : ""}`}
+                size="small"
+                color={card.budget.state === "paid" ? "success" : card.budget.state === "committed" ? "warning" : "default"}
+                onClick={() => setBudgetEditing(true)}
+                sx={{ cursor: "pointer" }}
+              />
+            )}
+
+            {canWrite && budgetEditing && (
+              <Box>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="flex-start">
+                  <TextField
+                    label="Amount (USD)"
+                    type="number"
+                    size="small"
+                    value={budgetAmount}
+                    onChange={(e) => setBudgetAmount(e.target.value)}
+                    onBlur={() => saveBudget()}
+                    inputProps={{ min: 0, step: "0.01" }}
+                    sx={{
+                      width: 140,
+                      "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+                      "& input": { color: "text.primary" },
+                    }}
+                  />
+                  <TextField
+                    select
+                    label="Bucket"
+                    size="small"
+                    value={budgetBucket}
+                    onChange={(e) => {
+                      setBudgetBucket(e.target.value);
+                      saveBudget({ bucket: e.target.value });
+                    }}
+                    sx={{
+                      width: 130,
+                      "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+                    }}
+                  >
+                    <MenuItem value="food">Food</MenuItem>
+                    <MenuItem value="prize">Prize</MenuItem>
+                    <MenuItem value="swag">Swag</MenuItem>
+                  </TextField>
+                  <TextField
+                    select
+                    label="State"
+                    size="small"
+                    value={budgetState}
+                    onChange={(e) => {
+                      setBudgetState(e.target.value);
+                      saveBudget({ state: e.target.value });
+                    }}
+                    sx={{
+                      width: 140,
+                      "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+                    }}
+                  >
+                    <MenuItem value="estimated">Estimated</MenuItem>
+                    <MenuItem value="committed">Committed</MenuItem>
+                    <MenuItem value="paid">Paid</MenuItem>
+                  </TextField>
+                  <TextField
+                    label="Vendor (optional)"
+                    size="small"
+                    value={budgetVendor}
+                    onChange={(e) => setBudgetVendor(e.target.value)}
+                    onBlur={() => saveBudget()}
+                    inputProps={{ maxLength: 200 }}
+                    sx={{
+                      minWidth: 180,
+                      flex: 1,
+                      "& .MuiInputBase-root": { bgcolor: "background.paper", color: "text.primary" },
+                      "& input": { color: "text.primary" },
+                    }}
+                  />
+                </Stack>
+                <Stack direction="row" spacing={1} sx={{ mt: 1 }} alignItems="center">
+                  <Button size="small" variant="contained" onClick={() => { saveBudget(); setBudgetEditing(false); }}>
+                    Done
+                  </Button>
+                  {card.budget && (
+                    <Button size="small" color="error" onClick={clearBudget} sx={{ textTransform: "none" }}>
+                      Remove budget
+                    </Button>
+                  )}
+                  <Typography variant="caption" color="text.secondary">
+                    Feeds the event-page budget widget. Estimated / Committed / Paid roll up by bucket.
+                  </Typography>
+                </Stack>
+                {budgetError && (
+                  <Alert severity="error" sx={{ mt: 1 }}>{budgetError}</Alert>
+                )}
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* Attachments */}
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+          Attachments ({(card.attachments || []).length})
+        </Typography>
+        {(card.attachments || []).map((att) => (
+          <Box key={att.id} sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <AttachFile fontSize="small" />
+            <a href={att.url} target="_blank" rel="noopener noreferrer">
+              {att.name}
+            </a>
+            <Typography variant="caption" color="text.secondary">
+              ({Math.round(att.size / 1024)} KB)
+            </Typography>
+          </Box>
+        ))}
+        {canWrite && (
+          <Box sx={{ mt: 1 }}>
+            {uploadError && <Alert severity="error" sx={{ mb: 1 }}>{uploadError}</Alert>}
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Button
+                variant="outlined"
+                size="small"
+                component="label"
+                startIcon={<AttachFile />}
+                disabled={uploading}
+              >
+                {uploading ? "Uploading…" : "Attach image"}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                />
+              </Button>
+              <Typography variant="caption" color="text.secondary">
+                PNG, JPG, WebP, GIF — max 10 MB · publicly visible
+              </Typography>
+            </Stack>
+          </Box>
+        )}
+
+        {/* Comments */}
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+          Comments ({comments.length})
+        </Typography>
+        {comments.filter((c) => !c.deleted_at && c.body !== "[deleted]").map((c) => (
+          <Box
+            key={c.id}
+            sx={{ mb: 1, pl: 1, borderLeft: "2px solid", borderColor: "divider" }}
+          >
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="caption" color="text.secondary">
+                {(c.author?.name || c.author?.user_id || "Someone").trim()} ·{" "}
+                {new Date(c.created_at).toLocaleString()}
+              </Typography>
+              {canWrite && (
+                <Tooltip title="Delete comment">
+                  <IconButton size="small" onClick={() => onDeleteComment(c.id)}>
+                    <Delete fontSize="inherit" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
+            <MentionRenderer body={c.body} />
+          </Box>
+        ))}
+        {canComment && (
+          <Box sx={{ mt: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="flex-end">
+              <Box sx={{ flex: 1 }}>
+                <MentionTextField
+                  value={commentBody}
+                  onChange={setCommentBody}
+                  placeholder="Post a public comment… type @ to mention someone"
+                  rows={2}
+                  size="small"
+                />
+              </Box>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleCommentSubmit}
+                disabled={submittingComment || !commentBody.trim()}
+              >
+                Post
+              </Button>
+            </Stack>
+          </Box>
+        )}
+
+        {/* Archive — quiet, destructive action lives at the bottom */}
+        {canWrite && (
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              startIcon={<Archive />}
+              color="inherit"
+              size="small"
+              onClick={onArchive}
+              sx={{ color: "text.secondary", textTransform: "none" }}
+            >
+              Archive card
+            </Button>
+          </Box>
+        )}
+      </DialogContent>
+
+      <Snackbar
+        open={linkCopied}
+        autoHideDuration={2000}
+        onClose={() => setLinkCopied(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        message="Link copied to clipboard"
+      />
+    </Dialog>
+  );
+}

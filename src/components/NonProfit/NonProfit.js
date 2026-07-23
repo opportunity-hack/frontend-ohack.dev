@@ -1,66 +1,43 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import useNonprofit from '../../hooks/use-nonprofit';
-import Head from 'next/head';
-import Image from 'next/image';
-import { normalizeImageUrl } from '../../lib/imageUtils';
-import { useAuthInfo } from '@propelauth/react';
-import { Puff } from 'react-loading-icons';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import useNonprofit from "../../hooks/use-nonprofit";
+import Head from "next/head";
+import { useAuthInfo } from "@propelauth/react";
 
-
-// Icons and MUI components
-import LanguageIcon from '@mui/icons-material/Language';
-import TagIcon from '@mui/icons-material/Tag';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-import { Grid } from '@mui/material';
-import Avatar from '@mui/material/Avatar';
-import { red } from '@mui/material/colors';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+// Icons
+import LanguageIcon from "@mui/icons-material/Language";
+import TagIcon from "@mui/icons-material/Tag";
 
 // Analytics
-import { trackEvent, initFacebookPixel } from '../../lib/ga';
+import { trackEvent, initFacebookPixel } from "../../lib/ga";
 
-import {
-  ChannelChip,
-  DescriptionStyled,
-  LayoutContainer,
-  LinkStyled,
-  ProjectsChip,
-  ProjectsContainer,
-  ProjectsGrid,
-  TitleBanner,
-  TitleChipContainer,
-  TitleContainer,
-  TitleStyled,
-  ApplyButtonContainer,
-  ApplyButton
-} from '../../styles/nonprofit/styles';
+// Refined design system
+import { RefinedRoot, RefinedFonts } from "../design/refined";
 
 // Lazy loaded components
-const ProblemStatement = lazy(() => import('../../components/ProblemStatement/ProblemStatement'));
-const LoginOrRegister = lazy(() => import('../LoginOrRegister/LoginOrRegister'));
+const ProblemStatement = lazy(() =>
+  import("../ProblemStatement/ProblemStatement")
+);
+const LoginOrRegister = lazy(() => import("../LoginOrRegister/LoginOrRegister"));
 
-
-// Loading placeholder component
 const LoadingPlaceholder = () => (
-  <Grid container justifyContent='center'>
-    <Puff stroke='#0000FF' />
-  </Grid>
+  <p className="ohx-muted" style={{ padding: "20px 0", margin: 0 }}>
+    Loading…
+  </p>
 );
 
 const NonProfit = React.memo(function NonProfit(props) {
-  const nonprofit_cta_text = "Hey there, it looks like there are no active projects with this organization.";
+  const nonprofit_cta_text =
+    "Hey there, it looks like there are no active projects with this organization.";
   const { nonprofit_id } = props;
   const { user } = useAuthInfo();
-  
+
   const [checked, setChecked] = useState([]);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [isPixelInitialized, setIsPixelInitialized] = useState(false);
 
-  const { handle_npo_problem_statement_edit, nonprofit } = useNonprofit(nonprofit_id);
-  
-  // Initialize Facebook Pixel only once
+  const { handle_npo_problem_statement_edit, nonprofit } =
+    useNonprofit(nonprofit_id);
+
   useEffect(() => {
     if (!isPixelInitialized) {
       initFacebookPixel();
@@ -71,9 +48,7 @@ const NonProfit = React.memo(function NonProfit(props) {
   const gaButton = useCallback(async (action, actionName) => {
     trackEvent({
       action: action,
-      params: {
-        action_name: actionName,
-      },
+      params: { action_name: actionName },
     });
   }, []);
 
@@ -86,241 +61,289 @@ const NonProfit = React.memo(function NonProfit(props) {
   }, [nonprofit_id, checked, handle_npo_problem_statement_edit, onComplete]);
 
   const nonProfitPageName = "from_nonprofit_page_" + nonprofit.id;
-  const style = { fontSize: '14px' };
-  
-  function getTwoLetters(str) {
-    if (typeof str === 'string' && str !== '') {
-      if (str.includes(' ')) {
-        const strArr = str.split(' ');
-        return strArr[0].charAt(0) + strArr[1].charAt(0);
-      } else {
-        return str.charAt(0);
-      }
-    }
-    return '';
-  }
-
-  let slack_details = '';
-  if (nonprofit.slack_channel && nonprofit.slack_channel !== '') {
-    slack_details = (
-      <Typography>
-        <Tooltip title='This is their dedicated channel in Slack'>
-          <IconButton>
-            <TagIcon />
-          </IconButton>
-        </Tooltip>
-        {nonprofit.slack_channel}
-      </Typography>
-    );
-  }
-
-  let description = nonprofit.description ?? '';
-  
-  const loginCallToAction = (
-    <Suspense fallback={<LoadingPlaceholder />}>
-      <LoginOrRegister
-        introText={"Whoa there - you need to login or create an account first."}
-        previousPage={"/nonprofit/" + nonprofit_id}
-      />
-    </Suspense>
-  );
-  
-  const image = normalizeImageUrl(nonprofit.image) || '/npo_placeholder.png';
+  const description = nonprofit.description ?? "";
   const projectCount = nonprofit.problem_statements?.length || 0;
 
-  // Preload the nonprofit image for better LCP
-  useEffect(() => {
-    if (nonprofit.image) {
-      const preloadLink = document.createElement('link');
-      preloadLink.rel = 'preload';
-      preloadLink.as = 'image';
-      preloadLink.href = nonprofit.image;
-      document.head.appendChild(preloadLink);
-      
-      return () => {
-        document.head.removeChild(preloadLink);
-      };
-    }
-  }, [nonprofit.image]);
-  
   const renderProblemStatements = () => {
     if (nonprofit.id === null) {
       return <LoadingPlaceholder />;
-    } 
-    
-    if (!nonprofit.problem_statements || nonprofit.problem_statements.length === 0) {      
+    }
+
+    if (
+      !nonprofit.problem_statements ||
+      nonprofit.problem_statements.length === 0
+    ) {
       return (
-        <Grid container>
-          <Grid size={{ xs: 12 }} style={{ fontSize: "13px"}}>
-            <Typography style={style}>{nonprofit_cta_text}</Typography>
-            <br/>
-          </Grid>
-          <ApplyButtonContainer>
-            <ApplyButton 
-              onClick={() => gaButton("click_apply", nonProfitPageName)} 
-              href="/nonprofits/apply">
-              Submit your project ideas!
-            </ApplyButton>
-          </ApplyButtonContainer>
-        </Grid>
+        <div
+          className="ohx-card"
+          style={{
+            padding: "28px 32px",
+            background: "var(--surface-2)",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "0.95rem",
+              color: "var(--muted)",
+              marginBottom: 20,
+            }}
+          >
+            {nonprofit_cta_text}
+          </p>
+          <a
+            href="/nonprofits/apply"
+            className="ohx-btn ohx-btn--primary"
+            onClick={() => gaButton("click_apply", nonProfitPageName)}
+          >
+            Submit your project ideas
+          </a>
+        </div>
       );
     }
-    
+
     return nonprofit.problem_statements.map((ps) => (
-      <Suspense key={ps.id} fallback={<LoadingPlaceholder />}>
+      <Suspense key={ps.id || ps} fallback={<LoadingPlaceholder />}>
         <ProblemStatement
           problem_statement_id={ps}
           user={user}
           npo_id={nonprofit_id}
+          headingLevel="h2"
         />
       </Suspense>
     ));
   };
 
   return (
-    <LayoutContainer key={nonprofit_id} container>
+    <RefinedRoot>
       <Head>
+        <RefinedFonts />
         <title>{nonprofit.name} | Opportunity Hack</title>
-        <meta
-          name='description'
-          content={`${nonprofit.name} - ${projectCount} projects.`}
+        <link
+          rel="canonical"
+          href={`https://www.ohack.dev/nonprofit/${nonprofit_id}`}
         />
-        <meta property='og:title' content={`${nonprofit.name} | Opportunity Hack`} />
         <meta
-          property='og:description'
-          content={`${nonprofit.name} - ${projectCount} projects.`}
+          name="description"
+          content={`${nonprofit.name} — ${projectCount} project${
+            projectCount !== 1 ? "s" : ""
+          } for social good.`}
         />
-        <meta property='og:image' content={image} />
-        <meta property='og:url' content={`https://ohack.dev/nonprofit/${nonprofit_id}`} />
-        <meta name='twitter:card' content='summary_large_image' />
-        <meta property='twitter:domain' content='ohack.dev' />
         <meta
-          property='twitter:url'
-          content={`https://ohack.dev/nonprofit/${nonprofit_id}`}
+          property="og:title"
+          content={`${nonprofit.name} | Opportunity Hack`}
         />
-        <meta name='twitter:title' content={`${nonprofit.name} | Opportunity Hack`} />
         <meta
-          name='twitter:description'
-          content={`${nonprofit.name} - ${projectCount} projects.`}
+          property="og:description"
+          content={`${nonprofit.name} — ${projectCount} project${
+            projectCount !== 1 ? "s" : ""
+          } for social good.`}
         />
-        <meta name='twitter:image' content={image} />
+        <meta
+          property="og:url"
+          content={`https://www.ohack.dev/nonprofit/${nonprofit_id}`}
+        />
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:image"
+          content="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Banner.png"
+        />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta property="twitter:domain" content="ohack.dev" />
+        <meta
+          property="twitter:url"
+          content={`https://www.ohack.dev/nonprofit/${nonprofit_id}`}
+        />
+        <meta
+          name="twitter:title"
+          content={`${nonprofit.name} | Opportunity Hack`}
+        />
+        <meta
+          name="twitter:description"
+          content={`${nonprofit.name} — ${projectCount} project${
+            projectCount !== 1 ? "s" : ""
+          } for social good.`}
+        />
         <meta name="twitter:creator" content="@opportunityhack" />
-        {/* Preload critical resources */}
-        <link rel="preload" href={image} as="image" />
       </Head>
 
-      <TitleBanner>
-        {/* Replace Parallax with optimized Next.js Image */}
-        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-          <Image
-            src={image}
-            alt={`${nonprofit.name} banner`}
-            layout="fill"
-            objectFit="cover"
-            priority={true}
-            quality={75}
-          />
-        </div>
-      </TitleBanner>
-      
-      <TitleContainer container>
-        {nonprofit.id ? (
-          <>
-            <Grid>
-              <TitleChipContainer>
-                <TitleStyled variant='h2' style={{paddingBottom: "0"}}>
-                  <Avatar
-                    sx={{ bgcolor: red[500] }}
-                    aria-label='npo-avatar'
-                    style={{ marginRight: '1.5rem' }}
-                  >
-                    {getTwoLetters(nonprofit.name)}
-                  </Avatar>
-                  {nonprofit.name}
-                </TitleStyled>
-                <ProjectsChip
-                  color='default'
-                  icon={<AccountTreeIcon />}
-                  label={`${projectCount} project${projectCount !== 1 ? 's' : ''} available`}
-                />                
-              </TitleChipContainer>
-            </Grid>
-            
-            <Grid>
+      {/* Masthead */}
+      <div
+        style={{
+          paddingTop: "clamp(88px, 12vw, 120px)",
+          paddingBottom: 40,
+        }}
+      >
+        <div className="ohx-wrap">
+          <p className="ohx-eyebrow" style={{ marginBottom: 12 }}>
+            Nonprofit Partner
+          </p>
+
+          {nonprofit.id ? (
+            <>
+              <h1
+                className="ohx-display rise"
+                style={{ animationDelay: "0ms", marginBottom: 14 }}
+              >
+                {nonprofit.name}
+              </h1>
+
               {description && (
-                <Typography style={{fontSize:"13px"}}>{description}</Typography>
+                <p
+                  className="ohx-lead rise"
+                  style={{ animationDelay: "60ms", marginBottom: 20 }}
+                >
+                  {description}
+                </p>
               )}
 
-              {nonprofit.website && (
-                <DescriptionStyled>
-                  <LanguageIcon /> {' '}
-                  <LinkStyled href={nonprofit.website} target='_blank' rel='noreferrer'>
-                    {nonprofit.website}
-                  </LinkStyled>
-                </DescriptionStyled>
-              )}
-
-              {nonprofit.contact_people && (
-                <DescriptionStyled>
-                  Point of Contact: {nonprofit.contact_people.map((person) => (
-                    <LinkStyled 
-                      mr={1} 
-                      target="_blank" 
-                      href={`https://opportunity-hack.slack.com/app_redirect?channel=${nonprofit.slack_channel}`} 
-                      key={person}
+              {/* Meta row */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 10,
+                  alignItems: "center",
+                  marginBottom: 16,
+                }}
+              >
+                {projectCount > 0 && (
+                  <span className="ohx-tag">
+                    {projectCount} project{projectCount !== 1 ? "s" : ""}
+                  </span>
+                )}
+                {nonprofit.website && (
+                  <a
+                    href={nonprofit.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ohx-link"
+                    style={{ fontSize: "0.9rem" }}
+                    onClick={() => gaButton("click_website", nonProfitPageName)}
+                  >
+                    <LanguageIcon
+                      sx={{ fontSize: 14, verticalAlign: "middle", mr: 0.3 }}
+                    />
+                    Website →
+                  </a>
+                )}
+                {nonprofit.slack_channel &&
+                  nonprofit.slack_channel !== "" && (
+                    <a
+                      href={`https://opportunity-hack.slack.com/app_redirect?channel=${nonprofit.slack_channel}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ohx-link"
+                      style={{ fontSize: "0.9rem" }}
                     >
-                      {person}
-                    </LinkStyled>                                            
-                  ))}
-                </DescriptionStyled>
-              )}
-
-              {nonprofit.slack_channel ? (
-                <DescriptionStyled>
-                  Looking to get involved? Join the{' '}
-                  <LinkStyled href={`https://opportunity-hack.slack.com/app_redirect?channel=${nonprofit.slack_channel}`}>
-                    <Tooltip
-                      title={
-                        <p style={{ fontSize: '1rem', margin: '0' }}>
-                          This is their dedicated channel in Slack
-                        </p>
-                      }
-                      arrow
-                    >
-                      <ChannelChip
-                        label={`#${nonprofit.slack_channel}`}
-                        variant='outlined'
-                        style={{ cursor: 'pointer' }} 
+                      <TagIcon
+                        sx={{ fontSize: 14, verticalAlign: "middle", mr: 0.3 }}
                       />
-                    </Tooltip>
-                  </LinkStyled>{' '}
-                  channel on{' '}
-                  <LinkStyled href='https://slack.com/'>Slack</LinkStyled> to
-                  join in on the discussion!
-                </DescriptionStyled>
-              ) : (
-                <DescriptionStyled>
-                  No Slack channels available.
-                </DescriptionStyled>
-              )}
-            </Grid>
-          </>
-        ) : (
-          <LoadingPlaceholder />
-        )}
-      </TitleContainer>
+                      #{nonprofit.slack_channel}
+                    </a>
+                  )}
+              </div>
 
-      <ProjectsContainer>
-        {!user && loginCallToAction}
-        <h3>Projects</h3>
-        <ProjectsGrid container>
-          {renderProblemStatements()}
-        </ProjectsGrid>
-      </ProjectsContainer>
-    </LayoutContainer>    
+              {/* Point of contact */}
+              {nonprofit.contact_people &&
+                nonprofit.contact_people.length > 0 && (
+                  <p
+                    className="ohx-muted"
+                    style={{ fontSize: "0.9rem", margin: 0 }}
+                  >
+                    Point of contact:{" "}
+                    {nonprofit.contact_people.map((person, i) => (
+                      <a
+                        key={person}
+                        href={
+                          nonprofit.slack_channel
+                            ? `https://opportunity-hack.slack.com/app_redirect?channel=${nonprofit.slack_channel}`
+                            : "#"
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="ohx-link"
+                        style={{ fontSize: "0.9rem" }}
+                      >
+                        {person}
+                        {i < nonprofit.contact_people.length - 1 ? ", " : ""}
+                      </a>
+                    ))}
+                  </p>
+                )}
+            </>
+          ) : (
+            <div
+              style={{
+                minHeight: 120,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <LoadingPlaceholder />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <hr
+        className="ohx-rule"
+        style={{ margin: 0, position: "relative", zIndex: 1 }}
+      />
+
+      {/* Projects section */}
+      <div
+        style={{
+          paddingTop: 48,
+          paddingBottom: 64,
+          background: "var(--paper)",
+        }}
+      >
+        <div className="ohx-wrap">
+          {/* Auth gate */}
+          {!user && (
+            <div
+              className="ohx-card"
+              style={{
+                padding: "20px 24px",
+                marginBottom: 32,
+                background: "var(--surface-2)",
+              }}
+            >
+              <Suspense fallback={<LoadingPlaceholder />}>
+                <LoginOrRegister
+                  introText={
+                    "Sign in or create an account to contribute to this project."
+                  }
+                  previousPage={"/nonprofit/" + nonprofit_id}
+                />
+              </Suspense>
+            </div>
+          )}
+
+          <p className="ohx-eyebrow" style={{ marginBottom: 10 }}>
+            Projects
+          </p>
+          <h2
+            className="ohx-display"
+            style={{
+              fontSize: "clamp(1.5rem, 2.8vw, 2rem)",
+              marginBottom: 32,
+            }}
+          >
+            {projectCount > 0
+              ? `${projectCount} active project${projectCount !== 1 ? "s" : ""}`
+              : "Projects"}
+          </h2>
+
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: 0 }}
+          >
+            {renderProblemStatements()}
+          </div>
+        </div>
+      </div>
+    </RefinedRoot>
   );
 });
 
 export default NonProfit;
-
-

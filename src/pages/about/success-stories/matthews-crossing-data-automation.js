@@ -42,8 +42,8 @@ export default function MatthewsCrossingSuccessStory() {
         <meta property="og:title" content="Matthews Crossing: Revolutionizing Food Bank Operations | Opportunity Hack" />
         <meta property="og:description" content="See how tech volunteers created an automated data management system for Matthews Crossing, streamlining food bank operations and improving efficiency." />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content="https://ohack.dev/success-stories/matthews-crossing-data-automation" />
-        <meta property="og:image" content="https://ohack.dev/images/matthews-crossing-banner.jpg" />
+        <meta property="og:url" content="https://www.ohack.dev/success-stories/matthews-crossing-data-automation" />
+        <meta property="og:image" content="https://www.ohack.dev/images/matthews-crossing-banner.jpg" />
       </Head>
 
       <Container maxWidth="lg">

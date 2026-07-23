@@ -1,32 +1,54 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Box,
-  Typography,
   Avatar,
-  TextField,
-  InputAdornment,
+  Box,
   Chip,
-  useMediaQuery,
-  useTheme,
+  InputAdornment,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import TableRowsIcon from "@mui/icons-material/TableRows";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Link from "next/link";
 import Image from "next/image";
 import Head from "next/head";
 import { useEnv } from "../../context/env.context";
 import { TIERS, getTierForHearts } from "../../lib/heartTiers";
+import { trackEvent } from "../../lib/ga";
 
 export default function CommunityChampions() {
   const { apiServerUrl } = useEnv();
   const [leaders, setLeaders] = useState([]);
   const [search, setSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("all");
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [viewMode, setViewMode] = useState("table");
+
+  useEffect(() => {
+    trackEvent({
+      action: "community_champions_view_mode",
+      params: { view_mode: "table", interaction: "page_load" },
+    });
+  }, []);
+
+  const handleViewModeChange = (_, val) => {
+    if (!val || val === viewMode) return;
+    setViewMode(val);
+    trackEvent({
+      action: "community_champions_view_mode",
+      params: { view_mode: val, interaction: "toggle" },
+    });
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -280,144 +302,306 @@ export default function CommunityChampions() {
               ))}
             </ToggleButtonGroup>
           </Box>
+          <Box
+            sx={{
+              mt: 1.5,
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={handleViewModeChange}
+              size="small"
+              aria-label="Community champions display mode"
+              sx={{
+                "& .MuiToggleButton-root": {
+                  textTransform: "none",
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                },
+              }}
+            >
+              <ToggleButton value="table">
+                <TableRowsIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                Table
+              </ToggleButton>
+              <ToggleButton value="cards">
+                <ViewModuleIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                Cards
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
           {(search || tierFilter !== "all") && (
             <Typography
               variant="caption"
-              sx={{ mt: 0.5, display: "block", textAlign: "center", color: "text.secondary" }}
+              sx={{
+                mt: 0.5,
+                display: "block",
+                textAlign: "center",
+                color: "text.secondary",
+              }}
             >
               {filtered.length} champion{filtered.length !== 1 ? "s" : ""} found
             </Typography>
           )}
         </Box>
 
-        {/* Champions Grid */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(2, 1fr)",
-              sm: "repeat(3, 1fr)",
-              md: "repeat(4, 1fr)",
-            },
-            gap: { xs: 1.5, md: 2.5 },
-          }}
-        >
-          {filtered.map((entry) => {
-            const tier = getTierForHearts(entry.totalHearts);
-            const tierColor = tier ? tier.color : "#ccc";
-            const tierName = tier ? tier.name : "Newcomer";
-            const hasTier = !!tier;
+        {viewMode === "table" ? (
+          <TableContainer
+            sx={{
+              border: "1px solid rgba(0,0,0,0.08)",
+              borderRadius: 3,
+              backgroundColor: "#fff",
+            }}
+          >
+            <Table
+              size="small"
+              aria-label="Community champions table"
+              sx={{
+                width: "100%",
+                tableLayout: "fixed",
+                "& .MuiTableCell-root": {
+                  py: 1,
+                  px: 1.25,
+                  fontSize: { xs: "0.8rem", md: "0.875rem" },
+                  verticalAlign: "middle",
+                  borderBottom: "1px solid rgba(0,0,0,0.06)",
+                },
+                "& .MuiTableHead-root .MuiTableCell-root": {
+                  py: 1.25,
+                  fontWeight: 700,
+                  whiteSpace: "nowrap",
+                  borderBottom: "1px solid rgba(0,0,0,0.1)",
+                },
+                "& .MuiTableBody-root .MuiTableRow:last-child .MuiTableCell-root": {
+                  borderBottom: 0,
+                },
+              }}
+            >
+              <colgroup>
+                <col style={{ width: 56 }} />
+                <col style={{ width: 88 }} />
+                <col />
+                <col style={{ width: 72 }} />
+              </colgroup>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ pl: { xs: 1.25, md: 1.5 } }}>Profile</TableCell>
+                  <TableCell>Rank</TableCell>
+                  <TableCell>Champion</TableCell>
+                  <TableCell sx={{ pr: { xs: 1.25, md: 1.5 }, textAlign: "right" }}>
+                    Hearts
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filtered.map((entry) => {
+                  const tier = getTierForHearts(entry.totalHearts);
+                  const tierColor = tier ? tier.color : "#ccc";
+                  const tierName = tier ? tier.name : "Newcomer";
 
-            return (
-              <Link
-                key={entry.userId}
-                href={`/profile/${entry.userId}`}
-                passHref
-                legacyBehavior
-              >
-                <Box
-                  component="a"
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textDecoration: "none",
-                    color: "inherit",
-                    p: { xs: 2, md: 2.5 },
-                    borderRadius: 3,
-                    backgroundColor: hasTier ? `${tierColor}08` : "#fafafa",
-                    border: hasTier
-                      ? `1.5px solid ${tierColor}40`
-                      : "1px solid rgba(0,0,0,0.06)",
-                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
-                    "&:hover": {
-                      transform: "translateY(-3px)",
-                      boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
-                    },
-                  }}
+                  return (
+                    <TableRow key={entry.userId} hover>
+                      <TableCell sx={{ pl: { xs: 1.25, md: 1.5 } }}>
+                        <Link href={`/profile/${entry.userId}`} passHref legacyBehavior>
+                          <Box component="a" sx={{ display: "inline-flex", textDecoration: "none" }}>
+                            <Avatar
+                              src={entry.profileImage}
+                              alt={`${entry.name} - Opportunity Hack ${tierName} community champion`}
+                              sx={{
+                                width: { xs: 36, md: 40 },
+                                height: { xs: 36, md: 40 },
+                                border: `2px solid ${tierColor}`,
+                                fontSize: { xs: 14, md: 16 },
+                              }}
+                            />
+                          </Box>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={tierName}
+                          size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: "0.65rem",
+                            height: 20,
+                            backgroundColor: tier ? tierColor : "#e0e0e0",
+                            color:
+                              tierName === "Gold" ||
+                              tierName === "Platinum" ||
+                              tierName === "Diamond"
+                                ? "#333"
+                                : "#fff",
+                            border: tierName === "Diamond" ? "1px solid #90caf9" : "none",
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        <Link href={`/profile/${entry.userId}`} passHref legacyBehavior>
+                          <Box
+                            component="a"
+                            sx={{
+                              fontWeight: 600,
+                              color: "#1d1d1d",
+                              textDecoration: "none",
+                              "&:hover": { textDecoration: "underline" },
+                            }}
+                          >
+                            {entry.name}
+                          </Box>
+                        </Link>
+                      </TableCell>
+                      <TableCell sx={{ pr: { xs: 1.25, md: 1.5 }, textAlign: "right" }}>
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            fontWeight: 600,
+                            color: "#444",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <FavoriteIcon sx={{ fontSize: 14, color: "#e53935" }} />
+                          {entry.totalHearts}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(2, 1fr)",
+                sm: "repeat(3, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: { xs: 1.5, md: 2.5 },
+            }}
+          >
+            {filtered.map((entry) => {
+              const tier = getTierForHearts(entry.totalHearts);
+              const tierColor = tier ? tier.color : "#ccc";
+              const tierName = tier ? tier.name : "Newcomer";
+              const hasTier = !!tier;
+
+              return (
+                <Link
+                  key={entry.userId}
+                  href={`/profile/${entry.userId}`}
+                  passHref
+                  legacyBehavior
                 >
-                  {/* Tier badge */}
-                  <Chip
-                    label={tierName}
-                    size="small"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 700,
-                      fontSize: "0.7rem",
-                      height: 22,
-                      backgroundColor: hasTier ? tierColor : "#e0e0e0",
-                      color:
-                        tierName === "Gold" || tierName === "Platinum" || tierName === "Diamond"
-                          ? "#333"
-                          : "#fff",
-                      border: tierName === "Diamond" ? "1px solid #90caf9" : "none",
-                    }}
-                  />
-
-                  {/* Avatar */}
-                  <Box sx={{ position: "relative", mb: 1 }}>
-                    <Avatar
-                      src={entry.profileImage}
-                      alt={`${entry.name} - Opportunity Hack ${tierName} community champion`}
-                      sx={{
-                        width: { xs: 64, md: 80 },
-                        height: { xs: 64, md: 80 },
-                        border: `3px solid ${tierColor}`,
-                        fontSize: { xs: 20, md: 26 },
-                      }}
-                    />
-                  </Box>
-
-                  {/* Name */}
-                  <Typography
-                    variant="subtitle2"
-                    component="h2"
-                    sx={{
-                      fontWeight: 700,
-                      textAlign: "center",
-                      lineHeight: 1.2,
-                      mb: 0.5,
-                      fontSize: { xs: "0.85rem", md: "0.95rem" },
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      maxWidth: "100%",
-                    }}
-                  >
-                    {entry.name}
-                  </Typography>
-
-                  {/* Hearts */}
                   <Box
+                    component="a"
                     sx={{
                       display: "flex",
+                      flexDirection: "column",
                       alignItems: "center",
-                      gap: 0.5,
+                      textDecoration: "none",
+                      color: "inherit",
+                      p: { xs: 2, md: 2.5 },
+                      borderRadius: 3,
+                      backgroundColor: hasTier ? `${tierColor}08` : "#fafafa",
+                      border: hasTier
+                        ? `1.5px solid ${tierColor}40`
+                        : "1px solid rgba(0,0,0,0.06)",
+                      transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                      "&:hover": {
+                        transform: "translateY(-3px)",
+                        boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+                      },
                     }}
                   >
-                    <FavoriteIcon sx={{ fontSize: 16, color: "#e53935" }} />
+                    <Chip
+                      label={tierName}
+                      size="small"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 700,
+                        fontSize: "0.7rem",
+                        height: 22,
+                        backgroundColor: hasTier ? tierColor : "#e0e0e0",
+                        color:
+                          tierName === "Gold" || tierName === "Platinum" || tierName === "Diamond"
+                            ? "#333"
+                            : "#fff",
+                        border: tierName === "Diamond" ? "1px solid #90caf9" : "none",
+                      }}
+                    />
+
+                    <Box sx={{ position: "relative", mb: 1 }}>
+                      <Avatar
+                        src={entry.profileImage}
+                        alt={`${entry.name} - Opportunity Hack ${tierName} community champion`}
+                        sx={{
+                          width: { xs: 64, md: 80 },
+                          height: { xs: 64, md: 80 },
+                          border: `3px solid ${tierColor}`,
+                          fontSize: { xs: 20, md: 26 },
+                        }}
+                      />
+                    </Box>
+
                     <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 600, color: "#666" }}
+                      variant="subtitle2"
+                      component="h2"
+                      sx={{
+                        fontWeight: 700,
+                        textAlign: "center",
+                        lineHeight: 1.2,
+                        mb: 0.5,
+                        fontSize: { xs: "0.85rem", md: "0.95rem" },
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        maxWidth: "100%",
+                      }}
                     >
-                      {entry.totalHearts} heart{entry.totalHearts !== 1 ? "s" : ""}
+                      {entry.name}
                     </Typography>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                      }}
+                    >
+                      <FavoriteIcon sx={{ fontSize: 16, color: "#e53935" }} />
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: "#666" }}>
+                        {entry.totalHearts} heart{entry.totalHearts !== 1 ? "s" : ""}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </Link>
-            );
-          })}
-        </Box>
+                </Link>
+              );
+            })}
+          </Box>
+        )}
 
         {filtered.length === 0 && (search || tierFilter !== "all") && (
-          <Typography
-            sx={{ textAlign: "center", color: "text.secondary", mt: 4 }}
-          >
+          <Typography sx={{ textAlign: "center", color: "text.secondary", mt: 4 }}>
             No champions found. Try adjusting your search or filter.
           </Typography>
         )}
 
-        {/* CTA Section */}
         <Box
           sx={{
             mt: { xs: 5, md: 6 },
@@ -427,11 +611,7 @@ export default function CommunityChampions() {
             textAlign: "center",
           }}
         >
-          <Typography
-            variant="h5"
-            component="h2"
-            sx={{ fontWeight: 700, mb: 1.5 }}
-          >
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 700, mb: 1.5 }}>
             Join Our Champions
           </Typography>
           <Typography

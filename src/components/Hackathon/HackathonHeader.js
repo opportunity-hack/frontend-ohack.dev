@@ -1,137 +1,112 @@
 import React from "react";
-import { Typography, Paper, Grid, Chip, Box } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { Box } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ReactMarkdown from "react-markdown";
 import { parseLocalDate } from "../../lib/dateUtils";
 
-const HeaderContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginTop: theme.spacing(5),
-  marginBottom: theme.spacing(3),
-  backgroundImage: "linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)",
-  color: theme.palette.getContrastText("#8fd3f4"),
-  minHeight: '220px', // Fixed height to prevent layout shift
-  display: 'flex',
-  flexDirection: 'column',
-}));
+// Refined "civic editorial" event masthead. Replaces the old mint-gradient
+// Paper with a calm, confident hero: eyebrow → big Fraunces title → a single
+// date·location meta line → muted markdown description → hairline rule.
+//
+// Styling is inline with CSS-var fallbacks (e.g. var(--ink, #16181D)) so the
+// masthead looks correct whether or not it sits inside a <RefinedRoot> — it's
+// reused on /hack/[event_id], /hack/[event_id]/agenda and /census, only one of
+// which provides the refined scope.
+const INK = "var(--ink, #16181D)";
+const MUTED = "var(--muted, #5B6270)";
+const ACCENT = "var(--accent, #E2552E)";
+const LINE = "var(--line, #E7E1D4)";
+const BRAND = "var(--brand, #1B3A6B)";
+const DISPLAY = "'Fraunces', Georgia, 'Times New Roman', serif";
+const BODY = "'Hanken Grotesk', system-ui, -apple-system, sans-serif";
 
-const EventTitle = styled(Typography)(({ theme }) => ({
-  fontWeight: "bold",
-  marginBottom: theme.spacing(2),
-  fontSize: {
-    xs: '1.75rem',
-    sm: '2.25rem',
-    md: '2.5rem'
-  },
-  lineHeight: 1.2
-}));
-
-const EventInfo = styled(Grid)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-}));
-
-const EventChip = styled(Chip)(({ theme }) => ({
-  margin: theme.spacing(0.5),
-  backgroundColor: "rgba(255, 255, 255, 0.7)",
-  color: theme.palette.getContrastText("rgba(255, 255, 255, 0.7)"),
-  fontSize: "0.875rem",
-  height: '32px',
-  '& .MuiChip-icon': {
-    color: theme.palette.primary.main
-  }
-}));
-
-const DescriptionContainer = styled(Box)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-  '& p': {
-    marginBottom: theme.spacing(1.5),
-    fontSize: '1rem',
-    lineHeight: 1.6
-  }
-}));
-
-const HackathonHeader = ({
-  title,
-  startDate,
-  endDate,
-  location,
-  description,
-}) => {
+const HackathonHeader = ({ title, startDate, endDate, location, description }) => {
   const formatDate = (date) => {
     const d = parseLocalDate(date);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (isNaN(d.getTime())) return "TBA";
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
   const formatDateISO = (date) => {
     const d = parseLocalDate(date);
+    if (isNaN(d.getTime())) return "";
     const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
+  const metaItem = { display: "inline-flex", alignItems: "center", gap: 6, color: MUTED, fontSize: "0.95rem", fontWeight: 500, fontFamily: BODY };
+
   return (
-    <HeaderContainer 
-      elevation={3} 
-      component="header" 
+    <Box
+      component="header"
       role="banner"
       itemScope
       itemType="https://schema.org/Event"
+      sx={{ pt: { xs: "92px", md: "120px" }, pb: { xs: 3, md: 4 }, minHeight: 220 }}
     >
-      <EventTitle 
-        variant="h2" 
-        component="h1" 
-        mt={5}
+      <p
+        className="rise"
+        style={{ fontFamily: BODY, textTransform: "uppercase", letterSpacing: "0.22em", fontSize: "0.72rem", fontWeight: 600, color: MUTED, margin: 0 }}
+      >
+        Opportunity Hack · hackathon
+      </p>
+
+      <h1
+        className="rise"
         itemProp="name"
+        style={{
+          fontFamily: DISPLAY,
+          fontWeight: 500,
+          letterSpacing: "-0.015em",
+          lineHeight: 1.05,
+          color: INK,
+          margin: "16px 0 20px",
+          maxWidth: "18ch",
+          fontSize: "clamp(2.2rem, 5vw, 3.6rem)",
+          animationDelay: "60ms",
+        }}
       >
         {title}
-      </EventTitle>
+      </h1>
 
-      <EventInfo container spacing={2} alignItems="center">
-        <Grid>
-          <EventChip
-            icon={<CalendarTodayIcon />}
-            label={
-              <span>
-                <time 
-                  dateTime={formatDateISO(startDate)} 
-                  itemProp="startDate"
-                >
-                  {formatDate(startDate)}
-                </time>
-                {" - "}
-                <time 
-                  dateTime={formatDateISO(endDate)} 
-                  itemProp="endDate"
-                >
-                  {formatDate(endDate)}
-                </time>
-              </span>
-            }
-            aria-label={`Event dates: ${formatDate(startDate)} to ${formatDate(endDate)}`}
-          />
-        </Grid>
-        <Grid>
-          <EventChip
-            icon={<LocationOnIcon />}
-            label={<span itemProp="location">{location}</span>}
-            aria-label={`Event location: ${location}`}
-          />
-        </Grid>
-      </EventInfo>
+      <div className="rise" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14, animationDelay: "130ms" }}>
+        <span style={metaItem}>
+          <CalendarTodayIcon sx={{ fontSize: 18, color: ACCENT }} />
+          <span>
+            <time dateTime={formatDateISO(startDate)} itemProp="startDate">{formatDate(startDate)}</time>
+            {" – "}
+            <time dateTime={formatDateISO(endDate)} itemProp="endDate">{formatDate(endDate)}</time>
+          </span>
+        </span>
+        <span aria-hidden="true" style={{ color: LINE }}>·</span>
+        <span style={metaItem} itemProp="location">
+          <LocationOnIcon sx={{ fontSize: 18, color: ACCENT }} />
+          <span>{location}</span>
+        </span>
+      </div>
 
-      <DescriptionContainer itemProp="description">
-        <Typography 
-          component="div" 
-          className="event-description"
-          role="article"
-          aria-label="Event description"
+      {description && (
+        <Box
+          itemProp="description"
+          className="rise"
+          sx={{
+            mt: 2.5,
+            maxWidth: "62ch",
+            animationDelay: "200ms",
+            "& p": { color: MUTED, fontFamily: BODY, fontSize: "1.05rem", lineHeight: 1.65, margin: "0 0 12px" },
+            "& a": { color: BRAND, textDecoration: "underline", textUnderlineOffset: "3px" },
+            "& a:hover": { color: ACCENT },
+            "& strong": { color: INK },
+          }}
         >
           <ReactMarkdown>{description}</ReactMarkdown>
-        </Typography>
-      </DescriptionContainer>
-    </HeaderContainer>
+        </Box>
+      )}
+
+      <hr style={{ height: 1, border: 0, background: LINE, width: "100%", margin: "28px 0 0" }} />
+    </Box>
   );
 };
 

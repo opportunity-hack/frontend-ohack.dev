@@ -265,7 +265,7 @@ const HackathonJudgeOpportunities = () => {
         <Box sx={{ mb: 5, textAlign: "center" }}>
           <Box
             component="img"
-            src="https://cdn.ohack.dev/ohack.dev/judge_3_2024.jpg"
+            src="https://cdn.ohack.dev/ohack.dev/judge_4_2024.webp"
             alt="Professional hackathon judges evaluating innovative technology solutions for nonprofits"
             sx={{
               width: "100%",
@@ -523,7 +523,7 @@ const HackathonJudgeOpportunities = () => {
                   <Typography variant="h5">Live Demo Sessions</Typography>
                 </Box>
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                  Engage directly with finalist teams through interactive demos, 
+                  Engage directly with finalist teams through interactive demos,
                   technical Q&A sessions, and detailed solution evaluations.
                 </Typography>
                 <Chip
@@ -534,6 +534,57 @@ const HackathonJudgeOpportunities = () => {
               </Card>
             </Grid>
           </Grid>
+        </Box>
+
+        {/* Demo Video Section */}
+        <Box sx={{ mb: 5 }}>
+          <Typography variant="h3" component="h2" gutterBottom>
+            Demo Example: Risk Scoring Solution
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              mb: 4,
+              maxWidth: "700px",
+              fontSize: "18px",
+              color: "text.secondary",
+            }}
+          >
+            Watch this example demo from our volunteer internship program showcasing
+            the type of innovative solutions our hackathon participants create for nonprofits.
+          </Typography>
+
+          <Paper elevation={3} sx={{ p: 3, textAlign: "center" }}>
+            <Box sx={{
+              position: "relative",
+              paddingBottom: "56.25%",
+              height: 0,
+              overflow: "hidden",
+              maxWidth: "100%",
+              marginBottom: 2
+            }}>
+              <Box
+                component="iframe"
+                src="https://www.youtube.com/embed/i_KQ0Z-0kkc"
+                title="Risk Scoring - End of Summer 2020 Demo - Opportunity Hack Volunteer Internship Program"
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  border: 0
+                }}
+                allowFullScreen
+              />
+            </Box>
+            <Typography variant="h6" gutterBottom>
+              Risk Scoring - End of Summer 2020 Demo
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Example demonstration from our volunteer internship program at Opportunity Hack
+            </Typography>
+          </Paper>
         </Box>
 
         <Divider sx={{ my: 5 }} />
@@ -592,10 +643,183 @@ const HackathonJudgeOpportunities = () => {
               Training Score: {totalScore}/40
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Practice with our evaluation framework to prepare for 
+              Practice with our evaluation framework to prepare for
               hackathon judge opportunities
             </Typography>
           </Paper>
+
+          <Alert severity="info" sx={{ mt: 3 }}>
+            <Typography variant="body1">
+              Want the full rubric with worked examples and a downloadable scorecard? See the{" "}
+              <Link href="/hackathon-judging-criteria" style={{ color: "inherit", fontWeight: 700 }}>
+                Hackathon Judging Criteria
+              </Link>{" "}
+              reference page.
+            </Typography>
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                href="/hackathon-judging-criteria"
+                onClick={() => trackOnClickButtonClickWithGoogleAndFacebook("view_full_judging_criteria")}
+              >
+                View Full Judging Criteria
+              </Button>
+            </Box>
+          </Alert>
+        </Box>
+
+        {/* Learn More About Our Mission */}
+        <Box sx={{ mb: 5 }}>
+          <Paper
+            elevation={3}
+            sx={{
+              p: 5,
+              textAlign: "center",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              borderRadius: 3
+            }}
+          >
+            <Box sx={{ mb: 3 }}>
+              <InfoRounded sx={{ fontSize: 60, mb: 2, opacity: 0.9 }} />
+            </Box>
+
+            <Typography variant="h3" component="h2" gutterBottom sx={{ color: "white" }}>
+              Learn About Our Mission &amp; Impact
+            </Typography>
+
+            <Typography
+              variant="body1"
+              sx={{
+                mb: 4,
+                maxWidth: "700px",
+                mx: "auto",
+                fontSize: "18px",
+                color: "rgba(255, 255, 255, 0.9)",
+                lineHeight: 1.6
+              }}
+            >
+              Discover how Opportunity Hack has been transforming nonprofits through technology
+              since 2013. Meet our founders, learn about our values, and see the real impact
+              we're making together with our community of volunteers and judges.
+            </Typography>
+
+            <Box sx={{ display: "flex", gap: 2, justifyContent: "center", flexWrap: "wrap" }}>
+              <Button
+                variant="contained"
+                size="large"
+                href="/about"
+                onClick={() =>
+                  trackOnClickButtonClickWithGoogleAndFacebook("learn_about_mission")
+                }
+                sx={{
+                  bgcolor: "white",
+                  color: "primary.main",
+                  fontSize: "16px",
+                  px: 4,
+                  py: 1.5,
+                  "&:hover": {
+                    bgcolor: "rgba(255, 255, 255, 0.9)"
+                  }
+                }}
+                startIcon={<GroupsRounded />}
+              >
+                About Opportunity Hack
+              </Button>
+
+              <Button
+                variant="outlined"
+                size="large"
+                href="#upcoming-events"
+                onClick={() => {
+                  document.getElementById("upcoming-events")?.scrollIntoView({
+                    behavior: "smooth",
+                  });
+                  trackOnClickButtonClickWithGoogleAndFacebook("join_judging_from_cta");
+                }}
+                sx={{
+                  borderColor: "white",
+                  color: "white",
+                  fontSize: "16px",
+                  px: 4,
+                  py: 1.5,
+                  "&:hover": {
+                    borderColor: "rgba(255, 255, 255, 0.8)",
+                    bgcolor: "rgba(255, 255, 255, 0.1)"
+                  }
+                }}
+                startIcon={<GavelRounded />}
+              >
+                Join Our Judging Panel
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+
+        {/* FAQ Section */}
+        <Box sx={{ mb: 5 }}>
+          <Typography variant="h3" component="h2" gutterBottom>
+            Frequently Asked Questions
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              mb: 4,
+              maxWidth: "700px",
+              fontSize: "18px",
+              color: "text.secondary",
+            }}
+          >
+            Common questions from technology professionals considering hackathon judge opportunities.
+          </Typography>
+          {[
+            {
+              q: "How do I become a hackathon judge at Opportunity Hack?",
+              a: "Apply through any active event listed in 'Current Hackathon Judge Opportunities' above. Each event has a dedicated judge application that takes about 5 minutes. We confirm your role within a few days, then send a short training video and the scoring rubric before the event.",
+            },
+            {
+              q: "What's the time commitment for a hackathon judge?",
+              a: "Plan on 4–6 hours total: a 30-minute orientation, ~2 hours reviewing 4-minute pitch videos asynchronously the week before, and 2–3 hours of live demo evaluations on the final day of the hackathon. We require judges to attend the live demo block in person whenever the event is in person.",
+            },
+            {
+              q: "Do I need to be in-person to judge a hackathon?",
+              a: "We strongly prefer in-person judging during the live demo block — direct teams Q&A is where the real evaluation happens. Remote judging is available for the asynchronous video review portion. For in-person hackathons, plan to arrive by 2pm on the final day.",
+            },
+            {
+              q: "What technical background do I need?",
+              a: "Any professional software, data, security, or product background works. Most of our judges are senior engineers, engineering managers, founders, or technical PMs. The scoring rubric (Scope, Documentation, Polish, Security) is designed so any technologist can evaluate fairly — you don't need to be a domain expert in every project.",
+            },
+            {
+              q: "Is judging a hackathon paid?",
+              a: "No — judging is a volunteer role. Many judges use it for ESG / corporate-volunteer-time programs at their employer, and we provide an attendance letter on request. Your sponsorship company can also secure dedicated judge slots through the corporate program.",
+            },
+            {
+              q: "What's the scoring framework?",
+              a: "Four equal categories scored 1–10: Scope (community impact + problem complexity), Documentation (code/UX clarity + ease of understanding), Polish (work remaining + production readiness), and Security (data protection + role-based access). Try the interactive scorecard above to practice.",
+            },
+            {
+              q: "Can my company sponsor judge slots for our team?",
+              a: "Yes. Our Corporate Judge Programs provide guaranteed judging seats for sponsor company teams as part of a sponsorship package. This is a popular professional-development perk and counts toward ESG goals. See the corporate sponsorship section above.",
+            },
+            {
+              q: "What if I've never judged a hackathon before?",
+              a: "First-time judges are welcome. We pair new judges with experienced judges in the live demo block, send a short training video covering the rubric, and have a head judge available for tie-breaks and edge cases throughout the event.",
+            },
+          ].map((item, idx) => (
+            <Accordion key={idx} sx={{ mb: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreRounded />}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {item.q}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="body1" sx={{ fontSize: "16px", lineHeight: 1.7 }}>
+                  {item.a}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
         </Box>
 
         {/* Corporate Opportunities */}
@@ -717,13 +941,15 @@ const HackathonJudgeOpportunities = () => {
 
 export default HackathonJudgeOpportunities;
 
-export const getStaticProps = async () => {    
+export const getStaticProps = async () => {
     const title = "Hackathon Judge Opportunities - Expert Evaluation Roles | Opportunity Hack";
     const description = "Discover exclusive hackathon judge opportunities to evaluate innovative technology solutions for nonprofits. Join expert judges worldwide in identifying impactful projects and advancing your professional network.";
+    const canonicalUrl = "https://www.ohack.dev/hackathon-judge-opportunities";
     return {
         props: {
-            title: "Hackathon Judge Opportunities - Opportunity Hack",
+            title: title,
             description: description,
+            canonical: canonicalUrl,
             openGraphData: [
                 {
                     name: "title",
@@ -752,7 +978,7 @@ export const getStaticProps = async () => {
                 {
                     name: "image",
                     property: "og:image",
-                    content: "https://cdn.ohack.dev/ohack.dev/judge_3_2024.jpg",
+                    content: "https://cdn.ohack.dev/ohack.dev/judge_4_2024.webp",
                     key: "ognameimage"
                 },
                 {
@@ -768,13 +994,13 @@ export const getStaticProps = async () => {
                 {
                     name: "url",
                     property: "url",
-                    content: "https://ohack.dev/hackathon-judge-opportunities",
+                    content: canonicalUrl,
                     key: "url"
                 },
                 {
                     name: "og:url",
                     property: "og:url",
-                    content: "https://ohack.dev/hackathon-judge-opportunities",
+                    content: canonicalUrl,
                     key: "ogurl"
                 },
                 {
@@ -804,7 +1030,7 @@ export const getStaticProps = async () => {
                 {
                     name: "twitter:image",
                     property: "twitter:image",
-                    content: "https://cdn.ohack.dev/ohack.dev/judge_3_2024.jpg",
+                    content: "https://cdn.ohack.dev/ohack.dev/judge_4_2024.webp",
                     key: "twitterimage"
                 },
                 {
@@ -825,33 +1051,44 @@ export const getStaticProps = async () => {
                 "@graph": [
                     {
                         "@type": "Organization",
-                        "@id": "https://ohack.dev/#organization",
+                        "@id": "https://www.ohack.dev/#organization",
                         "name": "Opportunity Hack",
-                        "url": "https://ohack.dev",
+                        "url": "https://www.ohack.dev",
                         "logo": {
                             "@type": "ImageObject",
-                            "url": "https://cdn.ohack.dev/ohack.dev/judge_3_2024.jpg"
+                            "url": "https://cdn.ohack.dev/ohack.dev/judge_4_2024.webp"
                         },
                         "sameAs": [
                             "https://twitter.com/opportunityhack",
-                            "https://github.com/opportunity-hack"
+                            "https://github.com/opportunity-hack",
+                            "https://www.linkedin.com/company/opportunity-hack/"
                         ]
                     },
                     {
                         "@type": "WebPage",
-                        "@id": "https://ohack.dev/hackathon-judge-opportunities#webpage",
-                        "url": "https://ohack.dev/hackathon-judge-opportunities",
+                        "@id": canonicalUrl + "#webpage",
+                        "url": canonicalUrl,
                         "name": title,
                         "description": description,
                         "isPartOf": {
                             "@type": "WebSite",
-                            "@id": "https://ohack.dev/#website"
+                            "@id": "https://www.ohack.dev/#website"
                         },
                         "about": {
-                            "@type": "VolunteerOpportunity",
-                            "name": "Hackathon Judge Opportunities", 
-                            "description": "Expert evaluation roles for technology professionals to assess innovative solutions for nonprofits at global hackathons",
-                            "skills": ["Technology Evaluation", "Project Assessment", "Technical Expertise", "Social Impact Analysis"]
+                            "@type": "JobPosting",
+                            "title": "Hackathon Judge",
+                            "description": "Volunteer expert evaluation role: assess innovative technology solutions built by hackers for nonprofit organizations at Opportunity Hack hackathons. Roles open globally for in-person and remote judging.",
+                            "hiringOrganization": {
+                                "@type": "Organization",
+                                "name": "Opportunity Hack",
+                                "sameAs": "https://www.ohack.dev"
+                            },
+                            "employmentType": "VOLUNTEER",
+                            "workLocation": {
+                                "@type": "Place",
+                                "address": "Global / Remote"
+                            },
+                            "skills": "Technology Evaluation, Project Assessment, Technical Expertise, Social Impact Analysis"
                         }
                     },
                     {
@@ -861,13 +1098,82 @@ export const getStaticProps = async () => {
                                 "@type": "ListItem",
                                 "position": 1,
                                 "name": "Home",
-                                "item": "https://ohack.dev"
+                                "item": "https://www.ohack.dev"
                             },
                             {
                                 "@type": "ListItem",
                                 "position": 2,
                                 "name": "Hackathon Judge Opportunities",
-                                "item": "https://ohack.dev/hackathon-judge-opportunities"
+                                "item": canonicalUrl
+                            }
+                        ]
+                    },
+                    {
+                        "@type": "FAQPage",
+                        "mainEntity": [
+                            {
+                                "@type": "Question",
+                                "name": "How do I become a hackathon judge at Opportunity Hack?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Apply through any active event listed in 'Current Hackathon Judge Opportunities'. Each event has a dedicated judge application that takes about 5 minutes. We confirm your role within a few days, then send a short training video and the scoring rubric before the event."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "What's the time commitment for a hackathon judge?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Plan on 4-6 hours total: a 30-minute orientation, about 2 hours reviewing 4-minute pitch videos asynchronously the week before, and 2-3 hours of live demo evaluations on the final day of the hackathon. We require judges to attend the live demo block in person whenever the event is in person."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "Do I need to be in-person to judge a hackathon?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "We strongly prefer in-person judging during the live demo block - direct team Q&A is where the real evaluation happens. Remote judging is available for the asynchronous video review portion. For in-person hackathons, plan to arrive by 2pm on the final day."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "What technical background do I need to judge a hackathon?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Any professional software, data, security, or product background works. Most judges are senior engineers, engineering managers, founders, or technical product managers. The scoring rubric (Scope, Documentation, Polish, Security) is designed so any technologist can evaluate fairly - you don't need to be a domain expert in every project."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "Is judging a hackathon paid?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "No - judging is a volunteer role. Many judges use it for ESG or corporate-volunteer-time programs at their employer, and we provide an attendance letter on request. Sponsor companies can also secure dedicated judge slots through our corporate sponsorship program."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "What's the hackathon judging scoring framework?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Four equal categories scored 1-10: Scope (community impact + problem complexity), Documentation (code/UX clarity + ease of understanding), Polish (work remaining + production readiness), and Security (data protection + role-based access). Practice with the interactive scorecard on this page."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "Can my company sponsor judge slots for our team?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Yes. Our Corporate Judge Programs provide guaranteed judging seats for sponsor company teams as part of a sponsorship package. This is a popular professional-development perk that also counts toward ESG goals."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "What if I've never judged a hackathon before?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "First-time judges are welcome. We pair new judges with experienced judges in the live demo block, send a short training video covering the rubric, and have a head judge available for tie-breaks and edge cases throughout the event."
+                                }
                             }
                         ]
                     }

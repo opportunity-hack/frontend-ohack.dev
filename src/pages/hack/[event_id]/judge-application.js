@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { useRouter } from "next/router";
+import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
@@ -45,6 +46,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
+import SurveyCTA from "../../../components/Survey/SurveyCTA";
 import LoginOrRegister from "../../../components/LoginOrRegister/LoginOrRegister2";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
@@ -55,6 +57,11 @@ import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
 import useProfileApi from "../../../hooks/use-profile-api";
 import UploadPhoto from "../../../components/UploadPhoto";
+import ReactMarkdown from "react-markdown";
+import {
+  OHackParticipationSelect,
+  PronounsPicker,
+} from "../../../components/ApplicationForm";
 import {
   SchoolRounded,
   WorkRounded,
@@ -63,6 +70,37 @@ import {
   GroupsRounded,
   CheckCircleRounded,
 } from "@mui/icons-material";
+
+const eventDescriptionMarkdownSx = {
+  mb: 3,
+  "& p": {
+    my: 1.25,
+    lineHeight: 1.7,
+  },
+  "& p:first-of-type": {
+    mt: 0,
+  },
+  "& p:last-child": {
+    mb: 0,
+  },
+  "& ul, & ol": {
+    my: 1.25,
+    pl: 3,
+  },
+  "& li": {
+    mb: 0.5,
+  },
+  "& h1, & h2, & h3, & h4": {
+    mt: 2.5,
+    mb: 1,
+    lineHeight: 1.3,
+    fontWeight: 600,
+  },
+  "& a": {
+    color: "primary.main",
+    textDecoration: "underline",
+  },
+};
 
 const JudgeApplicationComponent = () => {
   const router = useRouter();
@@ -130,6 +168,7 @@ const JudgeApplicationComponent = () => {
       otherBackground: "", // New field for "Other" option
       participationCount: "", // Added participation count field
       agreedToCodeOfConduct: false,
+      judgingCommitment: false,
       linkedinProfile: "",
       shortBio: "",
       photoUrl: "",
@@ -1171,12 +1210,20 @@ const JudgeApplicationComponent = () => {
       validateBasicInfo() &&
       validateBackgroundAndExperience() &&
       validateAvailability() &&
-      formData.codeOfConduct
+      formData.codeOfConduct &&
+      formData.judgingCommitment
     );
   };
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+
+    if (!formData.judgingCommitment) {
+      setError(
+        "Please confirm you'll review each project and ask questions tied to the judging criteria.",
+      );
+      return;
+    }
 
     if (!formData.codeOfConduct) {
       setError("You must agree to the code of conduct");
@@ -1357,7 +1404,7 @@ const JudgeApplicationComponent = () => {
         !profileLoading &&
         dataLoadingStatus === "completed" && (
           <Alert severity="success" sx={{ mb: 3 }}>
-            <Typography variant="body2">
+            <Typography variant="body1">
               ✓ We've automatically filled in some fields using your existing
               profile information. You can edit any field as needed.{" "}
               <Link href="/profile" sx={{ fontWeight: "bold" }}>
@@ -1408,14 +1455,11 @@ const JudgeApplicationComponent = () => {
           }
         />
 
-        <TextField
-          label="Pronouns"
-          name="pronouns"
-          fullWidth
+        <PronounsPicker
           value={formData.pronouns}
-          onChange={handleChange}
-          helperText="e.g. he/him, she/her, they/them"
-          sx={{ mb: 3 }}
+          onChange={(next) =>
+            setFormData((prev) => ({ ...prev, pronouns: next }))
+          }
         />
 
         <TextField
@@ -1467,32 +1511,11 @@ const JudgeApplicationComponent = () => {
       </Typography>
 
       <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="participation-count-label">
-            How many times have you participated in Opportunity Hack?
-          </InputLabel>
-          <Select
-            labelId="participation-count-label"
-            id="participation-count"
-            name="participationCount"
-            value={formData.participationCount}
-            onChange={handleChange}
-            label="How many times have you participated in Opportunity Hack?"
-          >
-            <MenuItem value="This is my first year! 👆">
-              This is my first year! 👆
-            </MenuItem>
-            <MenuItem value="This will be the 2nd time ✌️">
-              This will be the 2nd time ✌️
-            </MenuItem>
-            <MenuItem value="This will be the 3rd time ☘️">
-              This will be the 3rd time ☘️
-            </MenuItem>
-            <MenuItem value="I've been here 4+ times 🔥">
-              I've been here 4+ times 🔥
-            </MenuItem>
-          </Select>
-        </FormControl>
+        <OHackParticipationSelect
+          value={formData.participationCount}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
 
         <FormControl
           fullWidth
@@ -1589,7 +1612,9 @@ const JudgeApplicationComponent = () => {
   );
 
   // Render availability form
-  const renderAvailabilityForm = () => (
+  const renderAvailabilityForm = () => {
+    const arrivalTime = eventData?.constraints?.judge_venue_arrival_time;
+    return (
     <Box sx={{ mb: 4 }}>
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Availability & Logistics
@@ -1600,13 +1625,24 @@ const JudgeApplicationComponent = () => {
           <Typography variant="subtitle1" fontWeight="bold">
             Important Judging Schedule
           </Typography>
-          <Typography variant="body2">
+          <Typography variant="body1">
             Judging starts at 3:00 PM on the last day of the hackathon
             (typically Sunday). We expect to complete judging and announce the
             winning teams by 5:30 PM. Your presence during this entire timeframe
             is crucial. Please plan to arrive 15 to 30 minutes early to ensure you can participate fully.
           </Typography>
         </Alert>
+
+        {arrivalTime && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body1">
+              <strong>Please arrive at the venue by {arrivalTime}</strong>
+              {eventData?.location ? ` (${eventData.location})` : ""} on the
+              final day. This gives you time to settle in and review the
+              projects before judging begins.
+            </Typography>
+          </Alert>
+        )}
 
         {eventData && eventData.endDate && (
           <Box
@@ -1765,7 +1801,8 @@ const JudgeApplicationComponent = () => {
         </FormControl>
       </Box>
     </Box>
-  );
+    );
+  };
 
   // Render review form
   const renderReviewForm = () => (
@@ -1788,6 +1825,25 @@ const JudgeApplicationComponent = () => {
       <FormControlLabel
         control={
           <Checkbox
+            name="judgingCommitment"
+            checked={!!formData.judgingCommitment}
+            onChange={handleChange}
+            color="primary"
+            required
+          />
+        }
+        label={
+          <Typography variant="body1">
+            I will review each project I'm assigned and ask questions tied to
+            the judging criteria — Scope, Documentation, Polish, and Security.
+          </Typography>
+        }
+        sx={{ mb: 2, alignItems: "flex-start" }}
+      />
+
+      <FormControlLabel
+        control={
+          <Checkbox
             name="codeOfConduct"
             checked={formData.codeOfConduct}
             onChange={handleChange}
@@ -1796,7 +1852,7 @@ const JudgeApplicationComponent = () => {
           />
         }
         label={
-          <Typography variant="body2">
+          <Typography variant="body1">
             I agree to the{" "}
             <Link
               href="/hack/code-of-conduct"
@@ -1811,10 +1867,11 @@ const JudgeApplicationComponent = () => {
       />
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          By submitting this form, you're expressing interest in judging at
-          Opportunity Hack. Our team will review your application and reach out
-          with further details about judging logistics and criteria.
+        <Typography variant="body1">
+          Your application is <strong>pending review</strong> — our staff
+          reviews every judge application by hand, which can take up to a week.
+          We'll email you once you're approved or if we have follow-up
+          questions.
         </Typography>
       </Alert>
 
@@ -1846,18 +1903,18 @@ const JudgeApplicationComponent = () => {
   const pageDescription = eventData
     ? `Apply to judge ${eventData.name} in ${eventData.location}. Evaluate innovative tech solutions for nonprofits and help select winning projects that make real impact.`
     : "Apply to judge our tech for good hackathon. Evaluate innovative solutions for nonprofits and help select winning projects that make real social impact.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/judge-application`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/judge-application`;
 
   const imageUrl =
     eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
 
   // Breadcrumb items for structured data
   const breadcrumbItems = [
-    { name: "Home", url: "https://ohack.dev" },
-    { name: "Hackathons", url: "https://ohack.dev/hack" },
+    { name: "Home", url: "https://www.ohack.dev" },
+    { name: "Hackathons", url: "https://www.ohack.dev/hack" },
     {
       name: eventData?.name || "Hackathon Event",
-      url: `https://ohack.dev/hack/${event_id}`,
+      url: `https://www.ohack.dev/hack/${event_id}`,
     },
     {
       name: "Judge Application",
@@ -1875,7 +1932,7 @@ const JudgeApplicationComponent = () => {
     isPartOf: {
       "@type": "WebSite",
       name: "Opportunity Hack",
-      url: "https://ohack.dev",
+      url: "https://www.ohack.dev",
     },
     breadcrumb: {
       "@type": "BreadcrumbList",
@@ -1990,9 +2047,20 @@ const JudgeApplicationComponent = () => {
             Application Submitted!
           </Typography>
 
-          <Alert severity="success" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            Thank you for applying to be a judge at Opportunity Hack. We'll
-            review your application and contact you soon.
+          <Alert severity="success" sx={{ mb: 2, mx: "auto", maxWidth: 600 }}>
+            <Typography variant="body1">
+              Thanks for applying to judge at Opportunity Hack — we've received
+              your application.
+            </Typography>
+          </Alert>
+
+          <Alert severity="info" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
+            <Typography variant="body1">
+              <strong>Your application is pending review.</strong> Our staff
+              reviews every judge application — this typically takes up to a
+              week. You'll get an email when you're approved or if we have
+              follow-up questions.
+            </Typography>
           </Alert>
 
           <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
@@ -2095,6 +2163,15 @@ const JudgeApplicationComponent = () => {
         >
           Judge Application
         </Typography>
+
+        {/* Feedback CTA — selected judges, once the event is live or ended */}
+        {isSelected && (
+          <SurveyCTA
+            eventId={event_id}
+            startDate={eventData?.startDate}
+            endDate={eventData?.endDate}
+          />
+        )}
 
         {/* QR Code for Check-in */}
         <VolunteerCheckInQR
@@ -2315,26 +2392,74 @@ const JudgeApplicationComponent = () => {
                   </Stepper>
 
                   <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                    <Typography variant="body1" paragraph>
-                      Thank you for your interest in judging at Opportunity
-                      Hack! Judges play a crucial role in evaluating the
-                      projects created by our participants and providing
-                      valuable feedback.
+                    <Typography
+                      variant="h5"
+                      component="h2"
+                      sx={{ fontWeight: 600, mb: 1.5 }}
+                    >
+                      Judge at Opportunity Hack
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
+                      Strong judging is what makes the work teams put in
+                      meaningful — for them, and for the nonprofits they're
+                      building for. As a judge, you'll review every project
+                      you're assigned and ask questions that probe gaps in the
+                      judging criteria so teams get real, useful feedback.
                     </Typography>
 
                     {eventData && eventData.description && (
-                      <Typography variant="body1" sx={{ mb: 3 }}>
-                        <strong>About this event:</strong>{" "}
-                        {eventData.description}
-                      </Typography>
+                      <Box sx={eventDescriptionMarkdownSx}>
+                        <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
+                          About this event
+                        </Typography>
+                        <ReactMarkdown>{eventData.description}</ReactMarkdown>
+                      </Box>
                     )}
 
-                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                      <Typography variant="body1" paragraph>
-                        <strong>
-                          Want to learn more about judging at Opportunity Hack?
-                        </strong>{" "}
-                        Visit our{" "}
+                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontWeight: 600, mb: 1 }}
+                      >
+                        What good judging looks like
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        We score on four pillars — Scope, Documentation, Polish,
+                        and Security (
+                        <Link
+                          href="/hackathon-judging-criteria"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ fontWeight: 600 }}
+                        >
+                          read the full rubric
+                        </Link>
+                        ). When the team hasn't covered a pillar in their pitch,
+                        ask probing questions to find out:
+                      </Typography>
+                      <Box component="ul" sx={{ m: 0, pl: 3 }}>
+                        <Typography component="li" variant="body1">
+                          <strong>Scope:</strong> "Which user problem does this
+                          solve, and how did you decide what to leave out?"
+                        </Typography>
+                        <Typography component="li" variant="body1">
+                          <strong>Documentation:</strong> "If a new contributor
+                          joined Monday, where would they start?"
+                        </Typography>
+                        <Typography component="li" variant="body1">
+                          <strong>Polish:</strong> "Walk me through the happy
+                          path — what does the nonprofit see?"
+                        </Typography>
+                        <Typography component="li" variant="body1">
+                          <strong>Security:</strong> "Where does sensitive data
+                          live, and who has access?"
+                        </Typography>
+                      </Box>
+                    </Alert>
+
+                    <Alert severity="info" sx={{ mb: 4 }}>
+                      <Typography variant="body1">
+                        New to judging at Opportunity Hack? Visit our{" "}
                         <Link
                           href="/about/judges"
                           target="_blank"
@@ -2343,17 +2468,9 @@ const JudgeApplicationComponent = () => {
                         >
                           Judges Information Page
                         </Link>{" "}
-                        for details about the evaluation criteria, judging
-                        process, and commitment.
+                        for the full process and commitment.
                       </Typography>
                     </Alert>
-
-                    <Typography variant="body1" paragraph>
-                      As a judge, you'll review innovative solutions developed
-                      for nonprofits and help recognize outstanding
-                      contributions. Your expertise will help ensure the success
-                      of our hackathon.
-                    </Typography>
 
                     {(error || recaptchaError) && (
                       <Alert severity="error" sx={{ mb: 4 }}>
@@ -2480,7 +2597,7 @@ const JudgeApplicationPage = ({ seoMetadata }) => {
             isPartOf: {
               "@type": "WebSite",
               name: "Opportunity Hack",
-              url: "https://ohack.dev",
+              url: "https://www.ohack.dev",
             },
             breadcrumb: {
               "@type": "BreadcrumbList",
@@ -2489,19 +2606,19 @@ const JudgeApplicationPage = ({ seoMetadata }) => {
                   "@type": "ListItem",
                   position: 1,
                   name: "Home",
-                  item: "https://ohack.dev",
+                  item: "https://www.ohack.dev",
                 },
                 {
                   "@type": "ListItem",
                   position: 2,
                   name: "Hackathons",
-                  item: "https://ohack.dev/hack",
+                  item: "https://www.ohack.dev/hack",
                 },
                 {
                   "@type": "ListItem",
                   position: 3,
                   name: seoMetadata.eventName,
-                  item: `https://ohack.dev/hack/${event_id}`,
+                  item: `https://www.ohack.dev/hack/${event_id}`,
                 },
                 {
                   "@type": "ListItem",
@@ -2553,7 +2670,7 @@ const JudgeApplicationPage = ({ seoMetadata }) => {
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
         displayIfLoggedOut={
           <RedirectToLogin
-            postLoginRedirectUrl={currentUrl || window.location.href}
+            postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
           />
         }
       >
@@ -2574,13 +2691,13 @@ export async function getServerSideProps(context) {
       "Apply to judge our tech for good hackathon. Evaluate innovative solutions for nonprofits and help select winning projects that make real social impact.",
     eventName: "Opportunity Hack",
     location: "Tempe, Arizona",
-    canonicalUrl: `https://ohack.dev/hack/${event_id}/judge-application`,
+    canonicalUrl: `https://www.ohack.dev/hack/${event_id}/judge-application`,
     imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
   };
 
   // Try to fetch event data for better SEO
   try {
-    const apiServerUrl = process.env.NEXT_PUBLIC_REACT_APP_API_SERVER_URL;
+    const apiServerUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
     if (apiServerUrl) {
       const response = await fetch(
         `${apiServerUrl}/api/messages/hackathon/${event_id}`,
@@ -2595,7 +2712,7 @@ export async function getServerSideProps(context) {
             description: `Apply to judge ${eventData.title} in ${eventData.location || "Tempe, Arizona"}. Evaluate innovative tech solutions for nonprofits and help select winning projects that make real impact.`,
             eventName: eventData.title,
             location: eventData.location || "Tempe, Arizona",
-            canonicalUrl: `https://ohack.dev/hack/${event_id}/judge-application`,
+            canonicalUrl: `https://www.ohack.dev/hack/${event_id}/judge-application`,
             imageUrl:
               eventData.image_url ||
               "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
@@ -2615,4 +2732,10 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default JudgeApplicationPage;
+export default function JudgeApplicationPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <JudgeApplicationPage {...props} />
+    </ReCaptchaProvider>
+  );
+}

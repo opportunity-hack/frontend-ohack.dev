@@ -3,12 +3,15 @@ import dynamic from 'next/dynamic'
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AuthProvider } from "@propelauth/react";
-import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import theme from "../assets/theme";
 import { ShoppingCartProvider } from "../context/ShoppingCartContext";
+// Static import: SSR-safe (only registers axios interceptors in useEffect).
+// IMPORTANT: must NOT be dynamic(ssr:false) — that disables SSR for the entire
+// tree (empty <body>, empty titles, CWV collapse; June 2026 incident).
+import AxiosWrapper from '../components/axios-wrapper';
 
 // Placeholder heights tuned to match the rendered NavBar/Footer so the shell
 // doesn't shift when these chunks load (major source of site-wide CLS).
@@ -18,11 +21,6 @@ const FooterPlaceholder = () => (
 );
 
 // NOTE: Load dynamics below static imports to avoid eslint errors.
-
-const AxiosWrapper = dynamic(() => import('../components/axios-wrapper'), {
-  ssr: false,
-  loading: () => null
-})
 
 // SSR the NavBar shell so the layout above the fold is stable before hydration.
 // Auth-dependent avatar/login toggle is now wrapped in a fixed-width slot
@@ -68,26 +66,69 @@ export default function MyApp({ Component, pageProps }) {
           <meta key={index} {...og} />
         ))}
 
-        <title>{pageProps.title}</title>
+        {pageProps.canonical && (
+          <link rel="canonical" href={pageProps.canonical} />
+        )}
+
+        {pageProps.title && <title>{pageProps.title}</title>}
+
+        {pageProps.structuredData && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(pageProps.structuredData),
+            }}
+          />
+        )}
+
+        {/* Global Organization schema — renders on every page so brand SERP
+            features (knowledge panel eligibility, sameAs verification) work
+            sitewide. Page-level WebPage / BreadcrumbList / FAQPage scripts
+            reference this entity via @id. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "@id": "https://www.ohack.dev/#organization",
+              name: "Opportunity Hack",
+              alternateName: "OHack",
+              url: "https://www.ohack.dev",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://cdn.ohack.dev/ohack.dev/ohack.png",
+              },
+              description:
+                "501(c)(3) nonprofit connecting volunteer software developers with nonprofits to build free, custom software since 2013.",
+              foundingDate: "2013",
+              sameAs: [
+                "https://www.linkedin.com/company/opportunity-hack/",
+                "https://github.com/opportunity-hack",
+                "https://twitter.com/opportunityhack",
+                "https://www.instagram.com/opportunityhack/",
+                "https://www.youtube.com/@OpportunityHack",
+              ],
+            }),
+          }}
+        />
       </Head>
       <AuthProvider authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}>
-        <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY}>
-          <AxiosWrapper>
-            <ThemeProvider theme={theme}>
-              <ShoppingCartProvider>
-              <CssBaseline>
-                <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                  {!isPrintTimelinePage && <NavBar />}
-                  <Component {...pageProps} />
-                  {!isPrintTimelinePage && <Footer />}
-                </Box>
-              </CssBaseline>
-              <OnboardingDialog />
-              <ProfileCompletionPrompt />
-              </ShoppingCartProvider>
-            </ThemeProvider>
-          </AxiosWrapper>
-        </GoogleReCaptchaProvider>
+        <AxiosWrapper>
+          <ThemeProvider theme={theme}>
+            <ShoppingCartProvider>
+            <CssBaseline>
+              <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                {!isPrintTimelinePage && <NavBar />}
+                <Component {...pageProps} />
+                {!isPrintTimelinePage && <Footer />}
+              </Box>
+            </CssBaseline>
+            <OnboardingDialog />
+            <ProfileCompletionPrompt />
+            </ShoppingCartProvider>
+          </ThemeProvider>
+        </AxiosWrapper>
       </AuthProvider>
       <GA/>
     </>

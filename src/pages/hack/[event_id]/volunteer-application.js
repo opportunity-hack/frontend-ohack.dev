@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
+import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../../lib/ga';
 import {
   useAuthInfo,
@@ -49,9 +50,42 @@ import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
+import { PronounsPicker } from "../../../components/ApplicationForm";
 import UploadPhoto from "../../../components/UploadPhoto";
 import GiveButterWidget from "../../../components/GiveButterWidget";
+import ReactMarkdown from "react-markdown";
 import { getEventTimezone, getTimezoneAbbreviation } from "../../../lib/timezoneUtils";
+
+const eventDescriptionMarkdownSx = {
+  mb: 3,
+  "& p": {
+    my: 1.25,
+    lineHeight: 1.7,
+  },
+  "& p:first-of-type": {
+    mt: 0,
+  },
+  "& p:last-child": {
+    mb: 0,
+  },
+  "& ul, & ol": {
+    my: 1.25,
+    pl: 3,
+  },
+  "& li": {
+    mb: 0.5,
+  },
+  "& h1, & h2, & h3, & h4": {
+    mt: 2.5,
+    mb: 1,
+    lineHeight: 1.3,
+    fontWeight: 600,
+  },
+  "& a": {
+    color: "primary.main",
+    textDecoration: "underline",
+  },
+};
 
 const VolunteerApplicationComponent = () => {
   const router = useRouter();
@@ -1496,13 +1530,12 @@ const VolunteerApplicationComponent = () => {
         </AccordionSummary>
         <AccordionDetails>
           <Box sx={{ pt: 1 }}>
-            <TextField
-              label="Your Pronouns (Optional)"
-              name="pronouns"
-              fullWidth
+            <PronounsPicker
               value={formData.pronouns || ""}
-              onChange={handleFormChange}
-              sx={{ mb: 3 }}
+              onChange={(next) =>
+                setFormData((prev) => ({ ...prev, pronouns: next }))
+              }
+              required={false}
             />
 
             <TextField
@@ -2193,7 +2226,7 @@ const VolunteerApplicationComponent = () => {
   const pageDescription = eventData
     ? `Join our volunteer team for ${eventData.name} in ${eventData.location} from ${eventData.formattedStartDate} to ${eventData.formattedEndDate}. Help run an impactful hackathon where developers create technology solutions for nonprofits. Volunteer as a mentor, judge, or event organizer.`
     : "Volunteer for Opportunity Hack hackathon! Help run events where developers create technology solutions for nonprofits. Join as a mentor, judge, or organizer and make a real impact in the tech for good community.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/volunteer-application`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/volunteer-application`;
   const imageUrl =
     eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
 
@@ -2219,7 +2252,7 @@ const VolunteerApplicationComponent = () => {
         organizer: {
           "@type": "Organization",
           name: "Opportunity Hack",
-          url: "https://ohack.dev",
+          url: "https://www.ohack.dev",
         },
         offers: {
           "@type": "Offer",
@@ -2238,19 +2271,19 @@ const VolunteerApplicationComponent = () => {
               "@type": "ListItem",
               position: 1,
               name: "Home",
-              item: "https://ohack.dev/",
+              item: "https://www.ohack.dev/",
             },
             {
               "@type": "ListItem",
               position: 2,
               name: "Hackathons",
-              item: "https://ohack.dev/hack",
+              item: "https://www.ohack.dev/hack",
             },
             {
               "@type": "ListItem",
               position: 3,
               name: eventData.name,
-              item: `https://ohack.dev/hack/${event_id}`,
+              item: `https://www.ohack.dev/hack/${event_id}`,
             },
             {
               "@type": "ListItem",
@@ -2612,10 +2645,12 @@ const VolunteerApplicationComponent = () => {
                     </Typography>
 
                     {eventData && eventData.description && (
-                      <Typography variant="body1" sx={{ mb: 3 }}>
-                        <strong>About this event:</strong>{" "}
-                        {eventData.description}
-                      </Typography>
+                      <Box sx={eventDescriptionMarkdownSx}>
+                        <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
+                          About this event
+                        </Typography>
+                        <ReactMarkdown>{eventData.description}</ReactMarkdown>
+                      </Box>
                     )}
 
                     <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
@@ -2767,7 +2802,7 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
             isPartOf: {
               "@type": "WebSite",
               name: "Opportunity Hack",
-              url: "https://ohack.dev",
+              url: "https://www.ohack.dev",
             },
             breadcrumb: {
               "@type": "BreadcrumbList",
@@ -2776,19 +2811,19 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
                   "@type": "ListItem",
                   position: 1,
                   name: "Home",
-                  item: "https://ohack.dev",
+                  item: "https://www.ohack.dev",
                 },
                 {
                   "@type": "ListItem",
                   position: 2,
                   name: "Hackathons",
-                  item: "https://ohack.dev/hack",
+                  item: "https://www.ohack.dev/hack",
                 },
                 {
                   "@type": "ListItem",
                   position: 3,
                   name: seoMetadata.eventName,
-                  item: `https://ohack.dev/hack/${event_id}`,
+                  item: `https://www.ohack.dev/hack/${event_id}`,
                 },
                 {
                   "@type": "ListItem",
@@ -2840,7 +2875,7 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
         displayIfLoggedOut={
           <RedirectToLogin
-            postLoginRedirectUrl={currentUrl || window.location.href}
+            postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
           />
         }
       >
@@ -2861,13 +2896,13 @@ export async function getServerSideProps(context) {
       "Apply to volunteer at our hackathon event. Help support teams building tech solutions for nonprofits and make a difference in your community.",
     eventName: "Opportunity Hack",
     location: "Tempe, Arizona",
-    canonicalUrl: `https://ohack.dev/hack/${event_id}/volunteer-application`,
+    canonicalUrl: `https://www.ohack.dev/hack/${event_id}/volunteer-application`,
     imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
   };
 
   // Try to fetch event data for better SEO
   try {
-    const apiServerUrl = process.env.NEXT_PUBLIC_REACT_APP_API_SERVER_URL;
+    const apiServerUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
     if (apiServerUrl) {
       const response = await fetch(
         `${apiServerUrl}/api/messages/hackathon/${event_id}`,
@@ -2882,7 +2917,7 @@ export async function getServerSideProps(context) {
             description: `Apply to volunteer at ${eventData.title} in ${eventData.location || "Tempe, Arizona"}. Help support teams building innovative tech solutions for nonprofits.`,
             eventName: eventData.title,
             location: eventData.location || "Tempe, Arizona",
-            canonicalUrl: `https://ohack.dev/hack/${event_id}/volunteer-application`,
+            canonicalUrl: `https://www.ohack.dev/hack/${event_id}/volunteer-application`,
             imageUrl:
               eventData.image_url ||
               "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
@@ -2902,4 +2937,10 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default VolunteerApplicationPage;
+export default function VolunteerApplicationPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <VolunteerApplicationPage {...props} />
+    </ReCaptchaProvider>
+  );
+}

@@ -67,7 +67,7 @@ export default function StyleGuide(){
           property="og:image"
           content="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Dark_Blue_Square.png"
         />
-        <meta property="og:url" content="https://ohack.dev/styleguide" />
+        <meta property="og:url" content="https://www.ohack.dev/styleguide" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta
@@ -86,7 +86,7 @@ export default function StyleGuide(){
           name="keywords"
           content="Opportunity Hack, logo, brand guide, style guide, UX guidelines, nonprofit tech, social good, volunteer, design, development, hackathon"
         />
-        <link rel="canonical" href="https://ohack.dev/styleguide" />
+        <link rel="canonical" href="https://www.ohack.dev/styleguide" />
       </Head>
 
       <TitleContainer container>

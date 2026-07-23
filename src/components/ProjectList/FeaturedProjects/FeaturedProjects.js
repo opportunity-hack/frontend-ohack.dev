@@ -1,248 +1,120 @@
-import { Box, Card, CardContent, CardMedia, Grid, Typography, Chip, Stack, Link } from '@mui/material';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import GroupIcon from '@mui/icons-material/Group';
-import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
-import Tooltip from '@mui/material/Tooltip';
-import ReactMarkdown from 'react-markdown';
-import NextLink from 'next/link';
-import LaunchIcon from '@mui/icons-material/Launch';
-import BuildIcon from '@mui/icons-material/Build';
+import NextLink from "next/link";
+import Image from "next/image";
+
+// Quiet 3-up featured strip: a photo, a title, a one-line teaser, and a single
+// status tag. (Previously each featured card also stacked GitHub/helpers/skill
+// chips, which made the top of the page as busy as the grid below it.)
+
+const FEATURED_IMAGES = [
+  "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp",
+  "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
+  "https://cdn.ohack.dev/ohack.dev/2023_hackathon_3.webp",
+  "https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp",
+  "https://cdn.ohack.dev/ohack.dev/2023_hackathon_5.webp",
+  "https://cdn.ohack.dev/ohack.dev/2023_hackathon_6.webp",
+  "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
+  "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp",
+  "https://cdn.ohack.dev/ohack.dev/2024_hackathon_3.webp",
+  "https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp",
+  "https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp",
+  "https://cdn.ohack.dev/ohack.dev/2024_hackathon_6.webp",
+];
+
+const STATUS_LABEL = {
+  concept: "Concept",
+  hackathon: "Hackathon",
+  "post-hackathon": "Post-hackathon",
+  production: "Production",
+};
+
+function hashCode(str = "") {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash &= hash;
+  }
+  return hash;
+}
+
+function toPlain(text = "") {
+  return text
+    .replace(/[#>*_`~]/g, "")
+    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export default function FeaturedProjects({ projects }) {
-  const FEATURED_IMAGES = [
-    'https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp',
-    'https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp',
-    'https://cdn.ohack.dev/ohack.dev/2023_hackathon_3.webp',
-    'https://cdn.ohack.dev/ohack.dev/2023_hackathon_4.webp',
-    'https://cdn.ohack.dev/ohack.dev/2023_hackathon_5.webp',
-    'https://cdn.ohack.dev/ohack.dev/2023_hackathon_6.webp',
-    'https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp',
-    'https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp',
-    'https://cdn.ohack.dev/ohack.dev/2024_hackathon_3.webp',
-    'https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp',
-    'https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp',
-    'https://cdn.ohack.dev/ohack.dev/2024_hackathon_6.webp',
-  ];
-
-  const getFeaturedImage = (project) => {
-    // Use project id to consistently select the same image for each project
-    const index = Math.abs(hashCode(project.id)) % FEATURED_IMAGES.length;
-    return FEATURED_IMAGES[index];
-  };
-
-  // Simple string hash function
-  const hashCode = (str) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return hash;
-  };
-
   if (!projects?.length) return null;
 
-  const getGithubUrl = (project) => {
-    if (!project.github) return null;
-    if (typeof project.github === 'string') return project.github;
-    if (Array.isArray(project.github)) return project.github[0]?.link;
-    return project.github.link;
-  };
-
-  const getHelperTooltip = (project) => {
-    if (!project.helping?.length) return "";
-    const roleCounts = project.helping.reduce((acc, helper) => {
-      const type = helper.type || "Person";
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {});
-    return <span style={{ fontSize: '14px' }}>
-        {`Helpers: ${Object.entries(roleCounts)
-            .map(([type, count]) => `${count} ${type}${count > 1 ? "s" : ""}`)
-            .join(", ")}`}
-    </span>;
-  };
-
   return (
-    <Grid container spacing={3}>
-      {projects.map((project) => (
-        <Grid size={{ xs: 12, md: 4 }} key={project.id}>
-          <Card
-            sx={{
-              height: "100%",
+    <div
+      style={{
+        display: "grid",
+        gap: 20,
+        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+      }}
+    >
+      {projects.map((project, i) => {
+        const img = FEATURED_IMAGES[Math.abs(hashCode(project.id)) % FEATURED_IMAGES.length];
+        const status = STATUS_LABEL[project.status] || project.status;
+        return (
+          <NextLink
+            key={project.id}
+            href={`/project/${project.id}`}
+            className="ohx-card ohx-card--hover rise"
+            style={{
               display: "flex",
               flexDirection: "column",
-              transition: "transform 0.2s",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: (theme) => theme.shadows[4],
-              },
+              overflow: "hidden",
+              textDecoration: "none",
+              color: "inherit",
+              animationDelay: `${i * 90}ms`,
             }}
           >
-            <CardMedia
-              component="img"
-              height="140"
-              image={getFeaturedImage(project)}
-              alt={project.title}
-            />
-            <CardContent sx={{ flexGrow: 1 }}>
-              <Stack spacing={2}>
-                <NextLink href={`/project/${project.id}`} passHref>
-                  <Link
-                    underline="none"
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      p: 1,
-                      borderRadius: 1,
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        bgcolor: "action.hover",
-                        "& .title-text": {
-                          color: "primary.main",
-                        },
-                        "& .launch-icon": {
-                          transform: "translate(2px, -2px)",
-                          color: "primary.main",
-                        },
-                      },
-                    }}
+            <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "var(--surface-2)" }}>
+              <Image
+                src={img}
+                alt={project.title}
+                fill
+                sizes="(max-width: 600px) 100vw, 360px"
+                style={{ objectFit: "cover" }}
+              />
+            </div>
+            <div style={{ padding: "20px 22px 22px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
+                <h3 className="ohx-display" style={{ fontSize: "1.2rem" }}>
+                  {project.title}
+                </h3>
+                {status && (
+                  <span
+                    className={`ohx-tag${project.status === "production" ? " ohx-tag--accent" : ""}`}
+                    style={{ flexShrink: 0 }}
                   >
-                    <Typography
-                      variant="h6"
-                      className="title-text"
-                      sx={{
-                        transition: "color 0.2s ease",
-                        color: "text.primary",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                      }}
-                    >
-                      {project.title}
-                      <LaunchIcon
-                        className="launch-icon"
-                        sx={{
-                          fontSize: "0.9em",
-                          transition: "transform 0.2s ease, color 0.2s ease",
-                          color: "text.secondary",
-                        }}
-                      />
-                    </Typography>
-                  </Link>
-                </NextLink>
-
-                {project.status && (
-                <NextLink href={`/project/${project.id}`} passHref>
-                  <Chip label={project.status} size="small" color="success" />
-                </NextLink>
+                    {status}
+                  </span>
                 )}
-
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  component="div"
-                  sx={{
-                    minHeight: "4.5em",
-                    position: "relative",
+              </div>
+              {project.description && (
+                <p
+                  className="ohx-muted"
+                  style={{
+                    margin: 0,
+                    fontSize: "0.92rem",
+                    lineHeight: 1.5,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
                     overflow: "hidden",
-                    "&::after": {
-                      content: '""',
-                      position: "absolute",
-                      bottom: 0,
-                      right: 0,
-                      left: 0,
-                      height: "2em",
-                      background: "linear-gradient(transparent, white)",
-                    },
                   }}
                 >
-                  <ReactMarkdown>{project.description}</ReactMarkdown>
-                </Typography>
-
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                  {getGithubUrl(project) && (
-                    <Chip
-                      icon={<GitHubIcon />}
-                      label="GitHub"
-                      component={Link}
-                      href={getGithubUrl(project)}
-                      clickable
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  )}
-
-                  {project.helping?.length > 0 && (
-                    <Tooltip title={getHelperTooltip(project)}>
-                      <Chip
-                        icon={<GroupIcon />}
-                        label={`${project.helping.length} Helpers`}
-                        size="small"
-                        color="secondary"
-                        variant="outlined"
-                      />
-                    </Tooltip>
-                  )}
-                </Stack>
-
-                {project.skills && project.skills.length > 0 && (
-                  <Box
-                    sx={{
-                      border: "1px solid",
-                      borderColor: "divider",
-                      borderRadius: 1,
-                      p: 1.5,
-                      backgroundColor: "background.paper",
-                    }}
-                  >
-                    <Typography
-                      variant="subtitle2"
-                      color="primary"
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 0.5,
-                        mb: 1,
-                      }}
-                    >
-                      <BuildIcon fontSize="small" />
-                      Skills Used
-                    </Typography>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      flexWrap="wrap"
-                      sx={{
-                        "& .MuiChip-root": {
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            backgroundColor: "primary.main",
-                            color: "primary.contrastText",
-                          },
-                        },
-                      }}
-                    >
-                      {project.skills.map((skill) => (
-                        <Chip
-                          key={skill}
-                          label={skill}
-                          size="small"
-                          variant="outlined"
-                          sx={{ mb: 0.5 }}
-                        />
-                      ))}
-                    </Stack>
-                  </Box>
-                )}
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
+                  {toPlain(project.description)}
+                </p>
+              )}
+            </div>
+          </NextLink>
+        );
+      })}
+    </div>
   );
 }

@@ -1,44 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  BlankContainer,
-  ButtonContainer,
-  EventButton,
-  EventCards,
-  EventGreyText,
-  EventText,  
-  EventLink,
-  ProgressBarHolder,
-  ProgressContainer,
-  ThankYouContainer,
-  TypographyStyled,
-} from "./styles";
-import { 
-  CircularProgressbar, 
-  // buildStyles 
-} from "react-circular-progressbar";
-
-import { 
-  Typography, 
-  Box, 
-  Grid, 
-  Chip, 
-  Card, 
-  CardContent, 
-  LinearProgress, 
-  Skeleton,
-  Tooltip,
-  useTheme
-} from "@mui/material";
+import React from "react";
+import { CircularProgressbar } from "react-circular-progressbar";
+import { Typography, Box, Chip, Card, CardContent } from "@mui/material";
 import { format, getYear } from 'date-fns';
 import Link from 'next/link';
-import { parseLocalDate } from '../../lib/dateUtils';
-import { useAuthInfo } from '@propelauth/react';
+import { parseLocalDate, isValidDate } from '../../lib/dateUtils';
+import { stripMarkdown } from '../../lib/textUtils';
 import ImpactMetrics from '../ImpactMetrics';
 
+// Refined "civic editorial" tokens with fallbacks — /hack loads the webfonts
+// but isn't wrapped in <RefinedRoot>, so colors come from these fallbacks.
+const RX = {
+  ink: 'var(--ink, #16181D)', muted: 'var(--muted, #5B6270)', faint: 'var(--faint, #8A8F9A)',
+  line: 'var(--line, #E7E1D4)', brand: 'var(--brand, #1B3A6B)', accent: 'var(--accent, #E2552E)',
+  surface: 'var(--surface, #FFFFFF)', surface2: 'var(--surface-2, #F4F1E9)',
+  display: "'Fraunces', Georgia, serif", body: "'Hanken Grotesk', system-ui, sans-serif",
+};
+
+const DONATION_CATEGORIES = [
+  { label: 'Food', key: 'food' },
+  { label: 'Prize', key: 'prize' },
+  { label: 'Swag', key: 'swag' },
+];
 
 function EventFeature(props) {
-  // TODO: Fix unused variable warning here
-  console.log("EventFeature props:", props);
   const {
     title,
     description,
@@ -59,6 +43,11 @@ function EventFeature(props) {
   
   // TODO: Is the schema on the backend wrong? Or is the schema here wrong?
   const eventLinks = typeof rawEventLinks === 'string' ? [rawEventLinks] : rawEventLinks
+
+  // Descriptions may contain Markdown. These cards are clamped teasers wrapped
+  // in a single navigation <a>, so strip to clean plain text rather than render
+  // Markdown (which would nest anchors and break the line-clamp).
+  const descriptionText = stripMarkdown(description);
   
   
 
@@ -108,7 +97,7 @@ function EventFeature(props) {
                 lineHeight: 1.4
               }}
             >
-              {description}
+              {descriptionText}
             </Typography>
             
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -137,221 +126,150 @@ function EventFeature(props) {
     );
   }
 
-  // Original full card design
+  // Refined full card (civic-editorial). Not wrapped as one big anchor — the
+  // title + a "View event" link handle navigation, so the inner event-link
+  // buttons aren't nested inside another <a> (invalid HTML in the old version).
+  const validDates = isValidDate(start_date) && isValidDate(end_date);
+  const sameYear = validDates && getYear(new Date()) === getYear(parseLocalDate(start_date));
+  const dateLabel = validDates
+    ? `${format(parseLocalDate(start_date), sameYear ? 'MMM d' : 'MMM d, yyyy')} – ${format(parseLocalDate(end_date), 'MMM d, yyyy')}`
+    : null;
+  const hasDonations = donationCurrent?.food > 0 || donationCurrent?.prize > 0 || donationCurrent?.swag > 0;
+
   return (
-    <EventCards container direction="column">      
-      <Link href={`/hack/${event_id}`} passHref>
-        <div style={{ cursor: 'pointer', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ marginBottom: '12px' }}>
-            <EventLink variant="h3">{title}</EventLink>
-            <EventText variant="h3">{description}</EventText>
-          </div>
-          
-          <div style={{ marginBottom: '16px' }}>
-            {
-              getYear(new Date()) === getYear(parseLocalDate(start_date)) &&
-              <Typography variant="body1" sx={{ fontSize: '1rem', color: '#333', marginBottom: '8px' }}>
-                {format(parseLocalDate(start_date), 'MMM do')} to {format(parseLocalDate(end_date), 'MMM do yyyy')}
-              </Typography>
-            }
+    <Box
+      sx={{
+        backgroundColor: RX.surface,
+        border: `1px solid ${RX.line}`,
+        borderRadius: '12px',
+        p: { xs: 2.5, md: 3 },
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minWidth: 0,
+        overflowWrap: 'anywhere',
+        transition: 'transform .2s ease, box-shadow .2s ease, border-color .2s ease',
+        '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 18px 40px -28px rgba(22,24,29,0.45)', borderColor: '#d8d1c0' },
+      }}
+    >
+      {/* Eyebrow row: date + type */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, mb: 1.5, flexWrap: 'wrap' }}>
+        {dateLabel && (
+          <span style={{ fontFamily: RX.body, textTransform: 'uppercase', letterSpacing: '0.18em', fontSize: '0.7rem', fontWeight: 600, color: RX.muted }}>
+            {dateLabel}
+          </span>
+        )}
+        {type && (
+          <Chip
+            label={type}
+            size="small"
+            sx={{ backgroundColor: RX.surface2, color: RX.muted, border: `1px solid ${RX.line}`, fontWeight: 500, fontSize: '0.72rem', borderRadius: '999px' }}
+          />
+        )}
+      </Box>
 
-            {
-              getYear(new Date()) !== getYear(parseLocalDate(start_date)) &&
-              <Typography variant="body1" sx={{ fontSize: '1rem', color: '#333', marginBottom: '8px' }}>
-                {format(parseLocalDate(start_date), 'MMM do yyyy')} to {format(parseLocalDate(end_date), 'MMM do yyyy')}
-              </Typography>
-            }
-          </div>
-        
-          <EventGreyText variant="button">{location}</EventGreyText>                    
-          
-          {/* Only render the donation progress if there is data */}
-          {(donationCurrent?.food > 0 || donationCurrent?.prize > 0 || donationCurrent?.swag > 0) && (
-            <ProgressContainer
-              container
-              justifyContent="space-around"
-              direction="column"
-            >
-              <BlankContainer 
-                container 
-                justifyContent="center" 
-                direction="row" 
-                sx={{ 
-                  gap: { xs: '8px', sm: '16px', md: '20px' }, 
-                  flexWrap: 'wrap',
-                  '@media (max-width: 400px)': {
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '12px'
-                  }
-                }}
-              >
-                {donationCurrent?.food > 0 && (
-                  <ProgressBarHolder container justifyContent="center">
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center' }}>
-                      Food
-                    </Typography>
-                    <Box sx={{ width: '60px', height: '60px' }}>
-                      <CircularProgressbar
-                        styles={{
-                          path: {
-                            stroke: "#003486",
-                          },
-                          trail: {
-                            stroke: "#ffffff",
-                          },
-                          text: {
-                            fill: "#003486",
-                            fontSize: "20px",
-                            fontWeight: "bold"
-                          },
-                        }}
-                        value={(donationCurrent.food / donationGoals.food) * 100}
-                        text={`${(
-                          (donationCurrent.food / donationGoals.food) *
-                          100
-                        ).toFixed(0)}%`}
-                      />
-                    </Box>
-                    <Typography variant="caption" sx={{ 
-                      fontSize: '0.7rem', 
-                      textAlign: 'center',
-                      lineHeight: '1.2',
-                      wordBreak: 'break-all',
-                      maxWidth: '100%',
-                      overflow: 'hidden'
-                    }}>
-                      ${donationCurrent.food}/{donationGoals.food}
-                    </Typography>
-                  </ProgressBarHolder>
-                )}
+      {/* Title */}
+      <Link href={`/hack/${event_id}`} style={{ textDecoration: 'none' }}>
+        <Typography
+          component="h3"
+          sx={{ fontFamily: RX.display, fontWeight: 500, letterSpacing: '-0.01em', fontSize: { xs: '1.45rem', md: '1.7rem' }, lineHeight: 1.12, color: RX.ink, '&:hover': { color: RX.brand } }}
+        >
+          {title}
+        </Typography>
+      </Link>
 
-                {donationCurrent?.prize > 0 && (
-                <ProgressBarHolder container justifyContent="center">
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center' }}>
-                    Prize
-                  </Typography>
-                  <Box sx={{ width: '60px', height: '60px' }}>
+      {/* Description */}
+      {description && (
+        <Typography sx={{ mt: 1.25, color: RX.muted, fontSize: '0.97rem', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {description}
+        </Typography>
+      )}
+
+      {/* Meta */}
+      <Typography sx={{ mt: 1.5, color: RX.faint, fontSize: '0.85rem' }}>
+        {location || 'Location TBA'}
+        {nonprofits?.length ? ` · ${nonprofits.length} nonprofit${nonprofits.length === 1 ? '' : 's'}` : ''}
+      </Typography>
+
+      {/* Donation progress (navy rings) */}
+      {hasDonations && (
+        <Box sx={{ mt: 2.5, pt: 2.5, borderTop: `1px solid ${RX.line}` }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 2 }}>
+            {DONATION_CATEGORIES.map(({ label, key }) => {
+              if (!(donationCurrent?.[key] > 0)) return null;
+              const goal = donationGoals?.[key] || 0;
+              const pct = goal > 0 ? Math.min((donationCurrent[key] / goal) * 100, 100) : 0;
+              return (
+                <Box key={key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.75 }}>
+                  <span style={{ fontFamily: RX.body, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '0.62rem', fontWeight: 600, color: RX.muted }}>{label}</span>
+                  <Box sx={{ width: 58, height: 58 }}>
                     <CircularProgressbar
+                      value={pct}
+                      text={`${pct.toFixed(0)}%`}
                       styles={{
-                        path: {
-                          stroke: "#003486",
-                        },
-                        trail: {
-                          stroke: "#ffffff",
-                        },
-                        text: {
-                          fill: "#003486",
-                          fontSize: "20px",
-                          fontWeight: "bold"
-                        },
+                        path: { stroke: '#1B3A6B' },
+                        trail: { stroke: '#EDE8DC' },
+                        text: { fill: '#16181D', fontSize: '24px', fontWeight: 600 },
                       }}
-                      value={(donationCurrent.prize / donationGoals.prize) * 100}
-                      text={`${(
-                        (donationCurrent.prize / donationGoals.prize) *
-                        100
-                      ).toFixed(0)}%`}
                     />
                   </Box>
-                  <Typography variant="caption" sx={{ 
-                    fontSize: '0.7rem', 
-                    textAlign: 'center',
-                    lineHeight: '1.2',
-                    wordBreak: 'break-all',
-                    maxWidth: '100%',
-                    overflow: 'hidden'
-                  }}>
-                    ${donationCurrent?.prize}/{donationGoals?.prize}
-                  </Typography>
-                </ProgressBarHolder>
-                )}
-
-                {donationCurrent?.swag > 0 && (
-                  <ProgressBarHolder container justifyContent="center">
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center' }}>
-                      Swag
-                    </Typography>
-                    <Box sx={{ width: '60px', height: '60px' }}>
-                      <CircularProgressbar
-                        styles={{
-                          path: {
-                            stroke: "#003486",
-                          },
-                          trail: {
-                            stroke: "#ffffff",
-                          },
-                          text: {
-                            fill: "#003486",
-                            fontSize: "20px",
-                            fontWeight: "bold"
-                          },
-                        }}
-                        value={(donationCurrent?.swag / donationGoals?.swag) * 100}
-                        text={`${(
-                          (donationCurrent?.swag / donationGoals?.swag) *
-                          100
-                        ).toFixed(0)}%`}
-                      />
-                    </Box>
-                    <Typography variant="caption" sx={{ 
-                      fontSize: '0.7rem', 
-                      textAlign: 'center',
-                      lineHeight: '1.2',
-                      wordBreak: 'break-all',
-                      maxWidth: '100%',
-                      overflow: 'hidden'
-                    }}>
-                      ${donationCurrent.swag}/{donationGoals.swag}
-                    </Typography>
-                  </ProgressBarHolder>
-                )}
-              </BlankContainer>
-
-              {donationCurrent?.thank_you?.length > 0 && (
-                <ThankYouContainer>
-                  <Typography variant="caption" sx={{ fontSize: '0.8rem', textAlign: 'center', fontStyle: 'italic', mt: 1 }}>
-                    Special thanks to: {donationCurrent?.thank_you} for donating!
-                  </Typography>
-                </ThankYouContainer>
-              )}
-            </ProgressContainer>
+                  <span style={{ fontFamily: RX.body, fontSize: '0.72rem', color: RX.faint }}>
+                    ${donationCurrent[key]}/{goal}
+                  </span>
+                </Box>
+              );
+            })}
+          </Box>
+          {donationCurrent?.thank_you?.length > 0 && (
+            <Typography sx={{ mt: 1.5, fontSize: '0.8rem', textAlign: 'center', fontStyle: 'italic', color: RX.muted }}>
+              Special thanks to {donationCurrent.thank_you} for donating!
+            </Typography>
           )}
+        </Box>
+      )}
 
-          <ButtonContainer
-            container
-            direction="row"
-            justifyContent="center"
-            sx={{ mt: 'auto', gap: '8px', flexWrap: 'wrap', pt: 2 }}
-          >
-            {
-              eventLinks?.map((alink) => {
-                const isExternal = alink?.link?.startsWith('http');
-                return (
-                  <Link
-                  key={alink?.name} 
-                  prefetch={false} href={alink?.link} target={isExternal ? '_blank' : '_self'} onClick={(e) => {
-                    if (isExternal) {
-                      e.preventDefault();
-                      window.open(alink?.link, '_blank');
-                    }
-                  }}>
-                    <EventButton color={alink.color} variant={alink.variant}>
-                      {alink?.name}
-                    </EventButton>
-                  </Link>
-                );
-              })
-            }
-          </ButtonContainer>
-        
-          {/* Impact Metrics Section */}
-          <ImpactMetrics 
-              event_id={event_id} 
-              eventData={{ start_date, end_date, location, title, id }} 
-            />
-        </div>
-      </Link>
-    </EventCards>
+      {/* Event-link buttons — first is primary navy, rest are hairline ghost */}
+      {eventLinks?.length > 0 && (
+        <Box sx={{ mt: 2.5, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {eventLinks.map((alink, i) => {
+            const isExternal = alink?.link?.startsWith('http');
+            const primary = i === 0;
+            return (
+              <Link
+                key={alink?.name || i}
+                prefetch={false}
+                href={alink?.link || '#'}
+                target={isExternal ? '_blank' : '_self'}
+                rel={isExternal ? 'noopener noreferrer' : undefined}
+                style={{
+                  textDecoration: 'none',
+                  fontFamily: RX.body,
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  padding: '0.55em 1em',
+                  borderRadius: '6px',
+                  border: `1px solid ${primary ? RX.brand : RX.line}`,
+                  background: primary ? RX.brand : 'transparent',
+                  color: primary ? '#fff' : RX.ink,
+                }}
+              >
+                {alink?.name}
+              </Link>
+            );
+          })}
+        </Box>
+      )}
+
+      {/* View event affordance */}
+      <Box sx={{ mt: eventLinks?.length > 0 ? 1.5 : 2.5 }}>
+        <Link href={`/hack/${event_id}`} style={{ textDecoration: 'none', fontFamily: RX.body, fontWeight: 600, fontSize: '0.9rem', color: RX.brand }}>
+          View event →
+        </Link>
+      </Box>
+
+      {/* Impact Metrics */}
+      <ImpactMetrics event_id={event_id} eventData={{ start_date, end_date, location, title, id }} />
+    </Box>
   );
 }
 

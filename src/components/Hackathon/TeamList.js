@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import NextLink from "next/link";
 import {
   Typography,
   Card,
@@ -44,12 +45,172 @@ import {
   FaHandshake,
   FaUsers,
   FaShieldAlt,
+  FaTimes,
 } from 'react-icons/fa';
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { TEAM_STATUS_OPTIONS, getStatusOption, isJoiningDisabled } from '../../constants/teamStatus';
 import { isHackathonExpired } from '../../lib/dateUtils';
+import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
+import VideoDisplay from '../VideoDisplay/VideoDisplay';
+import {
+  MENTOR_COVERAGE_TOTAL,
+  coverageDoneCount,
+  JUDGING_CRITERIA,
+  SCORE_META,
+  latestRatingsByMentor,
+  consensusForCriterion,
+  relativeTime as mentorRelativeTime,
+} from '../Teams/mentorCoverage';
+import FlagIcon from '@mui/icons-material/Flag';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
+import GavelIcon from '@mui/icons-material/Gavel';
+
+// Map MUI palette color names to a hex so the dots paint reliably without
+// having to pass the whole theme down. Mirrors SCORE_META.color.
+const SCORE_DOT_COLORS = {
+  green: '#2e7d32',   // success.main
+  yellow: '#ed6c02',  // warning.main
+  red: '#d32f2f',     // error.main
+};
+
+/**
+ * 5-dot judging-readiness strip. One dot per criterion, painted by team
+ * consensus (worst rating across mentors). Empty dots when nobody's rated.
+ * Renders nothing if no criterion has any rating.
+ */
+const JudgingReadinessStrip = ({ team }) => {
+  const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
+  const hasAnyRating = Object.values(ratingsByMentor).some(
+    (perMentor) => perMentor && Object.keys(perMentor).length > 0
+  );
+  if (!hasAnyRating) return null;
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5, flexWrap: 'wrap' }}>
+      <GavelIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+        Judging readiness
+      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+        {JUDGING_CRITERIA.map((c) => {
+          const consensus = consensusForCriterion(ratingsByMentor[c.slug]);
+          const dotColor = consensus ? SCORE_DOT_COLORS[consensus] : 'transparent';
+          const label = consensus
+            ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label}`
+            : `${c.label}: not rated yet`;
+          return (
+            <Tooltip key={c.slug} title={label} placement="top" arrow>
+              <Box
+                aria-label={label}
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: dotColor,
+                  border: 1,
+                  borderColor: consensus ? dotColor : 'divider',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 8,
+                  color: '#fff',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                {c.label[0]}
+              </Box>
+            </Tooltip>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+};
+
+/**
+ * Compact at-a-glance mentor-support summary for the team list cards on
+ * /hack/<event_id>. Mirrors the per-team MentorTeamPanel's header pills but
+ * stays small. Renders nothing if a team has no mentor activity yet.
+ */
+const MentorSupportSummary = ({ team, eventId }) => {
+  const checklist = team?.mentor_checklist || {};
+  const doneCount = coverageDoneCount(checklist);
+  const openFlags = Number(team?.mentor_open_flag_count || 0);
+  const lastTouchedAt = team?.mentor_last_touched_at;
+  const lastTouchedBy = team?.mentor_last_touched_by_name;
+  const hasAnyRating = Array.isArray(team?.mentor_ratings) && team.mentor_ratings.length > 0;
+
+  // Hide entirely if there's no mentor activity to report.
+  if (!doneCount && !openFlags && !lastTouchedAt && !hasAnyRating) return null;
+
+  const coverageColor =
+    doneCount === MENTOR_COVERAGE_TOTAL ? 'success' : doneCount > 0 ? 'primary' : 'default';
+
+  return (
+    <Box
+      sx={{
+        mb: 1,
+        p: 1,
+        borderRadius: 1,
+        backgroundColor: openFlags > 0 ? 'rgba(255,167,38,0.10)' : 'rgba(33,150,243,0.06)',
+        border: 1,
+        borderColor: openFlags > 0 ? 'warning.light' : 'divider',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+        <EmojiPeopleIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+          Mentor support
+        </Typography>
+        {eventId && team?.id && (
+          <Link
+            component={NextLink}
+            href={`/hack/${eventId}/team/${team.id}/mentor`}
+            variant="caption"
+            sx={{ ml: 'auto' }}
+          >
+            Mentor details →
+          </Link>
+        )}
+      </Box>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+        <Chip
+          size="small"
+          color={coverageColor}
+          label={`${doneCount}/${MENTOR_COVERAGE_TOTAL} covered`}
+          sx={{ fontWeight: 600, height: 22 }}
+        />
+        {openFlags > 0 && (
+          <Chip
+            size="small"
+            color="warning"
+            icon={<FlagIcon sx={{ fontSize: 14 }} />}
+            label={`${openFlags} open flag${openFlags === 1 ? '' : 's'}`}
+            sx={{ height: 22 }}
+          />
+        )}
+        {lastTouchedAt && (
+          <Chip
+            size="small"
+            variant="outlined"
+            icon={<ScheduleIcon sx={{ fontSize: 14 }} />}
+            label={
+              lastTouchedBy
+                ? `${mentorRelativeTime(lastTouchedAt)} · ${lastTouchedBy}`
+                : mentorRelativeTime(lastTouchedAt)
+            }
+            sx={{ height: 22 }}
+          />
+        )}
+      </Box>
+      <JudgingReadinessStrip team={team} />
+    </Box>
+  );
+};
 
 // Helper function to check if team status prevents joining
 const isJoiningDisabledByStatus = (status) => {
@@ -60,117 +221,6 @@ const isJoiningDisabledByStatus = (status) => {
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
-
-// TeamMember component - extracted for better organization
-const TeamMember = ({ user, isCurrentUser }) => {
-  if (!user) return null;
-  
-  // Handle both profile objects and user ID strings
-  const userId = typeof user === 'string' ? user : user.user_id || user.id;
-  const displayName = user.name || user.nickname || '';
-  const githubUsername = user.github || user.github_username;
-  
-  // Extract just the username if a full GitHub URL was provided
-  const cleanGithubUsername = githubUsername ? githubUsername.replace(/^https?:\/\/(www\.)?github\.com\//, '') : null;
-  const profileUrl = `/profile/${userId}`;
-  const firstLetter = displayName && displayName.length > 0 ? displayName[0] : '?';
-  
-  return (
-    <Grid>
-      <Tooltip
-        title={
-          <Box sx={{ fontSize: "12px" }}>
-            <div>
-              {isCurrentUser ? "This is you" : `View ${displayName}'s profile`}
-            </div>
-            {cleanGithubUsername && (
-              <div style={{ marginTop: "4px", fontSize: "11px", opacity: 0.8 }}>
-                <FaGithub style={{ marginRight: "4px", fontSize: "10px" }} />@
-                {cleanGithubUsername}
-              </div>
-            )}
-          </Box>
-        }
-      >
-        <IconButton
-          component={Link}
-          href={profileUrl}
-          aria-label={`${displayName}'s profile`}
-          sx={{
-            p: 0,
-            "&:hover": {
-              backgroundColor: "rgba(0, 0, 0, 0.04)",
-            },
-          }}
-        >
-          <Avatar
-            src={user.profile_image}
-            alt={displayName}
-            sx={{
-              ...(isCurrentUser && {
-                border: "4px solid #3f51b5",
-                boxShadow: "0 0 4px rgba(63, 81, 181, 0.5)",
-              }),
-              ...(cleanGithubUsername && {
-                position: "relative",
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  bottom: -2,
-                  right: -2,
-                  width: 16,
-                  height: 16,
-                  backgroundColor: "#24292e",
-                  borderRadius: "50%",
-                  border: "2px solid white",
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z'/%3E%3C/svg%3E")`,
-                  backgroundSize: "10px 10px",
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
-                },
-              }),
-            }}
-          >
-            {firstLetter}
-          </Avatar>
-        </IconButton>
-      </Tooltip>
-      <Box sx={{ textAlign: "center", maxWidth: 64 }}>
-        <Typography
-          variant="caption"
-          display="block"
-          sx={{
-            mt: 0.5,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            fontWeight: isCurrentUser ? "bold" : "normal",
-            color: isCurrentUser ? "primary.main" : "inherit",
-          }}
-        >
-          {displayName}
-        </Typography>
-        {cleanGithubUsername && (
-          <Typography
-            variant="caption"
-            display="block"
-            sx={{
-              fontSize: "10px",
-              color: "text.secondary",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              mt: 0.25,
-            }}
-          >
-            <FaGithub style={{ marginRight: "2px", fontSize: "8px" }} />@
-            {cleanGithubUsername}
-          </Typography>
-        )}
-      </Box>
-    </Grid>
-  );
-};
 
 // Loading component - extracted for reuse
 const LoadingIndicator = ({ message }) => (
@@ -766,7 +816,6 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
         }
 
         const data = await response.json();
-        console.log("GitHub stats data:", data);
         setGithubData(data);
         
         // Pass stats back to parent component
@@ -888,10 +937,30 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, nonprofitMap, accessToken, onCopyGithubUsername }) => {
+const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, hackerStatus, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo, event_id, onVisible }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const cardRef = useRef(null);
+  const visibilityFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!onVisible) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !visibilityFiredRef.current) {
+          visibilityFiredRef.current = true;
+          onVisible(team);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onVisible, team]);
   
   // Check if this team's button is currently loading
   const isLoading = loadingTeamId === team?.id;
@@ -912,7 +981,11 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   
   // Check if joining is disabled by team status
   const joiningDisabledByStatus = isJoiningDisabledByStatus(team?.status);
-  const canJoin = canJoinLeave && !joiningDisabledByStatus;
+  // Only approved hackers can join a team. Mentors/judges/non-applicants resolve
+  // to a non-"approved" hackerStatus and are blocked from joining. null means the
+  // status hasn't loaded yet — keep Join disabled until we know.
+  const isApprovedHacker = hackerStatus === "approved";
+  const canJoin = canJoinLeave && !joiningDisabledByStatus && isApprovedHacker;
   const canLeave = canJoinLeave; // Users can still leave teams with restricted statuses
 
   // Map team members to their GitHub stats
@@ -949,10 +1022,21 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
   return (
     <Card
+      ref={cardRef}
+      elevation={0}
       sx={{
         position: "relative",
-        opacity: isActive ? 1 : 0.7,
-        border: isActive ? "none" : "1px solid #e0e0e0",
+        height: "100%",
+        opacity: isActive ? 1 : 0.72,
+        border: "1px solid var(--line, #E7E1D4)",
+        borderRadius: "10px",
+        boxShadow: "none",
+        transition: "transform .2s ease, box-shadow .2s ease, border-color .2s ease",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          boxShadow: "0 18px 40px -28px rgba(22,24,29,0.45)",
+          borderColor: "#d8d1c0",
+        },
       }}
     >
       {!isActive && (
@@ -980,7 +1064,16 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
       )}
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
-          <Typography variant="h6" sx={{ mr: 1 }}>{team?.name}</Typography>
+          <Typography variant="h6" component="h3" sx={{ mr: 1, fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500 }}>
+            <Link
+              component={NextLink}
+              href={`/hack/${event_id}/team/${team?.id}`}
+              underline="hover"
+              sx={{ color: "var(--ink, #16181D)", "&:hover": { color: "var(--brand, #1B3A6B)" } }}
+            >
+              {team?.name}
+            </Link>
+          </Typography>
           {team?.status && renderStatusChip(team?.status)}
         </Box>
         
@@ -991,7 +1084,10 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
               : "This team is currently inactive"}
           </Typography>
         )}
-        
+
+        {/* At-a-glance mentor support — renders nothing if no mentor activity yet */}
+        <MentorSupportSummary team={team} eventId={event_id} />
+
         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
           Slack Channel:{" "}
           <Link
@@ -1049,6 +1145,17 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
           )}
         </Box>
 
+        {/* Demo Video */}
+        {team?.demo_video_url && (
+          <Box sx={{ mb: 1.5 }}>
+            <LiteVideoThumbnail
+              url={team.demo_video_url}
+              label={`Watch ${team?.name || 'team'} demo`}
+              onClick={() => onPlayVideo?.(team.demo_video_url, team?.name)}
+            />
+          </Box>
+        )}
+
         {/* DevPost Project */}
         <Box sx={{ mb: 1 }}>
           {team?.devpost_link ? (
@@ -1089,8 +1196,11 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
         <Divider sx={{ my: 1 }} />
 
-        <Typography variant="subtitle1" style={{ marginTop: "10px", marginBottom: "8px" }}>
-          Team Members:
+        <Typography
+          variant="subtitle2"
+          sx={{ mt: 1.5, mb: 1, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: "uppercase", letterSpacing: "0.14em", fontSize: "0.66rem", fontWeight: 600, color: "var(--muted, #5B6270)" }}
+        >
+          Team members
         </Typography>
         <Grid container spacing={1}>
           {Array.isArray(team?.users) &&
@@ -1124,46 +1234,89 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
         {isLoggedIn && userProfile && (
           <div style={{ marginTop: "10px" }}>
             {isUserInTeam ? (
-              <Button
-                size="small"
-                variant="outlined"
-                color="secondary"
-                onClick={() => onLeave(team.id)}
-                disabled={isLoading || !canLeave}
-                startIcon={isLoading && <CircularProgress size={16} />}                
-              >
-                {isLoading ? "Leaving..." : "Leave Team"}
-              </Button>
-            ) : (
-              <Button
-                size="small"
-                variant="outlined"
-                color="primary"
-                onClick={handleJoinClick}
-                disabled={isLoading || !canJoin}
-                startIcon={isLoading && <CircularProgress size={16} />}
-              >
-                {isLoading ? "Joining..." : "Join Team"}
-              </Button>
-            )}
-            {(!canJoin || !canLeave) && (
+              <>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => onLeave(team.id)}
+                  disabled={isLoading || !canLeave}
+                  startIcon={isLoading && <CircularProgress size={16} />}
+                >
+                  {isLoading ? "Leaving..." : "Leave Team"}
+                </Button>
+                {!canLeave && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    display="block"
+                    sx={{ mt: 1 }}
+                  >
+                    {isHackathonExpired
+                      ? "Hackathon has ended - teams are now closed"
+                      : !teamJoinEnabled
+                        ? "Team joining is currently disabled"
+                        : "Team operations are currently restricted"}
+                  </Typography>
+                )}
+              </>
+            ) : isApprovedHacker ? (
+              <>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={handleJoinClick}
+                  disabled={isLoading || !canJoin}
+                  startIcon={isLoading && <CircularProgress size={16} />}
+                  sx={{ textTransform: "none", borderColor: "var(--brand, #1B3A6B)", color: "var(--brand, #1B3A6B)", "&:hover": { borderColor: "#16315a", backgroundColor: "rgba(27,58,107,0.06)" } }}
+                >
+                  {isLoading ? "Joining..." : "Join Team"}
+                </Button>
+                {!canJoin && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    display="block"
+                    sx={{ mt: 1 }}
+                  >
+                    {isHackathonExpired
+                      ? "Hackathon has ended - teams are now closed"
+                      : !teamJoinEnabled
+                        ? "Team joining is currently disabled"
+                        : !isActive
+                          ? "You cannot join inactive teams"
+                          : joiningDisabledByStatus
+                            ? "This team is no longer accepting new members"
+                            : "Team operations are currently restricted"}
+                  </Typography>
+                )}
+              </>
+            ) : hackerStatus === "pending" ? (
               <Typography
                 variant="caption"
-                color="error"
+                color="text.secondary"
                 display="block"
-                sx={{ mt: 1 }}
               >
-                {isHackathonExpired
-                  ? "Hackathon has ended - teams are now closed"
-                  : !teamJoinEnabled
-                    ? "Team joining is currently disabled"
-                    : !isActive
-                      ? "You cannot join/leave inactive teams"
-                      : joiningDisabledByStatus && !isUserInTeam
-                        ? "This team is no longer accepting new members"
-                        : "Team operations are currently restricted"}
+                Your hacker application is awaiting confirmation. You can join a
+                team once it&apos;s approved.
               </Typography>
-            )}
+            ) : hackerStatus === "none" ? (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
+                Joining a team is for approved hackers.{" "}
+                <Link
+                  component={NextLink}
+                  href={`/hack/${event_id}/hacker-application`}
+                  underline="hover"
+                >
+                  Apply as a hacker
+                </Link>{" "}
+                to get started.
+              </Typography>
+            ) : null}
           </div>
         )}
 
@@ -1181,7 +1334,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 };
 
 const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {} }) => {
-  const [teamData, setTeamData] = useState(teams);
+  const [teamData, setTeamData] = useState(teams || []);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
   // Add state to track which team's button is being processed
@@ -1192,9 +1345,27 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
     severity: "success",
   });
   const [userProfile, setUserProfile] = useState(null);
+  // Approved-hacker gate for Join: "approved" when the caller's hacker
+  // application for this event exists and isSelected === true. Mentors/judges
+  // hit the hacker-scoped endpoint and get nothing back, so they can't join.
+  // null = unknown/loading, "approved" | "pending" | "none" once resolved.
+  const [hackerStatus, setHackerStatus] = useState(null);
   const [nonprofitMap, setNonprofitMap] = useState({});
   const [nonprofitsLoading, setNonprofitsLoading] = useState(false);
+  const [videoDialog, setVideoDialog] = useState({
+    open: false,
+    url: null,
+    teamName: null,
+  });
   const { isLoggedIn, accessToken } = useAuthInfo();
+
+  const handlePlayVideo = useCallback((url, teamName) => {
+    setVideoDialog({ open: true, url, teamName: teamName || null });
+  }, []);
+
+  const handleCloseVideoDialog = useCallback(() => {
+    setVideoDialog((prev) => ({ ...prev, open: false }));
+  }, []);
 
   // Check if team joining is enabled from constraints
   const teamJoinEnabled = constraints.team_join_enabled !== false; // Default to true if not specified
@@ -1209,7 +1380,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
         // Extract unique user IDs from all teams (users are stored as string IDs)
         const userIds = new Set();
         teamsData.forEach((team) => {
-          if (Array.isArray(team.users)) {
+          if (Array.isArray(team?.users)) {
             team.users.forEach((userId) => {
               if (userId) userIds.add(userId);
             });
@@ -1253,7 +1424,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
         // Update teams with detailed user profiles, converting string IDs to profile objects
         const updatedTeams = teamsData.map((team) => ({
           ...team,
-          users: Array.isArray(team.users)
+          users: Array.isArray(team?.users)
             ? team.users.map(
                 (userId) => profileMap[userId] || { user_id: userId }
               )
@@ -1288,7 +1459,6 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
         );
         if (response.ok) {
           const data = await response.json();
-          console.log("User profile:", data);
           setUserProfile(data.text);
         } else {
           throw new Error("Failed to fetch user profile");
@@ -1303,6 +1473,36 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
       }
     }
   }, [isLoggedIn, accessToken]);
+
+  // Resolve the caller's hacker application for this event. The endpoint is
+  // volunteer_type-scoped to "hacker", so a mentor/judge (or someone with no
+  // application) gets null back and is never treated as an approved hacker.
+  const fetchHackerStatus = useCallback(async () => {
+    if (!isLoggedIn || !accessToken || !event_id) {
+      setHackerStatus("none");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/application/${event_id}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!response.ok) {
+        setHackerStatus("none");
+        return;
+      }
+      const data = await response.json();
+      const app = data?.data ?? null;
+      if (!app) {
+        setHackerStatus("none");
+      } else {
+        setHackerStatus(app.isSelected === true ? "approved" : "pending");
+      }
+    } catch (error) {
+      console.error("Error resolving hacker application status:", error);
+      setHackerStatus("none");
+    }
+  }, [isLoggedIn, accessToken, event_id]);
 
   // Fetch nonprofits for the event to build a name mapping
   const fetchNonprofits = useCallback(async () => {
@@ -1344,14 +1544,62 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
     }
   }, [event_id, accessToken]);
 
+  const fetchedTeamProfilesRef = useRef(new Set());
+
+  const fetchTeamProfiles = useCallback(async (team) => {
+    if (!team?.id || !accessToken) return;
+    if (fetchedTeamProfilesRef.current.has(team.id)) return;
+    fetchedTeamProfilesRef.current.add(team.id);
+
+    const userIds = Array.isArray(team.users)
+      ? team.users.filter((u) => typeof u === "string" && u)
+      : [];
+    if (!userIds.length) return;
+
+    const profileMap = {};
+    await Promise.all(
+      userIds.map(async (userId) => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (!response.ok) return;
+          const data = await response.json();
+          const profile = data.text || data;
+          if (profile) {
+            profile.user_id = userId;
+            profileMap[userId] = profile;
+          }
+        } catch {
+          // silently ignore per-user failures
+        }
+      })
+    );
+
+    if (!Object.keys(profileMap).length) return;
+
+    setTeamData((prev) =>
+      prev.map((t) =>
+        t.id === team.id
+          ? {
+              ...t,
+              users: Array.isArray(t.users)
+                ? t.users.map((u) =>
+                    typeof u === "string" ? profileMap[u] || { user_id: u } : u
+                  )
+                : t.users,
+            }
+          : t
+      )
+    );
+  }, [accessToken]);
+
   useEffect(() => {
     fetchUserProfile();
+    fetchHackerStatus();
     fetchNonprofits();
-    // Fetch detailed profiles for team members
-    if (teams && teams.length > 0) {
-      fetchTeamMemberProfiles(teams);
-    }
-  }, [teams, fetchUserProfile, fetchTeamMemberProfiles, fetchNonprofits]);
+  }, [fetchUserProfile, fetchHackerStatus, fetchNonprofits]);
 
   const handleJoinTeam = async (teamId) => {
     try {
@@ -1506,7 +1754,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
       )}
 
       <Grid container spacing={2}>
-        {teamData.map((team) => (
+        {(teamData || []).map((team) => (
           <Grid size={{ xs: 12, sm: 6, md: 4 }} key={team?.id}>
             <TeamCard
               team={team}
@@ -1517,13 +1765,44 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
               loadingTeamId={loadingTeamId}
               isHackathonExpired={isHackathonExpired(endDate, eventTimezone)}
               teamJoinEnabled={teamJoinEnabled}
+              hackerStatus={hackerStatus}
               nonprofitMap={nonprofitMap}
               accessToken={accessToken}
               onCopyGithubUsername={handleCopyGithubUsername}
+              onPlayVideo={handlePlayVideo}
+              event_id={event_id}
+              onVisible={isLoggedIn ? fetchTeamProfiles : undefined}
             />
           </Grid>        
         ))}
       </Grid>
+
+      <Dialog
+        open={videoDialog.open}
+        onClose={handleCloseVideoDialog}
+        maxWidth="md"
+        fullWidth
+        aria-labelledby="team-demo-video-title"
+      >
+        <DialogTitle id="team-demo-video-title" sx={{ pr: 6 }}>
+          {videoDialog.teamName ? `${videoDialog.teamName} demo` : "Team demo"}
+          <IconButton
+            aria-label="Close demo video"
+            onClick={handleCloseVideoDialog}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <FaTimes />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {videoDialog.url && (
+            <VideoDisplay
+              url={videoDialog.url}
+              title={videoDialog.teamName || "Team demo"}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}

@@ -221,9 +221,9 @@ const JudgeDashboardOverview = () => {
       trackingLabel: "judge_dashboard"
     },
     {
-      href: "/about/judges#judging-criteria",
+      href: "/hackathon-judging-criteria",
       icon: ChecklistRounded,
-      label: "Scoring Criteria",
+      label: "Scoring Criteria & Rubric",
       trackingLabel: "scoring_criteria"
     },
     {
@@ -467,7 +467,7 @@ const JudgeDashboardOverview = () => {
               </Button>
               <Button
                 variant="outlined"
-                href="/about/judges#judging-criteria"
+                href="/hackathon-judging-criteria"
                 onClick={() => trackOnClickButtonClickWithGoogleAndFacebook('review_criteria_cta')}
                 sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
               >
@@ -548,17 +548,17 @@ const JudgeDashboardOverview = () => {
 export default JudgeDashboardOverview;
 
 export const getStaticProps = async () => {
-  const title = "Judge Dashboard Tutorial - 8 Minute Video Guide | Opportunity Hack";
-  const description = "Watch this comprehensive 8-minute video tutorial on using the Opportunity Hack judge dashboard. Learn to evaluate projects in Round 1 & 2, navigate the scoring interface, and provide effective feedback to teams creating nonprofit technology solutions.";
+  const title = "How Our Hackathon Judging Dashboard Works (Video Walkthrough) | Opportunity Hack";
+  const description = "See exactly how Opportunity Hack judges evaluate nonprofit technology projects — 8-minute video walkthrough of the scoring dashboard, Round 1 & 2 flow, and how to give teams meaningful feedback.";
 
   return {
     props: {
-      title: "Video: Judge Dashboard Tutorial - Opportunity Hack",
+      title: "Hackathon Judging Dashboard Walkthrough — Opportunity Hack",
       description: description,
       openGraphData: [
         {
           name: "title",
-          property: "title", 
+          property: "title",
           content: title,
           key: "title"
         },
@@ -599,13 +599,13 @@ export const getStaticProps = async () => {
         {
           name: "url",
           property: "url",
-          content: "https://ohack.dev/judge/overview",
+          content: "https://www.ohack.dev/judge/overview",
           key: "url"
         },
         {
           name: "og:url",
           property: "og:url", 
-          content: "https://ohack.dev/judge/overview",
+          content: "https://www.ohack.dev/judge/overview",
           key: "ogurl"
         },
         {
@@ -698,9 +698,9 @@ export const getStaticProps = async () => {
         "@graph": [
           {
             "@type": "Organization",
-            "@id": "https://ohack.dev/#organization",
+            "@id": "https://www.ohack.dev/#organization",
             "name": "Opportunity Hack",
-            "url": "https://ohack.dev",
+            "url": "https://www.ohack.dev",
             "logo": {
               "@type": "ImageObject",
               "url": "https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
@@ -712,7 +712,7 @@ export const getStaticProps = async () => {
           },
           {
             "@type": "VideoObject",
-            "@id": "https://ohack.dev/judge/overview#main-video",
+            "@id": "https://www.ohack.dev/judge/overview#main-video",
             "name": title,
             "description": description,
             "thumbnailUrl": [
@@ -737,7 +737,7 @@ export const getStaticProps = async () => {
             "publisher": {
               "@type": "Organization",
               "name": "Opportunity Hack",
-              "url": "https://ohack.dev",
+              "url": "https://www.ohack.dev",
               "logo": {
                 "@type": "ImageObject",
                 "url": "https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
@@ -746,13 +746,13 @@ export const getStaticProps = async () => {
             "creator": {
               "@type": "Organization",
               "name": "Opportunity Hack",
-              "url": "https://ohack.dev"
+              "url": "https://www.ohack.dev"
             }
           },
           {
             "@type": "WebPage",
-            "@id": "https://ohack.dev/judge/overview#webpage",
-            "url": "https://ohack.dev/judge/overview",
+            "@id": "https://www.ohack.dev/judge/overview#webpage",
+            "url": "https://www.ohack.dev/judge/overview",
             "name": title,
             "description": description,
             "primaryImageOfPage": {
@@ -761,15 +761,15 @@ export const getStaticProps = async () => {
             },
             "isPartOf": {
               "@type": "WebSite",
-              "@id": "https://ohack.dev/#website"
+              "@id": "https://www.ohack.dev/#website"
             },
             "mainEntity": {
               "@type": "VideoObject",
-              "@id": "https://ohack.dev/judge/overview#main-video"
+              "@id": "https://www.ohack.dev/judge/overview#main-video"
             },
             "mainContentOfPage": {
               "@type": "VideoObject",
-              "@id": "https://ohack.dev/judge/overview#main-video"
+              "@id": "https://www.ohack.dev/judge/overview#main-video"
             },
             "specialty": "Video Tutorial",
             "about": {
@@ -785,19 +785,19 @@ export const getStaticProps = async () => {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Home",
-                "item": "https://ohack.dev"
+                "item": "https://www.ohack.dev"
               },
               {
                 "@type": "ListItem",
                 "position": 2, 
                 "name": "Judge Dashboard",
-                "item": "https://ohack.dev/judge"
+                "item": "https://www.ohack.dev/judge"
               },
               {
                 "@type": "ListItem",
                 "position": 3,
                 "name": "Dashboard Overview",
-                "item": "https://ohack.dev/judge/overview"
+                "item": "https://www.ohack.dev/judge/overview"
               }
             ]
           }

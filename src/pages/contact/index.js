@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ReCaptchaProvider from "../../components/ReCaptchaProvider";
 import { initFacebookPixel, trackEvent } from '../../lib/ga';
 import {
   Container,
@@ -78,6 +79,14 @@ const INQUIRY_TYPES = [
     description: "Information about sponsoring Opportunity Hack",
     link: "/sponsor",
     linkText: "Sponsorship Details",
+  },
+  {
+    value: "recruit",
+    label: "Recruiting / Hiring Talent",
+    description:
+      "Hire engineers, PMs, TPMs & designers who ship real software. Sponsor for résumé access & on-site recruiting",
+    link: "/sponsor",
+    linkText: "See Sponsorship & Résumé Access",
   },
   {
     value: "nonprofit",
@@ -656,4 +665,10 @@ const ContactPage = () => {
   );
 };
 
-export default ContactPage;
+export default function ContactPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <ContactPage {...props} />
+    </ReCaptchaProvider>
+  );
+}

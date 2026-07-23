@@ -1,0 +1,173 @@
+// Twelve Years of Opportunity Hack — Field Report data
+// Source: DevPost registrant + project exports across 21 hackathons, 2014-2026.
+
+export const DATA = {
+    headline: {
+        total_registrants: 4076,
+        total_submitted: 1080,
+        overall_conv: 26.5,
+        unique_hackathons: 21,
+        span_years: "2014–2026",
+        countries: 73,
+    },
+    yearly: {
+        reg_year: [2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+        total: [255, 1104, 229, 490, 453, 238, 83, 110, 407, 356, 246, 105],
+        submitted: [49, 261, 60, 125, 144, 40, 16, 12, 85, 113, 98, 77],
+        rate: [19.2, 23.6, 26.2, 25.5, 31.8, 16.8, 19.3, 10.9, 20.9, 31.7, 39.8, 73.3],
+    },
+    timeline: [
+        { date: "2014-10-11", year: 2014, title: "OHack San Jose", location: "San Jose", type: "hackathon", era: "Founding" },
+        { date: "2015-10-03", year: 2015, title: "OHack San Jose", location: "San Jose", type: "hackathon", era: "Founding" },
+        { date: "2015-10-10", year: 2015, title: "OHack Arizona", location: "Arizona", type: "hackathon", era: "Founding" },
+        { date: "2015-11-29", year: 2015, title: "OHack Bangalore", location: "Bangalore", type: "hackathon", era: "Founding" },
+        { date: "2015-11-29", year: 2015, title: "OHack Chennai", location: "Chennai", type: "hackathon", era: "Founding" },
+        { date: "2016-10-01", year: 2016, title: "OHack Arizona", location: "Arizona", type: "hackathon", era: "Arizona Era" },
+        { date: "2017-10-21", year: 2017, title: "OHack Arizona", location: "Arizona", type: "hackathon", era: "Arizona Era" },
+        { date: "2018-10-12", year: 2018, title: "OHack Atlanta", location: "Atlanta", type: "hackathon", era: "Arizona Era" },
+        { date: "2018-10-20", year: 2018, title: "Opportunity Hack 2018", location: "Arizona", type: "hackathon", era: "Arizona Era" },
+        { date: "2019-10-11", year: 2019, title: "OHack Chicago", location: "Chicago", type: "hackathon", era: "Arizona Era" },
+        { date: "2019-10-19", year: 2019, title: "OHack Arizona", location: "Arizona", type: "hackathon", era: "Arizona Era" },
+        { date: "2020-06-10", year: 2020, title: "COVID Internship", location: "Virtual", type: "internship", era: "COVID Pivot" },
+        { date: "2020-11-16", year: 2020, title: "November Hackathon", location: "Global", type: "Fall Hackathon", era: "COVID Pivot" },
+        { date: "2021-10-18", year: 2021, title: "Economic Empowerment for All", location: "Global", type: "Fall Hackathon", era: "COVID Pivot" },
+        { date: "2022-01-31", year: 2022, title: "ASU Capstone: Girard Training Stables", location: "ASU - Virtual", type: "capstone", era: "COVID Pivot" },
+        { date: "2022-12-10", year: 2022, title: "November Hackathon", location: "Arizona & Global", type: "Fall hackathon", era: "COVID Pivot" },
+        { date: "2022-12-11", year: 2022, title: "OHack '22 Completion", location: "Global", type: "Hackathon Completion", era: "COVID Pivot" },
+        { date: "2023-05-01", year: 2023, title: "Equestrian Scheduling", location: "Global", type: "Virtual", era: "Modern OHack" },
+        { date: "2023-07-15", year: 2023, title: "Make a Difference in the Lives of Teens", location: "Global", type: "Virtual", era: "Modern OHack" },
+        { date: "2023-10-07", year: 2023, title: "October 2023 Hackathon", location: "Tempe, Arizona @ ASU & Global", type: "Fall Hackathon", era: "Modern OHack" },
+        { date: "2023-10-25", year: 2023, title: "October 2023 Hackathon Completion", location: "Global", type: "Completion", era: "Modern OHack" },
+        { date: "2024-02-09", year: 2024, title: "High School Hack for UN's 17 Goals", location: "Online", type: "hackathon", era: "Modern OHack" },
+        { date: "2024-08-10", year: 2024, title: "OHack 2024 - Pre-Hackathon vSWE Program", location: "Virtual", type: "pre_hackathon", era: "Modern OHack" },
+        { date: "2024-10-12", year: 2024, title: "OHack 2024 - Arizona Hackathon", location: "ASU G Wing - Tempe, AZ", type: "hackathon", era: "Modern OHack" },
+        { date: "2024-10-14", year: 2024, title: "October 2024 Hackathon Completion", location: "Global", type: "Completion", era: "Modern OHack" },
+        { date: "2025-03-08", year: 2025, title: "Cal Poly Humboldt Hackathon for Social Good", location: "Harry Griffith Hall, Arcata, CA", type: "hackathon", era: "Modern OHack" },
+        { date: "2025-06-06", year: 2025, title: "Summer Volunteer Internship", location: "Online", type: "hackathon", era: "Modern OHack" },
+        { date: "2025-10-12", year: 2025, title: "ASU Fall Hackathon 2025 — Phoenix Coding Competition", location: "ASU Engineering Center G Wing — Tempe, AZ", type: "hackathon", era: "Modern OHack" },
+        { date: "2026-03-28", year: 2026, title: "ASU WiCS Hackathon — Nonprofit Innovation Challenge", location: "Tooker eSpaces — Tempe, AZ", type: "hackathon", era: "Modern OHack" },
+    ],
+    sources: {
+        source_cat: ["Friend/Colleague", "DevPost", "School/Club", "Organizer", "Other", "LinkedIn", "Employer", "Web Search", "Social Media", "Meetup/Event", "Returning Hacker", "Email"],
+        total: [606, 462, 331, 277, 52, 20, 15, 12, 12, 4, 4, 3],
+        submitted: [206, 55, 91, 109, 15, 3, 2, 4, 2, 2, 3, 2],
+        rate: [34.0, 11.9, 27.5, 39.4, 28.8, 15.0, 13.3, 33.3, 16.7, 50.0, 75.0, 66.7],
+    },
+    teammate: {
+        labels: ["Already have a team", "Looking for teammates", "Working solo"],
+        total: [898, 683, 270],
+        submitted: [357, 122, 27],
+        rate: [39.8, 17.9, 10.0],
+    },
+    team_size: {
+        labels: [1, 2, 3, 4, 5, 6, 7, 8, 11],
+        total: [170, 59, 85, 98, 63, 10, 3, 3, 1],
+        submitted: [78, 47, 79, 93, 61, 10, 3, 3, 1],
+        rate: [45.9, 79.7, 92.9, 94.9, 96.8, 100.0, 100.0, 100.0, 100.0],
+    },
+    repeat: {
+        labels: ["First-timer", "Repeat (2+ events)"],
+        total: [3624, 452],
+        submitted: [890, 190],
+        rate: [24.6, 42.0],
+    },
+    multi_submitter_dist: { 1: 973, 2: 46, 3: 5 },
+    specialty: {
+        labels: ["Full-stack developer", "Back-end developer", "Data scientist", "Front-end developer", "Designer", "Mobile developer", "Business", "Product manager"],
+        total: [690, 225, 160, 142, 72, 50, 44, 37],
+        submitted: [227, 58, 41, 48, 17, 10, 7, 5],
+        rate: [32.9, 25.8, 25.6, 33.8, 23.6, 20.0, 15.9, 13.5],
+    },
+    cities: {
+        labels: ["Tempe, AZ", "San Jose, CA", "Phoenix, AZ", "Chicago, IL", "Atlanta, GA", "San Francisco, CA", "Chandler, AZ", "New York, NY", "Santa Clara, CA", "Fremont, CA", "Mesa, AZ", "Arcata, CA"],
+        total: [667, 299, 298, 143, 89, 51, 36, 35, 32, 30, 26, 21],
+        submitted: [227, 64, 108, 53, 25, 13, 19, 6, 12, 10, 11, 12],
+        rate: [34.0, 21.4, 36.2, 37.1, 28.1, 25.5, 52.8, 17.1, 37.5, 33.3, 42.3, 57.1],
+    },
+    universities: {
+        labels: ["Arizona State University", "Grand Canyon University", "Georgia Tech", "Georgia State University", "Illinois Institute of Tech", "San Jose State University", "Cal Poly Humboldt", "U. of Illinois Chicago", "U. of Chicago", "DePaul University"],
+        total: [977, 72, 54, 48, 47, 37, 35, 33, 27, 24],
+        submitted: [344, 43, 10, 17, 23, 3, 25, 12, 11, 10],
+        rate: [35.2, 59.7, 18.5, 35.4, 48.9, 8.1, 71.4, 36.4, 40.7, 41.7],
+    },
+    tech_stack: {
+        labels: ["javascript", "python", "react", "css", "html", "node.js", "java", "typescript", "html5", "postgresql", "mysql", "bootstrap", "css3", "mongodb", "php"],
+        counts: [111, 88, 77, 62, 60, 56, 47, 38, 35, 31, 31, 30, 29, 27, 26],
+    },
+    timing: {
+        labels: ["0-1 days", "2-7 days", "8-14 days", "15-30 days", "31-60 days", "60+ days"],
+        total: [256, 886, 778, 736, 545, 875],
+        submitted: [104, 327, 196, 171, 105, 177],
+        rate: [40.6, 36.9, 25.2, 23.2, 19.3, 20.2],
+    },
+    domain: {
+        labels: [".edu (Student)", "Corporate/Other", "Personal"],
+        total: [858, 307, 2911],
+        submitted: [300, 70, 710],
+        rate: [35.0, 22.8, 24.4],
+    },
+};
+
+export const ERAS = [
+    {
+        key: "Founding",
+        name: "Founding",
+        years: "2014 — 2015",
+        cls: "e1",
+        tag: "A San Jose pilot in 2014, then a five-event explosion in 2015 spanning three countries — San Jose, Arizona, Bangalore, Chennai. The single biggest year by registrations in the entire history.",
+    },
+    {
+        key: "Arizona Era",
+        name: "Arizona Era",
+        years: "2016 — 2019",
+        cls: "e2",
+        tag: "The international expansion didn't repeat. OHack settled into an Arizona base, with corporate-sponsored extensions to Atlanta (PayPal Hack, 2018) and Chicago (PayPal Hack, 2019). Smaller years, but steadier completion rates.",
+    },
+    {
+        key: "COVID Pivot",
+        name: "COVID Pivot",
+        years: "2020 — 2022",
+        cls: "e3",
+        tag: "In-person events were impossible. OHack experimented: a summer internship, virtual hackathons, an ASU capstone partnership. Registration volume collapsed (244 in 2020, 88 in 2021, 114 in 2022), and completion rates dipped to a 10-year low. The format was being rebuilt under fire.",
+    },
+    {
+        key: "Modern OHack",
+        name: "Modern OHack",
+        years: "2023 — 2026",
+        cls: "e4",
+        tag: "A more diverse event mix: in-person hackathons, virtual sprints, completion programs, pre-hackathons, high-school events, and a Cal Poly Humboldt expansion. The format flexibility appears to be paying off — completion rates have climbed past 30%.",
+    },
+];
+
+export const LESSONS = [
+    {
+        n: 1,
+        title: "Treat solo registration as a problem to solve, not a state to allow.",
+        body: "Solo hackers finish at 9.8%. Teamed hackers finish at 39.7%. The single highest-impact change a hackathon can make is to put real product effort into team formation **before the event starts** — not as an afterthought during the kickoff. Matchmaking flows, \"looking for a team\" boards, and forced team-join steps at registration would all raise the completion floor.",
+        evidence: "§03 · 4× completion gap between solo and teamed registrants",
+    },
+    {
+        n: 2,
+        title: "Don't confuse listing platforms with recruitment channels.",
+        body: "DevPost-sourced registrants finish at 11.9% — about a third of the rate from friend referrals (34%) or direct organizer outreach (39%). Public listing platforms are useful for awareness but should not be where most marketing energy goes. **Word-of-mouth and direct outreach are 3× more efficient on a per-finisher basis.**",
+        evidence: "§04 · DevPost 11.9% vs Friend 34% vs Organizer 39%",
+    },
+    {
+        n: 3,
+        title: "Keep registration open until the event starts.",
+        body: "Same-day registrants finish at 44%. Hackers who signed up over a month early finish at 18%. Many hackathons close registration two weeks early \"for planning purposes\" — that decision systematically cuts off the highest-intent segment of the audience. **Late registration is high-intent registration.** Plan for a day-zero surge instead of fighting it.",
+        evidence: "§06 · 0–1 days out at 44% · 31–60 days at 18%",
+    },
+    {
+        n: 4,
+        title: "An anchor school is a strength — but track the concentration risk.",
+        body: "OHack's relationship with Arizona State produces 24% of all registrations at a 35% completion rate. That's an excellent partnership. But it's also a single point of failure: a policy change, a curriculum shift, or a key contact leaving could halve the funnel overnight. The lesson for any hackathon: **name your anchor partnerships explicitly, measure the concentration, and proactively cultivate two or three more** before you have to.",
+        evidence: "§05 · ASU = 985 registrants, 24% of total · Top 3 schools = 35% combined",
+    },
+    {
+        n: 5,
+        title: "Multi-time finishers are rare. Treat the ones you have like family.",
+        body: "Across twelve years, only 51 hackers have ever shipped projects at more than one Opportunity Hack event. Five have shipped three times. Zero have shipped four. That's a small number — and it argues against mass-email \"alumni newsletters\" as the right tactic. **The right tactic is high-touch, named-relationship outreach**: invitations to mentor, advise nonprofits, judge, or recruit teammates from new cohorts. Help your alumni stay in the ecosystem after they age out of competing.",
+        evidence: "§06 · 51 multi-time finishers in 12 years · Repeat conversion 42% vs first-time 24.6%",
+    },
+];

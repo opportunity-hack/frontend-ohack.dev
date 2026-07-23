@@ -11,11 +11,21 @@
  * native Date constructor.
  */
 export function parseLocalDate(date) {
+  if (!date && date !== 0) return new Date(NaN);
   if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
     const [year, month, day] = date.split('-').map(Number);
     return new Date(year, month - 1, day);
   }
   return new Date(date);
+}
+
+/**
+ * Returns true if the given value can be parsed into a valid Date.
+ */
+export function isValidDate(date) {
+  if (!date && date !== 0) return false;
+  const d = date instanceof Date ? date : parseLocalDate(date);
+  return !isNaN(d.getTime());
 }
 
 /**

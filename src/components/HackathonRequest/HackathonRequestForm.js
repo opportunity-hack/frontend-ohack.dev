@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import {
   TextField,
   Select,
@@ -26,6 +26,8 @@ import {
   FormGroup,
   useMediaQuery,
   useTheme,
+  ThemeProvider,
+  createTheme,
 } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
@@ -49,6 +51,22 @@ import format from "date-fns/format";
 import { debounce } from "lodash";
 import * as ga from "../../lib/ga";
 
+// Civic-editorial tokens (see docs/refined-design-system.md). The form is
+// reused on /hack/request/[request_id] outside a RefinedRoot, so we don't rely
+// on CSS vars here — we theme MUI directly + use explicit hex.
+const DISPLAY_FONT = "'Fraunces', Georgia, 'Times New Roman', serif";
+const RX = {
+  brand: "#1B3A6B",
+  brandInk: "#0E2547",
+  accent: "#E2552E",
+  ink: "#16181D",
+  muted: "#5B6270",
+  line: "#E7E1D4",
+  paper: "#FBFAF6",
+  surface: "#FFFFFF",
+  surface2: "#F4F1E9",
+};
+
 // Value label component for the slider
 function ValueLabelComponent(props) {
   const { children, value } = props;
@@ -67,8 +85,9 @@ function ValueLabelComponent(props) {
 // Calculate per-person budget
 const calculatePerPersonBudget = (totalBudget, employeeCount) => {
   const countRanges = {
+    "25": 25,
     "50": 50,
-    "100": 100,    
+    "100": 100,
     "200": 200,
     "300": 300,
     "500": 500,
@@ -87,16 +106,57 @@ const steps = [
   'Budget & Support'
 ];
 
+// Organization type drives the rest of the form's branching — surfaced as
+// selectable cards (university first: student-led campus events are the most
+// common host). `icon` is filled in at render time.
+const ORG_TYPES = [
+  {
+    value: "university",
+    label: "University or college",
+    desc: "A student club, course, or department running a campus event.",
+  },
+  {
+    value: "corporate",
+    label: "Company",
+    desc: "A team turning a hack day into real social impact.",
+  },
+  {
+    value: "community",
+    label: "Community group",
+    desc: "A local tech community, meetup, or innovation hub.",
+  },
+];
+
 const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
+
+  // Scoped "civic editorial" theme: navy primary, terracotta secondary, calm
+  // shape. Themes every MUI control (radios, checkboxes, slider, stepper,
+  // buttons, date pickers) in one place without touching each instance.
+  const formTheme = useMemo(
+    () =>
+      createTheme(theme, {
+        palette: {
+          primary: {
+            main: RX.brand,
+            dark: RX.brandInk,
+            light: "#E8EDF5",
+            contrastText: "#fff",
+          },
+          secondary: { main: RX.accent, contrastText: "#fff" },
+        },
+        shape: { borderRadius: 8 },
+      }),
+    [theme]
+  );
+
   // State management
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState(initialData || {
     // Basic information
     companyName: "",
-    organizationType: "corporate", // corporate, university, community
+    organizationType: "university", // university, corporate, community — student-led campus events are the most common host
     contactName: "",
     contactEmail: "",
     contactPhone: "",
@@ -151,6 +211,13 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // Anchor for step changes — scroll the form's own top into view (respecting
+  // the fixed navbar via scrollMarginTop) instead of jumping to the page top.
+  const formTopRef = useRef(null);
+  const scrollToFormTop = () => {
+    formTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   // Track events with Google Analytics
   const trackEvent = useCallback(
@@ -295,9 +362,9 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
       if (!formData.organizationType) newErrors.organizationType = "Required";
       if (!formData.contactName) newErrors.contactName = "Required";
       if (!formData.contactEmail) newErrors.contactEmail = "Required";
-      else if (!validateEmail(formData.contactEmail)) 
+      else if (!validateEmail(formData.contactEmail))
         newErrors.contactEmail = "Please enter a valid email address (e.g., email@example.com or Name <email@example.com>)";
-      if (!formData.contactPhone) newErrors.contactPhone = "Required";
+      // Phone is optional — many student organizers prefer to be reached by email.
     }
     
     // Step 2 validation
@@ -338,9 +405,8 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
       }
     }
     
-    // Step 5 validation
+    // Step 5 validation — budget is never a blocker (students often start at $0)
     else if (activeStep === 4) {
-      if (!formData.budget || formData.budget < 5000) newErrors.budget = "Minimum budget is $5,000";
       if (!formData.agreeToContact) newErrors.agreeToContact = "Required";
       if (!formData.agreeToTimeline) newErrors.agreeToTimeline = "Required";
     }
@@ -357,7 +423,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
       } else {
         setActiveStep((prevStep) => prevStep + 1);
         trackEvent("navigation", "HackathonRequestForm", `move_to_step_${activeStep + 1}`);
-        window.scrollTo(0, 0);
+        scrollToFormTop();
       }
     }
   };
@@ -366,14 +432,23 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
   const handleBack = () => {
     setActiveStep((prevStep) => prevStep - 1);
     trackEvent("navigation", "HackathonRequestForm", `move_to_step_${activeStep - 1}`);
-    window.scrollTo(0, 0);
+    scrollToFormTop();
   };
 
   // Submit the form
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      // The optional contribution ask only applies to companies; for student /
+      // university / community hosts we never carry a donation percentage.
+      const payload = {
+        ...formData,
+        donationPercentage:
+          formData.organizationType === "corporate"
+            ? formData.donationPercentage
+            : 0,
+      };
+      await onSubmit(payload);
       trackEvent(
         "submit",
         "HackathonRequestForm",
@@ -400,6 +475,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
 
   // Calculate estimated donation amount
   const calculatedDonation = Math.round(formData.budget * (formData.donationPercentage / 100));
+  const isCorporate = formData.organizationType === "corporate";
 
   // Get responsible party label
   const getResponsibilityLabel = (value) => {
@@ -412,17 +488,20 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
   };
 
   return (
-    <>
-      <Paper 
-        elevation={2} 
-        sx={{ 
-          p: 4, 
+    <ThemeProvider theme={formTheme}>
+      <Paper
+        ref={formTopRef}
+        elevation={0}
+        sx={{
+          p: { xs: 2.5, md: 4 },
           borderRadius: 2,
-          mb: 8 
+          border: `1px solid ${RX.line}`,
+          bgcolor: RX.surface,
+          scrollMarginTop: "88px",
         }}
       >
-        <Stepper 
-          activeStep={activeStep} 
+        <Stepper
+          activeStep={activeStep}
           alternativeLabel={!isMobile}
           orientation={isMobile ? 'vertical' : 'horizontal'}
           sx={{ mb: 4 }}
@@ -437,16 +516,85 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
         {/* Step 1: Your Information */}
         {activeStep === 0 && (
           <Box>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Tell Us About Your Organization
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.ink }}>
+              First, who's hosting?
             </Typography>
-            
-            <Grid container spacing={3}>
+            <Typography variant="body1" sx={{ color: RX.muted, mb: 3 }}>
+              This shapes the rest of the form so we only ask what's relevant to you.
+            </Typography>
+
+            <Box sx={{ mb: 1 }} role="radiogroup" aria-label="Organization type">
+              <Grid container spacing={2}>
+                {ORG_TYPES.map((opt) => {
+                  const selected = formData.organizationType === opt.value;
+                  const Icon =
+                    opt.value === "university"
+                      ? SchoolIcon
+                      : opt.value === "corporate"
+                      ? BusinessIcon
+                      : PeopleIcon;
+                  return (
+                    <Grid size={{ xs: 12, sm: 4 }} key={opt.value}>
+                      <Box
+                        role="radio"
+                        aria-checked={selected}
+                        tabIndex={0}
+                        onClick={() =>
+                          handleChange({
+                            target: { name: "organizationType", value: opt.value },
+                          })
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleChange({
+                              target: { name: "organizationType", value: opt.value },
+                            });
+                          }
+                        }}
+                        sx={{
+                          cursor: "pointer",
+                          height: "100%",
+                          p: 2.25,
+                          borderRadius: 2,
+                          bgcolor: selected ? "#F2F5FA" : RX.surface,
+                          border: `1px solid ${selected ? RX.brand : RX.line}`,
+                          boxShadow: selected ? `inset 0 0 0 1px ${RX.brand}` : "none",
+                          transition: "border-color .18s ease, background-color .18s ease",
+                          "&:hover": { borderColor: RX.brand },
+                          "&:focus-visible": {
+                            outline: `2px solid ${RX.brand}`,
+                            outlineOffset: 2,
+                          },
+                        }}
+                      >
+                        <Icon sx={{ color: selected ? RX.brand : RX.muted, mb: 1 }} />
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 600, color: RX.ink, lineHeight: 1.2 }}
+                        >
+                          {opt.label}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: RX.muted, mt: 0.5 }}>
+                          {opt.desc}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+
+            <Grid container spacing={3} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   margin="normal"
-                  label="Organization Name"
+                  label={
+                    formData.organizationType === "university"
+                      ? "School, club, or department name"
+                      : "Organization name"
+                  }
                   name="companyName"
                   value={formData.companyName}
                   onChange={handleChange}
@@ -455,56 +603,12 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   required
                 />
               </Grid>
-              
-              <Grid size={{ xs: 12 }}>
-                <FormControl fullWidth margin="normal">
-                  <FormLabel id="organization-type-label">Organization Type</FormLabel>
-                  <RadioGroup
-                    row
-                    aria-labelledby="organization-type-label"
-                    name="organizationType"
-                    value={formData.organizationType}
-                    onChange={handleChange}
-                  >
-                    <FormControlLabel 
-                      value="corporate" 
-                      control={<Radio />} 
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <BusinessIcon sx={{ mr: 1 }} />
-                          Corporate
-                        </Box>
-                      } 
-                    />
-                    <FormControlLabel 
-                      value="university" 
-                      control={<Radio />} 
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <SchoolIcon sx={{ mr: 1 }} />
-                          University/College
-                        </Box>
-                      } 
-                    />
-                    <FormControlLabel 
-                      value="community" 
-                      control={<Radio />} 
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <PeopleIcon sx={{ mr: 1 }} />
-                          Community Group
-                        </Box>
-                      } 
-                    />
-                  </RadioGroup>
-                </FormControl>
-              </Grid>
-              
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   margin="normal"
-                  label="Contact Name"
+                  label="Your name"
                   name="contactName"
                   value={formData.contactName}
                   onChange={handleChange}
@@ -513,12 +617,12 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   required
                 />
               </Grid>
-              
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   margin="normal"
-                  label="Contact Email"
+                  label="Email"
                   name="contactEmail"
                   type="email"
                   value={formData.contactEmail}
@@ -528,18 +632,17 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   required
                 />
               </Grid>
-              
+
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   margin="normal"
-                  label="Contact Phone"
+                  label="Phone (optional)"
                   name="contactPhone"
                   value={formData.contactPhone}
                   onChange={handleChange}
                   error={!!errors.contactPhone}
-                  helperText={errors.contactPhone}
-                  required
+                  helperText={errors.contactPhone || "We'll usually reach out by email first."}
                 />
               </Grid>
             </Grid>
@@ -549,10 +652,10 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
         {/* Step 2: Event Details */}
         {activeStep === 1 && (
           <Box>
-            <Typography variant="h5" component="h2" gutterBottom>
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.ink }}>
               Event Details
             </Typography>
-            
+
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth margin="normal">
@@ -566,6 +669,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                     error={!!errors.employeeCount}
                     required
                   >
+                    <MenuItem value="25">Up to ~25 participants</MenuItem>
                     <MenuItem value="50">~50 participants</MenuItem>
                     <MenuItem value="100">~100 participants</MenuItem>
                     <MenuItem value="200">~200 participants</MenuItem>
@@ -807,10 +911,10 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               </Grid>
               
               <Grid size={{ xs: 12 }}>
-                <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Schedule a Planning Call</Typography>
-                <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.light', borderRadius: 2, border: '1px solid', borderColor: 'primary.main' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: 'primary.contrastText' }}>
-                    📞 Please select a Friday for an initial planning call. Our team will confirm the call details after reviewing your request.
+                <Typography variant="h6" sx={{ mt: 4, mb: 2, fontFamily: DISPLAY_FONT, fontWeight: 600 }}>Schedule a Planning Call</Typography>
+                <Box sx={{ mb: 3, p: 2, bgcolor: RX.surface2, borderRadius: 2, border: `1px solid ${RX.line}` }}>
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: RX.ink }}>
+                    📞 Pick a Friday that works for an initial planning call. We'll confirm the details after reviewing your request — and if none of these dates work, we'll find another time together.
                   </Typography>
                 </Box>
               </Grid>
@@ -878,9 +982,9 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
         {/* Step 3: Nonprofit Engagement */}
         {activeStep === 2 && (
           <Box>
-            <Typography variant="h5" component="h2" gutterBottom>
-              {(['internal-products', 'api-integration'].includes(formData.hackathonTheme) && formData.organizationType === 'corporate') 
-                ? 'Internal Focus & Engagement' 
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.ink }}>
+              {(['internal-products', 'api-integration'].includes(formData.hackathonTheme) && formData.organizationType === 'corporate')
+                ? 'Internal Focus & Engagement'
                 : (formData.hackathonTheme === 'educational' && formData.organizationType === 'university')
                   ? 'Educational Focus & Engagement'
                   : 'Nonprofit Engagement'}
@@ -1138,19 +1242,20 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
         {/* Step 4: Responsibilities */}
         {activeStep === 3 && (
           <Box>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Division of Responsibilities
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.ink }}>
+              Who does what?
             </Typography>
-            
-            <Typography variant="body1" paragraph sx={{ mb: 3, fontWeight: 500 }}>
-              Please indicate who will be responsible for each aspect of the hackathon.
-              This helps us understand how to best support you.
+
+            <Typography variant="body1" paragraph sx={{ mb: 3, color: RX.muted }}>
+              A rough sense of who'll handle each piece helps us know where to lean in.
+              Not sure yet? Leave the suggested defaults — nothing here is final, and
+              we'll sort it all out together on the call.
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={0} sx={{ p: 2, bgcolor: '#f5f9ff' }}>
-                  <Typography variant="subtitle1" component="h3" gutterBottom fontWeight={600}>
+                <Paper elevation={0} sx={{ p: 2, bgcolor: RX.surface2, border: `1px solid ${RX.line}` }}>
+                  <Typography variant="subtitle1" component="h3" gutterBottom sx={{ fontWeight: 600, color: RX.brand }}>
                     Event Logistics
                   </Typography>
                   
@@ -1199,8 +1304,8 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               </Grid>
               
               <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={0} sx={{ p: 2, bgcolor: '#f7f7ff' }}>
-                  <Typography variant="subtitle1" component="h3" gutterBottom fontWeight={600}>
+                <Paper elevation={0} sx={{ p: 2, bgcolor: RX.surface2, border: `1px solid ${RX.line}` }}>
+                  <Typography variant="subtitle1" component="h3" gutterBottom sx={{ fontWeight: 600, color: RX.brand }}>
                     Event Personnel
                   </Typography>
                   
@@ -1249,8 +1354,8 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               </Grid>
               
               <Grid size={{ xs: 12 }}>
-                <Paper elevation={0} sx={{ p: 2, bgcolor: '#f5fff5' }}>
-                  <Typography variant="subtitle1" component="h3" gutterBottom fontWeight={600}>
+                <Paper elevation={0} sx={{ p: 2, bgcolor: RX.surface2, border: `1px solid ${RX.line}` }}>
+                  <Typography variant="subtitle1" component="h3" gutterBottom sx={{ fontWeight: 600, color: RX.brand }}>
                     Participant & Nonprofit Management
                   </Typography>
                   
@@ -1291,8 +1396,8 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               </Grid>
               
               <Grid size={{ xs: 12 }}>
-                <Paper elevation={0} sx={{ p: 2, bgcolor: '#fff5f5' }}>
-                  <Typography variant="subtitle1" component="h3" gutterBottom fontWeight={600}>
+                <Paper elevation={0} sx={{ p: 2, bgcolor: RX.surface2, border: `1px solid ${RX.line}` }}>
+                  <Typography variant="subtitle1" component="h3" gutterBottom sx={{ fontWeight: 600, color: RX.brand }}>
                     Post-Event Support
                   </Typography>
                   
@@ -1324,19 +1429,19 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
         {/* Step 5: Budget & Support */}
         {activeStep === 4 && (
           <Box>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Budget & Support
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.ink }}>
+              {isCorporate ? "Budget & Support" : "Funding & Support"}
             </Typography>
-            
+
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Estimated Event Budget
+              <Typography variant="h6" gutterBottom sx={{ fontFamily: DISPLAY_FONT, fontWeight: 600 }}>
+                {isCorporate ? "Estimated event budget" : "Do you have any funding? (optional)"}
                 <Tooltip
                   title={
                     <span style={{ fontSize: "1.2rem" }}>
-                      This budget helps us tailor the event to your needs and
-                      maximizes the social impact we can achieve together. It
-                      covers event organization, travel, materials, and nonprofit support.
+                      This helps us tailor the event to your needs. It covers
+                      event organization, travel, materials, and nonprofit
+                      support — it's just an estimate to start the conversation.
                     </span>
                   }
                 >
@@ -1346,25 +1451,34 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                   />
                 </Tooltip>
               </Typography>
-              
+
+              {!isCorporate && (
+                <Typography variant="body1" sx={{ color: RX.muted, mb: 1 }}>
+                  Most student-led and community events start with little or no
+                  budget — that's completely normal. Drag to roughly what you
+                  have access to (even $0), and we'll help you find sponsors for
+                  the rest.
+                </Typography>
+              )}
+
               <Slider
                 value={formData.budget}
                 onChange={handleSliderChange}
                 valueLabelDisplay="auto"
-                min={5000}
+                min={0}
                 max={50000}
                 step={1000}
                 marks={[
-                  { value: 5000, label: "$5k" },
+                  { value: 0, label: "$0" },
                   { value: 25000, label: "$25k" },
                   { value: 50000, label: "$50k" },
                 ]}
                 ValueLabelComponent={ValueLabelComponent}
                 sx={{ mb: 2 }}
               />
-              
+
               <Typography variant="body1" align="center" sx={{ fontWeight: 600 }}>
-                Suggested budget: ${formData.budget.toLocaleString()}
+                {isCorporate ? "Suggested budget" : "Funding you have in mind"}: ${formData.budget.toLocaleString()}
               </Typography>
               
               {formData.employeeCount && (
@@ -1382,18 +1496,21 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
                 </Typography>
               )}
               
-              <Paper 
-                elevation={2}
+              <Paper
+                elevation={0}
                 sx={{
                   mt: 3,
                   p: 3,
-                  bgcolor: "#f8f9ff",
+                  bgcolor: RX.surface2,
                   borderRadius: 2,
-                  border: "2px solid #e3f2fd",
+                  border: `1px solid ${RX.line}`,
                 }}
               >
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
-                  💰 Typical Budget Breakdown:
+                <Typography variant="h6" sx={{ mb: 1, fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.brand }}>
+                  For reference — what a fully-resourced event costs
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2, color: RX.muted }}>
+                  You don't need any of this lined up to apply. It's just so you know what's involved.
                 </Typography>
                 <Box component="ul" sx={{ pl: 2, m: 0 }}>
                   <Box component="li" sx={{ mb: 1 }}>
@@ -1430,114 +1547,110 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               </Paper>
             </Box>
             
-            <Box 
+            {/* What every host gets — shown to everyone, no donation pressure */}
+            <Box
               sx={{
                 p: 3,
                 mb: 4,
                 borderRadius: 2,
-                bgcolor: theme.palette.primary.light + '20',
-                border: `1px solid ${theme.palette.primary.light}`
+                bgcolor: RX.surface2,
+                border: `1px solid ${RX.line}`,
               }}
             >
-              <Typography variant="h6" sx={{ mb: 2, color: theme.palette.primary.main }}>
-                <FavoriteIcon sx={{ mr: 1, verticalAlign: 'bottom' }} />
-                Support Our Mission
+              <Typography variant="h6" sx={{ mb: 1.5, fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.brand }}>
+                What every host gets from us
               </Typography>
-              
-              <Typography variant="body1" paragraph>
-                Your contribution helps us sustain our nonprofit work, creating lasting technology
-                solutions for organizations that serve communities in need.
+              <Typography variant="body1" sx={{ color: RX.muted, mb: 2 }}>
+                Whatever your budget, you don't run this alone. Our team brings:
               </Typography>
-              
-              <Box sx={{ mb: 3 }}>
-                <Typography gutterBottom>
-                  Suggested donation: <strong>{formData.donationPercentage}%</strong> of your event budget (${calculatedDonation.toLocaleString()})
-                </Typography>
-                <Slider
-                  value={formData.donationPercentage}
-                  onChange={handleDonationSliderChange}
-                  valueLabelDisplay="auto"
-                  min={0}
-                  max={50}
-                  step={5}
-                  marks={[
-                    { value: 0, label: "0%" },
-                    { value: 20, label: "20%" },
-                    { value: 50, label: "50%" },
-                  ]}
-                />
-              </Box>
-              
-              <Paper
-                elevation={0}
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ display: 'flex', mb: 1 }}>
+                    <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
+                    <Typography variant="body2">Event coordination and a planning playbook</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', mb: 1 }}>
+                    <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
+                    <Typography variant="body2">Mentors and judges from our community</Typography>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ display: 'flex', mb: 1 }}>
+                    <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
+                    <Typography variant="body2">Marketing support for your event</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', mb: 1 }}>
+                    <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
+                    <Typography variant="body2">Access to our vetted nonprofit network</Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Optional contribution — companies only */}
+            {isCorporate && (
+              <Box
                 sx={{
-                  p: 2,
-                  mb: 3,
-                  bgcolor: theme.palette.background.paper,
-                  border: '1px dashed ' + theme.palette.primary.main,
-                  borderRadius: 2
+                  p: 3,
+                  mb: 4,
+                  borderRadius: 2,
+                  bgcolor: RX.surface2,
+                  border: `1px solid ${RX.line}`,
                 }}
               >
-                <Typography variant="subtitle2" gutterBottom sx={{ color: theme.palette.primary.main }}>
-                  Your Support Includes:
+                <Typography variant="h6" sx={{ mb: 1.5, fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.brand }}>
+                  <FavoriteIcon sx={{ mr: 1, verticalAlign: 'bottom', color: RX.accent }} />
+                  Support our mission (optional)
                 </Typography>
-                
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ display: 'flex', mb: 1 }}>
-                      <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
-                      <Typography variant="body2">Organizer travel to your location (if needed)</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', mb: 1 }}>
-                      <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
-                      <Typography variant="body2">Event coordination and planning assistance</Typography>
-                    </Box>
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ display: 'flex', mb: 1 }}>
-                      <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
-                      <Typography variant="body2">Marketing support for your event</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', mb: 1 }}>
-                      <CheckCircleIcon sx={{ color: theme.palette.success.main, mr: 1, fontSize: 20 }} />
-                      <Typography variant="body2">Access to our nonprofit network</Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Paper>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Your donation will directly fund:
+
+                <Typography variant="body1" sx={{ color: RX.muted, mb: 2 }}>
+                  A contribution helps us sustain the free nonprofit work behind
+                  every event. It funds technical support for nonprofits, project
+                  hosting, and educational resources for volunteers.
+                </Typography>
+
+                <Box sx={{ mb: 1 }}>
+                  <Typography gutterBottom>
+                    Suggested contribution: <strong>{formData.donationPercentage}%</strong> of your event budget (${calculatedDonation.toLocaleString()})
                   </Typography>
-                  <Typography variant="body2" component="ul" sx={{ pl: 2, mt: 1 }}>
-                    <li>Technical support for participating nonprofits</li>
-                    <li>Platform maintenance for project hosting</li>
-                    <li>Educational resources for volunteers</li>                
-                  </Typography>
+                  <Slider
+                    value={formData.donationPercentage}
+                    onChange={handleDonationSliderChange}
+                    valueLabelDisplay="auto"
+                    min={0}
+                    max={50}
+                    step={5}
+                    marks={[
+                      { value: 0, label: "0%" },
+                      { value: 20, label: "20%" },
+                      { value: 50, label: "50%" },
+                    ]}
+                  />
                 </Box>
-                
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    px: 3, 
-                    py: 2, 
-                    bgcolor: theme.palette.primary.main,
-                    color: 'white',
-                    borderRadius: 2
+
+                <Box
+                  sx={{
+                    mt: 1,
+                    px: 3,
+                    py: 2,
+                    display: 'inline-flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    bgcolor: RX.brand,
+                    color: '#fff',
+                    borderRadius: 2,
                   }}
                 >
-                  <Typography variant="h6" style={{color: 'white'}} align="center">
+                  <Typography variant="h6" sx={{ color: '#fff', fontFamily: DISPLAY_FONT, fontWeight: 600 }} align="center">
                     ${calculatedDonation.toLocaleString()}
                   </Typography>
                   <Typography variant="body2" align="center">
-                    Estimated Donation
+                    Estimated contribution
                   </Typography>
-                </Paper>
+                </Box>
               </Box>
-            </Box>
-            
+            )}
+
             <TextField
               fullWidth
               margin="normal"
@@ -1550,19 +1663,18 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
               placeholder="Tell us about your organization's social responsibility goals or any specific areas of impact you're interested in..."
             />
             
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                mt: 4, 
-                p: 3, 
-                bgcolor: 'grey.50',
-                border: '2px solid',
-                borderColor: 'primary.light',
-                borderRadius: 2
+              sx={{
+                mt: 4,
+                p: 3,
+                bgcolor: RX.surface2,
+                border: `1px solid ${RX.line}`,
+                borderRadius: 2,
               }}
             >
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
-                📋 Required Agreements
+              <Typography variant="h6" sx={{ mb: 2.5, fontFamily: DISPLAY_FONT, fontWeight: 600, color: RX.ink }}>
+                A couple of quick agreements
               </Typography>
               
               <Box sx={{ mb: 2 }}>
@@ -1662,7 +1774,7 @@ const HackathonRequestForm = ({ initialData, onSubmit, isEdit = false }) => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </>
+    </ThemeProvider>
   );
 };
 

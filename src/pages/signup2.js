@@ -21,7 +21,7 @@ export default function LoginAndSignup({ seoMetadata }) {
                 
                 // Security: Validate and sanitize the previousPage parameter
                 // Only allow internal URLs to prevent open redirect vulnerabilities
-                if (page && !page.startsWith('/') && !page.startsWith('https://ohack.dev')) {
+                if (page && !page.startsWith('/') && !page.startsWith('https://www.ohack.dev')) {
                     console.warn('Invalid previousPage parameter detected, using default')
                     page = '/'
                 }
@@ -148,7 +148,7 @@ export default function LoginAndSignup({ seoMetadata }) {
                 "@type": "WebSite",
                 name: "Opportunity Hack",
                 alternateName: "OHack",
-                url: "https://ohack.dev",
+                url: "https://www.ohack.dev",
                 description:
                   "Building a global community where individuals can accelerate their career growth while making a lasting impact for nonprofits",
               },
@@ -159,7 +159,7 @@ export default function LoginAndSignup({ seoMetadata }) {
                     "@type": "ListItem",
                     position: 1,
                     name: "Home",
-                    item: "https://ohack.dev",
+                    item: "https://www.ohack.dev",
                   },
                   {
                     "@type": "ListItem",
@@ -173,7 +173,7 @@ export default function LoginAndSignup({ seoMetadata }) {
                 "@type": "Organization",
                 name: "Opportunity Hack",
                 alternateName: "OHack",
-                url: "https://ohack.dev",
+                url: "https://www.ohack.dev",
                 logo: {
                   "@type": "ImageObject",
                   url: "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Dark_Blue.png",
@@ -262,7 +262,7 @@ export async function getServerSideProps(context) {
             title: "Join Opportunity Hack | Tech for Good Community Signup",
             description: "Join Opportunity Hack's global community of developers, designers, and changemakers. Use your skills to build technology solutions for nonprofits and create lasting social impact.",
             keywords: "opportunity hack signup, tech for good, nonprofit technology, developer community, social impact, volunteer programming, hackathon registration, join tech community",
-            canonicalUrl: "https://ohack.dev/signup2",
+            canonicalUrl: "https://www.ohack.dev/signup2",
             imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp"
         };
 
@@ -309,7 +309,7 @@ export async function getServerSideProps(context) {
                     title: "Join Opportunity Hack | Tech for Good Community Signup",
                     description: "Join Opportunity Hack's global community of developers, designers, and changemakers. Use your skills to build technology solutions for nonprofits and create lasting social impact.",
                     keywords: "opportunity hack signup, tech for good, nonprofit technology, developer community, social impact, volunteer programming, hackathon registration, join tech community",
-                    canonicalUrl: "https://ohack.dev/signup2",
+                    canonicalUrl: "https://www.ohack.dev/signup2",
                     imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp"
                 }
             }

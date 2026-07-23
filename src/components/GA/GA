@@ -4,18 +4,22 @@ import { useEffect } from "react";
 
 export default function GA() {
     const router = useRouter();
-  
+
     useEffect(() => {
-        const handleRouteChange = (url) => {
-            ga.pageview(url);
+        const handleRouteChange = (url, { shallow } = {}) => {
+            // Shallow navigations are internal UI state changes (dialog open/close,
+            // section tabs, filter params). They share the same page_title and
+            // represent no new page — exclude them from GA to stop the
+            // shallow-route page_view spam inflating session counts.
+            if (shallow) return;
+
+            // defer one tick so document.title has been updated by Next.js
+            // before we read it inside ga.pageview
+            setTimeout(() => ga.pageview(url), 0);
         };
-        
-        //When the component is mounted, subscribe to router changes
-        //and log those page views
+
         router.events.on("routeChangeComplete", handleRouteChange);
 
-        // If the component is unmounted, unsubscribe
-        // from the event with the `off` method
         return () => {
             router.events.off("routeChangeComplete", handleRouteChange);
         };

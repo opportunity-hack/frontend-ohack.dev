@@ -160,11 +160,22 @@ export default function NavBar() {
   };
 
   return (
-    <AppBar position="fixed">
+    <AppBar
+      position="fixed"
+      elevation={0}
+      sx={{
+        backgroundColor: "rgba(251,250,246,0.82)",
+        backdropFilter: "saturate(160%) blur(10px)",
+        WebkitBackdropFilter: "saturate(160%) blur(10px)",
+        color: "#16181D",
+        borderBottom: "1px solid #E7E1D4",
+        boxShadow: "none",
+      }}
+    >
       <Head>
         <link
           rel="preload"
-          href="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
+          href="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Dark_Blue_Banner.png"
           as="image"
         />
         <script type="application/ld+json">
@@ -190,26 +201,27 @@ export default function NavBar() {
           >
             <Image
               className="nav-bar__logo"
-              src="https://cdn.ohack.dev/ohack.dev/ohack_white.webp"
+              src="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Dark_Blue_Banner.png"
               alt="Opportunity Hack logo"
-              width={256 / 2.5}
-              height={122 / 2.5}
+              width={111}
+              height={37}
               priority
             />
           </Typography>
 
-          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+          <Box sx={{ flexGrow: 0, flexShrink: 0, display: { xs: "flex", md: "none" }, alignItems: "center" }}>
             <IconButton
               size="large"
-              aria-label="account of current user"
+              aria-label="open navigation menu"
               aria-controls="menu-appbar"
               aria-haspopup="true"
               onClick={handleOpenNavMenu}
               color="inherit"
-              sx={{ 
-                padding: "12px",
-                minWidth: "48px", 
-                minHeight: "48px"
+              sx={{
+                ml: -1,
+                minWidth: "48px",
+                minHeight: "48px",
+                color: "#16181D",
               }}
             >
               <MenuIcon />
@@ -228,10 +240,44 @@ export default function NavBar() {
               }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
-              sx={{
-                display: { xs: "block", md: "none" },
-                maxHeight: "75vh",
-                overflowY: "auto"
+              sx={{ display: { xs: "block", md: "none" } }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    mt: 1,
+                    width: "min(86vw, 340px)",
+                    maxHeight: "78vh",
+                    borderRadius: "14px",
+                    border: "1px solid #E7E1D4",
+                    boxShadow: "0 24px 60px -28px rgba(22,24,29,0.5)",
+                    backgroundColor: "#FBFAF6",
+                    overflowY: "auto",
+                    "& .MuiList-root": { py: 1 },
+                    "& .MuiListSubheader-root": {
+                      fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.18em",
+                      fontSize: "0.66rem",
+                      fontWeight: 600,
+                      color: "#8A8F9A",
+                      lineHeight: 2.4,
+                      background: "transparent",
+                    },
+                    "& .MuiMenuItem-root": {
+                      borderRadius: "8px",
+                      mx: 1,
+                      "& .MuiTypography-root": {
+                        textAlign: "left",
+                        fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                        fontSize: "1rem",
+                        fontWeight: 500,
+                        color: "#16181D",
+                      },
+                      "&:hover": { backgroundColor: "rgba(27,58,107,0.06)" },
+                    },
+                    "& .MuiDivider-root": { my: 0.75, borderColor: "#E7E1D4" },
+                  },
+                },
               }}
             >
               {/* Main Navigation Pages */}
@@ -287,12 +333,34 @@ export default function NavBar() {
             </Menu>
           </Box>
 
+          {/* Centered logo on mobile (desktop has its own wordmark on the left) */}
+          <Box
+            component="a"
+            href="/"
+            aria-label="Opportunity Hack home"
+            sx={{
+              flexGrow: 1,
+              display: { xs: "flex", md: "none" },
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Image
+              src="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Dark_Blue_Banner.png"
+              alt="Opportunity Hack logo"
+              width={102}
+              height={34}
+              priority
+              style={{ height: 30, width: "auto" }}
+            />
+          </Box>
+
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
             {/* Hackathons dropdown for desktop */}
             <Tooltip title="Hackathon Information">
               <NavbarButton
                 onClick={handleOpenHackathonsMenu}
-                sx={{ my: 1, color: "white", display: "block" }}
+                sx={{ my: 1, color: "#16181D", display: "block" }}
               >
                 Hackathons
               </NavbarButton>
@@ -334,13 +402,19 @@ export default function NavBar() {
               <NavbarLink href={page[1]} key={page[0]}>
                 <Button
                   onClick={handleCloseNavMenu}
-                  sx={{ 
-                    my: 2, 
-                    color: "white", 
+                  sx={{
+                    my: 2,
+                    color: "#16181D",
                     display: "block",
-                    px: 2,
+                    px: 1.75,
                     minWidth: "48px",
-                    minHeight: "48px"
+                    minHeight: "48px",
+                    textTransform: "none",
+                    fontWeight: 500,
+                    fontSize: "0.95rem",
+                    fontFamily: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+                    borderRadius: 1.5,
+                    "&:hover": { color: "#1B3A6B", backgroundColor: "rgba(27,58,107,0.06)" },
                   }}
                 >
                   {page[0]}
@@ -351,7 +425,7 @@ export default function NavBar() {
             <Tooltip title="Get Involved">
               <NavbarButton
                 onClick={handleOpenGetInvolvedMenu}
-                sx={{ my: 1, color: "white", display: "block" }}
+                sx={{ my: 1, color: "#16181D", display: "block" }}
               >
                 Get Involved
               </NavbarButton>
@@ -391,7 +465,7 @@ export default function NavBar() {
             <Tooltip title="About & Resources">
               <NavbarButton
                 onClick={handleOpenAboutMenu}
-                sx={{ my: 1, color: "white", display: "block" }}
+                sx={{ my: 1, color: "#16181D", display: "block" }}
               >
                 About
               </NavbarButton>

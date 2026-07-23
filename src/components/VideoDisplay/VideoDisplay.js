@@ -93,6 +93,7 @@ const VideoDisplay = ({ url, title }) => {
           frameBorder="0"
           allow={videoConfig.allow}
           allowFullScreen
+          loading="lazy"
         />
       </VideoWrapper>
     </Box>

@@ -172,7 +172,7 @@ export default function useProfileApi(){
                         company: data.text.company,
                         github: data.text.github,
                         history: data.text.history,
-                        profile_url: window.location.href + "/" + data.text.id,  // /profile/<db id>
+                        profile_url: `/profile/${data.text.id}`,  // /profile/<db id>
                         linkedin_url: data.text.linkedin_url,
                         instagram_url: data.text.instagram_url,  
                         propel_id: data.text.propel_id,

@@ -8,6 +8,8 @@ export default function usePublicProfile(userId) {
   const [profile, setProfile] = useState(null);
   const [badges, setBadges] = useState(null);
   const [hackathons, setHackathons] = useState(null);
+  const [praisesRecent, setPraisesRecent] = useState([]);
+  const [praisesCount, setPraisesCount] = useState(0);
   const [feedbackUrl, setFeedbackUrl] = useState("");
   const [privacySettings, setPrivacySettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,6 +75,7 @@ export default function usePublicProfile(userId) {
             what: "private",
             how: "private",
             hackathon_history: "private",
+            praises: "private",
           });
         }
       } catch (privacyError) {
@@ -101,7 +104,9 @@ export default function usePublicProfile(userId) {
       // For now, we'll use the existing profile data structure
       // In the future, we might want separate endpoints for badges and hackathons
       setBadges(profileData.badges || []);
-      setHackathons(profileData.hackathons || []);
+      setHackathons(profileData.hackathon_history || profileData.hackathons || []);
+      setPraisesRecent(profileData.praises_recent || []);
+      setPraisesCount(profileData.praises_count || 0);
     } catch (err) {
       console.error("Error fetching public profile:", err);
       setError(err.message);
@@ -120,6 +125,8 @@ export default function usePublicProfile(userId) {
     profile,
     badges,
     hackathons,
+    praisesRecent,
+    praisesCount,
     feedbackUrl,
     privacySettings,
     isLoading,

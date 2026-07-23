@@ -23,11 +23,9 @@ import {
   Chip,
   Grid,
   Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
+  Autocomplete,
+  Tooltip,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
@@ -36,9 +34,11 @@ import {
   Save as SaveIcon,
   Search as SearchIcon,
   Edit as EditIcon,
+  OpenInNew as OpenInNewIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
+import { useRouter } from "next/router";
 import axios from "axios";
 import ProblemStatementManagement from "./ProblemStatementManagement";
 
@@ -50,12 +50,12 @@ const NonprofitManagement = memo(({
   onUpdate = () => {},
   onError = () => {}
 }) => {
+  const router = useRouter();
   const [nonprofits, setNonprofits] = useState([]);
   const [hackathonNonprofits, setHackathonNonprofits] = useState([]);
   const [problemStatements, setProblemStatements] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedNonprofitId, setSelectedNonprofitId] = useState("");
+  const [nonprofitToAdd, setNonprofitToAdd] = useState(null);
   const [problemStatementDialogOpen, setProblemStatementDialogOpen] = useState(false);
   const [selectedNonprofit, setSelectedNonprofit] = useState(null);
   const [visiblePsIds, setVisiblePsIds] = useState(hackathon?.visible_problem_statements || null);
@@ -210,7 +210,7 @@ const NonprofitManagement = memo(({
 
   // Add a nonprofit to the hackathon with improved state handling
   const addNonprofitToHackathon = async () => {
-    if (!selectedNonprofitId || !hackathon?.id || isLoadingRef.current) return;
+    if (!nonprofitToAdd?.id || !hackathon?.id || isLoadingRef.current) return;
     
     isLoadingRef.current = true;
     setLoading(true);
@@ -220,7 +220,7 @@ const NonprofitManagement = memo(({
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/nonprofit`,
         {
           hackathonId: hackathon.id,
-          nonprofitId: selectedNonprofitId
+          nonprofitId: nonprofitToAdd.id
         },
         {
           headers: {
@@ -232,7 +232,7 @@ const NonprofitManagement = memo(({
       );
 
       if (response.status === 200) {
-        setSelectedNonprofitId("");
+        setNonprofitToAdd(null);
         onUpdate();
         
         // Only refetch if the current hackathon ID matches
@@ -357,11 +357,6 @@ const NonprofitManagement = memo(({
     nonprofit => !hackathonNonprofits.some(hn => hn.id === nonprofit.id)
   );
 
-  // Filter nonprofits based on search term
-  const filteredNonprofits = availableNonprofits.filter(
-    nonprofit => nonprofit.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   // Get problem statements for a specific nonprofit
   const getNonprofitProblemStatements = (nonprofitId) => {
     if (!nonprofitId) return [];
@@ -392,55 +387,81 @@ const NonprofitManagement = memo(({
         <Typography variant="subtitle1" gutterBottom>
           Add Nonprofit to Hackathon
         </Typography>
-        <Grid container spacing={2} alignItems="center">
+        <Grid container spacing={2} alignItems="flex-start">
           <Grid size={{ xs: 8 }}>
-            <FormControl fullWidth>
-              <InputLabel id="nonprofit-select-label">Select Nonprofit</InputLabel>
-              <Select
-                labelId="nonprofit-select-label"
-                value={selectedNonprofitId}
-                onChange={(e) => setSelectedNonprofitId(e.target.value)}
-                label="Select Nonprofit"
-              >
-                <MenuItem value="">
-                  <em>Select a nonprofit</em>
-                </MenuItem>
-                {filteredNonprofits.map((nonprofit) => (
-                  <MenuItem key={nonprofit.id} value={nonprofit.id}>
-                    {nonprofit.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Autocomplete
+              options={availableNonprofits}
+              getOptionLabel={(option) => option.name || ""}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              value={nonprofitToAdd}
+              onChange={(_, newValue) => setNonprofitToAdd(newValue)}
+              filterOptions={(options, { inputValue }) => {
+                const lc = inputValue.toLowerCase();
+                if (!lc) return options;
+                return options.filter(
+                  (o) =>
+                    o.name?.toLowerCase().includes(lc) ||
+                    o.description?.toLowerCase().includes(lc)
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Search nonprofits"
+                  placeholder="Type to filter by name or description…"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <SearchIcon sx={{ ml: 0.5, mr: 0.5, color: "text.secondary", flexShrink: 0 }} />
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box component="li" {...props} key={option.id}>
+                  <Box>
+                    <Typography variant="body2" fontWeight="medium">
+                      {option.name}
+                    </Typography>
+                    {option.description && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block", maxWidth: 420 }}
+                        noWrap
+                      >
+                        {option.description.length > 110
+                          ? option.description.slice(0, 110) + "…"
+                          : option.description}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+              noOptionsText={
+                loading ? "Loading…" : "No nonprofits available to add"
+              }
+              loading={loading}
+              fullWidth
+            />
           </Grid>
           <Grid size={{ xs: 4 }}>
             <Button
               variant="contained"
               color="primary"
               onClick={addNonprofitToHackathon}
-              disabled={!selectedNonprofitId || loading}
+              disabled={!nonprofitToAdd || loading}
               startIcon={loading ? <CircularProgress size={24} /> : <AddIcon />}
               fullWidth
+              sx={{ height: 56 }}
             >
               Add to Hackathon
             </Button>
           </Grid>
         </Grid>
-        
-        {/* Search filter */}
-        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-          <TextField
-            label="Search Nonprofits"
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            fullWidth
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-            }}
-          />
-        </Box>
       </Paper>
 
       {/* Project visibility save bar */}
@@ -503,9 +524,23 @@ const NonprofitManagement = memo(({
               return (
                 <Accordion key={nonprofit.id}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography sx={{ fontWeight: "bold" }}>
-                      {nonprofit.name || "Unnamed Nonprofit"}
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", pr: 1 }}>
+                      <Typography sx={{ fontWeight: "bold", flex: 1 }}>
+                        {nonprofit.name || "Unnamed Nonprofit"}
+                      </Typography>
+                      <Tooltip title="Edit nonprofit details">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/admin/nonprofit?id=${nonprofit.id}&from=${encodeURIComponent(`/admin/hackathons/${hackathon?.event_id || ''}`)}`);
+                          }}
+                          aria-label={`Edit ${nonprofit.name}`}
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </AccordionSummary>
                   <AccordionDetails>
                     <Box sx={{ mb: 2 }}>

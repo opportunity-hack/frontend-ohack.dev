@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import {
   Box,
@@ -15,12 +15,17 @@ import {
   Paper,
   Typography,
   Chip,
+  Alert,
 } from "@mui/material";
+import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
+import { useRouter } from "next/router";
 import AdminPage from "../../../components/admin/AdminPage";
 import NonprofitEditDialog from "../../../components/admin/NonprofitEditDialog";
 
 const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
+  const router = useRouter();
+  const autoOpenDoneRef = useRef(false);
   const [nonprofits, setNonprofits] = useState([]);
   const [problemStatements, setProblemStatements] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -100,6 +105,18 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
       fetchProblemStatements();
     }
   }, [isAdmin, accessToken]);
+
+  // Auto-open edit dialog when ?id= is present in the URL
+  useEffect(() => {
+    const targetId = router.query.id;
+    if (!targetId || autoOpenDoneRef.current || nonprofits.length === 0) return;
+    const found = nonprofits.find((n) => n.id === targetId);
+    if (found) {
+      autoOpenDoneRef.current = true;
+      setEditingNonprofit(found);
+      setEditDialogOpen(true);
+    }
+  }, [router.query.id, nonprofits]);
 
   const handleEditNonprofit = (nonprofit) => {
     setEditingNonprofit(nonprofit);
@@ -189,6 +206,9 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
     );
   }
 
+  const fromRaw = Array.isArray(router.query.from) ? router.query.from[0] : router.query.from;
+  const fromUrl = fromRaw ? decodeURIComponent(fromRaw) : null;
+
   return (
     <AdminPage
       title="Nonprofit Management"
@@ -196,6 +216,24 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
       onSnackbarClose={handleSnackbarClose}
       isAdmin={isAdmin}
     >
+      {fromUrl && (
+        <Alert
+          severity="info"
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              size="small"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => router.push(fromUrl)}
+              color="inherit"
+            >
+              Back
+            </Button>
+          }
+        >
+          Editing nonprofit — click Back to return to the hackathon editor.
+        </Alert>
+      )}
       <Box sx={{ mb: 3, width: "100%" }}>
         <Grid container spacing={2} alignItems="center">
           <Grid>

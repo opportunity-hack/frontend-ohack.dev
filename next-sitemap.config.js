@@ -11,6 +11,7 @@ module.exports = {
     "/hackathon/[hackathon_id]",
     "/project/[project_id]",
     "/hack/[event_id]",
+    // Dynamic routes covered by /server-sitemap.xml instead
     "https://api.test.ohack.dev/",
     "https://test.api.ohack.dev/",
   ],
@@ -50,8 +51,13 @@ module.exports = {
       changefreq = "weekly";
     } else if (
       path.includes("judging") ||
+      path.includes("judge") ||
       path.includes("mentor") ||
-      path.includes("sponsor")
+      path.includes("sponsor") ||
+      path.includes("recruit") ||
+      path.includes("hackathon") ||
+      path.includes("social-good") ||
+      path.includes("nonprofits")
     ) {
       priority = 0.8;
       changefreq = "weekly";

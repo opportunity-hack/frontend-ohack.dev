@@ -148,7 +148,7 @@ const AgendaPage = ({ eventData }) => {
 
   // Stub fields - can be added to event data object:
   const eventDescription = event.description || "Join us for an exciting hackathon focused on creating technology solutions for nonprofits.";
-  const eventWebsite = event.website || `https://ohack.dev/hack/${event_id}`;
+  const eventWebsite = event.website || `https://www.ohack.dev/hack/${event_id}`;
   const eventHashtag = event.hashtag || "#OpportunityHack";
 
   // Additional fields that could be added:
@@ -183,7 +183,7 @@ const AgendaPage = ({ eventData }) => {
     window.print();
   };
 
-  const agendaUrl = `https://ohack.dev/hack/${event_id}/agenda`;
+  const agendaUrl = `https://www.ohack.dev/hack/${event_id}/agenda`;
 
   return (
     <>

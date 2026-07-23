@@ -132,7 +132,6 @@ export default function Footer() {
                 growth while making a lasting impact for nonprofits.
               </p>
             </MutedText>
-          </div>
 
           <StyledText style={{ 
             marginTop: "2rem",
@@ -176,6 +175,7 @@ export default function Footer() {
             icon={GitHub}
           />
         </nav>
+          </div>
           <div style={{ marginTop: "2rem", minHeight: '60px' }}>
             <Hashtag style={{ 
               color: accessibilityStyles.hashtagColor,

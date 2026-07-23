@@ -1,16 +1,19 @@
 # Email API Endpoint Usage
 
 ## Overview
+
 The system now supports two different API endpoints for sending emails, automatically choosing the correct one based on recipient type.
 
 ## API Endpoints
 
 ### 1. User ID Endpoint (Registered Users)
+
 **Endpoint:** `POST /api/admin/{user.id}/message`
 
 **Used for:** Recipients who have user accounts in the system (have a user ID)
 
 **Request Body:**
+
 ```json
 {
   "message": "Email content here",
@@ -21,11 +24,13 @@ The system now supports two different API endpoints for sending emails, automati
 ```
 
 ### 2. Email-Only Endpoint (Non-Registered Recipients)
+
 **Endpoint:** `POST /api/admin/email/send`
 
 **Used for:** Recipients who only have email addresses (no user account)
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -41,26 +46,32 @@ The system now supports two different API endpoints for sending emails, automati
 The system automatically detects which endpoint to use based on these criteria:
 
 ```javascript
-const isEmailOnlyRecipient = !user.id || user.source === 'custom' || user.source === 'csv';
+const isEmailOnlyRecipient =
+  !user.id || user.source === "custom" || user.source === "csv";
 ```
 
 **Email-only endpoint used when:**
+
 - User has no ID (`!user.id`)
 - User source is 'custom' (manually added email)
 - User source is 'csv' (imported from CSV file)
 
 **User ID endpoint used when:**
+
 - User has a valid ID from the database
 - User was fetched from Slack/volunteer system
 
 ## Updated Components
 
 ### BatchEmailService (`src/lib/batchEmailService.js`)
+
 - **Enhanced:** `sendEmailToUser()` method now detects recipient type
 - **Added:** Endpoint tracking for debugging (`result.endpoint`)
 - **Improved:** Error messages include endpoint context
+- **Performance:** `sendBatchEmails()` uses bounded parallelism (`MAX_PARALLEL_SENDS = 8`) instead of sending every request strictly one-by-one
 
 ### VolunteerCommunication (`src/components/admin/VolunteerCommunication.js`)
+
 - **Enhanced:** `handleSendMessage()` method now uses dual-endpoint logic
 - **Maintained:** All existing functionality and UI behavior
 
@@ -83,6 +94,7 @@ When using `/admin/social-media`:
 ## Error Handling
 
 Enhanced error messages now include endpoint context:
+
 - `"Error message (via user-ID endpoint)"`
 - `"Error message (via email-only endpoint)"`
 

@@ -37,7 +37,7 @@ export default function ZurisCircleSuccessStory() {
         <meta property="og:title" content="Zuri's Circle: Transforming Event Management | Opportunity Hack" />
         <meta property="og:description" content="See how tech volunteers created an automated event registration and feedback analysis system for Zuri's Circle, revolutionizing their community engagement." />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content="https://ohack.dev/success-stories/zuris-circle-event-management" />
+        <meta property="og:url" content="https://www.ohack.dev/success-stories/zuris-circle-event-management" />
         <meta property="og:image" content="https://cdn.ohack.dev/nonprofit_images/Zuris_Circle_2019.webp" />
       </Head>
 

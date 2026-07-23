@@ -38,30 +38,42 @@ const extractTextContent = (element) => {
 };
 
 const FAQItem = ({ item, expanded, onChange, onExpand, questionFontSize, answerFontSize }) => (
-  <Accordion 
-    expanded={expanded} 
+  <Accordion
+    expanded={expanded}
+    disableGutters
+    elevation={0}
     onChange={(event, isExpanded) => {
       onChange(event, isExpanded);
       if (isExpanded) {
         onExpand(item.question);
       }
     }}
+    sx={{
+      border: '1px solid var(--line, #E7E1D4)',
+      borderRadius: '10px',
+      mb: 1.5,
+      backgroundColor: 'var(--surface, #FFFFFF)',
+      overflow: 'hidden',
+      '&:before': { display: 'none' },
+      '& .MuiAccordionSummary-root': { px: 2.5, minHeight: 58 },
+      '& .MuiAccordionSummary-content': { my: 1.5 },
+    }}
   >
     <AccordionSummary
-      expandIcon={<ExpandMoreIcon />}
+      expandIcon={<ExpandMoreIcon sx={{ color: 'var(--muted, #5B6270)' }} />}
       aria-controls="panel-content"
       id="panel-header"
     >
-      <Typography sx={{ display: 'flex', alignItems: 'center', fontSize: questionFontSize || '1.2rem', fontWeight: 600 }}>
-        <span style={{ marginRight: '8px', fontSize: '1.5rem' }}>{item.icon}</span>
+      <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1, fontFamily: "'Fraunces', Georgia, serif", fontSize: '1.1rem', fontWeight: 500, color: 'var(--ink, #16181D)' }}>
+        {item.icon && <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>}
         {item.question}
       </Typography>
     </AccordionSummary>
-    <AccordionDetails>
+    <AccordionDetails sx={{ px: 2.5, pb: 2.5, pt: 0, color: 'var(--muted, #5B6270)', lineHeight: 1.65, '& a': { color: 'var(--brand, #1B3A6B)' } }}>
       {typeof item.answer === 'string' ? (
-        <Typography sx={{ fontSize: answerFontSize || '1.1rem' }}>{item.answer}</Typography>
+        <Typography sx={{ fontSize: answerFontSize || '1rem', color: 'inherit', lineHeight: 1.65 }}>{item.answer}</Typography>
       ) : (
-        <Box sx={{ fontSize: answerFontSize || '1.1rem' }}>{item.answer}</Box>
+        <Box sx={{ fontSize: answerFontSize || '1rem', color: 'inherit', lineHeight: 1.65 }}>{item.answer}</Box>
       )}
     </AccordionDetails>
   </Accordion>
@@ -113,24 +125,26 @@ export default function InteractiveFAQ({ faqData, title = "FAQ", questionFontSiz
   });
 
   return (
-    <Box sx={{ maxWidth: '800px', margin: '0 auto', p: 4, scrollMarginTop: '2rem' }}>
-      <Typography variant="h4" gutterBottom align="center" sx={{ fontSize: questionFontSize, fontWeight: 700 }}>{title}</Typography>
+    <Box sx={{ maxWidth: '820px', margin: '0 auto', py: 4, px: { xs: 0, sm: 2 }, scrollMarginTop: '2rem' }}>
+      <Typography variant="h4" gutterBottom align="center" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)', mb: 3 }}>{title}</Typography>
       <TextField
         fullWidth
         variant="outlined"
-        placeholder="Search FAQ..."
+        placeholder="Search FAQ…"
         value={searchTerm}
         onChange={handleSearchChange}
-        sx={{ mb: 4 }}
+        sx={{
+          mb: 3,
+          '& .MuiOutlinedInput-root': { borderRadius: '8px', backgroundColor: 'var(--surface, #FFFFFF)', fontSize: '1rem' },
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--line, #E7E1D4)' },
+        }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ fontSize: '2rem' }} />
+              <SearchIcon sx={{ color: 'var(--faint, #8A8F9A)' }} />
             </InputAdornment>
           ),
-          style: { fontSize: questionFontSize }
         }}
-        InputLabelProps={{ style: { fontSize: questionFontSize } }}
       />
       <Box>
         {filteredFAQ.map((item, index) => (

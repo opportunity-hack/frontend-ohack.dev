@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import NextLink from 'next/link';
 import {
   Paper, Typography, Box, Grid, Chip, Link, Button,
   Divider, Skeleton, Avatar
 } from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { styled, alpha } from '@mui/material/styles';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupIcon from '@mui/icons-material/Group';
@@ -16,7 +19,10 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import PersonIcon from '@mui/icons-material/Person';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import PendingIcon from '@mui/icons-material/HourglassTop';
+import { useAuthInfo } from '@propelauth/react';
 import { WINNING_STATUSES, isWinningStatus, getWinningStatus } from '../../constants/teamStatus';
+import TeamMember from './TeamMember';
+import VideoDisplay from '../VideoDisplay/VideoDisplay';
 
 const RANK_STYLES = {
   1: { gradient: 'linear-gradient(135deg, #FFD700 0%, #FFA000 100%)', emoji: '\uD83E\uDD47', border: '#FFD700' },
@@ -28,9 +34,10 @@ const ResultsContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   marginTop: theme.spacing(3),
   marginBottom: theme.spacing(2),
-  background: `linear-gradient(135deg, ${alpha(theme.palette.warning.light, 0.15)} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 100%)`,
-  border: `2px solid ${alpha(theme.palette.warning.main, 0.3)}`,
-  borderRadius: theme.shape.borderRadius * 2,
+  backgroundColor: 'var(--surface-2, #F4F1E9)',
+  border: '1px solid var(--line, #E7E1D4)',
+  boxShadow: 'none',
+  borderRadius: 12,
 }));
 
 const StatCard = styled(Box)(({ theme }) => ({
@@ -38,27 +45,30 @@ const StatCard = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   alignItems: 'center',
   padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[1],
-  transition: 'transform 0.2s',
+  borderRadius: 10,
+  backgroundColor: 'var(--surface, #FFFFFF)',
+  border: '1px solid var(--line, #E7E1D4)',
+  boxShadow: 'none',
+  transition: 'transform 0.2s, box-shadow 0.2s',
   '&:hover': {
     transform: 'translateY(-3px)',
-    boxShadow: theme.shadows[3],
+    boxShadow: '0 14px 30px -24px rgba(22,24,29,0.5)',
   },
 }));
 
 const WinnerCard = styled(Paper)(({ theme, bordercolor }) => ({
   padding: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius * 2,
-  border: `2px solid ${bordercolor || theme.palette.divider}`,
+  borderRadius: 12,
+  backgroundColor: 'var(--surface, #FFFFFF)',
+  border: `2px solid ${bordercolor || 'var(--line, #E7E1D4)'}`,
+  boxShadow: 'none',
   transition: 'transform 0.2s, box-shadow 0.2s',
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[6],
+    boxShadow: '0 18px 40px -28px rgba(22,24,29,0.5)',
   },
 }));
 
@@ -70,16 +80,18 @@ const RankBadge = styled(Avatar)(({ gradient }) => ({
   marginBottom: 8,
 }));
 
-const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg }) => {
+const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg, fullResultsHref }) => {
   const [leaderboardStats, setLeaderboardStats] = useState(null);
   const [volunteerCounts, setVolunteerCounts] = useState({});
   const [statsLoading, setStatsLoading] = useState(true);
+  const [memberProfiles, setMemberProfiles] = useState({});
+  const { accessToken } = useAuthInfo();
 
   // Extract winning teams
   const winningTeams = useMemo(() => {
     if (!teams) return [];
     return teams
-      .filter(team => isWinningStatus(team.status))
+      .filter(team => isWinningStatus(team?.status))
       .map(team => ({ ...team, winInfo: getWinningStatus(team.status) }))
       .sort((a, b) => a.winInfo.rank - b.winInfo.rank);
   }, [teams]);
@@ -88,7 +100,7 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
   const totalTeams = teams?.length || 0;
   const totalParticipants = useMemo(() => {
     if (!teams) return 0;
-    return teams.reduce((sum, t) => sum + (t.users?.length || 0), 0);
+    return teams.reduce((sum, t) => sum + (t?.users?.length || 0), 0);
   }, [teams]);
 
   // Fetch leaderboard stats
@@ -102,6 +114,49 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
       .catch(() => {})
       .finally(() => setStatsLoading(false));
   }, [eventId]);
+
+  // Fetch profile details for winning-team members (so we can show avatars + names)
+  useEffect(() => {
+    if (!accessToken || winningTeams.length === 0) return;
+
+    const userIds = new Set();
+    winningTeams.forEach((team) => {
+      if (Array.isArray(team.users)) {
+        team.users.forEach((u) => {
+          const id = typeof u === 'string' ? u : u?.user_id || u?.id;
+          if (id) userIds.add(id);
+        });
+      }
+    });
+    if (userIds.size === 0) return;
+
+    let cancelled = false;
+    Promise.all(
+      Array.from(userIds).map((userId) =>
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            const profile = data?.text || data;
+            if (profile) profile.user_id = userId;
+            return [userId, profile];
+          })
+          .catch(() => [userId, null])
+      )
+    ).then((entries) => {
+      if (cancelled) return;
+      const map = {};
+      entries.forEach(([id, profile]) => {
+        if (profile) map[id] = profile;
+      });
+      setMemberProfiles(map);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, winningTeams]);
 
   // Fetch volunteer/mentor/judge/hacker counts
   useEffect(() => {
@@ -160,8 +215,8 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
     <ResultsContainer elevation={3} id="results">
       {/* Header */}
       <Box sx={{ textAlign: 'center', mb: 3 }}>
-        <EmojiEventsIcon sx={{ fontSize: 48, color: 'warning.main', mb: 1 }} aria-hidden="true" />
-        <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
+        <EmojiEventsIcon sx={{ fontSize: 44, color: 'var(--accent, #E2552E)', mb: 1 }} aria-hidden="true" />
+        <Typography variant="h4" component="h2" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)' }}>
           Hackathon Results
         </Typography>
         <Typography variant="body1" color="text.secondary">
@@ -176,7 +231,7 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
             <Grid size={{ xs: 6, sm: 4, md: 3, lg: 'auto' }} key={idx}>
               <StatCard>
                 {item.icon}
-                <Typography variant="h5" fontWeight="bold" color="primary.main">
+                <Typography variant="h5" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--brand, #1B3A6B)' }}>
                   {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -206,7 +261,7 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
       {/* Winners Showcase */}
       {winningTeams.length > 0 ? (
         <>
-          <Typography variant="h5" component="h3" fontWeight="bold" textAlign="center" gutterBottom>
+          <Typography variant="h5" component="h3" textAlign="center" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)' }}>
             Winning Teams
           </Typography>
           <Grid container spacing={3} sx={{ mt: 1 }}>
@@ -236,9 +291,56 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
                             mb: 0.5,
                           }}
                         />
-                        <Typography variant="h6" fontWeight="bold" noWrap>
-                          {team.name}
-                        </Typography>
+                        {eventId && team.id ? (
+                          <Link
+                            component={NextLink}
+                            href={`/hack/${eventId}/team/${team.id}`}
+                            underline="none"
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              mt: 0.75,
+                              color: 'primary.main',
+                              fontWeight: 'bold',
+                              fontSize: '1.25rem',
+                              lineHeight: 1.3,
+                              maxWidth: '100%',
+                              width: 'fit-content',
+                              '& .team-name-text': {
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                borderBottom: '2px solid transparent',
+                                transition: 'border-color 150ms ease',
+                              },
+                              '& .team-name-arrow': {
+                                fontSize: '1.1rem',
+                                transition: 'transform 150ms ease',
+                                flexShrink: 0,
+                              },
+                              '&:hover .team-name-text': {
+                                borderBottomColor: 'primary.main',
+                              },
+                              '&:hover .team-name-arrow': {
+                                transform: 'translateX(3px)',
+                              },
+                              '&:focus-visible': {
+                                outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                                outlineOffset: 2,
+                                borderRadius: 1,
+                              },
+                            }}
+                            aria-label={`View ${team.name} team page`}
+                          >
+                            <span className="team-name-text">{team.name}</span>
+                            <ArrowForwardIcon className="team-name-arrow" />
+                          </Link>
+                        ) : (
+                          <Typography variant="h6" fontWeight="bold" noWrap>
+                            {team.name}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
 
@@ -248,11 +350,52 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
                       </Typography>
                     )}
 
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {memberCount} team member{memberCount !== 1 ? 's' : ''}
-                    </Typography>
+                    {memberCount > 0 && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          Team Members ({memberCount})
+                        </Typography>
+                        <Grid container spacing={1}>
+                          {team.users.map((u, idx) => {
+                            const id = typeof u === 'string' ? u : u?.user_id || u?.id;
+                            const enriched = (id && memberProfiles[id]) || u;
+                            return (
+                              <TeamMember
+                                key={id || `member-${idx}`}
+                                user={enriched}
+                                isCurrentUser={false}
+                              />
+                            );
+                          })}
+                        </Grid>
+                      </Box>
+                    )}
+
+                    {team.demo_video_url && (
+                      <Box sx={{ mb: 2 }}>
+                        <VideoDisplay
+                          url={team.demo_video_url}
+                          title={`${team.name} demo`}
+                        />
+                      </Box>
+                    )}
 
                     <Box sx={{ mt: 'auto', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {eventId && team.id && (
+                        <Chip
+                          icon={<OpenInNewIcon sx={{ color: 'inherit !important' }} />}
+                          label="View team page"
+                          component={NextLink}
+                          href={`/hack/${eventId}/team/${team.id}`}
+                          clickable
+                          size="small"
+                          color="primary"
+                          sx={{
+                            fontWeight: 600,
+                            '& .MuiChip-label': { px: 1.25 },
+                          }}
+                        />
+                      )}
                       {githubLink && (
                         <Chip
                           icon={<GitHubIcon />}
@@ -299,8 +442,18 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg 
         </Box>
       )}
 
-      {/* View all teams link */}
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
+      {/* CTA row */}
+      <Box sx={{ textAlign: 'center', mt: 4, display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+        {fullResultsHref && (
+          <Button
+            variant="contained"
+            color="primary"
+            component="a"
+            href={fullResultsHref}
+          >
+            See full results & hacker funnel →
+          </Button>
+        )}
         <Button
           variant="outlined"
           endIcon={<ArrowDownwardIcon />}

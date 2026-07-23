@@ -39,8 +39,10 @@ import { styled } from "@mui/system";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
-import { Email as EmailIcon, VolunteerActivism as CertificateIcon } from '@mui/icons-material';
+import { Email as EmailIcon, VolunteerActivism as CertificateIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
+import NextLink from 'next/link';
+import HackerDepositChip from "./HackerDepositChip";
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
@@ -201,12 +203,17 @@ const VolunteerTable = ({
   // Auth props for Resend status lookup
   accessToken,
   orgId,
+  // Deposit refund (hackers only)
+  depositEnabled = false,
+  onDepositClick,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState({ open: false, message: '' });
   const [resendStatuses, setResendStatuses] = useState({}); // { resend_id: { last_event, ... } }
   const [loadingResendStatus, setLoadingResendStatus] = useState({});
   const [resendEmailsByRecipient, setResendEmailsByRecipient] = useState({}); // { email: [{id, subject, created_at, last_event}] }
   const [resendListLoaded, setResendListLoaded] = useState(false);
+  const [resendSyncing, setResendSyncing] = useState(false);
+  const [resendSyncSnackbar, setResendSyncSnackbar] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -288,7 +295,7 @@ const VolunteerTable = ({
   }, [accessToken, orgId, resendStatuses, loadingResendStatus]);
 
   // Fetch all sent emails from Resend list API, indexed by recipient
-  const fetchResendEmailList = useCallback(async () => {
+  const fetchResendEmailList = useCallback(async (force = false) => {
     if (!accessToken || !orgId || !volunteers?.length) return;
 
     const uniqueEmails = [
@@ -302,6 +309,7 @@ const VolunteerTable = ({
     if (uniqueEmails.length === 0) return;
 
     try {
+      setResendSyncing(true);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/emails/resend-list`,
         {
@@ -311,14 +319,14 @@ const VolunteerTable = ({
             'Content-Type': 'application/json',
             'X-Org-Id': orgId,
           },
-          body: JSON.stringify({ emails: uniqueEmails }),
+          body: JSON.stringify({ emails: uniqueEmails, force }),
         }
       );
 
       if (response.ok) {
         const data = await response.json();
-        const emailsByRecipient =
-          data?.data?.emails_by_recipient || data?.emails_by_recipient;
+        const payload = data?.data || data;
+        const emailsByRecipient = payload?.emails_by_recipient;
         if (emailsByRecipient) {
           const normalizedEmailsByRecipient = {};
           Object.entries(emailsByRecipient).forEach(([key, value]) => {
@@ -330,11 +338,17 @@ const VolunteerTable = ({
           });
           setResendEmailsByRecipient(normalizedEmailsByRecipient);
         }
-        // Mark list as successfully loaded only after a successful fetch
         setResendListLoaded(true);
+        if (payload?.syncing) {
+          setResendSyncSnackbar(true);
+          // Re-fetch once after ~30s to pick up background sync results
+          setTimeout(() => fetchResendEmailList(false), 30000);
+        }
       }
     } catch (err) {
       console.warn("Failed to fetch Resend email list:", err);
+    } finally {
+      setResendSyncing(false);
     }
   }, [accessToken, orgId, volunteers]);
 
@@ -344,12 +358,21 @@ const VolunteerTable = ({
     setResendEmailsByRecipient({});
   }, [orgId, accessToken]);
 
-  // Fetch Resend email list once when volunteers load
+  // Bulk-fetch delivery status for all known resend_ids when volunteers load (DB-first, no list crawl)
   useEffect(() => {
-    if (!resendListLoaded && volunteers?.length > 0 && accessToken && orgId) {
-      fetchResendEmailList();
+    if (!volunteers?.length || !accessToken || !orgId) return;
+    const allIds = [];
+    volunteers.forEach(v => {
+      const emails = Array.isArray(v.sent_emails) ? v.sent_emails : [];
+      emails.forEach(e => { if (e.resend_id && !resendStatuses[e.resend_id]) allIds.push(e.resend_id); });
+    });
+    if (allIds.length === 0) return;
+    const unique = [...new Set(allIds)];
+    for (let i = 0; i < unique.length; i += 100) {
+      fetchResendStatuses(unique.slice(i, i + 100));
     }
-  }, [volunteers, accessToken, orgId, resendListLoaded, fetchResendEmailList]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [volunteers, accessToken, orgId]);
 
   // Helper to get sent emails from either new sent_emails or legacy messages_sent
   const getSentEmails = useCallback((volunteer) => {
@@ -428,15 +451,19 @@ const VolunteerTable = ({
         { id: "artifacts", label: "Contrib.", minWidth: 100, priority: 3 },
       ];
     } else if (type === "hackers") {
-      return [
+      const cols = [
         ...baseColumns,
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
-        { id: "teamCode", label: "Team Code", minWidth: 50 }, // Reduced from 120, shorter label        
+        { id: "teamCode", label: "Team Code", minWidth: 50 }, // Reduced from 120, shorter label
         { id: "participantType", label: "Type", minWidth: 80 }, // Reduced from 120, shorter label
         { id: "experienceLevel", label: "Exp.", minWidth: 60 }, // Reduced from 120, shorter label
         { id: "teamStatus", label: "Team", minWidth: 80 }, // Reduced from 120, shorter label
         { id: "primaryRoles", label: "Roles", minWidth: 100, priority: 2 }, // Reduced from 150
       ];
+      if (depositEnabled) {
+        cols.push({ id: "deposit", label: "Deposit", minWidth: 130 });
+      }
+      return cols;
     } else if (type === "sponsors") {
       return [
         ...baseColumns,
@@ -453,7 +480,7 @@ const VolunteerTable = ({
     }
 
     return baseColumns;
-  }, [type]);
+  }, [type, depositEnabled]);
 
   const selectedCount = useMemo(() => {
     return volunteers.filter((volunteer) => volunteer.isSelected).length;
@@ -507,6 +534,13 @@ const VolunteerTable = ({
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
+      case "deposit":
+        return (
+          <HackerDepositChip
+            volunteer={volunteer}
+            onClick={onDepositClick ? () => onDepositClick(volunteer) : undefined}
+          />
+        );
       case "id":
         const id = volunteer.id || "N/A";
         const truncatedId = id.length > 8 ? `${id.slice(0, 8)}...` : id;
@@ -1498,7 +1532,7 @@ const VolunteerTable = ({
                 {/* Header Row */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Avatar
-                    src={volunteer.photoUrl}
+                    src={volunteer.profile_image || volunteer.photoUrl}
                     alt={volunteer.name}
                     sx={{ width: 40, height: 40, mr: 2 }}
                   >
@@ -1571,6 +1605,16 @@ const VolunteerTable = ({
                       color="primary"
                     />
                   )}
+                  {type === "hackers" && depositEnabled && (
+                    <HackerDepositChip
+                      volunteer={volunteer}
+                      onClick={
+                        onDepositClick
+                          ? () => onDepositClick(volunteer)
+                          : undefined
+                      }
+                    />
+                  )}
                 </Box>
 
                 {/* Key Info for Specific Types */}
@@ -1614,7 +1658,7 @@ const VolunteerTable = ({
 
               {/* Actions */}
               <CardActions sx={{ pt: 0, px: 2, pb: 2 }}>
-                <Box sx={{ display: 'flex', gap: 0.5, width: '100%' }}>
+                <Box sx={{ display: 'flex', gap: 0.5, width: '100%', alignItems: 'center' }}>
                   <Tooltip title="Edit">
                     <IconButton
                       onClick={() => onEditVolunteer(volunteer)}
@@ -1635,7 +1679,20 @@ const VolunteerTable = ({
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Box sx={{ flex: 1 }} /> {/* Spacer */}
+                  {volunteer.user_db_id && (
+                    <Tooltip title="View OHack profile">
+                      <IconButton
+                        component={NextLink}
+                        href={`/profile/${volunteer.user_db_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="small"
+                      >
+                        <OpenInNewIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <Box sx={{ flex: 1 }} />
                   {volunteer.email && (
                     <Button
                       size="small"
@@ -1680,7 +1737,29 @@ const VolunteerTable = ({
             variant="outlined"
           />
         )}
+
+        <Tooltip title="Discover emails not yet tracked in the database (confirmation emails, etc.)">
+          <span>
+            <Button
+              size="small"
+              variant="outlined"
+              disabled={resendSyncing}
+              onClick={() => fetchResendEmailList(true)}
+              sx={{ ml: 'auto' }}
+            >
+              {resendSyncing ? 'Syncing…' : 'Sync from Resend'}
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
+
+      <Snackbar
+        open={resendSyncSnackbar}
+        autoHideDuration={35000}
+        onClose={() => setResendSyncSnackbar(false)}
+        message="Sync started — refreshing in ~30s"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
 
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={1}>
         <Box>
@@ -1884,7 +1963,7 @@ const VolunteerTable = ({
                 <StyledTableCell data-label="Actions">
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
                     <Tooltip title="Edit">
-                      <IconButton 
+                      <IconButton
                         onClick={() => onEditVolunteer(volunteer)}
                         size="small"
                       >
@@ -1893,12 +1972,26 @@ const VolunteerTable = ({
                     </Tooltip>
                     {onMessageVolunteer && (
                       <Tooltip title="Send Message">
-                        <IconButton 
+                        <IconButton
                           onClick={() => onMessageVolunteer(volunteer)}
                           size="small"
                           color="primary"
                         >
                           <FaPaperPlane size={12} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {volunteer.user_db_id && (
+                      <Tooltip title="View OHack profile">
+                        <IconButton
+                          component={NextLink}
+                          href={`/profile/${volunteer.user_db_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          size="small"
+                          color="default"
+                        >
+                          <OpenInNewIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     )}

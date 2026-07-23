@@ -59,12 +59,12 @@ export default function FeedbackPage() {
           content="Get personalized feedback on your tech skills and grow your career with Opportunity Hack's unique feedback system."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ohack.dev/feedback" />
+        <meta property="og:url" content="https://www.ohack.dev/feedback" />
         <meta
           property="og:image"
-          content="https://ohack.dev/images/feedback-system.jpg"
+          content="https://www.ohack.dev/images/feedback-system.jpg"
         />
-        <link rel="canonical" href="https://ohack.dev/feedback" />
+        <link rel="canonical" href="https://www.ohack.dev/feedback" />
       </Head>
 
       <Box sx={{ maxWidth: 800, margin: "auto", padding: 3, marginTop: 10 }}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -21,8 +21,10 @@ import {
   Skeleton,
   TextField,
   InputAdornment,
-  Snackbar
+  Snackbar,
+  GlobalStyles,
 } from '@mui/material';
+import { TEAM_STATUS_OPTIONS, isWinningStatus, getWinningStatus } from '../../constants/teamStatus';
 import { Puff } from 'react-loading-icons';
 import { styled } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -48,6 +50,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import StarIcon from '@mui/icons-material/Star';
 import Link from 'next/link';
+import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -146,33 +149,6 @@ const getStatusIcon = (status) => {
   }
 };
 
-const getStatusLabel = (status) => {
-  switch (status) {
-    case 'IN_REVIEW':
-      return 'In Review';
-    case 'NONPROFIT_SELECTED':
-      return 'Nonprofit Selected';
-    case 'ONBOARDED':
-      return 'Onboarded';
-    case 'SWAG_RECEIVED':
-      return 'Swag Received';
-    case 'PROJECT_COMPLETE':
-      return 'Project Complete';
-    case 'COMPLETED_HACKATHON':
-      return 'Completed Hackathon';
-    case 'FOUNDING_ENGINEERS':
-      return 'Founding Engineers - 1st Place';
-    case 'COMPLETION_SUPPORT':
-      return 'Completion Support - 2nd Place';
-    case 'CATEGORY_WINNER':
-      return 'Category Winner';
-    case 'INACTIVE':
-      return 'Inactive';
-    default:
-      return 'Pending';
-  }
-};
-
 /* Example github link within team:
 "github_links": [
     {
@@ -191,41 +167,7 @@ const getTeamGitHubName = (team) => {
   return githubLinks.length > 0 && githubLinks[0].name ? githubLinks[0].name : null;
 };
 
-// Function to get the color for header background based on team status
-const getHeaderColor = (status, theme) => {
-  switch (status) {
-    case 'APPROVED':
-      return theme.palette.success.light;
-    case 'IN_REVIEW':
-      return theme.palette.warning.light;
-    case 'PROJECT_COMPLETE':
-      return theme.palette.info.light;
-    case 'REJECTED':
-      return theme.palette.error.light;
-    default:
-      return theme.palette.grey[100];
-  }
-};
-
-// Define keyframes for animations
-const keyframes = `
-  @keyframes pulse {
-    0% { background-position: 0% 50% }
-    50% { background-position: 100% 50% }
-    100% { background-position: 0% 50% }
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg) }
-    100% { transform: rotate(360deg) }
-  }
-
-  @keyframes fadeInOut {
-    0% { opacity: 0.7 }
-    50% { opacity: 1 }
-    100% { opacity: 0.7 }
-  }
-`;
+// Use TEAM_STATUS_OPTIONS from constants — no local label/icon/color duplicates needed.
 
 // Define video files array for waiting animations
 const waitingVideos = [
@@ -239,28 +181,17 @@ const waitingVideos = [
   'a_dog_that_is_waiting_by_the_3.mp4'
 ];
 
-const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, accessToken }) => {
-  // State for selected waiting video
+const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, accessToken, onTeamUpdated }) => {
   const [selectedVideo, setSelectedVideo] = useState('');
   const [devpostSubmissions, setDevpostSubmissions] = useState({});
   const [devpostLoading, setDevpostLoading] = useState({});
+  const [demoVideoSubmissions, setDemoVideoSubmissions] = useState({});
+  const [demoVideoLoading, setDemoVideoLoading] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Select a random waiting video on component mount
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * waitingVideos.length);
     setSelectedVideo(waitingVideos[randomIndex]);
-  }, []);
-  
-  // Inject the keyframes animation styles
-  useEffect(() => {
-    const styleElement = document.createElement('style');
-    styleElement.innerHTML = keyframes;
-    document.head.appendChild(styleElement);
-    
-    return () => {
-      document.head.removeChild(styleElement);
-    };
   }, []);
 
   // DevPost URL validation function
@@ -308,19 +239,13 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
         throw new Error('Failed to update DevPost link');
       }
 
-      // Update the team data locally
-      const updatedTeams = teams.map(team => 
-        team.id === teamId ? { ...team, devpost_link: url } : team
-      );
-      
+      if (onTeamUpdated) onTeamUpdated(teamId, { devpost_link: url });
+
       setSnackbar({
         open: true,
         message: 'DevPost link updated successfully!',
         severity: 'success'
       });
-
-      // Clear the input field so it shows the saved URL from team.devpost_link
-      // setDevpostSubmissions(prev => ({ ...prev, [teamId]: '' }));
 
     } catch (error) {
       console.error('Error updating DevPost link:', error);
@@ -337,6 +262,80 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
   // Handle input change for DevPost URL
   const handleDevPostInputChange = (teamId, value) => {
     setDevpostSubmissions(prev => ({ ...prev, [teamId]: value }));
+  };
+
+  // Demo video URL: accept YouTube, Vimeo, Loom, or Google Drive (matches VideoDisplay providers)
+  const isValidDemoVideoUrl = (url) => {
+    if (!url) return false;
+    const trimmed = url.trim();
+    return (
+      /youtube\.com\/.+v=[\w-]{11}/i.test(trimmed) ||
+      /youtu\.be\/[\w-]{11}/i.test(trimmed) ||
+      /vimeo\.com\/\d+/i.test(trimmed) ||
+      /loom\.com\/(share|embed)\/[a-zA-Z0-9]+/i.test(trimmed) ||
+      /drive\.google\.com\/file\/d\//i.test(trimmed)
+    );
+  };
+
+  const handleDemoVideoInputChange = (teamId, value) => {
+    setDemoVideoSubmissions(prev => ({ ...prev, [teamId]: value }));
+  };
+
+  const handleDemoVideoSubmit = async (teamId) => {
+    const url = (demoVideoSubmissions[teamId] || '').trim();
+    if (!url) {
+      setSnackbar({ open: true, message: 'Please enter a video URL', severity: 'error' });
+      return;
+    }
+    if (!isValidDemoVideoUrl(url)) {
+      setSnackbar({
+        open: true,
+        message: 'Please enter a YouTube, Vimeo, Loom, or Google Drive video URL.',
+        severity: 'error',
+      });
+      return;
+    }
+
+    setDemoVideoLoading(prev => ({ ...prev, [teamId]: true }));
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${teamId}/demo-video`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ demo_video_url: url }),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to update demo video');
+
+      if (onTeamUpdated) onTeamUpdated(teamId, { demo_video_url: url });
+      // Keep the input in sync so the preview still shows after save
+      setDemoVideoSubmissions(prev => ({ ...prev, [teamId]: url }));
+
+      setSnackbar({
+        open: true,
+        message: 'Demo video saved! Judges and visitors will see it on the event page.',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error updating demo video URL:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update demo video. Please try again.',
+        severity: 'error',
+      });
+    } finally {
+      setDemoVideoLoading(prev => ({ ...prev, [teamId]: false }));
+    }
+  };
+
+  const statusLabel = (status) => {
+    const opt = TEAM_STATUS_OPTIONS.find((o) => o.value === status);
+    const label = opt?.label || status;
+    return isWinningStatus(status) ? `🏆 ${label}` : label;
   };
 
   // Handle loading state with better UX
@@ -490,6 +489,11 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
   // Show team hub view
   return (
     <StyledPaper>
+      <GlobalStyles styles={{
+        '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+        '@keyframes pulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.6 } },
+        '@keyframes ohx-fade': { from: { opacity: 0, transform: 'translateY(8px)' }, to: { opacity: 1, transform: 'none' } },
+      }} />
       <Typography variant="h5" gutterBottom>
         Your Hackathon Team Hub
       </Typography>
@@ -511,11 +515,12 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
         <Box key={team.id} sx={{ mb: index < sortedTeams.length - 1 ? 4 : 0 }}>
           {/* Team Header */}
           <Card
-            elevation={3}
+            elevation={0}
             sx={{
               mb: 3,
-              borderRadius: "8px 8px 0 0",
-              backgroundColor: (theme) => getHeaderColor(team.status, theme),
+              borderRadius: 2,
+              bgcolor: "var(--surface-2, #F4F1E9)",
+              border: "1px solid var(--line, #E7E1D4)",
               position: "relative",
               overflow: "visible",
             }}
@@ -545,7 +550,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                     </Typography>
                     <StatusChip
                       icon={getStatusIcon(team.status)}
-                      label={getStatusLabel(team.status)}
+                      label={statusLabel(team.status)}
                       status={team.status}
                       size="medium"
                     />
@@ -567,68 +572,53 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
           {/* Main content card */}
           <Card elevation={1} sx={{ mb: 3, borderRadius: 2 }}>
             <CardContent>
-              {/* Enhanced waiting state for teams under review */}
+              {/* Waiting state for teams under review */}
               {team.status === "IN_REVIEW" && (
                 <Box
                   sx={{
                     mb: 3,
                     p: 3,
                     borderRadius: 2,
-                    background:
-                      "linear-gradient(145deg, #fff8e1 0%, #fffde7 100%)",
-                    border: "1px solid #ffe082",
-                    position: "relative",
-                    overflow: "hidden",
+                    bgcolor: "var(--surface-2, #F4F1E9)",
+                    border: "1px solid var(--line, #E7E1D4)",
                   }}
                 >
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: "4px",
-                      background:
-                        "linear-gradient(90deg, #ffe082, #ffb74d, #ffe082)",
-                      backgroundSize: "200% 100%",
-                      animation: "pulse 2s infinite linear",
-                    }}
-                  />
 
                   {/* Fun waiting video */}
                   {selectedVideo && (
                     <Box
                       sx={{
-                        width: "50%",
+                        width: { xs: "100%", sm: "40%" },
                         mb: 3,
                         borderRadius: 2,
                         overflow: "hidden",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                        border: "1px solid #ffe082",
+                        border: "1px solid var(--line, #E7E1D4)",
                       }}
                     >
                       <Box
                         sx={{
-                          bgcolor: "#f57c00",
-                          p: 2,
+                          bgcolor: "var(--surface-2, #F4F1E9)",
+                          px: 2,
+                          py: 1,
                           display: "flex",
                           justifyContent: "center",
                           alignItems: "center",
-                          borderBottom: "1px solid #ffe082",
+                          borderBottom: "1px solid var(--line, #E7E1D4)",
                         }}
                       >
                         <Typography
-                          variant="h6"
-                          sx={{ fontWeight: "bold", color: "white" }}
+                          variant="body2"
+                          sx={{ fontWeight: 600, color: "var(--ink, #16181D)" }}
                         >
                           <PendingIcon
                             sx={{
                               verticalAlign: "middle",
-                              mr: 1,
+                              mr: 0.5,
+                              fontSize: "1rem",
                               animation: "spin 3s infinite linear",
                             }}
                           />
-                          While You Wait...
+                          While you wait…
                         </Typography>
                       </Box>
                       <Box
@@ -661,17 +651,18 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                       </Box>
                       <Box
                         sx={{
-                          p: 2,
+                          px: 2,
+                          py: 1,
                           textAlign: "center",
-                          bgcolor: "#fff8e9",
-                          borderTop: "1px solid #ffe082",
+                          bgcolor: "var(--surface-2, #F4F1E9)",
+                          borderTop: "1px solid var(--line, #E7E1D4)",
                         }}
                       >
                         <Typography
                           variant="body2"
                           sx={{ fontStyle: "italic", color: "text.secondary" }}
                         >
-                          Refresh the page to see a different waiting animation!
+                          Refresh to see a different animal!
                         </Typography>
                       </Box>
                     </Box>
@@ -682,7 +673,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                   >
                     <PendingIcon
                       sx={{
-                        color: "warning.main",
+                        color: "var(--brand, #1B3A6B)",
                         mr: 2,
                         fontSize: "2rem",
                         animation: "spin 3s infinite linear",
@@ -691,7 +682,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                     <Box>
                       <Typography
                         variant="h5"
-                        sx={{ color: "#5d4037", fontWeight: "bold", mb: 1 }}
+                        sx={{ color: "var(--brand, #1B3A6B)", fontWeight: "bold", mb: 1 }}
                       >
                         Team Application Under Review
                       </Typography>
@@ -716,7 +707,8 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
 
                   <Box
                     sx={{
-                      bgcolor: "rgba(255, 224, 130, 0.3)",
+                      bgcolor: "var(--surface-2, #F4F1E9)",
+                      border: "1px solid var(--line, #E7E1D4)",
                       p: 2,
                       borderRadius: 1,
                     }}
@@ -741,7 +733,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                           boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                         }}
                       >
-                        <AccessTimeIcon sx={{ color: "warning.main" }} />
+                        <AccessTimeIcon sx={{ color: "var(--brand, #1B3A6B)" }} />
                       </Box>
                       <Box>
                         <Typography
@@ -774,7 +766,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                             width: 8,
                             height: 8,
                             borderRadius: "50%",
-                            bgcolor: "warning.main",
+                            bgcolor: "var(--brand, #1B3A6B)",
                             mr: 1.5,
                           }}
                         />
@@ -798,7 +790,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                             width: 8,
                             height: 8,
                             borderRadius: "50%",
-                            bgcolor: "warning.main",
+                            bgcolor: "var(--brand, #1B3A6B)",
                             mr: 1.5,
                           }}
                         />
@@ -821,7 +813,7 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                             width: 8,
                             height: 8,
                             borderRadius: "50%",
-                            bgcolor: "warning.main",
+                            bgcolor: "var(--brand, #1B3A6B)",
                             mr: 1.5,
                           }}
                         />
@@ -1340,7 +1332,101 @@ const TeamStatusPanel = ({ teams, loading, error, nonprofits, event, eventId, ac
                           Judging Criteria
                         </Button>
                       </Box>
-                    </Box>                    
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+
+              {/* Demo Video Section */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  gutterBottom
+                  sx={{ display: "flex", alignItems: "center" }}
+                >
+                  <YouTubeIcon fontSize="small" sx={{ mr: 1 }} /> Demo Video
+                </Typography>
+                <Card
+                  variant="outlined"
+                  sx={{ borderLeft: "4px solid #c4302b", borderRadius: 1 }}
+                >
+                  <CardContent>
+                    {team.demo_video_url ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <CheckIcon sx={{ color: 'success.main', mr: 1 }} />
+                        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                          Demo Video Linked
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Typography
+                        variant="body1"
+                        paragraph
+                        sx={{ color: "text.secondary", fontSize: "1.05rem" }}
+                      >
+                        🎬 <strong>Share Your Demo Video:</strong> Paste a public YouTube (or Vimeo / Loom / Google Drive) link so judges and visitors can watch your demo right from the event page.
+                      </Typography>
+                    )}
+
+                    <TextField
+                      fullWidth
+                      label="Demo Video URL"
+                      placeholder="https://youtu.be/..."
+                      value={demoVideoSubmissions[team.id] ?? team.demo_video_url ?? ''}
+                      onChange={(e) => handleDemoVideoInputChange(team.id, e.target.value)}
+                      error={
+                        !!demoVideoSubmissions[team.id] &&
+                        !isValidDemoVideoUrl(demoVideoSubmissions[team.id])
+                      }
+                      helperText={
+                        demoVideoSubmissions[team.id] && !isValidDemoVideoUrl(demoVideoSubmissions[team.id])
+                          ? "Enter a YouTube, Vimeo, Loom, or Google Drive URL."
+                          : team.demo_video_url && !demoVideoSubmissions[team.id]
+                          ? "Your current demo video is shown above."
+                          : "Public link only — viewers will not need to sign in."
+                      }
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <YouTubeIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ mb: 2 }}
+                    />
+
+                    {(() => {
+                      const previewUrl =
+                        (demoVideoSubmissions[team.id] && isValidDemoVideoUrl(demoVideoSubmissions[team.id])
+                          ? demoVideoSubmissions[team.id]
+                          : team.demo_video_url) || null;
+                      return previewUrl ? (
+                        <Box sx={{ mb: 2, maxWidth: 360 }}>
+                          <LiteVideoThumbnail
+                            url={previewUrl}
+                            label="Preview"
+                            onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
+                          />
+                        </Box>
+                      ) : null;
+                    })()}
+
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleDemoVideoSubmit(team.id)}
+                        disabled={
+                          demoVideoLoading[team.id] ||
+                          !demoVideoSubmissions[team.id] ||
+                          !isValidDemoVideoUrl(demoVideoSubmissions[team.id])
+                        }
+                        startIcon={demoVideoLoading[team.id] ? <CircularProgress size={16} /> : <SendIcon />}
+                      >
+                        {demoVideoLoading[team.id] ? 'Saving...' : (team.demo_video_url ? 'Update Video' : 'Save Video')}
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Box>

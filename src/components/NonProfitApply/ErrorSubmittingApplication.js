@@ -10,7 +10,7 @@ import {
 } from "../../styles/nonprofits/apply/styles";
 
 export default function ErrorSubmittingApplication() {
-  var image = "/npo_placeholder.png";
+  var image = "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Square.png";
 
   return (
     <LayoutContainer key="apply_form" container>

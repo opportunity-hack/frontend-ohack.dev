@@ -27,7 +27,8 @@ export const EventCategory = {
   DONATION: 'donation',
   ERROR: 'error',
   USER: 'user',
-  SOCIAL: 'social'
+  SOCIAL: 'social',
+  ADMIN: 'admin'
 };
 
 // Standard event actions for consistent naming
@@ -93,13 +94,12 @@ export const pageview = (url, additionalParams = {}) => {
         ...additionalParams
       };
 
+      // gtag('config', ...) already fires a page_view hit in GA4 — do NOT also
+      // call gtag('event', 'page_view', ...) or every navigation is counted twice.
       window.gtag('config', process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS, pageParams);
-      
+
       // Facebook Pixel page view
       if (ReactPixel) ReactPixel.pageView();
-      
-      // Track as an event as well for more flexibility in reporting
-      window.gtag('event', 'page_view', pageParams);
     } catch (error) {
       console.error('Error tracking pageview:', error);
     }

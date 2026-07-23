@@ -14,7 +14,8 @@ const DEFAULT_PRIVACY_SETTINGS = {
   feedback: "private",
   what: "private",
   how: "private",
-  hackathon_history: "private"
+  hackathon_history: "private",
+  praises: "public"
 };
 
 export default function usePrivacySettings() {

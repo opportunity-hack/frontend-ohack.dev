@@ -1,69 +1,11 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import {
-  Typography,
-  Card,
-  CardContent,
-  CardMedia,
-  Grid,
-  Button,
-  Container,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Chip,
-  Box,
-} from "@mui/material";
-import { styled } from "@mui/system";
+import Image from "next/image";
 import Link from "next/link";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import GroupIcon from "@mui/icons-material/Group";
-import BusinessIcon from "@mui/icons-material/Business";
-import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import SlideshowIcon from "@mui/icons-material/Slideshow";
-import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import { Box } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../../lib/ga";
-
-const TestimonialBox = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.grey[100],
-  padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-}));
-
-const StyledCard = styled(Card)(({ theme }) => ({
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
-  transition: "transform 0.3s ease-in-out",
-  "&:hover": {
-    transform: "scale(1.05)",
-  },
-}));
-
-const StyledCardMedia = styled(CardMedia)({
-  paddingTop: "56.25%" // 16:9 aspect ratio
-});
-
-const StyledCardContent = styled(CardContent)({
-  flexGrow: 1,
-});
-
-const LargerTypography = styled(Typography)(({ theme }) => ({
-  fontSize: "1rem",
-  [theme.breakpoints.up("md")]: {
-    fontSize: "1.1rem",
-  },
-}));
-
-const PresentationChip = styled(Chip)(({ theme }) => ({
-  margin: theme.spacing(0.5),
-}));
+import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from "../../../components/design/refined";
 
 const successStories = [
   {
@@ -303,237 +245,130 @@ export default function SuccessStories() {
   return (
     <>
       <Head>
-        <title>
-          Opportunity Hack Success Stories: Tech Innovation for Social Good
-        </title>
-        <meta
-          name="description"
-          content="Discover how Opportunity Hack connects nonprofits with skilled tech volunteers to create innovative solutions. Read success stories of AI, blockchain, and IoT applications in various social causes."
-        />
-        <meta
-          name="keywords"
-          content="Opportunity Hack, nonprofit technology, hackathon success stories, tech for good, AI for animal rescue, social impact tech"
-        />
-        <meta
-          property="og:title"
-          content="Opportunity Hack: Transforming Nonprofits through Technology"
-        />
-        <meta
-          property="og:description"
-          content="See how developers, designers, and tech companies are making a real-world impact through Opportunity Hack. Join us in using technology for social good."
-        />
+        <title>Opportunity Hack Success Stories: Tech Innovation for Social Good</title>
+        <meta name="description" content="Discover how Opportunity Hack connects nonprofits with skilled tech volunteers to create innovative solutions. Read success stories of AI, blockchain, and IoT applications in various social causes." />
+        <meta name="keywords" content="Opportunity Hack, nonprofit technology, hackathon success stories, tech for good, AI for animal rescue, social impact tech" />
+        <meta property="og:title" content="Opportunity Hack: Transforming Nonprofits through Technology" />
+        <meta property="og:description" content="See how developers, designers, and tech companies are making a real-world impact through Opportunity Hack. Join us in using technology for social good." />
         <meta property="og:type" content="website" />
-        <meta
-          property="og:url"
-          content="https://ohack.dev/about/success-stories"
-        />
-        <meta
-          property="og:image"
-          content="https://ohack.dev/images/opportunity-hack-success-banner.jpg"
-        />
+        <meta property="og:url" content="https://www.ohack.dev/about/success-stories" />
+        <meta property="og:image" content="https://www.ohack.dev/images/opportunity-hack-success-banner.jpg" />
+        <RefinedFonts />
       </Head>
 
-      <Container maxWidth="lg">
-        <Typography mt={10} variant="h2" align="center" gutterBottom>
-          Opportunity Hack Success Stories
-        </Typography>
-        <Typography variant="h3" align="center" paragraph>
-          Transforming Nonprofits Through Technology
-        </Typography>
-        <Typography variant="h4" align="center" paragraph>
-          Real-world impact, powered by innovation and compassion
-        </Typography>
+      <RefinedRoot>
+        {/* HERO */}
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(104px, 13vh, 156px)", paddingBottom: "clamp(28px, 5vh, 48px)" }}>
+          <Eyebrow><span className="rise" style={{ display: "inline-block" }}>Success stories</span></Eyebrow>
+          <h1 className="ohx-display rise" style={{ marginTop: 18, maxWidth: "16ch", animationDelay: "60ms" }}>
+            Real impact, <span className="ohx-italic">shipped.</span>
+          </h1>
+          <p className="ohx-lead rise" style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "60ch" }}>
+            How skilled tech volunteers and nonprofits team up at Opportunity Hack to build solutions that
+            keep working long after the hackathon ends.
+          </p>
+        </section>
 
-        <Grid container spacing={4} marginTop={4}>
-          {successStories.map((story, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} id={`${story.key}`}>
-              <StyledCard>
-                <StyledCardMedia image={story.image} title={story.title} />
-                <StyledCardContent>
-                  <Typography gutterBottom variant="h5" component="h2">
-                    {story.title}
-                  </Typography>
-                  <LargerTypography>
-                    <FavoriteIcon /> <strong>Nonprofit:</strong>{" "}
-                    {story.nonprofit}
-                  </LargerTypography>
-                  <LargerTypography>
-                    <GroupIcon /> <strong>Tech Volunteers:</strong>{" "}
-                    {story.hacker}
-                  </LargerTypography>
-                  <LargerTypography>
-                    <BusinessIcon /> <strong>Sponsor:</strong> {story.sponsor}
-                  </LargerTypography>
-                  <LargerTypography paragraph>
-                    <EmojiObjectsIcon /> <strong>Summary:</strong>{" "}
-                    {story.summary}
-                  </LargerTypography>
-                  <LargerTypography paragraph>
-                    <CheckCircleOutlineIcon /> <strong>Impact:</strong>{" "}
-                    {story.impact}
-                  </LargerTypography>
-                  {story.presentations && story.presentations.length > 0 && (
-                    <div>
-                      <Typography variant="subtitle1">
-                        Presentations:
-                      </Typography>
-                      {story.presentations.map((presentation, i) => (
-                        <PresentationChip
-                          key={i}
-                          onClick={() =>
-                            trackPresentationClick(presentation.title)
-                          }
-                          icon={
-                            presentation.type === "pdf" ? (
-                              <PictureAsPdfIcon />
-                            ) : (
-                              <SlideshowIcon />
-                            )
-                          }
-                          label={presentation.title}
-                          component="a"
-                          href={presentation.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          clickable
-                        />
+        {/* STORIES */}
+        <section className="ohx-wrap" style={{ paddingBottom: "clamp(48px, 8vh, 88px)" }}>
+          <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))" }}>
+            {successStories.map((story, index) => (
+              <article key={index} id={story.key} className="ohx-card rise" style={{ display: "flex", flexDirection: "column", overflow: "hidden", scrollMarginTop: 90, animationDelay: `${Math.min(index, 6) * 70}ms` }}>
+                <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "var(--surface-2)" }}>
+                  <Image src={story.image} alt={story.title} fill sizes="(max-width: 700px) 100vw, 420px" style={{ objectFit: "cover" }} />
+                </div>
+                <div style={{ padding: "24px 24px 22px", display: "flex", flexDirection: "column", flex: 1 }}>
+                  <span className="ohx-tag" style={{ alignSelf: "flex-start" }}>{story.nonprofit}</span>
+                  <h2 className="ohx-display" style={{ fontSize: "1.3rem", marginTop: 12 }}>{story.title}</h2>
+
+                  <dl style={{ margin: "14px 0 0", display: "grid", gap: 6 }}>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <dt className="ohx-eyebrow" style={{ fontSize: "0.6rem", minWidth: 76, paddingTop: 2 }}>Volunteers</dt>
+                      <dd className="ohx-muted" style={{ margin: 0, fontSize: "0.88rem" }}>{story.hacker}</dd>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <dt className="ohx-eyebrow" style={{ fontSize: "0.6rem", minWidth: 76, paddingTop: 2 }}>Sponsors</dt>
+                      <dd className="ohx-faint" style={{ margin: 0, fontSize: "0.82rem" }}>{story.sponsor}</dd>
+                    </div>
+                  </dl>
+
+                  <p className="ohx-muted" style={{ margin: "16px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>{story.summary}</p>
+
+                  <div style={{ marginTop: 14, padding: "14px 16px", background: "var(--surface-2)", borderRadius: 8, borderLeft: "3px solid var(--accent)" }}>
+                    <span className="ohx-eyebrow" style={{ fontSize: "0.6rem" }}>Impact</span>
+                    <p className="ohx-muted" style={{ margin: "6px 0 0", fontSize: "0.9rem", lineHeight: 1.5 }}>{story.impact}</p>
+                  </div>
+
+                  <p className="ohx-display ohx-italic" style={{ margin: "18px 0 0", fontSize: "1.02rem", lineHeight: 1.45 }}>&ldquo;{story.testimonial}&rdquo;</p>
+
+                  {story.learnings?.length > 0 && (
+                    <ul style={{ listStyle: "none", padding: 0, margin: "18px 0 0", display: "flex", flexDirection: "column", gap: 8 }}>
+                      {story.learnings.slice(0, 3).map((l, i) => (
+                        <li key={i} style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
+                          <span style={{ color: "var(--accent)", fontWeight: 700 }}>—</span>
+                          <span className="ohx-muted" style={{ fontSize: "0.88rem", lineHeight: 1.45 }}>{l}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {story.presentations?.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+                      {story.presentations.map((p, i) => (
+                        <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" className="ohx-tag" style={{ textDecoration: "none" }} onClick={() => trackPresentationClick(p.title)}>
+                          {p.type === "pdf" ? "PDF" : "Slides"} · {p.title}
+                        </a>
                       ))}
                     </div>
                   )}
-                  <TestimonialBox>
-                    <Typography
-                      variant="body1"
-                      style={{
-                        fontSize: "1.1rem",
-                      }}
-                      color="text.secondary"
-                    >
-                      <FormatQuoteIcon /> {story.testimonial}
-                    </Typography>
-                  </TestimonialBox>
 
-                  <Typography variant="subtitle1">Key Learnings:</Typography>
-                  <List dense>
-                    {story.learnings.slice(0, 3).map((learning, i) => (
-                      <ListItem key={i}>
-                        <ListItemIcon>
-                          <EmojiObjectsIcon color="primary" />
-                        </ListItemIcon>
-                        <ListItemText
-                          disableTypography
-                          style={{ fontSize: "1em" }}
-                          primary={learning}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
+                  <div style={{ marginTop: "auto", paddingTop: 18 }}>
+                    <Link href={story.caseStudyLink} className="ohx-link" style={{ fontSize: "0.9rem" }} onClick={() => trackButtonClick(story.title)}>
+                      Read the full case study <Arrow />
+                    </Link>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-                  <Button
-                    mt={3}
-                    size="small"
-                    color="primary"
-                    href={story.caseStudyLink}
-                    onClick={() => trackButtonClick(story.title)}
-                  >
-                    Read Full Case Study
-                  </Button>
-                </StyledCardContent>
-              </StyledCard>
-            </Grid>
-          ))}
-        </Grid>
+        {/* VIDEO */}
+        <section style={{ background: "var(--surface-2)", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
+          <div className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(48px, 7vh, 80px)" }}>
+            <div className="ohx-narrow" style={{ marginInline: "auto", textAlign: "center", marginBottom: 28 }}>
+              <Eyebrow>Join the movement</Eyebrow>
+              <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 12 }}>See it in two minutes</h2>
+              <p className="ohx-muted" style={{ margin: 0 }}>How Opportunity Hack supports nonprofits through technology.</p>
+            </div>
+            <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", maxWidth: 820, margin: "0 auto", borderRadius: 10, border: "1px solid var(--line)" }}>
+              <iframe
+                src="https://www.youtube.com/embed/_hpam2meMWY?si=XQfQ74uF21gwwWUM"
+                title="Opportunity Hack: Transforming Nonprofits Through Technology"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+              />
+            </div>
+          </div>
+        </section>
 
-        <Typography variant="h2" align="center" marginTop={8} gutterBottom>
-          Join the Opportunity Hack Movement
-        </Typography>
-        
-        <Box sx={{ textAlign: 'center', marginTop: 4, marginBottom: 6 }}>
-          <Typography variant="h5" gutterBottom>
-            See How We Transform Nonprofits Through Technology
-          </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph>
-            Watch this video to understand how Opportunity Hack supports nonprofits.
-          </Typography>
-          <Box sx={{ 
-            position: 'relative', 
-            paddingBottom: '56.25%', 
-            height: 0, 
-            overflow: 'hidden',
-            maxWidth: '800px',
-            margin: '0 auto',
-            borderRadius: 2,
-            boxShadow: 3
-          }}>
-            <iframe
-              src="https://www.youtube.com/embed/_hpam2meMWY?si=XQfQ74uF21gwwWUM"
-              title="Opportunity Hack: Transforming Nonprofits Through Technology"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none'
-              }}
-            />
-          </Box>
-        </Box>
-
-        <Box sx={{ textAlign: 'center', marginTop: 6, marginBottom: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            Ready to Transform Your Nonprofit?
-          </Typography>
-          <Typography variant="h6" color="text.secondary" paragraph sx={{ maxWidth: '600px', margin: '0 auto' }}>
-            Join hundreds of nonprofits who have already benefited from innovative tech solutions. 
-            Submit your challenge and let our skilled volunteers help you achieve your mission.
-          </Typography>
-          
-          <Grid container spacing={3} justifyContent="center" marginTop={3}>
-            <Grid>
-              <Link href="/nonprofits/apply" passHref>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  size="large"
-                  sx={{ 
-                    fontSize: '1.2rem',
-                    padding: '12px 32px',
-                    boxShadow: 3,
-                    '&:hover': {
-                      boxShadow: 6,
-                    }
-                  }}
-                >
-                  Submit Your Nonprofit's Challenge
-                </Button>
-              </Link>
-            </Grid>
-          </Grid>
-          
-          <Typography variant="body2" color="text.secondary" sx={{ marginTop: 2 }}>
-            Applications are reviewed regularly • Free for qualifying nonprofits
-          </Typography>
-        </Box>
-
-        <Grid container spacing={4} justifyContent="center" marginTop={4}>
-          <Grid>
-            <Link href="/about/hackers" passHref>
-              <Button variant="outlined" color="secondary" size="large">
-                Tech Volunteers: Apply Your Skills
-              </Button>
-            </Link>
-          </Grid>
-          <Grid>
-            <Link href="/sponsor" passHref>
-              <Button variant="outlined" color="info" size="large">
-                Sponsors: Empower Innovation
-              </Button>
-            </Link>
-          </Grid>
-        </Grid>
-      </Container>
+        {/* CTA */}
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(48px, 8vh, 88px)", paddingBottom: "clamp(56px, 9vh, 104px)", textAlign: "center" }}>
+          <Eyebrow>Ready to transform your nonprofit?</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 12 }}>Bring us your challenge</h2>
+          <p className="ohx-muted" style={{ margin: "0 auto 28px", maxWidth: "56ch" }}>
+            Join hundreds of nonprofits that have benefited from free tech solutions — submit your challenge and our volunteers will help.
+          </p>
+          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/nonprofits/apply" className="ohx-btn ohx-btn--primary">Submit your challenge <Arrow /></Link>
+            <Link href="/about/hackers" className="ohx-btn ohx-btn--ghost">Volunteer your skills</Link>
+            <Link href="/sponsor" className="ohx-btn ohx-btn--ghost">Sponsor innovation</Link>
+          </div>
+          <p className="ohx-faint" style={{ marginTop: 18, fontSize: "0.85rem" }}>Applications reviewed regularly · Free for qualifying nonprofits</p>
+        </section>
+      </RefinedRoot>
     </>
   );
 }

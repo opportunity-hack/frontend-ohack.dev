@@ -28,6 +28,9 @@ import {
   Group as TeamsIcon,
   Dashboard as DashboardIcon,
   Share as ShareIcon,
+  Article as ArticleIcon,
+  Feedback as FeedbackIcon,
+  SmartToy as SmartToyIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -98,11 +101,29 @@ const adminPages = [
     description: "Manage prizes and giveaways",
     icon: <GiftIcon fontSize="large" style={{ color: "#ff9800" }} />
   },
-  { 
-    path: "/admin/social-media", 
-    label: "Social Media", 
-    description: "Post news to Threads and other social platforms",
+  {
+    path: "/admin/communication",
+    label: "Communication",
+    description: "Email templates with version history + social media posting",
     icon: <ShareIcon fontSize="large" style={{ color: "#1DA1F2" }} />
+  },
+  {
+    path: "/admin/blog",
+    label: "Blog",
+    description: "Write, edit, and manage blog posts with markdown + SEO",
+    icon: <ArticleIcon fontSize="large" style={{ color: "#093170" }} />
+  },
+  {
+    path: "/admin/feedback",
+    label: "Feedback",
+    description: "Review event surveys, peer feedback, and onboarding feedback",
+    icon: <FeedbackIcon fontSize="large" style={{ color: "#7b1fa2" }} />
+  },
+  {
+    path: "/admin/praise-bot",
+    label: "Praise Bot",
+    description: "Configure GitHub digests, mentor rollups, calendar reminders, and community features for the Slack bot",
+    icon: <SmartToyIcon fontSize="large" style={{ color: "#611f69" }} />
   },
 ];
 

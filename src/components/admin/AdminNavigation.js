@@ -41,6 +41,9 @@ import {
   PostAdd as RequestIcon,
   ContactMail as ContactMailIcon,
   Storefront as StorefrontIcon,
+  Article as ArticleIcon,
+  Feedback as FeedbackIcon,
+  SmartToy as SmartToyIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -89,30 +92,15 @@ const adminPages = [
     icon: <RequestIcon style={{ color: "#e91e63" }} />
   },
   {
+    path: "/admin/feedback",
+    label: "Feedback",
+    icon: <FeedbackIcon style={{ color: "#7b1fa2" }} />
+  },
+  {
     path: "/admin/contact",
     label: "Contact",
     icon: <ContactMailIcon style={{ color: "#00897b" }} />
-  },
-  {
-    path: "/admin/check-in",
-    label: "Check In",
-    icon: <HandshakeIcon color="primary" />
   },  
-  {
-    path: "/admin/volunteer",
-    label: "Volunteer",
-    icon: <HandshakeIcon color="secondary" />
-  },
-  {
-    path: "/admin/teams",
-    label: "Teams",
-    icon: <TeamsIcon color="info" />
-  },
-  {
-    path: "/admin/judging",
-    label: "Judging",
-    icon: <JudgingIcon style={{ color: "#673ab7" }} />
-  },
   {
     path: "/admin/giveaways",
     label: "Giveaways",
@@ -150,9 +138,19 @@ const adminPages = [
     icon: <TimeIcon style={{ color: "#9c27b0" }} />
   },  
   {
-    path: "/admin/social-media",
-    label: "Social Media",
+    path: "/admin/communication",
+    label: "Communication",
     icon: <ShareIcon style={{ color: "#1DA1F2" }} />
+  },
+  {
+    path: "/admin/blog",
+    label: "Blog",
+    icon: <ArticleIcon style={{ color: "#093170" }} />
+  },
+  {
+    path: "/admin/praise-bot",
+    label: "Praise Bot",
+    icon: <SmartToyIcon style={{ color: "#611f69" }} />
   },
   // {
   //   path: "/admin/store",

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
-import { initFacebookPixel, trackEvent } from '../../../lib/ga';
+import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
+import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -8,7 +9,6 @@ import {
 } from "@propelauth/react";
 import {
   Typography,
-  Container,
   Box,
   TextField,
   Button,
@@ -19,7 +19,6 @@ import {
   FormHelperText,
   Select,
   MenuItem,
-  Paper,
   Divider,
   Alert,
   Link,
@@ -41,17 +40,181 @@ import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
-import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
-import InfoIcon from "@mui/icons-material/Info";
 import SearchIcon from "@mui/icons-material/Search";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
 import UploadPhoto from "../../../components/UploadPhoto";
+import useProfileApi from "../../../hooks/use-profile-api";
+import {
+  MealMenu,
+  OHackParticipationSelect,
+  PronounsPicker,
+  ProfileAutofillNotice,
+} from "../../../components/ApplicationForm";
+import ReviewStep from "../../../components/ApplicationForm/Hacker/ReviewStep";
+import LocationDemographicsStep from "../../../components/ApplicationForm/Hacker/LocationDemographicsStep";
+import BasicInfoStep from "../../../components/ApplicationForm/Hacker/BasicInfoStep";
+import SkillsExperienceStep from "../../../components/ApplicationForm/Hacker/SkillsExperienceStep";
+import InterestsTeamsStep from "../../../components/ApplicationForm/Hacker/InterestsTeamsStep";
 import Moment from "moment";
 import "moment-timezone";
-import { getEventTimezone, getTimezoneAbbreviation, formatDualTimezone } from "../../../lib/timezoneUtils";
+import {
+  getEventTimezone,
+  getTimezoneAbbreviation,
+  formatDualTimezone,
+} from "../../../lib/timezoneUtils";
+import {
+  PARTICIPANT_TYPE_OPTIONS,
+  EXPERIENCE_LEVEL_OPTIONS,
+  PRIMARY_ROLE_OPTIONS,
+  TECHNICAL_SKILLS_OPTIONS,
+  ALL_TECHNICAL_SKILLS,
+  SOCIAL_CAUSES_OPTIONS,
+  WORKSHOP_OPTIONS,
+  ARIZONA_COUNTY_OPTIONS,
+  COUNTRY_OPTIONS,
+  US_STATE_OPTIONS,
+  AGE_RANGE_OPTIONS,
+  REFERRAL_SOURCE_OPTIONS,
+  TEAM_SIZE_OPTIONS,
+} from "../../../components/ApplicationForm/Hacker/hackerFormConfig";
+import {
+  RefinedRoot,
+  RefinedFonts,
+  Eyebrow,
+  Arrow,
+} from "../../../components/design/refined";
+
+const RX = {
+  ink: "#16181D",
+  brand: "#1B3A6B",
+  brandInk: "#0E2547",
+  accent: "#E2552E",
+  accentSoft: "#FBE9E2",
+  line: "#E7E1D4",
+  surface2: "#F4F1E9",
+  muted: "#5B6270",
+};
+
+const refinedPanelSx = {
+  p: { xs: 2.5, sm: 3, md: 3.5 },
+  borderRadius: "10px",
+  backgroundColor: "var(--surface)",
+  boxShadow: "0 18px 40px -32px rgba(22,24,29,0.24)",
+};
+
+const refinedPrimaryButtonSx = {
+  textTransform: "none",
+  fontWeight: 600,
+  borderRadius: "6px",
+  px: 2.5,
+  py: 1.15,
+  bgcolor: RX.brand,
+  color: "#fff",
+  boxShadow: "none",
+  "&:hover": {
+    bgcolor: RX.brandInk,
+    boxShadow: "none",
+  },
+  "&.Mui-disabled": {
+    backgroundColor: "rgba(27,58,107,0.32)",
+    color: "rgba(255,255,255,0.78)",
+  },
+};
+
+const refinedGhostButtonSx = {
+  textTransform: "none",
+  fontWeight: 600,
+  borderRadius: "6px",
+  px: 2.5,
+  py: 1.15,
+  color: RX.ink,
+  borderColor: RX.line,
+  backgroundColor: "transparent",
+  boxShadow: "none",
+  "&:hover": {
+    borderColor: RX.ink,
+    backgroundColor: "rgba(0,0,0,0.02)",
+    boxShadow: "none",
+  },
+  "&.Mui-disabled": {
+    borderColor: RX.line,
+    color: "rgba(22,24,29,0.38)",
+  },
+};
+
+const refinedTagSx = {
+  display: "inline-flex",
+  alignItems: "center",
+  px: 1.2,
+  py: 0.5,
+  borderRadius: "999px",
+  border: `1px solid ${RX.line}`,
+  backgroundColor: RX.surface2,
+  color: RX.muted,
+  fontSize: "0.78rem",
+  fontWeight: 600,
+  lineHeight: 1.35,
+};
+
+const refinedAccentTagSx = {
+  ...refinedTagSx,
+  borderColor: "#F3D3C7",
+  backgroundColor: RX.accentSoft,
+  color: "#B23A18",
+};
+
+/** @param {"info" | "success" | "warning" | "error"} tone */
+const getRefinedAlertSx = (tone = "info") => {
+  let palette;
+
+  switch (tone) {
+    case "warning":
+      palette = {
+        backgroundColor: "rgba(226,85,46,0.08)",
+        borderColor: "rgba(226,85,46,0.2)",
+        iconColor: RX.accent,
+      };
+      break;
+    case "error":
+      palette = {
+        backgroundColor: "rgba(176,58,24,0.08)",
+        borderColor: "rgba(176,58,24,0.2)",
+        iconColor: "#B23A18",
+      };
+      break;
+    case "success":
+    case "info":
+    default:
+      palette = {
+        backgroundColor: "rgba(27,58,107,0.05)",
+        borderColor: "rgba(27,58,107,0.18)",
+        iconColor: RX.brand,
+      };
+      break;
+  }
+
+  return {
+    alignItems: "flex-start",
+    borderRadius: "10px",
+    border: `1px solid ${palette.borderColor}`,
+    backgroundColor: palette.backgroundColor,
+    color: RX.ink,
+    boxShadow: "none",
+    "& .MuiAlert-icon": {
+      color: palette.iconColor,
+      mt: 0.25,
+    },
+    "& .MuiAlert-message": {
+      width: "100%",
+    },
+    "& a": {
+      color: RX.brand,
+    },
+  };
+};
 
 const HackerApplicationComponent = () => {
   const router = useRouter();
@@ -70,6 +233,13 @@ const HackerApplicationComponent = () => {
   // Store volunteer ID for QR code generation
   const [volunteerId, setVolunteerId] = useState(null);
   const [isSelected, setIsSelected] = useState(false);
+  const [profileAutofilled, setProfileAutofilled] = useState(false);
+  const [eventTeams, setEventTeams] = useState([]);
+  const [teamsLoading, setTeamsLoading] = useState(false);
+  const [teamSearch, setTeamSearch] = useState("");
+
+  // Profile API integration — used to pre-fill LinkedIn/GitHub from the user's profile
+  const { profile, isLoading: profileLoading } = useProfileApi();
 
   // reCAPTCHA integration
   const {
@@ -84,6 +254,11 @@ const HackerApplicationComponent = () => {
   const initialLoadRef = useRef(false);
   const formInitializedRef = useRef(false);
   const confirmationShownRef = useRef(false);
+  // Guards `loadUserAndFormData` against re-runs when PropelAuth re-emits a new
+  // `user` object reference (token refresh, internal SDK updates). Without this
+  // guard the effect would re-fire `loadPreviousSubmission` (an API call) on
+  // every reference change.
+  const userDataLoadedRef = useRef(false);
 
   // Use ref to store uploaded photo URL to avoid race conditions
   const uploadedPhotoUrlRef = useRef("");
@@ -110,9 +285,9 @@ const HackerApplicationComponent = () => {
     inPerson: "",
     shirtSize: "",
     participationCount: "",
-    arizonaResident: "",
     county: "",
     ageRange: "",
+    parentalPermission: false,
     referralSource: "",
     referralSourceOther: "",
     socialCauses: [], // Array of selected causes
@@ -121,6 +296,7 @@ const HackerApplicationComponent = () => {
     motivation: "",
     teamStatus: "",
     teamCode: "",
+    soloAcknowledged: false,
     teamNeededSkills: "",
     teamMatchingPreferences: {
       preferredSize: "",
@@ -128,7 +304,11 @@ const HackerApplicationComponent = () => {
       preferredCauses: [],
     },
     workshopInterests: [],
-    interestedInTaxCredit: false,
+    workshopInterestsOther: "",
+    mealSelections: {},
+    depositAmountCents: null,
+    depositDisposition: "refund",
+    stripePaymentIntentId: "",
     willContinue: false,
     codeOfConduct: false,
     dietaryRestrictions: "",
@@ -218,239 +398,10 @@ const HackerApplicationComponent = () => {
     [setFormData],
   );
 
-  // Participant type options
-  const participantTypeOptions = [
-    "Student",
-    "Professional",
-    "Educator",
-    "Community Member",
-    "Other",
-  ];
-
-  // Experience level options
-  const experienceLevelOptions = [
-    "First-time hacker",
-    "Some hackathon experience (1-3 events)",
-    "Experienced hacker (4+ events)",
-  ];
-
-  // Primary role options
-  const primaryRoleOptions = [
-    "Software Development - Frontend",
-    "Software Development - Backend",
-    "Software Development - Mobile",
-    "Software Development - Full Stack",
-    "Design (UI/UX, Graphics)",
-    "Data Science/Analytics",
-    "Project Management",
-    "Business Analysis",
-    "Quality Assurance",
-    "DevOps",
-    "Other",
-  ];
-
-  // Technical skills options categorized
-  const technicalSkillsOptions = {
-    "Programming Languages": [
-      "JavaScript/TypeScript",
-      "Python",
-      "Java",
-      "C#/.NET",
-      "Ruby",
-      "PHP",
-      "Go",
-      "Swift",
-      "Kotlin",
-      "C/C++",
-      "Rust",
-      "Scala",
-      "R",
-      "Perl",
-    ],
-    "Frontend Development": [
-      "React",
-      "Angular",
-      "Vue.js",
-      "Next.js",
-      "HTML/CSS",
-      "Redux",
-      "Tailwind CSS",
-      "Bootstrap",
-      "Material UI",
-      "Web Components",
-      "Svelte",
-      "jQuery",
-    ],
-    "Backend Development": [
-      "Node.js",
-      "Express",
-      "Django",
-      "Flask",
-      "Spring Boot",
-      "Laravel",
-      "ASP.NET",
-      "Ruby on Rails",
-      "FastAPI",
-      "GraphQL",
-      "RESTful APIs",
-      "Serverless Architecture",
-    ],
-    "Mobile Development": [
-      "React Native",
-      "Flutter",
-      "iOS Development",
-      "Android Development",
-      "Xamarin",
-      "Ionic",
-    ],
-    "Database & Storage": [
-      "SQL Databases",
-      "PostgreSQL",
-      "MySQL/MariaDB",
-      "MongoDB",
-      "NoSQL Databases",
-      "Redis",
-      "Elasticsearch",
-      "DynamoDB",
-      "Firebase",
-      "ORM Tools",
-    ],
-    "DevOps & Cloud": [
-      "AWS",
-      "Azure",
-      "Google Cloud",
-      "Docker",
-      "Kubernetes",
-      "CI/CD Pipelines",
-      "GitHub Actions",
-      "Jenkins",
-      "Terraform",
-      "Ansible",
-    ],
-    "Data Science & AI": [
-      "Machine Learning",
-      "AI/NLP",
-      "Data Visualization",
-      "TensorFlow",
-      "PyTorch",
-      "Computer Vision",
-      "Pandas",
-      "NumPy",
-      "Big Data",
-      "Statistical Analysis",
-    ],
-    "Design & UX": [
-      "UI Design",
-      "UX Research",
-      "Graphic Design",
-      "Figma",
-      "Adobe XD",
-      "Sketch",
-      "Wireframing",
-      "Prototyping",
-    ],
-    "Other Skills": [
-      "Blockchain",
-      "AR/VR",
-      "IoT",
-      "Game Development",
-      "Cybersecurity",
-      "Project Management",
-      "Agile/Scrum",
-      "Technical Writing",
-      "Accessibility",
-      "Other",
-    ],
-  };
-
-  // Create a flat list of all skills for the autocomplete component
-  const allTechnicalSkills = Object.values(technicalSkillsOptions).flat();
-
-  // Original technical skills list for backward compatibility
-  const technicalSkillsOptionsFlat = allTechnicalSkills;
-
-  // Social causes options
-  const socialCausesOptions = [
-    "Education",
-    "Healthcare",
-    "Environment",
-    "Economic Opportunity",
-    "Community Development",
-    "Accessibility/Inclusion",
-    "Homelessness",
-    "Food Security",
-    "Mental Health",
-    "Disaster Relief",
-    "Animal Welfare",
-    "Other",
-  ];
-
-  // Workshop interest options
-  const workshopOptions = [
-    "Pre-hackathon skill-building workshops",
-    "During-event technical sessions",
-    "Social impact design thinking",
-    "Git/GitHub workflow",
-    "Cloud deployment",
-    "UX/UI fundamentals",
-    "API integration",
-    "Database design",
-    "Mobile development",
-    "Machine learning basics",
-  ];
-
-  // Arizona county options
-  const arizonaCountyOptions = [
-    "Apache",
-    "Cochise",
-    "Coconino",
-    "Gila",
-    "Graham",
-    "Greenlee",
-    "La Paz",
-    "Maricopa",
-    "Mohave",
-    "Navajo",
-    "Pima",
-    "Pinal",
-    "Santa Cruz",
-    "Yavapai",
-    "Yuma",
-  ];
-
-  // Age range options
-  const ageRangeOptions = [
-    "Under 18",
-    "18-24",
-    "25-34",
-    "35-44",
-    "45-54",
-    "55+",
-  ];
-
-  // Referral source options
-  const referralSourceOptions = [
-    "School/University",
-    "Employer",
-    "Social Media",
-    "Friend/Colleague",
-    "Previous Participant",
-    "Nonprofit Organization",
-    "Other",
-  ];
-
-  // Team size preferences
-  const teamSizeOptions = [
-    "No preference",
-    "2 people",
-    "3 people",
-    "4 people",
-    "5 people",
-    "I prefer to work alone even if that disqualifies me from winning a prize",
-  ];
-
   // Set up form with event_id
-  useEffect(() => { initFacebookPixel(); }, []);
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
 
   useEffect(() => {
     if (event_id && !formInitializedRef.current) {
@@ -523,14 +474,6 @@ const HackerApplicationComponent = () => {
         setFormData((prev) => ({
           ...prev,
           referralSourceOther: "",
-        }));
-      }
-
-      // Custom handling for Arizona residency to clear county when not an Arizona resident
-      if (name === "arizonaResident" && value !== "Arizona Resident") {
-        setFormData((prev) => ({
-          ...prev,
-          county: "",
         }));
       }
 
@@ -618,7 +561,8 @@ const HackerApplicationComponent = () => {
         }
 
         // Redirect to external application URL if configured
-        const externalUrl = eventData.constraints?.application_hacker_external_url;
+        const externalUrl =
+          eventData.constraints?.application_hacker_external_url;
         if (externalUrl) {
           window.location.href = externalUrl;
           return;
@@ -642,10 +586,11 @@ const HackerApplicationComponent = () => {
 
         // Check if event is in the past (with 1-day buffer for end date)
         const now = Moment().tz(eventTz);
-        const isEventPast = endDate.clone().add(1, "day").isBefore(now);
+        const forceOpen = eventData.constraints?.application_hacker_force_open === true;
+        const isEventPast = !forceOpen && endDate.clone().add(1, "day").isBefore(now);
 
         // Check if applications are closed (deadline has passed)
-        const isApplicationsClosed = now.isAfter(applicationDeadline);
+        const isApplicationsClosed = !forceOpen && now.isAfter(applicationDeadline);
 
         // Check if event is online/virtual
         const isOnlineEvent = ["Virtual", "Global", "Online"].some((term) =>
@@ -653,10 +598,13 @@ const HackerApplicationComponent = () => {
         );
 
         // Format application deadline for display
-        const tzAbbr = getTimezoneAbbreviation(applicationDeadline.toDate(), eventTz);
-        const formattedApplicationDeadline = applicationDeadline.format(
-          "dddd, MMMM Do, YYYY [at] h:mm A",
-        ) + ` ${tzAbbr}`;
+        const tzAbbr = getTimezoneAbbreviation(
+          applicationDeadline.toDate(),
+          eventTz,
+        );
+        const formattedApplicationDeadline =
+          applicationDeadline.format("dddd, MMMM Do, YYYY [at] h:mm A") +
+          ` ${tzAbbr}`;
 
         // Extract required questions from constraints
         const requiredQuestions =
@@ -686,14 +634,22 @@ const HackerApplicationComponent = () => {
             applicationDeadline.diff(now, "hours"),
           ),
           requiredQuestions,
+          constraints: eventData.constraints || {},
         });
 
-        // Initialize requiredQuestionAnswers array to match questions
+        // Initialize requiredQuestionAnswers to match question count without
+        // clobbering answers already loaded from a previous submission /
+        // localStorage (these effects resolve independently of this one).
         if (requiredQuestions.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            requiredQuestionAnswers: new Array(requiredQuestions.length).fill(null),
-          }));
+          setFormData((prev) => {
+            const existing = prev.requiredQuestionAnswers || [];
+            if (existing.length === requiredQuestions.length) return prev;
+            const filled = new Array(requiredQuestions.length).fill(null);
+            existing.forEach((v, i) => {
+              if (i < filled.length) filled[i] = v;
+            });
+            return { ...prev, requiredQuestionAnswers: filled };
+          });
         }
 
         // If it's an online event, automatically set inPerson to "No"
@@ -715,11 +671,78 @@ const HackerApplicationComponent = () => {
     fetchEventData();
   }, [event_id, apiServerUrl, setIsLoading, initializeRecaptcha, setFormData]);
 
+  // Build the "Find your team" list from the team codes that already-registered
+  // hackers entered for this event. The first hacker on a team types a team code;
+  // everyone after can pick it from this list instead of remembering it. Source is
+  // the `teamCode` column on the volunteers collection (public hacker endpoint).
+  useEffect(() => {
+    if (!apiServerUrl || !event_id) return;
+    let cancelled = false;
+    const fetchTeamCodes = async () => {
+      setTeamsLoading(true);
+      try {
+        const res = await fetch(
+          `${apiServerUrl}/api/messages/hackathon/${event_id}/hacker`,
+        );
+        if (!res.ok) throw new Error(`Failed to load hackers: ${res.status}`);
+        const json = await res.json();
+        const hackers = Array.isArray(json?.data) ? json.data : [];
+        // Tally distinct, non-empty team codes (case-insensitive dedupe; keep the
+        // first-seen casing as the display label).
+        const byKey = new Map();
+        for (const h of hackers) {
+          const raw = (h?.teamCode || "").trim();
+          if (!raw) continue;
+          const key = raw.toLowerCase();
+          const existing = byKey.get(key);
+          if (existing) existing.count += 1;
+          else byKey.set(key, { code: raw, count: 1 });
+        }
+        const codes = Array.from(byKey.values()).sort((a, b) =>
+          a.code.localeCompare(b.code, undefined, { sensitivity: "base" }),
+        );
+        if (!cancelled) setEventTeams(codes);
+      } catch (err) {
+        console.warn("Could not load team codes for event browser:", err);
+        if (!cancelled) setEventTeams([]);
+      } finally {
+        if (!cancelled) setTeamsLoading(false);
+      }
+    };
+    fetchTeamCodes();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiServerUrl, event_id]);
+
+  // Pre-fill LinkedIn and GitHub from the user's saved profile when fields are empty
+  useEffect(() => {
+    if (profileLoading || !profile) return;
+    let didAutofill = false;
+    setFormData((prev) => {
+      const next = { ...prev };
+      if (!prev.linkedin && profile.linkedin_url) {
+        next.linkedin = profile.linkedin_url;
+        didAutofill = true;
+      }
+      if (!prev.github && profile.github) {
+        next.github = profile.github;
+        didAutofill = true;
+      }
+      return didAutofill ? next : prev;
+    });
+    if (didAutofill) setProfileAutofilled(true);
+  }, [profile, profileLoading, setFormData]);
+
   // Handle user data and application loading - separate from event loading
   useEffect(() => {
     const loadUserAndFormData = async () => {
       // Skip if already initialized, event_id missing, or user not loaded yet
       if (!event_id || !formInitializedRef.current) return;
+      // Run-once: PropelAuth re-emits `user` on token refresh, which would
+      // otherwise re-fire loadPreviousSubmission (an API call) on every emit.
+      if (userDataLoadedRef.current) return;
+      userDataLoadedRef.current = true;
 
       try {
         // Pre-fill with user information if available
@@ -792,7 +815,6 @@ const HackerApplicationComponent = () => {
                     isSelected: prevData.isSelected || false,
                     shirtSize: prevData.shirtSize || "",
                     participationCount: prevData.participationCount || "",
-                    arizonaResident: prevData.arizonaResident || "",
                     county: prevData.county || "",
                     ageRange: prevData.ageRange || "",
                     referralSource: prevData.referralSource || "",
@@ -817,8 +839,6 @@ const HackerApplicationComponent = () => {
                     },
                     workshopInterests:
                       parsePreviousArrayField("workshopInterests"),
-                    interestedInTaxCredit:
-                      prevData.interestedInTaxCredit || false,
                     willContinue: prevData.willContinue || false,
                     codeOfConduct:
                       prevData.codeOfConduct ||
@@ -829,7 +849,24 @@ const HackerApplicationComponent = () => {
                     state: prevData.state || "",
                     additionalInfo:
                       prevData.additionalInfo || prevData.comments || "",
+                    requiredQuestionAnswers: Array.isArray(
+                      prevData.requiredQuestionAnswers,
+                    )
+                      ? prevData.requiredQuestionAnswers
+                      : [],
                     event_id: event_id,
+                    stripePaymentIntentId:
+                      prevData.stripe_payment_intent_id ||
+                      prevData.stripePaymentIntentId ||
+                      "",
+                    depositAmountCents:
+                      prevData.deposit_amount_cents ??
+                      prevData.depositAmountCents ??
+                      null,
+                    depositDisposition:
+                      prevData.deposit_disposition ||
+                      prevData.depositDisposition ||
+                      "refund",
                   };
                   setIsSelected(prevData.isSelected || false);
                   setVolunteerId(prevData.id || null);
@@ -866,12 +903,59 @@ const HackerApplicationComponent = () => {
   // Helper function to set error and scroll to top for better UX
   const setErrorAndScroll = (errorMessage) => {
     setError(errorMessage);
-    if (formRef?.current) {
-      formRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+    scrollToFormCard();
+  };
+
+  const scrollToProgressSection = () => {
+    if (typeof window === "undefined") {
+      return;
     }
+
+    const element = document.getElementById("hacker-application-progress");
+
+    if (!element) {
+      return;
+    }
+
+    const offset = isMobile ? 80 : 96;
+
+    window.requestAnimationFrame(() => {
+      const top = element.getBoundingClientRect().top + window.scrollY - offset;
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      window.scrollTo({
+        top: Math.max(top, 0),
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      });
+    });
+  };
+
+  const scrollToFormCard = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const element = document.getElementById("hacker-application-form");
+
+    if (!element) {
+      return;
+    }
+
+    const offset = isMobile ? 80 : 96;
+
+    window.requestAnimationFrame(() => {
+      const top = element.getBoundingClientRect().top + window.scrollY - offset;
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      window.scrollTo({
+        top: Math.max(top, 0),
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      });
+    });
   };
 
   const validateBasicInfo = () => {
@@ -881,11 +965,16 @@ const HackerApplicationComponent = () => {
       const answers = formData.requiredQuestionAnswers || [];
       for (let i = 0; i < questions.length; i++) {
         if (answers[i] === null || answers[i] === undefined) {
-          setErrorAndScroll(`Please answer the required question: "${questions[i].question}"`);
+          setErrorAndScroll(
+            `Please answer the required question: "${questions[i].question}"`,
+          );
           return false;
         }
         if (answers[i] !== questions[i].required_answer) {
-          setErrorAndScroll(questions[i].error || "You do not meet the eligibility requirements for this event.");
+          setErrorAndScroll(
+            questions[i].error ||
+              "You do not meet the eligibility requirements for this event.",
+          );
           return false;
         }
       }
@@ -958,20 +1047,24 @@ const HackerApplicationComponent = () => {
 
   const [inPersonError, setInPersonError] = useState("");
 
-  // Extend the validateLocationInfo function to check in-person requirement
+  // For in-person events, auto-set the legacy `inPerson` field to "Yes" since we no longer show the radio.
+  useEffect(() => {
+    if (!eventData) return;
+    if (!eventData.isOnlineEvent && formData.inPerson !== "Yes") {
+      setFormData((prev) => ({ ...prev, inPerson: "Yes" }));
+    }
+  }, [eventData, formData.inPerson, setFormData]);
+
+  // Validate location and demographics; under-18 attendees must confirm guardian permission.
   const validateLocationInfo = () => {
     // Clear any previous error
     setInPersonError("");
 
-    const requiredFields = ["arizonaResident", "country", "state", "ageRange"];
+    const requiredFields = ["country", "state", "ageRange"];
 
-    // Add in-person validation for non-online events
-    if (!eventData?.isOnlineEvent && formData.inPerson === "No") {
+    if (formData.ageRange === "Under 18" && !formData.parentalPermission) {
       setErrorAndScroll(
-        "This event is in-person only. Virtual participation is not supported.",
-      );
-      setInPersonError(
-        'This event requires in-person attendance. Please select "Yes, I\'ll attend in person".',
+        "Please confirm you have parent or guardian permission to attend.",
       );
       return false;
     }
@@ -985,8 +1078,12 @@ const HackerApplicationComponent = () => {
       }
     }
 
-    // Check for Arizona resident and county
-    if (formData.arizonaResident === "Arizona Resident" && !formData.county) {
+    // AZ residents must select a county.
+    if (
+      formData.country === "United States" &&
+      formData.state === "Arizona" &&
+      !formData.county
+    ) {
       setErrorAndScroll("Please select your county");
       return false;
     }
@@ -1030,6 +1127,16 @@ const HackerApplicationComponent = () => {
     // Specific validations based on team status
     if (formData.teamStatus === "I have a team" && !formData.teamCode) {
       setErrorAndScroll("Please enter your team code");
+      return false;
+    }
+
+    if (
+      formData.teamStatus === "I would like to work alone" &&
+      !formData.soloAcknowledged
+    ) {
+      setErrorAndScroll(
+        "Please confirm you understand the risks of working solo, or pick a team option.",
+      );
       return false;
     }
 
@@ -1113,32 +1220,128 @@ const HackerApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
-      trackEvent({ action: 'hacker_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'hacker_application' } });
-      // Scroll to top of form for better UX
-      if (formRef?.current) {
-        formRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
+      trackEvent({
+        action: "hacker_app_step",
+        params: {
+          event_label: steps[activeStep + 1],
+          step: activeStep + 2,
+          event_id,
+          page: "hacker_application",
+        },
+      });
+      scrollToProgressSection();
     }
   };
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
-    trackEvent({ action: 'hacker_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'hacker_application' } });
+    trackEvent({
+      action: "hacker_app_step_back",
+      params: {
+        event_label: steps[activeStep - 1],
+        step: activeStep,
+        event_id,
+        page: "hacker_application",
+      },
+    });
     // Save progress when moving between steps
     handleManualSave();
-    // Scroll to top of form for better UX
-    if (formRef?.current) {
-      formRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
+    scrollToProgressSection();
   };
 
   // handleSubmit function - Ensure backward compatibility
+  const isDepositRequired = () =>
+    !!eventData?.constraints?.hacker_deposit?.enabled;
+
+  const startDepositCheckout = async () => {
+    setSubmitting(true);
+    setError("");
+    try {
+      const defaultCents =
+        eventData?.constraints?.hacker_deposit?.default_amount_cents || 500;
+      const amount =
+        Number.isInteger(formData.depositAmountCents) &&
+        formData.depositAmountCents > 0
+          ? formData.depositAmountCents
+          : defaultCents;
+      const res = await fetch("/api/applications/hacker-deposit/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id,
+          amount_cents: amount,
+          disposition: formData.depositDisposition || "refund",
+          hacker_email: formData.email,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.error || "Failed to start deposit checkout");
+      // Form data is already auto-saved to localStorage; redirect to Stripe.
+      window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Could not start deposit checkout.");
+      setSubmitting(false);
+    }
+  };
+
+  // Resume the application after returning from Stripe Checkout
+  useEffect(() => {
+    const params =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : null;
+    const sessionId = params?.get("deposit_session_id");
+    const cancelled = params?.get("deposit_cancelled");
+    if (cancelled) {
+      setError(
+        "Deposit checkout was cancelled. You can try again on the Review step.",
+      );
+      // Clean the URL so the message goes away on next refresh.
+      const url = new URL(window.location.href);
+      url.searchParams.delete("deposit_cancelled");
+      window.history.replaceState({}, "", url.toString());
+      return;
+    }
+    if (!sessionId || formData.stripePaymentIntentId) return;
+    let cancelledFlag = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/applications/hacker-deposit/session?session_id=${encodeURIComponent(sessionId)}`,
+        );
+        const data = await res.json();
+        if (cancelledFlag) return;
+        if (data.payment_status === "paid" && data.payment_intent_id) {
+          setFormData((prev) => ({
+            ...prev,
+            stripePaymentIntentId: data.payment_intent_id,
+            depositAmountCents: data.amount_total ?? prev.depositAmountCents,
+            depositDisposition:
+              data.metadata?.disposition || prev.depositDisposition,
+          }));
+          setActiveStep(steps.length - 1);
+          // Clean the URL.
+          const url = new URL(window.location.href);
+          url.searchParams.delete("deposit_session_id");
+          window.history.replaceState({}, "", url.toString());
+        } else {
+          setError(
+            "Deposit not completed. You can try again on the Review step.",
+          );
+        }
+      } catch (err) {
+        if (!cancelledFlag)
+          setError("Could not verify deposit. Please try again.");
+      }
+    })();
+    return () => {
+      cancelledFlag = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event_id]);
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
@@ -1162,6 +1365,12 @@ const HackerApplicationComponent = () => {
     }
 
     if (!validateForm()) {
+      return;
+    }
+
+    // If a deposit is required and not yet paid, route to Stripe Checkout first.
+    if (isDepositRequired() && !formData.stripePaymentIntentId) {
+      await startDepositCheckout();
       return;
     }
 
@@ -1220,6 +1429,12 @@ const HackerApplicationComponent = () => {
         requiredQuestionAnswers: formData.requiredQuestionAnswers || [],
         // Add reCAPTCHA token
         recaptchaToken,
+        // Derive arizonaResident from country + state (kept in payload for any
+        // legacy downstream consumers — the user-facing dropdown was removed).
+        arizonaResident:
+          formData.country === "United States" && formData.state === "Arizona"
+            ? "Arizona Resident"
+            : "Non-Arizona Resident",
         // Add type information
         type: "hackers",
         volunteer_type: "hacker",
@@ -1227,6 +1442,15 @@ const HackerApplicationComponent = () => {
         linkedinProfile: formData.linkedin,
         shortBio: formData.bio,
         photoUrl: uploadedPhotoUrlRef.current || formData.photoUrl || "",
+        // Deposit + meal selections (when applicable)
+        meal_selections: formData.mealSelections || {},
+        parental_permission: !!formData.parentalPermission,
+        workshop_interests_other: formData.workshopInterestsOther || "",
+        deposit_amount_cents: formData.depositAmountCents || null,
+        deposit_disposition: formData.stripePaymentIntentId
+          ? formData.depositDisposition || "refund"
+          : null,
+        stripe_payment_intent_id: formData.stripePaymentIntentId || null,
       };
 
       if (apiServerUrl) {
@@ -1277,7 +1501,14 @@ const HackerApplicationComponent = () => {
       }
 
       setSuccess(true);
-      trackEvent({ action: 'hacker_app_submit', params: { event_label: 'success', event_id, page: 'hacker_application' } });
+      trackEvent({
+        action: "hacker_app_submit",
+        params: {
+          event_label: "success",
+          event_id,
+          page: "hacker_application",
+        },
+      });
       // Scroll to top of form to show "Application Submitted!" message
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1287,7 +1518,14 @@ const HackerApplicationComponent = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
-      trackEvent({ action: 'hacker_app_submit_error', params: { event_label: err.message, event_id, page: 'hacker_application' } });
+      trackEvent({
+        action: "hacker_app_submit_error",
+        params: {
+          event_label: err.message,
+          event_id,
+          page: "hacker_application",
+        },
+      });
       setError("Failed to submit your application. Please try again.");
     } finally {
       setSubmitting(false);
@@ -1303,1250 +1541,67 @@ const HackerApplicationComponent = () => {
     "Review",
   ];
 
-  // Handler for required question answers
-  const handleRequiredQuestionAnswer = (index, value) => {
-    setFormData((prev) => {
-      const newAnswers = [...(prev.requiredQuestionAnswers || [])];
-      newAnswers[index] = value;
-      return { ...prev, requiredQuestionAnswers: newAnswers };
-    });
-  };
-
-  // Render required screening questions
-  const renderRequiredQuestions = () => {
-    const questions = eventData?.requiredQuestions || [];
-    if (questions.length === 0) return null;
-
-    return (
-      <Box sx={{ mb: 4 }}>
-        {questions.map((q, index) => {
-          const answer = formData.requiredQuestionAnswers?.[index];
-          const isWrongAnswer = answer !== null && answer !== undefined && answer !== q.required_answer;
-
-          return (
-            <Alert
-              key={index}
-              severity={isWrongAnswer ? "error" : "warning"}
-              variant="outlined"
-              sx={{ mb: 2, borderWidth: 2 }}
-            >
-              <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
-                {q.question} <Box component="span" color="error.main">*</Box>
-              </Typography>
-              <RadioGroup
-                value={answer === true ? "yes" : answer === false ? "no" : ""}
-                onChange={(e) => handleRequiredQuestionAnswer(index, e.target.value === "yes")}
-              >
-                <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                <FormControlLabel value="no" control={<Radio />} label="No" />
-              </RadioGroup>
-              {isWrongAnswer && (
-                <Typography color="error" variant="body2" sx={{ mt: 1, fontWeight: "bold" }}>
-                  {q.error || "You do not meet the eligibility requirements for this event."}
-                </Typography>
-              )}
-            </Alert>
-          );
-        })}
-      </Box>
-    );
-  };
-
   // Render basic information form
   const renderBasicInfoForm = () => (
-    <Box sx={{ mb: 4 }}>
-      {renderRequiredQuestions()}
-
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Basic Information
-      </Typography>
-
-      <Box sx={{ mb: 3 }}>
-        <TextField
-          label="Email Address"
-          name="email"
-          type="email"
-          required
-          fullWidth
-          value={formData.email || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
-
-        <TextField
-          label="Your Name"
-          name="name"
-          required
-          fullWidth
-          value={formData.name || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
-
-        <TextField
-          label="Your Pronouns (Optional)"
-          name="pronouns"
-          fullWidth
-          value={formData.pronouns || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
-
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="participant-type-label">Participant Type</InputLabel>
-          <Select
-            labelId="participant-type-label"
-            id="participant-type"
-            name="participantType"
-            value={formData.participantType || ""}
-            onChange={handleChange}
-            label="Participant Type"
-          >
-            {participantTypeOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>Select what best describes you</FormHelperText>
-        </FormControl>
-
-        {formData.participantType === "Other" && (
-          <TextField
-            label="Please specify your participant type"
-            name="participantTypeOther"
-            required
-            fullWidth
-            value={formData.participantTypeOther || ""}
-            onChange={handleChange}
-            sx={{ mb: 3 }}
-          />
-        )}
-
-        <TextField
-          label="School or Organization"
-          name="schoolOrganization"
-          required
-          fullWidth
-          value={formData.schoolOrganization || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-          helperText="Your school, university, company, or organization"
-        />
-
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="experience-level-label">
-            Hackathon Experience Level
-          </InputLabel>
-          <Select
-            labelId="experience-level-label"
-            id="experience-level"
-            name="experienceLevel"
-            value={formData.experienceLevel || ""}
-            onChange={handleChange}
-            label="Hackathon Experience Level"
-          >
-            {experienceLevelOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>
-            How much experience do you have with hackathons?
-          </FormHelperText>
-        </FormControl>
-
-        <FormControl
-          fullWidth
-          required
-          sx={{ mb: formData.primaryRoles?.includes("Other") ? 1 : 3 }}
-        >
-          <InputLabel id="primary-roles-label">
-            Primary Role/Skill Set
-          </InputLabel>
-          <Select
-            labelId="primary-roles-label"
-            id="primary-roles"
-            multiple
-            value={formData.primaryRoles || []}
-            onChange={(e) => customHandleMultiSelectChange(e, "primaryRoles")}
-            input={<OutlinedInput label="Primary Role/Skill Set" />}
-            renderValue={(selected) => (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {selected.map((value) => (
-                  <Chip key={value} label={value} />
-                ))}
-              </Box>
-            )}
-          >
-            {primaryRoleOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                <Checkbox
-                  checked={(formData.primaryRoles || []).indexOf(option) > -1}
-                />
-                <ListItemText primary={option} />
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>
-            Select your primary roles or skill sets (select at least one)
-          </FormHelperText>
-        </FormControl>
-
-        {formData.primaryRoles?.includes("Other") && (
-          <TextField
-            label="Please specify your other role"
-            name="otherRole"
-            required
-            fullWidth
-            value={formData.otherRole || ""}
-            onChange={handleChange}
-            helperText="Tell us about your specific role or skill set"
-            sx={{ mb: 3 }}
-          />
-        )}
-      </Box>
-    </Box>
+    <BasicInfoStep
+      formData={formData}
+      setFormData={setFormData}
+      handleChange={handleChange}
+      customHandleMultiSelectChange={customHandleMultiSelectChange}
+      eventData={eventData}
+    />
   );
 
   // Render skills and experience form
   const renderSkillsAndExperienceForm = () => (
-    <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Skills & Experience
-      </Typography>
-
-      <Box sx={{ mb: 3 }}>
-        <FormControl
-          fullWidth
-          required
-          sx={{ mb: formData.skills?.includes("Other") ? 1 : 3 }}
-        >
-          <Typography variant="subtitle2" gutterBottom>
-            Technical Skills{" "}
-            <Box component="span" color="error.main">
-              *
-            </Box>
-          </Typography>
-
-          <Autocomplete
-            multiple
-            id="skills-autocomplete"
-            options={allTechnicalSkills}
-            value={formData.skills || []}
-            onChange={handleSkillsChange}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                variant="outlined"
-                placeholder="Search or select technical skills"
-                helperText="Select your technical skills (select at least one)"
-              />
-            )}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip key={option} label={option} {...getTagProps({ index })} />
-              ))
-            }
-            groupBy={(option) => {
-              // Find the category for this skill
-              for (const [category, skills] of Object.entries(
-                technicalSkillsOptions,
-              )) {
-                if (skills.includes(option)) {
-                  return category;
-                }
-              }
-              return "Other Skills";
-            }}
-            renderGroup={(params) => (
-              <li key={params.key}>
-                <Box
-                  sx={{
-                    position: "sticky",
-                    top: -8,
-                    pt: 1,
-                    pb: 1,
-                    bgcolor: "background.paper",
-                    zIndex: 1,
-                  }}
-                >
-                  <Typography
-                    variant="subtitle2"
-                    component="div"
-                    sx={{ fontWeight: "bold", pl: 2 }}
-                  >
-                    {params.group}
-                  </Typography>
-                </Box>
-                <ul style={{ padding: 0 }}>{params.children}</ul>
-              </li>
-            )}
-            freeSolo
-            filterSelectedOptions
-            sx={{
-              "& .MuiAutocomplete-tag": {
-                margin: "2px",
-              },
-            }}
-          />
-        </FormControl>
-
-        {formData.skills?.includes("Other") && (
-          <TextField
-            label="Please specify your other technical skills"
-            name="otherSkills"
-            required
-            fullWidth
-            value={formData.otherSkills || ""}
-            onChange={handleChange}
-            helperText="Tell us about your other technical skills"
-            sx={{ mb: 3 }}
-          />
-        )}
-
-        <TextField
-          label="Short bio"
-          name="bio"
-          multiline
-          rows={3}
-          fullWidth
-          value={formData.bio || ""}
-          onChange={handleChange}
-          helperText="Tell us a bit about yourself and your background (aim for 100-200 words)"
-          sx={{ mb: 3 }}
-        />
-
-        <TextField
-          label="LinkedIn Profile (Optional)"
-          name="linkedin"
-          type="url"
-          fullWidth
-          value={formData.linkedin || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-          placeholder="https://linkedin.com/in/yourprofile"
-        />
-
-        <TextField
-          label="GitHub Profile (Optional)"
-          name="github"
-          type="url"
-          fullWidth
-          value={formData.github || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-          placeholder="https://github.com/yourusername"
-        />
-
-        <TextField
-          label="Portfolio/Personal Website (Optional)"
-          name="portfolio"
-          type="url"
-          fullWidth
-          value={formData.portfolio || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-          placeholder="https://yourwebsite.com"
-        />
-
-        <UploadPhoto
-          value={formData.photoUrl || ""}
-          onChange={handlePhotoUpload}
-          onError={handlePhotoError}
-          label="Your Profile Photo (Optional)"
-          helperText="Please upload a professional photo of yourself, we'd like to add this to our website so people can see who is participating."
-          directory="hackers"
-          apiServerUrl={apiServerUrl}
-          accessToken={accessToken}
-          orgId={user?.orgId}
-          userId={user?.userId}
-          sx={{ mb: 3 }}
-        />
-
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="participation-count-label">
-            How many times have you participated in Opportunity Hack?
-          </InputLabel>
-          <Select
-            labelId="participation-count-label"
-            id="participation-count"
-            name="participationCount"
-            value={formData.participationCount || ""}
-            onChange={handleChange}
-            label="How many times have you participated in Opportunity Hack?"
-          >
-            <MenuItem value="This is my first year! 👆">
-              This is my first year! 👆
-            </MenuItem>
-            <MenuItem value="This will be the 2nd time ✌️">
-              This will be the 2nd time ✌️
-            </MenuItem>
-            <MenuItem value="This will be the 3rd time ☘️">
-              This will be the 3rd time ☘️
-            </MenuItem>
-            <MenuItem value="I've been here 4+ times 🔥">
-              I've been here 4+ times 🔥
-            </MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-    </Box>
+    <SkillsExperienceStep
+      formData={formData}
+      handleChange={handleChange}
+      handleSkillsChange={handleSkillsChange}
+      handlePhotoUpload={handlePhotoUpload}
+      handlePhotoError={handlePhotoError}
+      profileAutofilled={profileAutofilled}
+      profile={profile}
+      apiServerUrl={apiServerUrl}
+      accessToken={accessToken}
+      user={user}
+    />
   );
 
   // Render location and demographics form
   const renderLocationDemographicsForm = () => (
-    <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Location & Demographics
-      </Typography>
-
-      <Box sx={{ mb: 3 }}>
-        {/* Only show in-person question if it's not an online event */}
-        {!eventData?.isOnlineEvent && (
-          <FormControl
-            required
-            component="fieldset"
-            sx={{ mb: 3 }}
-            error={!!inPersonError}
-          >
-            <Typography variant="subtitle1" gutterBottom>
-              {`Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : ""}?`}{" "}
-              <Box component="span" color="error.main">
-                *
-              </Box>
-            </Typography>
-            <RadioGroup
-              name="inPerson"
-              value={formData.inPerson || ""}
-              onChange={handleChange}
-            >
-              <FormControlLabel
-                value="Yes"
-                control={<Radio />}
-                label="Yes, I'll attend in person"
-              />
-              <FormControlLabel
-                value="No"
-                control={<Radio />}
-                label={
-                  <Box
-                    component="span"
-                    sx={{ display: "flex", alignItems: "center" }}
-                  >
-                    <Typography
-                      component="span"
-                      sx={{
-                        textDecoration: !!inPersonError
-                          ? "line-through"
-                          : "none",
-                        color: !!inPersonError ? "error.main" : "inherit",
-                      }}
-                    >
-                      No, I'll participate virtually
-                    </Typography>
-                    {!!inPersonError && (
-                      <Typography
-                        component="span"
-                        sx={{ ml: 1, fontSize: "0.75rem", color: "error.main" }}
-                      >
-                        (not available)
-                      </Typography>
-                    )}
-                  </Box>
-                }
-              />
-            </RadioGroup>
-            {!!inPersonError && (
-              <FormHelperText error>{inPersonError}</FormHelperText>
-            )}
-            {!inPersonError && (
-              <FormHelperText
-                sx={{
-                  fontSize: "1.20rem",
-                  color: "red",
-                  fontWeight: 500,
-                }}
-              >
-                {!eventData?.isOnlineEvent
-                  ? "This event is in-person event only. Virtual participation is not supported because it's hard to engage with a virtual audience when we have to focus on the in-person attendees."
-                  : ""}
-              </FormHelperText>
-            )}
-          </FormControl>
-        )}
-
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="arizona-resident-label">Arizona Residency</InputLabel>
-          <Select
-            labelId="arizona-resident-label"
-            id="arizona-resident"
-            name="arizonaResident"
-            value={formData.arizonaResident || ""}
-            onChange={handleChange}
-            label="Arizona Residency"
-          >
-            <MenuItem value="Arizona Resident">Arizona Resident</MenuItem>
-            <MenuItem value="Non-Arizona Resident">
-              Non-Arizona Resident
-            </MenuItem>
-          </Select>
-          <FormHelperText>
-            This information helps with our QCO reporting requirements
-          </FormHelperText>
-        </FormControl>
-
-        {formData.arizonaResident === "Arizona Resident" && (
-          <FormControl fullWidth required sx={{ mb: 3 }}>
-            <InputLabel id="county-label">County</InputLabel>
-            <Select
-              labelId="county-label"
-              id="county"
-              name="county"
-              value={formData.county || ""}
-              onChange={handleChange}
-              label="County"
-            >
-              {arizonaCountyOptions.map((county) => (
-                <MenuItem key={county} value={county}>
-                  {county}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>Select your county in Arizona</FormHelperText>
-          </FormControl>
-        )}
-
-        <TextField
-          label="Country"
-          name="country"
-          required
-          fullWidth
-          value={formData.country || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
-
-        <TextField
-          label="State/Province"
-          name="state"
-          required
-          fullWidth
-          value={formData.state || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
-
-        <FormControl fullWidth required sx={{ mb: 3 }}>
-          <InputLabel id="age-range-label">Age Range</InputLabel>
-          <Select
-            labelId="age-range-label"
-            id="age-range"
-            name="ageRange"
-            value={formData.ageRange || ""}
-            onChange={handleChange}
-            label="Age Range"
-          >
-            {ageRangeOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>
-            This helps us understand our participant demographics
-          </FormHelperText>
-        </FormControl>
-
-        <FormControl
-          fullWidth
-          required
-          sx={{ mb: formData.referralSource === "Other" ? 1 : 3 }}
-        >
-          <InputLabel id="referral-source-label">
-            How did you hear about Opportunity Hack?
-          </InputLabel>
-          <Select
-            labelId="referral-source-label"
-            id="referral-source"
-            name="referralSource"
-            value={formData.referralSource || ""}
-            onChange={handleChange}
-            label="How did you hear about Opportunity Hack?"
-          >
-            {referralSourceOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {formData.referralSource === "Other" && (
-          <TextField
-            label="Please specify how you heard about us"
-            name="referralSourceOther"
-            required
-            fullWidth
-            value={formData.referralSourceOther || ""}
-            onChange={handleChange}
-            sx={{ mb: 3 }}
-          />
-        )}
-
-        <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel id="shirt-size-label">T-Shirt Size (Optional)</InputLabel>
-          <Select
-            labelId="shirt-size-label"
-            id="shirt-size"
-            name="shirtSize"
-            value={formData.shirtSize || ""}
-            onChange={handleChange}
-            label="T-Shirt Size (Optional)"
-          >
-            <MenuItem value="XS">XS</MenuItem>
-            <MenuItem value="S">S</MenuItem>
-            <MenuItem value="M">M</MenuItem>
-            <MenuItem value="L">L</MenuItem>
-            <MenuItem value="XL">XL</MenuItem>
-            <MenuItem value="XXL">XXL</MenuItem>
-            <MenuItem value="3XL">3XL</MenuItem>
-            <MenuItem value="4XL">4XL</MenuItem>
-          </Select>
-          <FormHelperText>
-            For people who complete the hackathon (subject to availability)
-          </FormHelperText>
-        </FormControl>
-
-        {/* Only show dietary restrictions for non-online events */}
-        {!eventData?.isOnlineEvent && (
-          <TextField
-            label="Dietary Restrictions (Optional)"
-            name="dietaryRestrictions"
-            fullWidth
-            value={formData.dietaryRestrictions || ""}
-            onChange={handleChange}
-            sx={{ mb: 3 }}
-            helperText="Please let us know about any dietary restrictions for in-person attendees"
-          />
-        )}
-
-        {formData.arizonaResident === "Arizona Resident" && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                name="interestedInTaxCredit"
-                checked={formData.interestedInTaxCredit || false}
-                onChange={handleChange}
-                color="primary"
-              />
-            }
-            label="I'm interested in receiving information about Arizona tax credits for supporting Opportunity Hack"
-            sx={{ mb: 2 }}
-          />
-        )}
-      </Box>
-    </Box>
+    <LocationDemographicsStep
+      formData={formData}
+      setFormData={setFormData}
+      handleChange={handleChange}
+      eventData={eventData}
+    />
   );
 
   // Render interests and team formation form
-  const renderInterestsTeamsForm = () => {
-    // Add handlers for the ranked causes
-    const handleAddCause = (cause) => {
-      if (!formData.socialCauses.includes(cause)) {
-        // If adding "Other" option, show a prompt for the custom cause
-        if (cause === "Other") {
-          const customCause = window.prompt(
-            "Please specify your other social cause interest:",
-          );
-          if (customCause && customCause.trim()) {
-            setFormData((prev) => ({
-              ...prev,
-              socialCauses: [...prev.socialCauses, cause],
-              otherSocialCause: customCause.trim(),
-            }));
-          } else {
-            // If they cancel the prompt or enter nothing, don't add "Other"
-            return;
-          }
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            socialCauses: [...prev.socialCauses, cause],
-          }));
-        }
-
-        // Auto-save to localStorage after changes
-        setTimeout(() => {
-          saveToLocalStorage();
-        }, 500);
-      }
-    };
-
-    const handleRemoveCause = (index) => {
-      setFormData((prev) => {
-        const newCauses = [...prev.socialCauses];
-        const removedCause = newCauses[index];
-        newCauses.splice(index, 1);
-
-        // If we removed "Other", also clear the otherSocialCause field
-        if (removedCause === "Other") {
-          return {
-            ...prev,
-            socialCauses: newCauses,
-            otherSocialCause: "",
-          };
-        }
-
-        return {
-          ...prev,
-          socialCauses: newCauses,
-        };
-      });
-
-      // Auto-save to localStorage after changes
-      setTimeout(() => {
-        saveToLocalStorage();
-      }, 500);
-    };
-
-    // Function to edit the "Other" social cause
-    const handleEditOtherCause = () => {
-      const currentValue = formData.otherSocialCause || "";
-      const newValue = window.prompt(
-        "Edit your other social cause:",
-        currentValue,
-      );
-
-      if (newValue !== null) {
-        // Only update if they didn't press Cancel
-        setFormData((prev) => ({
-          ...prev,
-          otherSocialCause: newValue.trim(),
-        }));
-
-        // Auto-save to localStorage after changes
-        setTimeout(() => {
-          saveToLocalStorage();
-        }, 500);
-      }
-    };
-
-    const handleMoveCause = (index, direction) => {
-      if (
-        (direction === "up" && index === 0) ||
-        (direction === "down" && index === formData.socialCauses.length - 1)
-      ) {
-        return; // Can't move outside boundaries
-      }
-
-      const newIndex = direction === "up" ? index - 1 : index + 1;
-
-      setFormData((prev) => {
-        const newCauses = [...prev.socialCauses];
-        const temp = newCauses[index];
-        newCauses[index] = newCauses[newIndex];
-        newCauses[newIndex] = temp;
-
-        return {
-          ...prev,
-          socialCauses: newCauses,
-        };
-      });
-
-      // Auto-save to localStorage after changes
-      setTimeout(() => {
-        saveToLocalStorage();
-      }, 500);
-    };
-
-    return (
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-          Interests & Team Formation
-        </Typography>
-
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            At Opportunity Hack, we believe in the power of diverse,
-            well-matched teams. The information you provide below helps us
-            connect hackers with complementary skills and shared interests in
-            social causes. Our team-matching algorithm uses this data to create
-            balanced teams that can effectively address nonprofit challenges.
-          </Typography>
-        </Alert>
-
-        <Box sx={{ mb: 3 }}>
-          {/* Replace the multi-select with ranked selection */}
-          <Typography variant="subtitle1" gutterBottom>
-            Social Causes You're Interested In{" "}
-            <Box component="span" color="error.main">
-              *
-            </Box>
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Select and rank social causes by priority. Your top choices will be
-            given more weight in team matching.
-          </Typography>
-
-          {/* Add causes section */}
-          <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel id="social-causes-label">Add Social Causes</InputLabel>
-            <Select
-              labelId="social-causes-label"
-              id="social-causes"
-              value=""
-              onChange={(e) => {
-                if (e.target.value) handleAddCause(e.target.value);
-              }}
-              input={<OutlinedInput label="Add Social Causes" />}
-            >
-              {socialCausesOptions
-                .filter((option) => !formData.socialCauses.includes(option))
-                .map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-            </Select>
-            <FormHelperText>
-              {formData.socialCauses.length === 0
-                ? "Please select at least one social cause you're interested in"
-                : "Add as many causes as you like. You can rank them below after adding."}
-            </FormHelperText>
-          </FormControl>
-
-          {/* Selected causes with improved ranking UI */}
-          {formData.socialCauses.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" gutterBottom sx={{ mb: 1 }}>
-                Your ranked causes (most important first):
-              </Typography>
-
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                {formData.socialCauses.map((cause, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      mb: index === formData.socialCauses.length - 1 ? 0 : 2,
-                      bgcolor: "background.paper",
-                      borderRadius: 1,
-                      overflow: "hidden",
-                      border: "1px solid",
-                      borderColor: "divider",
-                      transition: "all 0.2s ease-in-out",
-                      "&:hover": {
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                        borderColor: "primary.main",
-                      },
-                    }}
-                  >
-                    {/* Priority indicator */}
-                    <Box
-                      sx={{
-                        bgcolor:
-                          index === 0
-                            ? "primary.main"
-                            : index === 1
-                              ? "primary.light"
-                              : index === 2
-                                ? "info.light"
-                                : "grey.200",
-                        color: index < 3 ? "white" : "text.primary",
-                        p: 2,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: "bold",
-                        width: 50,
-                        fontSize: "1.1rem",
-                      }}
-                    >
-                      #{index + 1}
-                    </Box>
-
-                    {/* Cause name */}
-                    <Box sx={{ flex: 1, px: 2, py: 1.5, fontSize: "1rem" }}>
-                      {cause === "Other" ? (
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <Typography sx={{ mr: 1 }}>Other:</Typography>
-                          <Typography fontWeight="medium" color="primary.main">
-                            {formData.otherSocialCause || "(not specified)"}
-                          </Typography>
-                          <Button
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditOtherCause();
-                            }}
-                            sx={{ ml: 1, minWidth: 0, p: 0.5 }}
-                          >
-                            Edit
-                          </Button>
-                        </Box>
-                      ) : (
-                        cause
-                      )}
-                    </Box>
-
-                    {/* Control buttons with improved touchability */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        mr: 0.5,
-                        flexDirection: { xs: "column", sm: "row" },
-                      }}
-                    >
-                      <Button
-                        variant={index === 0 ? "text" : "contained"}
-                        color="primary"
-                        disabled={index === 0}
-                        onClick={() => handleMoveCause(index, "up")}
-                        sx={{
-                          minWidth: { xs: 40, sm: 48 },
-                          height: { xs: 28, sm: 40 },
-                          p: 0.5,
-                          m: 0.5,
-                          fontSize: "1.2rem",
-                        }}
-                        aria-label="Move up"
-                      >
-                        ↑
-                      </Button>
-                      <Button
-                        variant={
-                          index === formData.socialCauses.length - 1
-                            ? "text"
-                            : "contained"
-                        }
-                        color="primary"
-                        disabled={index === formData.socialCauses.length - 1}
-                        onClick={() => handleMoveCause(index, "down")}
-                        sx={{
-                          minWidth: { xs: 40, sm: 48 },
-                          height: { xs: 28, sm: 40 },
-                          p: 0.5,
-                          m: 0.5,
-                          fontSize: "1.2rem",
-                        }}
-                        aria-label="Move down"
-                      >
-                        ↓
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => handleRemoveCause(index)}
-                        sx={{
-                          minWidth: { xs: 40, sm: 48 },
-                          height: { xs: 28, sm: 40 },
-                          p: 0.5,
-                          m: 0.5,
-                        }}
-                        aria-label="Remove"
-                      >
-                        ✕
-                      </Button>
-                    </Box>
-                  </Box>
-                ))}
-
-                {/* Empty state message when no causes selected */}
-                {formData.socialCauses.length === 0 && (
-                  <Box
-                    sx={{ textAlign: "center", py: 4, color: "text.secondary" }}
-                  >
-                    No causes selected yet. Please add at least one cause from
-                    the dropdown above.
-                  </Box>
-                )}
-              </Paper>
-
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 1, fontStyle: "italic" }}
-              >
-                The order matters! Your top priority should be #1.
-              </Typography>
-            </Box>
-          )}
-
-          {/* Rest of the form remains unchanged */}
-          <TextField
-            label="Previous Social Impact Experience (Optional)"
-            name="socialImpactExperience"
-            multiline
-            rows={3}
-            fullWidth
-            value={formData.socialImpactExperience || ""}
-            onChange={handleChange}
-            helperText="Share any previous experience with social impact projects or nonprofits"
-            sx={{ mb: 3 }}
-          />
-
-          <TextField
-            label="What motivates you to participate in Opportunity Hack?"
-            name="motivation"
-            multiline
-            rows={3}
-            fullWidth
-            value={formData.motivation || ""}
-            onChange={handleChange}
-            helperText="What impact do you hope to create?"
-            sx={{ mb: 3 }}
-          />
-
-          <FormControl fullWidth required sx={{ mb: 3 }}>
-            <InputLabel id="team-status-label">Team Status</InputLabel>
-            <Select
-              labelId="team-status-label"
-              id="team-status"
-              name="teamStatus"
-              value={formData.teamStatus || ""}
-              onChange={handleChange}
-              label="Team Status"
-            >
-              <MenuItem value="I have a team">
-                I have a complete team of 2-5 people
-              </MenuItem>
-              <MenuItem value="I'm looking for team members">
-                I have a team and we'd like to add more people
-              </MenuItem>
-              <MenuItem value="I'd like to be matched with a team">
-                I don't have a team and I'd like to be matched with people to
-                form a team
-              </MenuItem>
-              <MenuItem value="I would like to work alone">
-                I would like to work alone and I'm okay with not obtaining
-                experience with working with others
-              </MenuItem>
-            </Select>
-            <FormHelperText>
-              Let us know your team situation - we'll help connect you with
-              teammates before or during the event
-            </FormHelperText>
-          </FormControl>
-
-          {formData.teamStatus === "I have a team" && (
-            <TextField
-              label="Team Name"
-              name="teamCode"
-              required
-              fullWidth
-              value={formData.teamCode || ""}
-              onChange={handleChange}
-              helperText="Talk with other team members to decide on unique name and you all should write that here"
-              sx={{ mb: 3 }}
-            />
-          )}
-
-          {(formData.teamStatus === "I'm looking for team members" ||
-            formData.teamStatus === "I'd like to be matched with a team") && (
-            <Box
-              sx={{ border: "1px solid #e0e0e0", borderRadius: 1, p: 2, mb: 3 }}
-            >
-              <Typography variant="subtitle1" gutterBottom>
-                Team Matching Preferences
-              </Typography>
-
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Our team-matching process has successfully connected hundreds of
-                hackers into effective teams over the years. Your preferences
-                below will help us create balanced teams where members
-                complement each other's skills and share common interests in
-                social causes.
-              </Typography>
-
-              <FormControl fullWidth required sx={{ mb: 3 }}>
-                <InputLabel id="preferred-size-label">
-                  Preferred Team Size
-                </InputLabel>
-                <Select
-                  labelId="preferred-size-label"
-                  id="preferred-size"
-                  value={formData.teamMatchingPreferences?.preferredSize || ""}
-                  onChange={(e) =>
-                    handleTeamMatchingChange("preferredSize", e.target.value)
-                  }
-                  label="Preferred Team Size"
-                >
-                  {teamSizeOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>
-                  This helps us match you with the right sized team
-                </FormHelperText>
-              </FormControl>
-
-              <FormControl fullWidth required sx={{ mb: 3 }}>
-                <InputLabel id="preferred-skills-label">
-                  Skills You'd Like in Teammates
-                </InputLabel>
-                <Select
-                  labelId="preferred-skills-label"
-                  id="preferred-skills"
-                  multiple
-                  value={
-                    formData.teamMatchingPreferences?.preferredSkills || []
-                  }
-                  onChange={(e) =>
-                    handleTeamMatchingChange("preferredSkills", e.target.value)
-                  }
-                  input={
-                    <OutlinedInput label="Skills You'd Like in Teammates" />
-                  }
-                  renderValue={(selected) => (
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip key={value} label={value} />
-                      ))}
-                    </Box>
-                  )}
-                >
-                  {primaryRoleOptions
-                    .filter((option) => option !== "Other")
-                    .map((option) => (
-                      <MenuItem key={option} value={option}>
-                        <Checkbox
-                          checked={
-                            (
-                              formData.teamMatchingPreferences
-                                ?.preferredSkills || []
-                            ).indexOf(option) > -1
-                          }
-                        />
-                        <ListItemText primary={option} />
-                      </MenuItem>
-                    ))}
-                </Select>
-                <FormHelperText>
-                  Select skills that would complement your own. These are
-                  especially helpful for team matching.
-                </FormHelperText>
-              </FormControl>
-
-              <Alert severity="info" sx={{ mb: 1 }}>
-                <Typography variant="body2">
-                  <strong>Tip:</strong> Being specific about your team
-                  preferences increases your chances of finding compatible
-                  teammates!
-                </Typography>
-              </Alert>
-            </Box>
-          )}
-
-          <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel id="workshop-interests-label">
-              Workshop Interests (Optional)
-            </InputLabel>
-            <Select
-              labelId="workshop-interests-label"
-              id="workshop-interests"
-              multiple
-              value={formData.workshopInterests || []}
-              onChange={(e) =>
-                customHandleMultiSelectChange(e, "workshopInterests")
-              }
-              input={<OutlinedInput label="Workshop Interests (Optional)" />}
-              renderValue={(selected) => (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip key={value} label={value} />
-                  ))}
-                </Box>
-              )}
-            >
-              {workshopOptions.map((option) => (
-                <MenuItem key={option} value={option}>
-                  <Checkbox
-                    checked={
-                      (formData.workshopInterests || []).indexOf(option) > -1
-                    }
-                  />
-                  <ListItemText primary={option} />
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>
-              Select workshops you're interested in attending
-            </FormHelperText>
-          </FormControl>
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                name="willContinue"
-                checked={formData.willContinue || false}
-                onChange={handleChange}
-                color="primary"
-              />
-            }
-            label="I'm interested in continuing project development after the hackathon"
-            sx={{ mb: 2, display: "block" }}
-          />
-        </Box>
-      </Box>
-    );
-  };
+  const renderInterestsTeamsForm = () => (
+    <InterestsTeamsStep
+      formData={formData}
+      setFormData={setFormData}
+      handleChange={handleChange}
+      handleTeamMatchingChange={handleTeamMatchingChange}
+      customHandleMultiSelectChange={customHandleMultiSelectChange}
+      saveToLocalStorage={saveToLocalStorage}
+      eventTeams={eventTeams}
+      teamsLoading={teamsLoading}
+      teamSearch={teamSearch}
+      setTeamSearch={setTeamSearch}
+    />
+  );
 
   // Render review form
   const renderReviewForm = () => (
-    <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Review & Submit
-      </Typography>
-
-      <TextField
-        label="Any additional information or questions?"
-        name="additionalInfo"
-        multiline
-        rows={4}
-        fullWidth
-        value={formData.additionalInfo || ""}
-        onChange={handleChange}
-        sx={{ mb: 4 }}
-      />
-
-      <FormControlLabel
-        control={
-          <Checkbox
-            name="codeOfConduct"
-            checked={formData.codeOfConduct || false}
-            onChange={handleChange}
-            color="primary"
-            required
-          />
-        }
-        label={
-          <Typography variant="body2">
-            I agree to the{" "}
-            <Link
-              href="/hack/code-of-conduct"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Code of Conduct
-            </Link>
-          </Typography>
-        }
-        sx={{ mb: 2 }}
-      />
-
-      <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          By submitting this form, you're expressing interest in participating
-          in Opportunity Hack. We'll review your application and send you
-          further details about the event.
-        </Typography>
-      </Alert>
-    </Box>
+    <ReviewStep
+      formData={formData}
+      setFormData={setFormData}
+      handleChange={handleChange}
+      eventData={eventData}
+    />
   );
 
   // Function to render the current step form
@@ -2574,18 +1629,18 @@ const HackerApplicationComponent = () => {
   const pageDescription = eventData
     ? `Apply to participate as a hacker/maker in ${eventData.name} in ${eventData.location}. Build innovative tech solutions for nonprofits, work with amazing teams, and create real social impact.`
     : "Apply to participate as a hacker/maker in our tech for good hackathon. Build innovative solutions for nonprofits, work with amazing teams, and create real social impact.";
-  const canonicalUrl = `https://ohack.dev/hack/${event_id}/hacker-application`;
+  const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/hacker-application`;
 
   const imageUrl =
     eventData?.image || "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
 
   // Breadcrumb items for structured data
   const breadcrumbItems = [
-    { name: "Home", url: "https://ohack.dev" },
-    { name: "Hackathons", url: "https://ohack.dev/hack" },
+    { name: "Home", url: "https://www.ohack.dev" },
+    { name: "Hackathons", url: "https://www.ohack.dev/hack" },
     {
       name: eventData?.name || "Hackathon Event",
-      url: `https://ohack.dev/hack/${event_id}`,
+      url: `https://www.ohack.dev/hack/${event_id}`,
     },
     {
       name: "Hacker Application",
@@ -2603,7 +1658,7 @@ const HackerApplicationComponent = () => {
     isPartOf: {
       "@type": "WebSite",
       name: "Opportunity Hack",
-      url: "https://ohack.dev",
+      url: "https://www.ohack.dev",
     },
     breadcrumb: {
       "@type": "BreadcrumbList",
@@ -2657,10 +1712,73 @@ const HackerApplicationComponent = () => {
     },
   };
 
+  const eventDateLabel = eventData?.formattedStartDate
+    ? eventData.formattedEndDate &&
+      eventData.formattedStartDate !== eventData.formattedEndDate
+      ? `${eventData.formattedStartDate} to ${eventData.formattedEndDate}`
+      : eventData.formattedStartDate
+    : null;
+  const currentStepLabel = steps[activeStep] || steps[0];
+  const deadlineTone =
+    eventData?.daysUntilDeadline <= 1
+      ? "error"
+      : eventData?.daysUntilDeadline <= 3
+        ? "warning"
+        : "info";
+  const stepperSx = {
+    "& .MuiStepLabel-label": {
+      fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+      fontSize: isMobile ? "0.72rem" : "0.92rem",
+      fontWeight: 500,
+      mt: 1,
+      color: RX.muted,
+      whiteSpace: isMobile ? "nowrap" : "normal",
+    },
+    "& .MuiStepLabel-label.Mui-active": {
+      color: RX.brand,
+      fontWeight: 700,
+    },
+    "& .MuiStepLabel-label.Mui-completed": {
+      color: RX.ink,
+      fontWeight: 600,
+    },
+    "& .MuiStepIcon-root": {
+      color: RX.line,
+      width: isMobile ? 22 : 28,
+      height: isMobile ? 22 : 28,
+    },
+    "& .MuiStepIcon-root.Mui-active": {
+      color: RX.brand,
+    },
+    "& .MuiStepIcon-root.Mui-completed": {
+      color: RX.brand,
+    },
+    "& .MuiStepIcon-text": {
+      fill: "#fff",
+    },
+    "& .MuiStepConnector-line": {
+      borderColor: RX.line,
+    },
+    ...(isMobile && {
+      overflowX: "auto",
+      px: 0.5,
+      "& .MuiStepLabel-root": {
+        px: 0.5,
+      },
+      "& .MuiStepLabel-labelContainer": {
+        width: "auto",
+      },
+      "&::-webkit-scrollbar": {
+        display: "none",
+      },
+      scrollbarWidth: "none",
+    }),
+  };
+
   // If form submitted successfully, show success message
   if (success) {
     return (
-      <Container>
+      <RefinedRoot>
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
@@ -2705,10 +1823,9 @@ const HackerApplicationComponent = () => {
           {/* Additional SEO meta tags */}
           <meta name="robots" content="index, follow" />
           <meta name="author" content="Opportunity Hack" />
-          <meta name="theme-color" content="#1976d2" />
+          <meta name="theme-color" content={RX.brand} />
         </Head>
 
-        {/* Structured Data */}
         <Script
           id="hacker-application-structured-data"
           type="application/ld+json"
@@ -2717,69 +1834,90 @@ const HackerApplicationComponent = () => {
           }}
         />
 
-        <Box my={8} textAlign="center">
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{ fontSize: "2.5rem", mb: 4, mt: 12 }}
-          >
-            Application Submitted!
-          </Typography>
-
-          <Alert severity="success" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            Thank you for applying to participate in Opportunity Hack. We'll
-            review your application and contact you with next steps soon.
-          </Alert>
-
-          <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
-            <GiveButterWidget
-              context="success"
-              userId={user?.userId}
-              applicationType="hacker"
-              size="large"
-              onDonationEvent={(eventData) => {
-                console.log("Hacker donation event:", eventData);
-              }}
-            />
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(100px, 12vh, 148px)",
+            paddingBottom: "clamp(48px, 8vh, 96px)",
+          }}
+        >
+          <Box sx={{ maxWidth: 760, mx: "auto", textAlign: "center", mb: 4 }}>
+            <Eyebrow>Application received</Eyebrow>
+            <h1 className="ohx-display" style={{ marginTop: 8 }}>
+              Hacker application <span className="ohx-italic">submitted.</span>
+            </h1>
+            <Typography
+              component="p"
+              className="ohx-lead"
+              sx={{ mt: 2, mx: "auto" }}
+            >
+              Thanks for applying to {eventData?.name || "Opportunity Hack"}. We
+              have your information and will follow up by email with next steps.
+            </Typography>
           </Box>
 
           <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 2,
-              justifyContent: "center",
-            }}
+            className="ohx-card"
+            sx={{ ...refinedPanelSx, maxWidth: 820, mx: "auto" }}
           >
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => router.push(`/hack/${event_id}`)}
+            <Alert
+              severity="success"
+              sx={{ ...getRefinedAlertSx("success"), mb: 3 }}
             >
-              Return to Hackathon Page
-            </Button>
+              <Typography variant="body1">
+                Your application is in. Watch your inbox for review updates,
+                acceptance details, and team-matching information.
+              </Typography>
+            </Alert>
 
-            {/* Added button for team finding if the user indicated they're looking for a team */}
-            {(formData.teamStatus === "I'd like to be matched with a team" ||
-              formData.teamStatus === "I'm looking for team members") && (
+            <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+              <GiveButterWidget
+                context="success"
+                userId={user?.userId}
+                applicationType="hacker"
+                size="large"
+                onDonationEvent={(eventData) => {
+                  console.log("Hacker donation event:", eventData);
+                }}
+              />
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 2,
+                justifyContent: "center",
+              }}
+            >
               <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => router.push(`/hack/${event_id}/findteam`)}
-                startIcon={<SearchIcon />}
+                variant="contained"
+                onClick={() => router.push(`/hack/${event_id}`)}
+                sx={refinedPrimaryButtonSx}
               >
-                Find a Team
+                Return to event
               </Button>
-            )}
+
+              {(formData.teamStatus === "I'd like to be matched with a team" ||
+                formData.teamStatus === "I'm looking for team members") && (
+                <Button
+                  variant="outlined"
+                  onClick={() => router.push(`/hack/${event_id}/findteam`)}
+                  startIcon={<SearchIcon />}
+                  sx={refinedGhostButtonSx}
+                >
+                  Find a team
+                </Button>
+              )}
+            </Box>
           </Box>
-        </Box>
-      </Container>
+        </section>
+      </RefinedRoot>
     );
   }
 
   return (
-    <Container>
+    <RefinedRoot>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -2789,7 +1927,6 @@ const HackerApplicationComponent = () => {
         />
         <link rel="canonical" href={canonicalUrl} />
 
-        {/* DNS prefetch and preconnect for performance */}
         <link rel="dns-prefetch" href="//cdn.ohack.dev" />
         <link
           rel="preconnect"
@@ -2797,7 +1934,6 @@ const HackerApplicationComponent = () => {
           crossOrigin="anonymous"
         />
 
-        {/* Open Graph tags */}
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -2811,7 +1947,6 @@ const HackerApplicationComponent = () => {
         />
         <meta property="og:site_name" content="Opportunity Hack" />
 
-        {/* Twitter Card tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
@@ -2821,13 +1956,11 @@ const HackerApplicationComponent = () => {
           content="Developers coding solutions for nonprofits at Opportunity Hack"
         />
 
-        {/* Additional SEO meta tags */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="Opportunity Hack" />
-        <meta name="theme-color" content="#1976d2" />
+        <meta name="theme-color" content={RX.brand} />
       </Head>
 
-      {/* Structured Data */}
       <Script
         id="hacker-application-structured-data"
         type="application/ld+json"
@@ -2836,7 +1969,6 @@ const HackerApplicationComponent = () => {
         }}
       />
 
-      {/* Form persistence notification component */}
       <FormPersistenceControls
         onSave={handleManualSave}
         onRestore={loadFromLocalStorage}
@@ -2845,122 +1977,107 @@ const HackerApplicationComponent = () => {
         onCloseNotification={closeNotification}
       />
 
-      <Box ref={formRef}>
-        <Typography
-          variant="h1"
-          component="h1"
-          sx={{ fontSize: "2.5rem", mb: 2, mt: 0 }}
-        >
-          Hacker Application
-        </Typography>
-
-        {/* QR Code for Check-in */}
-        <VolunteerCheckInQR
-          eventId={event_id}
-          volunteerId={volunteerId}
-          isSelected={isSelected}
-          volunteerType="hacker"
-          name={formData.name}
-          isSubmitted={true}
-          qrSize={200}
-          sx={{ mx: "auto", maxWidth: 500 }}
-        />
-
-        {isLoading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
+      <section
+        className="ohx-wrap"
+        style={{
+          paddingTop: "clamp(100px, 12vh, 148px)",
+          paddingBottom: "clamp(48px, 8vh, 96px)",
+        }}
+      >
+        <Box ref={formRef}>
+          <Box sx={{ maxWidth: 780, mb: 4 }}>
+            <Eyebrow>Opportunity Hack application</Eyebrow>
+            <h1 className="ohx-display" style={{ marginTop: 8 }}>
+              Hacker application <span className="ohx-italic">for good.</span>
+            </h1>
+            <Typography component="p" className="ohx-lead" sx={{ mt: 2 }}>
+              Tell us how you build, collaborate, and want to contribute. We
+              review applications early so teams and nonprofit partners can
+              start strong.
+            </Typography>
           </Box>
-        ) : (
-          <Box>
-            {/* Header section with responsive layout */}
+
+          <Box
+            className="ohx-card"
+            sx={{ ...refinedPanelSx, mb: 3, p: { xs: 2, sm: 2.5, md: 3 } }}
+          >
             <Box
               sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: { xs: "flex-start", md: "flex-start" },
-                gap: 2,
-                mb: 3,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "minmax(0,1.35fr) minmax(260px,320px)",
+                },
+                gap: 3,
+                alignItems: "start",
               }}
             >
-              {/* Event info */}
               <Box sx={{ flex: 1 }}>
-                {eventData && (
-                  <>
-                    <Typography
-                      variant="h2"
-                      component="h2"
-                      sx={{ fontSize: "1.75rem", mb: 1 }}
-                    >
-                      {eventData.name}
-                    </Typography>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    display: "block",
+                    color: RX.muted,
+                    letterSpacing: "0.16em",
+                    mb: 1,
+                  }}
+                >
+                  Current event
+                </Typography>
+                <Typography
+                  component="h2"
+                  sx={{
+                    fontFamily: "'Fraunces', Georgia, serif",
+                    fontWeight: 500,
+                    letterSpacing: "-0.015em",
+                    fontSize: { xs: "1.7rem", md: "2.15rem" },
+                    lineHeight: 1.08,
+                    color: RX.ink,
+                    mb: 1,
+                  }}
+                >
+                  {eventData?.name || "Loading event details"}
+                </Typography>
+                <Typography sx={{ color: RX.muted, fontSize: "1rem", mb: 2 }}>
+                  {eventData?.location || "Fetching location and timing"}
+                </Typography>
 
-                    <Typography
-                      variant="h3"
-                      component="h3"
-                      sx={{
-                        fontSize: "1.25rem",
-                        mb: 1,
-                        color: "text.secondary",
-                      }}
-                    >
-                      {eventData.location}
-                    </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+                  {eventDateLabel && (
+                    <Box component="span" sx={refinedTagSx}>
+                      {eventDateLabel}
+                    </Box>
+                  )}
+                  {eventData?.formattedApplicationDeadline && (
+                    <Box component="span" sx={refinedTagSx}>
+                      Apply by {eventData.formattedApplicationDeadline}
+                    </Box>
+                  )}
+                  <Box component="span" sx={refinedAccentTagSx}>
+                    Step {activeStep + 1} of {steps.length}
+                  </Box>
+                </Box>
 
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        mb: 1,
-                        color: "text.secondary",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                      }}
-                    >
-                      <Box
-                        component="span"
-                        sx={{ display: "inline-flex", alignItems: "center" }}
-                      >
-                        📆 {eventData.formattedStartDate}
-                      </Box>
-                      {eventData.formattedStartDate !==
-                        eventData.formattedEndDate && (
-                        <>
-                          <Box component="span" sx={{ mx: 0.5 }}>
-                            to
-                          </Box>
-                          <Box
-                            component="span"
-                            sx={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            {eventData.formattedEndDate}
-                          </Box>
-                        </>
-                      )}
-                    </Typography>
-                  </>
-                )}
+                <Typography sx={{ color: RX.muted, maxWidth: "58ch" }}>
+                  Build with a team, work from real nonprofit needs, and leave
+                  with a shipped portfolio piece instead of a throwaway demo.
+                </Typography>
               </Box>
 
-              {/* Social proof image */}
               <Box
                 sx={{
-                  width: { xs: "100%", sm: "180px", md: "220px" },
-                  height: { xs: "140px", sm: "120px", md: "150px" },
-                  borderRadius: 2,
+                  minHeight: { xs: 220, md: 260 },
+                  borderRadius: "10px",
                   overflow: "hidden",
-                  boxShadow: 2,
-                  flexShrink: 0,
-                  alignSelf: { xs: "center", md: "flex-start" },
-                  maxWidth: "100%",
-                  mt: { xs: 0, md: 1 },
+                  border: "1px solid var(--line)",
+                  backgroundColor: "var(--surface-2)",
                 }}
               >
                 <img
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp"
+                  src={imageUrl}
                   alt="Developers building innovative solutions for nonprofits at Opportunity Hack"
+                  width="1200"
+                  height="800"
                   style={{
                     width: "100%",
                     height: "100%",
@@ -2970,35 +2087,76 @@ const HackerApplicationComponent = () => {
                 />
               </Box>
             </Box>
+          </Box>
 
-            {/* Add ApplicationNav component */}
-            {event_id && (
+          <VolunteerCheckInQR
+            eventId={event_id}
+            volunteerId={volunteerId}
+            isSelected={isSelected}
+            volunteerType="hacker"
+            name={formData.name}
+            isSubmitted={true}
+            qrSize={200}
+            sx={{ mx: "auto", maxWidth: 560, mb: 3 }}
+          />
+
+          {event_id && (
+            <Box sx={{ mb: 3 }}>
               <ApplicationNav eventId={event_id} currentType="hacker" />
-            )}
+            </Box>
+          )}
 
-            <Box sx={{ mb: 4 }}>                   
+          {isLoading ? (
+            <Box
+              className="ohx-card"
+              sx={{
+                ...refinedPanelSx,
+                py: 8,
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <CircularProgress sx={{ color: RX.brand }} />
+            </Box>
+          ) : (
+            <Box sx={{ mt: 3, mb: 4 }}>
               {eventData && eventData.isEventPast ? (
-                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                  <Alert severity="warning" sx={{ mb: 3 }}>
-                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                <Box className="ohx-card" sx={refinedPanelSx}>
+                  <Alert
+                    severity="warning"
+                    sx={{ ...getRefinedAlertSx("warning"), mb: 3 }}
+                  >
+                    <Typography
+                      component="h2"
+                      sx={{
+                        fontFamily: "'Fraunces', Georgia, serif",
+                        fontSize: "1.5rem",
+                        fontWeight: 500,
+                        mb: 1,
+                      }}
+                    >
                       This event has already ended
                     </Typography>
                     <Typography variant="body1">
                       Applications are no longer being accepted for this
-                      hackathon as it has already concluded. Please check our
-                      upcoming events for future participation opportunities.
+                      hackathon. Head back to the events page to find the next
+                      chance to build with a nonprofit.
                     </Typography>
                   </Alert>
 
-                  <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+                  <Box
+                    sx={{ mb: 4, display: "flex", justifyContent: "center" }}
+                  >
                     <GiveButterWidget
                       context="event-ended"
                       userId={user?.userId}
                       applicationType="hacker"
                       size="large"
                       onDonationEvent={(eventData) => {
-                        // Track hacker application donations when event ended
-                        console.log("Event ended hacker donation event:", eventData);
+                        console.log(
+                          "Event ended hacker donation event:",
+                          eventData,
+                        );
                       }}
                     />
                   </Box>
@@ -3006,39 +2164,48 @@ const HackerApplicationComponent = () => {
                   <Box textAlign="center">
                     <Button
                       variant="contained"
-                      color="primary"
                       onClick={() => router.push("/hack")}
-                      sx={{ mt: 2 }}
+                      sx={refinedPrimaryButtonSx}
                     >
-                      View Upcoming Events
+                      View upcoming events
                     </Button>
                   </Box>
-                </Paper>
+                </Box>
               ) : eventData && eventData.isApplicationsClosed ? (
-                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                  <Alert severity="warning" sx={{ mb: 3 }}>
-                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                <Box className="ohx-card" sx={refinedPanelSx}>
+                  <Alert
+                    severity="warning"
+                    sx={{ ...getRefinedAlertSx("warning"), mb: 3 }}
+                  >
+                    <Typography
+                      component="h2"
+                      sx={{
+                        fontFamily: "'Fraunces', Georgia, serif",
+                        fontSize: "1.5rem",
+                        fontWeight: 500,
+                        mb: 1,
+                      }}
+                    >
                       Applications are now closed
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 2 }}>
-                      The application deadline has passed. Applications closed
-                      on{" "}
+                      The deadline passed on{" "}
                       <strong>{eventData.formattedApplicationDeadline}</strong>{" "}
-                      to allow time for application review and acceptance
-                      notifications.
+                      so we have time to review submissions and send decisions
+                      before the event starts.
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: RX.muted }}>
                       The hackathon begins on {eventData.formattedStartDate}. If
                       you believe this is an error or have special
                       circumstances, please{" "}
-                      <Link href="/contact" color="primary" underline="hover">
+                      <Link href="/contact" underline="hover">
                         contact the organizers
                       </Link>{" "}
-                      immediately.
+                      right away.
                     </Typography>
                   </Alert>
+
                   <Box
-                    textAlign="center"
                     sx={{
                       display: "flex",
                       gap: 2,
@@ -3048,153 +2215,261 @@ const HackerApplicationComponent = () => {
                   >
                     <Button
                       variant="contained"
-                      color="primary"
                       onClick={() => router.push(`/hack/${event_id}`)}
-                      sx={{ mt: 2 }}
+                      sx={refinedPrimaryButtonSx}
                     >
-                      View Event Details
+                      View event details
                     </Button>
                     <Button
                       variant="outlined"
-                      color="primary"
                       onClick={() => router.push("/hack")}
-                      sx={{ mt: 2 }}
+                      sx={refinedGhostButtonSx}
                     >
-                      View Other Events
+                      View other events
                     </Button>
                   </Box>
-                </Paper>
+                </Box>
               ) : (
                 <>
-                  <Stepper
-                    activeStep={activeStep}
-                    alternativeLabel={!isMobile}
-                    orientation={isMobile ? "horizontal" : "horizontal"}
-                    sx={{
-                      mb: 4,
-                      ...(isMobile && {
-                        "& .MuiStepLabel-root": {
-                          padding: "0 4px", // Reduce padding on mobile
-                        },
-                        "& .MuiStepLabel-labelContainer": {
-                          width: "auto", // Let the label container be as small as possible
-                        },
-                        "& .MuiStepLabel-label": {
-                          fontSize: "0.7rem", // Smaller text on mobile
-                          whiteSpace: "nowrap", // Prevent text wrapping
-                        },
-                        "& .MuiSvgIcon-root": {
-                          width: 20, // Smaller icons
-                          height: 20,
-                        },
-                        overflowX: "auto", // Allow horizontal scrolling if needed
-                        "&::-webkit-scrollbar": {
-                          display: "none", // Hide scrollbar on webkit browsers
-                        },
-                        scrollbarWidth: "none", // Hide scrollbar on Firefox
-                      }),
-                    }}
+                  <Box
+                    id="hacker-application-progress"
+                    className="ohx-card"
+                    sx={{ ...refinedPanelSx, mb: 3, p: { xs: 2, sm: 3 } }}
                   >
-                    {steps.map((label) => (
-                      <Step key={label}>
-                        <StepLabel>
-                          {isMobile
-                            ? // On mobile, show abbreviated labels or just the step number
-                              activeStep === steps.indexOf(label)
-                              ? label
-                              : steps.indexOf(label) + 1
-                            : // On desktop, show full labels
-                              label}
-                        </StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-
-                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                    <Typography variant="body1" paragraph>
-                      Thank you for your interest in participating as a hacker
-                      at Opportunity Hack! Hackers like you build innovative
-                      solutions for nonprofits that make a real difference in
-                      their communities.
-                    </Typography>
-
-                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                      <Typography variant="body1" sx={{ mb: 1 }}>
-                        <strong>What to expect as a hacker:</strong>
-                      </Typography>
-                      <ul style={{ marginBottom: 0, paddingLeft: "1.5rem" }}>
-                        <li>
-                          Work in teams to develop solutions for nonprofit
-                          challenges
-                        </li>
-                        <li>
-                          Gain experience with new technologies and
-                          collaboration tools
-                        </li>
-                        <li>
-                          Learn from mentors and nonprofit partners about social
-                          impact
-                        </li>
-                        <li>
-                          Present your solution to judges and compete for prizes
-                        </li>
-                        <li>
-                          Build your portfolio and network with tech
-                          professionals
-                        </li>
-                      </ul>
-                    </Alert>
-
-                    {eventData && (
-                      <Alert
-                        severity={
-                          eventData.daysUntilDeadline <= 1
-                            ? "error"
-                            : eventData.daysUntilDeadline <= 3
-                              ? "warning"
-                              : "info"
-                        }
-                        sx={{ mb: 4 }}
-                      >
-                        <Typography variant="body1" sx={{ mb: 1 }}>
-                          <strong>Application Deadline:</strong>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 2,
+                        flexDirection: { xs: "column", sm: "row" },
+                        alignItems: { xs: "flex-start", sm: "flex-end" },
+                        mb: 2,
+                      }}
+                    >
+                      <Box>
+                        <Typography
+                          variant="overline"
+                          sx={{
+                            display: "block",
+                            color: RX.muted,
+                            letterSpacing: "0.16em",
+                            mb: 0.5,
+                          }}
+                        >
+                          Application progress
                         </Typography>
-                        <Typography variant="body2">
-                          Applications close on{" "}
-                          {eventData.formattedApplicationDeadline}
+                        <Typography
+                          component="h2"
+                          sx={{
+                            fontFamily: "'Fraunces', Georgia, serif",
+                            fontWeight: 500,
+                            letterSpacing: "-0.01em",
+                            fontSize: { xs: "1.35rem", sm: "1.55rem" },
+                            color: RX.ink,
+                          }}
+                        >
+                          Step {activeStep + 1}: {currentStepLabel}
+                        </Typography>
+                      </Box>
+                      <Typography sx={{ color: RX.muted }}>
+                        {activeStep + 1} of {steps.length} sections
+                      </Typography>
+                    </Box>
+
+                    <Stepper
+                      activeStep={activeStep}
+                      alternativeLabel={!isMobile}
+                      orientation="horizontal"
+                      sx={stepperSx}
+                    >
+                      {steps.map((label, index) => (
+                        <Step key={label}>
+                          <StepLabel>
+                            {isMobile
+                              ? activeStep === index
+                                ? label
+                                : index + 1
+                              : label}
+                          </StepLabel>
+                        </Step>
+                      ))}
+                    </Stepper>
+                  </Box>
+
+                  <Box
+                    id="hacker-application-form"
+                    className="ohx-card"
+                    sx={{ ...refinedPanelSx, p: { xs: 2.5, sm: 3, md: 4 } }}
+                  >
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gap: 2,
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                          lg: "minmax(0,1.1fr) minmax(280px,0.9fr)",
+                        },
+                        mb: 4,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          p: { xs: 2, md: 2.5 },
+                          borderRadius: "10px",
+                          border: "1px solid var(--line)",
+                          backgroundColor: "var(--surface-2)",
+                          minHeight: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                        }}
+                      >
+                        <Typography
+                          variant="overline"
+                          sx={{
+                            display: "block",
+                            color: RX.muted,
+                            letterSpacing: "0.16em",
+                            mb: 0.75,
+                          }}
+                        >
+                          What to expect
+                        </Typography>
+                        <Typography
+                          component="h2"
+                          sx={{
+                            fontFamily: "'Fraunces', Georgia, serif",
+                            fontWeight: 500,
+                            fontSize: { xs: "1.35rem", sm: "1.6rem" },
+                            lineHeight: 1.15,
+                            color: RX.ink,
+                            mb: 1,
+                          }}
+                        >
+                          Hackers ship real work for nonprofits
+                        </Typography>
+                        <Typography sx={{ color: RX.muted, mb: 1.5 }}>
+                          We use this application to understand your skills,
+                          team preferences, and the kind of support you will
+                          need during the event.
+                        </Typography>
+                        <Box
+                          component="ul"
+                          sx={{
+                            mb: 0,
+                            pl: 2.25,
+                            color: RX.ink,
+                            "& li": { mb: 0.75 },
+                            "& li:last-child": { mb: 0 },
+                          }}
+                        >
+                          <li>
+                            Work in teams to solve real nonprofit challenges.
+                          </li>
+                          <li>
+                            Learn from mentors, judges, and nonprofit partners.
+                          </li>
+                          <li>
+                            Ship something portfolio-worthy instead of a
+                            throwaway demo.
+                          </li>
+                          <li>
+                            Present your solution and build new connections.
+                          </li>
+                        </Box>
+                      </Box>
+
+                      {eventData && (
+                        <Box
+                          sx={{
+                            p: { xs: 2, md: 2.5 },
+                            borderRadius: "10px",
+                            border:
+                              deadlineTone === "info"
+                                ? `1px solid ${RX.line}`
+                                : "1px solid rgba(226,85,46,0.22)",
+                            backgroundColor:
+                              deadlineTone === "info"
+                                ? "var(--surface-2)"
+                                : "rgba(226,85,46,0.06)",
+                            minHeight: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          <Typography
+                            variant="overline"
+                            sx={{
+                              display: "block",
+                              color: RX.muted,
+                              letterSpacing: "0.16em",
+                              mb: 0.75,
+                            }}
+                          >
+                            Application deadline
+                          </Typography>
+                          <Typography
+                            component="h3"
+                            sx={{
+                              fontFamily: "'Fraunces', Georgia, serif",
+                              fontWeight: 500,
+                              fontSize: { xs: "1.35rem", sm: "1.6rem" },
+                              lineHeight: 1.15,
+                              color: RX.ink,
+                              mb: 1,
+                            }}
+                          >
+                            Apply before kickoff
+                          </Typography>
+                          <Typography sx={{ color: RX.muted, mb: 1.5 }}>
+                            Applications close on{" "}
+                            {eventData.formattedApplicationDeadline}.
+                          </Typography>
                           {eventData.hoursUntilDeadline > 0 && (
-                            <span>
-                              {" "}
-                              (
+                            <Box
+                              component="span"
+                              sx={{
+                                ...(deadlineTone === "info"
+                                  ? refinedTagSx
+                                  : refinedAccentTagSx),
+                                alignSelf: "flex-start",
+                                mb: 1.5,
+                              }}
+                            >
                               {eventData.daysUntilDeadline > 0
                                 ? `${eventData.daysUntilDeadline} day${eventData.daysUntilDeadline !== 1 ? "s" : ""} remaining`
                                 : `${eventData.hoursUntilDeadline} hour${eventData.hoursUntilDeadline !== 1 ? "s" : ""} remaining`}
-                              )
-                            </span>
+                            </Box>
                           )}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          This early deadline allows us to review applications
-                          and send acceptance notifications before the hackathon
-                          begins on {eventData.formattedStartDate}.
-                        </Typography>
-                        {eventData.daysUntilDeadline <= 1 && (
-                          <Typography
-                            variant="body2"
-                            sx={{ mt: 1, fontWeight: "bold" }}
-                          >
-                            ⚠️ Deadline is approaching soon - please submit your
-                            application as early as possible!
+                          <Typography sx={{ color: RX.muted }}>
+                            We close applications ahead of kickoff so we can
+                            review submissions and send decisions before the
+                            hackathon begins on {eventData.formattedStartDate}.
                           </Typography>
-                        )}
-                      </Alert>
-                    )}
+                          {eventData.daysUntilDeadline <= 1 && (
+                            <Typography
+                              sx={{
+                                mt: 1.5,
+                                color: RX.ink,
+                                fontWeight: 600,
+                              }}
+                            >
+                              Deadline is close. Submit as early as you can.
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
 
                     {(error || recaptchaError) && (
-                      <Alert severity="error" sx={{ mb: 4 }}>
+                      <Alert
+                        severity="error"
+                        sx={{ ...getRefinedAlertSx("error"), mb: 3 }}
+                      >
                         {error || recaptchaError}
                       </Alert>
                     )}
+
+                    <Divider sx={{ borderColor: RX.line, mb: 3 }} />
 
                     <form
                       onSubmit={(e) => {
@@ -3208,20 +2483,27 @@ const HackerApplicationComponent = () => {
                         sx={{
                           display: "flex",
                           justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 2,
                           mt: 4,
+                          flexDirection: { xs: "column-reverse", sm: "row" },
                         }}
                       >
                         <Button
                           disabled={activeStep === 0 || submitting}
                           onClick={handleBack}
                           variant="outlined"
+                          sx={{
+                            ...refinedGhostButtonSx,
+                            minWidth: 120,
+                            alignSelf: { xs: "stretch", sm: "auto" },
+                          }}
                         >
                           Back
                         </Button>
 
                         <Button
                           variant="contained"
-                          color="primary"
                           onClick={handleNext}
                           disabled={
                             submitting ||
@@ -3230,12 +2512,28 @@ const HackerApplicationComponent = () => {
                               (eventData.isApplicationsClosed ||
                                 eventData.isEventPast))
                           }
+                          endIcon={
+                            !(submitting || recaptchaLoading) ? (
+                              <Arrow />
+                            ) : undefined
+                          }
+                          sx={{
+                            ...refinedPrimaryButtonSx,
+                            minWidth: 180,
+                            alignSelf: { xs: "stretch", sm: "auto" },
+                          }}
                         >
                           {activeStep === steps.length - 1 ? (
                             submitting || recaptchaLoading ? (
-                              <CircularProgress size={24} />
+                              <CircularProgress
+                                size={24}
+                                sx={{ color: "#fff" }}
+                              />
+                            ) : isDepositRequired() &&
+                              !formData.stripePaymentIntentId ? (
+                              "Continue to deposit"
                             ) : (
-                              "Submit Application"
+                              "Submit application"
                             )
                           ) : (
                             "Next"
@@ -3243,15 +2541,14 @@ const HackerApplicationComponent = () => {
                         </Button>
                       </Box>
                     </form>
-                  </Paper>
+                  </Box>
                 </>
               )}
-            </Box>            
-          </Box>
-          
-       )} 
-      </Box>
-    </Container>
+            </Box>
+          )}
+        </Box>
+      </section>
+    </RefinedRoot>
   );
 };
 
@@ -3305,7 +2602,8 @@ const HackerApplicationPage = ({ seoMetadata }) => {
         {/* Additional SEO meta tags */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="Opportunity Hack" />
-        <meta name="theme-color" content="#1976d2" />
+        <meta name="theme-color" content={RX.brand} />
+        <RefinedFonts />
       </Head>
 
       {/* Structured Data for SEO */}
@@ -3322,7 +2620,7 @@ const HackerApplicationPage = ({ seoMetadata }) => {
             isPartOf: {
               "@type": "WebSite",
               name: "Opportunity Hack",
-              url: "https://ohack.dev",
+              url: "https://www.ohack.dev",
             },
             breadcrumb: {
               "@type": "BreadcrumbList",
@@ -3331,19 +2629,19 @@ const HackerApplicationPage = ({ seoMetadata }) => {
                   "@type": "ListItem",
                   position: 1,
                   name: "Home",
-                  item: "https://ohack.dev",
+                  item: "https://www.ohack.dev",
                 },
                 {
                   "@type": "ListItem",
                   position: 2,
                   name: "Hackathons",
-                  item: "https://ohack.dev/hack",
+                  item: "https://www.ohack.dev/hack",
                 },
                 {
                   "@type": "ListItem",
                   position: 3,
                   name: seoMetadata.eventName,
-                  item: `https://ohack.dev/hack/${event_id}`,
+                  item: `https://www.ohack.dev/hack/${event_id}`,
                 },
                 {
                   "@type": "ListItem",
@@ -3374,7 +2672,7 @@ const HackerApplicationPage = ({ seoMetadata }) => {
               organizer: {
                 "@type": "Organization",
                 name: "Opportunity Hack",
-                url: "https://ohack.dev",
+                url: "https://www.ohack.dev",
               },
               offers: {
                 "@type": "Offer",
@@ -3392,7 +2690,10 @@ const HackerApplicationPage = ({ seoMetadata }) => {
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
         displayIfLoggedOut={
           <RedirectToLogin
-            postLoginRedirectUrl={currentUrl || window.location.href}
+            postLoginRedirectUrl={
+              currentUrl ||
+              (typeof window !== "undefined" ? window.location.href : undefined)
+            }
           />
         }
       >
@@ -3413,13 +2714,13 @@ export async function getServerSideProps(context) {
       "Join our hackathon to build innovative tech solutions for nonprofits and social good. Apply to participate as a developer, designer, or product manager.",
     eventName: "Opportunity Hack",
     location: "Tempe, Arizona",
-    canonicalUrl: `https://ohack.dev/hack/${event_id}/hacker-application`,
+    canonicalUrl: `https://www.ohack.dev/hack/${event_id}/hacker-application`,
     imageUrl: "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
   };
 
   // Try to fetch event data for better SEO
   try {
-    const apiServerUrl = process.env.NEXT_PUBLIC_REACT_APP_API_SERVER_URL;
+    const apiServerUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
     if (apiServerUrl) {
       const response = await fetch(
         `${apiServerUrl}/api/messages/hackathon/${event_id}`,
@@ -3434,7 +2735,7 @@ export async function getServerSideProps(context) {
             description: `Join ${eventData.title} in ${eventData.location || "Tempe, Arizona"}. Build innovative tech solutions for nonprofits and make a real social impact through code.`,
             eventName: eventData.title,
             location: eventData.location || "Tempe, Arizona",
-            canonicalUrl: `https://ohack.dev/hack/${event_id}/hacker-application`,
+            canonicalUrl: `https://www.ohack.dev/hack/${event_id}/hacker-application`,
             imageUrl:
               eventData.image_url ||
               "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
@@ -3454,4 +2755,10 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default HackerApplicationPage;
+export default function HackerApplicationPageWithRecaptcha(props) {
+  return (
+    <ReCaptchaProvider>
+      <HackerApplicationPage {...props} />
+    </ReCaptchaProvider>
+  );
+}

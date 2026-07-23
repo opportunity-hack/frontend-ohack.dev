@@ -348,13 +348,13 @@ const EventLocationPage = () => {
         />
         <meta name="author" content="Opportunity Hack" />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://ohack.dev/about/locations/asu-tempe-arizona" />
+        <link rel="canonical" href="https://www.ohack.dev/about/locations/asu-tempe-arizona" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:title" content={`${activeLocation.name} - ASU Tempe Arizona Event Location | Opportunity Hack`} />
         <meta property="og:description" content={`Complete guide to Opportunity Hack events at ${activeLocation.name}, ASU Tempe campus. Find venue details, parking, hotels, and transportation options.`} />
-        <meta property="og:url" content="https://ohack.dev/about/locations/asu-tempe-arizona" />
+        <meta property="og:url" content="https://www.ohack.dev/about/locations/asu-tempe-arizona" />
         <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/locations/asu-tempe-venue.webp" />
         <meta property="og:image:alt" content={`ASU Tempe ${activeLocation.name} - Opportunity Hack event venue`} />
         <meta property="og:site_name" content="Opportunity Hack" />
@@ -386,10 +386,10 @@ const EventLocationPage = () => {
               "latitude": activeLocation.coordinates.lat,
               "longitude": activeLocation.coordinates.lng
             },
-            "url": "https://ohack.dev/about/locations/asu-tempe-arizona",
+            "url": "https://www.ohack.dev/about/locations/asu-tempe-arizona",
             "sameAs": [
               "https://www.asu.edu",
-              "https://ohack.dev"
+              "https://www.ohack.dev"
             ]
           })}
         </script>
@@ -1149,7 +1149,7 @@ export const getStaticProps = async () => {
         {
           name: "og:url",
           property: "og:url", 
-          content: "https://ohack.dev/about/locations/asu-tempe-arizona",
+          content: "https://www.ohack.dev/about/locations/asu-tempe-arizona",
           key: "ogurl"
         },
         {
@@ -1183,7 +1183,7 @@ export const getStaticProps = async () => {
           "latitude": 33.4255,
           "longitude": -111.9400
         },
-        "url": "https://ohack.dev/about/locations/asu-tempe-arizona"
+        "url": "https://www.ohack.dev/about/locations/asu-tempe-arizona"
       }
     },
   };

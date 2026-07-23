@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -66,7 +67,9 @@ import {
   FaExternalLinkAlt,
   FaCheckCircle,
   FaBug,
-  FaLink
+  FaLink,
+  FaVideo,
+  FaPlus
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
@@ -74,7 +77,9 @@ import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/router';
 import useHackathonEvents from '../../hooks/use-hackathon-events';
 import UserSearchDialog from './UserSearchDialog';
-import { TEAM_STATUS_OPTIONS, getStatusOption } from '../../constants/teamStatus';
+import TeamFieldPopover from './TeamFieldPopover';
+import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
+import { TEAM_STATUS_OPTIONS, getStatusOption, WINNING_STATUSES, isWinningStatus } from '../../constants/teamStatus';
 
 // GitHub Issue Templates for different hackathon phases
 // Returns templates with event-specific URLs based on the provided eventId
@@ -240,8 +245,12 @@ const MESSAGE_TEMPLATES = {
   }
 };
 
-// Component for managing teams in the admin panel
-const TeamManagement = ({ orgId }) => {
+// Component for managing teams in the admin panel.
+// When `embeddedHackathonId` is provided (the Firestore doc id of a hackathon),
+// the component skips its own URL parsing/writeback and hides the event picker,
+// pinning the view to that one hackathon. Used by the per-event sidebar
+// section at /admin/hackathons/[event_id]?section=teams.
+const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const theme = useTheme();
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
@@ -250,6 +259,27 @@ const TeamManagement = ({ orgId }) => {
   // Fetch hackathons using the hook
   const { hackathons = [] } = useHackathonEvents(false) || {};
   const [selectedHackathon, setSelectedHackathon] = useState('');
+
+  // Stable option list — prevents MUI Autocomplete from resetting inputValue on re-render
+  const hackathonOptions = React.useMemo(
+    () =>
+      hackathons
+        .filter((h) => h?.id)
+        .sort((a, b) => {
+          const da = a.start_date ? new Date(a.start_date) : new Date(0);
+          const db = b.start_date ? new Date(b.start_date) : new Date(0);
+          return db - da;
+        })
+        .map((h) => ({
+          id: h.id,
+          label: `${h.event_id}${h.start_date ? ' \u00b7 ' + new Date(h.start_date).toLocaleDateString() : ''}`,
+        })),
+    [hackathons]
+  );
+  const selectedHackathonOption = React.useMemo(
+    () => hackathonOptions.find((o) => o.id === selectedHackathon) ?? null,
+    [hackathonOptions, selectedHackathon]
+  );
 
   // State for teams data and UI
   const [loading, setLoading] = useState(false);
@@ -293,12 +323,31 @@ const TeamManagement = ({ orgId }) => {
   const [expandedRepo, setExpandedRepo] = useState(null);
   const [githubIssueSummaries, setGithubIssueSummaries] = useState({}); // Add state for table issue summaries
 
-  // Handle URL parameters and set initial state
+  // Status / completeness filter applied above the team table
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  // Inline quick-edit popover (for video and devpost columns)
+  const [popoverState, setPopoverState] = useState({
+    open: false,
+    anchorEl: null,
+    team: null,
+    field: null,
+  });
+
+  // Handle URL parameters and set initial state.
+  // When embedded, the parent owns event selection — pin to that hackathon
+  // and skip both URL parsing and the most-recent fallback.
   useEffect(() => {
+    if (embeddedHackathonId) {
+      if (selectedHackathon !== embeddedHackathonId) {
+        setSelectedHackathon(embeddedHackathonId);
+      }
+      return;
+    }
     if (!router?.query) return;
-    
+
     const { event_id } = router.query;
-    
+
     if (event_id && Array.isArray(hackathons) && hackathons.some(h => h?.id === event_id)) {
       setSelectedHackathon(event_id);
     } else if (Array.isArray(hackathons) && hackathons.length > 0 && !selectedHackathon) {
@@ -310,19 +359,22 @@ const TeamManagement = ({ orgId }) => {
           const dateB = new Date(b.start_date);
           return dateB - dateA; // Most recent first
         });
-      
+
       if (sortedHackathons.length > 0) {
         setSelectedHackathon(sortedHackathons[0].id);
       }
     }
-  }, [hackathons, router?.query]);
+  }, [embeddedHackathonId, hackathons, router?.query, selectedHackathon]);
   
   // Update URL when selectedHackathon changes
   useEffect(() => {
+    // Host page owns the URL when embedded — never write back, or we'd
+    // clobber the [event_id] path param and the ?section= query.
+    if (embeddedHackathonId) return;
     if (!router?.replace || !selectedHackathon || !Array.isArray(hackathons) || hackathons.length === 0) {
       return;
     }
-    
+
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
@@ -343,7 +395,7 @@ const TeamManagement = ({ orgId }) => {
     } catch (error) {
       console.warn('Failed to update URL:', error);
     }
-  }, [selectedHackathon, router, hackathons]);
+  }, [embeddedHackathonId, selectedHackathon, router, hackathons]);
 
   // Fetch teams for the selected hackathon
   useEffect(() => {
@@ -352,32 +404,42 @@ const TeamManagement = ({ orgId }) => {
     }
   }, [selectedHackathon]);
 
-  console.log("Team Data:", teamData);
-  // Filter teams based on search term
+  // Filter teams based on search term + active filter chip
   useEffect(() => {
     if (!teams) return;
 
-    const filtered = teams.filter(
-      (team) => {
-        const searchLower = searchTerm.toLowerCase();
-        
-        // Check team name
-        const nameMatch = team.name?.toLowerCase().includes(searchLower);
-        
-        // Check slack channel
-        const slackMatch = team.slack_channel?.toLowerCase().includes(searchLower);
-        
-        // Check team members - with null-safe checks
-        const memberMatch = team.team_members?.some(
-          (member) => member?.name?.toLowerCase().includes(searchLower)
-        );
-        
-        return nameMatch || slackMatch || memberMatch;
+    const searchLower = searchTerm.toLowerCase();
+    const filtered = teams.filter((team) => {
+      // Search filter
+      const nameMatch = team.name?.toLowerCase().includes(searchLower);
+      const slackMatch = team.slack_channel?.toLowerCase().includes(searchLower);
+      const memberMatch = team.team_members?.some(
+        (member) => member?.name?.toLowerCase().includes(searchLower)
+      );
+      const matchesSearch = !searchLower || nameMatch || slackMatch || memberMatch;
+      if (!matchesSearch) return false;
+
+      // Chip filter
+      switch (activeFilter) {
+        case 'winning':
+          return isWinningStatus(team.status);
+        case 'in_review':
+          return (team.status || 'IN_REVIEW') === 'IN_REVIEW';
+        case 'active':
+          return team.active === 'True' || team.active === true;
+        case 'missing_devpost':
+          return !team.devpost_link;
+        case 'missing_video':
+          return !team.demo_video_url;
+        case 'all':
+        default:
+          return true;
       }
-    );
+    });
 
     setFilteredTeams(filtered);
-  }, [searchTerm, teams]);
+    setPage(0);
+  }, [searchTerm, teams, activeFilter]);
 
   // Sort teams when sortConfig changes
   useEffect(() => {
@@ -396,17 +458,12 @@ const TeamManagement = ({ orgId }) => {
     setFilteredTeams(sortedTeams);
   }, [sortConfig]);
 
-  // Add function to fetch issue summary for table display
-  const fetchGithubIssueSummary = async (repo) => {
+  // Fetch issue summary for one repo. Returns [repoKey, summary] or null.
+  // NOTE: Intentionally does NOT setState — callers should batch the results
+  // into a single setGithubIssueSummaries call to avoid N-renders-per-fetch.
+  const fetchGithubIssueSummaryRaw = async (repo) => {
     const repoKey = `${repo.link}-summary`;
-    
-    // Don't refetch if we already have the data
-    if (githubIssueSummaries[repoKey]) {
-      return githubIssueSummaries[repoKey];
-    }
-
     try {
-      // Extract org and repo from the GitHub URL
       const urlParts = repo.link.split('/');
       const org = urlParts[urlParts.length - 2];
       const repoName = urlParts[urlParts.length - 1];
@@ -414,11 +471,7 @@ const TeamManagement = ({ orgId }) => {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues`,
         {
-          params: {
-            org: org,
-            repo: repoName,
-            state: 'all'
-          },
+          params: { org, repo: repoName, state: 'all' },
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
@@ -428,21 +481,14 @@ const TeamManagement = ({ orgId }) => {
 
       if (response.data && response.data.success) {
         const issues = response.data.issues || [];
-        const openCount = issues.filter(issue => issue.state === 'open').length;
-        const closedCount = issues.filter(issue => issue.state === 'closed').length;
-        const summary = { open: openCount, closed: closedCount, total: issues.length };
-        
-        setGithubIssueSummaries(prev => ({
-          ...prev,
-          [repoKey]: summary
-        }));
-        
-        return summary;
+        const openCount = issues.filter((issue) => issue.state === 'open').length;
+        const closedCount = issues.filter((issue) => issue.state === 'closed').length;
+        return [repoKey, { open: openCount, closed: closedCount, total: issues.length }];
       }
     } catch (error) {
       console.error("Error fetching GitHub issues summary:", error);
-      return { open: 0, closed: 0, total: 0 };
     }
+    return null;
   };
 
   // Fetch teams for a hackathon
@@ -462,18 +508,40 @@ const TeamManagement = ({ orgId }) => {
       if (response.data && response.data.teams) {
         setTeams(response.data.teams);
         setFilteredTeams(response.data.teams);
-        
+
         // Fetch nonprofits to build the map for displaying nonprofit names
         fetchNonprofits(hackathonId);
-        
-        // Fetch GitHub issue summaries for all teams with repositories
-        response.data.teams.forEach(team => {
-          if (team.github_links && team.github_links.length > 0) {
-            team.github_links.forEach(repo => {
-              fetchGithubIssueSummary(repo);
-            });
-          }
+
+        // Fetch GitHub issue summaries for all teams with repositories.
+        // Dedupe by repo link, skip already-cached, and batch into a SINGLE
+        // setGithubIssueSummaries call so we don't trigger one re-render per
+        // repo (which used to cascade through this 2900-line component).
+        const reposToFetch = [];
+        const seen = new Set();
+        response.data.teams.forEach((team) => {
+          (team.github_links || []).forEach((repo) => {
+            if (!repo?.link) return;
+            const repoKey = `${repo.link}-summary`;
+            if (seen.has(repoKey) || githubIssueSummaries[repoKey]) return;
+            seen.add(repoKey);
+            reposToFetch.push(repo);
+          });
         });
+
+        if (reposToFetch.length > 0) {
+          (async () => {
+            const results = await Promise.all(
+              reposToFetch.map((repo) => fetchGithubIssueSummaryRaw(repo))
+            );
+            const next = {};
+            results.forEach((entry) => {
+              if (entry) next[entry[0]] = entry[1];
+            });
+            if (Object.keys(next).length > 0) {
+              setGithubIssueSummaries((prev) => ({ ...prev, ...next }));
+            }
+          })();
+        }
       }
     } catch (error) {
       console.error("Error fetching teams:", error);
@@ -483,8 +551,38 @@ const TeamManagement = ({ orgId }) => {
     }
   };
 
-  // Fetch nonprofits for the selected hackathon
+  // Track whether the current nonprofit list is the global fallback (hackathon
+  // had no nonprofits attached) vs. the hackathon-scoped list.
+  const [nonprofitSource, setNonprofitSource] = useState("hackathon");
+
+  // Fetch nonprofits for the selected hackathon. If the hackathon doc has no
+  // nonprofits attached (or the fetch fails), fall back to ALL nonprofits so
+  // an admin can still manually assign one to a team.
   const fetchNonprofits = async (hackathonId) => {
+    const applyList = (list, source) => {
+      setNonprofitOptions(list);
+      const npMap = {};
+      list.forEach((np) => {
+        npMap[np.id] = np.name;
+      });
+      setNonprofitMap(npMap);
+      setNonprofitSource(source);
+    };
+
+    const fetchAll = async () => {
+      const all = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+      const list = all?.data?.nonprofits || [];
+      applyList(list, "all");
+    };
+
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos/hackathon/${hackathonId}`,
@@ -496,19 +594,22 @@ const TeamManagement = ({ orgId }) => {
         }
       );
 
-      if (response.data && response.data.nonprofits) {
-        setNonprofitOptions(response.data.nonprofits);
-        
-        // Build the nonprofit map for quick lookups
-        const npMap = {};
-        response.data.nonprofits.forEach(nonprofit => {
-          npMap[nonprofit.id] = nonprofit.name;
-        });
-        setNonprofitMap(npMap);
+      const scoped = response?.data?.nonprofits || [];
+      if (scoped.length > 0) {
+        applyList(scoped, "hackathon");
+      } else {
+        // No nonprofits attached to this hackathon — fall back so the manual
+        // assignment dropdown still has something to choose from.
+        await fetchAll();
       }
     } catch (error) {
       console.error("Error fetching nonprofits:", error);
-      enqueueSnackbar("Failed to fetch nonprofits", { variant: "error" });
+      try {
+        await fetchAll();
+      } catch (fallbackError) {
+        console.error("Error fetching all nonprofits fallback:", fallbackError);
+        enqueueSnackbar("Failed to fetch nonprofits", { variant: "error" });
+      }
     }
   };
 
@@ -525,7 +626,6 @@ const TeamManagement = ({ orgId }) => {
           },
         }
       );
-      console.log("Team Details Response:", response.data);
       if (response.data && response.data.team) {
         // Ensure team_members is always an array to prevent rendering issues
         const team = {
@@ -560,13 +660,50 @@ const TeamManagement = ({ orgId }) => {
       ...team,
       active: team.active === "True",
     });
-    // Fetch GitHub issues for all repositories to populate summaries
-    console.log("Fetching GitHub issues for team:", team);
-    if (team.github_links && team.github_links.length > 0) {
-      team.github_links.forEach((repo) => {
-        fetchGithubIssues(repo, "all"); // Fetch all issues for summary
-      });
+
+    // Prefetch GitHub issues for all repos but BATCH the results into a single
+    // setGithubIssues call. Calling fetchGithubIssues in a forEach would
+    // setState once per repo, triggering N renders of the full edit dialog.
+    const reposToFetch = (team.github_links || []).filter(
+      (repo) => repo?.link && !githubIssues[`${repo.link}-all`]
+    );
+    if (reposToFetch.length > 0) {
+      (async () => {
+        const results = await Promise.all(
+          reposToFetch.map(async (repo) => {
+            try {
+              const urlParts = repo.link.split('/');
+              const org = urlParts[urlParts.length - 2];
+              const repoName = urlParts[urlParts.length - 1];
+              const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues`,
+                {
+                  params: { org, repo: repoName, state: 'all' },
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "X-Org-Id": orgId,
+                  },
+                }
+              );
+              if (response.data?.success) {
+                return [`${repo.link}-all`, response.data.issues || []];
+              }
+            } catch (error) {
+              console.error("Error prefetching GitHub issues:", error);
+            }
+            return null;
+          })
+        );
+        const next = {};
+        results.forEach((entry) => {
+          if (entry) next[entry[0]] = entry[1];
+        });
+        if (Object.keys(next).length > 0) {
+          setGithubIssues((prev) => ({ ...prev, ...next }));
+        }
+      })();
     }
+
     fetchNonprofits(selectedHackathon);
     // Reset message dialog state when switching teams
     setSelectedTemplate(null);
@@ -583,35 +720,87 @@ const TeamManagement = ({ orgId }) => {
     }));
   };
 
-  // Save team updates
+  // Low-level PATCH helper used by both the full edit Dialog save and inline Popover quick-edits.
+  // `partial` should include `id` and whatever fields to update. Caller is responsible for
+  // showing snackbars and refreshing list state if it cares about them.
+  const patchTeam = useCallback(async (partial) => {
+    const response = await axios.patch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,
+      partial,
+      {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "content-type": "application/json",
+          "X-Org-Id": orgId,
+        },
+      }
+    );
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || "Update failed");
+    }
+    return response.data;
+  }, [accessToken, orgId]);
+
+  // Save team updates from the full edit Dialog
   const handleSaveTeam = async () => {
     setLoading(true);
     try {
-      const response = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,        
-        {
-            ...teamData,
-            active: teamData.active ? "True" : "False",          
-        },
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            "content-type": "application/json",
-            "X-Org-Id": orgId,
-          },                
-        });
-
-      if (response.data && response.data.success) {
-        enqueueSnackbar("Team updated successfully", { variant: "success" });
-        setEditDialogOpen(false);
-        fetchTeams(selectedHackathon);
-      }
+      await patchTeam({
+        ...teamData,
+        active: teamData.active ? "True" : "False",
+      });
+      enqueueSnackbar("Team updated successfully", { variant: "success" });
+      setEditDialogOpen(false);
+      fetchTeams(selectedHackathon);
     } catch (error) {
       console.error("Error updating team:", error);
       enqueueSnackbar("Failed to update team", { variant: "error" });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Optimistic inline-edit save used by TeamFieldPopover.
+  // Updates the local teams list immediately so the table reflects the change without a full refetch.
+  const handleQuickPatch = useCallback(async (team, partial) => {
+    try {
+      await patchTeam({ id: team.id, ...partial });
+      setTeams((prev) =>
+        prev.map((t) => (t.id === team.id ? { ...t, ...partial } : t))
+      );
+      enqueueSnackbar("Team updated", { variant: "success" });
+    } catch (error) {
+      console.error("Quick-edit failed:", error);
+      enqueueSnackbar("Failed to update team", { variant: "error" });
+      throw error;
+    }
+  }, [patchTeam, enqueueSnackbar]);
+
+  // Demo-video URL validator shared by the Popover and the full edit Dialog
+  const validateDemoVideoUrl = (value) => {
+    if (!value) return null; // empty = clear (allowed)
+    const trimmed = value.trim();
+    if (trimmed.length > 500) return "URL too long (500 char max).";
+    const valid =
+      /youtube\.com\/.+v=[\w-]{11}/i.test(trimmed) ||
+      /youtu\.be\/[\w-]{11}/i.test(trimmed) ||
+      /vimeo\.com\/\d+/i.test(trimmed) ||
+      /loom\.com\/(share|embed)\/[a-zA-Z0-9]+/i.test(trimmed) ||
+      /drive\.google\.com\/file\/d\//i.test(trimmed);
+    return valid ? null : "Enter a YouTube, Vimeo, Loom, or Google Drive URL.";
+  };
+
+  const openVideoPopover = (event, team) => {
+    setPopoverState({
+      open: true,
+      anchorEl: event.currentTarget,
+      team,
+      field: "demo_video_url",
+    });
+  };
+
+  const closePopover = () => {
+    setPopoverState((prev) => ({ ...prev, open: false }));
   };
 
   // Send message to team's slack channel
@@ -723,7 +912,6 @@ const TeamManagement = ({ orgId }) => {
   // Handle user selection from user search dialog
   const handleUserSelect = (user) => {
     if (user && user.id) {
-      console.log("User added to team:", user);
       // Reload team details to reflect the new member
       loadTeamDetails(teamData.id);
       // Show success message
@@ -1028,16 +1216,48 @@ const TeamManagement = ({ orgId }) => {
 
   // Render selected nonprofit with history
   const renderNonprofitSelection = () => {
-    if (!teamData || !teamData.nonprofit_rankings) return null;
+    if (!teamData) return null;
+
+    const rankings = Array.isArray(teamData.nonprofit_rankings)
+      ? teamData.nonprofit_rankings
+      : [];
+    const hasRankings = rankings.length > 0;
+    const hasOptions = nonprofitOptions.length > 0;
 
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
         <CardHeader
           title="Nonprofit Assignment"
-          subheader="Current selection and ranking history"
+          subheader={
+            hasRankings
+              ? "Current selection and ranking history"
+              : "Manually assign a nonprofit to this team"
+          }
         />
         <Divider />
         <CardContent>
+          {!hasRankings && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              This team has no nonprofit rankings on file — the team
+              creation / nonprofit matching flow was not completed for this
+              hackathon. You can still manually assign a nonprofit below.
+            </Alert>
+          )}
+          {!hasOptions && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              No nonprofits are attached to this hackathon, and the global
+              fallback returned no nonprofits either. Add nonprofits to the
+              hackathon (Admin → Hackathons → this event → Nonprofits) and
+              reopen this dialog.
+            </Alert>
+          )}
+          {hasOptions && nonprofitSource === "all" && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Showing all nonprofits as a fallback because none are attached
+              to this hackathon.
+            </Alert>
+          )}
+
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" gutterBottom>
               Current Assignment
@@ -1053,6 +1273,7 @@ const TeamManagement = ({ orgId }) => {
                   handleTeamDataChange("selected_nonprofit_id", e.target.value)
                 }
                 label="Assigned Nonprofit"
+                disabled={!hasOptions}
               >
                 <MenuItem value="">
                   <em>Not assigned yet</em>
@@ -1066,54 +1287,118 @@ const TeamManagement = ({ orgId }) => {
             </FormControl>
           </Box>
 
-          <Typography variant="subtitle2" gutterBottom>
-            Team's Nonprofit Rankings
-          </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Rank</TableCell>
-                  <TableCell>Nonprofit</TableCell>
-                  <TableCell>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {teamData.nonprofit_rankings.map((ranking, index) => {
-                  const nonprofit = nonprofitOptions.find(
-                    (n) => n.id === ranking.nonprofit_id
-                  );
-                  const isSelected =
-                    teamData.selected_nonprofit_id === ranking.nonprofit_id;
+          {(teamData.status || "IN_REVIEW") === "IN_REVIEW" ? (
+            <Box
+              sx={{
+                mb: 3,
+                p: 2,
+                borderRadius: 1,
+                bgcolor: "#e8f5e9",
+                border: 1,
+                borderColor: "success.light",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  {teamData.selected_nonprofit_id
+                    ? "Ready to approve"
+                    : "Pick a nonprofit to approve this team"}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {teamData.selected_nonprofit_id
+                    ? `Approving notifies the team and assigns them to ${getNonprofitName(
+                        teamData.selected_nonprofit_id
+                      )}.`
+                    : "Choose a nonprofit above, then approve — this notifies the team and sets their status to Nonprofit Selected."}
+                </Typography>
+              </Box>
+              <Tooltip
+                title={
+                  teamData.selected_nonprofit_id ? "" : "Select a nonprofit first"
+                }
+              >
+                <span>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<FaCheckCircle />}
+                    disabled={!teamData.selected_nonprofit_id}
+                    onClick={() => setApprovalDialogOpen(true)}
+                  >
+                    Approve Team
+                  </Button>
+                </span>
+              </Tooltip>
+            </Box>
+          ) : (
+            <Alert severity="success" icon={<FaCheckCircle />} sx={{ mb: 3 }}>
+              This team has been approved
+              {teamData.selected_nonprofit_id
+                ? ` and assigned to ${getNonprofitName(
+                    teamData.selected_nonprofit_id
+                  )}`
+                : ""}
+              .
+            </Alert>
+          )}
 
-                  return (
-                    <TableRow key={index} selected={isSelected}>
-                      <TableCell>{ranking.rank}</TableCell>
-                      <TableCell>
-                        {nonprofit ? nonprofit.name : "Unknown Nonprofit"}
-                      </TableCell>
-                      <TableCell>
-                        {isSelected ? (
-                          <Chip
-                            size="small"
-                            color="primary"
-                            label="Selected"
-                            icon={<FaCheck />}
-                          />
-                        ) : (
-                          <Chip
-                            size="small"
-                            variant="outlined"
-                            label="Not Selected"
-                          />
-                        )}
-                      </TableCell>
+          {hasRankings && (
+            <>
+              <Typography variant="subtitle2" gutterBottom>
+                Team's Nonprofit Rankings
+              </Typography>
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Rank</TableCell>
+                      <TableCell>Nonprofit</TableCell>
+                      <TableCell>Status</TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {rankings.map((ranking, index) => {
+                      const nonprofit = nonprofitOptions.find(
+                        (n) => n.id === ranking.nonprofit_id
+                      );
+                      const isSelected =
+                        teamData.selected_nonprofit_id === ranking.nonprofit_id;
+
+                      return (
+                        <TableRow key={index} selected={isSelected}>
+                          <TableCell>{ranking.rank}</TableCell>
+                          <TableCell>
+                            {nonprofit ? nonprofit.name : "Unknown Nonprofit"}
+                          </TableCell>
+                          <TableCell>
+                            {isSelected ? (
+                              <Chip
+                                size="small"
+                                color="primary"
+                                label="Selected"
+                                icon={<FaCheck />}
+                              />
+                            ) : (
+                              <Chip
+                                size="small"
+                                variant="outlined"
+                                label="Not Selected"
+                              />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </CardContent>
       </Card>
     );
@@ -1414,6 +1699,53 @@ const TeamManagement = ({ orgId }) => {
                     ),
                   }}
                 />
+
+                <TextField
+                  fullWidth
+                  label="Demo Video URL"
+                  value={teamData.demo_video_url || ""}
+                  onChange={(e) =>
+                    handleTeamDataChange("demo_video_url", e.target.value)
+                  }
+                  placeholder="https://youtu.be/..."
+                  error={!!validateDemoVideoUrl(teamData.demo_video_url)}
+                  helperText={
+                    validateDemoVideoUrl(teamData.demo_video_url) ||
+                    "YouTube, Vimeo, Loom, or Google Drive"
+                  }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <FaVideo />
+                      </InputAdornment>
+                    ),
+                    endAdornment: teamData.demo_video_url && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          component="a"
+                          href={teamData.demo_video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          color="primary"
+                        >
+                          <FaExternalLinkAlt size={14} />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                {teamData.demo_video_url && !validateDemoVideoUrl(teamData.demo_video_url) && (
+                  <Box sx={{ maxWidth: 320 }}>
+                    <LiteVideoThumbnail
+                      url={teamData.demo_video_url}
+                      label="Preview"
+                      onClick={() =>
+                        window.open(teamData.demo_video_url, '_blank', 'noopener,noreferrer')
+                      }
+                    />
+                  </Box>
+                )}
 
                 <TextField
                   fullWidth
@@ -1737,21 +2069,6 @@ const TeamManagement = ({ orgId }) => {
             >
               Send Message
             </Button>
-
-            {/* Add Approve Team Button */}
-            <Button
-              startIcon={<FaCheckCircle />}
-              variant="contained"
-              color="success"
-              onClick={() => setApprovalDialogOpen(true)}
-              disabled={
-                !teamData.selected_nonprofit_id ||
-                teamData.status !== "IN_REVIEW"
-              }
-              sx={{ ml: 2 }}
-            >
-              Approve Team
-            </Button>
           </Box>
 
           <Typography variant="subtitle2" gutterBottom>
@@ -1963,43 +2280,36 @@ const TeamManagement = ({ orgId }) => {
 
   return (
     <div>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Team Management
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Manage teams, assign nonprofits, and monitor team progress across all
-          hackathons.
-        </Typography>
-      </Box>
+      {!embeddedHackathonId && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Team Management
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Manage teams, assign nonprofits, and monitor team progress across all
+            hackathons.
+          </Typography>
+        </Box>
+      )}
 
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, md: 4 }}>
-            <FormControl fullWidth>
-              <InputLabel id="hackathon-select-label">
-                Select Hackathon
-              </InputLabel>
-              <Select
-                labelId="hackathon-select-label"
-                value={selectedHackathon}
-                onChange={(e) => setSelectedHackathon(e.target.value)}
-                label="Select Hackathon"
-              >
-                <MenuItem value="">
-                  <em>Select a hackathon</em>
-                </MenuItem>
-                {hackathons
-                  .filter(hackathon => hackathon?.id) // Filter out invalid entries
-                  .map((hackathon) => (
-                    <MenuItem key={hackathon.id} value={hackathon.id}>
-                      {hackathon.event_id} - {hackathon.start_date ? new Date(hackathon.start_date).toLocaleDateString() : 'Unknown Date'}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
+          {!embeddedHackathonId && (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Autocomplete
+                fullWidth
+                options={hackathonOptions}
+                value={selectedHackathonOption}
+                onChange={(_, option) => setSelectedHackathon(option?.id ?? '')}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                renderInput={(params) => (
+                  <TextField {...params} label="Select Hackathon" placeholder="Type to search…" />
+                )}
+                noOptionsText="No hackathons found"
+              />
+            </Grid>
+          )}
+          <Grid size={{ xs: 12, md: embeddedHackathonId ? 12 : 8 }}>
             <TextField
               fullWidth
               placeholder="Search teams, members, or slack channels..."
@@ -2022,6 +2332,36 @@ const TeamManagement = ({ orgId }) => {
             />
           </Grid>
         </Grid>
+
+        {/* Filter chips — quick scoping for demo/judging-day workflows */}
+        {selectedHackathon && (
+          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+              Show:
+            </Typography>
+            {[
+              { key: 'all',             label: 'All' },
+              { key: 'winning',         label: 'Winning' },
+              { key: 'in_review',       label: 'In review' },
+              { key: 'active',          label: 'Active' },
+              { key: 'missing_devpost', label: 'Missing DevPost' },
+              { key: 'missing_video',   label: 'Missing Video' },
+            ].map((f) => {
+              const selected = activeFilter === f.key;
+              return (
+                <Chip
+                  key={f.key}
+                  label={f.label}
+                  size="small"
+                  clickable
+                  color={selected ? 'primary' : 'default'}
+                  variant={selected ? 'filled' : 'outlined'}
+                  onClick={() => setActiveFilter(f.key)}
+                />
+              );
+            })}
+          </Box>
+        )}
       </Paper>
 
       {loading && !editDialogOpen ? (
@@ -2118,6 +2458,7 @@ const TeamManagement = ({ orgId }) => {
                     <TableCell>Members</TableCell>
                     <TableCell>GitHub</TableCell>
                     <TableCell>DevPost</TableCell>
+                    <TableCell>Demo Video</TableCell>
                     <TableCell>Nonprofit</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
@@ -2218,6 +2559,28 @@ const TeamManagement = ({ orgId }) => {
                           )}
                         </TableCell>
                         <TableCell>
+                          {team.demo_video_url ? (
+                            <Box sx={{ width: 96 }}>
+                              <LiteVideoThumbnail
+                                url={team.demo_video_url}
+                                width={96}
+                                height={54}
+                                label="Edit demo video"
+                                onClick={(e) => openVideoPopover(e, team)}
+                              />
+                            </Box>
+                          ) : (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<FaPlus size={10} />}
+                              onClick={(e) => openVideoPopover(e, team)}
+                            >
+                              Add
+                            </Button>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {getNonprofitName(team.selected_nonprofit_id)}
                         </TableCell>
                         <TableCell>
@@ -2299,6 +2662,30 @@ const TeamManagement = ({ orgId }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Box sx={{ flex: 1 }} />
+          {(teamData?.status || "IN_REVIEW") === "IN_REVIEW" &&
+            (teamData?.selected_nonprofit_id ? (
+              <Button
+                onClick={() => setApprovalDialogOpen(true)}
+                variant="contained"
+                color="success"
+                startIcon={<FaCheckCircle />}
+                disabled={loading}
+              >
+                Approve Team
+              </Button>
+            ) : (
+              <Tooltip title="Select a nonprofit, then approve">
+                <Button
+                  onClick={() => setActiveTab(1)}
+                  variant="outlined"
+                  color="success"
+                  startIcon={<FaCheckCircle />}
+                >
+                  Assign nonprofit to approve
+                </Button>
+              </Tooltip>
+            ))}
           <Button
             onClick={handleSaveTeam}
             variant="contained"
@@ -2722,6 +3109,37 @@ const TeamManagement = ({ orgId }) => {
           }}
         />
       )}
+
+      {/* Inline quick-edit popover (video / devpost) */}
+      <TeamFieldPopover
+        open={popoverState.open}
+        anchorEl={popoverState.anchorEl}
+        onClose={closePopover}
+        team={popoverState.team}
+        field={popoverState.field}
+        label={
+          popoverState.field === 'demo_video_url'
+            ? 'Demo Video URL'
+            : popoverState.field === 'devpost_link'
+            ? 'DevPost Link'
+            : 'Value'
+        }
+        placeholder={
+          popoverState.field === 'demo_video_url'
+            ? 'https://youtu.be/...'
+            : popoverState.field === 'devpost_link'
+            ? 'https://devpost.com/software/...'
+            : ''
+        }
+        helperText={
+          popoverState.field === 'demo_video_url'
+            ? 'YouTube, Vimeo, Loom, or Google Drive'
+            : ''
+        }
+        validate={popoverState.field === 'demo_video_url' ? validateDemoVideoUrl : undefined}
+        previewKind={popoverState.field === 'demo_video_url' ? 'video' : 'none'}
+        onSave={handleQuickPatch}
+      />
     </div>
   );
 };

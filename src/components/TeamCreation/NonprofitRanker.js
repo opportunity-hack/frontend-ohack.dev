@@ -5,15 +5,18 @@ import {
   Card,
   CardContent,
   Chip,
-  Alert
+  Alert,
+  IconButton,
+  Tooltip
 } from '@mui/material';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { MdDragHandle } from 'react-icons/md';
+import { FaTimes } from 'react-icons/fa';
 
 /**
  * Component for ranking selected nonprofits using drag and drop
  */
-const NonprofitRanker = memo(({ selectedNonprofits, handleDragEnd }) => {
+const NonprofitRanker = memo(({ selectedNonprofits, handleDragEnd, onRemove }) => {
   return (
     <Box 
       sx={{ 
@@ -24,12 +27,19 @@ const NonprofitRanker = memo(({ selectedNonprofits, handleDragEnd }) => {
         bgcolor: 'rgba(25, 118, 210, 0.04)'
       }}
     >
-      <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-        <MdDragHandle style={{ marginRight: 8 }} /> Drag to Rank Your Nonprofit Choices
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
+          <MdDragHandle style={{ marginRight: 8 }} /> Your ranked choices
+        </Typography>
+        <Chip
+          label={`${selectedNonprofits.length} selected`}
+          color={selectedNonprofits.length >= 2 ? 'success' : 'default'}
+          size="small"
+        />
+      </Box>
       <Typography variant="body2" color="text.secondary" paragraph>
-        Your first choice (#1) should be at the top of the list. Drag and drop to arrange the nonprofits 
-        in your order of preference.
+        Drag to reorder — <strong>#1 at the top is your top choice</strong>. Add or
+        remove nonprofits anytime from the list below.
       </Typography>
       
       {selectedNonprofits.length > 0 ? (
@@ -87,7 +97,7 @@ const NonprofitRanker = memo(({ selectedNonprofits, handleDragEnd }) => {
                                   }}
                                 >
                                   <img 
-                                    src={nonprofit.image || "/npo_placeholder.png"} 
+                                    src={nonprofit.image || "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Light_Blue_Square.png"} 
                                     alt={nonprofit.name} 
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                   />
@@ -121,17 +131,29 @@ const NonprofitRanker = memo(({ selectedNonprofits, handleDragEnd }) => {
                               {nonprofit.problem_statements && nonprofit.problem_statements.length > 0 && (
                                 <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                   {nonprofit.problem_statements.map((problem, idx) => (
-                                    <Chip 
-                                      key={idx} 
-                                      label={problem.displayTitle} 
-                                      size="small" 
-                                      variant="outlined" 
+                                    <Chip
+                                      key={idx}
+                                      label={problem.displayTitle}
+                                      size="small"
+                                      variant="outlined"
                                       sx={{ mb: 0.5 }}
                                     />
                                   ))}
                                 </Box>
                               )}
                             </Box>
+                            {onRemove && (
+                              <Tooltip title="Remove from your choices">
+                                <IconButton
+                                  size="small"
+                                  aria-label={`Remove ${nonprofit.name}`}
+                                  onClick={() => onRemove(nonprofit)}
+                                  sx={{ ml: 1, alignSelf: 'flex-start', color: 'text.secondary' }}
+                                >
+                                  <FaTimes />
+                                </IconButton>
+                              </Tooltip>
+                            )}
                           </Box>
                         </CardContent>
                       </Card>
