@@ -115,8 +115,18 @@ function OnboardingComponent() {
   const [error, setError] = useState('');
   const [openCongratulatoryDialog, setOpenCongratulatoryDialog] = useState(false);
   const [cookies, setCookie] = useCookies(['onboarding_visited']);
-  
+  const stepperScrollRef = React.useRef(null);
+
   useEffect(() => { initFacebookPixel(); }, []);
+
+  // On narrow screens the 9-step stepper overflows horizontally — keep the
+  // active step scrolled into view.
+  useEffect(() => {
+    const el = stepperScrollRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+    const ratio = steps.length > 1 ? activeStep / (steps.length - 1) : 0;
+    el.scrollTo({ left: ratio * (el.scrollWidth - el.clientWidth), behavior: 'smooth' });
+  }, [activeStep]);
 
   useEffect(() => {
     const ONBOARDING_VISITED_COOKIE = "onboarding_visited";
@@ -320,9 +330,13 @@ function OnboardingComponent() {
             </p>
           </div>
 
-          {/* Stepper */}
-          <Box className="ohx-card" sx={{ p: { xs: 2, sm: 3 }, mt: 3 }}>
-            <Stepper activeStep={activeStep} alternativeLabel sx={stepperSx}>
+          {/* Stepper — horizontally scrollable on narrow screens (9 steps don't fit) */}
+          <Box
+            ref={stepperScrollRef}
+            className="ohx-card"
+            sx={{ p: { xs: 1.5, sm: 3 }, mt: 3, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}
+          >
+            <Stepper activeStep={activeStep} alternativeLabel sx={{ ...stepperSx, minWidth: { xs: 720, md: 0 } }}>
               {steps.map((label, index) => (
                 <Step key={label} completed={completed[index]}>
                   <StepButton onClick={() => setActiveStep(index)} disabled={index > highestStepReached}>
