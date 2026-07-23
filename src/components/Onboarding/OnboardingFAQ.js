@@ -199,9 +199,10 @@ const OnboardingFAQ = () => {
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Check the GitHub repo</strong> - Every project page has a "Code &amp; Tasks" section with a
-                Code and an Issues button for each repository. Reading the README and open issues is the fastest way
-                to find something concrete to pick up.
+                <strong>Check the GitHub repo</strong> - Every project page has a "Code &amp; Tasks" section right
+                below the description, listing each repository — including repos built by teams at past hackathons —
+                with open-issue counts and the top open tickets shown right on the page. Reading the README and open
+                issues is the fastest way to find something concrete to pick up.
               </Typography>
             </li>
             <li>

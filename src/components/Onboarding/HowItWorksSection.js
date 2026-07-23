@@ -27,7 +27,7 @@ const stages = [
   {
     title: 'Problems become projects',
     description:
-      'Each selected challenge is published as a project on ohack.dev/projects with a description, the skills needed, a GitHub repository — where the work to be done is documented as public GitHub Issues — and its own Slack channel where the work is coordinated.'
+      'Each selected challenge is published as a project on ohack.dev/projects with a description, the skills needed, a "Code & Tasks" section listing its GitHub repositories — where the work to be done is documented as public GitHub Issues — and its own Slack channel where the work is coordinated.'
   },
   {
     title: 'The hackathon weekend',
