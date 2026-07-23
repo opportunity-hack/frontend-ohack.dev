@@ -11,15 +11,15 @@ import {
   Chip
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import StepHeader from './StepHeader';
 
 const ValueCard = styled(Card)(({ theme }) => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
-  transition: 'all 0.3s ease',
+  transition: 'border-color 0.2s',
   '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: theme.shadows[10]
+    borderColor: '#1B3A6B'
   }
 }));
 
@@ -72,11 +72,8 @@ const MissionOverview = () => {
   return (
     <Box>
       {/* Mission statement */}
+      <StepHeader title="Our Mission" />
       <Box mb={4} textAlign="center">
-        <Typography variant="h3" component="h1" gutterBottom>
-          Our Mission
-        </Typography>
-        <Divider sx={{ mt: 2, mb: 3, mx: 'auto', width: '70%' }} />
         <Typography variant="h5" paragraph sx={{ fontWeight: 400, maxWidth: '800px', mx: 'auto', fontStyle: 'italic' }}>
             To <b>empower</b> nonprofits through <b>sustainable technology </b>
             solutions by connecting them with passionate <b>volunteer developers</b>.
@@ -218,17 +215,17 @@ const MissionOverview = () => {
           'Environmental Conservation', 'Mental Health', 'Youth Services', 
           'Elderly Care', 'Disaster Relief', 'Arts & Culture', 'Human Rights'
         ].map((cause, index) => (
-          <Chip 
-            key={index} 
-            label={cause} 
-            color={index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'secondary' : 'default'}
-            variant={index % 2 === 0 ? 'filled' : 'outlined'}
+          <Chip
+            key={index}
+            label={cause}
+            variant="outlined"
             sx={{
-              fontSize: '1.2rem',
-              height: 37,
-              px: 2.5,
-              py: 1,
-              borderRadius: 5,
+              fontSize: '1.1rem',
+              height: 36,
+              px: 1.5,
+              borderRadius: 2,
+              borderColor: 'divider',
+              color: 'text.primary',
             }}
           />
         ))}

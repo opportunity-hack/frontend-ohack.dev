@@ -35,6 +35,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import { trackEvent } from '../../lib/ga';
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
+import StepHeader from './StepHeader';
 
 // Styled components
 const RatingContainer = styled(Box)(({ theme }) => ({
@@ -129,12 +130,15 @@ const FeedbackSection = () => {
     };
   };
 
-  // Available topics for feedback
+  // Available topics for feedback — mirrors the onboarding steps.
+  // Keep in sync with USEFUL_TOPICS in admin/feedback/onboardingAnalytics.js.
   const topicOptions = [
-    'Mission Overview', 
-    'Introduction Guide', 
-    'Slack Tutorial', 
-    'Buddy System', 
+    'Mission Overview',
+    'How It Works',
+    'Ways to Get Involved',
+    'Website Tour',
+    'Slack Tutorial',
+    'Introduction Guide',
     'FAQ Section'
   ];
 
@@ -318,16 +322,10 @@ const FeedbackSection = () => {
 
   return (
     <Box>
-      {/* Header */}
-      <Box mb={3} textAlign="center">
-        <Typography variant="h3" component="h1" gutterBottom sx={{ fontSize: '2.5rem' }}>
-          Your Feedback Matters
-        </Typography>
-        <Typography variant="subtitle1" color="textSecondary" sx={{ fontSize: '1.3rem' }}>
-          Help us improve the onboarding experience for future members
-        </Typography>
-        <Divider sx={{ mt: 2, mb: 3 }} />
-      </Box>
+      <StepHeader
+        title="Your Feedback Matters"
+        subtitle="Help us improve the onboarding experience for future members"
+      />
 
       {/* Why feedback matters */}
       <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
@@ -697,7 +695,7 @@ const FeedbackSection = () => {
         <Typography variant="body2" component="ul" sx={{ fontSize: '1.1rem', '& li': { mb: 1 } }}>
           <li>Added more detailed Slack channel descriptions based on new member confusion</li>
           <li>Created step-by-step guides for common technical setup questions</li>
-          <li>Improved the buddy matching system to connect new members faster</li>
+          <li>Rebuilt the onboarding around the full project lifecycle, roles, and a website tour</li>
           <li>Expanded FAQ section with questions frequently asked by new members</li>
           <li>Added more visual examples and screenshots to improve clarity</li>
         </Typography>

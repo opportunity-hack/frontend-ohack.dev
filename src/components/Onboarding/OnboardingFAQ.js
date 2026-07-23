@@ -17,6 +17,7 @@ import LaptopIcon from '@mui/icons-material/Laptop';
 import FeedIcon from '@mui/icons-material/Feed';
 import { useEnv } from '../../context/env.context';
 import InteractiveFAQ from '../Hackathon/InteractiveFAQ';
+import StepHeader from './StepHeader';
 
 /**
  * OnboardingFAQ component
@@ -58,17 +59,21 @@ const OnboardingFAQ = () => {
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Find a buddy</strong> - Request a buddy through this onboarding flow or in the #buddy-matching channel.
+                <strong>Log in on ohack.dev</strong> - Use the Log In button (most people sign in with Google) to get a profile,
+                submit applications, and track volunteer hours. Note this is <em>separate</em> from your Slack account — you'll
+                want both; see the <a href="/signup">signup guide</a> if you're not on our Slack yet.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Explore projects</strong> - Browse current projects in the #project-matching channel or on our website.
+                <strong>Join a hackathon</strong> - Find the next event at{' '}
+                <a href="/hack">ohack.dev/hack</a> and apply as a hacker, mentor, judge, or volunteer right on the event page.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Attend events</strong> - Join our next hackathon, workshop, or virtual meetup announced in #events.
+                <strong>Explore projects</strong> - Browse all projects at{' '}
+                <a href="/projects">ohack.dev/projects</a> — each project page links to its own Slack channel where the work happens.
               </Typography>
             </li>
           </ol>
@@ -117,22 +122,18 @@ const OnboardingFAQ = () => {
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Virtual events</strong> - Attend our regular community calls, workshops, and social events.
+                <strong>Office hours</strong> - Drop into our weekly{' '}
+                <a href="/office-hours">office hours</a> to meet organizers and other members live.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Project teams</strong> - Join a project team to collaborate closely with other members.
+                <strong>Project teams</strong> - Join a project&apos;s Slack channel to collaborate closely with other members.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Buddy system</strong> - Get paired with an experienced member who can introduce you around.
-              </Typography>
-            </li>
-            <li>
-              <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>In-person hackathons</strong> - When available, our in-person events are a great way to network.
+                <strong>In-person hackathons</strong> - Our in-person events are the best way to meet the community face-to-face.
               </Typography>
             </li>
           </ul>
@@ -144,11 +145,11 @@ const OnboardingFAQ = () => {
       question: "Is there a code of conduct?",
       answer: (
         <Typography paragraph sx={{ fontSize: answerFontSize }}>
-          Yes, we have a comprehensive Code of Conduct that all members are required to follow. It emphasizes respect, 
-          inclusivity, and professional behavior. We're committed to providing a harassment-free, welcoming environment 
-          for everyone regardless of gender, sexual orientation, disability, physical appearance, body size, race, or religion. 
-          You can find the full Code of Conduct on our website or in the #rules channel on Slack. If you experience any issues, 
-          please contact a community moderator immediately.
+          Yes, we have a comprehensive Code of Conduct that all members are required to follow. It emphasizes respect,
+          inclusivity, and professional behavior. We're committed to providing a harassment-free, welcoming environment
+          for everyone regardless of gender, sexual orientation, disability, physical appearance, body size, race, or religion.
+          You can read the full <a href="/hack/code-of-conduct">Code of Conduct here</a>. If you experience any issues,
+          please contact an organizer immediately.
         </Typography>
       ),
       icon: "📜"
@@ -179,27 +180,49 @@ const OnboardingFAQ = () => {
           <ol>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Browse current projects</strong> - Check the #project-matching channel on Slack or the Projects section on our website.
+                <strong>Browse projects</strong> - Go to <a href="/projects">ohack.dev/projects</a> and look for projects
+                tagged "Needs Help" — those are actively looking for contributors. Projects tagged "Live" are already in
+                production and generally don't need new volunteers.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Express interest</strong> - Comment on the project post or message the project lead.
+                <strong>Flip the "Want to help?" switch</strong> - On the project page, sign in and slide the
+                "Want to help?" toggle to raise your hand as a helper — it tells us and the community you're on board.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Attend an onboarding meeting</strong> - Most teams have a process to bring new members up to speed.
+                <strong>Join the project's Slack channel</strong> - Every project page has a "Join #channel" button.
+                Say hello in the channel and ask where you can help — that's where the people working on it coordinate.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Start small</strong> - Begin with smaller tasks or issues labeled "good for beginners."
+                <strong>Check the GitHub repo</strong> - Every project page has a "Code &amp; Tasks" section with a
+                Code and an Issues button for each repository. Reading the README and open issues is the fastest way
+                to find something concrete to pick up.
+              </Typography>
+            </li>
+            <li>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
+                <strong>No issues yet? Create them</strong> - Pull the code down, run it, and think like a product
+                manager: write GitHub Issues for the work you find. We document all work as Issues because closed
+                tickets give you public credit for your contributions — and writing good tickets is itself a
+                contribution.
+              </Typography>
+            </li>
+            <li>
+              <Typography paragraph sx={{ fontSize: answerFontSize }}>
+                <strong>Join it at a hackathon</strong> - Most project work happens with a team during an event, so the
+                biggest on-ramp is applying to the next hackathon at <a href="/hack">ohack.dev/hack</a> and picking that
+                project with your team.
               </Typography>
             </li>
           </ol>
           <Typography paragraph sx={{ fontSize: answerFontSize }}>
-            We encourage teams to be open to new members, but some projects may have specific skill requirements or be in a phase where onboarding is challenging. Don't be discouraged if one project isn't a good fit—there are always new opportunities emerging.
+            Activity varies between events — if a channel is quiet, don't be discouraged. Ask in #general or come to
+            office hours and we'll point you at a project that needs what you bring.
           </Typography>
         </>
       ),
@@ -209,11 +232,11 @@ const OnboardingFAQ = () => {
       question: "Can I propose a new project idea?",
       answer: (
         <Typography paragraph sx={{ fontSize: answerFontSize }}>
-          Absolutely! We encourage members to propose new project ideas, especially those addressing nonprofit needs. 
-          To propose a new project, share your idea in the #project-ideas channel on Slack with details about the problem 
-          it addresses, potential solution, and technologies involved. Community members will provide feedback, and if there's 
-          sufficient interest, you can form a team to work on it. If you already have a nonprofit partner in mind, that's great! 
-          If not, our nonprofit outreach team can potentially help connect you with organizations that might benefit from your solution.
+          Absolutely — with one important note: our projects start from a real nonprofit's need, not from a solution
+          looking for a user. If you know a nonprofit that could use technical help, point them to{' '}
+          <a href="/nonprofits">ohack.dev/nonprofits</a> to submit their challenge — that's how new projects are born.
+          If you have an idea but no nonprofit partner yet, share it in Slack or bring it to{' '}
+          <a href="/office-hours">office hours</a> and we can help figure out whether there's an organization it would serve.
         </Typography>
       ),
       icon: "💡"
@@ -275,11 +298,11 @@ const OnboardingFAQ = () => {
       question: "When is your next hackathon?",
       answer: (
         <Typography paragraph sx={{ fontSize: answerFontSize }}>
-          We typically organize multiple hackathons throughout the year, both virtual and in-person (when possible). 
-          Our flagship events usually occur in the spring and fall. For the most up-to-date information on upcoming 
-          hackathons, check the #events channel on Slack, subscribe to our newsletter, or visit the Events page on our website. 
-          Hackathons are announced at least 4-8 weeks in advance to give participants time to prepare. Between major hackathons, 
-          we also organize smaller coding sprints and workshops that you're welcome to join!
+          The single source of truth for upcoming events is <a href="/hack">ohack.dev/hack</a> — every upcoming and past
+          hackathon is listed there, and each event page has the dates, location, schedule, and application forms.
+          Our flagship in-person event happens in the fall in Arizona, with other events through the year. New events
+          are also announced in Slack and on the <a href="/blog">blog</a>, typically several weeks in advance so you
+          have time to apply and form a team.
         </Typography>
       ),
       icon: "📅"
@@ -350,12 +373,12 @@ const OnboardingFAQ = () => {
       question: "How do you handle project hosting and deployment?",
       answer: (
         <Typography paragraph sx={{ fontSize: answerFontSize }}>
-          We typically host projects on GitHub under the Opportunity Hack organization, which provides version control and collaboration tools. 
-          For deployment, we use a variety of platforms depending on the project's needs. Many web applications are deployed on Heroku, Vercel, 
-          or Netlify, which offer free tiers for nonprofit projects. For more complex applications requiring custom infrastructure, we work with 
-          cloud providers like AWS, GCP, or Azure, often utilizing their nonprofit credits programs. Our DevOps team helps set up deployment 
-          pipelines and monitors application health. We prioritize sustainable, low-maintenance hosting solutions that nonprofits can manage 
-          long-term with minimal technical expertise.
+          Projects are hosted on GitHub under the Opportunity Hack organization, which provides version control and
+          collaboration tools — each project page links to its repository. For deployment, teams use cloud platforms
+          like AWS, fly.io, and Google Cloud depending on the project's needs; Opportunity Hack covers initial hosting
+          costs (up to $15/month plus up to $250 in one-time costs), and nonprofits can take over as a project grows.
+          We prioritize sustainable, low-maintenance hosting that nonprofits can manage long-term with minimal
+          technical expertise.
         </Typography>
       ),
       icon: "☁️"
@@ -378,12 +401,14 @@ const OnboardingFAQ = () => {
       question: "What happens to projects after hackathons end?",
       answer: (
         <Typography paragraph sx={{ fontSize: answerFontSize }}>
-          Unlike traditional hackathons, we emphasize long-term project development and sustainability. After a hackathon ends, 
-          projects typically enter our "continued development" phase. Teams often continue working on their solutions, refining 
-          features, addressing bugs, and ensuring the project meets the nonprofit's needs. We have a dedicated project maintenance 
-          team that helps ensure projects remain active and supported. For projects that have reached a stable state, we provide 
-          documentation and training to nonprofits on how to use and maintain their solutions. Some projects may evolve over multiple 
-          hackathons, with new teams building upon previous work. Our goal is to create lasting impact, not just weekend prototypes.
+          Unlike traditional hackathons, the event is the beginning, not the end. Winning teams are invited to keep
+          building for roughly three months after the event, turning their prototype into production software with
+          regular check-ins along the way. A project counts as finished when it meets our{' '}
+          <a href="/about/completion">Definition of Done</a>: deployed to production, signed off by the nonprofit,
+          documented, secured, and open-sourced. After that, the project shows as "Live" on the website, we check in
+          with the nonprofit quarterly, and maintenance needs are picked up by volunteers from the community. Some
+          projects also evolve over multiple hackathons, with new teams building on previous work. Our goal is lasting
+          impact, not weekend prototypes.
         </Typography>
       ),
       icon: "🔄"
@@ -396,10 +421,12 @@ const OnboardingFAQ = () => {
         <Typography paragraph sx={{ fontSize: answerFontSize }}>
           Absolutely! We encourage members to showcase their Opportunity Hack contributions on resumes, portfolios, and LinkedIn profiles. 
           These projects demonstrate real-world experience, teamwork, and a commitment to social impact—qualities that many employers value. 
-          When listing your contributions, include specific technical skills utilized, your role in the team, and the impact of the project on 
-          the nonprofit. We can provide verification of your participation upon request, and many of our corporate partners recognize Opportunity 
-          Hack experience favorably during hiring processes. Additionally, your GitHub contributions through our organization are public and can 
-          serve as concrete examples of your coding abilities.
+          When listing your contributions, include specific technical skills utilized, your role in the team, and the impact of the project on
+          the nonprofit. Because all our work happens in the open, a recruiter can review your entire portfolio: your GitHub commits and the
+          issue tickets you wrote and closed, your communication in public Slack channels, your team's demo videos, and your public
+          ohack.dev profile page. Volunteers can also request a signed verification letter directly through the website (find the letters link
+          on the event page you participated in), and many of our corporate partners recognize Opportunity Hack experience favorably during
+          hiring processes.
         </Typography>
       ),
       icon: "📄"
@@ -414,37 +441,32 @@ const OnboardingFAQ = () => {
           <ul>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Become a project lead</strong> - Coordinate a team working on a nonprofit solution
+                <strong>Mentor at a hackathon</strong> - Guide teams through scoping, architecture, and getting unstuck. Apply on any event page.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Volunteer as a mentor</strong> - Help guide newer members and share your expertise
+                <strong>Judge an event</strong> - Evaluate final projects and help decide the winners. Apply on any event page.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Join the organizing team</strong> - Help plan events and community initiatives
+                <strong>Help run events</strong> - Volunteer for check-in, logistics, photography, and more — no coding required.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Lead workshops</strong> - Share your knowledge through educational sessions
+                <strong>Help with nonprofit outreach</strong> - Connect us with organizations that could use free software.
               </Typography>
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Become a buddy</strong> - Help onboard and support new community members
-              </Typography>
-            </li>
-            <li>
-              <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Help with outreach</strong> - Connect with nonprofits and identify potential projects
+                <strong>Sponsor or recruit</strong> - Introduce your company to <a href="/sponsor">sponsorship</a> opportunities.
               </Typography>
             </li>
           </ul>
           <Typography paragraph sx={{ fontSize: answerFontSize }}>
-            Express your interest in taking on these roles in the #community-involvement channel on Slack, or reach out to one of our community managers.
+            Reach out in Slack or come to <a href="/office-hours">office hours</a> and tell us what you'd like to take on.
           </Typography>
         </>
       ),
@@ -479,16 +501,10 @@ const OnboardingFAQ = () => {
 
   return (
     <Box>
-      {/* Header */}
-      <Box mb={3} textAlign="center">
-        <Typography variant="h3" component="h1" gutterBottom sx={{ fontSize: '2.5rem' }}>
-          Frequently Asked Questions
-        </Typography>
-        <Typography variant="subtitle1" color="textSecondary" sx={{ fontSize: '1.25rem', fontWeight: 500 }}>
-          Find answers to common questions about getting involved
-        </Typography>
-        <Divider sx={{ mt: 2, mb: 3 }} />
-      </Box>
+      <StepHeader
+        title="Frequently Asked Questions"
+        subtitle="Find answers to common questions about getting involved"
+      />
 
       {/* FAQ List */}
       <InteractiveFAQ faqData={faqData} searchTerm={searchTerm} answerFontSize={answerFontSize} questionFontSize="1.4rem"/>
