@@ -45,9 +45,22 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon, Link as LinkIcon, Save as SaveIcon, Delete as DeleteIcon, Event as EventIcon, Close as CloseIcon, GitHub as GitHubIcon, People as PeopleIcon, Description as DescriptionIcon, Chat as ChatIcon, OpenInNew as OpenInNewIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
+import { ALL_PROJECT_STATUSES } from "../../../lib/projectStatus";
 import LinkManagement from "../../../components/admin/LinkManagement";
 import useNonprofit from "../../../hooks/use-nonprofit";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
+
+// One chip color scheme for both the card and table views
+const statusChipColor = (status) =>
+  status === "production" || status === "maintenance"
+    ? "success"
+    : status === "hackathon"
+    ? "info"
+    : status === "post-hackathon"
+    ? "warning"
+    : status === "active"
+    ? "primary"
+    : "default";
 
 const AdminProblemsPage = () => {
   const { accessToken, userClass } = useAuthInfo();
@@ -642,13 +655,7 @@ const AdminProblemsPage = () => {
                       </Typography>
                       <Chip
                         label={problem.status}
-                        color={
-                          problem.status === "production"
-                            ? "success"
-                            : problem.status === "active"
-                            ? "primary"
-                            : "default"
-                        }
+                        color={statusChipColor(problem.status)}
                         size="small"
                         sx={{ ml: 1 }}
                       />
@@ -919,17 +926,7 @@ const AdminProblemsPage = () => {
                       <TableCell>
                         <Chip
                           label={problem.status}
-                          color={
-                            problem.status === "production"
-                              ? "success"
-                              : problem.status === "hackathon"
-                              ? "info"
-                              : problem.status === "post-hackathon"
-                              ? "warning"
-                              : problem.status === "active"
-                              ? "primary"
-                              : "default"
-                          }
+                          color={statusChipColor(problem.status)}
                           size="small"
                           sx={{ fontWeight: 'medium' }}
                         />
@@ -1403,18 +1400,41 @@ const AdminProblemsPage = () => {
                   </Box>
                 )}
 
-                <TextField
-                  fullWidth
-                  label="Status"
-                  value={editingProblem?.status || ""}
-                  onChange={(e) =>
-                    setEditingProblem((prev) => ({
-                      ...prev,
-                      status: e.target.value,
-                    }))
-                  }
-                  margin="normal" 
-                />
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="problem-status-label">Status</InputLabel>
+                  <Select
+                    labelId="problem-status-label"
+                    label="Status"
+                    value={editingProblem?.status || ""}
+                    onChange={(e) =>
+                      setEditingProblem((prev) => ({
+                        ...prev,
+                        status: e.target.value,
+                      }))
+                    }
+                  >
+                    {/* Preserve a legacy/unknown value so opening the dialog
+                        doesn't silently clear it */}
+                    {editingProblem?.status &&
+                      !ALL_PROJECT_STATUSES.some(
+                        (s) => s.value === editingProblem.status
+                      ) && (
+                        <MenuItem value={editingProblem.status}>
+                          {editingProblem.status} (legacy)
+                        </MenuItem>
+                      )}
+                    {ALL_PROJECT_STATUSES.map((s) => (
+                      <MenuItem key={s.value} value={s.value}>
+                        <Box>
+                          <Typography variant="body1">{s.label}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {s.blurb}
+                          </Typography>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
                 <TextField
                   fullWidth
                   label="First Thought Of"

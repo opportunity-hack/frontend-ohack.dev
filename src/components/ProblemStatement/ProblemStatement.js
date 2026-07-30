@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import Tooltip from "@mui/material/Tooltip";
 import BuildIcon from "@mui/icons-material/Build";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
 import TagIcon from "@mui/icons-material/Tag";
 import Switch from "@mui/material/Switch";
 import Stack from "@mui/material/Stack";
@@ -36,6 +37,11 @@ import useHackathonEvents from "../../hooks/use-hackathon-events";
 import useProjectNonprofit from "../../hooks/use-project-nonprofit";
 import { useRedirectFunctions } from "@propelauth/react";
 import { trackEvent, initFacebookPixel } from "../../lib/ga";
+import {
+  isPausedStatus,
+  isLiveStatus,
+  acceptsNewHelpers,
+} from "../../lib/projectStatus";
 import Events from "../Events/Events";
 import ReferenceItem from "../ReferenceItem/ReferenceItem";
 import { HelpDialog, UnhelpDialog } from "../HelpDialog/HelpDialog";
@@ -744,8 +750,10 @@ export default function ProblemStatement({
 
   const copyProjectLink = "project/" + problem_statement.id;
 
-  // Live projects don't need new volunteers; maintenance-status projects still do.
-  const isProduction = problem_statement.status === "production";
+  // Live projects don't need new volunteers; maintenance-status projects still
+  // do. Paused projects have no active need, so they don't recruit either.
+  const isPaused = isPausedStatus(problem_statement.status);
+  const offerHelpToggle = acceptsNewHelpers(problem_statement.status);
 
   // Code & Tasks tiers: project-level repos are canonical; team-built repos
   // from hackathons follow under their own quiet label
@@ -772,20 +780,53 @@ export default function ProblemStatement({
   const TitleTag = headingLevel;
 
   const renderStatus = () => {
-    if (problem_statement.status === "production") {
+    if (isPaused) {
       return (
         <Tooltip
-          title="This project is live and being used by the nonprofit!"
+          title="Work on this project is on hold — check the Slack channel before starting new work."
           arrow
           placement="top"
         >
           <span className="ohx-tag">
-            <WorkspacePremiumIcon
+            <PauseCircleOutlineIcon
               sx={{ fontSize: 13, verticalAlign: "middle", mr: 0.5 }}
             />
-            Live
+            Paused
           </span>
         </Tooltip>
+      );
+    }
+    if (isLiveStatus(problem_statement.status)) {
+      const maintained = problem_statement.status === "maintenance";
+      return (
+        <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
+          <Tooltip
+            title="This project is live and being used by the nonprofit!"
+            arrow
+            placement="top"
+          >
+            <span className="ohx-tag">
+              <WorkspacePremiumIcon
+                sx={{ fontSize: 13, verticalAlign: "middle", mr: 0.5 }}
+              />
+              Live
+            </span>
+          </Tooltip>
+          {maintained && (
+            <Tooltip
+              title="Live and in maintenance — patches and small enhancements still welcome help."
+              arrow
+              placement="top"
+            >
+              <span className="ohx-tag ohx-tag--accent">
+                <BuildIcon
+                  sx={{ fontSize: 13, verticalAlign: "middle", mr: 0.5 }}
+                />
+                Welcomes Help
+              </span>
+            </Tooltip>
+          )}
+        </span>
       );
     }
     return (
@@ -1315,9 +1356,9 @@ export default function ProblemStatement({
           )}
         </div>
 
-        {/* Help toggle — hidden on production projects, except for existing
-            helpers so they can still toggle themselves off */}
-        {(!isProduction || help_checked === "checked") && (
+        {/* Help toggle — hidden on production and paused projects, except for
+            existing helpers so they can still toggle themselves off */}
+        {(offerHelpToggle || help_checked === "checked") && (
           <div style={{ marginBottom: 28 }}>{renderHelpToggle()}</div>
         )}
 

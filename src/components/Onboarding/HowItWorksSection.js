@@ -14,6 +14,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import StepHeader from './StepHeader';
+import { PROJECT_LADDER, PAUSED_STATUS } from '../../lib/projectStatus';
 
 const NAVY = '#1B3A6B';
 
@@ -62,14 +63,12 @@ const definitionOfDone = [
   'Open-sourced under the MIT license'
 ];
 
-// Matches the status ladder shown on every project page (ProjectProgress).
-const projectStatuses = [
-  { label: 'Concept', description: 'An idea no one has built yet — needs a team' },
-  { label: 'Hackathon', description: 'Worked on at one or more hackathons' },
-  { label: 'Post-Hackathon', description: 'Development continuing after the event' },
-  { label: 'Production', description: 'Live and being used by the nonprofit' },
-  { label: 'Maintenance', description: 'Live, receiving patches and enhancements' }
-];
+// Matches the status ladder shown on every project page (ProjectProgress) —
+// both render from the shared catalog in src/lib/projectStatus.js.
+const projectStatuses = PROJECT_LADDER.map(({ label, blurb }) => ({
+  label,
+  description: blurb
+}));
 
 /**
  * HowItWorksSection
@@ -198,6 +197,13 @@ const HowItWorksSection = () => {
             </React.Fragment>
           ))}
         </Box>
+        <Typography variant="body1" sx={{ fontSize: '1.05rem', mt: 2, color: 'text.secondary' }}>
+          You may also see a project marked{' '}
+          <Box component="span" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+            {PAUSED_STATUS.label}
+          </Box>
+          {' '}— {PAUSED_STATUS.description.charAt(0).toLowerCase() + PAUSED_STATUS.description.slice(1)}
+        </Typography>
       </Paper>
 
       <Box textAlign="center">

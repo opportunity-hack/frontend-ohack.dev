@@ -1,18 +1,12 @@
 import { useMemo } from "react";
 import NextLink from "next/link";
+import { PROJECT_STATUS_LABELS, isPausedStatus } from "../../lib/projectStatus";
 
 // Calm, single-surface project card. The previous version nested two bordered
 // boxes ("Skills Used", "Hackathon History") plus several colored chips inside
 // every card, which read as cluttered across a 9-up grid. This keeps one quiet
 // surface: title + status, a short description, a thin row of skill tags, and a
 // light footer. All visual tokens come from the <RefinedRoot> scope.
-
-const STATUS_LABEL = {
-  concept: "Concept",
-  hackathon: "Hackathon",
-  "post-hackathon": "Post-hackathon",
-  production: "Production",
-};
 
 function getGithubUrl(project) {
   if (!project.github) return null;
@@ -42,8 +36,9 @@ export default function ProjectCard({ project, hackathons }) {
     return hackathons.find((h) => project.events.includes(h.id)) || null;
   }, [project.events, hackathons]);
 
-  const statusLabel = STATUS_LABEL[project.status] || project.status;
+  const statusLabel = PROJECT_STATUS_LABELS[project.status] || project.status;
   const isProduction = project.status === "production";
+  const isPaused = isPausedStatus(project.status);
 
   return (
     <div
@@ -108,7 +103,11 @@ export default function ProjectCard({ project, hackathons }) {
         }}
       >
         <span className="ohx-faint" style={{ fontSize: "0.82rem" }}>
-          {helpers > 0 ? `${helpers} helper${helpers === 1 ? "" : "s"}` : "Needs helpers"}
+          {helpers > 0
+            ? `${helpers} helper${helpers === 1 ? "" : "s"}`
+            : isPaused
+            ? "On hold"
+            : "Needs helpers"}
           {relatedHackathon?.location ? ` · ${relatedHackathon.location}` : ""}
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
