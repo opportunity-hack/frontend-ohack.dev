@@ -3,9 +3,20 @@ import { Pagination, Box } from "@mui/material";
 import ProjectCard from "./ProjectCard";
 import FeaturedProjects from "./FeaturedProjects/FeaturedProjects";
 import { RefinedRoot, Eyebrow, Arrow } from "../design/refined";
-import { ALL_PROJECT_STATUSES, isPausedStatus } from "../../lib/projectStatus";
+import {
+  ALL_PROJECT_STATUSES,
+  isPausedStatus,
+  acceptsNewHelpers,
+} from "../../lib/projectStatus";
 
 const PROJECTS_PER_PAGE = 9;
+
+// Rank is an editorial priority: 1 is the best, higher numbers matter less,
+// unranked (or 0/garbage) sorts last.
+const rankValue = (p) => {
+  const r = Number(p.rank);
+  return Number.isFinite(r) && r > 0 ? r : Infinity;
+};
 
 const STATUS_FILTERS = [
   { value: null, label: "All" },
@@ -41,10 +52,19 @@ export default function ProjectList({ initialProjects = [], events }) {
   }, [initialProjects, searchQuery, status]);
 
   const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
+    let list = filtered;
+    // "Needs help first" is a volunteer-finder view: projects that aren't
+    // recruiting (production, paused) are excluded entirely — unless the
+    // status chip explicitly asks for that status.
+    if (sortBy === "needHelp") {
+      list = list.filter(
+        (p) => acceptsNewHelpers(p.status) || status === p.status
+      );
+    }
+    return [...list].sort((a, b) => {
       // Paused projects aren't asking for work, so they sink below active
-      // ones in the help-oriented sorts (unless the Paused filter is on).
-      if (sortBy === "rank" || sortBy === "needHelp") {
+      // ones in the relevance sort (unless the Paused filter is on).
+      if (sortBy === "rank") {
         const pausedDelta = isPausedStatus(a.status) - isPausedStatus(b.status);
         if (pausedDelta !== 0) return pausedDelta;
       }
@@ -54,13 +74,21 @@ export default function ProjectList({ initialProjects = [], events }) {
         case "title":
           return (a.title || "").localeCompare(b.title || "");
         case "needHelp":
-          return (a.helping?.length || 0) - (b.helping?.length || 0);
+          // Fewest helpers first; among equals, best editorial rank wins
+          return (
+            (a.helping?.length || 0) - (b.helping?.length || 0) ||
+            rankValue(a) - rankValue(b)
+          );
         case "rank":
         default:
-          return (b.rank || 0) - (a.rank || 0);
+          // Rank 1 is the top pick; unranked projects follow alphabetically
+          return (
+            rankValue(a) - rankValue(b) ||
+            (a.title || "").localeCompare(b.title || "")
+          );
       }
     });
-  }, [filtered, sortBy]);
+  }, [filtered, sortBy, status]);
 
   const totalPages = Math.ceil(sorted.length / PROJECTS_PER_PAGE);
   const pageProjects = useMemo(() => {
@@ -69,8 +97,19 @@ export default function ProjectList({ initialProjects = [], events }) {
   }, [sorted, currentPage]);
 
   const featured = useMemo(() => {
-    const explicit = initialProjects.filter((p) => p.featured);
-    if (explicit.length >= 3) return explicit.slice(0, 3);
+    // Rank 1 is the editorial "feature this" signal (the explicit `featured`
+    // flag also counts). Paused projects never feature — no active need.
+    const picks = initialProjects.filter(
+      (p) => !isPausedStatus(p.status) && (p.featured || rankValue(p) === 1)
+    );
+    if (picks.length > 0) {
+      // Most in need of hands first
+      return picks.sort(
+        (a, b) => (a.helping?.length || 0) - (b.helping?.length || 0)
+      );
+    }
+    // Nothing ranked 1: fall back to the best-ranked projects still
+    // looking for a team.
     return [...initialProjects]
       .filter(
         (p) =>
@@ -78,7 +117,7 @@ export default function ProjectList({ initialProjects = [], events }) {
           p.status !== "post-hackathon" &&
           !isPausedStatus(p.status)
       )
-      .sort((a, b) => (b.rank || 0) - (a.rank || 0))
+      .sort((a, b) => rankValue(a) - rankValue(b))
       .slice(0, 3);
   }, [initialProjects]);
 
