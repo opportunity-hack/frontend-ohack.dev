@@ -1,5 +1,6 @@
 import NextLink from "next/link";
 import Image from "next/image";
+import { PROJECT_STATUS_LABELS } from "../../../lib/projectStatus";
 
 // Quiet 3-up featured strip: a photo, a title, a one-line teaser, and a single
 // status tag. (Previously each featured card also stacked GitHub/helpers/skill
@@ -19,13 +20,6 @@ const FEATURED_IMAGES = [
   "https://cdn.ohack.dev/ohack.dev/2024_hackathon_5.webp",
   "https://cdn.ohack.dev/ohack.dev/2024_hackathon_6.webp",
 ];
-
-const STATUS_LABEL = {
-  concept: "Concept",
-  hackathon: "Hackathon",
-  "post-hackathon": "Post-hackathon",
-  production: "Production",
-};
 
 function hashCode(str = "") {
   let hash = 0;
@@ -57,7 +51,7 @@ export default function FeaturedProjects({ projects }) {
     >
       {projects.map((project, i) => {
         const img = FEATURED_IMAGES[Math.abs(hashCode(project.id)) % FEATURED_IMAGES.length];
-        const status = STATUS_LABEL[project.status] || project.status;
+        const status = PROJECT_STATUS_LABELS[project.status] || project.status;
         return (
           <NextLink
             key={project.id}

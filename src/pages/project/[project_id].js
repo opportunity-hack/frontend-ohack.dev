@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { PROJECT_STATUS_LABELS } from "../../lib/projectStatus";
 
 const Project = dynamic(() => import("../../components/Project/Project"), {
   ssr: false
@@ -51,7 +52,8 @@ export async function getStaticProps({ params = {} } = {}) {
   var title = nonprofitNames
     ? `Project: ${ps.title} — ${nonprofitNames}`
     : "Project: " + ps.title;
-  var metaDescription = (nonprofitNames ? `For ${nonprofitNames}. ` : "") + ps.status + ": " + ps.description + " ";
+  const statusLabel = PROJECT_STATUS_LABELS[ps.status] || ps.status || "Project";
+  var metaDescription = (nonprofitNames ? `For ${nonprofitNames}. ` : "") + statusLabel + ": " + ps.description + " ";
   var countOfhelpingMentors = 0;
   var countOfhelpingHackers = 0;
 
@@ -132,7 +134,7 @@ export async function getStaticProps({ params = {} } = {}) {
         },
         {
           property: "twitter:data1",
-          value: ps.status,
+          value: statusLabel,
           key: "twitterdata1",
         },
         {
