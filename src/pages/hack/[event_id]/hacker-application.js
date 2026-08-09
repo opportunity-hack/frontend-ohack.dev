@@ -45,6 +45,7 @@ import FormPersistenceControls from "../../../components/FormPersistenceControls
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
+import { formSectionStyle } from "../../../components/ApplicationForm/refinedStyles";
 import UploadPhoto from "../../../components/UploadPhoto";
 import useProfileApi from "../../../hooks/use-profile-api";
 import {
@@ -586,11 +587,14 @@ const HackerApplicationComponent = () => {
 
         // Check if event is in the past (with 1-day buffer for end date)
         const now = Moment().tz(eventTz);
-        const forceOpen = eventData.constraints?.application_hacker_force_open === true;
-        const isEventPast = !forceOpen && endDate.clone().add(1, "day").isBefore(now);
+        const forceOpen =
+          eventData.constraints?.application_hacker_force_open === true;
+        const isEventPast =
+          !forceOpen && endDate.clone().add(1, "day").isBefore(now);
 
         // Check if applications are closed (deadline has passed)
-        const isApplicationsClosed = !forceOpen && now.isAfter(applicationDeadline);
+        const isApplicationsClosed =
+          !forceOpen && now.isAfter(applicationDeadline);
 
         // Check if event is online/virtual
         const isOnlineEvent = ["Virtual", "Global", "Online"].some((term) =>
@@ -1834,13 +1838,7 @@ const HackerApplicationComponent = () => {
           }}
         />
 
-        <section
-          className="ohx-wrap"
-          style={{
-            paddingTop: "clamp(100px, 12vh, 148px)",
-            paddingBottom: "clamp(48px, 8vh, 96px)",
-          }}
-        >
+        <section className="ohx-wrap" style={formSectionStyle}>
           <Box sx={{ maxWidth: 760, mx: "auto", textAlign: "center", mb: 4 }}>
             <Eyebrow>Application received</Eyebrow>
             <h1 className="ohx-display" style={{ marginTop: 8 }}>
@@ -1969,21 +1967,7 @@ const HackerApplicationComponent = () => {
         }}
       />
 
-      <FormPersistenceControls
-        onSave={handleManualSave}
-        onRestore={loadFromLocalStorage}
-        onClear={clearSavedData}
-        notification={notification}
-        onCloseNotification={closeNotification}
-      />
-
-      <section
-        className="ohx-wrap"
-        style={{
-          paddingTop: "clamp(100px, 12vh, 148px)",
-          paddingBottom: "clamp(48px, 8vh, 96px)",
-        }}
-      >
+      <section className="ohx-wrap" style={formSectionStyle}>
         <Box ref={formRef}>
           <Box sx={{ maxWidth: 780, mb: 4 }}>
             <Eyebrow>Opportunity Hack application</Eyebrow>
@@ -2231,6 +2215,17 @@ const HackerApplicationComponent = () => {
                 </Box>
               ) : (
                 <>
+                  {/* Save/restore controls live beside the form they act on
+                      (mt: 0 — the section provides the NavBar clearance) */}
+                  <FormPersistenceControls
+                    sx={{ mt: 0, mb: 2 }}
+                    onSave={handleManualSave}
+                    onRestore={loadFromLocalStorage}
+                    onClear={clearSavedData}
+                    notification={notification}
+                    onCloseNotification={closeNotification}
+                  />
+
                   <Box
                     id="hacker-application-progress"
                     className="ohx-card"
