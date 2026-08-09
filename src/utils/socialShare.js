@@ -1,4 +1,6 @@
-const DEFAULT_SITE_URL = "https://ohack.dev";
+// Canonical host is www — a bare ohack.dev share URL costs a redirect hop
+// (and some scrapers don't follow it).
+const DEFAULT_SITE_URL = "https://www.ohack.dev";
 
 export function getSiteUrl() {
   if (typeof window !== "undefined" && window.location?.origin) {

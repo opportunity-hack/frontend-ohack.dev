@@ -32,6 +32,8 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import LanguageIcon from '@mui/icons-material/Language';
+import PortfolioTab from './Portfolio/PortfolioTab';
 import ShareableGitHubContributions from './ShareableGitHubContributions';
 import RaffleEntries from './RaffleEntries';
 import CertificatesSection from './Sections/CertificatesSection';
@@ -178,6 +180,7 @@ export default function Profile() {
     const hashTabMap = {
       '#basic': 0, '#impact': 1, '#github': 2,
       '#swag': 3, '#volunteer': 4, '#giveaways': 5,
+      '#portfolio': 6,
     };
     if (router.asPath.includes('#')) {
       const hash = `#${router.asPath.split('#')[1]}`;
@@ -187,9 +190,9 @@ export default function Profile() {
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    const tabNames = ['basic', 'impact', 'github', 'swag', 'volunteer', 'giveaways'];
+    const tabNames = ['basic', 'impact', 'github', 'swag', 'volunteer', 'giveaways', 'portfolio'];
     trackEvent({ action: 'profile_tab_change', params: { event_label: tabNames[newValue], page: 'profile' } });
-    const tabHashMap = { 0: 'basic', 1: 'impact', 2: 'github', 3: 'swag', 4: 'volunteer', 5: 'giveaways' };
+    const tabHashMap = { 0: 'basic', 1: 'impact', 2: 'github', 3: 'swag', 4: 'volunteer', 5: 'giveaways', 6: 'portfolio' };
     router.push(`/profile#${tabHashMap[newValue]}`, undefined, { shallow: true });
   };
 
@@ -515,6 +518,7 @@ export default function Profile() {
                 <Tab icon={<LocalShippingIcon />} label={isMobile ? undefined : "Swag & Shipping"} title="Swag & Shipping" {...a11yProps(3)} />
                 <Tab icon={<VolunteerActivismIcon />} label={isMobile ? undefined : "Volunteer History"} title="Volunteer History" {...a11yProps(4)} />
                 <Tab icon={<CardGiftcardIcon />} label={isMobile ? undefined : "Giveaway Entries"} title="Giveaway Entries" {...a11yProps(5)} />
+                <Tab icon={<LanguageIcon />} label={isMobile ? undefined : "Portfolio"} title="Portfolio" {...a11yProps(6)} />
               </Tabs>
             </Box>
           </Box>
@@ -849,6 +853,22 @@ export default function Profile() {
                 <Box component="li" sx={{ mb: 1 }}>Complete your profile information</Box>
                 <Box component="li">Refer other volunteers to join Opportunity Hack</Box>
               </Box>
+            </TabPanel>
+
+            {/* Tab 6 — Portfolio */}
+            <TabPanel value={activeTab} index={6}>
+              <PanelHeader eyebrow="Portfolio" title="Your public portfolio">
+                One shareable page with your demo videos, certificates, GitHub work, praise, and hearts —
+                private by default, yours to publish.
+              </PanelHeader>
+              <PortfolioTab
+                profile={profile}
+                update_profile_metadata={update_profile_metadata}
+                privacySettings={privacySettings}
+                togglePrivacySetting={togglePrivacySetting}
+                privacyLoading={privacyLoading}
+                isLoading={isLoading}
+              />
             </TabPanel>
 
           </Box>

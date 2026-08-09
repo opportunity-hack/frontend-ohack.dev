@@ -75,7 +75,16 @@ function HackathonCard({ hackathon, mode, profileUrl }) {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {hackathon.title && (
               <Typography variant="h6" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
-                {hackathon.title}
+                {hackathon.event_id ? (
+                  <a
+                    href={`/hack/${hackathon.event_id}`}
+                    style={{ color: "inherit", textDecoration: "none" }}
+                  >
+                    {hackathon.title}
+                  </a>
+                ) : (
+                  hackathon.title
+                )}
               </Typography>
             )}
             {dateLabel && (

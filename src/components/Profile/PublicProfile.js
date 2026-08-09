@@ -1,9 +1,8 @@
-import React from "react";
-import { useRouter } from "next/router";
+import React, { useState, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { Box, CircularProgress, Avatar } from "@mui/material";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import { Box, CircularProgress, Dialog, DialogContent, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import InstagramIcon from "@mui/icons-material/Instagram";
@@ -14,8 +13,14 @@ import BadgesSection from "./Sections/BadgesSection";
 import PraisesSection from "./Sections/PraisesSection";
 import FeedbackSection from "./Sections/FeedbackSection";
 import HeartsExplainer from "./Sections/HeartsExplainer";
-import LinkedInShareButton from "../share/LinkedInShareButton";
+import PortfolioHero from "./Portfolio/PortfolioHero";
+import BioVideoSection from "./Portfolio/BioVideoSection";
+import TeamsShowcaseSection from "./Portfolio/TeamsShowcaseSection";
+import GitHubStatsSection from "./Portfolio/GitHubStatsSection";
+import CertificateWallSection from "./Portfolio/CertificateWallSection";
+import VideoDisplay from "../VideoDisplay/VideoDisplay";
 import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from "../design/refined";
+import { canonicalPathForProfile } from "../../lib/portfolioMeta";
 
 const educationLabels = {
   in_college: "In College",
@@ -25,21 +30,11 @@ const educationLabels = {
   in_middle_school: "In Middle School",
 };
 
-const roleLabels = {
-  hacker_in_school: "Hacker (In School)",
-  hacker_pro: "Hacker (Professional)",
-  mentor: "Mentor",
-  volunteer: "Volunteer",
-  judge: "Judge",
-  nonprofit: "Nonprofit",
-  sponsor: "Sponsor",
-  organizer: "Organizer",
-};
-
-// Refined section frame (eyebrow + heading + body in one quiet card)
-function PanelSection({ eyebrow, title, children }) {
+// Refined section frame (eyebrow + heading + body in one quiet card).
+// Anchored ids make sections deep-linkable (#featured-work etc.).
+function PanelSection({ id, eyebrow, title, children }) {
   return (
-    <section className="ohx-card" style={{ padding: "26px 26px 24px", marginBottom: 20 }}>
+    <section id={id} className="ohx-card" style={{ padding: "26px 26px 24px", marginBottom: 20, scrollMarginTop: 96 }}>
       {eyebrow && <Eyebrow style={{ marginBottom: 6 }}>{eyebrow}</Eyebrow>}
       <h2 className="ohx-display" style={{ fontSize: "1.35rem", marginBottom: 18 }}>{title}</h2>
       {children}
@@ -59,10 +54,13 @@ function AboutRow({ icon, label, children }) {
   );
 }
 
-const PublicProfile = () => {
-  const router = useRouter();
-  const { userid } = router.query;
-
+/**
+ * The public portfolio page body. Server-rendered on /u/[slug] and
+ * /profile/[userid] (initialData comes from getServerSideProps); falls back
+ * to client fetching when SSR had no data. Empty or private sections skip
+ * silently — an employer-facing portfolio must read tight.
+ */
+const PublicProfile = ({ userid, initialData = null }) => {
   const {
     profile,
     badges,
@@ -73,9 +71,14 @@ const PublicProfile = () => {
     privacySettings,
     isLoading,
     error,
-  } = usePublicProfile(userid);
+  } = usePublicProfile(userid, { initialData });
 
-  const profilePath = userid ? `/profile/${userid}` : "/";
+  // The single page-level video player (CWV rule: never an iframe per card)
+  const [videoDialog, setVideoDialog] = useState(null);
+  const openVideo = useCallback((url, title) => setVideoDialog({ url, title }), []);
+  const closeVideo = useCallback(() => setVideoDialog(null), []);
+
+  const sharePath = canonicalPathForProfile(profile, userid);
   const isPublic = (field) => privacySettings?.[field] === "public";
 
   if (isLoading) {
@@ -124,41 +127,28 @@ const PublicProfile = () => {
       </AboutRow>
     );
 
+  const showBio = isPublic("bio") && profile?.bio;
+  const showBioVideo = isPublic("bio_video_url") && profile?.bio_video_url;
+  const showAbout = showBio || showBioVideo || aboutFields.length > 0 || (isPublic("expertise") && profile?.expertise?.length > 0);
+  const teams = isPublic("teams") ? profile?.teams || [] : [];
+  const showGitHub = isPublic("github_history") && (profile?.github_history?.length > 0 || profile?.github);
+  const showCertificates = isPublic("certificates") && profile?.certificates &&
+    ((profile.certificates.github_certificates || []).length > 0 || (profile.certificates.heart_certificates || []).length > 0);
+
   return (
     <>
       <Head>
-        <title>Profile for {profile?.name || userid} — Opportunity Hack Developer Portal</title>
         <RefinedFonts />
       </Head>
 
       <RefinedRoot>
-        {/* HEADER */}
-        <section className="ohx-wrap" style={{ paddingTop: "clamp(100px, 12vh, 148px)", paddingBottom: "clamp(28px, 5vh, 44px)" }}>
-          <Eyebrow><span className="rise" style={{ display: "inline-block" }}>Community profile</span></Eyebrow>
-          <div className="rise" style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 20, animationDelay: "60ms" }}>
-            <div style={{ display: "flex", gap: 22, alignItems: "center", flexWrap: "wrap" }}>
-              <Avatar
-                src={profile?.profile_image || "https://i.imgur.com/RdOsE7s.png"}
-                alt={profile?.name}
-                sx={{ width: { xs: 84, sm: 104 }, height: { xs: 84, sm: 104 }, border: "1px solid var(--line)" }}
-              />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <h1 className="ohx-display" style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}>{profile?.name || "Anonymous user"}</h1>
-                  <VerifiedUserIcon sx={{ color: "#1B3A6B", fontSize: 24 }} />
-                </div>
-                <p className="ohx-muted" style={{ margin: "6px 0 0" }}>{profile?.nickname || "Community member"}</p>
-                {profile?.role && isPublic("role") && (
-                  <span className="ohx-tag" style={{ marginTop: 12, display: "inline-flex" }}>{roleLabels[profile.role] || profile.role}</span>
-                )}
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <Link href={feedbackUrl} className="ohx-btn ohx-btn--primary">Send feedback <Arrow /></Link>              
-              <LinkedInShareButton variant="profile" url={profilePath} label={`Share ${profile?.name || "this profile"} to LinkedIn`} />
-            </div>
-          </div>
-        </section>
+        <PortfolioHero
+          profile={profile}
+          hackathons={isPublic("hackathon_history") ? hackathons : []}
+          isPublic={isPublic}
+          feedbackUrl={feedbackUrl}
+          sharePath={sharePath}
+        />
 
         {/* BODY */}
         <section className="ohx-wrap" style={{ paddingBottom: "clamp(56px, 9vh, 104px)" }}>
@@ -174,13 +164,23 @@ const PublicProfile = () => {
                   </div>
                 )}
 
-                {(aboutFields.length > 0 || (isPublic("expertise") && profile?.expertise?.length > 0)) && (
-                  <PanelSection title="About">
-                    <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-                      {aboutFields}
-                    </div>
+                {showAbout && (
+                  <PanelSection id="about" title="About">
+                    {showBio && (
+                      <p style={{ marginTop: 0, marginBottom: showBioVideo || aboutFields.length ? 18 : 0, whiteSpace: "pre-line", lineHeight: 1.6 }}>
+                        {profile.bio}
+                      </p>
+                    )}
+                    {showBioVideo && (
+                      <BioVideoSection url={profile.bio_video_url} name={profile?.name} />
+                    )}
+                    {aboutFields.length > 0 && (
+                      <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", marginTop: showBio || showBioVideo ? 20 : 0 }}>
+                        {aboutFields}
+                      </div>
+                    )}
                     {isPublic("expertise") && profile?.expertise?.length > 0 && (
-                      <div style={{ marginTop: aboutFields.length ? 20 : 0 }}>
+                      <div style={{ marginTop: 20 }}>
                         <span className="ohx-eyebrow" style={{ fontSize: "0.62rem" }}>Areas of expertise</span>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
                           {profile.expertise.map((s) => <span key={s} className="ohx-tag">{s}</span>)}
@@ -190,29 +190,53 @@ const PublicProfile = () => {
                   </PanelSection>
                 )}
 
+                {teams.length > 0 && (
+                  <PanelSection id="featured-work" title="Featured work">
+                    <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 16, fontSize: "0.95rem" }}>
+                      Hackathon teams, demo videos, and the code behind them.
+                    </p>
+                    <TeamsShowcaseSection teams={teams} onPlayVideo={openVideo} />
+                  </PanelSection>
+                )}
+
+                {showGitHub && (
+                  <PanelSection id="github" title="GitHub contributions">
+                    <GitHubStatsSection username={profile?.github} initialHistory={profile?.github_history || null} />
+                  </PanelSection>
+                )}
+
+                {showCertificates && (
+                  <PanelSection id="certificates" title="Certificates">
+                    <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 16, fontSize: "0.95rem" }}>
+                      Verifiable recognition for shipped contributions.
+                    </p>
+                    <CertificateWallSection certificates={profile.certificates} />
+                  </PanelSection>
+                )}
+
                 {isPublic("badges") && badges?.length > 0 && (
-                  <PanelSection title="Achievements & badges">
-                    <BadgesSection badges={badges} mode="public" profileUrl={profilePath} />
+                  <PanelSection id="badges" title="Achievements & badges">
+                    <BadgesSection badges={badges} mode="public" profileUrl={sharePath} />
                   </PanelSection>
                 )}
 
                 {isPublic("hackathon_history") && hackathons?.length > 0 && (
-                  <PanelSection title="Hackathon history">
+                  <PanelSection id="hackathons" title="Hackathon history">
                     <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 16, fontSize: "0.95rem" }}>
                       Participation, mentoring, and judging at Opportunity Hack events.
                     </p>
-                    <HackathonsSection hackathons={hackathons} mode="public" profileUrl={profilePath} />
+                    <HackathonsSection hackathons={hackathons} mode="public" profileUrl={sharePath} />
                   </PanelSection>
                 )}
 
                 {isPublic("praises") && (praisesCount > 0 || praisesRecent?.length > 0) && (
-                  <PanelSection title="Praises received">
-                    <PraisesSection userId={userid} initialPraises={praisesRecent || []} initialCount={praisesCount || 0} />
+                  <PanelSection id="praise" title="Praises received">
+                    <PraisesSection userId={profile?.id || userid} initialPraises={praisesRecent || []} initialCount={praisesCount || 0} />
                   </PanelSection>
                 )}
 
                 {(isPublic("what") || isPublic("how")) && (
-                  <PanelSection title="Community feedback">
+                  <PanelSection id="community-feedback" title="Community feedback">
                     <HeartsExplainer compact />
                     <Box sx={{ mt: 2 }}>
                       <FeedbackSection history={profile?.history} feedbackUrl={feedbackUrl} userName={profile?.name} showWhat={isPublic("what")} showHow={isPublic("how")} />
@@ -230,14 +254,22 @@ const PublicProfile = () => {
                   <hr className="ohx-rule" />
                   <p className="ohx-muted" style={{ margin: "18px 0", fontSize: "0.92rem" }}>Want to get involved with Opportunity Hack?</p>
                   <Link href="/volunteer" className="ohx-btn ohx-btn--primary" style={{ width: "100%", justifyContent: "center", marginBottom: 12 }}>Become a volunteer <Arrow /></Link>
-                  <Link href="/projects" className="ohx-link" style={{ display: "inline-flex", marginBottom: 8, fontSize: "0.9rem" }}>View current projects <Arrow /></Link>                  
+                  <Link href="/projects" className="ohx-link" style={{ display: "inline-flex", marginBottom: 8, fontSize: "0.9rem" }}>View current projects <Arrow /></Link>
                 </div>
               </aside>
           </Box>
-
-        
         </section>
       </RefinedRoot>
+
+      {/* One page-level demo-video player — thumbnails everywhere are facades */}
+      <Dialog open={Boolean(videoDialog)} onClose={closeVideo} maxWidth="md" fullWidth>
+        <DialogContent sx={{ position: "relative", pt: 5 }}>
+          <IconButton onClick={closeVideo} aria-label="Close video" sx={{ position: "absolute", top: 6, right: 6 }}>
+            <CloseIcon />
+          </IconButton>
+          {videoDialog && <VideoDisplay url={videoDialog.url} title={videoDialog.title} />}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

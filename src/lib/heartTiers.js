@@ -50,6 +50,24 @@ export const ALL_REWARDS = TIERS.flatMap((tier) =>
   tier.rewards.map((r) => ({ ...r, tier: tier.name, color: tier.color }))
 );
 
+/**
+ * Sum a user's hearts from their profile `history` map (what + how sections
+ * only — matches the backend hearts summary). Shared by HeartGauge and the
+ * public portfolio hero.
+ */
+export function countHeartsFromHistory(history) {
+  let total = 0;
+  for (const section of ["what", "how"]) {
+    const values = history?.[section];
+    if (!values || typeof values !== "object") continue;
+    for (const value of Object.values(values)) {
+      const amount = Number(value);
+      if (!Number.isNaN(amount)) total += amount;
+    }
+  }
+  return total;
+}
+
 /** Return the tier object a person belongs to given their heart count, or null. */
 export function getTierForHearts(hearts) {
   let matched = null;
