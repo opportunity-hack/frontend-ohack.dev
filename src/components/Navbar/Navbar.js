@@ -12,6 +12,7 @@ import {
 } from "@propelauth/react";
 import {
   AppBar,
+  Badge,
   Box,
   Toolbar,
   IconButton,
@@ -24,8 +25,11 @@ import {
   Divider,
   ListSubheader,
 } from "@mui/material";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 import { LoginButton, NavbarLink, NavbarButton } from "./styles";
+import HeartsStatusMenuItem from "./HeartsStatusMenuItem";
+import useHeartsSummary from "../../hooks/use-hearts-summary";
 
 const pages = [
   ["Hackathons", "/hack"],
@@ -79,6 +83,11 @@ export default function NavBar() {
   const { isLoggedIn, user } = useAuthInfo();
   const { redirectToLoginPage } = useRedirectFunctions();
   const logout = useLogoutFunction();
+  // Hearts tier for the avatar ring/badge + dropdown status. Module-cached
+  // fetch shared with ProfileCompletionPrompt — one request per page load,
+  // none when logged out. Client-effect only, so SSR renders no ring (the
+  // ring/badge overlay the avatar without changing its box — no CLS).
+  const heartsSummary = useHeartsSummary();
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
@@ -531,7 +540,51 @@ export default function NavBar() {
                       margin: "4px",
                     }}
                   >
-                    <Avatar alt={user?.firstName} src={user?.pictureUrl} />
+                    {/* Tier ring + heart badge overlay the avatar without
+                        changing its box — the fixed-width auth slot and 64px
+                        bar height stay untouched (CWV invariant). */}
+                    <Badge
+                      overlap="circular"
+                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                      invisible={!heartsSummary.tier}
+                      badgeContent={
+                        <Box
+                          sx={{
+                            width: 14,
+                            height: 14,
+                            borderRadius: "50%",
+                            backgroundColor: heartsSummary.tier?.color || "transparent",
+                            border: "1.5px solid #FBFAF6",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FavoriteIcon
+                            sx={{
+                              fontSize: 9,
+                              color: ["Gold", "Platinum", "Diamond"].includes(
+                                heartsSummary.tier?.name
+                              )
+                                ? "#333"
+                                : "#fff",
+                            }}
+                          />
+                        </Box>
+                      }
+                    >
+                      <Avatar
+                        alt={user?.firstName}
+                        src={user?.pictureUrl}
+                        sx={{
+                          border: "2px solid transparent",
+                          boxSizing: "border-box",
+                          ...(heartsSummary.tier && {
+                            borderColor: heartsSummary.tier.color,
+                          }),
+                        }}
+                      />
+                    </Badge>
                   </IconButton>
                 </Tooltip>
                 <Menu
@@ -550,6 +603,15 @@ export default function NavBar() {
                   open={Boolean(anchorElUser)}
                   onClose={handleCloseUserMenu}
                 >
+                  <HeartsStatusMenuItem
+                    profile={heartsSummary.profile}
+                    hearts={heartsSummary.hearts}
+                    tier={heartsSummary.tier}
+                    nextTier={heartsSummary.nextTier}
+                    heartsToNext={heartsSummary.heartsToNext}
+                    progressPct={heartsSummary.progressPct}
+                    onNavigate={handleCloseUserMenu}
+                  />
                   {auth_settings.map((setting) => (
                     <Link href={setting[1]} key={setting[0]} passHref>
                       <MenuItem

@@ -95,8 +95,6 @@ export default function useProfileApi(){
 
     useEffect(() => {
         const getProfileDetails = async () => {
-            console.log("*** getProfileDetails user_id: ", user);
-            
             setIsLoading(true);
             
             if (!user) {
