@@ -6,6 +6,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FeedbackIcon from "@mui/icons-material/Feedback";
 import Link from "next/link";
+import { HEART_CATEGORIES } from "../../../lib/heartTiers";
 
 const HEART_COLOR = "#ff6d75";
 const MAX_HEARTS = 10;
@@ -17,29 +18,8 @@ const StyledRating = styled(Rating)(({ theme }) => ({
   },
 }));
 
-const WHAT_ITEMS = [
-  ["productionalized_projects", "Productionalized projects", "Projects that have been operationalized."],
-  ["requirements_gathering", "Requirements gathering", "Worked with nonprofits to capture what they need."],
-  ["documentation", "Documentation", "Wrote docs for developers and nonprofits."],
-  ["design_architecture", "Design architecture", "Diagrams: sequence, deployment, ERD, etc."],
-  ["code_quality", "Code quality"],
-  ["unit_test_writing", "Unit test writing"],
-  ["unit_test_coverage", "Unit test coverage"],
-  ["observability", "Observability", "Added monitoring (USE, RED) to software."],
-  ["judge", "Judging", "Judged other people's work."],
-  ["mentor", "Mentoring", "Mentored other people."],
-];
-
-const HOW_ITEMS = [
-  ["standups_completed", "Standups completed", "Provided updates and communicated to the team."],
-  ["code_reliability", "Code reliability", "Code doesn't crash and stays available."],
-  [
-    "customer_driven_innovation_and_design_thinking",
-    "Customer-driven innovation",
-    "Conversations with customers to drive product decisions.",
-  ],
-  ["iterations_of_code_pushed_to_production", "Production iterations", "Iterated on the final product."],
-];
+const WHAT_ITEMS = HEART_CATEGORIES.what;
+const HOW_ITEMS = HEART_CATEGORIES.how;
 
 function RatingItem({ label, description, value }) {
   return (

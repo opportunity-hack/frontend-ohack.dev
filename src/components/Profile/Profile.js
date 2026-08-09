@@ -21,13 +21,13 @@ import usePrivacySettings from "../../hooks/use-privacy-settings.js";
 import BadgesSection from "./Sections/BadgesSection";
 import HackathonsSection from "./Sections/HackathonsSection";
 import FeedbackSection from "./Sections/FeedbackSection";
-import HeartsExplainer from "./Sections/HeartsExplainer";
+import HeartsRewardsTab from "./Sections/HeartsRewardsTab";
+import HeartsStatusStrip from "./HeartsStatusStrip";
 import PrivacyToggle from "../../components/PrivacyToggle/PrivacyToggle";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister2';
-import HeartGauge from '../HeartGauge/HeartGauge';
 import PersonIcon from '@mui/icons-material/Person';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
@@ -181,6 +181,9 @@ export default function Profile() {
       '#basic': 0, '#impact': 1, '#github': 2,
       '#swag': 3, '#volunteer': 4, '#giveaways': 5,
       '#portfolio': 6,
+      // Tab 1 was renamed Impact -> Hearts (Aug 2026). '#hearts' is the
+      // canonical hash now; '#impact' stays as a legacy alias for old links.
+      '#hearts': 1,
     };
     if (router.asPath.includes('#')) {
       const hash = `#${router.asPath.split('#')[1]}`;
@@ -190,9 +193,9 @@ export default function Profile() {
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    const tabNames = ['basic', 'impact', 'github', 'swag', 'volunteer', 'giveaways', 'portfolio'];
+    const tabNames = ['basic', 'hearts', 'github', 'swag', 'volunteer', 'giveaways', 'portfolio'];
     trackEvent({ action: 'profile_tab_change', params: { event_label: tabNames[newValue], page: 'profile' } });
-    const tabHashMap = { 0: 'basic', 1: 'impact', 2: 'github', 3: 'swag', 4: 'volunteer', 5: 'giveaways', 6: 'portfolio' };
+    const tabHashMap = { 0: 'basic', 1: 'hearts', 2: 'github', 3: 'swag', 4: 'volunteer', 5: 'giveaways', 6: 'portfolio' };
     router.push(`/profile#${tabHashMap[newValue]}`, undefined, { shallow: true });
   };
 
@@ -475,7 +478,13 @@ export default function Profile() {
                   <Link href={profile?.profile_url || '#'} className="ohx-btn ohx-btn--primary">
                     View public profile <Arrow />
                   </Link>
-                  <HeartGauge history={profile?.history} />
+                  <HeartsStatusStrip
+                    history={profile?.history}
+                    onOpenHearts={() => {
+                      setActiveTab(1);
+                      router.push('/profile#hearts', undefined, { shallow: true });
+                    }}
+                  />
                 </Box>
               </>
             )}
@@ -513,7 +522,7 @@ export default function Profile() {
                 }}
               >
                 <Tab icon={<PersonIcon />} label={isMobile ? undefined : "Basic Info"} title="Basic Info" {...a11yProps(0)} />
-                <Tab icon={<EmojiEventsIcon />} label={isMobile ? undefined : "Impact"} title="Impact" {...a11yProps(1)} />
+                <Tab icon={<FavoriteIcon />} label={isMobile ? undefined : "Hearts"} title="Hearts" {...a11yProps(1)} />
                 <Tab icon={<GitHubIcon />} label={isMobile ? undefined : "GitHub"} title="GitHub" {...a11yProps(2)} />
                 <Tab icon={<LocalShippingIcon />} label={isMobile ? undefined : "Swag & Shipping"} title="Swag & Shipping" {...a11yProps(3)} />
                 <Tab icon={<VolunteerActivismIcon />} label={isMobile ? undefined : "Volunteer History"} title="Volunteer History" {...a11yProps(4)} />
@@ -638,38 +647,26 @@ export default function Profile() {
               </Grid>
             </TabPanel>
 
-            {/* Tab 1 — Impact */}
+            {/* Tab 1 — Hearts (rewards status; was "Impact") */}
             <TabPanel value={activeTab} index={1}>
-              <PanelHeader eyebrow="Impact" title="Your Impact & Achievements" />
-              <Box sx={{ mb: 3 }}>
-                <HeartsExplainer />
-              </Box>
-              <Grid container spacing={{ xs: 2, sm: 4 }}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  {isLoading ? (
-                    <Skeleton variant="rectangular" height={180} />
-                  ) : (
-                    <div className="ohx-card" style={{ padding: 24 }}>
-                      <RaffleEntries profile={profile} githubHistory={githubHistory} />
-                    </div>
-                  )}
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  {isLoading || isGithubLoading ? (
-                    <Skeleton variant="rectangular" height={180} />
-                  ) : (
-                    <div className="ohx-card" style={{ padding: 24 }}>
-                      <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
-                    </div>
-                  )}
-                </Grid>
-              </Grid>
+              <PanelHeader eyebrow="Hearts & rewards" title="Your rewards status">
+                Hearts are how we recognize the impact you create for nonprofits —
+                they unlock real rewards as you climb tiers.
+              </PanelHeader>
+              <HeartsRewardsTab
+                profile={profile}
+                isLoading={isLoading}
+                onOpenGiveaways={() => {
+                  setActiveTab(5);
+                  router.push('/profile#giveaways', undefined, { shallow: true });
+                }}
+              />
             </TabPanel>
 
-            {/* Tab 2 — GitHub Certificates */}
+            {/* Tab 2 — GitHub Contributions & Certificates */}
             <TabPanel value={activeTab} index={2}>
-              <PanelHeader eyebrow="GitHub" title="GitHub Certificates">
-                Certificates recognizing your code contributions to nonprofits through Opportunity Hack.
+              <PanelHeader eyebrow="GitHub" title="GitHub Contributions & Certificates">
+                Your code contributions to nonprofits through Opportunity Hack, and the certificates recognizing them.
               </PanelHeader>
               {!github ? (
                 <p className="ohx-muted" style={{ fontSize: '0.95rem' }}>
@@ -695,6 +692,17 @@ export default function Profile() {
                   }))}
                   mode="private"
                 />
+              )}
+              {github && (
+                <Box sx={{ mt: 3 }}>
+                  {isLoading || isGithubLoading ? (
+                    <Skeleton variant="rectangular" height={180} />
+                  ) : (
+                    <div className="ohx-card" style={{ padding: 24 }}>
+                      <ShareableGitHubContributions githubHistory={githubHistory} userName={github} />
+                    </div>
+                  )}
+                </Box>
               )}
               <Box sx={{ mt: 3 }}>
                 <Link href="/cert" className="ohx-link">
