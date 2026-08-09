@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
 import {
@@ -8,7 +9,6 @@ import {
 } from "@propelauth/react";
 import {
   Typography,
-  Container,
   Box,
   TextField,
   Button,
@@ -18,18 +18,12 @@ import {
   Select,
   MenuItem,
   CircularProgress,
-  Paper,
-  Divider,
   Alert,
   Grid,
   Stepper,
   Step,
   StepLabel,
-  Card,
-  CardContent,
-  CardActions,
   Chip,
-  Stack,
   Tooltip,
   IconButton,
   InputAdornment,
@@ -48,12 +42,37 @@ import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
-import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
-import { sponsorLevels } from "../../../data/sponsorData";
+import ReactMarkdown from "react-markdown";
+import {
+  RefinedRoot,
+  RefinedFonts,
+  Eyebrow,
+  Arrow,
+  Stat,
+} from "../../../components/design/refined";
+import {
+  refinedFieldSx,
+  refinedChoiceSx,
+  refinedChipSx,
+  refinedInlineLinkSx,
+  refinedSelectMenuProps,
+  stepTitleSx,
+  stepLeadSx,
+  eventMarkdownSx,
+  infoAlertSx,
+  warningAlertSx,
+  successAlertSx,
+  errorAlertSx,
+  emphasisPanelSx,
+  primaryButtonSx,
+  ghostButtonSx,
+  refinedStepperSx,
+  refinedStepperMobileSx,
+} from "../../../components/ApplicationForm/refinedStyles";
 
 // Sponsorship tiers - aligned with /sponsor page
 const sponsorshipTiers = [
@@ -184,6 +203,9 @@ const SponsorApplicationComponent = () => {
 
   // Add the initialization ref at the top level
   const initializationRef = useRef(false);
+
+  // Scroll target so step navigation lands on the step fields, not the page hero
+  const stepContentRef = useRef(null);
 
   // Initial form state
   const initialFormData = {
@@ -798,13 +820,13 @@ const SponsorApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
-      // Scroll to top of form for better UX
-      if (formRef?.current) {
-        formRef.current.scrollIntoView({
+      // Bring the new step's fields into view (not the page hero)
+      requestAnimationFrame(() => {
+        stepContentRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
-      }
+      });
     }
   }, [
     activeStep,
@@ -813,27 +835,33 @@ const SponsorApplicationComponent = () => {
     validateSponsorshipInfo,
     validateVolunteerInfo,
     handleSubmit,
-    formRef,
   ]);
 
   const handleBack = useCallback(() => {
     setActiveStep((prev) => Math.max(0, prev - 1));
-    // Scroll to top of form for better UX
-    if (formRef?.current) {
-      formRef.current.scrollIntoView({
+    // Bring the new step's fields into view (not the page hero)
+    requestAnimationFrame(() => {
+      stepContentRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-    }
-  }, [formRef]);
+    });
+  }, []);
 
   // Company Information Form
   const renderBasicInfoForm = useCallback(
     () => (
       <Box>
-        <Typography variant="h6" component="h3" sx={{ mb: 3 }}>
-          Tell us about your organization
-        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Eyebrow>Step 1</Eyebrow>
+          <Typography component="h2" sx={stepTitleSx}>
+            Company information
+          </Typography>
+          <Typography variant="body1" sx={stepLeadSx}>
+            Tell us about your organization so we can route your application and
+            follow up with the right person.
+          </Typography>
+        </Box>
 
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 6 }}>
@@ -846,6 +874,7 @@ const SponsorApplicationComponent = () => {
               value={formData.email || ""}
               onChange={handleChange}
               error={typeof error === "string" && error.includes("email")}
+              sx={refinedFieldSx}
             />
           </Grid>
 
@@ -869,6 +898,7 @@ const SponsorApplicationComponent = () => {
                   </InputAdornment>
                 ),
               }}
+              sx={refinedFieldSx}
             />
           </Grid>
 
@@ -881,6 +911,7 @@ const SponsorApplicationComponent = () => {
               value={formData.company || ""}
               onChange={handleChange}
               error={typeof error === "string" && error.includes("company")}
+              sx={refinedFieldSx}
             />
           </Grid>
 
@@ -893,6 +924,7 @@ const SponsorApplicationComponent = () => {
               value={formData.name || ""}
               onChange={handleChange}
               error={typeof error === "string" && error.includes("name")}
+              sx={refinedFieldSx}
             />
           </Grid>
 
@@ -904,17 +936,19 @@ const SponsorApplicationComponent = () => {
               value={formData.title || ""}
               onChange={handleChange}
               placeholder="e.g., Director of Community Engagement"
+              sx={refinedFieldSx}
             />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
+            <FormControl fullWidth sx={refinedFieldSx}>
               <InputLabel>Preferred Contact Method</InputLabel>
               <Select
                 name="preferredContact"
                 value={formData.preferredContact || "email"}
                 onChange={handleChange}
                 label="Preferred Contact Method"
+                MenuProps={refinedSelectMenuProps}
               >
                 <MenuItem value="email">Email</MenuItem>
                 <MenuItem value="phone">Phone</MenuItem>
@@ -930,21 +964,27 @@ const SponsorApplicationComponent = () => {
               value={formData.howHeard || ""}
               onChange={handleChange}
               placeholder="e.g., Social media, referral, etc."
+              sx={refinedFieldSx}
             />
           </Grid>
 
           <Grid size={{ xs: 12 }}>
-            <Box sx={{ mt: 2, mb: 1 }}>
-              <Typography variant="subtitle1" gutterBottom>
+            <Box sx={{ mt: 1, mb: 1 }}>
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                sx={{ color: "var(--ink)", fontWeight: 600 }}
+              >
                 Company Logo (Optional)
               </Typography>
 
-              <FormControl fullWidth sx={{ mb: 1 }}>
+              <FormControl fullWidth sx={{ ...refinedFieldSx, mb: 1 }}>
                 <Select
                   name="useLogo"
                   value={formData.useLogo || "Yes"}
                   onChange={handleChange}
                   displayEmpty
+                  MenuProps={refinedSelectMenuProps}
                 >
                   <MenuItem value="Yes">Yes, you can use our logo</MenuItem>
                   <MenuItem value="No">No, please don't use our logo</MenuItem>
@@ -976,7 +1016,7 @@ const SponsorApplicationComponent = () => {
                       "image/gif",
                       "image/svg+xml",
                     ]}
-                    sx={{ mb: 2 }}
+                    sx={refinedFieldSx}
                   />
                 </Box>
               )}
@@ -992,18 +1032,20 @@ const SponsorApplicationComponent = () => {
   const renderSponsorshipForm = useCallback(
     () => (
       <Box>
-        <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-          Choose Your Sponsorship Level
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 3, color: "text.secondary" }}>
-          Select the sponsorship tier that aligns with your organization's
-          impact goals. Each tier offers increasing visibility and engagement
-          opportunities with our passionate tech community.
-        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Eyebrow>Step 2</Eyebrow>
+          <Typography component="h2" sx={stepTitleSx}>
+            Choose your sponsorship level
+          </Typography>
+          <Typography variant="body1" sx={stepLeadSx}>
+            Select the tier that fits your organization's goals. Every level
+            puts your engineers in the room to mentor, judge, and meet the
+            builders you might want to hire.
+          </Typography>
+        </Box>
 
         {/* Value Proposition Alert */}
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
           <Typography variant="body2">
             <strong>💡 Maximum Impact:</strong> Higher tiers provide
             exponentially more value through extended website presence, social
@@ -1012,182 +1054,169 @@ const SponsorApplicationComponent = () => {
         </Alert>
 
         <Grid container spacing={3}>
-          {sponsorshipTiers.map((tier, index) => {
-            const isSelected = formData.sponsorshipTier === tier.name;
+          {sponsorshipTiers.map((tier) => {
+            const isTierSelected = formData.sponsorshipTier === tier.name;
             const isPopular = tier.name === "Transformer"; // Mark Transformer as popular choice
             const isCustom = tier.name === "Custom Sponsorship";
 
             return (
               <Grid size={{ xs: 12, md: isCustom ? 12 : 6 }} key={tier.name}>
-                <Card
-                  raised={isSelected}
-                  sx={{
-                    height: "100%",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease-in-out",
-                    border: isSelected
-                      ? `3px solid ${theme.palette.primary.main}`
-                      : `2px solid ${tier.color || "#e0e0e0"}`,
-                    backgroundColor: tier.color || "white",
-                    position: "relative",
-                    transform: isSelected ? "scale(1.02)" : "scale(1)",
-                    "&:hover": {
-                      boxShadow: 8,
-                      transform: "scale(1.02)",
-                    },
-                  }}
+                <Box
                   onClick={() =>
                     handleChange({
                       target: { name: "sponsorshipTier", value: tier.name },
                     })
                   }
+                  className="ohx-card"
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    p: { xs: 2.5, md: 3 },
+                    cursor: "pointer",
+                    borderWidth: isTierSelected ? 2 : 1,
+                    borderStyle: "solid",
+                    borderColor: isTierSelected
+                      ? "var(--brand)"
+                      : "var(--line)",
+                    backgroundColor: isTierSelected
+                      ? "rgba(27,58,107,0.05)"
+                      : "var(--surface)",
+                  }}
                 >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 1,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Typography
+                      component="h3"
+                      sx={{ ...stepTitleSx, fontSize: "1.3rem", mb: 0 }}
+                    >
+                      {tier.name}
+                    </Typography>
+                    <Chip
+                      label={tier.amount}
+                      sx={{
+                        ...refinedChipSx,
+                        fontWeight: 700,
+                        ...(isTierSelected && {
+                          bgcolor: "var(--brand)",
+                          color: "#fff",
+                          borderColor: "var(--brand)",
+                        }),
+                      }}
+                    />
+                  </Box>
+
                   {/* Popular Badge */}
                   {isPopular && (
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: 80,
-                        right: 10,
-                        backgroundColor: "warning.main",
-                        color: "white",
-                        px: 2,
-                        py: 0.5,
-                        borderRadius: "15px",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                        zIndex: 1,
-                      }}
+                    <span
+                      className="ohx-tag ohx-tag--accent"
+                      style={{ marginTop: 12, alignSelf: "flex-start" }}
                     >
-                      ⭐ MOST POPULAR
-                    </Box>
+                      ⭐ Most popular
+                    </span>
                   )}
 
-                  <CardContent sx={{ pb: 1 }}>
+                  <Box component="hr" className="ohx-rule" sx={{ my: 2.25 }} />
+
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 700, color: "var(--ink)", mb: 1 }}
+                  >
+                    Your Benefits & Impact:
+                  </Typography>
+
+                  <Box
+                    component="ul"
+                    sx={{
+                      paddingLeft: "20px",
+                      margin: 0,
+                      mb: 2,
+                      "& li": {
+                        marginBottom: "8px",
+                        "&::marker": {
+                          color: "var(--brand)",
+                        },
+                      },
+                    }}
+                  >
+                    {tier.benefits.map((benefit, idx) => (
+                      <li key={idx}>
+                        <Typography
+                          variant="body2"
+                          sx={{ lineHeight: 1.55, color: "var(--muted)" }}
+                        >
+                          {benefit}
+                        </Typography>
+                      </li>
+                    ))}
+                  </Box>
+
+                  {/* Social Proof for Higher Tiers */}
+                  {tier.name === "Visionary" && (
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 2,
+                        mt: "auto",
+                        p: 1.5,
+                        borderRadius: 2,
+                        border: "1px solid var(--line)",
+                        backgroundColor: "var(--surface-2)",
                       }}
                     >
                       <Typography
-                        variant="h5"
-                        component="div"
-                        sx={{ fontWeight: "bold" }}
+                        variant="caption"
+                        sx={{ fontStyle: "italic", color: "var(--muted)" }}
                       >
-                        {tier.name}
+                        "As a Visionary sponsor, we've hired 3 amazing
+                        developers directly from Opportunity Hack events." -
+                        PayPal Employee
                       </Typography>
-                      <Chip
-                        label={tier.amount}
-                        color={isSelected ? "primary" : "default"}
-                        sx={{
-                          fontWeight: "bold",
-                          fontSize: "14px",
-                          backgroundColor: isSelected
-                            ? "primary.main"
-                            : "rgba(0,0,0,0.1)",
-                          color: isSelected ? "white" : "text.primary",
-                        }}
-                      />
                     </Box>
+                  )}
 
-                    <Divider sx={{ mb: 2 }} />
-
-                    <Typography
-                      variant="subtitle2"
-                      gutterBottom
-                      sx={{ fontWeight: "bold", color: "text.primary" }}
-                    >
-                      Your Benefits & Impact:
-                    </Typography>
-
+                  {tier.name === "Transformer" && (
                     <Box
-                      component="ul"
                       sx={{
-                        paddingLeft: "20px",
-                        margin: 0,
-                        "& li": {
-                          marginBottom: "8px",
-                          "&::marker": {
-                            color: "primary.main",
-                          },
-                        },
-                      }}
-                    >
-                      {tier.benefits.map((benefit, idx) => (
-                        <li key={idx}>
-                          <Typography variant="body2" sx={{ lineHeight: 1.4 }}>
-                            {benefit}
-                          </Typography>
-                        </li>
-                      ))}
-                    </Box>
-
-                    {/* Social Proof for Higher Tiers */}
-                    {tier.name === "Visionary" && (
-                      <Box
-                        sx={{
-                          mt: 2,
-                          p: 1.5,
-                          backgroundColor: "rgba(255,255,255,0.8)",
-                          borderRadius: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{ fontStyle: "italic", color: "text.secondary" }}
-                        >
-                          "As a Visionary sponsor, we've hired 3 amazing
-                          developers directly from Opportunity Hack events." -
-                          PayPal Employee
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {tier.name === "Transformer" && (
-                      <Box
-                        sx={{
-                          mt: 2,
-                          p: 1.5,
-                          backgroundColor: "rgba(255,255,255,0.8)",
-                          borderRadius: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{ fontStyle: "italic", color: "text.secondary" }}
-                        >
-                          🔥 Perfect balance of visibility and value - chosen by
-                          60% of our returning sponsors
-                        </Typography>
-                      </Box>
-                    )}
-                  </CardContent>
-
-                  <CardActions sx={{ pt: 0, pb: 2, px: 2 }}>
-                    <Button
-                      fullWidth
-                      variant={isSelected ? "contained" : "outlined"}
-                      color="primary"
-                      size="large"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleChange({
-                          target: { name: "sponsorshipTier", value: tier.name },
-                        });
-                      }}
-                      sx={{
-                        fontWeight: "bold",
-                        py: 1.5,
+                        mt: "auto",
+                        p: 1.5,
                         borderRadius: 2,
+                        border: "1px solid var(--line)",
+                        backgroundColor: "var(--surface-2)",
                       }}
                     >
-                      {isSelected ? "✓ Selected" : `Choose ${tier.name}`}
-                    </Button>
-                  </CardActions>
-                </Card>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontStyle: "italic", color: "var(--muted)" }}
+                      >
+                        🔥 Perfect balance of visibility and value - chosen by
+                        60% of our returning sponsors
+                      </Typography>
+                    </Box>
+                  )}
+
+                  <Button
+                    fullWidth
+                    variant={isTierSelected ? "contained" : "outlined"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleChange({
+                        target: { name: "sponsorshipTier", value: tier.name },
+                      });
+                    }}
+                    sx={{
+                      mt: 2,
+                      ...(isTierSelected ? primaryButtonSx : ghostButtonSx),
+                    }}
+                  >
+                    {isTierSelected ? "✓ Selected" : `Choose ${tier.name}`}
+                  </Button>
+                </Box>
               </Grid>
             );
           })}
@@ -1195,7 +1224,7 @@ const SponsorApplicationComponent = () => {
 
         {formData.sponsorshipTier === "Custom Sponsorship" && (
           <Box sx={{ mt: 4 }}>
-            <Alert severity="success" sx={{ mb: 2 }}>
+            <Alert severity="success" sx={{ ...successAlertSx, mb: 2 }}>
               <Typography variant="body2">
                 <strong>Custom Sponsorship Selected!</strong> We'll work with
                 you to create a tailored package that maximizes your impact and
@@ -1212,7 +1241,7 @@ const SponsorApplicationComponent = () => {
               onChange={handleChange}
               error={typeof error === "string" && error.includes("custom")}
               helperText="Share your budget range, specific goals, target audience, or unique partnership ideas. The more details you provide, the better we can tailor your sponsorship package."
-              sx={{ mb: 2 }}
+              sx={{ ...refinedFieldSx, mb: 2 }}
             />
           </Box>
         )}
@@ -1227,31 +1256,21 @@ const SponsorApplicationComponent = () => {
             value={formData.sponsorshipDetails || ""}
             onChange={handleChange}
             helperText="Any specific recruitment needs, technical areas of interest, or special requests for your sponsorship experience"
+            sx={refinedFieldSx}
           />
         </Box>
 
         {/* Benefits Summary for Selected Tier */}
         {formData.sponsorshipTier &&
           formData.sponsorshipTier !== "Custom Sponsorship" && (
-            <Box
-              sx={{
-                mt: 3,
-                p: 3,
-                backgroundColor: "primary.light",
-                borderRadius: 2,
-              }}
-            >
+            <Box sx={{ ...emphasisPanelSx, mt: 3 }}>
               <Typography
-                variant="h6"
-                gutterBottom
-                sx={{ color: "primary.contrastText" }}
+                component="h3"
+                sx={{ ...stepTitleSx, fontSize: "1.2rem", mb: 1 }}
               >
                 🎯 {formData.sponsorshipTier} Sponsorship
               </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: "primary.contrastText", opacity: 0.9 }}
-              >
+              <Typography sx={{ color: "var(--muted)", lineHeight: 1.7 }}>
                 Thank you for choosing the {formData.sponsorshipTier} tier! Your
                 sponsorship will directly enable us to provide better resources
                 for participants, attract more high-quality talent, and create
@@ -1261,25 +1280,31 @@ const SponsorApplicationComponent = () => {
           )}
       </Box>
     ),
-    [formData, error, handleChange, theme.palette.primary.main],
+    [formData, error, handleChange],
   );
 
   // Volunteering Form
   const renderVolunteeringForm = useCallback(
     () => (
       <Box>
-        <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-          Volunteering Opportunities
-        </Typography>
-
-        <Typography variant="body2" sx={{ mb: 3 }}>
-          Many sponsors also contribute through volunteering. If you're
-          interested in getting your team involved, let us know how you'd like
-          to help.
-        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Eyebrow>Step 3</Eyebrow>
+          <Typography component="h2" sx={stepTitleSx}>
+            Volunteering opportunities
+          </Typography>
+          <Typography variant="body1" sx={stepLeadSx}>
+            Many sponsors also contribute through volunteering. If you're
+            interested in getting your team involved, let us know how you'd like
+            to help.
+          </Typography>
+        </Box>
 
         <Box sx={{ mb: 4 }}>
-          <Typography variant="subtitle1" gutterBottom>
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{ color: "var(--ink)", fontWeight: 600 }}
+          >
             How would you like to volunteer? (Select all that apply)
           </Typography>
 
@@ -1294,12 +1319,18 @@ const SponsorApplicationComponent = () => {
                     }
                     onChange={handleChange}
                     name={`volunteerRole-${role.value}`}
+                    sx={refinedChoiceSx}
                   />
                 }
                 label={
                   <Box>
-                    <Typography variant="body2">{role.label}</Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: "var(--ink)" }}>
+                      {role.label}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "var(--muted)" }}
+                    >
                       {role.description}
                     </Typography>
                   </Box>
@@ -1318,7 +1349,7 @@ const SponsorApplicationComponent = () => {
               error={
                 typeof error === "string" && error.includes("other volunteer")
               }
-              sx={{ mt: 2 }}
+              sx={{ ...refinedFieldSx, mt: 2 }}
             />
           )}
         </Box>
@@ -1345,6 +1376,7 @@ const SponsorApplicationComponent = () => {
                   </InputAdornment>
                 ),
               }}
+              sx={refinedFieldSx}
             />
           </Grid>
 
@@ -1369,6 +1401,7 @@ const SponsorApplicationComponent = () => {
                   </InputAdornment>
                 ),
               }}
+              sx={refinedFieldSx}
             />
           </Grid>
         </Grid>
@@ -1381,94 +1414,101 @@ const SponsorApplicationComponent = () => {
   const renderReviewForm = useCallback(
     () => (
       <Box>
-        <Typography variant="h6" component="h3" sx={{ mb: 3 }}>
-          Review Your Information
-        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Eyebrow>Step 4</Eyebrow>
+          <Typography component="h2" sx={stepTitleSx}>
+            Review and submit
+          </Typography>
+          <Typography variant="body1" sx={stepLeadSx}>
+            One last look before you send it. Confirm the details below, add any
+            final notes, and submit for our team to follow up.
+          </Typography>
+        </Box>
 
-        <Paper elevation={0} variant="outlined" sx={{ p: 3, mb: 3 }}>
+        <Box className="ohx-card" sx={{ p: 3, mb: 3 }}>
           <Typography
             variant="subtitle1"
             gutterBottom
-            sx={{ fontWeight: "bold" }}
+            sx={{ fontWeight: 700, color: "var(--ink)" }}
           >
             Company Information
           </Typography>
 
           <Grid container spacing={2}>
             <Grid size={{ xs: 4 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                 Company:
               </Typography>
             </Grid>
             <Grid size={{ xs: 8 }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                 {formData.company || "Not provided"}
               </Typography>
             </Grid>
 
             <Grid size={{ xs: 4 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                 Contact:
               </Typography>
             </Grid>
             <Grid size={{ xs: 8 }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                 {formData.name || "Not provided"}
               </Typography>
             </Grid>
 
             <Grid size={{ xs: 4 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                 Title:
               </Typography>
             </Grid>
             <Grid size={{ xs: 8 }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                 {formData.title || "Not provided"}
               </Typography>
             </Grid>
 
             <Grid size={{ xs: 4 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                 Email:
               </Typography>
             </Grid>
             <Grid size={{ xs: 8 }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                 {formData.email || "Not provided"}
               </Typography>
             </Grid>
 
             <Grid size={{ xs: 4 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                 Phone:
               </Typography>
             </Grid>
             <Grid size={{ xs: 8 }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                 {formData.phoneNumber || "Not provided"}
               </Typography>
             </Grid>
           </Grid>
-        </Paper>
+        </Box>
 
-        <Paper elevation={0} variant="outlined" sx={{ p: 3, mb: 3 }}>
+        <Box className="ohx-card" sx={{ p: 3, mb: 3 }}>
           <Typography
             variant="subtitle1"
             gutterBottom
-            sx={{ fontWeight: "bold" }}
+            sx={{ fontWeight: 700, color: "var(--ink)" }}
           >
             Sponsorship Details
           </Typography>
 
           <Grid container spacing={2}>
             <Grid size={{ xs: 4 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                 Sponsorship Tier:
               </Typography>
             </Grid>
             <Grid size={{ xs: 8 }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                 {formData.sponsorshipTier || "Not selected"}
               </Typography>
             </Grid>
@@ -1476,12 +1516,12 @@ const SponsorApplicationComponent = () => {
             {formData.sponsorshipTier === "Custom Sponsorship" && (
               <>
                 <Grid size={{ xs: 4 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                     Custom Details:
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 8 }}>
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                     {formData.customSponsorship || "Not provided"}
                   </Typography>
                 </Grid>
@@ -1491,12 +1531,12 @@ const SponsorApplicationComponent = () => {
             {formData.sponsorshipDetails && (
               <>
                 <Grid size={{ xs: 4 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                     Additional Details:
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 8 }}>
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                     {formData.sponsorshipDetails}
                   </Typography>
                 </Grid>
@@ -1504,26 +1544,26 @@ const SponsorApplicationComponent = () => {
             )}
 
             <Grid size={{ xs: 4 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                 Logo Usage:
               </Typography>
             </Grid>
             <Grid size={{ xs: 8 }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                 {formData.useLogo || "Not specified"}
               </Typography>
             </Grid>
           </Grid>
-        </Paper>
+        </Box>
 
         {(formData.volunteerRoles?.length > 0 ||
           formData.volunteerCount ||
           formData.volunteerHours) && (
-          <Paper elevation={0} variant="outlined" sx={{ p: 3, mb: 3 }}>
+          <Box className="ohx-card" sx={{ p: 3, mb: 3 }}>
             <Typography
               variant="subtitle1"
               gutterBottom
-              sx={{ fontWeight: "bold" }}
+              sx={{ fontWeight: 700, color: "var(--ink)" }}
             >
               Volunteering Information
             </Typography>
@@ -1532,7 +1572,7 @@ const SponsorApplicationComponent = () => {
               {formData.volunteerRoles?.length > 0 && (
                 <>
                   <Grid size={{ xs: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                       Volunteer Roles:
                     </Typography>
                   </Grid>
@@ -1549,7 +1589,7 @@ const SponsorApplicationComponent = () => {
                                 )?.label
                           }
                           size="small"
-                          sx={{ mb: 1, mr: 1 }}
+                          sx={{ ...refinedChipSx, mb: 1, mr: 1 }}
                         />
                       ))}
                     </Box>
@@ -1560,12 +1600,12 @@ const SponsorApplicationComponent = () => {
               {formData.volunteerCount && (
                 <>
                   <Grid size={{ xs: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                       Volunteer Count:
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 8 }}>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                       {formData.volunteerCount} people
                     </Typography>
                   </Grid>
@@ -1575,19 +1615,19 @@ const SponsorApplicationComponent = () => {
               {formData.volunteerHours && (
                 <>
                   <Grid size={{ xs: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: "var(--muted)" }}>
                       Volunteer Hours:
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 8 }}>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ color: "var(--ink)" }}>
                       {formData.volunteerHours} hours
                     </Typography>
                   </Grid>
                 </>
               )}
             </Grid>
-          </Paper>
+          </Box>
         )}
 
         <TextField
@@ -1598,10 +1638,10 @@ const SponsorApplicationComponent = () => {
           fullWidth
           value={formData.additionalNotes || ""}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={{ ...refinedFieldSx, mb: 1 }}
         />
 
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
           <Typography variant="body2">
             By submitting this form, you're expressing interest in sponsoring
             Opportunity Hack. Our team will contact you within 2-3 business days
@@ -1707,428 +1747,549 @@ const SponsorApplicationComponent = () => {
       }
     : null;
 
-  // If form submitted successfully, show success message
-  if (success) {
+  const renderSuccessMessage = () => {
     return (
-      <Container>
+      <RefinedRoot>
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
           <link rel="canonical" href={canonicalUrl} />
+          <meta name="theme-color" content="#1B3A6B" />
         </Head>
 
-        <Box my={8} textAlign="center">
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{ fontSize: "2.5rem", mb: 4, mt: 12 }}
-          >
-            Application Submitted!
-          </Typography>
-
-          <Alert severity="success" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            Thank you for your interest in sponsoring Opportunity Hack. Our team
-            will review your application and contact you within 2-3 business
-            days.
-          </Alert>
-
-          <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
-            <GiveButterWidget
-              context="success"
-              userId={user?.userId}
-              applicationType="sponsor"
-              size="large"
-              onDonationEvent={(eventData) => {
-                // Track sponsor application donations
-                console.log("Sponsor donation event:", eventData);
-                // You can add additional tracking here
-              }}
-            />
-          </Box>
-
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push(`/hack/${event_id}`)}
-            sx={{ mt: 2 }}
-          >
-            Return to Hackathon Page
-          </Button>
-        </Box>
-      </Container>
-    );
-  }
-
-  return (
-    <Container>
-      <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta charSet="UTF-8" />
-        <meta
-          name="keywords"
-          content={`hackathon sponsor, sponsorship application, tech for good, nonprofit hackathon, opportunity hack, corporate sponsorship, volunteer, tech sponsorship, ${eventData?.name || "hackathon"}, ${eventData?.location || "tech event"}, corporate social responsibility, tech investment, brand visibility`}
-        />
-        <meta name="author" content="Opportunity Hack" />
-        <meta
-          name="robots"
-          content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-        />
-        <link rel="canonical" href={canonicalUrl} />
-
-        {/* Open Graph tags */}
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:image" content={imageUrl} />
-        <meta
-          property="og:image:alt"
-          content="Sponsors engaging with participants at Opportunity Hack hackathon"
-        />
-        <meta property="og:site_name" content="Opportunity Hack" />
-        <meta property="og:locale" content="en_US" />
-
-        {/* Twitter Card tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@OpportunityHack" />
-        <meta name="twitter:creator" content="@OpportunityHack" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content={imageUrl} />
-        <meta
-          name="twitter:image:alt"
-          content="Sponsors engaging with participants at Opportunity Hack hackathon"
-        />
-
-        {/* Additional SEO tags */}
-        <meta name="application-name" content="Opportunity Hack" />
-        <meta name="theme-color" content="#3f51b5" />
-        <meta name="format-detection" content="telephone=no" />
-
-        {/* Preconnect to optimize loading */}
-        <link
-          rel="preconnect"
-          href="https://cdn.ohack.dev"
-          crossOrigin="anonymous"
-        />
-        <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
-      </Head>
-
-      {structuredData && (
-        <Script
-          id="sponsor-application-structured-data"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      )}
-
-      {/* Form persistence notification component */}
-      <FormPersistenceControls
-        onSave={saveToLocalStorage}
-        onRestore={loadFromLocalStorage}
-        onClear={clearSavedData}
-        notification={notification}
-        onCloseNotification={closeNotification}
-      />
-
-      <Box ref={formRef}>
-        <Typography
-          variant="h1"
-          component="h1"
-          sx={{ fontSize: "2.5rem", mb: 2, mt: 0 }}
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(100px, 12vh, 148px)",
+            paddingBottom: "clamp(48px, 8vh, 96px)",
+          }}
         >
-          Sponsor Application
-        </Typography>
-
-        {/* QR Code for Check-in */}
-        <VolunteerCheckInQR
-          eventId={event_id}
-          volunteerId={volunteerId}
-          isSelected={isSelected}
-          volunteerType="sponsor"
-          name={formData.name}
-          isSubmitted={true}
-          qrSize={200}
-          sx={{ mx: "auto", maxWidth: 500 }}
-        />
-
-        {isLoading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box>
-            {/* Header section with responsive layout */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: { xs: "flex-start", md: "flex-start" },
-                gap: 2,
-                mb: 3,
-              }}
-            >
-              {/* Event info */}
-              <Box sx={{ flex: 1 }}>
-                {eventData && (
-                  <>
-                    <Typography
-                      variant="h2"
-                      component="h2"
-                      sx={{ fontSize: "1.75rem", mb: 1 }}
-                    >
-                      {eventData.name}
-                    </Typography>
-
-                    <Typography
-                      variant="h3"
-                      component="h3"
-                      sx={{
-                        fontSize: "1.25rem",
-                        mb: 1,
-                        color: "text.secondary",
-                      }}
-                    >
-                      {eventData.location}
-                    </Typography>
-
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        mb: 1,
-                        color: "text.secondary",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                      }}
-                    >
-                      <Box
-                        component="span"
-                        sx={{ display: "inline-flex", alignItems: "center" }}
-                      >
-                        📆 {eventData.formattedStartDate}
-                      </Box>
-                      {eventData.formattedStartDate !==
-                        eventData.formattedEndDate && (
-                        <>
-                          <Box component="span" sx={{ mx: 0.5 }}>
-                            to
-                          </Box>
-                          <Box
-                            component="span"
-                            sx={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            {eventData.formattedEndDate}
-                          </Box>
-                        </>
-                      )}
-                    </Typography>
-                  </>
-                )}
-              </Box>
-
-              {/* Social proof image */}
-              <Box
-                sx={{
-                  width: { xs: "100%", sm: "180px", md: "220px" },
-                  height: { xs: "140px", sm: "120px", md: "150px" },
-                  borderRadius: 2,
-                  overflow: "hidden",
-                  boxShadow: 2,
-                  flexShrink: 0,
-                  alignSelf: { xs: "center", md: "flex-start" },
-                  maxWidth: "100%",
-                  mt: { xs: 0, md: 1 },
-                }}
+          <div style={{ maxWidth: 760, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <Eyebrow>Application received</Eyebrow>
+              <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                Application <span className="ohx-italic">submitted.</span>
+              </h1>
+              <p
+                className="ohx-lead"
+                style={{ margin: "16px auto 0", textAlign: "center" }}
               >
-                <img
-                  src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_5.webp"
-                  alt="Sponsors engaging with participants at Opportunity Hack"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "block",
-                    objectFit: "cover",
+                Thank you for your interest in sponsoring Opportunity Hack.
+              </p>
+            </div>
+
+            <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+              <Alert severity="success" sx={{ ...successAlertSx, mb: 4 }}>
+                <Typography variant="body1">
+                  Thank you for your interest in sponsoring Opportunity Hack.
+                  Our team will review your application and contact you within
+                  2-3 business days.
+                </Typography>
+              </Alert>
+
+              <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+                <GiveButterWidget
+                  context="success"
+                  userId={user?.userId}
+                  applicationType="sponsor"
+                  size="large"
+                  onDonationEvent={(eventData) => {
+                    // Track sponsor application donations
+                    console.log("Sponsor donation event:", eventData);
+                    // You can add additional tracking here
                   }}
                 />
               </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 1.5,
+                  justifyContent: "center",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={() => router.push(`/hack/${event_id}`)}
+                  sx={primaryButtonSx}
+                >
+                  Return to hackathon page
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => router.push("/hack")}
+                  sx={ghostButtonSx}
+                >
+                  See upcoming events
+                </Button>
+              </Box>
             </Box>
+          </div>
+        </section>
+      </RefinedRoot>
+    );
+  };
 
-            {/* Application Nav component */}
-            {event_id && (
-              <ApplicationNav eventId={event_id} currentType="sponsor" />
-            )}
+  const renderApplicationForm = () => {
+    return (
+      <RefinedRoot>
+        <Head>
+          <title>{pageTitle}</title>
+          <meta name="description" content={pageDescription} />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
+          <meta charSet="UTF-8" />
+          <meta
+            name="keywords"
+            content={`hackathon sponsor, sponsorship application, tech for good, nonprofit hackathon, opportunity hack, corporate sponsorship, volunteer, tech sponsorship, ${eventData?.name || "hackathon"}, ${eventData?.location || "tech event"}, corporate social responsibility, tech investment, brand visibility`}
+          />
+          <meta name="author" content="Opportunity Hack" />
+          <meta
+            name="robots"
+            content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+          />
+          <link rel="canonical" href={canonicalUrl} />
 
-            <Box sx={{ mb: 4 }}>
-              {eventData && eventData.isEventPast ? (
-                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                  <Alert severity="warning" sx={{ mb: 3 }}>
-                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
-                      This event has already ended
-                    </Typography>
-                    <Typography variant="body1">
-                      Applications are no longer being accepted for sponsors as
-                      this hackathon has already concluded. Please check our
-                      upcoming events for future sponsorship opportunities.
-                    </Typography>
-                  </Alert>
+          {/* Open Graph tags */}
+          <meta property="og:title" content={pageTitle} />
+          <meta property="og:description" content={pageDescription} />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={canonicalUrl} />
+          <meta property="og:image" content={imageUrl} />
+          <meta
+            property="og:image:alt"
+            content="Sponsors engaging with participants at Opportunity Hack hackathon"
+          />
+          <meta property="og:site_name" content="Opportunity Hack" />
+          <meta property="og:locale" content="en_US" />
 
-                  <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
-                    <GiveButterWidget
-                      context="event-ended"
-                      userId={user?.userId}
-                      applicationType="sponsor"
-                      size="large"
-                      onDonationEvent={(eventData) => {
-                        // Track sponsor application donations when event ended
-                        console.log("Event ended sponsor donation event:", eventData);
-                      }}
+          {/* Twitter Card tags */}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:site" content="@OpportunityHack" />
+          <meta name="twitter:creator" content="@OpportunityHack" />
+          <meta name="twitter:title" content={pageTitle} />
+          <meta name="twitter:description" content={pageDescription} />
+          <meta name="twitter:image" content={imageUrl} />
+          <meta
+            name="twitter:image:alt"
+            content="Sponsors engaging with participants at Opportunity Hack hackathon"
+          />
+
+          {/* Additional SEO tags */}
+          <meta name="application-name" content="Opportunity Hack" />
+          <meta name="theme-color" content="#1B3A6B" />
+          <meta name="format-detection" content="telephone=no" />
+          <RefinedFonts />
+
+          {/* Preconnect to optimize loading */}
+          <link
+            rel="preconnect"
+            href="https://cdn.ohack.dev"
+            crossOrigin="anonymous"
+          />
+          <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
+        </Head>
+
+        {structuredData && (
+          <Script
+            id="sponsor-application-structured-data"
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          />
+        )}
+
+        {/* Form persistence notification component */}
+        <FormPersistenceControls
+          onSave={saveToLocalStorage}
+          onRestore={loadFromLocalStorage}
+          onClear={clearSavedData}
+          notification={notification}
+          onCloseNotification={closeNotification}
+        />
+
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(100px, 12vh, 148px)",
+            paddingBottom: "clamp(48px, 8vh, 96px)",
+          }}
+        >
+          <Box ref={formRef}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  lg: "minmax(0, 1.1fr) 320px",
+                },
+                gap: { xs: 4, lg: 5 },
+                alignItems: "start",
+                mb: 4,
+              }}
+            >
+              <Box>
+                <Eyebrow>
+                  {eventData
+                    ? `${eventData.name} · sponsor application`
+                    : "Sponsor application"}
+                </Eyebrow>
+                <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                  Fund the weekend that{" "}
+                  <span className="ohx-italic">ships real software.</span>
+                </h1>
+                <p className="ohx-lead" style={{ marginTop: 16 }}>
+                  Your sponsorship covers the venue, food, and support behind a
+                  weekend where volunteer engineers turn ideas into working
+                  software for nonprofits — and puts your own team in the room
+                  to mentor, judge, and meet the builders you'd want to hire.
+                  This application covers your company details, sponsorship
+                  tier, and how you'd like to get involved.
+                </p>
+
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "repeat(2,minmax(0,1fr))",
+                      sm: "repeat(3,minmax(0,1fr))",
+                    },
+                    gap: 2,
+                    mt: 3,
+                    maxWidth: 540,
+                  }}
+                >
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat value={String(steps.length)} label="steps" />
+                  </Box>
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat
+                      value={String(sponsorshipTiers.length)}
+                      label="sponsorship tiers"
                     />
                   </Box>
-
-                  <Box textAlign="center">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => router.push("/hack")}
-                      sx={{ mt: 2 }}
-                    >
-                      View Upcoming Events
-                    </Button>
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat value="2-3 days" label="response time" />
                   </Box>
-                </Paper>
-              ) : (
-                <>
-                  <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                    <Typography variant="body1">
-                      By sponsoring Opportunity Hack, you help develop
-                      real-world tech solutions for nonprofits while connecting
-                      with top talent. Your support directly impacts communities
-                      in need.
-                    </Typography>
-                    <Box sx={{ mt: 1 }}>
-                      <Link
-                        href="/sponsor"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{
-                          fontWeight: "bold",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                        }}
-                      >
-                        Learn more about sponsor benefits and impact{" "}
-                        <InfoIcon fontSize="small" />
-                      </Link>
-                    </Box>
-                  </Alert>
+                </Box>
 
-                  <Stepper
-                    activeStep={activeStep}
-                    alternativeLabel={!isMobile}
-                    orientation={isMobile ? "horizontal" : "horizontal"}
-                    sx={{
-                      mb: 4,
-                      ...(isMobile && {
-                        "& .MuiStepLabel-root": {
-                          padding: "0 4px",
-                        },
-                        "& .MuiStepLabel-labelContainer": {
-                          width: "auto",
-                        },
-                        "& .MuiStepLabel-label": {
-                          fontSize: "0.7rem",
-                          whiteSpace: "nowrap",
-                        },
-                        "& .MuiSvgIcon-root": {
-                          width: 20,
-                          height: 20,
-                        },
-                        overflowX: "auto",
-                        "&::-webkit-scrollbar": {
-                          display: "none",
-                        },
-                        scrollbarWidth: "none",
-                      }),
-                    }}
+                {eventData && (
+                  <Box
+                    className="ohx-card"
+                    sx={{ mt: 3, p: { xs: 2.5, md: 3 } }}
                   >
-                    {steps.map((label) => (
-                      <Step key={label}>
-                        <StepLabel>
-                          {isMobile
-                            ? activeStep === steps.indexOf(label)
-                              ? label
-                              : steps.indexOf(label) + 1
-                            : label}
-                        </StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-
-                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                    {/* QR Code for Check-in */}
-                    {(error || recaptchaError) && (
-                      <Alert severity="error" sx={{ mb: 4 }}>
-                        {error || recaptchaError}
-                      </Alert>
-                    )}
-
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSubmit();
+                    <Eyebrow>Event details</Eyebrow>
+                    <Typography
+                      component="h2"
+                      sx={{
+                        ...stepTitleSx,
+                        fontSize: { xs: "1.4rem", sm: "1.7rem" },
+                        mt: 1,
                       }}
                     >
-                      {getStepContent(activeStep)}
+                      {eventData.name}
+                    </Typography>
+                    <Typography sx={{ color: "var(--muted)", mb: 1 }}>
+                      {eventData.location}
+                    </Typography>
+                    <Typography sx={{ color: "var(--muted)", lineHeight: 1.7 }}>
+                      {eventData.formattedStartDate}
+                      {eventData.formattedStartDate !==
+                      eventData.formattedEndDate
+                        ? ` to ${eventData.formattedEndDate}`
+                        : ""}
+                    </Typography>
+                    {eventData.description && (
+                      <Box sx={eventMarkdownSx}>
+                        <ReactMarkdown>{eventData.description}</ReactMarkdown>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </Box>
 
-                      <Box
+              <Box className="ohx-card" sx={{ p: 2.25 }}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    width: "100%",
+                    aspectRatio: "16 / 10",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    border: "1px solid var(--line)",
+                    mb: 2,
+                  }}
+                >
+                  <Image
+                    src="https://cdn.ohack.dev/ohack.dev/2023_hackathon_5.webp"
+                    alt="Sponsors engaging with participants at Opportunity Hack"
+                    fill
+                    sizes="(max-width: 1200px) 100vw, 320px"
+                    style={{ objectFit: "cover" }}
+                  />
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "var(--muted)", lineHeight: 1.7, mb: 1.5 }}
+                >
+                  The sponsors who get the most out of Opportunity Hack send
+                  engineers to mentor and judge, not just a logo. That's where
+                  the best conversations — and the best candidates — show up.
+                </Typography>
+                <Link
+                  href="/sponsor"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    ...refinedInlineLinkSx,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    "&:hover": {
+                      ...refinedInlineLinkSx["&:hover"],
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  Read the sponsor guide <Arrow />
+                </Link>
+              </Box>
+            </Box>
+
+            <Box sx={{ mb: 2.5 }}>
+              <ApplicationNav eventId={event_id} currentType="sponsor" />
+            </Box>
+
+            {Boolean(volunteerId) && isSelected && (
+              <Box className="ohx-card" sx={{ p: 3, mb: 3, maxWidth: 560 }}>
+                <Eyebrow>Check-in</Eyebrow>
+                <VolunteerCheckInQR
+                  eventId={event_id}
+                  volunteerId={volunteerId}
+                  isSelected={isSelected}
+                  volunteerType="sponsor"
+                  name={formData.name}
+                  isSubmitted={true}
+                  qrSize={200}
+                  sx={{ mx: "auto", maxWidth: 500 }}
+                />
+              </Box>
+            )}
+
+            {isLoading ? (
+              <Box
+                className="ohx-card"
+                sx={{
+                  minHeight: 240,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mt: 3,
+                }}
+              >
+                <CircularProgress sx={{ color: "var(--brand)" }} />
+              </Box>
+            ) : (
+              <Box sx={{ mt: 3 }}>
+                {eventData && eventData.isEventPast ? (
+                  <Box
+                    className="ohx-card"
+                    sx={{ p: { xs: 2.5, sm: 3.5 }, mb: 4 }}
+                  >
+                    <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
+                      <Typography
+                        variant="h6"
+                        component="div"
                         sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          mt: 4,
+                          mb: 1,
+                          fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                          fontWeight: 500,
                         }}
                       >
-                        <Button
-                          disabled={activeStep === 0 || submitting}
-                          onClick={handleBack}
-                          variant="outlined"
-                        >
-                          Back
-                        </Button>
+                        This event has already ended
+                      </Typography>
+                      <Typography variant="body1">
+                        Applications are no longer being accepted for sponsors
+                        as this hackathon has already concluded. Please check
+                        our upcoming events for future sponsorship
+                        opportunities.
+                      </Typography>
+                    </Alert>
 
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={handleNext}
-                          disabled={submitting || recaptchaLoading}
+                    <Box
+                      sx={{ mb: 4, display: "flex", justifyContent: "center" }}
+                    >
+                      <GiveButterWidget
+                        context="event-ended"
+                        userId={user?.userId}
+                        applicationType="sponsor"
+                        size="large"
+                        onDonationEvent={(eventData) => {
+                          // Track sponsor application donations when event ended
+                          console.log(
+                            "Event ended sponsor donation event:",
+                            eventData,
+                          );
+                        }}
+                      />
+                    </Box>
+
+                    <Box textAlign="center">
+                      <Button
+                        variant="contained"
+                        onClick={() => router.push("/hack")}
+                        sx={primaryButtonSx}
+                      >
+                        View Upcoming Events
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : (
+                  <>
+                    <Alert
+                      severity="info"
+                      icon={<InfoIcon />}
+                      sx={{ ...infoAlertSx, mb: 4 }}
+                    >
+                      <Typography variant="body1">
+                        By sponsoring Opportunity Hack, you help develop
+                        real-world tech solutions for nonprofits while
+                        connecting with top talent. Your support directly
+                        impacts communities in need.
+                      </Typography>
+                      <Box sx={{ mt: 1 }}>
+                        <Link
+                          href="/sponsor"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            ...refinedInlineLinkSx,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
                         >
-                          {activeStep === steps.length - 1 ? (
-                            submitting || recaptchaLoading ? (
-                              <CircularProgress size={24} />
-                            ) : (
-                              "Submit"
-                            )
-                          ) : (
-                            "Next"
-                          )}
-                        </Button>
+                          Learn more about sponsor benefits and impact{" "}
+                          <InfoIcon fontSize="small" />
+                        </Link>
                       </Box>
-                    </form>
-                  </Paper>
-                </>
-              )}
-            </Box>
+                    </Alert>
+
+                    <Box
+                      className="ohx-card"
+                      sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}
+                    >
+                      <Stepper
+                        activeStep={activeStep}
+                        alternativeLabel={!isMobile}
+                        orientation="horizontal"
+                        sx={{
+                          ...refinedStepperSx,
+                          ...(isMobile && refinedStepperMobileSx),
+                        }}
+                      >
+                        {steps.map((label) => (
+                          <Step key={label}>
+                            <StepLabel>
+                              {isMobile
+                                ? activeStep === steps.indexOf(label)
+                                  ? label
+                                  : steps.indexOf(label) + 1
+                                : label}
+                            </StepLabel>
+                          </Step>
+                        ))}
+                      </Stepper>
+                    </Box>
+
+                    <Box
+                      className="ohx-card"
+                      sx={{ p: { xs: 2.5, sm: 3, md: 4 }, mb: 4 }}
+                    >
+                      {(error || recaptchaError) && (
+                        <Alert severity="error" sx={{ ...errorAlertSx, mb: 4 }}>
+                          {error || recaptchaError}
+                        </Alert>
+                      )}
+
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSubmit();
+                        }}
+                      >
+                        <Box
+                          ref={stepContentRef}
+                          sx={{ scrollMarginTop: "96px" }}
+                        >
+                          {getStepContent(activeStep)}
+                        </Box>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: { xs: "column-reverse", sm: "row" },
+                            justifyContent: "space-between",
+                            gap: 1.5,
+                            mt: 4,
+                          }}
+                        >
+                          <Button
+                            disabled={activeStep === 0 || submitting}
+                            onClick={handleBack}
+                            variant="outlined"
+                            sx={{
+                              ...ghostButtonSx,
+                              opacity: activeStep === 0 ? 0.45 : 1,
+                            }}
+                          >
+                            Back
+                          </Button>
+
+                          <Button
+                            variant="contained"
+                            onClick={handleNext}
+                            disabled={submitting || recaptchaLoading}
+                            sx={primaryButtonSx}
+                            endIcon={
+                              activeStep === steps.length - 1 ||
+                              submitting ||
+                              recaptchaLoading ? null : (
+                                <Arrow />
+                              )
+                            }
+                          >
+                            {activeStep === steps.length - 1 ? (
+                              submitting || recaptchaLoading ? (
+                                <CircularProgress
+                                  size={20}
+                                  sx={{ color: "#fff" }}
+                                />
+                              ) : (
+                                "Submit"
+                              )
+                            ) : (
+                              "Next"
+                            )}
+                          </Button>
+                        </Box>
+                      </form>
+                    </Box>
+                  </>
+                )}
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
-    </Container>
-  );
+        </section>
+      </RefinedRoot>
+    );
+  };
+
+  // Main return - after all hooks have been called
+  return success ? renderSuccessMessage() : renderApplicationForm();
 };
 
 // Create a new component that uses RequiredAuthProvider
@@ -2146,6 +2307,7 @@ const SponsorApplicationPage = ({ seoMetadata }) => {
     <>
       {/* SEO metadata available to crawlers before authentication */}
       <Head>
+        <RefinedFonts />
         <title>{seoMetadata.title}</title>
         <meta name="description" content={seoMetadata.description} />
         <meta
@@ -2181,7 +2343,7 @@ const SponsorApplicationPage = ({ seoMetadata }) => {
         {/* Additional SEO meta tags */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="Opportunity Hack" />
-        <meta name="theme-color" content="#1976d2" />
+        <meta name="theme-color" content="#1B3A6B" />
       </Head>
 
       {/* Structured Data for SEO */}
@@ -2274,7 +2436,10 @@ const SponsorApplicationPage = ({ seoMetadata }) => {
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
         displayIfLoggedOut={
           <RedirectToLogin
-            postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
+            postLoginRedirectUrl={
+              currentUrl ||
+              (typeof window !== "undefined" ? window.location.href : undefined)
+            }
           />
         }
       >
