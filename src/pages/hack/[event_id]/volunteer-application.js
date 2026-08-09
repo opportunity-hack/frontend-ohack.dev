@@ -172,6 +172,7 @@ const VolunteerApplicationComponent = () => {
     state: "",
     inPerson: "",
     experienceLevel: "",
+    shirtSize: "",
     volunteerType: [],
     otherVolunteerType: "",
     skills: [],
@@ -220,6 +221,10 @@ const VolunteerApplicationComponent = () => {
     "Some volunteering experience (1-3 events)",
     "Experienced volunteer (4+ events)",
   ];
+
+  // Keep in sync with the hacker form's shirt-size options
+  // (ApplicationForm/Hacker/LocationDemographicsStep.js)
+  const shirtSizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
 
   // Helper function to determine if event is virtual/global
   const isVirtualEvent = () => {
@@ -1034,6 +1039,7 @@ const VolunteerApplicationComponent = () => {
                     inPerson:
                       prevData.inPerson || (prevData.isInPerson ? "Yes" : "No"),
                     experienceLevel: prevData.experienceLevel || "",
+                    shirtSize: prevData.shirtSize || "",
                     volunteerType: parsePreviousArrayField("volunteerType"),
                     otherVolunteerType: prevData.otherVolunteerType || "",
                     skills: parsePreviousArrayField("skills"),
@@ -1767,6 +1773,29 @@ const VolunteerApplicationComponent = () => {
             sx={refinedFieldSx}
           />
         )}
+
+        <FormControl fullWidth sx={refinedFieldSx}>
+          <InputLabel id="shirt-size-label">T-Shirt Size (Optional)</InputLabel>
+          <Select
+            labelId="shirt-size-label"
+            id="shirt-size"
+            name="shirtSize"
+            value={formData.shirtSize || ""}
+            onChange={handleFormChange}
+            label="T-Shirt Size (Optional)"
+            MenuProps={refinedSelectMenuProps}
+          >
+            {shirtSizeOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>
+            Helps us order the right sizes for event-day volunteers (subject to
+            availability)
+          </FormHelperText>
+        </FormControl>
 
         <TextField
           label="Any additional information or questions?"

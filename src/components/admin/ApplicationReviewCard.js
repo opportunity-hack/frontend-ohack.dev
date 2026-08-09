@@ -152,6 +152,7 @@ const ApplicationReviewCard = ({
           "linkedinProfile",
           "portfolio",
           "otherSocialCause",
+          "shirtSize",
           "additionalInfo",
         ],
         statusField: "isSelected",
@@ -401,6 +402,7 @@ const ApplicationReviewCard = ({
       otherBackground: "Other Background",
       linkedinProfile: "LinkedIn Profile",
       introductionVideoUrl: "Intro Video",
+      shirtSize: "T-Shirt Size",
       photoUrl: "Photo",
       status: "Status",
       // Sponsor-specific fields
