@@ -62,6 +62,7 @@ import {
   Stat,
 } from "../../../components/design/refined";
 import {
+  IntroVideoField,
   OHackParticipationSelect,
   PronounsPicker,
 } from "../../../components/ApplicationForm";
@@ -74,6 +75,7 @@ import {
   CheckCircleRounded,
 } from "@mui/icons-material";
 import {
+  formSectionStyle,
   refinedFieldSx,
   refinedChoiceSx,
   refinedChipSx,
@@ -165,6 +167,7 @@ const JudgeApplicationComponent = () => {
       judgingCommitment: false,
       linkedinProfile: "",
       shortBio: "",
+      introductionVideoUrl: "", // "Tell us about you" video (upload or YouTube/Vimeo/Loom link)
       photoUrl: "",
       pronouns: "",
       country: "",
@@ -283,6 +286,7 @@ const JudgeApplicationComponent = () => {
                   prevData.agreedToCodeOfConduct || prevData.codeOfConduct,
                 ),
                 photoUrl: prevData.photoUrl || "",
+                introductionVideoUrl: prevData.introductionVideoUrl || "",
 
                 // Ensure event_id is always set
                 event_id: event_id,
@@ -1196,6 +1200,13 @@ const JudgeApplicationComponent = () => {
       return false;
     }
 
+    if (!formData.introductionVideoUrl) {
+      setError(
+        "Please add a short video introduction — upload a video file or paste a YouTube, Vimeo, or Loom link",
+      );
+      return false;
+    }
+
     setError("");
     return true;
   };
@@ -1635,6 +1646,26 @@ const JudgeApplicationComponent = () => {
           sx={refinedFieldSx}
         />
 
+        <IntroVideoField
+          required
+          value={formData.introductionVideoUrl}
+          onChange={(url) =>
+            setFormData((prev) => ({ ...prev, introductionVideoUrl: url }))
+          }
+          accessToken={accessToken}
+          apiServerUrl={apiServerUrl}
+          onVideoAdded={(method) =>
+            trackEvent({
+              action: "judge_app_intro_video_added",
+              params: {
+                event_label: method,
+                event_id,
+                page: "judge_application",
+              },
+            })
+          }
+        />
+
         <UploadPhoto
           value={formData.photoUrl}
           onChange={handlePhotoUpload}
@@ -2067,13 +2098,7 @@ const JudgeApplicationComponent = () => {
           }}
         />
 
-        <section
-          className="ohx-wrap"
-          style={{
-            paddingTop: "clamp(100px, 12vh, 148px)",
-            paddingBottom: "clamp(48px, 8vh, 96px)",
-          }}
-        >
+        <section className="ohx-wrap" style={formSectionStyle}>
           <div style={{ maxWidth: 760, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <Eyebrow>Application received</Eyebrow>
@@ -2233,22 +2258,7 @@ const JudgeApplicationComponent = () => {
           }}
         />
 
-        {/* Form persistence notification component */}
-        <FormPersistenceControls
-          onSave={saveToLocalStorage}
-          onRestore={loadFromLocalStorage}
-          onClear={clearSavedData}
-          notification={notification}
-          onCloseNotification={closeNotification}
-        />
-
-        <section
-          className="ohx-wrap"
-          style={{
-            paddingTop: "clamp(100px, 12vh, 148px)",
-            paddingBottom: "clamp(48px, 8vh, 96px)",
-          }}
-        >
+        <section className="ohx-wrap" style={formSectionStyle}>
           <Box ref={formRef}>
             <Box
               sx={{
@@ -2501,6 +2511,17 @@ const JudgeApplicationComponent = () => {
                           </Typography>
                         </Alert>
                       )}
+
+                    {/* Save/restore controls live beside the form they act on
+                        (mt: 0 — the section provides the NavBar clearance) */}
+                    <FormPersistenceControls
+                      sx={{ mt: 0, mb: 2 }}
+                      onSave={saveToLocalStorage}
+                      onRestore={loadFromLocalStorage}
+                      onClear={clearSavedData}
+                      notification={notification}
+                      onCloseNotification={closeNotification}
+                    />
 
                     <Box
                       className="ohx-card"

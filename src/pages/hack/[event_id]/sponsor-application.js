@@ -55,6 +55,7 @@ import {
   Stat,
 } from "../../../components/design/refined";
 import {
+  formSectionStyle,
   refinedFieldSx,
   refinedChoiceSx,
   refinedChipSx,
@@ -1757,13 +1758,7 @@ const SponsorApplicationComponent = () => {
           <meta name="theme-color" content="#1B3A6B" />
         </Head>
 
-        <section
-          className="ohx-wrap"
-          style={{
-            paddingTop: "clamp(100px, 12vh, 148px)",
-            paddingBottom: "clamp(48px, 8vh, 96px)",
-          }}
-        >
+        <section className="ohx-wrap" style={formSectionStyle}>
           <div style={{ maxWidth: 760, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <Eyebrow>Application received</Eyebrow>
@@ -1902,21 +1897,7 @@ const SponsorApplicationComponent = () => {
         )}
 
         {/* Form persistence notification component */}
-        <FormPersistenceControls
-          onSave={saveToLocalStorage}
-          onRestore={loadFromLocalStorage}
-          onClear={clearSavedData}
-          notification={notification}
-          onCloseNotification={closeNotification}
-        />
-
-        <section
-          className="ohx-wrap"
-          style={{
-            paddingTop: "clamp(100px, 12vh, 148px)",
-            paddingBottom: "clamp(48px, 8vh, 96px)",
-          }}
-        >
+        <section className="ohx-wrap" style={formSectionStyle}>
           <Box ref={formRef}>
             <Box
               sx={{
@@ -2177,6 +2158,17 @@ const SponsorApplicationComponent = () => {
                         </Link>
                       </Box>
                     </Alert>
+
+                    {/* Save/restore controls live beside the form they act on
+                        (mt: 0 — the section provides the NavBar clearance) */}
+                    <FormPersistenceControls
+                      sx={{ mt: 0, mb: 2 }}
+                      onSave={saveToLocalStorage}
+                      onRestore={loadFromLocalStorage}
+                      onClear={clearSavedData}
+                      notification={notification}
+                      onCloseNotification={closeNotification}
+                    />
 
                     <Box
                       className="ohx-card"

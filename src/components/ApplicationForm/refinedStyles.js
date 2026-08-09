@@ -4,6 +4,15 @@
 // These sx objects assume the page body is wrapped in <RefinedRoot> (which
 // defines the CSS variables) with <RefinedFonts/> in <Head>.
 
+// Top/bottom padding for the application pages' outer <section className="ohx-wrap">.
+// The NavBar is position:absolute (64px tall), so the section — the first in-flow
+// element on these pages — must clear it itself. Tighter than the marketing pages'
+// clamp(100px,12vh,148px): forms should start working sooner than a landing page.
+export const formSectionStyle = {
+  paddingTop: "clamp(88px, 9vh, 108px)",
+  paddingBottom: "clamp(48px, 8vh, 96px)",
+};
+
 export const refinedFieldSx = {
   mb: 3,
   "& .MuiInputBase-root": {

@@ -63,6 +63,7 @@ import {
   Stat,
 } from "../../../components/design/refined";
 import {
+  formSectionStyle,
   refinedFieldSx,
   refinedChoiceSx,
   refinedChipSx,
@@ -2437,13 +2438,7 @@ const VolunteerApplicationComponent = () => {
         <RefinedFonts />
       </Head>
 
-      <section
-        className="ohx-wrap"
-        style={{
-          paddingTop: "clamp(100px, 12vh, 148px)",
-          paddingBottom: "clamp(48px, 8vh, 96px)",
-        }}
-      >
+      <section className="ohx-wrap" style={formSectionStyle}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
             <Eyebrow>Application received</Eyebrow>
@@ -2578,21 +2573,7 @@ const VolunteerApplicationComponent = () => {
       )}
 
       {/* Form persistence notification component */}
-      <FormPersistenceControls
-        onSave={handleManualSave}
-        onRestore={loadFromLocalStorage}
-        onClear={clearSavedData}
-        notification={notification}
-        onCloseNotification={closeNotification}
-      />
-
-      <section
-        className="ohx-wrap"
-        style={{
-          paddingTop: "clamp(100px, 12vh, 148px)",
-          paddingBottom: "clamp(48px, 8vh, 96px)",
-        }}
-      >
+      <section className="ohx-wrap" style={formSectionStyle}>
         <Box ref={formRef}>
           <Box
             sx={{
@@ -2818,6 +2799,17 @@ const VolunteerApplicationComponent = () => {
                 </Box>
               ) : (
                 <>
+                  {/* Save/restore controls live beside the form they act on
+                      (mt: 0 — the section provides the NavBar clearance) */}
+                  <FormPersistenceControls
+                    sx={{ mt: 0, mb: 2 }}
+                    onSave={handleManualSave}
+                    onRestore={loadFromLocalStorage}
+                    onClear={clearSavedData}
+                    notification={notification}
+                    onCloseNotification={closeNotification}
+                  />
+
                   <Box className="ohx-card" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                     <Stepper
                       activeStep={activeStep}
