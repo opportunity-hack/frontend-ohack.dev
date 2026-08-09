@@ -2302,14 +2302,17 @@ const JudgeApplicationComponent = () => {
                     maxWidth: 540,
                   }}
                 >
+                  {/* Values must stay consistent with the claims on
+                      /hackathon-judge-opportunities (4–6 hrs) and
+                      /hackathon-judging-criteria (8–10 projects) */}
                   <Box className="ohx-card" sx={{ p: 2.5 }}>
-                    <Stat value={String(steps.length)} label="steps" />
+                    <Stat value="4–6 hrs" label="total commitment" />
                   </Box>
                   <Box className="ohx-card" sx={{ p: 2.5 }}>
-                    <Stat value="4" label="score criteria" />
+                    <Stat value="8–10" label="projects to score" />
                   </Box>
                   <Box className="ohx-card" sx={{ p: 2.5 }}>
-                    <Stat value="Manual" label="review" />
+                    <Stat value="Since 2013" label="hacking for good" />
                   </Box>
                 </Box>
 
