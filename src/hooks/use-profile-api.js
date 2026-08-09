@@ -29,24 +29,26 @@ export default function useProfileApi(){
             return null;
 
         const response = await axios({
-            // TODO: Cut over to this eventually
-            //url: `${apiServerUrl}/api/users/profile`,
-            url: `${apiServerUrl}/api/messages/profile`,
+            url: `${apiServerUrl}/api/users/profile`,
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
             data: {
-                // user_id: user_id,
                 metadata: metadata
             }
         });
-            
+
         const { data } = response;
 
-        // TODO: When we cut over to the user service, this will return a profile object. There won't be a "text" field.
-        onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
+        // The canonical endpoint returns the updated flat profile dict.
+        // Keep the profile state fresh, and keep the historical onComplete
+        // contract (a status string) stable for all existing callers.
+        if (data && data.id) {
+            setProfile({ ...data, profile_url: `/profile/${data.id}` });
+        }
+        onComplete("Saved Profile Metadata");
         return data;
     };
 
@@ -65,7 +67,7 @@ export default function useProfileApi(){
         }
         
         const response = await axios({
-            url: `${apiServerUrl}/api/messages/profile/helping`,
+            url: `${apiServerUrl}/api/users/profile/helping`,
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -85,45 +87,6 @@ export default function useProfileApi(){
         return data;
     };
 
-    // Handle calling /profile/ endpoint by user id using the db id of the user (not the Propel ID or the Slack ID)
-    const get_user_by_id = async (user_id, onComplete) => {
-        if (!user_id)
-            return null;
-        
-        const response = await axios({  
-            url: `${apiServerUrl}/api/users/${user_id}/profile`,
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-            },
-        });
-
-        const { data } = response;
-
-        onComplete(data);
-        return data;
-    };
-
-    const get_user_profile_by_id = useCallback(async (userId) => {
-        if (!userId) return null;
-        
-        try {
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userId}/profile`
-            );
-            
-            if (!response.ok) {
-                throw new Error(`Failed to fetch user profile: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Error fetching user profile:', error);
-            return null;
-        }
-    }, []);
-    
     /*
     User is already signed in via Auth0 SDK
     Pass profile data to backend to save the fact that they have logged in
@@ -142,8 +105,8 @@ export default function useProfileApi(){
             }
 
             try {
-                const response = await axios({  
-                    url: `${apiServerUrl}/api/messages/profile`,
+                const response = await axios({
+                    url: `${apiServerUrl}/api/users/profile`,
                     method: "GET",
                     headers: {
                         "content-type": "application/json",
@@ -152,43 +115,20 @@ export default function useProfileApi(){
 
                 const { data } = response;
 
-                if (data) {     
-                    console.log("*** getProfileDetails data: ", data);               
-                    // TODO: update backend user service to return badges and consume them here
-                    setBadges(data.text.badges);
-                    // TODO: update backend user service to return hackathons and consume them here
-                    setHackathons(data.text.hackathons);
+                if (data && data.id) {
+                    setBadges(data.badges);
+                    setHackathons(data.hackathons);
 
-                    /* profileData is expected to have the form:
-                        {role: '', education: '', shirt_size: '', profile_url: ''}
-                    */
-                        
-                    var profileData = {
-                        role: data.text.role,
-                        education: data.text.education,
-                        shirt_size: data.text.shirt_size,
-                        expertise: data.text.expertise,
-                        why: data.text.why,
-                        company: data.text.company,
-                        github: data.text.github,
-                        history: data.text.history,
-                        profile_url: `/profile/${data.text.id}`,  // /profile/<db id>
-                        linkedin_url: data.text.linkedin_url,
-                        instagram_url: data.text.instagram_url,  
-                        propel_id: data.text.propel_id,
-                        // Added address fields
-                        street_address: data.text.street_address,
-                        street_address_2: data.text.street_address_2,
-                        city: data.text.city,
-                        state: data.text.state,
-                        postal_code: data.text.postal_code,
-                        country: data.text.country,
-                        // Added sticker preference
-                        want_stickers: data.text.want_stickers,
-                    };
-
-                    setProfile(profileData);
-                    setFeedbackUrl(window.location.href.replace("profile", "feedback") + "/" + data.text.id);
+                    // The canonical endpoint returns the full flat profile —
+                    // spread it instead of hand-projecting fields (the old
+                    // projection silently dropped anything it didn't list,
+                    // which is exactly the bug class the backend registry
+                    // now guards against).
+                    setProfile({
+                        ...data,
+                        profile_url: `/profile/${data.id}`, // /profile/<db id>
+                    });
+                    setFeedbackUrl(`/feedback/${data.id}`);
                 }
                 else {
                     setBadges(null);
@@ -211,15 +151,13 @@ export default function useProfileApi(){
     }, [user, apiServerUrl, default_profile]);
     
 
-    return {              
+    return {
         badges,
         hackathons,
         profile,
-        get_user_by_id,
         feedback_url,
         handle_help_toggle,
         update_profile_metadata,
-        get_user_profile_by_id,
         isLoading
     };
 };

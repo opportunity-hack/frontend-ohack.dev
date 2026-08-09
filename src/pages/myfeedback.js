@@ -203,14 +203,14 @@ const MyFeedbackPage = withRequiredAuthInfo(({ userClass }) => {
   const fetchProfileId = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile`,
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         }
       );
-      setProfileId(response.data.text.id);
+      setProfileId(response.data.id);
     } catch (err) {
       console.error("Failed to fetch profile ID:", err);
     }

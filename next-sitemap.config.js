@@ -7,6 +7,9 @@ module.exports = {
   exclude: [
     "/admin",
     "/profile",
+    "/profile/[userid]",
+    "/u/[slug]",
+    "/cert/[cert_id]",
     "/nonprofit/[nonprofit_id]",
     "/hackathon/[hackathon_id]",
     "/project/[project_id]",

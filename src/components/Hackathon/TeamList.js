@@ -1393,15 +1393,14 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
           Array.from(userIds).map(async (userId) => {
             try {
               const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`,
+                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userId}/profile`,
                 { headers: { Authorization: `Bearer ${accessToken}` } }
               );
 
               if (!response.ok)
                 throw new Error(`Failed to fetch profile for user ${userId}`);
 
-              const data = await response.json();
-              const profile = data.text || data;
+              const profile = await response.json();
 
               // Add user ID to the profile object for reference
               if (profile) {
@@ -1450,7 +1449,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
     if (isLoggedIn && accessToken) {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile`,
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -1459,7 +1458,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
         );
         if (response.ok) {
           const data = await response.json();
-          setUserProfile(data.text);
+          setUserProfile(data);
         } else {
           throw new Error("Failed to fetch user profile");
         }
@@ -1561,12 +1560,11 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
       userIds.map(async (userId) => {
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`,
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userId}/profile`,
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
           if (!response.ok) return;
-          const data = await response.json();
-          const profile = data.text || data;
+          const profile = await response.json();
           if (profile) {
             profile.user_id = userId;
             profileMap[userId] = profile;

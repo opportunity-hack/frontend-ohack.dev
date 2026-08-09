@@ -9,6 +9,7 @@ const YOUTUBE_REGEX =
 const VIMEO_REGEX = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)/;
 const LOOM_REGEX = /loom\.com\/(?:share|embed)\//;
 const DRIVE_REGEX = /drive\.google\.com\/file\/d\//;
+const RAW_VIDEO_REGEX = /\.(mp4|webm|mov)(\?|#|$)/i;
 
 const providerLabel = (url) => {
   if (!url) return null;
@@ -16,6 +17,7 @@ const providerLabel = (url) => {
   if (VIMEO_REGEX.test(url)) return "Vimeo";
   if (LOOM_REGEX.test(url)) return "Loom";
   if (DRIVE_REGEX.test(url)) return "Google Drive";
+  if (RAW_VIDEO_REGEX.test(url)) return "Video";
   return null;
 };
 
@@ -25,12 +27,15 @@ const LiteVideoThumbnail = ({
   width = 320,
   height = 180,
   label = "Watch demo",
+  posterUrl = null,
 }) => {
   if (!url) return null;
 
   const youtubeMatch = url.match(YOUTUBE_REGEX);
   const youtubeId = youtubeMatch ? youtubeMatch[1] : null;
   const provider = providerLabel(url);
+  // A supplied poster (e.g. for raw mp4s) renders exactly like a YouTube thumb
+  const posterSrc = posterUrl || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : null);
 
   const buttonStyles = {
     position: "relative",
@@ -69,13 +74,13 @@ const LiteVideoThumbnail = ({
           width: "100%",
           paddingBottom: "56.25%",
           height: 0,
-          bgcolor: youtubeId ? "transparent" : "grey.900",
+          bgcolor: posterSrc ? "transparent" : "grey.900",
         }}
       >
-        {youtubeId ? (
+        {posterSrc ? (
           <Box
             component="img"
-            src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+            src={posterSrc}
             alt=""
             loading="lazy"
             decoding="async"

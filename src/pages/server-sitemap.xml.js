@@ -52,6 +52,17 @@ export async function getServerSideProps(ctx) {
     console.error('[server-sitemap] news fetch failed:', e.message);
   }
 
+  // Public portfolio pages (opt-in only — backend lists profile_visibility=public)
+  try {
+    const data = await fetchJson(`${API_URL}/api/users/portfolio/sitemap`);
+    const portfolios = data.portfolios || [];
+    for (const p of portfolios) {
+      if (p.slug) fields.push({ loc: `${BASE_URL}/u/${p.slug}`, lastmod: now, priority: '0.6', changefreq: 'weekly' });
+    }
+  } catch (e) {
+    console.error('[server-sitemap] portfolios fetch failed:', e.message);
+  }
+
   ctx.res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
   return getServerSideSitemapLegacy(ctx, fields);
 }

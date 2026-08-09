@@ -6,7 +6,8 @@ import {
   Paper,
   Grid,
   Divider,
-  Alert
+  Alert,
+  Link as MuiLink
 } from '@mui/material';
 import EventIcon from '@mui/icons-material/Event';
 import CodeIcon from '@mui/icons-material/Code';
@@ -150,9 +151,9 @@ const portfolioSurfaces = [
   },
   {
     icon: <BadgeIcon />,
-    title: 'Your public profile',
+    title: 'Your portfolio page',
     description:
-      'Your ohack.dev profile has a public page you can link from a résumé or LinkedIn, tying your history here together.'
+      'Your profile doubles as a portfolio page that collects all of the above in one shareable link — your demo videos, certificates, GitHub contributions, praise, and hearts. Claim a custom URL (ohack.dev/u/you) and link it from your résumé or LinkedIn.'
   },
   {
     icon: <FavoriteIcon />,
@@ -342,6 +343,15 @@ const WebsiteTourSection = () => {
             capture the work to be done. Writing good tickets is a real, visible contribution.
           </Typography>
         </Paper>
+        <Typography variant="body1" sx={{ fontSize: '1.08rem', mt: 2.5 }}>
+          Your portfolio is <strong>private by default</strong> — you choose section by section
+          what shows, and flip one switch when you want search engines to find it. Set it up
+          anytime under{' '}
+          <MuiLink href="/profile#portfolio" target="_blank" rel="noopener">
+            Profile → Portfolio
+          </MuiLink>
+          .
+        </Typography>
       </Paper>
     </Box>
   );

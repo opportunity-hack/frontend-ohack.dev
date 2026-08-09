@@ -133,12 +133,11 @@ const HackathonResults = ({ teams, nonprofitMap, eventId, eventTitle, githubOrg,
     let cancelled = false;
     Promise.all(
       Array.from(userIds).map((userId) =>
-        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userId}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userId}/profile`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
           .then((res) => (res.ok ? res.json() : null))
-          .then((data) => {
-            const profile = data?.text || data;
+          .then((profile) => {
             if (profile) profile.user_id = userId;
             return [userId, profile];
           })
