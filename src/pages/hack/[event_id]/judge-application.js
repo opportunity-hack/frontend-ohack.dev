@@ -65,6 +65,7 @@ import {
   IntroVideoField,
   OHackParticipationSelect,
   PronounsPicker,
+  scrollToStepContent,
 } from "../../../components/ApplicationForm";
 import {
   SchoolRounded,
@@ -1121,12 +1122,7 @@ const JudgeApplicationComponent = () => {
         },
       });
       // Bring the new step's fields into view (not the page hero)
-      requestAnimationFrame(() => {
-        stepContentRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
+      scrollToStepContent(stepContentRef);
     }
   };
 
@@ -1142,12 +1138,7 @@ const JudgeApplicationComponent = () => {
       },
     });
     // Bring the new step's fields into view (not the page hero)
-    requestAnimationFrame(() => {
-      stepContentRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
+    scrollToStepContent(stepContentRef);
   };
 
   const validateBasicInfo = () => {
@@ -2674,7 +2665,8 @@ const JudgeApplicationComponent = () => {
                       >
                         <Box
                           ref={stepContentRef}
-                          sx={{ scrollMarginTop: "96px" }}
+                          tabIndex={-1}
+                          sx={{ scrollMarginTop: "96px", outline: "none" }}
                         >
                           {getStepContent(activeStep)}
                         </Box>

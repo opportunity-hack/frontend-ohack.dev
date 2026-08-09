@@ -47,7 +47,10 @@ import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
-import { PronounsPicker } from "../../../components/ApplicationForm";
+import {
+  PronounsPicker,
+  scrollToStepContent,
+} from "../../../components/ApplicationForm";
 import UploadPhoto from "../../../components/UploadPhoto";
 import GiveButterWidget from "../../../components/GiveButterWidget";
 import ReactMarkdown from "react-markdown";
@@ -1344,13 +1347,8 @@ const VolunteerApplicationComponent = () => {
           page: "volunteer_application",
         },
       });
-      // Scroll to top of form for better UX
-      if (formRef?.current) {
-        formRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
+      // Land on the new step's fields, not the page hero
+      scrollToStepContent(stepContentRef);
     }
   };
 
@@ -1367,13 +1365,8 @@ const VolunteerApplicationComponent = () => {
     });
     // Save progress when moving between steps
     handleManualSave();
-    // Scroll to top of form for better UX
-    if (formRef?.current) {
-      formRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
+    // Land on the new step's fields, not the page hero
+    scrollToStepContent(stepContentRef);
   };
 
   const handleSubmit = async (e) => {
@@ -2952,7 +2945,8 @@ const VolunteerApplicationComponent = () => {
                     >
                       <Box
                         ref={stepContentRef}
-                        sx={{ scrollMarginTop: "96px" }}
+                        tabIndex={-1}
+                        sx={{ scrollMarginTop: "96px", outline: "none" }}
                       >
                         {getStepContent(activeStep)}
                       </Box>

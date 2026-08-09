@@ -54,6 +54,7 @@ import {
 import {
   OHackParticipationSelect,
   PronounsPicker,
+  scrollToStepContent,
 } from "../../../components/ApplicationForm";
 import UploadPhoto from "../../../components/UploadPhoto";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -804,12 +805,7 @@ const MentorApplicationComponent = () => {
         },
       });
       // Bring the new step's fields into view (not the page hero)
-      requestAnimationFrame(() => {
-        stepContentRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
+      scrollToStepContent(stepContentRef);
     }
   };
 
@@ -825,12 +821,7 @@ const MentorApplicationComponent = () => {
       },
     });
     // Bring the new step's fields into view (not the page hero)
-    requestAnimationFrame(() => {
-      stepContentRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
+    scrollToStepContent(stepContentRef);
   };
 
   // Toggle between month view and date view
@@ -2709,7 +2700,8 @@ const MentorApplicationComponent = () => {
                       >
                         <Box
                           ref={stepContentRef}
-                          sx={{ scrollMarginTop: "96px" }}
+                          tabIndex={-1}
+                          sx={{ scrollMarginTop: "96px", outline: "none" }}
                         >
                           {getStepContent(activeStep)}
                         </Box>

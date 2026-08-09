@@ -6,3 +6,4 @@ export { default as PronounsPicker } from "./PronounsPicker";
 export { CURATED_PRONOUNS } from "./PronounsPicker";
 export { default as MealMenu } from "./MealMenu";
 export { default as IntroVideoField } from "./IntroVideoField";
+export { scrollToStepContent } from "./stepScroll";

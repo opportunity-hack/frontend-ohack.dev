@@ -43,6 +43,7 @@ import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
+import { scrollToStepContent } from "../../../components/ApplicationForm";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
@@ -822,12 +823,7 @@ const SponsorApplicationComponent = () => {
     } else {
       setActiveStep((prev) => prev + 1);
       // Bring the new step's fields into view (not the page hero)
-      requestAnimationFrame(() => {
-        stepContentRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
+      scrollToStepContent(stepContentRef);
     }
   }, [
     activeStep,
@@ -841,12 +837,7 @@ const SponsorApplicationComponent = () => {
   const handleBack = useCallback(() => {
     setActiveStep((prev) => Math.max(0, prev - 1));
     // Bring the new step's fields into view (not the page hero)
-    requestAnimationFrame(() => {
-      stepContentRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
+    scrollToStepContent(stepContentRef);
   }, []);
 
   // Company Information Form
@@ -2215,7 +2206,8 @@ const SponsorApplicationComponent = () => {
                       >
                         <Box
                           ref={stepContentRef}
-                          sx={{ scrollMarginTop: "96px" }}
+                          tabIndex={-1}
+                          sx={{ scrollMarginTop: "96px", outline: "none" }}
                         >
                           {getStepContent(activeStep)}
                         </Box>
