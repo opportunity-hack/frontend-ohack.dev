@@ -1,15 +1,15 @@
-import React from 'react';
-import { 
-  Box, 
-  IconButton, 
-  Alert, 
-  Typography, 
+import React from "react";
+import {
+  Box,
+  IconButton,
+  Alert,
+  Typography,
   Snackbar,
-  Tooltip
-} from '@mui/material';
-import SaveIcon from '@mui/icons-material/Save';
-import RestoreIcon from '@mui/icons-material/Restore';
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+  Tooltip,
+} from "@mui/material";
+import SaveIcon from "@mui/icons-material/Save";
+import RestoreIcon from "@mui/icons-material/Restore";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 
 export default function FormPersistenceControls({
   onSave,
@@ -17,61 +17,56 @@ export default function FormPersistenceControls({
   onClear,
   notification,
   onCloseNotification,
-  showAutoSaveMessage = true
+  showAutoSaveMessage = true,
+  // Default mt: 10 exists to clear the absolutely-positioned NavBar on legacy
+  // pages that render this as their first element. Pages that already provide
+  // that clearance (the refined application forms) pass sx={{ mt: 0, ... }}.
+  sx = {},
 }) {
   const handleClear = () => {
-    if (window.confirm('Are you sure you want to clear all form data?')) {
+    if (window.confirm("Are you sure you want to clear all form data?")) {
       onClear();
     }
   };
-  
+
   return (
-    <Box sx={{ mt: 10 }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        gap: 1, 
-        mb: 1.5,
-        flexWrap: 'wrap'
-      }}>
+    <Box sx={{ mt: 10, ...sx }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+          mb: 1.5,
+          flexWrap: "wrap",
+        }}
+      >
         <Tooltip title="Save form progress">
-          <IconButton 
-            color="primary" 
-            onClick={onSave} 
-            size="small"
-          >
-            <SaveIcon /> 
+          <IconButton color="primary" onClick={onSave} size="small">
+            <SaveIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Restore saved form">
-          <IconButton 
-            color="secondary" 
-            onClick={onRestore} 
-            size="small"
-          >
-            <RestoreIcon /> 
+          <IconButton color="secondary" onClick={onRestore} size="small">
+            <RestoreIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Clear form data">
-          <IconButton 
-            color="error" 
-            onClick={handleClear} 
-            size="small"
-          >
-            <DeleteSweepIcon /> 
+          <IconButton color="error" onClick={handleClear} size="small">
+            <DeleteSweepIcon />
           </IconButton>
         </Tooltip>
       </Box>
-      
+
       {showAutoSaveMessage && (
         <Alert severity="success" icon={<SaveIcon />} sx={{ mb: 2 }}>
           <Typography variant="body2">
-            <strong>Your form progress is automatically saved</strong> as you type. You can come back and continue later.
-            Use the icons above to manually save, restore, or clear your form data.
+            <strong>Your form progress is automatically saved</strong> as you
+            type. You can come back and continue later. Use the icons above to
+            manually save, restore, or clear your form data.
           </Typography>
         </Alert>
       )}
-      
+
       <Snackbar
         open={notification.open}
         autoHideDuration={3000}
