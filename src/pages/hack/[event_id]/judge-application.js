@@ -96,6 +96,32 @@ import {
   refinedStepperMobileSx,
 } from "../../../components/ApplicationForm/refinedStyles";
 
+// Judging-window defaults when the event doesn't configure
+// constraints.judge_judging_{start,end}_time (admin → Judges section).
+const DEFAULT_JUDGING_START = "15:00";
+const DEFAULT_JUDGING_END = "17:30";
+
+// "15:00" → "3:00 PM". Falls back to the raw value on unexpected input so a
+// bad constraint never renders an empty schedule.
+const formatTime12h = (hhmm) => {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hhmm || "");
+  if (!match) return hhmm || "";
+  const hours = Number(match[1]);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  return `${hours % 12 || 12}:${match[2]} ${suffix}`;
+};
+
+// The judging window shown across the availability step and enforced by
+// validateAvailability — always derived from event constraints with defaults.
+const getJudgingWindow = (eventData) => ({
+  start: formatTime12h(
+    eventData?.constraints?.judge_judging_start_time || DEFAULT_JUDGING_START,
+  ),
+  end: formatTime12h(
+    eventData?.constraints?.judge_judging_end_time || DEFAULT_JUDGING_END,
+  ),
+});
+
 const JudgeApplicationComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
@@ -527,6 +553,20 @@ const JudgeApplicationComponent = () => {
     initialFormData,
     setIsLoading,
   ]);
+
+  // Virtual/global events accept online judges; anything else is a physical
+  // venue where judging happens in the room. Same heuristic as the volunteer
+  // form's isVirtualEvent().
+  const isVirtualEvent = () => {
+    if (!eventData?.location) return false;
+    const location = eventData.location.toLowerCase();
+    return (
+      location.includes("global") ||
+      location.includes("virtual") ||
+      location.includes("online") ||
+      location.includes("remote")
+    );
+  };
 
   // Extend handleFormChange to handle otherBackground field
   const handleChange = (e) => {
@@ -1214,6 +1254,25 @@ const JudgeApplicationComponent = () => {
       }
     }
 
+    // At a physical venue, judging only happens in the room — block remote
+    // applications instead of soft-warning (mirrors the volunteer form).
+    // Runs on both step Next and final submit via validateForm().
+    if (!isVirtualEvent()) {
+      if (formData.inPerson !== "Yes") {
+        setError(
+          "This event's judging happens in person at the venue, so we can't accept remote judges. If you can't be there, consider mentoring (mentors can join virtually) or judging one of our online events.",
+        );
+        return false;
+      }
+      if (formData.canAttendJudging === "No") {
+        const judgingWindow = getJudgingWindow(eventData);
+        setError(
+          `Judges must be at the venue for the judging window (${judgingWindow.start}–${judgingWindow.end} on the final day) — that window is the entire role. If you can only make part of it, choose "Partial" and explain; if you can't make it at all, consider mentoring instead.`,
+        );
+        return false;
+      }
+    }
+
     setError("");
     return true;
   };
@@ -1677,6 +1736,7 @@ const JudgeApplicationComponent = () => {
   // Render availability form
   const renderAvailabilityForm = () => {
     const arrivalTime = eventData?.constraints?.judge_venue_arrival_time;
+    const judgingWindow = getJudgingWindow(eventData);
     return (
       <Box sx={{ mb: 4 }}>
         <Box sx={{ mb: 3 }}>
@@ -1696,18 +1756,20 @@ const JudgeApplicationComponent = () => {
               Important judging schedule
             </Typography>
             <Typography variant="body1">
-              Judging starts at 3:00 PM on the last day of the hackathon
-              (typically Sunday). We expect to complete judging and announce the
-              winning teams by 5:30 PM. Your presence during this entire
-              timeframe is crucial. Please plan to arrive 15 to 30 minutes early
-              to ensure you can participate fully.
+              Judging starts at {judgingWindow.start} on the last day of the
+              hackathon (typically Sunday). We expect to complete judging and
+              announce the winning teams by {judgingWindow.end}. Your presence
+              during this entire timeframe is crucial. Please plan to arrive 15
+              to 30 minutes early to ensure you can participate fully.
             </Typography>
           </Alert>
 
           {arrivalTime && (
             <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
               <Typography variant="body1">
-                <strong>Please arrive at the venue by {arrivalTime}</strong>
+                <strong>
+                  Please arrive at the venue by {formatTime12h(arrivalTime)}
+                </strong>
                 {eventData?.location ? ` (${eventData.location})` : ""} on the
                 final day. This gives you time to settle in and review the
                 projects before judging begins.
@@ -1747,7 +1809,7 @@ const JudgeApplicationComponent = () => {
                   component="span"
                   sx={{ fontWeight: 700, color: "var(--ink)" }}
                 >
-                  3:00 PM to approximately 5:30 PM
+                  {judgingWindow.start} to approximately {judgingWindow.end}
                 </Box>
               </Typography>
             </Box>
@@ -1759,8 +1821,8 @@ const JudgeApplicationComponent = () => {
               gutterBottom
               sx={{ fontWeight: 600, color: "var(--ink)" }}
             >
-              Can you commit to being present for the entire judging period
-              (3:00 PM to 5:30 PM on the last day)?
+              Can you commit to being present for the entire judging period (
+              {judgingWindow.start} to {judgingWindow.end} on the last day)?
             </Typography>
             <RadioGroup
               name="canAttendJudging"
@@ -1783,14 +1845,33 @@ const JudgeApplicationComponent = () => {
                 label="I can attend part of the judging period (please explain in availability)"
               />
             </RadioGroup>
-            {formData.canAttendJudging === "No" && (
-              <Alert severity="warning" sx={{ ...warningAlertSx, mt: 1 }}>
-                Please note that availability during the judging period is a key
-                requirement for judges. Your application may still be
-                considered, but priority will be given to those who can attend
-                the full judging session.
-              </Alert>
-            )}
+            {formData.canAttendJudging === "No" &&
+              (isVirtualEvent() ? (
+                <Alert severity="warning" sx={{ ...warningAlertSx, mt: 1 }}>
+                  Please note that availability during the judging period is a
+                  key requirement for judges. Your application may still be
+                  considered, but priority will be given to those who can attend
+                  the full judging session.
+                </Alert>
+              ) : (
+                <Alert severity="error" sx={{ ...errorAlertSx, mt: 1 }}>
+                  <Typography variant="body2">
+                    <strong>
+                      The judging window is the entire role at this event
+                    </strong>{" "}
+                    — we can't accept judges who can't be at the venue for it.
+                    If you can make part of the window, choose "Partial" and
+                    explain above. Otherwise,{" "}
+                    <Link
+                      href={`/hack/${event_id}/mentor-application`}
+                      sx={refinedInlineLinkSx}
+                    >
+                      apply to mentor
+                    </Link>{" "}
+                    — mentors help all weekend and can join virtually.
+                  </Typography>
+                </Alert>
+              ))}
           </FormControl>
 
           <TextField
@@ -1811,35 +1892,25 @@ const JudgeApplicationComponent = () => {
               gutterBottom
               sx={{ fontWeight: 600, color: "var(--ink)" }}
             >
-              {eventData &&
-              ["Virtual", "Global", "Online"].some((term) =>
-                eventData.location?.toLowerCase().includes(term.toLowerCase()),
-              )
+              {isVirtualEvent()
                 ? "Will you be participating online?"
                 : `Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : " at the event location"}?`}
             </Typography>
 
-            {/* Show preference indicator for in-person events */}
-            {eventData &&
-              !["Virtual", "Global", "Online"].some((term) =>
-                eventData.location?.toLowerCase().includes(term.toLowerCase()),
-              ) && (
-                <FormHelperText
-                  sx={{ mb: 2, color: "#9b5d05", fontWeight: 700 }}
-                >
-                  ⭐ In-person participation is strongly preferred for judges
-                </FormHelperText>
-              )}
+            {/* In-person is a hard requirement at physical venues */}
+            {eventData && !isVirtualEvent() && (
+              <FormHelperText sx={{ mb: 2, color: "#9b5d05", fontWeight: 700 }}>
+                Judging happens at the venue — in-person attendance is required
+                for judges at this event.
+              </FormHelperText>
+            )}
 
             <RadioGroup
               name="inPerson"
               value={formData.inPerson}
               onChange={handleChange}
             >
-              {eventData &&
-              ["Virtual", "Global", "Online"].some((term) =>
-                eventData.location?.toLowerCase().includes(term.toLowerCase()),
-              ) ? (
+              {isVirtualEvent() ? (
                 <>
                   <FormControlLabel
                     value="Yes"
@@ -1862,26 +1933,39 @@ const JudgeApplicationComponent = () => {
                   <FormControlLabel
                     value="No"
                     control={<Radio sx={refinedChoiceSx} />}
-                    label="No, I'll participate remotely"
+                    label="No, I can't attend in person"
                   />
                 </>
               )}
             </RadioGroup>
 
-            {/* Additional context for remote judges at physical events */}
-            {formData.inPerson === "No" &&
-              eventData &&
-              !["Virtual", "Global", "Online"].some((term) =>
-                eventData.location?.toLowerCase().includes(term.toLowerCase()),
-              ) && (
-                <Alert severity="warning" sx={{ ...warningAlertSx, mt: 2 }}>
-                  <Typography variant="body2">
-                    Please note: Remote judging is possible but in-person judges
-                    are prioritized. If selected, we'll discuss remote judging
-                    logistics with you.
-                  </Typography>
-                </Alert>
-              )}
+            {/* Remote judging isn't available at physical events — say so
+                in place and point to real alternatives instead of a dead end */}
+            {formData.inPerson === "No" && eventData && !isVirtualEvent() && (
+              <Alert severity="error" sx={{ ...errorAlertSx, mt: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>We can't accept remote judges for this event</strong>{" "}
+                  — judging happens in person at the venue. You won't be able to
+                  submit this application, but there are two great ways to help
+                  from anywhere:
+                </Typography>
+                <Typography variant="body2" component="div">
+                  •{" "}
+                  <Link
+                    href={`/hack/${event_id}/mentor-application`}
+                    sx={refinedInlineLinkSx}
+                  >
+                    Apply to mentor this event
+                  </Link>{" "}
+                  — mentors support teams all weekend and can join virtually.
+                  <br />•{" "}
+                  <Link href="/hack" sx={refinedInlineLinkSx}>
+                    Judge one of our online events
+                  </Link>{" "}
+                  instead.
+                </Typography>
+              </Alert>
+            )}
           </FormControl>
         </Box>
       </Box>
