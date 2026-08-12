@@ -96,6 +96,32 @@ import {
   refinedStepperMobileSx,
 } from "../../../components/ApplicationForm/refinedStyles";
 
+// Judging-window defaults when the event doesn't configure
+// constraints.judge_judging_{start,end}_time (admin → Judges section).
+const DEFAULT_JUDGING_START = "15:00";
+const DEFAULT_JUDGING_END = "17:30";
+
+// "15:00" → "3:00 PM". Falls back to the raw value on unexpected input so a
+// bad constraint never renders an empty schedule.
+const formatTime12h = (hhmm) => {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hhmm || "");
+  if (!match) return hhmm || "";
+  const hours = Number(match[1]);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  return `${hours % 12 || 12}:${match[2]} ${suffix}`;
+};
+
+// The judging window shown across the availability step and enforced by
+// validateAvailability — always derived from event constraints with defaults.
+const getJudgingWindow = (eventData) => ({
+  start: formatTime12h(
+    eventData?.constraints?.judge_judging_start_time || DEFAULT_JUDGING_START,
+  ),
+  end: formatTime12h(
+    eventData?.constraints?.judge_judging_end_time || DEFAULT_JUDGING_END,
+  ),
+});
+
 const JudgeApplicationComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
@@ -1239,8 +1265,9 @@ const JudgeApplicationComponent = () => {
         return false;
       }
       if (formData.canAttendJudging === "No") {
+        const judgingWindow = getJudgingWindow(eventData);
         setError(
-          'Judges must be at the venue for the judging window (3:00–5:30 PM on the final day) — that window is the entire role. If you can only make part of it, choose "Partial" and explain; if you can\'t make it at all, consider mentoring instead.',
+          `Judges must be at the venue for the judging window (${judgingWindow.start}–${judgingWindow.end} on the final day) — that window is the entire role. If you can only make part of it, choose "Partial" and explain; if you can't make it at all, consider mentoring instead.`,
         );
         return false;
       }
@@ -1709,6 +1736,7 @@ const JudgeApplicationComponent = () => {
   // Render availability form
   const renderAvailabilityForm = () => {
     const arrivalTime = eventData?.constraints?.judge_venue_arrival_time;
+    const judgingWindow = getJudgingWindow(eventData);
     return (
       <Box sx={{ mb: 4 }}>
         <Box sx={{ mb: 3 }}>
@@ -1728,18 +1756,20 @@ const JudgeApplicationComponent = () => {
               Important judging schedule
             </Typography>
             <Typography variant="body1">
-              Judging starts at 3:00 PM on the last day of the hackathon
-              (typically Sunday). We expect to complete judging and announce the
-              winning teams by 5:30 PM. Your presence during this entire
-              timeframe is crucial. Please plan to arrive 15 to 30 minutes early
-              to ensure you can participate fully.
+              Judging starts at {judgingWindow.start} on the last day of the
+              hackathon (typically Sunday). We expect to complete judging and
+              announce the winning teams by {judgingWindow.end}. Your presence
+              during this entire timeframe is crucial. Please plan to arrive 15
+              to 30 minutes early to ensure you can participate fully.
             </Typography>
           </Alert>
 
           {arrivalTime && (
             <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
               <Typography variant="body1">
-                <strong>Please arrive at the venue by {arrivalTime}</strong>
+                <strong>
+                  Please arrive at the venue by {formatTime12h(arrivalTime)}
+                </strong>
                 {eventData?.location ? ` (${eventData.location})` : ""} on the
                 final day. This gives you time to settle in and review the
                 projects before judging begins.
@@ -1779,7 +1809,7 @@ const JudgeApplicationComponent = () => {
                   component="span"
                   sx={{ fontWeight: 700, color: "var(--ink)" }}
                 >
-                  3:00 PM to approximately 5:30 PM
+                  {judgingWindow.start} to approximately {judgingWindow.end}
                 </Box>
               </Typography>
             </Box>
@@ -1791,8 +1821,8 @@ const JudgeApplicationComponent = () => {
               gutterBottom
               sx={{ fontWeight: 600, color: "var(--ink)" }}
             >
-              Can you commit to being present for the entire judging period
-              (3:00 PM to 5:30 PM on the last day)?
+              Can you commit to being present for the entire judging period (
+              {judgingWindow.start} to {judgingWindow.end} on the last day)?
             </Typography>
             <RadioGroup
               name="canAttendJudging"
