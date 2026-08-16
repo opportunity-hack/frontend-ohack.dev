@@ -1,5 +1,16 @@
+import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
 import React, { useEffect, useMemo } from "react";
-import { Grid, Button, Box, Typography, Paper, List, ListItem, Divider, Chip } from "@mui/material";
+import {
+  Grid,
+  Button,
+  Box,
+  Typography,
+  Paper,
+  List,
+  ListItem,
+  Divider,
+  Chip,
+} from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import LinkIcon from "@mui/icons-material/Link";
@@ -57,8 +68,8 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
         highlight: true,
         ariaLabel: "View hackathon results and winners",
       },
-      ...baseSections.map(s =>
-        s.id === "applications" ? { ...s, highlight: false } : s
+      ...baseSections.map((s) =>
+        s.id === "applications" ? { ...s, highlight: false } : s,
       ),
     ];
   }, [isHackathonExpired]);
@@ -76,7 +87,14 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
   return (
     <Paper
       elevation={0}
-      sx={{ p: 3, my: 4, borderRadius: '12px', backgroundColor: 'var(--surface, #FFFFFF)', border: '1px solid var(--line, #E7E1D4)', boxShadow: 'none' }}
+      sx={{
+        p: 3,
+        my: 4,
+        borderRadius: "12px",
+        backgroundColor: "var(--surface, #FFFFFF)",
+        border: "1px solid var(--line, #E7E1D4)",
+        boxShadow: "none",
+      }}
       component="nav"
       aria-labelledby="table-of-contents-heading"
     >
@@ -87,12 +105,12 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
         gutterBottom
         align="center"
         sx={{
-          fontFamily: "'Fraunces', Georgia, serif",
+          fontFamily: FONT_DISPLAY,
           fontSize: { xs: "1.4rem", sm: "1.6rem" },
           fontWeight: 500,
-          letterSpacing: '-0.01em',
-          color: 'var(--ink, #16181D)',
-          marginBottom: 2
+          letterSpacing: "-0.01em",
+          color: "var(--ink, #16181D)",
+          marginBottom: 2,
         }}
       >
         Table of Contents
@@ -101,23 +119,39 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
       {/* Quick Access Event Links */}
       {eventLinks && eventLinks.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-            <LinkIcon sx={{ mr: 1, color: 'var(--accent, #E2552E)' }} />
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
+            }}
+          >
+            <LinkIcon sx={{ mr: 1, color: "var(--accent, #E2552E)" }} />
             <Typography
               component="h3"
-              sx={{ fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: 'uppercase', letterSpacing: '0.16em', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted, #5B6270)' }}
+              sx={{
+                fontFamily: FONT_BODY,
+                textTransform: "uppercase",
+                letterSpacing: "0.16em",
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                color: "var(--muted, #5B6270)",
+              }}
             >
               Quick Access
             </Typography>
           </Box>
 
-          <Box sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: 1,
-            mb: 2
-          }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 1,
+              mb: 2,
+            }}
+          >
             {eventLinks.slice(0, 4).map((link, index) => (
               <Chip
                 key={index}
@@ -128,23 +162,25 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
                 rel={link.open_new === "True" ? "noopener noreferrer" : ""}
                 clickable
                 variant="outlined"
-                icon={link.open_new === "True" ? <OpenInNewIcon /> : <LinkIcon />}
+                icon={
+                  link.open_new === "True" ? <OpenInNewIcon /> : <LinkIcon />
+                }
                 sx={{
                   borderRadius: 2,
                   fontWeight: 600,
-                  fontSize: '0.82rem',
-                  color: 'var(--brand, #1B3A6B)',
-                  backgroundColor: 'var(--surface, #FFFFFF)',
-                  borderColor: 'var(--line, #E7E1D4)',
-                  '& .MuiChip-icon': { color: 'var(--accent, #E2552E)' },
-                  '&:hover': {
-                    backgroundColor: 'rgba(27,58,107,0.06)',
-                    borderColor: 'var(--brand, #1B3A6B)',
+                  fontSize: "0.82rem",
+                  color: "var(--brand, #1B3A6B)",
+                  backgroundColor: "var(--surface, #FFFFFF)",
+                  borderColor: "var(--line, #E7E1D4)",
+                  "& .MuiChip-icon": { color: "var(--accent, #E2552E)" },
+                  "&:hover": {
+                    backgroundColor: "rgba(27,58,107,0.06)",
+                    borderColor: "var(--brand, #1B3A6B)",
                   },
-                  '&:focus': {
-                    outline: '2px solid currentColor',
-                    outlineOffset: '2px'
-                  }
+                  "&:focus": {
+                    outline: "2px solid currentColor",
+                    outlineOffset: "2px",
+                  },
                 }}
               />
             ))}
@@ -158,38 +194,41 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
                 sx={{
                   borderRadius: 2,
                   fontWeight: 600,
-                  fontSize: '0.82rem',
-                  color: 'var(--muted, #5B6270)',
-                  backgroundColor: 'var(--surface-2, #F4F1E9)',
-                  borderColor: 'var(--line, #E7E1D4)',
-                  '&:hover': { backgroundColor: 'rgba(27,58,107,0.06)', borderColor: 'var(--brand, #1B3A6B)' },
+                  fontSize: "0.82rem",
+                  color: "var(--muted, #5B6270)",
+                  backgroundColor: "var(--surface-2, #F4F1E9)",
+                  borderColor: "var(--line, #E7E1D4)",
+                  "&:hover": {
+                    backgroundColor: "rgba(27,58,107,0.06)",
+                    borderColor: "var(--brand, #1B3A6B)",
+                  },
                 }}
               />
             )}
           </Box>
 
-          <Divider sx={{ mx: 'auto', maxWidth: '60%' }} />
+          <Divider sx={{ mx: "auto", maxWidth: "60%" }} />
         </Box>
       )}
 
-      <List 
-        component="ul" 
+      <List
+        component="ul"
         aria-label="Event sections navigation"
-        sx={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          justifyContent: 'center',
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
           p: 0,
-          gap: 1
+          gap: 1,
         }}
       >
         {sections.map((section) => (
           <ListItem
             key={section.id}
-            sx={{ 
-              width: 'auto', 
+            sx={{
+              width: "auto",
               p: 0.5,
-              display: 'inline-flex'
+              display: "inline-flex",
             }}
             dense
           >
@@ -204,28 +243,35 @@ const TableOfContents = ({ eventLinks = [], isHackathonExpired = false }) => {
                 borderRadius: 999,
                 textTransform: "none",
                 fontWeight: 600,
-                fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
-                minWidth: { xs: '120px', sm: '140px' },
-                boxShadow: 'none',
+                fontFamily: FONT_BODY,
+                minWidth: { xs: "120px", sm: "140px" },
+                boxShadow: "none",
                 ...(section.highlight
                   ? {
                       px: 3,
                       py: 1.25,
-                      backgroundColor: 'var(--brand, #1B3A6B)',
-                      color: '#fff',
-                      border: '1px solid var(--brand, #1B3A6B)',
-                      '&:hover': { backgroundColor: '#16315a', boxShadow: 'none' },
+                      backgroundColor: "var(--brand, #1B3A6B)",
+                      color: "#fff",
+                      border: "1px solid var(--brand, #1B3A6B)",
+                      "&:hover": {
+                        backgroundColor: "#16315a",
+                        boxShadow: "none",
+                      },
                     }
                   : {
-                      backgroundColor: 'var(--surface, #FFFFFF)',
-                      color: 'var(--ink, #16181D)',
-                      border: '1px solid var(--line, #E7E1D4)',
-                      '&:hover': { backgroundColor: 'rgba(27,58,107,0.06)', borderColor: 'var(--brand, #1B3A6B)', boxShadow: 'none' },
+                      backgroundColor: "var(--surface, #FFFFFF)",
+                      color: "var(--ink, #16181D)",
+                      border: "1px solid var(--line, #E7E1D4)",
+                      "&:hover": {
+                        backgroundColor: "rgba(27,58,107,0.06)",
+                        borderColor: "var(--brand, #1B3A6B)",
+                        boxShadow: "none",
+                      },
                     }),
                 "&:focus": {
-                  outline: '2px solid currentColor',
-                  outlineOffset: '2px'
-                }
+                  outline: "2px solid currentColor",
+                  outlineOffset: "2px",
+                },
               }}
             >
               {section.name}

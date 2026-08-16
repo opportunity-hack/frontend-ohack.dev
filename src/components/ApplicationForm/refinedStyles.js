@@ -4,6 +4,44 @@
 // These sx objects assume the page body is wrapped in <RefinedRoot> (which
 // defines the CSS variables) with <RefinedFonts/> in <Head>.
 
+import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
+import { createTheme } from "@mui/material/styles";
+import baseTheme from "../../assets/theme";
+
+// Scoped MUI theme for the application forms: pins the token font on every
+// variant and sizes the form copy slightly above the MUI defaults (body1 17px
+// matches RefinedRoot's base). Wrap each form page in
+// <ThemeProvider theme={refinedFormTheme}> just inside/around <RefinedRoot>.
+// Built from the app base theme so the MuiGrid legacy-flex override survives.
+// Note: createTheme(theme, overrides) only deep-merges, so every variant must
+// pin fontFamily explicitly — the top-level typography.fontFamily does NOT
+// regenerate variant styles.
+export const refinedFormTheme = createTheme(baseTheme, {
+  typography: {
+    fontFamily: FONT_BODY,
+    body1: {
+      fontFamily: FONT_BODY,
+      fontSize: "17px", // matches RefinedRoot's base copy size
+      lineHeight: 1.6,
+    },
+    body2: { fontFamily: FONT_BODY, fontSize: "14.5px" },
+    subtitle1: { fontFamily: FONT_BODY, fontSize: "17px" },
+    subtitle2: { fontFamily: FONT_BODY, fontSize: "15px" },
+    h6: { fontFamily: FONT_BODY, fontSize: "20px" },
+    button: { fontFamily: FONT_BODY, fontSize: "15px" },
+    caption: { fontFamily: FONT_BODY, fontSize: "13px" },
+    overline: { fontFamily: FONT_BODY, fontSize: "12px" },
+  },
+});
+
+// Measure cap for multi-sentence prose runs inside the full-width form cards
+// (the cards span the 1120px .ohx-wrap; uncapped paragraphs hit ~120+ chars
+// per line on desktop — double the readable 45–75). em: relative to the
+// paragraph's own size, 40em ≈ 680px ≈ 70 CPL at the 17px body.
+export const formProseSx = {
+  maxWidth: "40em",
+};
+
 // Top/bottom padding for the application pages' outer <section className="ohx-wrap">.
 // The NavBar is position:absolute (64px tall), so the section — the first in-flow
 // element on these pages — must clear it itself. Tighter than the marketing pages'
@@ -102,8 +140,8 @@ export const refinedSelectMenuProps = {
 };
 
 export const stepTitleSx = {
-  fontFamily: "var(--display,'Fraunces',Georgia,serif)",
-  fontSize: { xs: "1.65rem", sm: "2rem" },
+  fontFamily: FONT_DISPLAY,
+  fontSize: { xs: "26px", sm: "32px" },
   fontWeight: 500,
   letterSpacing: "-0.015em",
   color: "var(--ink)",
@@ -125,7 +163,7 @@ export const eventMarkdownSx = {
     my: 1.5,
   },
   "& h1, & h2, & h3, & h4": {
-    fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+    fontFamily: FONT_DISPLAY,
     fontWeight: 500,
     letterSpacing: "-0.015em",
     color: "var(--ink)",
@@ -133,13 +171,13 @@ export const eventMarkdownSx = {
     mb: 1,
   },
   "& h1": {
-    fontSize: "1.4rem",
+    fontSize: "22px",
   },
   "& h2": {
-    fontSize: "1.25rem",
+    fontSize: "20px",
   },
   "& h3, & h4": {
-    fontSize: "1.1rem",
+    fontSize: "18px",
   },
   "& ul, & ol": {
     my: 1.5,
@@ -213,7 +251,7 @@ export const emphasisPanelSx = {
 export const primaryButtonSx = {
   backgroundColor: "var(--brand)",
   color: "#fff",
-  fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+  fontFamily: FONT_BODY,
   fontWeight: 600,
   textTransform: "none",
   borderRadius: "5px",
@@ -233,7 +271,7 @@ export const primaryButtonSx = {
 export const ghostButtonSx = {
   borderColor: "var(--line)",
   color: "var(--ink)",
-  fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+  fontFamily: FONT_BODY,
   fontWeight: 600,
   textTransform: "none",
   borderRadius: "5px",
@@ -249,8 +287,8 @@ export const ghostButtonSx = {
 
 export const refinedStepperSx = {
   "& .MuiStepLabel-label": {
-    fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
-    fontSize: "0.92rem",
+    fontFamily: FONT_BODY,
+    fontSize: "14.5px",
     fontWeight: 500,
     mt: 1,
     color: "#5B6270",
@@ -296,7 +334,7 @@ export const refinedStepperMobileSx = {
     px: 0.5,
   },
   "& .MuiStepLabel-label": {
-    fontSize: "0.72rem",
+    fontSize: "11.5px",
     whiteSpace: "nowrap",
   },
   "& .MuiSvgIcon-root": {

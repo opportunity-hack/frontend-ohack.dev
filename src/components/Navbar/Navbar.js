@@ -1,3 +1,4 @@
+import { FONT_BODY } from "../../styles/fonts";
 import React, { useEffect } from "react";
 import Link from "next/link";
 import Head from "next/head";
@@ -99,11 +100,11 @@ export default function NavBar() {
     if (isLoggedIn && user?.email) {
       // Set user data for analytics
       set(user.email);
-      
+
       // Track login event
       trackEvent({
         action: "Login Email Set",
-        params: {}
+        params: {},
       });
     }
 
@@ -114,8 +115,10 @@ export default function NavBar() {
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
   const handleOpenAboutMenu = (event) => setAnchorElAbout(event.currentTarget);
-  const handleOpenGetInvolvedMenu = (event) => setAnchorElGetInvolved(event.currentTarget);
-  const handleOpenHackathonsMenu = (event) => setAnchorElHackathons(event.currentTarget);
+  const handleOpenGetInvolvedMenu = (event) =>
+    setAnchorElGetInvolved(event.currentTarget);
+  const handleOpenHackathonsMenu = (event) =>
+    setAnchorElHackathons(event.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
   const handleCloseUserMenu = () => setAnchorElUser(null);
   const handleCloseAboutMenu = () => setAnchorElAbout(null);
@@ -218,7 +221,14 @@ export default function NavBar() {
             />
           </Typography>
 
-          <Box sx={{ flexGrow: 0, flexShrink: 0, display: { xs: "flex", md: "none" }, alignItems: "center" }}>
+          <Box
+            sx={{
+              flexGrow: 0,
+              flexShrink: 0,
+              display: { xs: "flex", md: "none" },
+              alignItems: "center",
+            }}
+          >
             <IconButton
               size="large"
               aria-label="open navigation menu"
@@ -263,7 +273,7 @@ export default function NavBar() {
                     overflowY: "auto",
                     "& .MuiList-root": { py: 1 },
                     "& .MuiListSubheader-root": {
-                      fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                      fontFamily: FONT_BODY,
                       textTransform: "uppercase",
                       letterSpacing: "0.18em",
                       fontSize: "0.66rem",
@@ -277,7 +287,7 @@ export default function NavBar() {
                       mx: 1,
                       "& .MuiTypography-root": {
                         textAlign: "left",
-                        fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                        fontFamily: FONT_BODY,
                         fontSize: "1rem",
                         fontWeight: 500,
                         color: "#16181D",
@@ -292,7 +302,7 @@ export default function NavBar() {
               {/* Main Navigation Pages */}
               {pages.map((page) => (
                 <Link href={page[1]} key={page[0]} passHref>
-                  <MenuItem 
+                  <MenuItem
                     onClick={handleCloseNavMenu}
                     sx={{ py: 1.5, minHeight: "48px" }}
                   >
@@ -300,39 +310,39 @@ export default function NavBar() {
                   </MenuItem>
                 </Link>
               ))}
-              
+
               <Divider />
               <ListSubheader>Hackathon Resources</ListSubheader>
               {hackathonMenuItems.slice(1).map((item) => (
                 <Link href={item[1]} key={item[0]} passHref>
-                  <MenuItem 
-                    onClick={handleCloseNavMenu} 
+                  <MenuItem
+                    onClick={handleCloseNavMenu}
                     sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
                   >
                     <Typography textAlign="center">{item[0]}</Typography>
                   </MenuItem>
                 </Link>
               ))}
-              
+
               <Divider />
               <ListSubheader>Get Involved</ListSubheader>
               {getInvolvedMenuItems.map((item) => (
                 <Link href={item[1]} key={item[0]} passHref>
-                  <MenuItem 
-                    onClick={handleCloseNavMenu} 
+                  <MenuItem
+                    onClick={handleCloseNavMenu}
                     sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
                   >
                     <Typography textAlign="center">{item[0]}</Typography>
                   </MenuItem>
                 </Link>
               ))}
-              
+
               <Divider />
               <ListSubheader>About & Resources</ListSubheader>
               {aboutMenuItems.map((item) => (
                 <Link href={item[1]} key={item[0]} passHref>
-                  <MenuItem 
-                    onClick={handleCloseNavMenu} 
+                  <MenuItem
+                    onClick={handleCloseNavMenu}
                     sx={{ pl: 3, py: 1.5, minHeight: "48px" }}
                   >
                     <Typography textAlign="center">{item[0]}</Typography>
@@ -375,10 +385,10 @@ export default function NavBar() {
               </NavbarButton>
             </Tooltip>
             <Menu
-              sx={{ 
+              sx={{
                 mt: "45px",
                 maxHeight: "75vh",
-                overflowY: "auto"
+                overflowY: "auto",
               }}
               id="hackathons-menu"
               anchorEl={anchorElHackathons}
@@ -396,7 +406,7 @@ export default function NavBar() {
             >
               {hackathonMenuItems.map((item) => (
                 <Link href={item[1]} key={item[0]} passHref>
-                  <MenuItem 
+                  <MenuItem
                     onClick={handleCloseHackathonsMenu}
                     sx={{ py: 1.5, minHeight: "48px" }}
                   >
@@ -421,9 +431,12 @@ export default function NavBar() {
                     textTransform: "none",
                     fontWeight: 500,
                     fontSize: "0.95rem",
-                    fontFamily: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+                    fontFamily: FONT_BODY,
                     borderRadius: 1.5,
-                    "&:hover": { color: "#1B3A6B", backgroundColor: "rgba(27,58,107,0.06)" },
+                    "&:hover": {
+                      color: "#1B3A6B",
+                      backgroundColor: "rgba(27,58,107,0.06)",
+                    },
                   }}
                 >
                   {page[0]}
@@ -440,10 +453,10 @@ export default function NavBar() {
               </NavbarButton>
             </Tooltip>
             <Menu
-              sx={{ 
+              sx={{
                 mt: "45px",
                 maxHeight: "75vh",
-                overflowY: "auto"
+                overflowY: "auto",
               }}
               id="get-involved-menu"
               anchorEl={anchorElGetInvolved}
@@ -461,7 +474,7 @@ export default function NavBar() {
             >
               {getInvolvedMenuItems.map((item) => (
                 <Link href={item[1]} key={item[0]} passHref>
-                  <MenuItem 
+                  <MenuItem
                     onClick={handleCloseGetInvolvedMenu}
                     sx={{ py: 1.5, minHeight: "48px" }}
                   >
@@ -480,10 +493,10 @@ export default function NavBar() {
               </NavbarButton>
             </Tooltip>
             <Menu
-              sx={{ 
+              sx={{
                 mt: "45px",
                 maxHeight: "75vh",
-                overflowY: "auto"
+                overflowY: "auto",
               }}
               id="about-menu"
               anchorEl={anchorElAbout}
@@ -501,7 +514,7 @@ export default function NavBar() {
             >
               {aboutMenuItems.map((item) => (
                 <Link href={item[1]} key={item[0]} passHref>
-                  <MenuItem 
+                  <MenuItem
                     onClick={handleCloseAboutMenu}
                     sx={{ py: 1.5, minHeight: "48px" }}
                   >
@@ -553,7 +566,8 @@ export default function NavBar() {
                             width: 14,
                             height: 14,
                             borderRadius: "50%",
-                            backgroundColor: heartsSummary.tier?.color || "transparent",
+                            backgroundColor:
+                              heartsSummary.tier?.color || "transparent",
                             border: "1.5px solid #FBFAF6",
                             display: "flex",
                             alignItems: "center",
@@ -564,7 +578,7 @@ export default function NavBar() {
                             sx={{
                               fontSize: 9,
                               color: ["Gold", "Platinum", "Diamond"].includes(
-                                heartsSummary.tier?.name
+                                heartsSummary.tier?.name,
                               )
                                 ? "#333"
                                 : "#fff",

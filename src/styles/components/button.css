@@ -1,6 +1,6 @@
 .button {
   border: 0;
-  border-radius: 0.4rem;
+  border-radius: 4.8px;
 
   font-family: var(--font-primary);
   font-weight: 600;
@@ -13,20 +13,20 @@
 
   /* responsive */
 
-  min-width: 10rem;
-  padding: 1.6rem 1.6rem;
+  min-width: 120px;
+  padding: 19.2px 19.2px;
 
-  font-size: 1.6rem;
-  line-height: 2.4rem;
+  font-size: 19.2px;
+  line-height: 28.8px;
 }
 
 .button--compact {
   /* responsive */
 
-  padding: 1rem 1.6rem;
+  padding: 12px 19.2px;
 
-  font-size: 1.6rem;
-  line-height: 1.6rem;
+  font-size: 19.2px;
+  line-height: 19.2px;
 }
 
 .button--pad {
@@ -75,19 +75,19 @@
   .button {
     /* responsive */
 
-    min-width: 0.8rem;
-    padding: 1rem 1.2rem;
+    min-width: 9.6px;
+    padding: 12px 14.4px;
 
-    font-size: 1.3rem;
-    line-height: 2.2rem;
+    font-size: 15.6px;
+    line-height: 26.4px;
   }
 
   .button--compact {
     /* responsive */
 
-    padding: 0.6rem 1rem;
+    padding: 7.2px 12px;
 
-    font-size: 1.3rem;
-    line-height: 2rem;
+    font-size: 15.6px;
+    line-height: 24px;
   }
 }

@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../../styles/fonts";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -55,8 +56,10 @@ import {
   Arrow,
   Stat,
 } from "../../../components/design/refined";
+import { ThemeProvider } from "@mui/material/styles";
 import {
   formSectionStyle,
+  refinedFormTheme,
   refinedFieldSx,
   refinedChoiceSx,
   refinedChipSx,
@@ -1087,7 +1090,7 @@ const SponsorApplicationComponent = () => {
                   >
                     <Typography
                       component="h3"
-                      sx={{ ...stepTitleSx, fontSize: "1.3rem", mb: 0 }}
+                      sx={{ ...stepTitleSx, fontSize: "21px", mb: 0 }}
                     >
                       {tier.name}
                     </Typography>
@@ -1258,7 +1261,7 @@ const SponsorApplicationComponent = () => {
             <Box sx={{ ...emphasisPanelSx, mt: 3 }}>
               <Typography
                 component="h3"
-                sx={{ ...stepTitleSx, fontSize: "1.2rem", mb: 1 }}
+                sx={{ ...stepTitleSx, fontSize: "19px", mb: 1 }}
               >
                 🎯 {formData.sponsorshipTier} Sponsorship
               </Typography>
@@ -1957,7 +1960,7 @@ const SponsorApplicationComponent = () => {
                       component="h2"
                       sx={{
                         ...stepTitleSx,
-                        fontSize: { xs: "1.4rem", sm: "1.7rem" },
+                        fontSize: { xs: "22.5px", sm: "27px" },
                         mt: 1,
                       }}
                     >
@@ -2077,7 +2080,7 @@ const SponsorApplicationComponent = () => {
                         component="div"
                         sx={{
                           mb: 1,
-                          fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                          fontFamily: FONT_DISPLAY,
                           fontWeight: 500,
                         }}
                       >
@@ -2273,7 +2276,11 @@ const SponsorApplicationComponent = () => {
   };
 
   // Main return - after all hooks have been called
-  return success ? renderSuccessMessage() : renderApplicationForm();
+  return (
+    <ThemeProvider theme={refinedFormTheme}>
+      {success ? renderSuccessMessage() : renderApplicationForm()}
+    </ThemeProvider>
+  );
 };
 
 // Create a new component that uses RequiredAuthProvider

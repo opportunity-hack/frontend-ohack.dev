@@ -1,3 +1,4 @@
+import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import NextLink from "next/link";
 import {
@@ -46,14 +47,18 @@ import {
   FaUsers,
   FaShieldAlt,
   FaTimes,
-} from 'react-icons/fa';
+} from "react-icons/fa";
 import { useAuthInfo } from "@propelauth/react";
 import MuiAlert from "@mui/material/Alert";
-import { formatDistanceToNow, parseISO } from 'date-fns';
-import { TEAM_STATUS_OPTIONS, getStatusOption, isJoiningDisabled } from '../../constants/teamStatus';
-import { isHackathonExpired } from '../../lib/dateUtils';
-import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
-import VideoDisplay from '../VideoDisplay/VideoDisplay';
+import { formatDistanceToNow, parseISO } from "date-fns";
+import {
+  TEAM_STATUS_OPTIONS,
+  getStatusOption,
+  isJoiningDisabled,
+} from "../../constants/teamStatus";
+import { isHackathonExpired } from "../../lib/dateUtils";
+import LiteVideoThumbnail from "../VideoDisplay/LiteVideoThumbnail";
+import VideoDisplay from "../VideoDisplay/VideoDisplay";
 import {
   MENTOR_COVERAGE_TOTAL,
   coverageDoneCount,
@@ -62,18 +67,18 @@ import {
   latestRatingsByMentor,
   consensusForCriterion,
   relativeTime as mentorRelativeTime,
-} from '../Teams/mentorCoverage';
-import FlagIcon from '@mui/icons-material/Flag';
-import ScheduleIcon from '@mui/icons-material/Schedule';
-import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
-import GavelIcon from '@mui/icons-material/Gavel';
+} from "../Teams/mentorCoverage";
+import FlagIcon from "@mui/icons-material/Flag";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import EmojiPeopleIcon from "@mui/icons-material/EmojiPeople";
+import GavelIcon from "@mui/icons-material/Gavel";
 
 // Map MUI palette color names to a hex so the dots paint reliably without
 // having to pass the whole theme down. Mirrors SCORE_META.color.
 const SCORE_DOT_COLORS = {
-  green: '#2e7d32',   // success.main
-  yellow: '#ed6c02',  // warning.main
-  red: '#d32f2f',     // error.main
+  green: "#2e7d32", // success.main
+  yellow: "#ed6c02", // warning.main
+  red: "#d32f2f", // error.main
 };
 
 /**
@@ -84,20 +89,34 @@ const SCORE_DOT_COLORS = {
 const JudgingReadinessStrip = ({ team }) => {
   const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
   const hasAnyRating = Object.values(ratingsByMentor).some(
-    (perMentor) => perMentor && Object.keys(perMentor).length > 0
+    (perMentor) => perMentor && Object.keys(perMentor).length > 0,
   );
   if (!hasAnyRating) return null;
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5, flexWrap: 'wrap' }}>
-      <GavelIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 0.75,
+        mt: 0.5,
+        flexWrap: "wrap",
+      }}
+    >
+      <GavelIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ fontWeight: 600 }}
+      >
         Judging readiness
       </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
         {JUDGING_CRITERIA.map((c) => {
           const consensus = consensusForCriterion(ratingsByMentor[c.slug]);
-          const dotColor = consensus ? SCORE_DOT_COLORS[consensus] : 'transparent';
+          const dotColor = consensus
+            ? SCORE_DOT_COLORS[consensus]
+            : "transparent";
           const label = consensus
             ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label}`
             : `${c.label}: not rated yet`;
@@ -108,15 +127,15 @@ const JudgingReadinessStrip = ({ team }) => {
                 sx={{
                   width: 12,
                   height: 12,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   bgcolor: dotColor,
                   border: 1,
-                  borderColor: consensus ? dotColor : 'divider',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  borderColor: consensus ? dotColor : "divider",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontSize: 8,
-                  color: '#fff',
+                  color: "#fff",
                   fontWeight: 700,
                   lineHeight: 1,
                 }}
@@ -142,13 +161,18 @@ const MentorSupportSummary = ({ team, eventId }) => {
   const openFlags = Number(team?.mentor_open_flag_count || 0);
   const lastTouchedAt = team?.mentor_last_touched_at;
   const lastTouchedBy = team?.mentor_last_touched_by_name;
-  const hasAnyRating = Array.isArray(team?.mentor_ratings) && team.mentor_ratings.length > 0;
+  const hasAnyRating =
+    Array.isArray(team?.mentor_ratings) && team.mentor_ratings.length > 0;
 
   // Hide entirely if there's no mentor activity to report.
   if (!doneCount && !openFlags && !lastTouchedAt && !hasAnyRating) return null;
 
   const coverageColor =
-    doneCount === MENTOR_COVERAGE_TOTAL ? 'success' : doneCount > 0 ? 'primary' : 'default';
+    doneCount === MENTOR_COVERAGE_TOTAL
+      ? "success"
+      : doneCount > 0
+        ? "primary"
+        : "default";
 
   return (
     <Box
@@ -156,14 +180,19 @@ const MentorSupportSummary = ({ team, eventId }) => {
         mb: 1,
         p: 1,
         borderRadius: 1,
-        backgroundColor: openFlags > 0 ? 'rgba(255,167,38,0.10)' : 'rgba(33,150,243,0.06)',
+        backgroundColor:
+          openFlags > 0 ? "rgba(255,167,38,0.10)" : "rgba(33,150,243,0.06)",
         border: 1,
-        borderColor: openFlags > 0 ? 'warning.light' : 'divider',
+        borderColor: openFlags > 0 ? "warning.light" : "divider",
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-        <EmojiPeopleIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
+        <EmojiPeopleIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 600 }}
+        >
           Mentor support
         </Typography>
         {eventId && team?.id && (
@@ -171,13 +200,20 @@ const MentorSupportSummary = ({ team, eventId }) => {
             component={NextLink}
             href={`/hack/${eventId}/team/${team.id}/mentor`}
             variant="caption"
-            sx={{ ml: 'auto' }}
+            sx={{ ml: "auto" }}
           >
             Mentor details →
           </Link>
         )}
       </Box>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 0.5,
+          alignItems: "center",
+        }}
+      >
         <Chip
           size="small"
           color={coverageColor}
@@ -189,7 +225,7 @@ const MentorSupportSummary = ({ team, eventId }) => {
             size="small"
             color="warning"
             icon={<FlagIcon sx={{ fontSize: 14 }} />}
-            label={`${openFlags} open flag${openFlags === 1 ? '' : 's'}`}
+            label={`${openFlags} open flag${openFlags === 1 ? "" : "s"}`}
             sx={{ height: 22 }}
           />
         )}
@@ -224,7 +260,7 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 
 // Loading component - extracted for reuse
 const LoadingIndicator = ({ message }) => (
-  <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+  <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
     <CircularProgress />
     <Typography variant="body2" color="textSecondary" sx={{ ml: 2 }}>
       {message}
@@ -234,7 +270,9 @@ const LoadingIndicator = ({ message }) => (
 
 // Utility function to render team status chip
 const renderStatusChip = (status) => {
-  const statusOption = TEAM_STATUS_OPTIONS.find((opt) => opt.value === status) || TEAM_STATUS_OPTIONS[0];
+  const statusOption =
+    TEAM_STATUS_OPTIONS.find((opt) => opt.value === status) ||
+    TEAM_STATUS_OPTIONS[0];
   return (
     <Chip
       label={statusOption.label}
@@ -248,16 +286,16 @@ const renderStatusChip = (status) => {
 
 // Utility function to format date
 const formatCreatedDate = (dateString) => {
-  if (!dateString) return 'Unknown';
+  if (!dateString) return "Unknown";
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   } catch (error) {
-    return 'Unknown';
+    return "Unknown";
   }
 };
 
@@ -265,21 +303,27 @@ const formatCreatedDate = (dateString) => {
 const parseGithubUrl = (url) => {
   try {
     const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split('/').filter(part => part);
+    const pathParts = urlObj.pathname.split("/").filter((part) => part);
     if (pathParts.length >= 2) {
       return {
         org: pathParts[0],
-        repo: pathParts[1]
+        repo: pathParts[1],
       };
     }
   } catch (error) {
-    console.error('Invalid GitHub URL:', url, error);
+    console.error("Invalid GitHub URL:", url, error);
   }
   return null;
 };
 
 // Team Join Confirmation Modal Component
-const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading }) => {
+const TeamJoinConfirmationModal = ({
+  open,
+  onClose,
+  onConfirm,
+  teamName,
+  loading,
+}) => {
   const [confirmations, setConfirmations] = useState({
     knowTeamMember: false,
     notMentor: false,
@@ -287,9 +331,9 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
   });
 
   const handleCheckboxChange = (field) => (event) => {
-    setConfirmations(prev => ({
+    setConfirmations((prev) => ({
       ...prev,
-      [field]: event.target.checked
+      [field]: event.target.checked,
     }));
   };
 
@@ -319,26 +363,29 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
 
   const checklistItems = [
     {
-      key: 'knowTeamMember',
-      icon: <FaHandshake style={{ color: '#2e7d32', fontSize: '20px' }} />,
-      title: 'I know someone on this team',
-      description: 'Connect with existing members or come with friends for the best experience, don\'t join random teams',
-      color: '#2e7d32'
+      key: "knowTeamMember",
+      icon: <FaHandshake style={{ color: "#2e7d32", fontSize: "20px" }} />,
+      title: "I know someone on this team",
+      description:
+        "Connect with existing members or come with friends for the best experience, don't join random teams",
+      color: "#2e7d32",
     },
     {
-      key: 'notMentor',
-      icon: <FaShieldAlt style={{ color: '#1976d2', fontSize: '20px' }} />,
-      title: 'I\'m participating as a hacker',
-      description: 'Mentors can help multiple teams, may not be available for the entire hackathon, and shouldn\'t join individual teams',
-      color: '#1976d2'
+      key: "notMentor",
+      icon: <FaShieldAlt style={{ color: "#1976d2", fontSize: "20px" }} />,
+      title: "I'm participating as a hacker",
+      description:
+        "Mentors can help multiple teams, may not be available for the entire hackathon, and shouldn't join individual teams",
+      color: "#1976d2",
     },
     {
-      key: 'understands',
-      icon: <FaUsers style={{ color: '#9c27b0', fontSize: '20px' }} />,
-      title: 'I\'m ready to collaborate',
-      description: 'I\'ll contribute actively throughout the hackathon making something great for nonprofits and the community',
-      color: '#9c27b0'
-    }
+      key: "understands",
+      icon: <FaUsers style={{ color: "#9c27b0", fontSize: "20px" }} />,
+      title: "I'm ready to collaborate",
+      description:
+        "I'll contribute actively throughout the hackathon making something great for nonprofits and the community",
+      color: "#9c27b0",
+    },
   ];
 
   return (
@@ -350,37 +397,37 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
       PaperProps={{
         sx: {
           borderRadius: 3,
-          overflow: 'hidden',
-        }
+          overflow: "hidden",
+        },
       }}
     >
       {/* Header with gradient background */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          color: "white",
           p: 3,
-          textAlign: 'center',
-          position: 'relative',
+          textAlign: "center",
+          position: "relative",
         }}
       >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             mb: 1,
           }}
         >
           <Box
             sx={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '50%',
+              background: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "50%",
               p: 1.5,
               mr: 2,
             }}
           >
-            <FaUserFriends style={{ fontSize: '24px' }} />
+            <FaUserFriends style={{ fontSize: "24px" }} />
           </Box>
           <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
             Ready to join {teamName}?
@@ -394,7 +441,10 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
       <DialogContent sx={{ p: 0 }}>
         {/* Quick checklist */}
         <Box sx={{ p: 3 }}>
-          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', color: 'text.primary' }}>
+          <Typography
+            variant="h6"
+            sx={{ mb: 3, textAlign: "center", color: "text.primary" }}
+          >
             Quick Team Guidelines
           </Typography>
 
@@ -403,52 +453,59 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
               <Grid size={{ xs: 12, sm: 4 }} key={item.key}>
                 <Card
                   sx={{
-                    height: '100%',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    border: confirmations[item.key] ? `2px solid ${item.color}` : '2px solid transparent',
-                    background: confirmations[item.key] 
-                      ? `linear-gradient(135deg, ${item.color}08, ${item.color}15)` 
-                      : 'white',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
+                    height: "100%",
+                    transition: "all 0.3s ease",
+                    cursor: "pointer",
+                    border: confirmations[item.key]
+                      ? `2px solid ${item.color}`
+                      : "2px solid transparent",
+                    background: confirmations[item.key]
+                      ? `linear-gradient(135deg, ${item.color}08, ${item.color}15)`
+                      : "white",
+                    "&:hover": {
+                      transform: "translateY(-2px)",
                       boxShadow: 3,
-                    }
+                    },
                   }}
-                  onClick={() => handleCheckboxChange(item.key)({ target: { checked: !confirmations[item.key] } })}
+                  onClick={() =>
+                    handleCheckboxChange(item.key)({
+                      target: { checked: !confirmations[item.key] },
+                    })
+                  }
                 >
-                  <CardContent sx={{ textAlign: 'center', p: 2 }}>
-                    <Box sx={{ mb: 2 }}>
-                      {item.icon}
-                    </Box>
+                  <CardContent sx={{ textAlign: "center", p: 2 }}>
+                    <Box sx={{ mb: 2 }}>{item.icon}</Box>
                     <FormControlLabel
                       control={
                         <Checkbox
                           checked={confirmations[item.key]}
                           onChange={handleCheckboxChange(item.key)}
-                          sx={{ 
+                          sx={{
                             color: item.color,
-                            '&.Mui-checked': { color: item.color }
+                            "&.Mui-checked": { color: item.color },
                           }}
                           onClick={(e) => e.stopPropagation()}
                         />
                       }
                       label={
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: 600, mb: 1 }}
+                        >
                           {item.title}
                         </Typography>
                       }
-                      sx={{ 
-                        flexDirection: 'column',
-                        alignItems: 'center',
+                      sx={{
+                        flexDirection: "column",
+                        alignItems: "center",
                         m: 0,
-                        '& .MuiFormControlLabel-label': { mt: 1 }
+                        "& .MuiFormControlLabel-label": { mt: 1 },
                       }}
                     />
-                    <Typography 
-                      variant="body2" 
+                    <Typography
+                      variant="body2"
                       color="text.secondary"
-                      sx={{ fontSize: '12px', lineHeight: 1.4 }}
+                      sx={{ fontSize: "12px", lineHeight: 1.4 }}
                     >
                       {item.description}
                     </Typography>
@@ -460,69 +517,77 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
 
           {/* Progress indicator */}
           <Box sx={{ mt: 3, mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
               <Typography variant="body2" color="text.secondary">
-                Progress: {Object.values(confirmations).filter(Boolean).length}/3
+                Progress: {Object.values(confirmations).filter(Boolean).length}
+                /3
               </Typography>
               <Box sx={{ flexGrow: 1, mx: 2 }}>
                 <LinearProgress
                   variant="determinate"
-                  value={(Object.values(confirmations).filter(Boolean).length / 3) * 100}
+                  value={
+                    (Object.values(confirmations).filter(Boolean).length / 3) *
+                    100
+                  }
                   sx={{
                     height: 6,
                     borderRadius: 3,
-                    '& .MuiLinearProgress-bar': {
-                      background: 'linear-gradient(90deg, #667eea, #764ba2)',
+                    "& .MuiLinearProgress-bar": {
+                      background: "linear-gradient(90deg, #667eea, #764ba2)",
                       borderRadius: 3,
-                    }
+                    },
                   }}
                 />
               </Box>
-              {allConfirmed && <FaCheckCircle style={{ color: '#4caf50', fontSize: '18px' }} />}
+              {allConfirmed && (
+                <FaCheckCircle style={{ color: "#4caf50", fontSize: "18px" }} />
+              )}
             </Box>
           </Box>
 
           {/* Encouragement message */}
           {allConfirmed ? (
-            <MuiAlertComponent 
-              severity="success" 
-              sx={{ 
+            <MuiAlertComponent
+              severity="success"
+              sx={{
                 mt: 2,
                 borderRadius: 2,
-                '& .MuiAlert-icon': {
-                  fontSize: '20px'
-                }
+                "& .MuiAlert-icon": {
+                  fontSize: "20px",
+                },
               }}
             >
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                Perfect! 🎉 You're all set to join the team and start building something amazing together.
+                Perfect! 🎉 You're all set to join the team and start building
+                something amazing together.
               </Typography>
             </MuiAlertComponent>
           ) : (
-            <MuiAlertComponent 
-              severity="info" 
-              sx={{ 
+            <MuiAlertComponent
+              severity="info"
+              sx={{
                 mt: 2,
                 borderRadius: 2,
-                background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
-                border: 'none'
+                background: "linear-gradient(135deg, #e3f2fd, #f3e5f5)",
+                border: "none",
               }}
             >
               <Typography variant="body1">
-                Almost there! Just confirm the items above to join your new team. 
+                Almost there! Just confirm the items above to join your new
+                team.
               </Typography>
             </MuiAlertComponent>
           )}
         </Box>
       </DialogContent>
 
-      <DialogActions 
-        sx={{ 
-          px: 3, 
-          pb: 3, 
+      <DialogActions
+        sx={{
+          px: 3,
+          pb: 3,
           pt: 0,
-          background: 'linear-gradient(to right, #fafafa, #f5f5f5)',
-          gap: 2
+          background: "linear-gradient(to right, #fafafa, #f5f5f5)",
+          gap: 2,
         }}
       >
         <Button
@@ -531,11 +596,11 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
           variant="outlined"
           color="inherit"
           size="large"
-          sx={{ 
+          sx={{
             minWidth: 100,
             borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 500
+            textTransform: "none",
+            fontWeight: 500,
           }}
         >
           Maybe Later
@@ -545,27 +610,33 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
           disabled={!allConfirmed || loading}
           variant="contained"
           size="large"
-          startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <FaUserFriends />}
+          startIcon={
+            loading ? (
+              <CircularProgress size={18} color="inherit" />
+            ) : (
+              <FaUserFriends />
+            )
+          }
           sx={{
             minWidth: 140,
             borderRadius: 2,
-            textTransform: 'none',
+            textTransform: "none",
             fontWeight: 600,
-            background: allConfirmed 
-              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+            background: allConfirmed
+              ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
               : undefined,
             opacity: !allConfirmed ? 0.6 : 1,
-            transform: allConfirmed ? 'scale(1.02)' : 'scale(1)',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              background: allConfirmed 
-                ? 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' 
+            transform: allConfirmed ? "scale(1.02)" : "scale(1)",
+            transition: "all 0.3s ease",
+            "&:hover": {
+              background: allConfirmed
+                ? "linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)"
                 : undefined,
-              transform: allConfirmed ? 'scale(1.05)' : 'scale(1)',
-            }
+              transform: allConfirmed ? "scale(1.05)" : "scale(1)",
+            },
           }}
         >
-          {loading ? 'Joining Team...' : 'Join Team! 🚀'}
+          {loading ? "Joining Team..." : "Join Team! 🚀"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -573,52 +644,61 @@ const TeamJoinConfirmationModal = ({ open, onClose, onConfirm, teamName, loading
 };
 
 // Enhanced TeamMember component with GitHub stats integration
-const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUsername }) => {
+const TeamMemberWithStats = ({
+  user,
+  isCurrentUser,
+  githubStats,
+  onCopyGithubUsername,
+}) => {
   if (!user) return null;
-  
+
   // Handle both profile objects and user ID strings
-  const userId = typeof user === 'string' ? user : user.user_id || user.id;
-  const displayName = user.name || user.nickname || '';
+  const userId = typeof user === "string" ? user : user.user_id || user.id;
+  const displayName = user.name || user.nickname || "";
   const githubUsername = user.github || user.github_username;
-  
+
   // Extract just the username if a full GitHub URL was provided
-  const cleanGithubUsername = githubUsername ? githubUsername.replace(/^https?:\/\/(www\.)?github\.com\//, '') : null;
+  const cleanGithubUsername = githubUsername
+    ? githubUsername.replace(/^https?:\/\/(www\.)?github\.com\//, "")
+    : null;
   const profileUrl = `/profile/${userId}`;
-  const firstLetter = displayName && displayName.length > 0 ? displayName[0] : '?';
-  
+  const firstLetter =
+    displayName && displayName.length > 0 ? displayName[0] : "?";
+
   // Get GitHub stats for this member
-  const hasActivity = githubStats && (githubStats.commits > 0 || githubStats.issues?.total > 0);
-  
+  const hasActivity =
+    githubStats && (githubStats.commits > 0 || githubStats.issues?.total > 0);
+
   const handleCopyGithubUsername = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!cleanGithubUsername) return;
-    
+
     try {
       await navigator.clipboard.writeText(cleanGithubUsername);
       if (onCopyGithubUsername) {
         onCopyGithubUsername(cleanGithubUsername);
       }
     } catch (err) {
-      console.error('Failed to copy GitHub username:', err);
+      console.error("Failed to copy GitHub username:", err);
       // Fallback for older browsers
-      const textArea = document.createElement('textarea');
+      const textArea = document.createElement("textarea");
       textArea.value = cleanGithubUsername;
       document.body.appendChild(textArea);
       textArea.select();
       try {
-        document.execCommand('copy');
+        document.execCommand("copy");
         if (onCopyGithubUsername) {
           onCopyGithubUsername(cleanGithubUsername);
         }
       } catch (fallbackErr) {
-        console.error('Fallback copy failed:', fallbackErr);
+        console.error("Fallback copy failed:", fallbackErr);
       }
       document.body.removeChild(textArea);
     }
   };
-  
+
   return (
     <Grid>
       <Tooltip
@@ -633,7 +713,9 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUse
                 <FaGithub style={{ marginRight: "4px", fontSize: "10px" }} />@
                 {cleanGithubUsername}
                 <br />
-                <em style={{ fontSize: "10px" }}>Click username below to copy</em>
+                <em style={{ fontSize: "10px" }}>
+                  Click username below to copy
+                </em>
               </div>
             )}
             {githubStats ? (
@@ -642,14 +724,19 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUse
                 <div>🐛 {githubStats.issues?.total || 0} issues</div>
                 <div>🔀 {githubStats.pull_requests?.total || 0} PRs</div>
                 {githubStats.latest_commit_time && (
-                  <div style={{ marginTop: 4, fontSize: '10px', opacity: 0.8 }}>
-                    Last active: {new Date(githubStats.latest_commit_time).toLocaleDateString()}
+                  <div style={{ marginTop: 4, fontSize: "10px", opacity: 0.8 }}>
+                    Last active:{" "}
+                    {new Date(
+                      githubStats.latest_commit_time,
+                    ).toLocaleDateString()}
                   </div>
                 )}
               </Box>
             ) : (
-              <div style={{ fontSize: '10px', opacity: 0.8, marginTop: 4 }}>
-                {cleanGithubUsername ? 'No GitHub activity yet' : 'No GitHub username'}
+              <div style={{ fontSize: "10px", opacity: 0.8, marginTop: 4 }}>
+                {cleanGithubUsername
+                  ? "No GitHub activity yet"
+                  : "No GitHub username"}
               </div>
             )}
           </Box>
@@ -668,14 +755,14 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUse
         >
           <Badge
             badgeContent={githubStats?.commits || 0}
-            color={hasActivity ? 'success' : 'default'}
+            color={hasActivity ? "success" : "default"}
             max={99}
             sx={{
-              '& .MuiBadge-badge': {
-                fontSize: '10px',
-                height: '16px',
-                minWidth: '16px',
-              }
+              "& .MuiBadge-badge": {
+                fontSize: "10px",
+                height: "16px",
+                minWidth: "16px",
+              },
             }}
           >
             <Avatar
@@ -687,7 +774,9 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUse
                   boxShadow: "0 0 4px rgba(63, 81, 181, 0.5)",
                 }),
                 ...(hasActivity && {
-                  border: hasActivity ? '2px solid #4caf50' : '1px solid #e0e0e0',
+                  border: hasActivity
+                    ? "2px solid #4caf50"
+                    : "1px solid #e0e0e0",
                 }),
                 ...(cleanGithubUsername && {
                   position: "relative",
@@ -781,7 +870,12 @@ const TeamMemberWithStats = ({ user, isCurrentUser, githubStats, onCopyGithubUse
 };
 
 // Updated GitHubStats component - now only shows repository overview
-const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => {
+const GitHubStats = ({
+  githubUrl,
+  teamMembers,
+  accessToken,
+  onStatsLoaded,
+}) => {
   const [githubData, setGithubData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -792,7 +886,7 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 
       const parsedUrl = parseGithubUrl(githubUrl);
       if (!parsedUrl) {
-        setError('Invalid GitHub URL');
+        setError("Invalid GitHub URL");
         return;
       }
 
@@ -806,25 +900,27 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
-          console.warn(`GitHub stats returned ${response.status} for ${parsedUrl.org}/${parsedUrl.repo}`);
+          console.warn(
+            `GitHub stats returned ${response.status} for ${parsedUrl.org}/${parsedUrl.repo}`,
+          );
           setError(null);
           return;
         }
 
         const data = await response.json();
         setGithubData(data);
-        
+
         // Pass stats back to parent component
         if (onStatsLoaded) {
           onStatsLoaded(data);
         }
       } catch (err) {
-        console.error('Error fetching GitHub stats:', err);
-        setError('Failed to load GitHub statistics');
+        console.error("Error fetching GitHub stats:", err);
+        setError("Failed to load GitHub statistics");
       } finally {
         setLoading(false);
       }
@@ -836,8 +932,8 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
   if (loading) {
     return (
       <Box sx={{ mt: 1, mb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <FaGithub style={{ marginRight: 8, fontSize: '14px' }} />
+        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+          <FaGithub style={{ marginRight: 8, fontSize: "14px" }} />
           <Typography variant="body2">Loading GitHub stats...</Typography>
         </Box>
         <LinearProgress size="small" />
@@ -848,8 +944,12 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
   if (error) {
     return (
       <Box sx={{ mt: 1, mb: 1 }}>
-        <Typography variant="caption" color="error" sx={{ display: 'flex', alignItems: 'center' }}>
-          <FaExclamationCircle style={{ marginRight: 4, fontSize: '12px' }} />
+        <Typography
+          variant="caption"
+          color="error"
+          sx={{ display: "flex", alignItems: "center" }}
+        >
+          <FaExclamationCircle style={{ marginRight: 4, fontSize: "12px" }} />
           {error}
         </Typography>
       </Box>
@@ -859,36 +959,55 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
   if (!githubData) return null;
 
   // Calculate total commits
-  const totalCommits = githubData.contributors?.reduce((sum, contributor) => sum + (contributor.commits || 0), 0) || 0;
+  const totalCommits =
+    githubData.contributors?.reduce(
+      (sum, contributor) => sum + (contributor.commits || 0),
+      0,
+    ) || 0;
 
   // Get the latest_commit_time from all contributors
-  const latestCommitTime = githubData.contributors?.reduce((latest, contributor) => 
-    contributor.latest_commit_time && (!latest || new Date(contributor.latest_commit_time) > new Date(latest))
-      ? contributor.latest_commit_time 
-      : latest, null) || null;
-  
+  const latestCommitTime =
+    githubData.contributors?.reduce(
+      (latest, contributor) =>
+        contributor.latest_commit_time &&
+        (!latest || new Date(contributor.latest_commit_time) > new Date(latest))
+          ? contributor.latest_commit_time
+          : latest,
+      null,
+    ) || null;
+
   // Calculate total issues
-  const totalIssues = githubData.contributors?.reduce((sum, contributor) => {
-    const issues = contributor.issues || {};
-    return sum + (issues.total || 0);
-  }, 0) || 0;
+  const totalIssues =
+    githubData.contributors?.reduce((sum, contributor) => {
+      const issues = contributor.issues || {};
+      return sum + (issues.total || 0);
+    }, 0) || 0;
 
   // Calculate total PRs
-  const totalPRs = githubData.contributors?.reduce((sum, contributor) => {
-    const prs = contributor.pull_requests || {};
-    return sum + (prs.total || 0);
-  }, 0) || 0;
+  const totalPRs =
+    githubData.contributors?.reduce((sum, contributor) => {
+      const prs = contributor.pull_requests || {};
+      return sum + (prs.total || 0);
+    }, 0) || 0;
 
   return (
     <Box sx={{ mt: 1, mb: 1 }}>
       {/* Repository Overview Stats */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>        
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: 1,
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
         <Chip
           icon={<FaGitAlt />}
           label={`${totalCommits} commits`}
           size="small"
-          color={totalCommits > 0 ? 'success' : 'default'}
-          variant={totalCommits > 0 ? 'filled' : 'outlined'}
+          color={totalCommits > 0 ? "success" : "default"}
+          variant={totalCommits > 0 ? "filled" : "outlined"}
         />
         {totalIssues > 0 && (
           <Chip
@@ -909,25 +1028,43 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
           />
         )}
         <Typography variant="caption" color="textSecondary">
-          {githubData.contributor_count} contributor{githubData.contributor_count !== 1 ? 's' : ''}
+          {githubData.contributor_count} contributor
+          {githubData.contributor_count !== 1 ? "s" : ""}
         </Typography>
       </Box>
 
       {/* Last commit time */}
       {latestCommitTime && (
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <FaClock style={{ marginRight: 6, fontSize: '12px', color: '#666' }} />
+        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+          <FaClock
+            style={{ marginRight: 6, fontSize: "12px", color: "#666" }}
+          />
           <Typography variant="caption" color="textSecondary">
-            Last commit: {formatDistanceToNow(parseISO(latestCommitTime), { addSuffix: true })}
+            Last commit:{" "}
+            {formatDistanceToNow(parseISO(latestCommitTime), {
+              addSuffix: true,
+            })}
           </Typography>
         </Box>
       )}
 
       {/* Encouragement message for inactive teams */}
       {totalCommits === 0 && (
-        <Box sx={{ mt: 1, p: 1, backgroundColor: '#fff3e0', borderRadius: 1, border: '1px solid #ffcc02' }}>
-          <Typography variant="caption" color="#e65100" sx={{ display: 'flex', alignItems: 'center' }}>
-            <FaCode style={{ marginRight: 4, fontSize: '12px' }} />
+        <Box
+          sx={{
+            mt: 1,
+            p: 1,
+            backgroundColor: "#fff3e0",
+            borderRadius: 1,
+            border: "1px solid #ffcc02",
+          }}
+        >
+          <Typography
+            variant="caption"
+            color="#e65100"
+            sx={{ display: "flex", alignItems: "center" }}
+          >
+            <FaCode style={{ marginRight: 4, fontSize: "12px" }} />
             Get started! No commits yet - time to push some code! 🚀
           </Typography>
         </Box>
@@ -937,7 +1074,23 @@ const GitHubStats = ({ githubUrl, teamMembers, accessToken, onStatsLoaded }) => 
 };
 
 // Team Card component - extracted for better organization
-const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamId, isHackathonExpired, teamJoinEnabled, hackerStatus, nonprofitMap, accessToken, onCopyGithubUsername, onPlayVideo, event_id, onVisible }) => {
+const TeamCard = ({
+  team,
+  userProfile,
+  isLoggedIn,
+  onJoin,
+  onLeave,
+  loadingTeamId,
+  isHackathonExpired,
+  teamJoinEnabled,
+  hackerStatus,
+  nonprofitMap,
+  accessToken,
+  onCopyGithubUsername,
+  onPlayVideo,
+  event_id,
+  onVisible,
+}) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -956,29 +1109,33 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
           observer.disconnect();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, [onVisible, team]);
-  
+
   // Check if this team's button is currently loading
   const isLoading = loadingTeamId === team?.id;
-  
+
   // Check if current user is in the team
-  const isUserInTeam = isLoggedIn && userProfile && Array.isArray(team?.users) && 
-    team.users.some(user => {      
+  const isUserInTeam =
+    isLoggedIn &&
+    userProfile &&
+    Array.isArray(team?.users) &&
+    team.users.some((user) => {
       // Handle both object and string cases
-      if (typeof user === 'string') {
+      if (typeof user === "string") {
         return user === userProfile.user_id;
       }
       return user.id === userProfile.id;
     });
-    
+
   // Check if the team is active - override with hackathon expiration and team join enabled
-  const isActive = !isHackathonExpired && (team.active === "True" || team.active === true);
+  const isActive =
+    !isHackathonExpired && (team.active === "True" || team.active === true);
   const canJoinLeave = isActive && teamJoinEnabled;
-  
+
   // Check if joining is disabled by team status
   const joiningDisabledByStatus = isJoiningDisabledByStatus(team?.status);
   // Only approved hackers can join a team. Mentors/judges/non-applicants resolve
@@ -997,10 +1154,13 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
     if (!githubUsername) return null;
 
     // Clean the username (remove @ and URL parts)
-    const cleanUsername = githubUsername.replace(/^@/, '').replace(/^https?:\/\/(www\.)?github\.com\//, '');
+    const cleanUsername = githubUsername
+      .replace(/^@/, "")
+      .replace(/^https?:\/\/(www\.)?github\.com\//, "");
 
-    return githubData.contributors.find(contributor =>
-      contributor.login === cleanUsername || contributor.id === cleanUsername
+    return githubData.contributors.find(
+      (contributor) =>
+        contributor.login === cleanUsername || contributor.id === cleanUsername,
     );
   };
 
@@ -1031,7 +1191,8 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
         border: "1px solid var(--line, #E7E1D4)",
         borderRadius: "10px",
         boxShadow: "none",
-        transition: "transform .2s ease, box-shadow .2s ease, border-color .2s ease",
+        transition:
+          "transform .2s ease, box-shadow .2s ease, border-color .2s ease",
         "&:hover": {
           transform: "translateY(-3px)",
           boxShadow: "0 18px 40px -28px rgba(22,24,29,0.45)",
@@ -1063,20 +1224,34 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
         </Box>
       )}
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
-          <Typography variant="h6" component="h3" sx={{ mr: 1, fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            mb: 1,
+          }}
+        >
+          <Typography
+            variant="h6"
+            component="h3"
+            sx={{ mr: 1, fontFamily: FONT_DISPLAY, fontWeight: 500 }}
+          >
             <Link
               component={NextLink}
               href={`/hack/${event_id}/team/${team?.id}`}
               underline="hover"
-              sx={{ color: "var(--ink, #16181D)", "&:hover": { color: "var(--brand, #1B3A6B)" } }}
+              sx={{
+                color: "var(--ink, #16181D)",
+                "&:hover": { color: "var(--brand, #1B3A6B)" },
+              }}
             >
               {team?.name}
             </Link>
           </Typography>
           {team?.status && renderStatusChip(team?.status)}
         </Box>
-        
+
         {!isActive && (
           <Typography variant="body2" color="error" sx={{ mb: 1 }}>
             {isHackathonExpired
@@ -1101,10 +1276,13 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
         {/* Nonprofit Information */}
         {team?.selected_nonprofit_id && nonprofitMap && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <FaHeart style={{ marginRight: 8, color: '#e91e63', fontSize: '14px' }} />
+          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+            <FaHeart
+              style={{ marginRight: 8, color: "#e91e63", fontSize: "14px" }}
+            />
             <Typography variant="body2" color="textSecondary">
-              <strong>Nonprofit:</strong> {nonprofitMap[team.selected_nonprofit_id] || 'Unknown Nonprofit'}
+              <strong>Nonprofit:</strong>{" "}
+              {nonprofitMap[team.selected_nonprofit_id] || "Unknown Nonprofit"}
             </Typography>
           </Box>
         )}
@@ -1113,8 +1291,8 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
         <Box sx={{ mb: 1 }}>
           {hasGithubLinks && (
             <>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                <FaGithub style={{ marginRight: 8, fontSize: '14px' }} />
+              <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+                <FaGithub style={{ marginRight: 8, fontSize: "14px" }} />
                 <Link
                   href={team.github_links[0].link}
                   target="_blank"
@@ -1124,9 +1302,9 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                   GitHub Repository
                 </Link>
               </Box>
-              
+
               {/* GitHub Statistics */}
-              <GitHubStats 
+              <GitHubStats
                 githubUrl={team.github_links[0].link}
                 teamMembers={team.users}
                 accessToken={accessToken}
@@ -1134,10 +1312,16 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
               />
             </>
           )}
-          
+
           {team?.github_username && (
-            <Box sx={{ display: 'flex', alignItems: 'center', ml: hasGithubLinks ? 3 : 0 }}>
-              <FaUser style={{ marginRight: 8, fontSize: '12px' }} />
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                ml: hasGithubLinks ? 3 : 0,
+              }}
+            >
+              <FaUser style={{ marginRight: 8, fontSize: "12px" }} />
               <Typography variant="caption" color="textSecondary">
                 Admin: @{team.github_username}
               </Typography>
@@ -1150,7 +1334,7 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
           <Box sx={{ mb: 1.5 }}>
             <LiteVideoThumbnail
               url={team.demo_video_url}
-              label={`Watch ${team?.name || 'team'} demo`}
+              label={`Watch ${team?.name || "team"} demo`}
               onClick={() => onPlayVideo?.(team.demo_video_url, team?.name)}
             />
           </Box>
@@ -1159,8 +1343,8 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
         {/* DevPost Project */}
         <Box sx={{ mb: 1 }}>
           {team?.devpost_link ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-              <FaExternalLinkAlt style={{ marginRight: 8, fontSize: '14px' }} />
+            <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+              <FaExternalLinkAlt style={{ marginRight: 8, fontSize: "14px" }} />
               <Link
                 href={team.devpost_link}
                 target="_blank"
@@ -1171,12 +1355,14 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
               </Link>
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-              <FaExternalLinkAlt style={{ marginRight: 8, fontSize: '14px', opacity: 0.5 }} />
+            <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+              <FaExternalLinkAlt
+                style={{ marginRight: 8, fontSize: "14px", opacity: 0.5 }}
+              />
               <Link
                 href={`/hack/${team?.hackathon_event_id}/manageteam`}
                 variant="body2"
-                sx={{ fontStyle: 'italic', color: 'text.secondary' }}
+                sx={{ fontStyle: "italic", color: "text.secondary" }}
               >
                 Add DevPost Project
               </Link>
@@ -1186,8 +1372,8 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
         {/* Created Date */}
         {team?.created && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <FaCalendarAlt style={{ marginRight: 8, fontSize: '12px' }} />
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <FaCalendarAlt style={{ marginRight: 8, fontSize: "12px" }} />
             <Typography variant="caption" color="textSecondary">
               Created: {formatCreatedDate(team.created)}
             </Typography>
@@ -1198,7 +1384,16 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
 
         <Typography
           variant="subtitle2"
-          sx={{ mt: 1.5, mb: 1, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: "uppercase", letterSpacing: "0.14em", fontSize: "0.66rem", fontWeight: 600, color: "var(--muted, #5B6270)" }}
+          sx={{
+            mt: 1.5,
+            mb: 1,
+            fontFamily: FONT_BODY,
+            textTransform: "uppercase",
+            letterSpacing: "0.14em",
+            fontSize: "0.66rem",
+            fontWeight: 600,
+            color: "var(--muted, #5B6270)",
+          }}
         >
           Team members
         </Typography>
@@ -1268,7 +1463,15 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
                   onClick={handleJoinClick}
                   disabled={isLoading || !canJoin}
                   startIcon={isLoading && <CircularProgress size={16} />}
-                  sx={{ textTransform: "none", borderColor: "var(--brand, #1B3A6B)", color: "var(--brand, #1B3A6B)", "&:hover": { borderColor: "#16315a", backgroundColor: "rgba(27,58,107,0.06)" } }}
+                  sx={{
+                    textTransform: "none",
+                    borderColor: "var(--brand, #1B3A6B)",
+                    color: "var(--brand, #1B3A6B)",
+                    "&:hover": {
+                      borderColor: "#16315a",
+                      backgroundColor: "rgba(27,58,107,0.06)",
+                    },
+                  }}
                 >
                   {isLoading ? "Joining..." : "Join Team"}
                 </Button>
@@ -1333,7 +1536,14 @@ const TeamCard = ({ team, userProfile, isLoggedIn, onJoin, onLeave, loadingTeamI
   );
 };
 
-const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {} }) => {
+const TeamList = ({
+  teams,
+  event_id,
+  id,
+  endDate,
+  eventTimezone,
+  constraints = {},
+}) => {
   const [teamData, setTeamData] = useState(teams || []);
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
@@ -1394,7 +1604,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
             try {
               const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userId}/profile`,
-                { headers: { Authorization: `Bearer ${accessToken}` } }
+                { headers: { Authorization: `Bearer ${accessToken}` } },
               );
 
               if (!response.ok)
@@ -1413,11 +1623,11 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
             } catch (error) {
               console.error(
                 `Error fetching profile for user ${userId}:`,
-                error
+                error,
               );
               return { userId, error };
             }
-          })
+          }),
         );
 
         // Update teams with detailed user profiles, converting string IDs to profile objects
@@ -1425,7 +1635,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
           ...team,
           users: Array.isArray(team?.users)
             ? team.users.map(
-                (userId) => profileMap[userId] || { user_id: userId }
+                (userId) => profileMap[userId] || { user_id: userId },
               )
             : [],
         }));
@@ -1442,7 +1652,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
         setProfilesLoading(false);
       }
     },
-    [accessToken]
+    [accessToken],
   );
 
   const fetchUserProfile = useCallback(async () => {
@@ -1454,7 +1664,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
         if (response.ok) {
           const data = await response.json();
@@ -1484,7 +1694,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/application/${event_id}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (!response.ok) {
         setHackerStatus("none");
@@ -1515,11 +1725,11 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
-        const data = await response.json();        
+        const data = await response.json();
         if (data.nonprofits) {
           // Build a map of nonprofit ID to nonprofit name for quick lookups
           const npMap = {};
@@ -1545,53 +1755,58 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
 
   const fetchedTeamProfilesRef = useRef(new Set());
 
-  const fetchTeamProfiles = useCallback(async (team) => {
-    if (!team?.id || !accessToken) return;
-    if (fetchedTeamProfilesRef.current.has(team.id)) return;
-    fetchedTeamProfilesRef.current.add(team.id);
+  const fetchTeamProfiles = useCallback(
+    async (team) => {
+      if (!team?.id || !accessToken) return;
+      if (fetchedTeamProfilesRef.current.has(team.id)) return;
+      fetchedTeamProfilesRef.current.add(team.id);
 
-    const userIds = Array.isArray(team.users)
-      ? team.users.filter((u) => typeof u === "string" && u)
-      : [];
-    if (!userIds.length) return;
+      const userIds = Array.isArray(team.users)
+        ? team.users.filter((u) => typeof u === "string" && u)
+        : [];
+      if (!userIds.length) return;
 
-    const profileMap = {};
-    await Promise.all(
-      userIds.map(async (userId) => {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userId}/profile`,
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-          );
-          if (!response.ok) return;
-          const profile = await response.json();
-          if (profile) {
-            profile.user_id = userId;
-            profileMap[userId] = profile;
-          }
-        } catch {
-          // silently ignore per-user failures
-        }
-      })
-    );
-
-    if (!Object.keys(profileMap).length) return;
-
-    setTeamData((prev) =>
-      prev.map((t) =>
-        t.id === team.id
-          ? {
-              ...t,
-              users: Array.isArray(t.users)
-                ? t.users.map((u) =>
-                    typeof u === "string" ? profileMap[u] || { user_id: u } : u
-                  )
-                : t.users,
+      const profileMap = {};
+      await Promise.all(
+        userIds.map(async (userId) => {
+          try {
+            const response = await fetch(
+              `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userId}/profile`,
+              { headers: { Authorization: `Bearer ${accessToken}` } },
+            );
+            if (!response.ok) return;
+            const profile = await response.json();
+            if (profile) {
+              profile.user_id = userId;
+              profileMap[userId] = profile;
             }
-          : t
-      )
-    );
-  }, [accessToken]);
+          } catch {
+            // silently ignore per-user failures
+          }
+        }),
+      );
+
+      if (!Object.keys(profileMap).length) return;
+
+      setTeamData((prev) =>
+        prev.map((t) =>
+          t.id === team.id
+            ? {
+                ...t,
+                users: Array.isArray(t.users)
+                  ? t.users.map((u) =>
+                      typeof u === "string"
+                        ? profileMap[u] || { user_id: u }
+                        : u,
+                    )
+                  : t.users,
+              }
+            : t,
+        ),
+      );
+    },
+    [accessToken],
+  );
 
   useEffect(() => {
     fetchUserProfile();
@@ -1613,7 +1828,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({ teamId }),
-        }
+        },
       );
       if (response.ok) {
         // Update local state by adding the user profile to the team
@@ -1625,8 +1840,8 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
                   ...team,
                   users: [...team.users, userProfile],
                 }
-              : team
-          )
+              : team,
+          ),
         );
 
         setSnackbar({
@@ -1664,7 +1879,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({ teamId }),
-        }
+        },
       );
       if (response.ok) {
         // Update local state by removing the user from the team
@@ -1688,7 +1903,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
               };
             }
             return team;
-          })
+          }),
         );
 
         setSnackbar({
@@ -1731,22 +1946,18 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
     return <LoadingIndicator message="Loading teams..." />;
   }
 
-
   return (
     <div>
-      
-
       {/* Non-blocking loading indicator while profiles are loading */}
       {(profilesLoading || nonprofitsLoading) && (
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <CircularProgress size={16} sx={{ mr: 1 }} />
           <Typography variant="body2" color="textSecondary">
-            {profilesLoading && nonprofitsLoading 
+            {profilesLoading && nonprofitsLoading
               ? "Loading team member profiles and nonprofit information..."
-              : profilesLoading 
+              : profilesLoading
                 ? "Updating team member profiles..."
-                : "Loading nonprofit information..."
-            }
+                : "Loading nonprofit information..."}
           </Typography>
         </Box>
       )}
@@ -1771,7 +1982,7 @@ const TeamList = ({ teams, event_id, id, endDate, eventTimezone, constraints = {
               event_id={event_id}
               onVisible={isLoggedIn ? fetchTeamProfiles : undefined}
             />
-          </Grid>        
+          </Grid>
         ))}
       </Grid>
 

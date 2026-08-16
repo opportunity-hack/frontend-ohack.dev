@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../../styles/fonts";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -65,8 +66,10 @@ import {
   Arrow,
   Stat,
 } from "../../../components/design/refined";
+import { ThemeProvider } from "@mui/material/styles";
 import {
   formSectionStyle,
+  refinedFormTheme,
   refinedFieldSx,
   refinedChoiceSx,
   refinedChipSx,
@@ -1915,7 +1918,7 @@ const VolunteerApplicationComponent = () => {
                 component="div"
                 sx={{
                   mb: 2,
-                  fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                  fontFamily: FONT_DISPLAY,
                   fontWeight: 500,
                 }}
               >
@@ -2007,14 +2010,14 @@ const VolunteerApplicationComponent = () => {
                 component="h3"
                 sx={{
                   ...stepTitleSx,
-                  fontSize: { xs: "1.2rem", sm: "1.4rem" },
+                  fontSize: { xs: "19px", sm: "22.5px" },
                 }}
               >
                 Available volunteer slots
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ ...stepLeadSx, fontSize: "0.98rem", mb: 2 }}
+                sx={{ ...stepLeadSx, fontSize: "15.5px", mb: 2 }}
               >
                 Choose the volunteer roles and time slots that work best for
                 you. Each time block shows different volunteer opportunities
@@ -2060,10 +2063,9 @@ const VolunteerApplicationComponent = () => {
                         <Typography
                           component="h4"
                           sx={{
-                            fontFamily:
-                              "var(--display,'Fraunces',Georgia,serif)",
+                            fontFamily: FONT_DISPLAY,
                             fontWeight: 500,
-                            fontSize: "1.15rem",
+                            fontSize: "18.5px",
                           }}
                         >
                           {date}
@@ -2222,7 +2224,7 @@ const VolunteerApplicationComponent = () => {
                                               minWidth: 0,
                                               px: 1.4,
                                               py: 0.7,
-                                              fontSize: "0.82rem",
+                                              fontSize: "13px",
                                             }}
                                           >
                                             {isSelected
@@ -2239,7 +2241,7 @@ const VolunteerApplicationComponent = () => {
                                               minWidth: 0,
                                               px: 1.4,
                                               py: 0.7,
-                                              fontSize: "0.82rem",
+                                              fontSize: "13px",
                                               textTransform: "none",
                                               borderRadius: "5px",
                                               color: "#b04a36",
@@ -2269,7 +2271,7 @@ const VolunteerApplicationComponent = () => {
                     component="h4"
                     sx={{
                       ...stepTitleSx,
-                      fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                      fontSize: { xs: "17.5px", sm: "20px" },
                       mb: 2,
                     }}
                   >
@@ -2337,7 +2339,7 @@ const VolunteerApplicationComponent = () => {
                       mt: 2,
                       px: 1.6,
                       py: 0.7,
-                      fontSize: "0.82rem",
+                      fontSize: "13px",
                     }}
                   >
                     Clear All
@@ -2656,7 +2658,7 @@ const VolunteerApplicationComponent = () => {
                     component="h2"
                     sx={{
                       ...stepTitleSx,
-                      fontSize: { xs: "1.4rem", sm: "1.7rem" },
+                      fontSize: { xs: "22.5px", sm: "27px" },
                       mt: 1,
                     }}
                   >
@@ -2778,7 +2780,7 @@ const VolunteerApplicationComponent = () => {
                       component="div"
                       sx={{
                         mb: 1,
-                        fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                        fontFamily: FONT_DISPLAY,
                         fontWeight: 500,
                       }}
                     >
@@ -2868,7 +2870,7 @@ const VolunteerApplicationComponent = () => {
                         component="h2"
                         sx={{
                           ...stepTitleSx,
-                          fontSize: { xs: "1.35rem", sm: "1.55rem" },
+                          fontSize: { xs: "21.5px", sm: "25px" },
                           mt: 1,
                         }}
                       >
@@ -3011,7 +3013,11 @@ const VolunteerApplicationComponent = () => {
   );
 
   // Main return - after all hooks have been called
-  return success ? renderSuccessMessage() : renderApplicationForm();
+  return (
+    <ThemeProvider theme={refinedFormTheme}>
+      {success ? renderSuccessMessage() : renderApplicationForm()}
+    </ThemeProvider>
+  );
 };
 
 // Export the component with RequiredAuthProvider

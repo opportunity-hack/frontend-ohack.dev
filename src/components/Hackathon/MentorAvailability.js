@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../styles/fonts";
 import React, { useMemo, useState } from "react";
 import {
   Typography,
@@ -23,15 +24,15 @@ import {
   FormControlLabel,
   Avatar,
   Tooltip,
-  Badge
+  Badge,
 } from "@mui/material";
 import { styled } from "@mui/system";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import PersonIcon from '@mui/icons-material/Person';
-import ComputerIcon from '@mui/icons-material/Computer';
-import GroupsIcon from '@mui/icons-material/Groups';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import PersonIcon from "@mui/icons-material/Person";
+import ComputerIcon from "@mui/icons-material/Computer";
+import GroupsIcon from "@mui/icons-material/Groups";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -42,9 +43,9 @@ const MentorCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(1),
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.spacing(1),
-  '&:hover': {
+  "&:hover": {
     boxShadow: theme.shadows[2],
-  }
+  },
 }));
 
 // Sticky first column for the matrix (keeps the date label visible on mobile scroll)
@@ -102,21 +103,27 @@ const MentorAvailability = ({ volunteers }) => {
   // Helper function to extract expertise from volunteer data
   const extractExpertise = (volunteer) => {
     const expertise = [];
-    
+
     // Check various fields for expertise information
-    if (volunteer.skills) expertise.push(...volunteer.skills.split(',').map(s => s.trim()));
-    if (volunteer.expertise) expertise.push(...volunteer.expertise.split(',').map(s => s.trim()));
-    if (volunteer.technologies) expertise.push(...volunteer.technologies.split(',').map(s => s.trim()));
-    if (volunteer.programming_languages) expertise.push(...volunteer.programming_languages.split(',').map(s => s.trim()));
-    
+    if (volunteer.skills)
+      expertise.push(...volunteer.skills.split(",").map((s) => s.trim()));
+    if (volunteer.expertise)
+      expertise.push(...volunteer.expertise.split(",").map((s) => s.trim()));
+    if (volunteer.technologies)
+      expertise.push(...volunteer.technologies.split(",").map((s) => s.trim()));
+    if (volunteer.programming_languages)
+      expertise.push(
+        ...volunteer.programming_languages.split(",").map((s) => s.trim()),
+      );
+
     // Remove duplicates and empty strings
-    return [...new Set(expertise.filter(e => e && e.length > 0))];
+    return [...new Set(expertise.filter((e) => e && e.length > 0))];
   };
 
   // Helper function to get mentor initials for avatar
   const getMentorInitials = (name) => {
-    if (!name) return '?';
-    const parts = name.split(' ');
+    if (!name) return "?";
+    const parts = name.split(" ");
     if (parts.length >= 2) {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
@@ -128,18 +135,18 @@ const MentorAvailability = ({ volunteers }) => {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       // Parse various date formats
       let dateToCheck;
-      if (dateString.includes(',')) {
+      if (dateString.includes(",")) {
         // Format: "Monday, Jan 15" or "Jan 15"
-        const cleanDate = dateString.replace(/^\w+,\s*/, '');
-        dateToCheck = new Date(cleanDate + ', ' + today.getFullYear());
+        const cleanDate = dateString.replace(/^\w+,\s*/, "");
+        dateToCheck = new Date(cleanDate + ", " + today.getFullYear());
       } else {
         // Try direct parsing
-        dateToCheck = new Date(dateString + ', ' + today.getFullYear());
+        dateToCheck = new Date(dateString + ", " + today.getFullYear());
       }
-      
+
       return dateToCheck < today;
     } catch (error) {
       return false; // If parsing fails, don't filter out
@@ -155,19 +162,24 @@ const MentorAvailability = ({ volunteers }) => {
     }
     setExpandedDates(newExpanded);
   };
-  
+
   const availabilityData = useMemo(() => {
     // Group data by date
     const dateGroups = {};
 
     // Define time periods in order
     const timePeriods = [
-      { emoji: '🌅', name: 'Early Morning', key: 'earlyMorning', short: 'Early' },
-      { emoji: '☀️', name: 'Morning', key: 'morning', short: 'Morn' },
-      { emoji: '🏙️', name: 'Afternoon', key: 'afternoon', short: 'Aft' },
-      { emoji: '🌆', name: 'Evening', key: 'evening', short: 'Eve' },
-      { emoji: '🌃', name: 'Night', key: 'night', short: 'Night' },
-      { emoji: '🌙', name: 'Late Night', key: 'lateNight', short: 'Late' }
+      {
+        emoji: "🌅",
+        name: "Early Morning",
+        key: "earlyMorning",
+        short: "Early",
+      },
+      { emoji: "☀️", name: "Morning", key: "morning", short: "Morn" },
+      { emoji: "🏙️", name: "Afternoon", key: "afternoon", short: "Aft" },
+      { emoji: "🌆", name: "Evening", key: "evening", short: "Eve" },
+      { emoji: "🌃", name: "Night", key: "night", short: "Night" },
+      { emoji: "🌙", name: "Late Night", key: "lateNight", short: "Late" },
     ];
 
     // Process each volunteer
@@ -180,11 +192,14 @@ const MentorAvailability = ({ volunteers }) => {
           const slots = [];
           let currentSlot = "";
           const parts = volunteer.availability.split(", ");
-          
+
           for (let i = 0; i < parts.length; i++) {
             const part = parts[i];
-            const startsNewSlot = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(part);
-            
+            const startsNewSlot =
+              /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(
+                part,
+              );
+
             if (startsNewSlot && currentSlot) {
               slots.push(currentSlot.trim());
               currentSlot = part;
@@ -194,33 +209,43 @@ const MentorAvailability = ({ volunteers }) => {
               currentSlot = part;
             }
           }
-          
+
           if (currentSlot) {
             slots.push(currentSlot.trim());
           }
-          
+
           slots.forEach((slot) => {
             if (slot) {
-              const hasTimeInfo = /🌅|☀️|🏙️|🌆|🌃|🌙/.test(slot) && 
-                                  /(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/.test(slot);
-              
+              const hasTimeInfo =
+                /🌅|☀️|🏙️|🌆|🌃|🌙/.test(slot) &&
+                /(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/.test(
+                  slot,
+                );
+
               if (hasTimeInfo) {
                 // Extract date part (everything before the colon)
                 const datePart = slot.split(":")[0]?.trim();
-                
+
                 // Extract time period
-                const timePeriodMatch = slot.match(/🌅\s+(Early Morning)|☀️\s+(Morning)|🏙️\s+(Afternoon)|🌆\s+(Evening)|🌃\s+(Night)|🌙\s+(Late Night)/);
-                const timePeriod = timePeriodMatch ? 
-                  (timePeriodMatch[1] || timePeriodMatch[2] || timePeriodMatch[3] || 
-                   timePeriodMatch[4] || timePeriodMatch[5] || timePeriodMatch[6]) : "";
-                
+                const timePeriodMatch = slot.match(
+                  /🌅\s+(Early Morning)|☀️\s+(Morning)|🏙️\s+(Afternoon)|🌆\s+(Evening)|🌃\s+(Night)|🌙\s+(Late Night)/,
+                );
+                const timePeriod = timePeriodMatch
+                  ? timePeriodMatch[1] ||
+                    timePeriodMatch[2] ||
+                    timePeriodMatch[3] ||
+                    timePeriodMatch[4] ||
+                    timePeriodMatch[5] ||
+                    timePeriodMatch[6]
+                  : "";
+
                 if (datePart && timePeriod) {
                   if (!dateGroups[datePart]) {
                     dateGroups[datePart] = {
                       uniqueMentors: new Set(),
                       mentorDetails: new Map(),
                     };
-                    timePeriods.forEach(period => {
+                    timePeriods.forEach((period) => {
                       dateGroups[datePart][period.key] = {
                         total: 0,
                         inPerson: 0,
@@ -230,11 +255,11 @@ const MentorAvailability = ({ volunteers }) => {
                         mentorList: [],
                         name: period.name,
                         emoji: period.emoji,
-                        short: period.short
+                        short: period.short,
                       };
                     });
                   }
-                  
+
                   // Add mentor to the day's unique mentors
                   dateGroups[datePart].uniqueMentors.add(mentorId);
                   dateGroups[datePart].mentorDetails.set(mentorId, {
@@ -243,11 +268,13 @@ const MentorAvailability = ({ volunteers }) => {
                     expertise: mentorExpertise,
                     email: volunteer.email,
                     company: volunteer.company,
-                    isCheckedIn: isCheckedIn
+                    isCheckedIn: isCheckedIn,
                   });
-                  
+
                   // Map time period to key
-                  const periodKey = timePeriods.find(p => p.name === timePeriod)?.key;
+                  const periodKey = timePeriods.find(
+                    (p) => p.name === timePeriod,
+                  )?.key;
                   if (periodKey && dateGroups[datePart][periodKey]) {
                     dateGroups[datePart][periodKey].total++;
                     dateGroups[datePart][periodKey].mentors.add(mentorId);
@@ -258,7 +285,7 @@ const MentorAvailability = ({ volunteers }) => {
                       expertise: mentorExpertise,
                       email: volunteer.email,
                       company: volunteer.company,
-                      isCheckedIn: isCheckedIn
+                      isCheckedIn: isCheckedIn,
                     });
                     if (volunteer.isInPerson) {
                       dateGroups[datePart][periodKey].inPerson++;
@@ -281,18 +308,20 @@ const MentorAvailability = ({ volunteers }) => {
     const sortedDates = Object.keys(dateGroups).sort((a, b) => {
       const fullDayA = a.trim();
       const fullDayB = b.trim();
-      
-      let dayMatchA = fullDayA.match(/(\w+),\s+(\w+)\s+(\d+)/) || 
-                      fullDayA.match(/(\w+)\s+(\w+)\s+(\d+)/) ||   
-                      fullDayA.match(/(\w+)\s+(\d+)/);             
-                      
-      let dayMatchB = fullDayB.match(/(\w+),\s+(\w+)\s+(\d+)/) || 
-                      fullDayB.match(/(\w+)\s+(\w+)\s+(\d+)/) ||   
-                      fullDayB.match(/(\w+)\s+(\d+)/);             
-      
+
+      let dayMatchA =
+        fullDayA.match(/(\w+),\s+(\w+)\s+(\d+)/) ||
+        fullDayA.match(/(\w+)\s+(\w+)\s+(\d+)/) ||
+        fullDayA.match(/(\w+)\s+(\d+)/);
+
+      let dayMatchB =
+        fullDayB.match(/(\w+),\s+(\w+)\s+(\d+)/) ||
+        fullDayB.match(/(\w+)\s+(\w+)\s+(\d+)/) ||
+        fullDayB.match(/(\w+)\s+(\d+)/);
+
       if (dayMatchA && dayMatchB) {
         let monthA, monthB, dateA, dateB;
-        
+
         if (dayMatchA.length === 4) {
           monthA = dayMatchA[2];
           dateA = parseInt(dayMatchA[3], 10);
@@ -300,7 +329,7 @@ const MentorAvailability = ({ volunteers }) => {
           monthA = dayMatchA[1];
           dateB = parseInt(dayMatchA[2], 10);
         }
-        
+
         if (dayMatchB.length === 4) {
           monthB = dayMatchB[2];
           dateB = parseInt(dayMatchB[3], 10);
@@ -308,31 +337,52 @@ const MentorAvailability = ({ volunteers }) => {
           monthB = dayMatchB[1];
           dateB = parseInt(dayMatchB[2], 10);
         }
-        
+
         const monthOrder = {
-          "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-          "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
-          "January": 1, "February": 2, "March": 3, "April": 4, "June": 6,
-          "July": 7, "August": 8, "September": 9, "October": 10, "November": 11, "December": 12
+          Jan: 1,
+          Feb: 2,
+          Mar: 3,
+          Apr: 4,
+          May: 5,
+          Jun: 6,
+          Jul: 7,
+          Aug: 8,
+          Sep: 9,
+          Oct: 10,
+          Nov: 11,
+          Dec: 12,
+          January: 1,
+          February: 2,
+          March: 3,
+          April: 4,
+          June: 6,
+          July: 7,
+          August: 8,
+          September: 9,
+          October: 10,
+          November: 11,
+          December: 12,
         };
-        
+
         const monthOrderA = monthOrder[monthA] || 0;
         const monthOrderB = monthOrder[monthB] || 0;
-        
+
         if (monthOrderA !== monthOrderB) {
           return monthOrderA - monthOrderB;
         }
-        
+
         if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
           return dateA - dateB;
         }
       }
-      
+
       return a.localeCompare(b);
     });
 
     // Filter past dates unless explicitly shown
-    const filteredDates = showPastDates ? sortedDates : sortedDates.filter(date => !isPastDate(date));
+    const filteredDates = showPastDates
+      ? sortedDates
+      : sortedDates.filter((date) => !isPastDate(date));
 
     return { dateGroups, sortedDates: filteredDates, timePeriods };
   }, [volunteers, showPastDates]);
@@ -343,7 +393,11 @@ const MentorAvailability = ({ volunteers }) => {
   const totalMentors = useMemo(() => {
     const uniqueMentors = new Set();
     volunteers.forEach((volunteer) => {
-      if (volunteer.isSelected && volunteer.volunteer_type === "mentor" && volunteer?.availability) {
+      if (
+        volunteer.isSelected &&
+        volunteer.volunteer_type === "mentor" &&
+        volunteer?.availability
+      ) {
         uniqueMentors.add(volunteer.id || volunteer.email || volunteer.name);
       }
     });
@@ -373,7 +427,8 @@ const MentorAvailability = ({ volunteers }) => {
             });
           }
           const entry = roster.get(m.id);
-          if (!entry.availability.has(date)) entry.availability.set(date, new Set());
+          if (!entry.availability.has(date))
+            entry.availability.set(date, new Set());
           entry.availability.get(date).add(period.key);
           entry.slotCount += 1;
         });
@@ -415,7 +470,15 @@ const MentorAvailability = ({ volunteers }) => {
 
   const renderMentorRosterCard = (mentor) => (
     <MentorCard key={mentor.id} variant="outlined" sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 }, display: "flex", flexDirection: "column", height: "100%" }}>
+      <CardContent
+        sx={{
+          p: 1.5,
+          "&:last-child": { pb: 1.5 },
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
           <Badge
             overlap="circular"
@@ -437,7 +500,9 @@ const MentorAvailability = ({ volunteers }) => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: mentor.isInPerson ? theme.palette.primary.main : theme.palette.secondary.main,
+                bgcolor: mentor.isInPerson
+                  ? theme.palette.primary.main
+                  : theme.palette.secondary.main,
                 fontSize: "1rem",
               }}
             >
@@ -446,11 +511,18 @@ const MentorAvailability = ({ volunteers }) => {
           </Badge>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 600, lineHeight: 1.2 }}
+            >
               {mentor.name}
             </Typography>
             {mentor.company && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block" }}
+              >
                 {mentor.company}
               </Typography>
             )}
@@ -485,17 +557,28 @@ const MentorAvailability = ({ volunteers }) => {
                 label={skill}
                 size="small"
                 variant="outlined"
-                sx={{ fontSize: "0.65rem", height: "20px", "& .MuiChip-label": { px: 1 } }}
+                sx={{
+                  fontSize: "0.65rem",
+                  height: "20px",
+                  "& .MuiChip-label": { px: 1 },
+                }}
               />
             ))}
             {mentor.expertise.length > (isMobile ? 3 : 5) && (
-              <Tooltip title={mentor.expertise.slice(isMobile ? 3 : 5).join(", ")} arrow>
+              <Tooltip
+                title={mentor.expertise.slice(isMobile ? 3 : 5).join(", ")}
+                arrow
+              >
                 <Chip
                   label={`+${mentor.expertise.length - (isMobile ? 3 : 5)}`}
                   size="small"
                   variant="filled"
                   color="info"
-                  sx={{ fontSize: "0.65rem", height: "20px", "& .MuiChip-label": { px: 1 } }}
+                  sx={{
+                    fontSize: "0.65rem",
+                    height: "20px",
+                    "& .MuiChip-label": { px: 1 },
+                  }}
                 />
               </Tooltip>
             )}
@@ -506,26 +589,45 @@ const MentorAvailability = ({ volunteers }) => {
 
         <Typography
           variant="overline"
-          sx={{ color: "text.secondary", lineHeight: 1.2, fontSize: "0.6rem", letterSpacing: "0.06em" }}
+          sx={{
+            color: "text.secondary",
+            lineHeight: 1.2,
+            fontSize: "0.6rem",
+            letterSpacing: "0.06em",
+          }}
         >
           Available
         </Typography>
         <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-          {Array.from(mentor.availability.entries()).map(([date, periodKeys]) => (
-            <Box key={date} sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 600, color: "var(--ink, #16181D)", minWidth: 88 }}
+          {Array.from(mentor.availability.entries()).map(
+            ([date, periodKeys]) => (
+              <Box
+                key={date}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.75,
+                  flexWrap: "wrap",
+                }}
               >
-                {date}
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {timePeriods
-                  .filter((p) => periodKeys.has(p.key))
-                  .map((p) => renderPeriodPill(p, `${date}-${p.key}`))}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 600,
+                    color: "var(--ink, #16181D)",
+                    minWidth: 88,
+                  }}
+                >
+                  {date}
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {timePeriods
+                    .filter((p) => periodKeys.has(p.key))
+                    .map((p) => renderPeriodPill(p, `${date}-${p.key}`))}
+                </Box>
               </Box>
-            </Box>
-          ))}
+            ),
+          )}
         </Stack>
       </CardContent>
     </MentorCard>
@@ -533,11 +635,25 @@ const MentorAvailability = ({ volunteers }) => {
 
   return (
     <StyledPaper elevation={3}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: "var(--ink, #16181D)" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{
+            fontFamily: FONT_DISPLAY,
+            fontWeight: 500,
+            color: "var(--ink, #16181D)",
+          }}
+        >
           Mentor Availability
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <FormControlLabel
             control={
               <Switch
@@ -561,10 +677,22 @@ const MentorAvailability = ({ volunteers }) => {
           />
         </Box>
       </Box>
-      
+
       {totalMentors > 0 && (
-        <Box sx={{ mb: 2, p: 1.5, backgroundColor: "var(--surface-2, #F4F1E9)", border: "1px solid var(--line, #E7E1D4)", borderLeft: "3px solid var(--accent, #E2552E)", borderRadius: 2 }}>
-          <Typography variant="body1" sx={{ color: "var(--ink, #16181D)", fontWeight: 600 }}>
+        <Box
+          sx={{
+            mb: 2,
+            p: 1.5,
+            backgroundColor: "var(--surface-2, #F4F1E9)",
+            border: "1px solid var(--line, #E7E1D4)",
+            borderLeft: "3px solid var(--accent, #E2552E)",
+            borderRadius: 2,
+          }}
+        >
+          <Typography
+            variant="body1"
+            sx={{ color: "var(--ink, #16181D)", fontWeight: 600 }}
+          >
             {totalMentors} total mentors available
           </Typography>
         </Box>
@@ -577,16 +705,27 @@ const MentorAvailability = ({ volunteers }) => {
           href="https://opportunity-hack.slack.com/archives/C01E5CGDQ74"
           target="_blank"
           rel="noopener noreferrer"
-          sx={{ padding: theme.spacing(1.1, 3), textTransform: "none", fontWeight: 600, borderRadius: "5px", backgroundColor: "var(--brand, #1B3A6B)", color: "#fff", boxShadow: "none", "&:hover": { backgroundColor: "#16315a", boxShadow: "none" } }}
+          sx={{
+            padding: theme.spacing(1.1, 3),
+            textTransform: "none",
+            fontWeight: 600,
+            borderRadius: "5px",
+            backgroundColor: "var(--brand, #1B3A6B)",
+            color: "#fff",
+            boxShadow: "none",
+            "&:hover": { backgroundColor: "#16315a", boxShadow: "none" },
+          }}
         >
           Join #ask-a-mentor Slack
         </Button>
       </Box>
 
       {sortedDates.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 3 }}>
+        <Box sx={{ textAlign: "center", py: 3 }}>
           <Typography variant="h6" color="text.secondary">
-            {showPastDates ? 'No mentor availability data yet' : 'No upcoming mentor availability'}
+            {showPastDates
+              ? "No mentor availability data yet"
+              : "No upcoming mentor availability"}
           </Typography>
         </Box>
       ) : compactView ? (
@@ -606,15 +745,29 @@ const MentorAvailability = ({ volunteers }) => {
                     <TableCell
                       key={period.key}
                       align="center"
-                      sx={{ p: 0.5, fontWeight: 700, fontSize: "0.65rem", lineHeight: 1.1 }}
+                      sx={{
+                        p: 0.5,
+                        fontWeight: 700,
+                        fontSize: "0.65rem",
+                        lineHeight: 1.1,
+                      }}
                     >
-                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                        }}
+                      >
                         <span style={{ fontSize: "1rem" }}>{period.emoji}</span>
                         <span>{isMobile ? period.short : period.name}</span>
                       </Box>
                     </TableCell>
                   ))}
-                  <TableCell align="center" sx={{ p: 0.5, fontWeight: 700, fontSize: "0.65rem" }}>
+                  <TableCell
+                    align="center"
+                    sx={{ p: 0.5, fontWeight: 700, fontSize: "0.65rem" }}
+                  >
                     Mentors
                   </TableCell>
                 </TableRow>
@@ -622,13 +775,18 @@ const MentorAvailability = ({ volunteers }) => {
               <TableBody>
                 {sortedDates.map((date) => {
                   const dayData = dateGroups[date];
-                  const hasAnyAvailability = timePeriods.some((period) => dayData[period.key].total > 0);
+                  const hasAnyAvailability = timePeriods.some(
+                    (period) => dayData[period.key].total > 0,
+                  );
                   if (!hasAnyAvailability) return null;
 
                   const isExpanded = expandedDates.has(date);
                   const uniqueMentorCount = dayData.uniqueMentors.size;
-                  const checkedInCount = Array.from(dayData.uniqueMentors).filter((mentorId) =>
-                    dayData.mentorDetails.get(mentorId)?.isCheckedIn
+                  const checkedInCount = Array.from(
+                    dayData.uniqueMentors,
+                  ).filter(
+                    (mentorId) =>
+                      dayData.mentorDetails.get(mentorId)?.isCheckedIn,
                   ).length;
                   const isPast = isPastDate(date);
 
@@ -640,19 +798,38 @@ const MentorAvailability = ({ volunteers }) => {
                         sx={{ cursor: "pointer", opacity: isPast ? 0.6 : 1 }}
                       >
                         <DateBodyCell>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
                             {isExpanded ? (
-                              <ExpandLessIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                              <ExpandLessIcon
+                                fontSize="small"
+                                sx={{ color: "text.secondary" }}
+                              />
                             ) : (
-                              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                              <ExpandMoreIcon
+                                fontSize="small"
+                                sx={{ color: "text.secondary" }}
+                              />
                             )}
                             <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 600, lineHeight: 1.2 }}
+                              >
                                 {isPast && "⏰ "}
                                 {date}
                               </Typography>
                               {checkedInCount > 0 && (
-                                <Typography variant="caption" color="success.main" sx={{ fontSize: "0.6rem" }}>
+                                <Typography
+                                  variant="caption"
+                                  color="success.main"
+                                  sx={{ fontSize: "0.6rem" }}
+                                >
                                   ✅ {checkedInCount} checked in
                                 </Typography>
                               )}
@@ -665,9 +842,15 @@ const MentorAvailability = ({ volunteers }) => {
                           const tip =
                             uniqueInPeriod > 0
                               ? `${period.name}: ${uniqueInPeriod} mentor${uniqueInPeriod !== 1 ? "s" : ""}` +
-                                (slotData.inPerson > 0 ? ` · 👥 ${slotData.inPerson} in-person` : "") +
-                                (slotData.remote > 0 ? ` · 💻 ${slotData.remote} remote` : "") +
-                                (slotData.checkedIn > 0 ? ` · ✅ ${slotData.checkedIn} checked in` : "")
+                                (slotData.inPerson > 0
+                                  ? ` · 👥 ${slotData.inPerson} in-person`
+                                  : "") +
+                                (slotData.remote > 0
+                                  ? ` · 💻 ${slotData.remote} remote`
+                                  : "") +
+                                (slotData.checkedIn > 0
+                                  ? ` · ✅ ${slotData.checkedIn} checked in`
+                                  : "")
                               : `${period.name}: no mentors`;
                           return (
                             <Tooltip key={period.key} title={tip} arrow>
@@ -677,56 +860,103 @@ const MentorAvailability = ({ volunteers }) => {
                             </Tooltip>
                           );
                         })}
-                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: "0.85rem" }}>
+                        <TableCell
+                          align="center"
+                          sx={{ fontWeight: 700, fontSize: "0.85rem" }}
+                        >
                           {uniqueMentorCount}
                         </TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell colSpan={timePeriods.length + 2} sx={{ p: 0, border: 0 }}>
+                        <TableCell
+                          colSpan={timePeriods.length + 2}
+                          sx={{ p: 0, border: 0 }}
+                        >
                           <Collapse in={isExpanded} unmountOnExit>
-                            <Box sx={{ p: 1.5, backgroundColor: "var(--surface-2, #F4F1E9)" }}>
-                              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-                                {Array.from(dayData.uniqueMentors).map((mentorId) => {
-                                  const d = dayData.mentorDetails.get(mentorId);
-                                  if (!d) return null;
-                                  const tipText =
-                                    (d.company ? `${d.company} · ` : "") +
-                                    (d.expertise?.length ? d.expertise.join(", ") : "No skills listed");
-                                  return (
-                                    <Tooltip key={mentorId} title={tipText} arrow>
-                                      <Chip
-                                        size="small"
-                                        variant="outlined"
-                                        color={d.isInPerson ? "primary" : "secondary"}
-                                        avatar={
-                                          <Avatar
-                                            sx={{
-                                              bgcolor: d.isInPerson
-                                                ? theme.palette.primary.main
-                                                : theme.palette.secondary.main,
-                                              fontSize: "0.6rem",
-                                            }}
-                                          >
-                                            {getMentorInitials(d.name)}
-                                          </Avatar>
-                                        }
-                                        label={
-                                          <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.4 }}>
-                                            {d.name}
-                                            {d.isInPerson ? (
-                                              <GroupsIcon sx={{ fontSize: "0.85rem" }} />
-                                            ) : (
-                                              <ComputerIcon sx={{ fontSize: "0.85rem" }} />
-                                            )}
-                                            {d.isCheckedIn && (
-                                              <CheckCircleIcon sx={{ fontSize: "0.85rem", color: "success.main" }} />
-                                            )}
-                                          </Box>
-                                        }
-                                      />
-                                    </Tooltip>
-                                  );
-                                })}
+                            <Box
+                              sx={{
+                                p: 1.5,
+                                backgroundColor: "var(--surface-2, #F4F1E9)",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 0.75,
+                                }}
+                              >
+                                {Array.from(dayData.uniqueMentors).map(
+                                  (mentorId) => {
+                                    const d =
+                                      dayData.mentorDetails.get(mentorId);
+                                    if (!d) return null;
+                                    const tipText =
+                                      (d.company ? `${d.company} · ` : "") +
+                                      (d.expertise?.length
+                                        ? d.expertise.join(", ")
+                                        : "No skills listed");
+                                    return (
+                                      <Tooltip
+                                        key={mentorId}
+                                        title={tipText}
+                                        arrow
+                                      >
+                                        <Chip
+                                          size="small"
+                                          variant="outlined"
+                                          color={
+                                            d.isInPerson
+                                              ? "primary"
+                                              : "secondary"
+                                          }
+                                          avatar={
+                                            <Avatar
+                                              sx={{
+                                                bgcolor: d.isInPerson
+                                                  ? theme.palette.primary.main
+                                                  : theme.palette.secondary
+                                                      .main,
+                                                fontSize: "0.6rem",
+                                              }}
+                                            >
+                                              {getMentorInitials(d.name)}
+                                            </Avatar>
+                                          }
+                                          label={
+                                            <Box
+                                              component="span"
+                                              sx={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: 0.4,
+                                              }}
+                                            >
+                                              {d.name}
+                                              {d.isInPerson ? (
+                                                <GroupsIcon
+                                                  sx={{ fontSize: "0.85rem" }}
+                                                />
+                                              ) : (
+                                                <ComputerIcon
+                                                  sx={{ fontSize: "0.85rem" }}
+                                                />
+                                              )}
+                                              {d.isCheckedIn && (
+                                                <CheckCircleIcon
+                                                  sx={{
+                                                    fontSize: "0.85rem",
+                                                    color: "success.main",
+                                                  }}
+                                                />
+                                              )}
+                                            </Box>
+                                          }
+                                        />
+                                      </Tooltip>
+                                    );
+                                  },
+                                )}
                               </Box>
                             </Box>
                           </Collapse>
@@ -738,8 +968,13 @@ const MentorAvailability = ({ volunteers }) => {
               </TableBody>
             </Table>
           </TableContainer>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-            Numbers = unique mentors available · 👥 in-person · 💻 remote · ✅ checked in · tap a date for names
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 1 }}
+          >
+            Numbers = unique mentors available · 👥 in-person · 💻 remote · ✅
+            checked in · tap a date for names
           </Typography>
         </>
       ) : (

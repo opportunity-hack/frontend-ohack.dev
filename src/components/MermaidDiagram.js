@@ -1,4 +1,5 @@
 // components/MermaidDiagram.js
+import { FONT_BODY } from "../styles/fonts";
 import React, { useEffect, useRef } from "react";
 import mermaid from "mermaid";
 
@@ -14,7 +15,7 @@ const MermaidDiagram = ({ chart }) => {
       startOnLoad: true,
       theme: "base",
       securityLevel: "loose",
-      fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+      fontFamily: FONT_BODY,
       themeVariables: {
         primaryColor: "#F4F1E9",
         primaryBorderColor: "#1B3A6B",

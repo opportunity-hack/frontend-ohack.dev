@@ -110,24 +110,24 @@
 
 @media only screen and (max-width: 480px) {
   .nav-bar__tab {
-    font-size: 1.5rem;
+    font-size: 18px;
   }
 
   .nav-bar {
-    height: 6.4rem;
+    height: 76.8px;
 
-    padding: 0.8rem 1.6rem;
+    padding: 9.6px 19.2px;
   }
 
   .nav-bar__brand {
     display: flex;
     align-items: center;
 
-    margin-right: 1.6rem;
+    margin-right: 19.2px;
   }
 
   .nav-bar__logo {
-    height: 3.2rem;
+    height: 38.4px;
   }
 
   .nav-bar__tab--active {
@@ -142,24 +142,24 @@
 
 @media only screen and (max-width: 340px) {
   .nav-bar__tab {
-    font-size: 1.3rem;
+    font-size: 15.6px;
   }
 
   .nav-bar {
-    height: 6.4rem;
+    height: 76.8px;
 
-    padding: 0.8rem 1.6rem;
+    padding: 9.6px 19.2px;
   }
 
   .nav-bar__brand {
     display: flex;
     align-items: center;
 
-    margin-right: 1.6rem;
+    margin-right: 19.2px;
   }
 
   .nav-bar__logo {
-    height: 2.8rem;
+    height: 33.6px;
   }
 
   .nav-bar__tab--active {

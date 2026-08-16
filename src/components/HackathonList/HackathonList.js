@@ -1,3 +1,4 @@
+import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
@@ -19,12 +20,12 @@ function HackathonList({ compact = false }) {
     useHackathonEvents("current");
   const [newsData, setNewsData] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
-  
+
   // Prefetch hackathon event pages when component mounts
   useEffect(() => {
     if (hackathons && hackathons.length > 0) {
       // Prefetch all event pages to make navigation instant
-      hackathons.forEach(event => {
+      hackathons.forEach((event) => {
         router.prefetch(`/hack/${event.event_id}`);
       });
     }
@@ -62,47 +63,51 @@ function HackathonList({ compact = false }) {
       height={400} // Match the fixed height of EventCards
       style={{ marginBottom: "20px" }}
     />
-  );    
+  );
 
   // Compact mode for side-by-side layout, regular mode for standalone
   if (compact) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Typography 
-          variant="h6" 
-          component="h2" 
-          sx={{ 
+      <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+        <Typography
+          variant="h6"
+          component="h2"
+          sx={{
             mt: 2,
-            mb: 1.5, 
+            mb: 1.5,
             fontWeight: 500,
-            color: 'text.primary',
-            fontSize: { xs: '1.1rem', md: '1.25rem' }
+            color: "text.primary",
+            fontSize: { xs: "1.1rem", md: "1.25rem" },
           }}
         >
           Upcoming Events
         </Typography>
-        
+
         {hackathonsLoading ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {Array(2).fill(0).map((_, index) => (
-              <Skeleton
-                key={`compact-skeleton-${index}`}
-                variant="rectangular"
-                width="100%"
-                height={150}
-                sx={{ borderRadius: 2 }}
-              />
-            ))}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {Array(2)
+              .fill(0)
+              .map((_, index) => (
+                <Skeleton
+                  key={`compact-skeleton-${index}`}
+                  variant="rectangular"
+                  width="100%"
+                  height={150}
+                  sx={{ borderRadius: 2 }}
+                />
+              ))}
           </Box>
         ) : hackathons && hackathons.length > 0 ? (
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: 2,
-            overflowY: 'auto',
-            maxHeight: { xs: 'none', lg: '550px' },
-            pr: { lg: 1 }
-          }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              overflowY: "auto",
+              maxHeight: { xs: "none", lg: "550px" },
+              pr: { lg: 1 },
+            }}
+          >
             {hackathons.map((event) => (
               <EventFeature
                 id={event?.id}
@@ -126,7 +131,14 @@ function HackathonList({ compact = false }) {
             ))}
           </Box>
         ) : (
-          <Box sx={{ py: 3, textAlign: 'center', bgcolor: 'grey.50', borderRadius: 2 }}>
+          <Box
+            sx={{
+              py: 3,
+              textAlign: "center",
+              bgcolor: "grey.50",
+              borderRadius: 2,
+            }}
+          >
             <Typography variant="body1" color="textSecondary">
               No upcoming events at the moment
             </Typography>
@@ -138,21 +150,23 @@ function HackathonList({ compact = false }) {
             </Link>
           </Box>
         )}
-        
+
         {/* Compact news section */}
-        <Box sx={{ 
-          mt: 3, 
-          pt: 3, 
-          borderTop: '1px solid',
-          borderColor: 'divider'
-        }}>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              mb: 0.5, 
+        <Box
+          sx={{
+            mt: 3,
+            pt: 3,
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              mb: 0.5,
               fontWeight: 500,
-              color: 'text.primary',
-              fontSize: { xs: '1.1rem', md: '1.25rem' }
+              color: "text.primary",
+              fontSize: { xs: "1.1rem", md: "1.25rem" },
             }}
           >
             Latest News
@@ -160,7 +174,12 @@ function HackathonList({ compact = false }) {
           {newsLoading ? (
             <Skeleton variant="rectangular" width="100%" height={100} />
           ) : (
-            <News newsData={newsData?.slice(0, 2) || []} frontpage="true" loading={false} compact={true} />
+            <News
+              newsData={newsData?.slice(0, 2) || []}
+              frontpage="true"
+              loading={false}
+              compact={true}
+            />
           )}
         </Box>
       </Box>
@@ -175,25 +194,52 @@ function HackathonList({ compact = false }) {
       direction="column"
       textAlign="center"
     >
-      <Typography component="p" sx={{ fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: '0.72rem', fontWeight: 600, color: '#5B6270', mb: 1 }}>
+      <Typography
+        component="p"
+        sx={{
+          fontFamily: FONT_BODY,
+          textTransform: "uppercase",
+          letterSpacing: "0.22em",
+          fontSize: "0.72rem",
+          fontWeight: 600,
+          color: "#5B6270",
+          mb: 1,
+        }}
+      >
         What&apos;s next
       </Typography>
-      <SectionTitle variant="h2" component="h2" id="upcoming-events-heading" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, letterSpacing: '-0.015em', color: '#16181D' }}>
+      <SectionTitle
+        variant="h2"
+        component="h2"
+        id="upcoming-events-heading"
+        sx={{
+          fontFamily: FONT_DISPLAY,
+          fontWeight: 500,
+          letterSpacing: "-0.015em",
+          color: "#16181D",
+        }}
+      >
         Upcoming &amp; current events
       </SectionTitle>
 
-      <Typography variant="body1" sx={{ mb: 3, maxWidth: '720px', color: '#5B6270' }}>
-        Join an upcoming hackathon and make a difference — work with nonprofits to solve real-world challenges with technology.
+      <Typography
+        variant="body1"
+        sx={{ mb: 3, maxWidth: "720px", color: "#5B6270" }}
+      >
+        Join an upcoming hackathon and make a difference — work with nonprofits
+        to solve real-world challenges with technology.
       </Typography>
 
       <EmptyGrid>
         {hackathonsLoading ? (
           <HackathonGrid>
-            {Array(2).fill(0).map((_, index) => (
-              <React.Fragment key={`event-skeleton-${index}`}>
-                {renderEventSkeleton()}
-              </React.Fragment>
-            ))}
+            {Array(2)
+              .fill(0)
+              .map((_, index) => (
+                <React.Fragment key={`event-skeleton-${index}`}>
+                  {renderEventSkeleton()}
+                </React.Fragment>
+              ))}
           </HackathonGrid>
         ) : hackathons && hackathons.length > 0 ? (
           <HackathonGrid>
@@ -219,7 +265,7 @@ function HackathonList({ compact = false }) {
             ))}
           </HackathonGrid>
         ) : (
-          <Box sx={{ py: 4, textAlign: 'center' }}>
+          <Box sx={{ py: 4, textAlign: "center" }}>
             <Typography variant="h6" color="textSecondary" gutterBottom>
               No upcoming events at the moment
             </Typography>
@@ -236,8 +282,12 @@ function HackathonList({ compact = false }) {
         )}
 
         {hackathons && hackathons.length > 0 && (
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Link prefetch={false} href="/blog" style={{ textDecoration: 'none' }}>
+          <Box sx={{ mt: 2, textAlign: "center" }}>
+            <Link
+              prefetch={false}
+              href="/blog"
+              style={{ textDecoration: "none" }}
+            >
               <MoreNewsStyle>
                 Read latest updates from Opportunity Hack
                 <ArrowForwardIcon sx={{ ml: 1, fontSize: 16 }} />

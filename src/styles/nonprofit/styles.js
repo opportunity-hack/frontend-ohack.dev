@@ -1,54 +1,53 @@
-import { 
-  Grid, 
-  Typography, 
-  Chip, 
-  Link, 
+import {
+  Grid,
+  Typography,
+  Chip,
+  Link,
   Button,
   // TODO: Are we planning to do anything thematically with Tooltip?
-  // Tooltip 
+  // Tooltip
 } from "@mui/material";
 import { styled as styling } from "@mui/material";
 
 export const MoreNewsStyle = styling(Button)({
-  borderRadius: "1rem",
-  paddingLeft: "0.9rem",
-  paddingRight: "0.9rem",
-  fontWeight: 600,  
+  borderRadius: "12px",
+  paddingLeft: "10.8px",
+  paddingRight: "10.8px",
+  fontWeight: 600,
   fontSize: "12px",
   textTransform: "unset !important",
   backgroundColor: "#E0E0E0",
   color: "#000000",
-  
 
   "&:hover": {
     backgroundColor: `var(--blue)`,
   },
 });
 
-export const ApplyButton = styling(Button) ({
-  borderRadius: "2rem",
-  paddingLeft: "1.5rem",
-  paddingRight: "1.5rem",
+export const ApplyButton = styling(Button)({
+  borderRadius: "24px",
+  paddingLeft: "18px",
+  paddingRight: "18px",
   fontWeight: 600,
   fontSize: "15px",
   textTransform: "unset !important",
   backgroundColor: "#FFD700",
   color: "#000000",
-  minWidth: "25rem",
+  minWidth: "300px",
 
   "&:hover": {
     backgroundColor: `var(--blue)`,
   },
-})
+});
 
 export const ApplyButtonContainer = styling(Grid)({
-  paddingTop: "1rem"
-})
+  paddingTop: "12px",
+});
 
 export const LayoutContainer = styling(Grid)({
   justifyContent: "center",
   alignContent: "center",
-  paddingTop: "9rem",    
+  paddingTop: "108px",
   backgroundColor: "white",
 });
 
@@ -59,7 +58,7 @@ export const ContentContainer = styling(Grid)({
 
 export const TitleBanner = styling(Grid)({
   width: "100%",
-  height: "20rem",
+  height: "240px",
   // backgroundAttachment: "fixed",
   // backgroundPosition: "center",
   // backgroundRepeat: "no-repeat",
@@ -72,35 +71,35 @@ export const TitleBanner = styling(Grid)({
 
 export const TitleContainer = styling(Grid)((props) => ({
   backgroundColor: "#f5f7f7",
-  padding: "3.5rem 12.5%",
+  padding: "42px 12.5%",
   borderBottom: "1px solid #e7e7e7",
   flexDirection: "column",
 
   [props.theme.breakpoints.down("md")]: {
-    padding: "3.5rem 7.5%",
+    padding: "42px 7.5%",
   },
 }));
 
 export const DetailsContainer = styling(Grid)({
-  paddingRight: "6rem",
+  paddingRight: "72px",
 });
 
 export const CardContainer = styling(Grid)({
   backgroundColor: "white",
-  padding: "3rem",
+  padding: "36px",
 });
 
 export const TitleStyled = styling(Typography)({
   fontWeight: "500",
   alignItems: "center",
   display: "flex",
-  paddingBottom: "1rem",
+  paddingBottom: "12px",
 });
 
 export const TitleChipContainer = styling(Grid)((props) => ({
   display: "flex",
   alignItems: "center",
-  paddingBottom: "1rem",
+  paddingBottom: "12px",
   //   flexDirection: "column",
 
   [props.theme.breakpoints.down("sm")]: {
@@ -110,10 +109,10 @@ export const TitleChipContainer = styling(Grid)((props) => ({
 }));
 
 export const ProjectsChip = styling(Chip)((props) => ({
-  fontSize: "1.25rem",
-  marginLeft: "3rem",
-  letterSpacing: "0.05rem",
-  padding: "0 0.5rem 0 1rem",
+  fontSize: "15px",
+  marginLeft: "36px",
+  letterSpacing: "0.6px",
+  padding: "0 6px 0 12px",
 
   [props.theme.breakpoints.down("sm")]: {
     marginLeft: "0",
@@ -121,19 +120,19 @@ export const ProjectsChip = styling(Chip)((props) => ({
 }));
 
 export const DescriptionStyled = styling(Typography)({
-  fontSize: "1.25rem",
-  padding: "1rem 0",
+  fontSize: "15px",
+  padding: "12px 0",
 });
 
 export const ChannelChip = styling(Chip)({
   padding: "0",
-  fontSize: "1.25rem",
+  fontSize: "15px",
   fontWeight: 500,
-  height: "2.25rem",
-  borderRadius: "0.5rem",
+  height: "27px",
+  borderRadius: "6px",
   backgroundColor: "white",
   "& span": {
-    padding: "0 0.4rem",
+    padding: "0 4.8px",
   },
 });
 export const LinkStyled = styling(Link)({
@@ -142,16 +141,16 @@ export const LinkStyled = styling(Link)({
 
 export const ProjectsContainer = styling(Grid)((props) => ({
   width: "75%",
-  
+
   [props.theme.breakpoints.down("md")]: {
-    width: "99%"  
+    width: "99%",
   },
 }));
 
 export const ProjectsGrid = styling(Grid)({
-  display: "grid",  
+  display: "grid",
   // gridTemplateColumns: "1fr 1fr",
-  
-  columnGap: "3.5rem",
-  rowGap: "3.5rem",
+
+  columnGap: "42px",
+  rowGap: "42px",
 });
