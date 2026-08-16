@@ -1,3 +1,4 @@
+import { FONT_BODY, FONT_DISPLAY } from "../../../styles/fonts";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
@@ -45,7 +46,11 @@ import FormPersistenceControls from "../../../components/FormPersistenceControls
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
-import { formSectionStyle } from "../../../components/ApplicationForm/refinedStyles";
+import { ThemeProvider } from "@mui/material/styles";
+import {
+  formSectionStyle,
+  refinedFormTheme,
+} from "../../../components/ApplicationForm/refinedStyles";
 import UploadPhoto from "../../../components/UploadPhoto";
 import useProfileApi from "../../../hooks/use-profile-api";
 import {
@@ -155,7 +160,7 @@ const refinedTagSx = {
   border: `1px solid ${RX.line}`,
   backgroundColor: RX.surface2,
   color: RX.muted,
-  fontSize: "0.78rem",
+  fontSize: "12.5px",
   fontWeight: 600,
   lineHeight: 1.35,
 };
@@ -1731,8 +1736,8 @@ const HackerApplicationComponent = () => {
         : "info";
   const stepperSx = {
     "& .MuiStepLabel-label": {
-      fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
-      fontSize: isMobile ? "0.72rem" : "0.92rem",
+      fontFamily: FONT_BODY,
+      fontSize: isMobile ? "11.5px" : "14.5px",
       fontWeight: 500,
       mt: 1,
       color: RX.muted,
@@ -2011,10 +2016,10 @@ const HackerApplicationComponent = () => {
                 <Typography
                   component="h2"
                   sx={{
-                    fontFamily: "'Fraunces', Georgia, serif",
+                    fontFamily: FONT_DISPLAY,
                     fontWeight: 500,
                     letterSpacing: "-0.015em",
-                    fontSize: { xs: "1.7rem", md: "2.15rem" },
+                    fontSize: { xs: "27px", md: "34.5px" },
                     lineHeight: 1.08,
                     color: RX.ink,
                     mb: 1,
@@ -2022,7 +2027,7 @@ const HackerApplicationComponent = () => {
                 >
                   {eventData?.name || "Loading event details"}
                 </Typography>
-                <Typography sx={{ color: RX.muted, fontSize: "1rem", mb: 2 }}>
+                <Typography sx={{ color: RX.muted, fontSize: "16px", mb: 2 }}>
                   {eventData?.location || "Fetching location and timing"}
                 </Typography>
 
@@ -2113,8 +2118,8 @@ const HackerApplicationComponent = () => {
                     <Typography
                       component="h2"
                       sx={{
-                        fontFamily: "'Fraunces', Georgia, serif",
-                        fontSize: "1.5rem",
+                        fontFamily: FONT_DISPLAY,
+                        fontSize: "24px",
                         fontWeight: 500,
                         mb: 1,
                       }}
@@ -2164,8 +2169,8 @@ const HackerApplicationComponent = () => {
                     <Typography
                       component="h2"
                       sx={{
-                        fontFamily: "'Fraunces', Georgia, serif",
-                        fontSize: "1.5rem",
+                        fontFamily: FONT_DISPLAY,
+                        fontSize: "24px",
                         fontWeight: 500,
                         mb: 1,
                       }}
@@ -2256,10 +2261,10 @@ const HackerApplicationComponent = () => {
                         <Typography
                           component="h2"
                           sx={{
-                            fontFamily: "'Fraunces', Georgia, serif",
+                            fontFamily: FONT_DISPLAY,
                             fontWeight: 500,
                             letterSpacing: "-0.01em",
-                            fontSize: { xs: "1.35rem", sm: "1.55rem" },
+                            fontSize: { xs: "21.5px", sm: "25px" },
                             color: RX.ink,
                           }}
                         >
@@ -2332,9 +2337,9 @@ const HackerApplicationComponent = () => {
                         <Typography
                           component="h2"
                           sx={{
-                            fontFamily: "'Fraunces', Georgia, serif",
+                            fontFamily: FONT_DISPLAY,
                             fontWeight: 500,
-                            fontSize: { xs: "1.35rem", sm: "1.6rem" },
+                            fontSize: { xs: "21.5px", sm: "25.5px" },
                             lineHeight: 1.15,
                             color: RX.ink,
                             mb: 1,
@@ -2405,9 +2410,9 @@ const HackerApplicationComponent = () => {
                           <Typography
                             component="h3"
                             sx={{
-                              fontFamily: "'Fraunces', Georgia, serif",
+                              fontFamily: FONT_DISPLAY,
                               fontWeight: 500,
-                              fontSize: { xs: "1.35rem", sm: "1.6rem" },
+                              fontSize: { xs: "21.5px", sm: "25.5px" },
                               lineHeight: 1.15,
                               color: RX.ink,
                               mb: 1,
@@ -2692,7 +2697,9 @@ const HackerApplicationPage = ({ seoMetadata }) => {
           />
         }
       >
-        <HackerApplicationComponent />
+        <ThemeProvider theme={refinedFormTheme}>
+          <HackerApplicationComponent />
+        </ThemeProvider>
       </RequiredAuthProvider>
     </>
   );

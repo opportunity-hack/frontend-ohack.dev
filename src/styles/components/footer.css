@@ -5,7 +5,7 @@
 
   width: 100%;
 
-  margin-top: 2.4rem;
+  margin-top: 28.8px;
 
   background: linear-gradient(to bottom, #ffffff 50%, var(--color4) 100%);
   
@@ -14,8 +14,8 @@
 
   /* responsive */
 
-  font-size: 1.6rem;
-  line-height: 2.4rem;
+  font-size: 19.2px;
+  line-height: 28.8px;
 }
 
 .footer-grid {
@@ -23,11 +23,11 @@
   grid-template-rows: auto auto;
 
   width: 100%;
-  max-width: 120rem;
+  max-width: 1440px;
 
   /* responsive */
 
-  padding: 3.2rem;
+  padding: 38.4px;
 }
 
 .footer-grid__info {
@@ -36,7 +36,7 @@
   /* responsive */
 
   grid-template-columns: 1.5fr 1fr auto;
-  column-gap: 2.4rem;
+  column-gap: 28.8px;
 }
 
 .footer-grid__brand {
@@ -45,7 +45,7 @@
   justify-items: center;
 
   grid-template-columns: 1fr;
-  margin-top: 3.2rem;
+  margin-top: 38.4px;
 }
 
 .footer-info__message {
@@ -55,7 +55,7 @@
 }
 
 .footer-message__headline {
-  margin: 0 0 1.4rem;
+  margin: 0 0 16.8px;
 
   font-weight: 500;
 }
@@ -63,7 +63,7 @@
 .footer-message__description {
   margin-bottom: 0;
 
-  letter-spacing: 0.016rem;
+  letter-spacing: 0.2px;
 }
 
 .footer-info__button {
@@ -77,7 +77,7 @@
 
   /* responsive */
 
-  row-gap: 0.8rem;
+  row-gap: 9.6px;
 }
 
 .footer-info__resource-list-item {
@@ -98,7 +98,7 @@
 }
 
 .footer__hyperlink {
-  letter-spacing: 0.001rem;
+  letter-spacing: 0px;
 }
 
 .footer__hyperlink,
@@ -115,21 +115,21 @@
   .footer {
     /* responsive */
 
-    font-size: 1.4rem;
-    line-height: 2.2rem;
+    font-size: 16.8px;
+    line-height: 26.4px;
   }
 
   .footer-grid {
     /* responsive */
 
-    padding: 3.2rem;
+    padding: 38.4px;
   }
 
   .footer-grid__info {
     /* responsive */
 
     grid-template-columns: 1fr;
-    row-gap: 3.2rem;
+    row-gap: 38.4px;
   }
 
   .footer-info__message {
@@ -142,8 +142,8 @@
     /* responsive */
 
     grid-template-columns: 1fr 1fr;
-    row-gap: 3.2rem;
-    column-gap: 3.2rem;
+    row-gap: 38.4px;
+    column-gap: 38.4px;
   }
 
   .footer-info__resource-list-item:nth-child(odd) {
@@ -159,21 +159,21 @@
   .footer {
     /* responsive */
 
-    font-size: 1.4rem;
-    line-height: 2.2rem;
+    font-size: 16.8px;
+    line-height: 26.4px;
   }
 
   .footer-grid {
     /* responsive */
 
-    padding: 3.2rem 1.6rem;
+    padding: 38.4px 19.2px;
   }
 
   .footer-grid__info {
     /* responsive */
 
     grid-template-columns: 1fr;
-    row-gap: 3.2rem;
+    row-gap: 38.4px;
   }
 
   .footer-info__message {
@@ -186,8 +186,8 @@
     /* responsive */
 
     grid-template-columns: 1fr 1fr;
-    row-gap: 3.2rem;
-    column-gap: 3.2rem;
+    row-gap: 38.4px;
+    column-gap: 38.4px;
   }
 
   .footer-info__resource-list-item:nth-child(odd) {

@@ -1,43 +1,51 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { 
-  Typography, 
-  TextField, 
-  Accordion, 
-  AccordionSummary, 
+import { FONT_DISPLAY } from "../../styles/fonts";
+import React, { useState, useCallback, useEffect } from "react";
+import {
+  Typography,
+  TextField,
+  Accordion,
+  AccordionSummary,
   AccordionDetails,
   Box,
-  InputAdornment
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { trackEvent } from '../../lib/ga'; // Adjust this import path as necessary
-import { debounce } from 'lodash';
+  InputAdornment,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { trackEvent } from "../../lib/ga"; // Adjust this import path as necessary
+import { debounce } from "lodash";
 
 // Improved helper function to safely extract text content from React elements
 const extractTextContent = (element) => {
-  if (typeof element === 'string') {
+  if (typeof element === "string") {
     return element;
   }
   if (Array.isArray(element)) {
-    return element.map(extractTextContent).join(' ');
+    return element.map(extractTextContent).join(" ");
   }
   if (React.isValidElement(element)) {
     const { children, ...props } = element.props;
-    const childrenText = children ? extractTextContent(children) : '';
+    const childrenText = children ? extractTextContent(children) : "";
     const propsText = Object.values(props)
-      .filter(prop => typeof prop === 'string')
-      .join(' ');
+      .filter((prop) => typeof prop === "string")
+      .join(" ");
     return `${childrenText} ${propsText}`.trim();
   }
-  if (typeof element === 'object' && element !== null) {
+  if (typeof element === "object" && element !== null) {
     return Object.values(element)
-      .filter(value => typeof value === 'string')
-      .join(' ');
+      .filter((value) => typeof value === "string")
+      .join(" ");
   }
-  return '';
+  return "";
 };
 
-const FAQItem = ({ item, expanded, onChange, onExpand, questionFontSize, answerFontSize }) => (
+const FAQItem = ({
+  item,
+  expanded,
+  onChange,
+  onExpand,
+  questionFontSize,
+  answerFontSize,
+}) => (
   <Accordion
     expanded={expanded}
     disableGutters
@@ -49,39 +57,80 @@ const FAQItem = ({ item, expanded, onChange, onExpand, questionFontSize, answerF
       }
     }}
     sx={{
-      border: '1px solid var(--line, #E7E1D4)',
-      borderRadius: '10px',
+      border: "1px solid var(--line, #E7E1D4)",
+      borderRadius: "10px",
       mb: 1.5,
-      backgroundColor: 'var(--surface, #FFFFFF)',
-      overflow: 'hidden',
-      '&:before': { display: 'none' },
-      '& .MuiAccordionSummary-root': { px: 2.5, minHeight: 58 },
-      '& .MuiAccordionSummary-content': { my: 1.5 },
+      backgroundColor: "var(--surface, #FFFFFF)",
+      overflow: "hidden",
+      "&:before": { display: "none" },
+      "& .MuiAccordionSummary-root": { px: 2.5, minHeight: 58 },
+      "& .MuiAccordionSummary-content": { my: 1.5 },
     }}
   >
     <AccordionSummary
-      expandIcon={<ExpandMoreIcon sx={{ color: 'var(--muted, #5B6270)' }} />}
+      expandIcon={<ExpandMoreIcon sx={{ color: "var(--muted, #5B6270)" }} />}
       aria-controls="panel-content"
       id="panel-header"
     >
-      <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1, fontFamily: "'Fraunces', Georgia, serif", fontSize: '1.1rem', fontWeight: 500, color: 'var(--ink, #16181D)' }}>
-        {item.icon && <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>}
+      <Typography
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          fontFamily: FONT_DISPLAY,
+          fontSize: "1.1rem",
+          fontWeight: 500,
+          color: "var(--ink, #16181D)",
+        }}
+      >
+        {item.icon && <span style={{ fontSize: "1.3rem" }}>{item.icon}</span>}
         {item.question}
       </Typography>
     </AccordionSummary>
-    <AccordionDetails sx={{ px: 2.5, pb: 2.5, pt: 0, color: 'var(--muted, #5B6270)', lineHeight: 1.65, '& a': { color: 'var(--brand, #1B3A6B)' } }}>
-      {typeof item.answer === 'string' ? (
-        <Typography sx={{ fontSize: answerFontSize || '1rem', color: 'inherit', lineHeight: 1.65 }}>{item.answer}</Typography>
+    <AccordionDetails
+      sx={{
+        px: 2.5,
+        pb: 2.5,
+        pt: 0,
+        color: "var(--muted, #5B6270)",
+        lineHeight: 1.65,
+        "& a": { color: "var(--brand, #1B3A6B)" },
+      }}
+    >
+      {typeof item.answer === "string" ? (
+        <Typography
+          sx={{
+            fontSize: answerFontSize || "1rem",
+            color: "inherit",
+            lineHeight: 1.65,
+          }}
+        >
+          {item.answer}
+        </Typography>
       ) : (
-        <Box sx={{ fontSize: answerFontSize || '1rem', color: 'inherit', lineHeight: 1.65 }}>{item.answer}</Box>
+        <Box
+          sx={{
+            fontSize: answerFontSize || "1rem",
+            color: "inherit",
+            lineHeight: 1.65,
+          }}
+        >
+          {item.answer}
+        </Box>
       )}
     </AccordionDetails>
   </Accordion>
 );
 
-export default function InteractiveFAQ({ faqData, title = "FAQ", questionFontSize = '1.2rem', answerFontSize = '1.1rem', searchTerm: externalSearchTerm }) {
+export default function InteractiveFAQ({
+  faqData,
+  title = "FAQ",
+  questionFontSize = "1.2rem",
+  answerFontSize = "1.1rem",
+  searchTerm: externalSearchTerm,
+}) {
   const [expanded, setExpanded] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -92,8 +141,8 @@ export default function InteractiveFAQ({ faqData, title = "FAQ", questionFontSiz
     trackEvent({
       action: "faq_item_expanded",
       params: {
-        faq_question: question
-      }
+        faq_question: question,
+      },
     });
   };
 
@@ -103,8 +152,8 @@ export default function InteractiveFAQ({ faqData, title = "FAQ", questionFontSiz
       trackEvent({
         action: "faq_search",
         params: {
-          search_term: term
-        }
+          search_term: term,
+        },
       });
     }
   };
@@ -117,16 +166,38 @@ export default function InteractiveFAQ({ faqData, title = "FAQ", questionFontSiz
     debouncedTrackSearch(newSearchTerm);
   };
 
-  const filteredFAQ = faqData.filter(item => {
-    const questionMatch = item.question.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredFAQ = faqData.filter((item) => {
+    const questionMatch = item.question
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const answerText = extractTextContent(item.answer).toLowerCase();
     const answerMatch = answerText.includes(searchTerm.toLowerCase());
     return questionMatch || answerMatch;
   });
 
   return (
-    <Box sx={{ maxWidth: '820px', margin: '0 auto', py: 4, px: { xs: 0, sm: 2 }, scrollMarginTop: '2rem' }}>
-      <Typography variant="h4" gutterBottom align="center" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)', mb: 3 }}>{title}</Typography>
+    <Box
+      sx={{
+        maxWidth: "820px",
+        margin: "0 auto",
+        py: 4,
+        px: { xs: 0, sm: 2 },
+        scrollMarginTop: "2rem",
+      }}
+    >
+      <Typography
+        variant="h4"
+        gutterBottom
+        align="center"
+        sx={{
+          fontFamily: FONT_DISPLAY,
+          fontWeight: 500,
+          color: "var(--ink, #16181D)",
+          mb: 3,
+        }}
+      >
+        {title}
+      </Typography>
       <TextField
         fullWidth
         variant="outlined"
@@ -135,13 +206,19 @@ export default function InteractiveFAQ({ faqData, title = "FAQ", questionFontSiz
         onChange={handleSearchChange}
         sx={{
           mb: 3,
-          '& .MuiOutlinedInput-root': { borderRadius: '8px', backgroundColor: 'var(--surface, #FFFFFF)', fontSize: '1rem' },
-          '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--line, #E7E1D4)' },
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "8px",
+            backgroundColor: "var(--surface, #FFFFFF)",
+            fontSize: "1rem",
+          },
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "var(--line, #E7E1D4)",
+          },
         }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: 'var(--faint, #8A8F9A)' }} />
+              <SearchIcon sx={{ color: "var(--faint, #8A8F9A)" }} />
             </InputAdornment>
           ),
         }}
@@ -160,7 +237,11 @@ export default function InteractiveFAQ({ faqData, title = "FAQ", questionFontSiz
         ))}
       </Box>
       {filteredFAQ.length === 0 && (
-        <Typography align="center" color="text.secondary" sx={{ mt: 4, fontSize: answerFontSize }}>
+        <Typography
+          align="center"
+          color="text.secondary"
+          sx={{ mt: 4, fontSize: answerFontSize }}
+        >
           No matching questions found.
         </Typography>
       )}

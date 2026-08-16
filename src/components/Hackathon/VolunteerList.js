@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../styles/fonts";
 import React from "react";
 import {
   Grid,
@@ -37,7 +38,10 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import ForumIcon from "@mui/icons-material/Forum";
 import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import Moment from "moment";
-import { getTimezoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from "../../lib/timezoneUtils";
+import {
+  getTimezoneAbbreviation,
+  DEFAULT_EVENT_TIMEZONE,
+} from "../../lib/timezoneUtils";
 import NextLink from "next/link";
 import ShareVolunteer from "./ShareVolunteer";
 import { useEffect } from "react";
@@ -55,103 +59,103 @@ import TableRowsIcon from "@mui/icons-material/TableRows";
 // Field configuration for data-driven rendering
 const FIELD_CONFIG = {
   company: {
-    fields: ['company', 'schoolOrganization', 'companyName'],
-    type: 'chip',
+    fields: ["company", "schoolOrganization", "companyName"],
+    type: "chip",
     icon: WorkIcon,
-    label: 'Organization'
+    label: "Organization",
   },
   bio: {
-    fields: ['shortBio', 'shortBiography'],
-    type: 'expandable_text',
-    maxLength: 150
+    fields: ["shortBio", "shortBiography"],
+    type: "expandable_text",
+    maxLength: 150,
   },
   expertise: {
-    fields: ['expertise', 'background'],
-    type: 'text',
-    label: 'Expertise'
+    fields: ["expertise", "background"],
+    type: "text",
+    label: "Expertise",
   },
   softwareSpecifics: {
-    fields: ['softwareEngineeringSpecifics'],
-    type: 'text',
-    label: 'Software Specifics'
+    fields: ["softwareEngineeringSpecifics"],
+    type: "text",
+    label: "Software Specifics",
   },
   whyJudge: {
-    fields: ['whyJudge'],
-    type: 'expandable_text',
-    label: 'Why volunteering',
-    maxLength: 150
+    fields: ["whyJudge"],
+    type: "expandable_text",
+    label: "Why volunteering",
+    maxLength: 150,
   },
   primaryRoles: {
-    fields: ['primaryRoles'],
-    type: 'text',
-    label: 'Primary Skills'
+    fields: ["primaryRoles"],
+    type: "text",
+    label: "Primary Skills",
   },
   skills: {
-    fields: ['skills'],
-    type: 'text',
-    label: 'Technical Skills'
+    fields: ["skills"],
+    type: "text",
+    label: "Technical Skills",
   },
   socialCauses: {
-    fields: ['socialCauses'],
-    type: 'chip_list',
+    fields: ["socialCauses"],
+    type: "chip_list",
     icon: FavoriteIcon,
-    label: 'Passionate About',
+    label: "Passionate About",
     maxItems: 3,
-    color: 'secondary',
-    variant: 'outlined'
+    color: "secondary",
+    variant: "outlined",
   },
   location: {
-    fields: ['state'],
-    type: 'chip',
-    icon: LocationOnIcon
+    fields: ["state"],
+    type: "chip",
+    icon: LocationOnIcon,
   },
   participationCount: {
-    fields: ['participationCount'],
-    type: 'chip',
+    fields: ["participationCount"],
+    type: "chip",
     icons: {
       mentor: VolunteerActivismIcon,
-      hacker: EmojiEventsIcon
-    }
+      hacker: EmojiEventsIcon,
+    },
   },
   teamStatus: {
-    fields: ['teamStatus'],
-    type: 'team_status_chip',
-    icon: GroupIcon
+    fields: ["teamStatus"],
+    type: "team_status_chip",
+    icon: GroupIcon,
   },
   linkedinProfile: {
-    fields: ['linkedinProfile'],
-    type: 'link_chip',
+    fields: ["linkedinProfile"],
+    type: "link_chip",
     icon: LinkedInIcon,
-    label: 'LinkedIn'
+    label: "LinkedIn",
   },
   github: {
-    fields: ['github'],
-    type: 'link_chip',
+    fields: ["github"],
+    type: "link_chip",
     icon: GitHubIcon,
-    label: 'GitHub'
+    label: "GitHub",
   },
   portfolio: {
-    fields: ['portfolio'],
-    type: 'link_chip',
+    fields: ["portfolio"],
+    type: "link_chip",
     icon: LaunchIcon,
-    label: 'Portfolio'
+    label: "Portfolio",
   },
   availability: {
-    fields: ['availability'],
-    type: 'availability',
-    allowedTypes: ['mentor', 'volunteer']
-  },  
+    fields: ["availability"],
+    type: "availability",
+    allowedTypes: ["mentor", "volunteer"],
+  },
   artifacts: {
-    fields: ['artifacts'],
-    type: 'artifacts',
-    requiredType: 'volunteer'
-  }
+    fields: ["artifacts"],
+    type: "artifacts",
+    requiredType: "volunteer",
+  },
 };
 
 const TYPE_CONFIG = {
-  mentor:    { label: "Mentors",    learnMoreHref: "/about/mentors" },
-  judge:     { label: "Judges",     learnMoreHref: "/about/judges" },
-  hacker:    { label: "Hackers",    learnMoreHref: "/hack" },
+  mentor: { label: "Mentors", learnMoreHref: "/about/mentors" },
+  judge: { label: "Judges", learnMoreHref: "/about/judges" },
+  hacker: { label: "Hackers", learnMoreHref: "/hack" },
   volunteer: { label: "Volunteers", learnMoreHref: "/volunteer" },
 };
 
@@ -238,7 +242,9 @@ const AvailabilityChip = styled(Chip)(
       : timeofdaycolor || theme.palette.success.light,
     color: isavailablenow
       ? "#fff"
-      : theme.palette.getContrastText(timeofdaycolor || theme.palette.success.light),
+      : theme.palette.getContrastText(
+          timeofdaycolor || theme.palette.success.light,
+        ),
     boxShadow: "none",
     transition: "all 0.2s ease-in-out",
     "&:hover": {
@@ -262,38 +268,34 @@ const AvailableMentorsSection = styled(Box)(({ theme }) => ({
 
 const AvailableMentorChip = styled(Chip)(({ theme, isInPerson }) => ({
   margin: theme.spacing(0.5),
-  height: 'auto',
-  minHeight: '32px',
+  height: "auto",
+  minHeight: "32px",
   padding: theme.spacing(0.5),
-  backgroundColor: isInPerson
-    ? theme.palette.success.main
-    : "#1B3A6B",
+  backgroundColor: isInPerson ? theme.palette.success.main : "#1B3A6B",
   color: "#fff",
-  '& .MuiChip-label': {
+  "& .MuiChip-label": {
     padding: theme.spacing(0.5, 1),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
     lineHeight: 1.2,
   },
   "&:hover": {
-    backgroundColor: isInPerson
-      ? theme.palette.success.dark
-      : "#16315a",
-    transform: 'translateY(-2px)',
+    backgroundColor: isInPerson ? theme.palette.success.dark : "#16315a",
+    transform: "translateY(-2px)",
     boxShadow: theme.shadows[4],
   },
 }));
 
 const MentorName = styled(Typography)(({ theme }) => ({
   fontWeight: 600,
-  fontSize: '0.875rem',
+  fontSize: "0.875rem",
   lineHeight: 1.1,
   marginBottom: theme.spacing(0.25),
 }));
 
 const MentorExpertise = styled(Typography)(({ theme }) => ({
-  fontSize: '0.75rem',
+  fontSize: "0.75rem",
   opacity: 0.9,
   lineHeight: 1.1,
   fontWeight: 400,
@@ -313,79 +315,79 @@ const AvailableNowBanner = styled(Box)(({ theme }) => ({
   padding: theme.spacing(1, 2),
   borderRadius: theme.shape.borderRadius,
   marginBottom: theme.spacing(2),
-  display: 'flex',
-  alignItems: 'center',
+  display: "flex",
+  alignItems: "center",
   gap: theme.spacing(1),
   fontWeight: 600,
 }));
 
 const TimeSlotChip = styled(Chip)(({ theme, isAvailableNow }) => ({
   margin: theme.spacing(0.5, 0.5, 0.5, 0),
-  backgroundColor: isAvailableNow 
+  backgroundColor: isAvailableNow
     ? theme.palette.success.main
     : theme.palette.grey[100],
-  color: isAvailableNow 
-    ? theme.palette.success.contrastText 
+  color: isAvailableNow
+    ? theme.palette.success.contrastText
     : theme.palette.text.primary,
-  border: isAvailableNow 
+  border: isAvailableNow
     ? `2px solid ${theme.palette.success.dark}`
     : `1px solid ${theme.palette.grey[300]}`,
   fontWeight: isAvailableNow ? 600 : 400,
   boxShadow: isAvailableNow ? theme.shadows[3] : theme.shadows[1],
-  '&:hover': {
-    backgroundColor: isAvailableNow 
+  "&:hover": {
+    backgroundColor: isAvailableNow
       ? theme.palette.success.dark
       : theme.palette.grey[200],
-    transform: 'translateY(-2px)',
+    transform: "translateY(-2px)",
     boxShadow: theme.shadows[4],
   },
-  '& .MuiChip-label': {
-    fontSize: '0.8rem',
-    paddingLeft: '8px',
-    paddingRight: '8px',
+  "& .MuiChip-label": {
+    fontSize: "0.8rem",
+    paddingLeft: "8px",
+    paddingRight: "8px",
   },
 }));
 
 const CompactTimeSlot = styled(Box)(({ theme, isAvailableNow }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   padding: theme.spacing(0.5, 1),
   margin: theme.spacing(0.25),
   borderRadius: theme.shape.borderRadius,
-  fontSize: '0.75rem',
-  backgroundColor: isAvailableNow 
+  fontSize: "0.75rem",
+  backgroundColor: isAvailableNow
     ? theme.palette.success.main
     : theme.palette.grey[100],
-  color: isAvailableNow 
-    ? theme.palette.success.contrastText 
+  color: isAvailableNow
+    ? theme.palette.success.contrastText
     : theme.palette.text.secondary,
-  border: `1px solid ${isAvailableNow 
-    ? theme.palette.success.dark 
-    : theme.palette.grey[300]}`,
+  border: `1px solid ${
+    isAvailableNow ? theme.palette.success.dark : theme.palette.grey[300]
+  }`,
   fontWeight: isAvailableNow ? 600 : 400,
 }));
 
 const ExpandButton = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   padding: theme.spacing(1),
   marginTop: theme.spacing(1),
   backgroundColor: alpha(theme.palette.primary.main, 0.1),
   borderRadius: theme.shape.borderRadius,
-  cursor: 'pointer',
-  transition: 'all 0.2s ease-in-out',
+  cursor: "pointer",
+  transition: "all 0.2s ease-in-out",
   border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-  '&:hover': {
+  "&:hover": {
     backgroundColor: alpha(theme.palette.primary.main, 0.2),
-    transform: 'translateY(-1px)',
+    transform: "translateY(-1px)",
   },
 }));
 
 const ExpandableSection = styled(Box)(({ isExpanded }) => ({
-  overflow: 'hidden',
-  transition: 'max-height 0.3s ease-in-out, opacity 0.2s ease-in-out',
-  maxHeight: isExpanded ? '400px' : '0px',
+  overflow: "hidden",
+  transition: "max-height 0.3s ease-in-out, opacity 0.2s ease-in-out",
+  maxHeight: isExpanded ? "400px" : "0px",
   opacity: isExpanded ? 1 : 0,
 }));
 
@@ -396,11 +398,11 @@ const ExpandableText = styled(Box)(({ theme }) => ({
 const ReadMoreButton = styled(Button)(({ theme }) => ({
   padding: theme.spacing(0.5, 1),
   marginTop: theme.spacing(0.5),
-  fontSize: '0.75rem',
-  textTransform: 'none',
+  fontSize: "0.75rem",
+  textTransform: "none",
   fontWeight: 500,
-  minHeight: 'auto',
-  '&:hover': {
+  minHeight: "auto",
+  "&:hover": {
     backgroundColor: alpha(theme.palette.primary.main, 0.08),
   },
 }));
@@ -408,9 +410,9 @@ const ReadMoreButton = styled(Button)(({ theme }) => ({
 // Utility functions for field-based rendering
 const getFieldValue = (volunteer, fieldConfig) => {
   if (!volunteer || !fieldConfig?.fields) return null;
-  
+
   for (const field of fieldConfig.fields) {
-    if (volunteer[field] != null && volunteer[field] !== '') {
+    if (volunteer[field] != null && volunteer[field] !== "") {
       return volunteer[field];
     }
   }
@@ -420,19 +422,19 @@ const getFieldValue = (volunteer, fieldConfig) => {
 const shouldRenderField = (volunteer, fieldKey, type) => {
   const fieldConfig = FIELD_CONFIG[fieldKey];
   if (!fieldConfig) return false;
-  
+
   // Check if field has a type requirement (legacy)
   if (fieldConfig.requiredType && fieldConfig.requiredType !== type) {
     return false;
   }
-  
+
   // Check if field has allowed types (new approach)
   if (fieldConfig.allowedTypes && !fieldConfig.allowedTypes.includes(type)) {
     return false;
   }
-  
+
   const value = getFieldValue(volunteer, fieldConfig);
-  return value != null && value !== '';
+  return value != null && value !== "";
 };
 
 const VolunteerList = ({ event_id, type, eventTimezone }) => {
@@ -469,11 +471,13 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
 
   const renderChipList = (value, fieldConfig) => {
     if (!value) return null;
-    
-    const items = Array.isArray(value) ? value : value.split(",").map(c => c.trim());
+
+    const items = Array.isArray(value)
+      ? value
+      : value.split(",").map((c) => c.trim());
     const maxItems = fieldConfig.maxItems || 3;
     const IconComponent = fieldConfig.icon;
-    
+
     return (
       <Box sx={{ mt: 2 }}>
         <Typography variant="body2" sx={{ mb: 1 }}>
@@ -497,20 +501,24 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
 
   const renderTeamStatusChip = (value) => {
     if (!value) return null;
-    
+
     const getTeamLabel = (status) => {
       switch (status) {
-        case "I have a team": return "Has Team";
-        case "I'm looking for team members": return "Seeking Members";
-        case "I'd like to be matched with a team": return "Looking for Team";
-        default: return "Solo";
+        case "I have a team":
+          return "Has Team";
+        case "I'm looking for team members":
+          return "Seeking Members";
+        case "I'd like to be matched with a team":
+          return "Looking for Team";
+        default:
+          return "Solo";
       }
     };
-    
+
     const getTeamColor = (status) => {
       return status === "I have a team" ? "success" : "primary";
     };
-    
+
     return (
       <Chip
         icon={<GroupIcon />}
@@ -524,7 +532,7 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
   const renderLinkChip = (value, fieldConfig) => {
     if (!value) return null;
     const IconComponent = fieldConfig.icon;
-    
+
     return (
       <Link href={value} target="_blank" rel="noopener noreferrer">
         <Chip
@@ -539,48 +547,48 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
 
   const renderField = (volunteer, fieldKey, type) => {
     if (!shouldRenderField(volunteer, fieldKey, type)) return null;
-    
+
     const fieldConfig = FIELD_CONFIG[fieldKey];
     const value = getFieldValue(volunteer, fieldConfig);
-    
+
     switch (fieldConfig.type) {
-      case 'chip':
+      case "chip":
         // Handle participation count with different icons based on type
-        if (fieldKey === 'participationCount' && fieldConfig.icons) {
-          const IconComponent = fieldConfig.icons[type] || fieldConfig.icons.mentor;
-          return (
-            <Chip
-              icon={<IconComponent />}
-              label={value}
-              size="small"
-            />
-          );
+        if (fieldKey === "participationCount" && fieldConfig.icons) {
+          const IconComponent =
+            fieldConfig.icons[type] || fieldConfig.icons.mentor;
+          return <Chip icon={<IconComponent />} label={value} size="small" />;
         }
         return renderFieldChip(value, fieldConfig);
-        
-      case 'text':
+
+      case "text":
         // Handle array values by joining them
         const displayValue = Array.isArray(value) ? value.join(", ") : value;
         return renderFieldText(displayValue, fieldConfig);
-        
-      case 'expandable_text':
-        return renderExpandableText(value, volunteer.name, fieldKey, fieldConfig.label);
-        
-      case 'chip_list':
+
+      case "expandable_text":
+        return renderExpandableText(
+          value,
+          volunteer.name,
+          fieldKey,
+          fieldConfig.label,
+        );
+
+      case "chip_list":
         return renderChipList(value, fieldConfig);
-        
-      case 'team_status_chip':
+
+      case "team_status_chip":
         return renderTeamStatusChip(value);
-        
-      case 'link_chip':
+
+      case "link_chip":
         return renderLinkChip(value, fieldConfig);
-        
-      case 'availability':
+
+      case "availability":
         return renderAvailability(value, volunteer.name);
-        
-      case 'artifacts':
+
+      case "artifacts":
         return renderArtifacts(value);
-        
+
       default:
         return null;
     }
@@ -790,28 +798,28 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
   };
 
   const toggleExpanded = (volunteerName) => {
-    setExpandedAvailability(prev => ({
+    setExpandedAvailability((prev) => ({
       ...prev,
-      [volunteerName]: !prev[volunteerName]
+      [volunteerName]: !prev[volunteerName],
     }));
   };
 
   const toggleBioExpanded = (volunteerName, field) => {
     const key = `${volunteerName}-${field}`;
-    setExpandedBios(prev => ({
+    setExpandedBios((prev) => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: !prev[key],
     }));
   };
 
   const renderExpandableText = (text, volunteerName, field, label) => {
-    if (!text || typeof text !== 'string') return null;
-    
+    if (!text || typeof text !== "string") return null;
+
     const MAX_LENGTH = 150;
     const key = `${volunteerName}-${field}`;
     const isExpanded = expandedBios[key] || false;
     const needsTruncation = text.length > MAX_LENGTH;
-    
+
     if (!needsTruncation) {
       return (
         <Typography variant="body2" paragraph sx={{ mb: 1.5 }}>
@@ -822,10 +830,10 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
 
     // Find the last complete word within MAX_LENGTH characters
     let truncateAt = MAX_LENGTH;
-    while (truncateAt > 0 && text[truncateAt] !== ' ') {
+    while (truncateAt > 0 && text[truncateAt] !== " ") {
       truncateAt--;
     }
-    
+
     // If we couldn't find a space, fall back to character limit
     if (truncateAt === 0) {
       truncateAt = MAX_LENGTH;
@@ -838,10 +846,10 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
       <ExpandableText>
         <Typography variant="body2" sx={{ mb: 0.5 }}>
           {label && <strong>{label}:</strong>} {previewText}
-          {!isExpanded && '...'}
+          {!isExpanded && "..."}
           {isExpanded && ` ${remainingText}`}
         </Typography>
-        
+
         <ReadMoreButton
           size="small"
           onClick={() => toggleBioExpanded(volunteerName, field)}
@@ -849,7 +857,7 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
           color="primary"
           variant="text"
         >
-          {isExpanded ? 'Show Less' : 'Read More'}
+          {isExpanded ? "Show Less" : "Read More"}
         </ReadMoreButton>
       </ExpandableText>
     );
@@ -857,30 +865,31 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
 
   // Helper function to detect if availability is volunteer format vs mentor format
   const detectAvailabilityFormat = (availability) => {
-    if (!availability || typeof availability !== "string") return 'unknown';
+    if (!availability || typeof availability !== "string") return "unknown";
 
     // Volunteer format has dash separator and tends to have event names
     // Example: "Friday, Oct 10: Doors Open & Registration - 🍕 Food Service (8:00am - 11:00am)"
-    const volunteerPattern = /\w+,\s+\w+\s+\d+:\s+[^-]+-\s+[🍕🧹📸🎤🎯🔧💻📋🎨🔒🎵🏃‍♂️🛠️📊🎪🎭🎬🎮🎲]/;
-    
+    const volunteerPattern =
+      /\w+,\s+\w+\s+\d+:\s+[^-]+-\s+[🍕🧹📸🎤🎯🔧💻📋🎨🔒🎵🏃‍♂️🛠️📊🎪🎭🎬🎮🎲]/;
+
     // Mentor format typically has emoji at the start of the time portion without dash separator
     // Example: "Friday Oct 10: 🌅 Early Morning (7am - 9am PST)"
     const mentorPattern = /\w+\s+\w+\s+\d+:\s+[🌅☀️🏙️🌆🌃🌙]\s+/;
-    
+
     // Additional check: volunteer format often contains dash separators
-    const hasDashSeparator = availability.includes(' - ');
+    const hasDashSeparator = availability.includes(" - ");
 
     if (hasDashSeparator && volunteerPattern.test(availability)) {
-      return 'volunteer';
+      return "volunteer";
     } else if (mentorPattern.test(availability)) {
-      return 'mentor';
+      return "mentor";
     }
 
     if (hasDashSeparator) {
-      return 'volunteer';
+      return "volunteer";
     }
 
-    return 'mentor';
+    return "mentor";
   };
 
   // Helper function to parse volunteer availability format
@@ -889,66 +898,72 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
       // Split by comma followed by space and day name pattern
       // Example input: "Friday, Oct 10: Doors Open & Registration - 🍕 Food Service (8:00am - 11:00am), Friday, Oct 10: Nonprofit Pitches - 🧹 Cleanup Crew (10:00am - 12:00pm)"
       const parts = availability.split(/,\s+(?=\w+,\s+\w+\s+\d+:)/);
-      
-      return parts.map((slot, index) => {
-        // Parse format: "Friday, Oct 10: Doors Open & Registration - 🍕 Food Service (8:00am - 11:00am)"
-        // More flexible regex to capture various emoji patterns
-        const match = slot.match(/^(\w+,\s+\w+\s+\d+):\s+([^-]+?)\s*-\s*([🍕🧹📸🎤🎯🔧💻📋🎨🔒🎵🏃‍♂️🛠️📊🎪🎭🎬🎮🎲])\s+([^(]+?)\s*\(([^)]+)\)/);
-        
-        if (match) {
-          const [, dateStr, eventName, emoji, role, timeRange] = match;
 
-          // Create short date format (e.g., "Oct 10" from "Friday, Oct 10")
-          const shortDate = dateStr.split(',')[1]?.trim() || dateStr; // "Oct 10"
-          const dayName = dateStr.split(',')[0]?.trim() || ''; // "Friday"
-          
+      return parts
+        .map((slot, index) => {
+          // Parse format: "Friday, Oct 10: Doors Open & Registration - 🍕 Food Service (8:00am - 11:00am)"
+          // More flexible regex to capture various emoji patterns
+          const match = slot.match(
+            /^(\w+,\s+\w+\s+\d+):\s+([^-]+?)\s*-\s*([🍕🧹📸🎤🎯🔧💻📋🎨🔒🎵🏃‍♂️🛠️📊🎪🎭🎬🎮🎲])\s+([^(]+?)\s*\(([^)]+)\)/,
+          );
+
+          if (match) {
+            const [, dateStr, eventName, emoji, role, timeRange] = match;
+
+            // Create short date format (e.g., "Oct 10" from "Friday, Oct 10")
+            const shortDate = dateStr.split(",")[1]?.trim() || dateStr; // "Oct 10"
+            const dayName = dateStr.split(",")[0]?.trim() || ""; // "Friday"
+
+            return {
+              original: slot.trim(),
+              dateStr: dateStr.trim(),
+              shortDate,
+              dayName,
+              eventName: eventName.trim(),
+              emoji,
+              role: role.trim(),
+              timeRange: timeRange
+                .replace(/\s*(am|pm)\s*-\s*/i, "$1 - ")
+                .replace(/\s+[A-Za-z]{2,5}$/g, "")
+                .trim(),
+              isCurrentlyAvailable: false, // Volunteers don't have "currently available" concept
+              sortKey: dateStr + eventName,
+            };
+          }
+
+          // Fallback parsing if regex doesn't match - try to extract basic info
+          const basicMatch = slot.match(/^([^:]+):\s*(.+)/);
+          if (basicMatch) {
+            const [, dateStr, rest] = basicMatch;
+            return {
+              original: slot.trim(),
+              dateStr: dateStr.trim(),
+              shortDate: dateStr.trim(),
+              dayName: "",
+              eventName: rest.trim(),
+              emoji: "📋",
+              timeRange: "",
+              isCurrentlyAvailable: false,
+              sortKey: slot.trim(),
+            };
+          }
+
+          // Last resort fallback
           return {
             original: slot.trim(),
-            dateStr: dateStr.trim(),
-            shortDate,
-            dayName,
-            eventName: eventName.trim(),
-            emoji,
-            role: role.trim(),
-            timeRange: timeRange.replace(/\s*(am|pm)\s*-\s*/i, '$1 - ').replace(/\s+[A-Za-z]{2,5}$/g, '').trim(),
-            isCurrentlyAvailable: false, // Volunteers don't have "currently available" concept
-            sortKey: dateStr + eventName
-          };
-        }
-        
-        // Fallback parsing if regex doesn't match - try to extract basic info
-        const basicMatch = slot.match(/^([^:]+):\s*(.+)/);
-        if (basicMatch) {
-          const [, dateStr, rest] = basicMatch;
-          return {
-            original: slot.trim(),
-            dateStr: dateStr.trim(),
-            shortDate: dateStr.trim(),
-            dayName: '',
-            eventName: rest.trim(),
-            emoji: '📋',            
-            timeRange: '',
+            dateStr: slot.trim(),
+            shortDate: slot.trim(),
+            dayName: "",
+            eventName: slot.trim(),
+            emoji: "📋",
+            timeRange: "",
             isCurrentlyAvailable: false,
-            sortKey: slot.trim()
+            sortKey: slot.trim(),
           };
-        }
-        
-        // Last resort fallback
-        return {
-          original: slot.trim(),
-          dateStr: slot.trim(),
-          shortDate: slot.trim(),
-          dayName: '',
-          eventName: slot.trim(),
-          emoji: '📋',          
-          timeRange: '',
-          isCurrentlyAvailable: false,
-          sortKey: slot.trim()
-        };
-      }).filter(slot => slot.original); // Remove empty slots
-      
+        })
+        .filter((slot) => slot.original); // Remove empty slots
     } catch (error) {
-      console.error('Error parsing volunteer availability:', error);
+      console.error("Error parsing volunteer availability:", error);
       return [];
     }
   };
@@ -964,7 +979,10 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
           <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
             📅 Volunteer Schedule
           </Typography>
-          <Typography variant="body2" sx={{ p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{ p: 2, backgroundColor: "grey.50", borderRadius: 1 }}
+          >
             {availability}
           </Typography>
         </AvailabilitySection>
@@ -985,54 +1003,84 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
 
     // Count how many date groups we're showing when collapsed
     const dateGroups = Object.keys(slotsByDate);
-    const visibleDateGroups = isExpanded ? dateGroups.length : Math.min(dateGroups.length, 2);
+    const visibleDateGroups = isExpanded
+      ? dateGroups.length
+      : Math.min(dateGroups.length, 2);
     const hiddenDateGroups = dateGroups.length - visibleDateGroups;
 
     return (
       <AvailabilitySection>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
           <Typography variant="subtitle2" color="primary">
             📅 Volunteer Schedule ({totalSlots} shifts)
           </Typography>
           {shouldShowExpanded && hiddenDateGroups > 0 && (
             <Typography variant="caption" color="text.secondary">
-              {isExpanded ? 'Showing all shifts' : `Showing first few of ${totalSlots} shifts`}
+              {isExpanded
+                ? "Showing all shifts"
+                : `Showing first few of ${totalSlots} shifts`}
             </Typography>
           )}
         </Box>
 
         <Stack spacing={1}>
           {Object.entries(slotsByDate).map(([date, dateSlots], index) => {
-            const shouldHideDate = shouldShowExpanded && !isExpanded && index >= 2;
+            const shouldHideDate =
+              shouldShowExpanded && !isExpanded && index >= 2;
             if (shouldHideDate) return null;
 
             return (
               <Box key={date}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
-                  {dateSlots[0].dayName ? `${dateSlots[0].dayName}, ${date}` : date}
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: "text.primary", mb: 1 }}
+                >
+                  {dateSlots[0].dayName
+                    ? `${dateSlots[0].dayName}, ${date}`
+                    : date}
                 </Typography>
                 <Stack spacing={0.1} sx={{ ml: 2 }}>
                   {dateSlots.map((slot, slotIndex) => (
-                    <Box key={slotIndex} sx={{ 
-                      display: 'flex', 
-                      alignItems: 'flex-start', 
-                      p: 1.1, 
-                      borderRadius: 1,
-                      backgroundColor: 'grey.50',
-                      border: '1px solid',
-                      borderColor: 'grey.200',
-                      '&:hover': {
-                        backgroundColor: 'grey.100'
-                      }
-                    }}>
-                      <Typography component="span" sx={{ fontSize: '1.0em', mr: 1.5, mt: 0.0 }}>
+                    <Box
+                      key={slotIndex}
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        p: 1.1,
+                        borderRadius: 1,
+                        backgroundColor: "grey.50",
+                        border: "1px solid",
+                        borderColor: "grey.200",
+                        "&:hover": {
+                          backgroundColor: "grey.100",
+                        },
+                      }}
+                    >
+                      <Typography
+                        component="span"
+                        sx={{ fontSize: "1.0em", mr: 1.5, mt: 0.0 }}
+                      >
                         {slot.emoji}
                       </Typography>
                       <Box sx={{ minWidth: 0, flex: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.3 }}>
-                          {slot.eventName || 'Event'}
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 500, lineHeight: 1.3 }}
+                        >
+                          {slot.eventName || "Event"}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2, display: 'block' }}>                          
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ lineHeight: 1.2, display: "block" }}
+                        >
                           {slot.timeRange && ` • ${slot.timeRange}`}
                         </Typography>
                       </Box>
@@ -1045,19 +1093,29 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
         </Stack>
 
         {shouldShowExpanded && hiddenDateGroups > 0 && (
-          <ExpandButton onClick={() => toggleExpanded(volunteerName)} sx={{ mt: 2 }}>
+          <ExpandButton
+            onClick={() => toggleExpanded(volunteerName)}
+            sx={{ mt: 2 }}
+          >
             <Typography variant="body2" color="primary" sx={{ mr: 1 }}>
               {isExpanded
-                ? 'Show Less'
-                : `Show All ${totalSlots} Volunteer Shifts`
-              }
+                ? "Show Less"
+                : `Show All ${totalSlots} Volunteer Shifts`}
             </Typography>
-            {isExpanded ? <ExpandLessIcon color="primary" /> : <ExpandMoreIcon color="primary" />}
+            {isExpanded ? (
+              <ExpandLessIcon color="primary" />
+            ) : (
+              <ExpandMoreIcon color="primary" />
+            )}
           </ExpandButton>
         )}
 
         <Divider sx={{ my: 1.5 }} />
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: "block", textAlign: "center" }}
+        >
           📋 Volunteer commitments • Times shown as registered
         </Typography>
       </AvailabilitySection>
@@ -1077,7 +1135,9 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         const startsNewSlot =
-          /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(part);
+          /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\w+ \w+ \d+:|🌅|☀️|🏙️|🌆|🌃|🌙)/.test(
+            part,
+          );
 
         if (startsNewSlot && currentSlot) {
           slots.push(currentSlot.trim());
@@ -1096,49 +1156,63 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
       if (slots.length === 0) return null;
 
       // Process and sort slots for better display
-      const processedSlots = slots.map((slot) => {
-        const slotIsCurrentlyAvailable = isCurrentlyAvailable(slot);
-        
-        // Extract readable parts
-        const datePart = slot.split(":")[0]?.trim(); // "Friday Oct 10"
-        const timePart = slot.split(":")[1]?.trim(); // "🌅 Early Morning (7am - 9am PST)"
-        
-        // Extract emoji and time period using Unicode escape sequences
-        const emojiMatch = timePart?.match(/([\u{1F305}\u{2600}\u{1F3D9}\u{1F306}\u{1F303}\u{1F319}])/u);
-        const timeRangeMatch = timePart?.match(/\(([^)]+)\)/);
-        const periodMatch = timePart?.match(/[\u{1F305}\u{2600}\u{1F3D9}\u{1F306}\u{1F303}\u{1F319}]\s+([^(]+)/u);
-        
-        const emoji = emojiMatch ? emojiMatch[1] : "";
-        const timeRange = timeRangeMatch ? timeRangeMatch[1].replace(/\s+[A-Z]{2,5}$/, '') : "";
-        const period = periodMatch ? periodMatch[1].trim() : "";
-        
-        // Create short date format (e.g., "Oct 10" from "Friday Oct 10")
-        const shortDate = datePart.split(' ').slice(-2).join(' ');
-        
-        return {
-          original: slot,
-          datePart,
-          shortDate,
-          emoji,
-          period,
-          timeRange,
-          isCurrentlyAvailable: slotIsCurrentlyAvailable,
-          // For sorting
-          sortKey: datePart + period
-        };
-      }).sort((a, b) => {
-        // Sort by date first, then by time period
-        return a.sortKey.localeCompare(b.sortKey);
-      });
+      const processedSlots = slots
+        .map((slot) => {
+          const slotIsCurrentlyAvailable = isCurrentlyAvailable(slot);
+
+          // Extract readable parts
+          const datePart = slot.split(":")[0]?.trim(); // "Friday Oct 10"
+          const timePart = slot.split(":")[1]?.trim(); // "🌅 Early Morning (7am - 9am PST)"
+
+          // Extract emoji and time period using Unicode escape sequences
+          const emojiMatch = timePart?.match(
+            /([\u{1F305}\u{2600}\u{1F3D9}\u{1F306}\u{1F303}\u{1F319}])/u,
+          );
+          const timeRangeMatch = timePart?.match(/\(([^)]+)\)/);
+          const periodMatch = timePart?.match(
+            /[\u{1F305}\u{2600}\u{1F3D9}\u{1F306}\u{1F303}\u{1F319}]\s+([^(]+)/u,
+          );
+
+          const emoji = emojiMatch ? emojiMatch[1] : "";
+          const timeRange = timeRangeMatch
+            ? timeRangeMatch[1].replace(/\s+[A-Z]{2,5}$/, "")
+            : "";
+          const period = periodMatch ? periodMatch[1].trim() : "";
+
+          // Create short date format (e.g., "Oct 10" from "Friday Oct 10")
+          const shortDate = datePart.split(" ").slice(-2).join(" ");
+
+          return {
+            original: slot,
+            datePart,
+            shortDate,
+            emoji,
+            period,
+            timeRange,
+            isCurrentlyAvailable: slotIsCurrentlyAvailable,
+            // For sorting
+            sortKey: datePart + period,
+          };
+        })
+        .sort((a, b) => {
+          // Sort by date first, then by time period
+          return a.sortKey.localeCompare(b.sortKey);
+        });
 
       // Separate currently available from future slots
-      const availableNow = processedSlots.filter(slot => slot.isCurrentlyAvailable);
-      const futureSlots = processedSlots.filter(slot => !slot.isCurrentlyAvailable);
+      const availableNow = processedSlots.filter(
+        (slot) => slot.isCurrentlyAvailable,
+      );
+      const futureSlots = processedSlots.filter(
+        (slot) => !slot.isCurrentlyAvailable,
+      );
 
       // For many slots (>6), show expandable compact view
       if (processedSlots.length > 6) {
-        const visibleFutureSlots = isExpanded ? futureSlots : futureSlots.slice(0, 3);
-        
+        const visibleFutureSlots = isExpanded
+          ? futureSlots
+          : futureSlots.slice(0, 3);
+
         return (
           <AvailabilitySection>
             {availableNow.length > 0 && (
@@ -1149,58 +1223,87 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                 </Typography>
               </AvailableNowBanner>
             )}
-            
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 1,
+              }}
+            >
               <Typography variant="subtitle2" color="primary">
                 📅 {processedSlots.length} Time Slots Available
               </Typography>
               {futureSlots.length > 3 && (
                 <Typography variant="caption" color="text.secondary">
-                  {isExpanded ? 'Showing all slots' : `${visibleFutureSlots.length} of ${futureSlots.length} shown`}
+                  {isExpanded
+                    ? "Showing all slots"
+                    : `${visibleFutureSlots.length} of ${futureSlots.length} shown`}
                 </Typography>
               )}
             </Box>
-            
-            <Box sx={{ maxHeight: isExpanded ? '300px' : '120px', overflowY: 'auto', pr: 1 }}>
+
+            <Box
+              sx={{
+                maxHeight: isExpanded ? "300px" : "120px",
+                overflowY: "auto",
+                pr: 1,
+              }}
+            >
               <Stack spacing={0.5}>
                 {/* Always show available now slots */}
                 {availableNow.map((slot, index) => (
-                  <Tooltip key={`now-${index}`} title="Available right now - perfect time to get help!">
+                  <Tooltip
+                    key={`now-${index}`}
+                    title="Available right now - perfect time to get help!"
+                  >
                     <CompactTimeSlot isAvailableNow={true}>
-                      <span style={{ marginRight: '6px' }}>{slot.emoji}</span>
-                      <strong>{slot.shortDate} • {slot.timeRange}</strong>
+                      <span style={{ marginRight: "6px" }}>{slot.emoji}</span>
+                      <strong>
+                        {slot.shortDate} • {slot.timeRange}
+                      </strong>
                     </CompactTimeSlot>
                   </Tooltip>
                 ))}
-                
+
                 {/* Show limited or all future slots based on expansion */}
                 {visibleFutureSlots.map((slot, index) => (
                   <Tooltip key={`future-${index}`} title={slot.original}>
                     <CompactTimeSlot isAvailableNow={false}>
-                      <span style={{ marginRight: '6px' }}>{slot.emoji}</span>
+                      <span style={{ marginRight: "6px" }}>{slot.emoji}</span>
                       {slot.shortDate} • {slot.timeRange}
                     </CompactTimeSlot>
                   </Tooltip>
                 ))}
               </Stack>
             </Box>
-            
+
             {/* Expandable section for remaining slots */}
             {futureSlots.length > 3 && (
               <ExpandButton onClick={() => toggleExpanded(volunteerName)}>
                 <Typography variant="body2" color="primary" sx={{ mr: 1 }}>
-                  {isExpanded 
-                    ? 'Show Less' 
-                    : `Show ${futureSlots.length - 3} More Time Slots`
-                  }
+                  {isExpanded
+                    ? "Show Less"
+                    : `Show ${futureSlots.length - 3} More Time Slots`}
                 </Typography>
-                {isExpanded ? <ExpandLessIcon color="primary" /> : <ExpandMoreIcon color="primary" />}
+                {isExpanded ? (
+                  <ExpandLessIcon color="primary" />
+                ) : (
+                  <ExpandMoreIcon color="primary" />
+                )}
               </ExpandButton>
             )}
-            
+
             <Divider sx={{ my: 1.5 }} />
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
-              🟢 = Available Now • All times in {getTimezoneAbbreviation(new Date(), volTz)} • Click "Show More" to see all slots
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", textAlign: "center" }}
+            >
+              🟢 = Available Now • All times in{" "}
+              {getTimezoneAbbreviation(new Date(), volTz)} • Click "Show More"
+              to see all slots
             </Typography>
           </AvailabilitySection>
         );
@@ -1217,12 +1320,12 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
               </Typography>
             </AvailableNowBanner>
           )}
-          
+
           <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
             📅 When You Can Get Help
           </Typography>
-          
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
             {processedSlots.map((slot, index) => (
               <Tooltip
                 key={index}
@@ -1239,13 +1342,29 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
               >
                 <TimeSlotChip
                   label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
                       <span>{slot.emoji}</span>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                        <Typography variant="caption" component="span" sx={{ lineHeight: 1, fontWeight: 600 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          component="span"
+                          sx={{ lineHeight: 1, fontWeight: 600 }}
+                        >
                           {slot.shortDate}
                         </Typography>
-                        <Typography variant="caption" component="span" sx={{ lineHeight: 1, opacity: 0.9 }}>
+                        <Typography
+                          variant="caption"
+                          component="span"
+                          sx={{ lineHeight: 1, opacity: 0.9 }}
+                        >
                           {slot.timeRange}
                         </Typography>
                       </Box>
@@ -1253,27 +1372,29 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                   }
                   isAvailableNow={slot.isCurrentlyAvailable}
                   clickable
-                  sx={{ 
-                    height: 'auto',
-                    '& .MuiChip-label': {
-                      padding: '8px 12px',
-                    }
+                  sx={{
+                    height: "auto",
+                    "& .MuiChip-label": {
+                      padding: "8px 12px",
+                    },
                   }}
                 />
               </Tooltip>
             ))}
           </Box>
-          
+
           <Divider sx={{ my: 1.5 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
-            {availableNow.length > 0 
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", textAlign: "center" }}
+          >
+            {availableNow.length > 0
               ? "🟢 = Available Now • Click any slot to see details"
-              : "Hover for full details • Check back during these times"
-            }
+              : "Hover for full details • Check back during these times"}
           </Typography>
         </AvailabilitySection>
       );
-
     } catch (error) {
       console.error("Error rendering mentor availability:", error);
       return null;
@@ -1285,11 +1406,11 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
     if (!availability || typeof availability !== "string") return null;
 
     const format = detectAvailabilityFormat(availability);
-    
+
     switch (format) {
-      case 'volunteer':
+      case "volunteer":
         return renderVolunteerAvailability(availability, volunteerName);
-      case 'mentor':
+      case "mentor":
       default:
         return renderMentorAvailability(availability, volunteerName);
     }
@@ -1298,9 +1419,9 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
   const [expandedCards, setExpandedCards] = React.useState({});
 
   const toggleCardExpanded = (volunteerName) => {
-    setExpandedCards(prev => ({
+    setExpandedCards((prev) => ({
       ...prev,
-      [volunteerName]: !prev[volunteerName]
+      [volunteerName]: !prev[volunteerName],
     }));
   };
 
@@ -1321,11 +1442,14 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
     const parts = [];
     const company = getFieldValue(volunteer, FIELD_CONFIG.company);
     if (company) parts.push(company);
-    if (volunteer.title && !volunteer.experienceLevel) parts.push(volunteer.title);
+    if (volunteer.title && !volunteer.experienceLevel)
+      parts.push(volunteer.title);
     if (volunteer.experienceLevel) parts.push(volunteer.experienceLevel);
     const expertise = getFieldValue(volunteer, FIELD_CONFIG.expertise);
     if (!parts.length && expertise) {
-      const short = Array.isArray(expertise) ? expertise.slice(0, 2).join(", ") : expertise.split(/[,;]/).slice(0, 2).join(", ");
+      const short = Array.isArray(expertise)
+        ? expertise.slice(0, 2).join(", ")
+        : expertise.split(/[,;]/).slice(0, 2).join(", ");
       parts.push(short);
     }
     return parts.join(" · ");
@@ -1339,18 +1463,19 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
     const isExpanded = expandedCards[name] || false;
     const imageUrl = getVolunteerImage(volunteer);
     const subtitle = getCompactSubtitle(volunteer);
-    const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+    const initials = name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
 
     // Gather visible-at-a-glance chips (location, in-person badge, team status)
-    const hasLocation = shouldRenderField(volunteer, 'location', type);
-    const hasTeamStatus = shouldRenderField(volunteer, 'teamStatus', type);
+    const hasLocation = shouldRenderField(volunteer, "location", type);
+    const hasTeamStatus = shouldRenderField(volunteer, "teamStatus", type);
 
     return (
-      <Grid
-        size={{ xs: 6, sm: 4, md: 3 }}
-        key={name}
-        id={`mentor-${name}`}
-      >
+      <Grid size={{ xs: 6, sm: 4, md: 3 }} key={name} id={`mentor-${name}`}>
         <PersonCard isExpanded={isExpanded}>
           {/* Always-visible top section: avatar, name, subtitle, key badges */}
           <CardTopSection onClick={() => toggleCardExpanded(name)}>
@@ -1410,9 +1535,17 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
             )}
             {/* Quick-glance chips visible without expanding */}
             {(hasLocation || hasTeamStatus) && (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.75, justifyContent: "center" }}>
-                {renderField(volunteer, 'location', type)}
-                {renderField(volunteer, 'teamStatus', type)}
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 0.5,
+                  mt: 0.75,
+                  justifyContent: "center",
+                }}
+              >
+                {renderField(volunteer, "location", type)}
+                {renderField(volunteer, "teamStatus", type)}
               </Box>
             )}
           </CardTopSection>
@@ -1430,35 +1563,57 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
               "&:hover": { color: "primary.main" },
             }}
           >
-            {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            {isExpanded ? (
+              <ExpandLessIcon fontSize="small" />
+            ) : (
+              <ExpandMoreIcon fontSize="small" />
+            )}
           </Box>
 
           {/* Expanded detail section */}
           <Collapse in={isExpanded}>
             <ExpandedContent>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    flexWrap: "wrap",
+                  }}
+                >
                   {volunteer.pronouns && (
-                    <Chip icon={<PersonIcon />} label={volunteer.pronouns} size="small" />
+                    <Chip
+                      icon={<PersonIcon />}
+                      label={volunteer.pronouns}
+                      size="small"
+                    />
                   )}
                 </Box>
                 <ShareVolunteer volunteer={volunteer} type={type} />
               </Box>
               <ChipContainer>
-                {renderField(volunteer, 'participationCount', type)}
-                {renderField(volunteer, 'linkedinProfile', type)}
-                {renderField(volunteer, 'github', type)}
-                {renderField(volunteer, 'portfolio', type)}
+                {renderField(volunteer, "participationCount", type)}
+                {renderField(volunteer, "linkedinProfile", type)}
+                {renderField(volunteer, "github", type)}
+                {renderField(volunteer, "portfolio", type)}
               </ChipContainer>
-              {renderField(volunteer, 'bio', type)}
-              {renderField(volunteer, 'expertise', type)}
-              {renderField(volunteer, 'softwareSpecifics', type)}
-              {renderField(volunteer, 'whyJudge', type)}
-              {renderField(volunteer, 'primaryRoles', type)}
-              {renderField(volunteer, 'skills', type)}
-              {renderField(volunteer, 'socialCauses', type)}
-              {renderField(volunteer, 'availability', type)}
-              {renderField(volunteer, 'artifacts', type)}
+              {renderField(volunteer, "bio", type)}
+              {renderField(volunteer, "expertise", type)}
+              {renderField(volunteer, "softwareSpecifics", type)}
+              {renderField(volunteer, "whyJudge", type)}
+              {renderField(volunteer, "primaryRoles", type)}
+              {renderField(volunteer, "skills", type)}
+              {renderField(volunteer, "socialCauses", type)}
+              {renderField(volunteer, "availability", type)}
+              {renderField(volunteer, "artifacts", type)}
             </ExpandedContent>
           </Collapse>
         </PersonCard>
@@ -1486,7 +1641,9 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
       >
         <Table size="small" sx={{ minWidth: 600 }}>
           <TableHead>
-            <TableRow sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}>
+            <TableRow
+              sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}
+            >
               <TableCell>Name</TableCell>
               <TableCell>Organization</TableCell>
               <TableCell>Expertise</TableCell>
@@ -1509,21 +1666,31 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                 .slice(0, 2)
                 .toUpperCase();
               const company = getFieldValue(volunteer, FIELD_CONFIG.company);
-              const expertise = getFieldValue(volunteer, FIELD_CONFIG.expertise);
+              const expertise = getFieldValue(
+                volunteer,
+                FIELD_CONFIG.expertise,
+              );
               const expertiseDisplay = expertise
                 ? Array.isArray(expertise)
                   ? expertise.slice(0, 2).join(", ")
                   : expertise.split(/[,;]/).slice(0, 2).join(", ")
                 : null;
               const location = getFieldValue(volunteer, FIELD_CONFIG.location);
-              const teamStatus = getFieldValue(volunteer, FIELD_CONFIG.teamStatus);
+              const teamStatus = getFieldValue(
+                volunteer,
+                FIELD_CONFIG.teamStatus,
+              );
 
               const getTeamLabel = (status) => {
                 switch (status) {
-                  case "I have a team": return "Has Team";
-                  case "I'm looking for team members": return "Seeking Members";
-                  case "I'd like to be matched with a team": return "Looking for Team";
-                  default: return "Solo";
+                  case "I have a team":
+                    return "Has Team";
+                  case "I'm looking for team members":
+                    return "Seeking Members";
+                  case "I'd like to be matched with a team":
+                    return "Looking for Team";
+                  default:
+                    return "Solo";
                 }
               };
 
@@ -1538,7 +1705,9 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                     }}
                   >
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
                         <Avatar
                           src={imageUrl}
                           alt={name}
@@ -1588,7 +1757,11 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                             icon={<GroupIcon />}
                             label={getTeamLabel(teamStatus)}
                             size="small"
-                            color={teamStatus === "I have a team" ? "success" : "primary"}
+                            color={
+                              teamStatus === "I have a team"
+                                ? "success"
+                                : "primary"
+                            }
                           />
                         ) : (
                           "—"
@@ -1597,10 +1770,16 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                     )}
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 0.5 }}>
-                        {getFieldValue(volunteer, FIELD_CONFIG.linkedinProfile) && (
+                        {getFieldValue(
+                          volunteer,
+                          FIELD_CONFIG.linkedinProfile,
+                        ) && (
                           <Tooltip title="LinkedIn">
                             <Link
-                              href={getFieldValue(volunteer, FIELD_CONFIG.linkedinProfile)}
+                              href={getFieldValue(
+                                volunteer,
+                                FIELD_CONFIG.linkedinProfile,
+                              )}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -1612,7 +1791,10 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                         {getFieldValue(volunteer, FIELD_CONFIG.github) && (
                           <Tooltip title="GitHub">
                             <Link
-                              href={getFieldValue(volunteer, FIELD_CONFIG.github)}
+                              href={getFieldValue(
+                                volunteer,
+                                FIELD_CONFIG.github,
+                              )}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -1624,7 +1806,10 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                         {getFieldValue(volunteer, FIELD_CONFIG.portfolio) && (
                           <Tooltip title="Portfolio">
                             <Link
-                              href={getFieldValue(volunteer, FIELD_CONFIG.portfolio)}
+                              href={getFieldValue(
+                                volunteer,
+                                FIELD_CONFIG.portfolio,
+                              )}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -1648,13 +1833,28 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                   <TableRow>
                     <TableCell
                       colSpan={showTeamStatus ? 8 : 7}
-                      sx={{ py: 0, borderBottom: isExpanded ? undefined : "none" }}
+                      sx={{
+                        py: 0,
+                        borderBottom: isExpanded ? undefined : "none",
+                      }}
                     >
                       <Collapse in={isExpanded}>
                         <Box sx={{ py: 2, px: 1 }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mb: 1.5,
+                              flexWrap: "wrap",
+                            }}
+                          >
                             {volunteer.pronouns && (
-                              <Chip icon={<PersonIcon />} label={volunteer.pronouns} size="small" />
+                              <Chip
+                                icon={<PersonIcon />}
+                                label={volunteer.pronouns}
+                                size="small"
+                              />
                             )}
                             {renderField(volunteer, "participationCount", type)}
                             <ShareVolunteer volunteer={volunteer} type={type} />
@@ -1692,13 +1892,32 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
     return <Skeleton marginTop={5} variant="rect" width={210} height={300} />;
   }
 
-  const { label: sectionLabel, learnMoreHref } = TYPE_CONFIG[type] || TYPE_CONFIG.volunteer;
+  const { label: sectionLabel, learnMoreHref } =
+    TYPE_CONFIG[type] || TYPE_CONFIG.volunteer;
 
   return (
     <Box sx={{ mt: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, flexWrap: "wrap", gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 2,
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
         <HeadingContainer sx={{ mb: 0 }}>
-          <Typography variant="h4" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: "var(--ink, #16181D)" }}>{sectionLabel}</Typography>
+          <Typography
+            variant="h4"
+            sx={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 500,
+              color: "var(--ink, #16181D)",
+            }}
+          >
+            {sectionLabel}
+          </Typography>
           <NextLink href={learnMoreHref} passHref>
             <StyledLink component="a" href={learnMoreHref}>
               (Learn more)
@@ -1709,7 +1928,9 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
         <ToggleButtonGroup
           value={viewMode}
           exclusive
-          onChange={(_, v) => { if (v) setViewMode(v); }}
+          onChange={(_, v) => {
+            if (v) setViewMode(v);
+          }}
           size="small"
           aria-label="View mode"
         >
@@ -1732,41 +1953,63 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
         Array.isArray(availableMentors) &&
         availableMentors.length > 0 && (
           <AvailableMentorsSection>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
               <span>🟢</span>
               Currently Available Mentors:
-              <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ ml: 1 }}
+              >
                 ({availableMentors.length} available now)
               </Typography>
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
               {availableMentors.map((mentor) => {
                 // Extract expertise for display
-                const expertise = getFieldValue(mentor, FIELD_CONFIG.expertise) || 
-                                getFieldValue(mentor, FIELD_CONFIG.skills) ||
-                                getFieldValue(mentor, FIELD_CONFIG.primaryRoles) ||
-                                getFieldValue(mentor, FIELD_CONFIG.company) ||
-                                'General Support';
-                
+                const expertise =
+                  getFieldValue(mentor, FIELD_CONFIG.expertise) ||
+                  getFieldValue(mentor, FIELD_CONFIG.skills) ||
+                  getFieldValue(mentor, FIELD_CONFIG.primaryRoles) ||
+                  getFieldValue(mentor, FIELD_CONFIG.company) ||
+                  "General Support";
+
                 // Truncate expertise for chip display (show first 2-3 skills)
-                const expertiseArray = Array.isArray(expertise) ? expertise : expertise.split(/[,;|]/).map(s => s.trim());
-                const displayExpertise = expertiseArray.slice(0, 2).join(' • ');
-                const fullExpertise = expertiseArray.join(' • ');
-                
+                const expertiseArray = Array.isArray(expertise)
+                  ? expertise
+                  : expertise.split(/[,;|]/).map((s) => s.trim());
+                const displayExpertise = expertiseArray.slice(0, 2).join(" • ");
+                const fullExpertise = expertiseArray.join(" • ");
+
                 const tooltipContent = (
                   <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, mb: 0.5 }}
+                    >
                       {mentor?.name || "Mentor"}
                     </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
-                      {mentor?.isInPerson ? "📍 Available now (in-person)" : "💻 Available now (remote)"}
+                    <Typography
+                      variant="caption"
+                      sx={{ display: "block", mb: 0.5 }}
+                    >
+                      {mentor?.isInPerson
+                        ? "📍 Available now (in-person)"
+                        : "💻 Available now (remote)"}
                     </Typography>
                     {getFieldValue(mentor, FIELD_CONFIG.company) && (
-                      <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ display: "block", mb: 0.5 }}
+                      >
                         🏢 {getFieldValue(mentor, FIELD_CONFIG.company)}
                       </Typography>
                     )}
-                    <Typography variant="caption" sx={{ display: 'block' }}>
+                    <Typography variant="caption" sx={{ display: "block" }}>
                       🎯 {fullExpertise}
                     </Typography>
                   </Box>
@@ -1798,7 +2041,11 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                 );
               })}
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 1, fontStyle: "italic" }}
+            >
               💡 Click any mentor to scroll to their full profile below
             </Typography>
           </AvailableMentorsSection>

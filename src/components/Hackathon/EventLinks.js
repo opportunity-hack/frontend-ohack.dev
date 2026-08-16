@@ -1,5 +1,14 @@
+import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
 import React from "react";
-import { Paper, Typography, Button, Grid, Box, Divider, Chip } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  Button,
+  Grid,
+  Box,
+  Divider,
+  Chip,
+} from "@mui/material";
 import { styled } from "@mui/material/styles";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PersonIcon from "@mui/icons-material/Person";
@@ -11,8 +20,8 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import SocialProofIndicator from './SocialProofIndicator';
-import useParticipantCounts from '../../hooks/use-participant-counts';
+import SocialProofIndicator from "./SocialProofIndicator";
+import useParticipantCounts from "../../hooks/use-participant-counts";
 
 const LinksContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -52,7 +61,10 @@ const LinkButton = styled(Button)(({ theme }) => ({
     borderColor: "var(--brand, #1B3A6B)",
     boxShadow: "none",
   },
-  "& .MuiButton-startIcon": { marginRight: theme.spacing(1), color: "var(--accent, #E2552E)" },
+  "& .MuiButton-startIcon": {
+    marginRight: theme.spacing(1),
+    color: "var(--accent, #E2552E)",
+  },
 }));
 
 // Calm uniform application card (replaces the 6 rainbow-colored contained buttons).
@@ -64,7 +76,8 @@ const ApplicationButton = styled(Button)(({ theme }) => ({
   color: "var(--ink, #16181D)",
   textTransform: "none",
   boxShadow: "none",
-  transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+  transition:
+    "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
   "&:hover": {
     backgroundColor: "var(--surface, #FFFFFF)",
     transform: "translateY(-2px)",
@@ -92,10 +105,10 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
 
   // Get counts for social proof
   const getCountsForType = (type) => {
-    const pluralType = type === 'hacker' ? 'hackers' : `${type}s`;
+    const pluralType = type === "hacker" ? "hackers" : `${type}s`;
     return counts[pluralType] || { accepted: 0, total: 0 };
   };
-  
+
   // 🎯 SOCIAL PROOF CONFIGURATION - Easily customizable urgency settings
   // showUrgency: true/false - whether to show "Filling up fast!" and "Popular choice" messages
   // urgencyThreshold: number - minimum accepted participants before showing urgency messages
@@ -114,10 +127,13 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
     {
       type: "hacker",
       title: "Hacker Application",
-      description: "Participate as a developer, designer, product or project manager",
+      description:
+        "Participate as a developer, designer, product or project manager",
       icon: <PersonIcon />,
       color: "primary",
-      link: constraints.application_hacker_external_url || `/hack/${event_id}/hacker-application`,
+      link:
+        constraints.application_hacker_external_url ||
+        `/hack/${event_id}/hacker-application`,
       enabled: constraints.application_hacker_enabled !== false,
       isExternal: !!constraints.application_hacker_external_url,
       roleType: "hackers",
@@ -129,7 +145,9 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
       description: "Guide teams with your technical expertise",
       icon: <VolunteerActivismIcon />,
       color: "secondary",
-      link: constraints.application_mentor_external_url || `/hack/${event_id}/mentor-application`,
+      link:
+        constraints.application_mentor_external_url ||
+        `/hack/${event_id}/mentor-application`,
       enabled: constraints.application_mentor_enabled !== false,
       isExternal: !!constraints.application_mentor_external_url,
       roleType: "mentors",
@@ -141,7 +159,9 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
       description: "Evaluate solutions and provide feedback",
       icon: <GavelIcon />,
       color: "success",
-      link: constraints.application_judge_external_url || `/hack/${event_id}/judge-application`,
+      link:
+        constraints.application_judge_external_url ||
+        `/hack/${event_id}/judge-application`,
       enabled: constraints.application_judge_enabled !== false,
       isExternal: !!constraints.application_judge_external_url,
       roleType: "judges",
@@ -200,11 +220,13 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
     const ButtonContent = <LinkButton {...buttonProps}>{link.name}</LinkButton>;
 
     return link.open_new === "True" || link.link.startsWith("http") ? (
-      <a href={link.link} target={
-        link.open_new === "True" ? "_blank" : "_self"
-      }
-          rel={link.open_new === "True" ? "noopener noreferrer" : ""}
-      style={{ textDecoration: "none" }} key={link.name}>
+      <a
+        href={link.link}
+        target={link.open_new === "True" ? "_blank" : "_self"}
+        rel={link.open_new === "True" ? "noopener noreferrer" : ""}
+        style={{ textDecoration: "none" }}
+        key={link.name}
+      >
         {ButtonContent}
       </a>
     ) : (
@@ -219,24 +241,68 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
     return (
       <LinksContainer elevation={2} id="applications">
         <Box>
-          <Typography sx={{ fontFamily: "'Hanken Grotesk', system-ui, sans-serif", textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted, #5B6270)' }}>
+          <Typography
+            sx={{
+              fontFamily: FONT_BODY,
+              textTransform: "uppercase",
+              letterSpacing: "0.22em",
+              fontSize: "0.72rem",
+              fontWeight: 600,
+              color: "var(--muted, #5B6270)",
+            }}
+          >
             Step 1
           </Typography>
-          <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)', mt: 0.5 }}>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 500,
+              color: "var(--ink, #16181D)",
+              mt: 0.5,
+            }}
+          >
             Apply to participate
           </Typography>
-          <Typography variant="body2" paragraph sx={{ color: 'var(--muted, #5B6270)' }}>
-            Join the community! Pick the role that best matches how you&apos;d like to contribute.
+          <Typography
+            variant="body2"
+            paragraph
+            sx={{ color: "var(--muted, #5B6270)" }}
+          >
+            Join the community! Pick the role that best matches how you&apos;d
+            like to contribute.
           </Typography>
 
           {/* Overall Social Proof Summary */}
-          {!countsLoading && Object.values(counts).some(c => c.accepted > 0) && (
-            <Box sx={{ mb: 2.5, p: 1.5, borderRadius: 2, backgroundColor: 'var(--surface-2, #F4F1E9)', border: '1px solid var(--line, #E7E1D4)', borderLeft: '3px solid var(--accent, #E2552E)' }}>
-              <Typography sx={{ color: 'var(--ink, #16181D)', fontWeight: 600, fontSize: '0.9rem' }}>
-                Join {Object.values(counts).reduce((sum, c) => sum + c.accepted, 0)}+ participants already confirmed for this hackathon.
-              </Typography>
-            </Box>
-          )}
+          {!countsLoading &&
+            Object.values(counts).some((c) => c.accepted > 0) && (
+              <Box
+                sx={{
+                  mb: 2.5,
+                  p: 1.5,
+                  borderRadius: 2,
+                  backgroundColor: "var(--surface-2, #F4F1E9)",
+                  border: "1px solid var(--line, #E7E1D4)",
+                  borderLeft: "3px solid var(--accent, #E2552E)",
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: "var(--ink, #16181D)",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Join{" "}
+                  {Object.values(counts).reduce(
+                    (sum, c) => sum + c.accepted,
+                    0,
+                  )}
+                  + participants already confirmed for this hackathon.
+                </Typography>
+              </Box>
+            )}
 
           <Grid container spacing={2}>
             {applicationTypes.map((app) => (
@@ -248,24 +314,46 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                   href={app.enabled ? app.link : undefined}
                   disabled={!app.enabled}
                   component={app.enabled ? "a" : "button"}
-                  {...(app.enabled && app.isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  {...(app.enabled && app.isExternal
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
                   sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    height: '100%',
-                    minHeight: '100px', // Increased to accommodate social proof
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    height: "100%",
+                    minHeight: "100px", // Increased to accommodate social proof
                     opacity: app.enabled ? 1 : 0.55,
-                    cursor: app.enabled ? 'pointer' : 'not-allowed',
-                    position: 'relative',
-                    overflow: 'visible'
+                    cursor: app.enabled ? "pointer" : "not-allowed",
+                    position: "relative",
+                    overflow: "visible",
                   }}
                 >
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
-                    <Typography component="span" sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, fontSize: '1.05rem', color: 'var(--ink, #16181D)' }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      width: "100%",
+                    }}
+                  >
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontFamily: FONT_DISPLAY,
+                        fontWeight: 500,
+                        fontSize: "1.05rem",
+                        color: "var(--ink, #16181D)",
+                      }}
+                    >
                       {app.title}
                     </Typography>
-                    <Typography variant="caption" component="span" align="left" sx={{ color: 'var(--muted, #5B6270)', mt: 0.25 }}>
+                    <Typography
+                      variant="caption"
+                      component="span"
+                      align="left"
+                      sx={{ color: "var(--muted, #5B6270)", mt: 0.25 }}
+                    >
                       {app.description}
                       {!app.enabled && " (Closed)"}
                       {app.enabled && app.isExternal && " (Opens in new tab)"}
@@ -278,7 +366,9 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                         total={getCountsForType(app.type).total}
                         roleType={app.roleType}
                         showUrgency={app.socialProof?.showUrgency || false}
-                        urgencyThreshold={app.socialProof?.urgencyThreshold || 10}
+                        urgencyThreshold={
+                          app.socialProof?.urgencyThreshold || 10
+                        }
                         variant="compact"
                         buttonColor={app.color}
                       />
@@ -292,12 +382,20 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
       </LinksContainer>
     );
   }
-  
+
   // For event-links-only variant
   if (variant === "event-links" && links && links.length > 0) {
     return (
       <LinksContainer elevation={2} id="event-links">
-        <Typography variant="h5" gutterBottom sx={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, color: 'var(--ink, #16181D)' }}>
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{
+            fontFamily: FONT_DISPLAY,
+            fontWeight: 500,
+            color: "var(--ink, #16181D)",
+          }}
+        >
           Important event links
         </Typography>
         <Grid container spacing={2}>
@@ -310,7 +408,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
       </LinksContainer>
     );
   }
-  
+
   // For full variant (original behavior - both sections)
   return (
     <LinksContainer elevation={2} id="applications">
@@ -319,52 +417,60 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
           Apply to Participate
         </Typography>
         <Typography variant="body2" color="textSecondary" paragraph>
-          Join the community! Select the role that best matches how you'd like to contribute to this hackathon.
+          Join the community! Select the role that best matches how you'd like
+          to contribute to this hackathon.
         </Typography>
 
         {/* Overall Social Proof Summary */}
-        {!countsLoading && Object.values(counts).some(c => c.accepted > 0) && (
-          <Box sx={{
-            mb: 2,
-            p: 1.5,
-            backgroundColor: 'primary.main',
-            borderRadius: 2,
-            border: '2px solid',
-            borderColor: 'primary.dark',
-            boxShadow: 2,
-            background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.9) 0%, rgba(21, 101, 192, 0.9) 100%)',
-            position: 'relative',
-            overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)',
-              backgroundSize: '20px 20px',
-              backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-              opacity: 0.1,
-              pointerEvents: 'none'
-            }
-          }}>
-            <Typography
-              variant="subtitle2"
+        {!countsLoading &&
+          Object.values(counts).some((c) => c.accepted > 0) && (
+            <Box
               sx={{
-                color: 'common.white',
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                position: 'relative',
-                zIndex: 1
+                mb: 2,
+                p: 1.5,
+                backgroundColor: "primary.main",
+                borderRadius: 2,
+                border: "2px solid",
+                borderColor: "primary.dark",
+                boxShadow: 2,
+                background:
+                  "linear-gradient(135deg, rgba(25, 118, 210, 0.9) 0%, rgba(21, 101, 192, 0.9) 100%)",
+                position: "relative",
+                overflow: "hidden",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background:
+                    "linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)",
+                  backgroundSize: "20px 20px",
+                  backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
+                  opacity: 0.1,
+                  pointerEvents: "none",
+                },
               }}
             >
-              🎉 Join {Object.values(counts).reduce((sum, c) => sum + c.accepted, 0)}+ participants already confirmed for this hackathon!
-            </Typography>
-          </Box>
-        )}
-        
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: "common.white",
+                  fontWeight: 700,
+                  fontSize: "0.875rem",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                  position: "relative",
+                  zIndex: 1,
+                }}
+              >
+                🎉 Join{" "}
+                {Object.values(counts).reduce((sum, c) => sum + c.accepted, 0)}+
+                participants already confirmed for this hackathon!
+              </Typography>
+            </Box>
+          )}
+
         <Grid container spacing={2} mb={3}>
           {applicationTypes.map((app) => (
             <Grid size={{ xs: 12, sm: 6 }} key={app.type}>
@@ -376,19 +482,32 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
                 href={app.enabled ? app.link : undefined}
                 disabled={!app.enabled}
                 component={app.enabled ? "a" : "button"}
-                {...(app.enabled && app.isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                {...(app.enabled && app.isExternal
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  height: '100%',
-                  minHeight: '80px',
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  height: "100%",
+                  minHeight: "80px",
                   opacity: app.enabled ? 1 : 0.6,
-                  cursor: app.enabled ? 'pointer' : 'not-allowed'
+                  cursor: app.enabled ? "pointer" : "not-allowed",
                 }}
               >
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
-                  <Typography variant="subtitle1" component="span" fontWeight="bold">
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    width: "100%",
+                  }}
+                >
+                  <Typography
+                    variant="subtitle1"
+                    component="span"
+                    fontWeight="bold"
+                  >
                     {app.title}
                   </Typography>
                   <Typography variant="caption" component="span" align="left">
@@ -402,7 +521,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
           ))}
         </Grid>
       </Box>
-      
+
       {links && links.length > 0 && (
         <>
           <Divider sx={{ my: 3 }} />

@@ -12,14 +12,14 @@
   /* responsive */
 
   margin: 0 auto;
-  padding: 3.2rem 6.4rem;
+  padding: 38.4px 76.8px;
 }
 
 .hero-banner__logo {
   /* responsive */
 
-  width: 26.752rem;
-  height: 12.8rem;
+  width: 321px;
+  height: 153.6px;
 }
 
 .hero-banner__headline {
@@ -27,36 +27,36 @@
 
   /* responsive */
 
-  margin: 2.4rem 0 8px 0;
+  margin: 28.8px 0 8px 0;
 
-  font-size: 4.8rem;
+  font-size: 57.6px;
 }
 
 .hero-banner__description {
-  /* max-width: 58rem; */
+  /* max-width: 696px; */
 
   text-align: center;
 
   /* responsive */
 
-  margin-bottom: 3.2rem;
-  font-size: 3rem;
-  line-height: 2.4rem;
+  margin-bottom: 38.4px;
+  font-size: 36px;
+  line-height: 28.8px;
   /* font-size: 20px; */
-  /* line-height: 3.2rem; */
+  /* line-height: 38.4px; */
 }
 
 @media only screen and (max-width: 540px) {
   .hero-banner {
-    padding: 3.2rem 1.6rem;
+    padding: 38.4px 19.2px;
   }
 
   .hero-banner__logo {
-    width: 20.1rem;
-    height: 9.6rem;
+    width: 241.2px;
+    height: 115.2px;
   }
 
   .hero-banner__headline {
-    font-size: 3.2rem;
+    font-size: 38.4px;
   }
 }

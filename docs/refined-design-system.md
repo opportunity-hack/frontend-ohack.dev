@@ -331,3 +331,12 @@ The event page (`src/pages/hack/[event_id].js`) now:
   disclosure pattern (see `about/judges`), MUI `Slider` with
   `sx={{ color: '#1B3A6B' }}`, search `<input>` + quiet toggle-tag filters
   (see `ProjectList` / `NonProfitList`).
+
+## Typography update (Aug 2026)
+
+Fonts now load globally via next/font (`src/styles/fonts.js` — the single
+source of truth; import `FONT_BODY` / `FONT_DISPLAY`, never hardcode family
+names). `<RefinedFonts/>` is a deprecated null stub. The root font-size was
+fixed from 12px → 100%; refined.js display clamps/eyebrow/lead/btn/tag sizes
+were frozen to px at their previously-rendered look. See CLAUDE.md
+"Typography system" for the full contract.

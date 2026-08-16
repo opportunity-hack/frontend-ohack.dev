@@ -1,37 +1,35 @@
-import { Html, Head, Main, NextScript } from 'next/document'
-import Script from 'next/script';
-
+import { Html, Head, Main, NextScript } from "next/document";
+import Script from "next/script";
+import { hanken, fraunces } from "../styles/fonts";
 
 export default function Document() {
-    return (
-      <Html
-        lang="en">
-        <Head>
-          <link rel="icon" href="/favicon.ico" />
-          
-          <noscript>
-            {/* TODO: Alt text or skip alt text error in eslint. Also, what is this? */}
-            <img
-              height="1"
-              width="1"
-              style={{ display: "none" }}
-              src={`https://www.facebook.com/tr?id=340533780623242&ev=PageView&noscript=1`}
-              alt="tracker"
-            />
-          </noscript>
+  return (
+    <Html lang="en" className={`${hanken.variable} ${fraunces.variable}`}>
+      <Head>
+        <link rel="icon" href="/favicon.ico" />
 
-          {/* Global Site Tag (gtag.js) - Google Analytics */}
-          <Script
-            strategy="afterInteractive"
-            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
+        <noscript>
+          {/* TODO: Alt text or skip alt text error in eslint. Also, what is this? */}
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src={`https://www.facebook.com/tr?id=340533780623242&ev=PageView&noscript=1`}
+            alt="tracker"
           />
-          
+        </noscript>
 
-          <Script
-            id="google-analytics"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
+        {/* Global Site Tag (gtag.js) - Google Analytics */}
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
+        />
+
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
                             window.dataLayer = window.dataLayer || [];
                             function gtag(){dataLayer.push(arguments);}
                             gtag('js', new Date());
@@ -40,14 +38,14 @@ export default function Document() {
                             });
                             gtag('config', 'AW-11474351176');
                         `,
-            }}
-          />
+          }}
+        />
 
-          <Script
-            id="facebook-pixel"
-            strategy="lazyOnLoad"
-            dangerouslySetInnerHTML={{
-              __html: `
+        <Script
+          id="facebook-pixel"
+          strategy="lazyOnLoad"
+          dangerouslySetInnerHTML={{
+            __html: `
                             !function(f,b,e,v,n,t,s)
                             {if(f.fbq)return;n=f.fbq=function(){n.callMethod ?
                                 n.callMethod.apply(n, arguments) : n.queue.push(arguments)};
@@ -59,20 +57,13 @@ export default function Document() {
                             fbq('init', '340533780623242');
                             fbq('track', 'PageView');
                         `,
-            }}
-          />
-        </Head>
-        <body>
-          <Main />
-          <NextScript />
-        </body>
-      </Html>
-    );
+          }}
+        />
+      </Head>
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  );
 }
-                
-                
-                        
-
-              
-                
-            

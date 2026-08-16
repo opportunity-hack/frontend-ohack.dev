@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../../styles/fonts";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -67,8 +68,10 @@ import {
   getEventTimezone,
   getTimezoneAbbreviation,
 } from "../../../lib/timezoneUtils";
+import { ThemeProvider } from "@mui/material/styles";
 import {
   formSectionStyle,
+  refinedFormTheme,
   refinedFieldSx,
   refinedChoiceSx,
   refinedChipSx,
@@ -1499,7 +1502,7 @@ const MentorApplicationComponent = () => {
       </Box>
       <Typography
         variant="body2"
-        sx={{ ...stepLeadSx, fontSize: "0.98rem", mb: 2 }}
+        sx={{ ...stepLeadSx, fontSize: "15.5px", mb: 2 }}
       >
         Select the dates you are available. For each date, pick the time slots
         you can mentor. For long hackathons, use the filter to quickly find your
@@ -1777,7 +1780,7 @@ const MentorApplicationComponent = () => {
                       px: 1.6,
                       py: 0.7,
                       ml: { sm: 1.5 },
-                      fontSize: "0.82rem",
+                      fontSize: "13px",
                     }}
                   >
                     Select All Slots
@@ -1959,7 +1962,7 @@ const MentorApplicationComponent = () => {
               mt: 1.5,
               px: 1.6,
               py: 0.7,
-              fontSize: "0.82rem",
+              fontSize: "13px",
             }}
           >
             Clear All
@@ -2376,7 +2379,7 @@ const MentorApplicationComponent = () => {
                       component="h2"
                       sx={{
                         ...stepTitleSx,
-                        fontSize: { xs: "1.4rem", sm: "1.7rem" },
+                        fontSize: { xs: "22.5px", sm: "27px" },
                         mt: 1,
                       }}
                     >
@@ -2500,7 +2503,7 @@ const MentorApplicationComponent = () => {
                         component="div"
                         sx={{
                           mb: 1,
-                          fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                          fontFamily: FONT_DISPLAY,
                           fontWeight: 500,
                         }}
                       >
@@ -2576,7 +2579,7 @@ const MentorApplicationComponent = () => {
                               px: 0.5,
                             },
                             "& .MuiStepLabel-label": {
-                              fontSize: "0.72rem",
+                              fontSize: "11.5px",
                               whiteSpace: "nowrap",
                             },
                             "& .MuiSvgIcon-root": {
@@ -2610,7 +2613,7 @@ const MentorApplicationComponent = () => {
                           component="h2"
                           sx={{
                             ...stepTitleSx,
-                            fontSize: { xs: "1.35rem", sm: "1.55rem" },
+                            fontSize: { xs: "21.5px", sm: "25px" },
                             mt: 1,
                           }}
                         >
@@ -2767,7 +2770,11 @@ const MentorApplicationComponent = () => {
   };
 
   // Main return - after all hooks have been called
-  return success ? renderSuccessMessage() : renderApplicationForm();
+  return (
+    <ThemeProvider theme={refinedFormTheme}>
+      {success ? renderSuccessMessage() : renderApplicationForm()}
+    </ThemeProvider>
+  );
 };
 
 // Create a new component that uses RequiredAuthProvider

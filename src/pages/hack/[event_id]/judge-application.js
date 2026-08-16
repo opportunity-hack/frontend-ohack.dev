@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../../styles/fonts";
 import React, {
   useState,
   useEffect,
@@ -75,8 +76,11 @@ import {
   GroupsRounded,
   CheckCircleRounded,
 } from "@mui/icons-material";
+import { ThemeProvider } from "@mui/material/styles";
 import {
   formSectionStyle,
+  formProseSx,
+  refinedFormTheme,
   refinedFieldSx,
   refinedChoiceSx,
   refinedChipSx,
@@ -664,7 +668,7 @@ const JudgeApplicationComponent = () => {
               component="div"
               sx={{
                 mb: 1,
-                fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                fontFamily: FONT_DISPLAY,
                 fontWeight: 500,
               }}
             >
@@ -682,7 +686,7 @@ const JudgeApplicationComponent = () => {
               component="h2"
               sx={{
                 ...stepTitleSx,
-                fontSize: { xs: "1.3rem", sm: "1.5rem" },
+                fontSize: { xs: "21px", sm: "24px" },
               }}
             >
               Enter access code
@@ -737,7 +741,7 @@ const JudgeApplicationComponent = () => {
               component="h2"
               sx={{
                 ...stepTitleSx,
-                fontSize: { xs: "1.4rem", sm: "1.6rem" },
+                fontSize: { xs: "22.5px", sm: "25.5px" },
               }}
             >
               Consider mentoring instead
@@ -868,7 +872,7 @@ const JudgeApplicationComponent = () => {
               component="h2"
               sx={{
                 ...stepTitleSx,
-                fontSize: { xs: "1.2rem", sm: "1.35rem" },
+                fontSize: { xs: "19px", sm: "21.5px" },
                 textAlign: "center",
               }}
             >
@@ -906,7 +910,7 @@ const JudgeApplicationComponent = () => {
               component="div"
               sx={{
                 mb: 1,
-                fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                fontFamily: FONT_DISPLAY,
                 fontWeight: 500,
               }}
             >
@@ -945,7 +949,7 @@ const JudgeApplicationComponent = () => {
               component="h2"
               sx={{
                 ...stepTitleSx,
-                fontSize: { xs: "1.4rem", sm: "1.6rem" },
+                fontSize: { xs: "22.5px", sm: "25.5px" },
               }}
             >
               Perfect timing to become a mentor
@@ -1076,7 +1080,7 @@ const JudgeApplicationComponent = () => {
               component="h2"
               sx={{
                 ...stepTitleSx,
-                fontSize: { xs: "1.2rem", sm: "1.35rem" },
+                fontSize: { xs: "19px", sm: "21.5px" },
                 textAlign: "center",
               }}
             >
@@ -2401,7 +2405,7 @@ const JudgeApplicationComponent = () => {
                       component="h2"
                       sx={{
                         ...stepTitleSx,
-                        fontSize: { xs: "1.4rem", sm: "1.7rem" },
+                        fontSize: { xs: "22.5px", sm: "27px" },
                         mt: 1,
                       }}
                     >
@@ -2530,7 +2534,7 @@ const JudgeApplicationComponent = () => {
                         component="div"
                         sx={{
                           mb: 1,
-                          fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                          fontFamily: FONT_DISPLAY,
                           fontWeight: 500,
                         }}
                       >
@@ -2638,7 +2642,7 @@ const JudgeApplicationComponent = () => {
                           component="h2"
                           sx={{
                             ...stepTitleSx,
-                            fontSize: { xs: "1.35rem", sm: "1.55rem" },
+                            fontSize: { xs: "21.5px", sm: "25px" },
                             mt: 1,
                           }}
                         >
@@ -2647,7 +2651,8 @@ const JudgeApplicationComponent = () => {
                         <Typography
                           variant="body1"
                           sx={{
-                            color: "var(--muted)",
+                            ...formProseSx,
+                            color: "var(--ink)",
                             mb: 1.25,
                             lineHeight: 1.7,
                           }}
@@ -2661,7 +2666,12 @@ const JudgeApplicationComponent = () => {
                         </Typography>
                         <Typography
                           variant="body1"
-                          sx={{ color: "var(--ink)", mb: 1, fontWeight: 600 }}
+                          sx={{
+                            ...formProseSx,
+                            color: "var(--ink)",
+                            mb: 1,
+                            fontWeight: 600,
+                          }}
                         >
                           We score on four pillars — Scope, Documentation,
                           Polish, and Security (
@@ -2678,7 +2688,12 @@ const JudgeApplicationComponent = () => {
                         </Typography>
                         <Box
                           component="ul"
-                          sx={{ m: 0, pl: 3, color: "var(--ink)" }}
+                          sx={{
+                            ...formProseSx,
+                            m: 0,
+                            pl: 3,
+                            color: "var(--ink)",
+                          }}
                         >
                           <Typography
                             component="li"
@@ -2819,7 +2834,11 @@ const JudgeApplicationComponent = () => {
   };
 
   // Main return - after all hooks have been called
-  return success ? renderSuccessMessage() : renderApplicationForm();
+  return (
+    <ThemeProvider theme={refinedFormTheme}>
+      {success ? renderSuccessMessage() : renderApplicationForm()}
+    </ThemeProvider>
+  );
 };
 
 // Create a new component that uses RequiredAuthProvider
