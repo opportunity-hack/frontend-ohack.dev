@@ -6,27 +6,17 @@
 // hairline rules, and a single orchestrated load animation.
 //
 // Everything is scoped under <RefinedRoot> so it never leaks into the rest of
-// the app (which keeps its global MUI theme). Fonts are injected per-page via
-// <RefinedFonts /> inside next/head with preconnect + display=swap.
+// the app (which keeps its global MUI theme). Fonts load GLOBALLY via
+// next/font in _document.js (src/styles/fonts.js is the single source).
 
 import React from "react";
 import { styled } from "@mui/material/styles";
+import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
 
-// --- Font <link>s for the page <Head>. Preconnect keeps the swap cheap. ---
-export const RefinedFonts = () => (
-  <>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
-      crossOrigin="anonymous"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-  </>
-);
+// Deprecated no-op kept so the ~43 existing <RefinedFonts /> call sites keep
+// compiling. Fonts are self-hosted app-wide through next/font now — do NOT
+// re-add Google Fonts <link>s here, and don't add new call sites.
+export const RefinedFonts = () => null;
 
 // The scoped design system. All visual decisions live here as CSS variables +
 // utility classNames so the page markup stays semantic and quiet.
@@ -43,8 +33,8 @@ export const RefinedRoot = styled("main")(({ theme }) => ({
   "--brand-ink": "#0E2547", // darker navy for hovers
   "--accent": "#E2552E", // terracotta — the "social good" highlight
   "--accent-soft": "#FBE9E2",
-  "--display": "'Fraunces', Georgia, 'Times New Roman', serif",
-  "--body": "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+  "--display": FONT_DISPLAY,
+  "--body": FONT_BODY,
 
   position: "relative",
   width: "100%",
@@ -89,22 +79,31 @@ export const RefinedRoot = styled("main")(({ theme }) => ({
     letterSpacing: "-0.015em",
     margin: 0,
   },
-  "& h1.ohx-display": { fontSize: "clamp(2.6rem, 6.2vw, 5rem)", fontWeight: 500 },
-  "& h2.ohx-display": { fontSize: "clamp(1.9rem, 3.6vw, 2.9rem)" },
-  "& h3.ohx-display": { fontSize: "clamp(1.3rem, 2.2vw, 1.7rem)", lineHeight: 1.15 },
-  "& .ohx-italic": { fontStyle: "italic", color: "var(--accent)", fontWeight: 400 },
+  // px (not rem) on purpose: values are frozen at the look that was visually
+  // approved before the root font-size flip to 100% (see CLAUDE.md gotcha).
+  "& h1.ohx-display": { fontSize: "clamp(31px, 6.2vw, 60px)", fontWeight: 500 },
+  "& h2.ohx-display": { fontSize: "clamp(23px, 3.6vw, 35px)" },
+  "& h3.ohx-display": {
+    fontSize: "clamp(16px, 2.2vw, 20px)",
+    lineHeight: 1.15,
+  },
+  "& .ohx-italic": {
+    fontStyle: "italic",
+    color: "var(--accent)",
+    fontWeight: 400,
+  },
 
   "& .ohx-eyebrow": {
     fontFamily: "var(--body)",
     textTransform: "uppercase",
     letterSpacing: "0.22em",
-    fontSize: "0.72rem",
+    fontSize: "9px",
     fontWeight: 600,
     color: "var(--muted)",
     margin: 0,
   },
   "& .ohx-lead": {
-    fontSize: "clamp(1.05rem, 1.6vw, 1.3rem)",
+    fontSize: "clamp(13px, 1.6vw, 16px)",
     lineHeight: 1.6,
     color: "var(--muted)",
     maxWidth: "46ch",
@@ -129,14 +128,15 @@ export const RefinedRoot = styled("main")(({ theme }) => ({
     gap: "0.55em",
     fontFamily: "var(--body)",
     fontWeight: 600,
-    fontSize: "1rem",
+    fontSize: "12px",
     lineHeight: 1,
     padding: "0.95em 1.5em",
     borderRadius: 4,
     border: "1px solid transparent",
     cursor: "pointer",
     textDecoration: "none",
-    transition: "transform .18s ease, background-color .18s ease, color .18s ease, border-color .18s ease",
+    transition:
+      "transform .18s ease, background-color .18s ease, color .18s ease, border-color .18s ease",
     WebkitTapHighlightColor: "transparent",
   },
   "& .ohx-btn:active": { transform: "translateY(1px)" },
@@ -150,7 +150,10 @@ export const RefinedRoot = styled("main")(({ theme }) => ({
     color: "var(--ink)",
     borderColor: "var(--line)",
   },
-  "& .ohx-btn--ghost:hover": { borderColor: "var(--ink)", background: "rgba(0,0,0,0.02)" },
+  "& .ohx-btn--ghost:hover": {
+    borderColor: "var(--ink)",
+    background: "rgba(0,0,0,0.02)",
+  },
 
   // --- Inline link with an animated underline ---
   "& .ohx-link": {
@@ -176,7 +179,8 @@ export const RefinedRoot = styled("main")(({ theme }) => ({
     background: "var(--surface)",
     border: "1px solid var(--line)",
     borderRadius: 8,
-    transition: "transform .22s ease, box-shadow .22s ease, border-color .22s ease",
+    transition:
+      "transform .22s ease, box-shadow .22s ease, border-color .22s ease",
   },
   "& a.ohx-card:hover, & .ohx-card--hover:hover": {
     transform: "translateY(-3px)",
@@ -188,7 +192,7 @@ export const RefinedRoot = styled("main")(({ theme }) => ({
   "& .ohx-tag": {
     display: "inline-flex",
     alignItems: "center",
-    fontSize: "0.78rem",
+    fontSize: "9.5px",
     fontWeight: 500,
     color: "var(--muted)",
     background: "var(--surface-2)",
@@ -243,13 +247,17 @@ export const Stat = ({ value, label }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
     <span
       className="ohx-display"
-      style={{ fontSize: "clamp(1.5rem,2.4vw,2.1rem)", fontWeight: 500, lineHeight: 1 }}
+      style={{
+        fontSize: "clamp(18px,2.4vw,25px)",
+        fontWeight: 500,
+        lineHeight: 1,
+      }}
     >
       {value}
     </span>
     <span
       className="ohx-eyebrow"
-      style={{ letterSpacing: "0.14em", fontSize: "0.66rem" }}
+      style={{ letterSpacing: "0.14em", fontSize: "8px" }}
     >
       {label}
     </span>

@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../../styles/fonts";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -54,6 +55,7 @@ import {
 import {
   OHackParticipationSelect,
   PronounsPicker,
+  scrollToStepContent,
 } from "../../../components/ApplicationForm";
 import UploadPhoto from "../../../components/UploadPhoto";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -66,203 +68,29 @@ import {
   getEventTimezone,
   getTimezoneAbbreviation,
 } from "../../../lib/timezoneUtils";
-
-const refinedFieldSx = {
-  mb: 3,
-  "& .MuiInputBase-root": {
-    bgcolor: "var(--surface)",
-    color: "var(--ink)",
-    borderRadius: 2,
-  },
-  "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "var(--line)",
-  },
-  "& .MuiInputBase-root:hover .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#d5cdbd",
-  },
-  "& .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
-    borderColor: "var(--brand)",
-  },
-  "& .MuiInputLabel-root": {
-    color: "var(--muted)",
-  },
-  "& .MuiInputLabel-root.Mui-focused": {
-    color: "var(--brand)",
-  },
-  "& .MuiFormHelperText-root": {
-    color: "var(--muted)",
-  },
-  "& textarea, & input": {
-    color: "var(--ink)",
-  },
-};
-
-const refinedChoiceSx = {
-  color: "var(--line)",
-  "&.Mui-checked": {
-    color: "var(--brand)",
-  },
-};
-
-const refinedChipSx = {
-  border: "1px solid var(--line)",
-  bgcolor: "var(--surface-2)",
-  color: "var(--ink)",
-  fontWeight: 500,
-  "& .MuiChip-deleteIcon": {
-    color: "var(--muted)",
-  },
-};
-
-const refinedAlertSx = {
-  borderRadius: 2,
-  border: "1px solid var(--line)",
-  bgcolor: "var(--surface-2)",
-  color: "var(--ink)",
-  "& .MuiAlert-icon": {
-    color: "var(--brand)",
-    mt: 0.25,
-  },
-  "& .MuiAlert-message": {
-    width: "100%",
-  },
-};
-
-const refinedInlineLinkSx = {
-  color: "var(--brand)",
-  fontWeight: 600,
-  textDecorationColor: "#d5cdbd",
-  "&:hover": {
-    color: "var(--brand-ink)",
-  },
-};
-
-const refinedCardSx = {
-  border: "1px solid var(--line)",
-  borderRadius: 2,
-  backgroundColor: "var(--surface)",
-  boxShadow: "none",
-};
-
-const refinedSelectMenuProps = {
-  PaperProps: {
-    sx: {
-      mt: 1,
-      borderRadius: 2,
-      border: "1px solid var(--line)",
-      boxShadow: "0 18px 40px -28px rgba(22,24,29,0.45)",
-    },
-  },
-};
-
-const stepTitleSx = {
-  fontFamily: "var(--display,'Fraunces',Georgia,serif)",
-  fontSize: { xs: "1.65rem", sm: "2rem" },
-  fontWeight: 500,
-  letterSpacing: "-0.015em",
-  color: "var(--ink)",
-  mb: 1,
-};
-
-const stepLeadSx = {
-  color: "var(--muted)",
-  maxWidth: "44rem",
-  mb: 3,
-  lineHeight: 1.7,
-};
-
-const eventMarkdownSx = {
-  color: "var(--muted)",
-  lineHeight: 1.75,
-  mt: 2,
-  "& p": {
-    my: 1.5,
-  },
-  "& h1, & h2, & h3, & h4": {
-    fontFamily: "var(--display,'Fraunces',Georgia,serif)",
-    fontWeight: 500,
-    letterSpacing: "-0.015em",
-    color: "var(--ink)",
-    mt: 3,
-    mb: 1,
-  },
-  "& h1": {
-    fontSize: "1.4rem",
-  },
-  "& h2": {
-    fontSize: "1.25rem",
-  },
-  "& h3, & h4": {
-    fontSize: "1.1rem",
-  },
-  "& ul, & ol": {
-    my: 1.5,
-    pl: 3,
-  },
-  "& li": {
-    mb: 0.6,
-  },
-  "& a": {
-    color: "var(--brand)",
-    fontWeight: 600,
-    textDecorationColor: "#d5cdbd",
-  },
-  "& a:hover": {
-    color: "var(--brand-ink)",
-  },
-  "& strong": {
-    color: "var(--ink)",
-  },
-  "& code": {
-    bgcolor: "var(--surface-2)",
-    px: 0.5,
-    py: 0.1,
-    borderRadius: 0.75,
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-    fontSize: "0.95em",
-  },
-};
-
-const infoAlertSx = {
-  ...refinedAlertSx,
-};
-
-const warningAlertSx = {
-  ...refinedAlertSx,
-  borderColor: "#e7d1aa",
-  bgcolor: "#faf3e5",
-  "& .MuiAlert-icon": {
-    color: "#9b5d05",
-    mt: 0.25,
-  },
-};
-
-const successAlertSx = {
-  ...refinedAlertSx,
-  borderColor: "#c5dbc7",
-  bgcolor: "#edf7f0",
-  "& .MuiAlert-icon": {
-    color: "#2f6e50",
-    mt: 0.25,
-  },
-};
-
-const errorAlertSx = {
-  ...refinedAlertSx,
-  borderColor: "#e4c0ba",
-  bgcolor: "#f9efed",
-  "& .MuiAlert-icon": {
-    color: "#b04a36",
-    mt: 0.25,
-  },
-};
-
-const emphasisPanelSx = {
-  p: { xs: 2.5, md: 3 },
-  borderRadius: 2,
-  border: "1px solid var(--line)",
-  backgroundColor: "var(--surface-2)",
-};
+import { ThemeProvider } from "@mui/material/styles";
+import {
+  formSectionStyle,
+  refinedFormTheme,
+  refinedFieldSx,
+  refinedChoiceSx,
+  refinedChipSx,
+  refinedAlertSx,
+  refinedInlineLinkSx,
+  refinedCardSx,
+  refinedSelectMenuProps,
+  stepTitleSx,
+  stepLeadSx,
+  eventMarkdownSx,
+  infoAlertSx,
+  warningAlertSx,
+  successAlertSx,
+  errorAlertSx,
+  emphasisPanelSx,
+  primaryButtonSx,
+  ghostButtonSx,
+  refinedStepperSx as mentorStepperSx,
+} from "../../../components/ApplicationForm/refinedStyles";
 
 // Shown alongside the check-in QR (selected mentors only). The QR is for
 // in-person check-in at the venue; remote/virtual mentors should instead check
@@ -296,77 +124,6 @@ const RemoteCheckInNote = ({ eventId, isVirtual, sx = {} }) => (
     </Typography>
   </Box>
 );
-
-const primaryButtonSx = {
-  backgroundColor: "var(--brand)",
-  color: "#fff",
-  fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
-  fontWeight: 600,
-  textTransform: "none",
-  borderRadius: "5px",
-  px: 2.75,
-  py: 1.15,
-  boxShadow: "none",
-  "&:hover": {
-    backgroundColor: "#16315a",
-    boxShadow: "none",
-  },
-  "&.Mui-disabled": {
-    backgroundColor: "rgba(27,58,107,0.35)",
-    color: "rgba(255,255,255,0.72)",
-  },
-};
-
-const ghostButtonSx = {
-  borderColor: "var(--line)",
-  color: "var(--ink)",
-  fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
-  fontWeight: 600,
-  textTransform: "none",
-  borderRadius: "5px",
-  px: 2.5,
-  py: 1.05,
-  boxShadow: "none",
-  "&:hover": {
-    borderColor: "var(--ink)",
-    backgroundColor: "rgba(0,0,0,0.02)",
-    boxShadow: "none",
-  },
-};
-
-const mentorStepperSx = {
-  "& .MuiStepLabel-label": {
-    fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
-    fontSize: "0.92rem",
-    fontWeight: 500,
-    mt: 1,
-    color: "#5B6270",
-  },
-  "& .MuiStepLabel-label.Mui-active": {
-    color: "#1B3A6B",
-    fontWeight: 700,
-  },
-  "& .MuiStepLabel-label.Mui-completed": {
-    color: "#16181D",
-  },
-  "& .MuiStepIcon-root": {
-    color: "#E7E1D4",
-    width: 28,
-    height: 28,
-  },
-  "& .MuiStepIcon-root.Mui-active": {
-    color: "#1B3A6B",
-  },
-  "& .MuiStepIcon-root.Mui-completed": {
-    color: "#1B3A6B",
-  },
-  "& .MuiStepIcon-text": {
-    fill: "#fff",
-  },
-  "& .MuiStepConnector-line": {
-    borderColor: "#E7E1D4",
-  },
-};
 
 const MentorApplicationComponent = () => {
   const router = useRouter();
@@ -1051,12 +808,7 @@ const MentorApplicationComponent = () => {
         },
       });
       // Bring the new step's fields into view (not the page hero)
-      requestAnimationFrame(() => {
-        stepContentRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
+      scrollToStepContent(stepContentRef);
     }
   };
 
@@ -1072,12 +824,7 @@ const MentorApplicationComponent = () => {
       },
     });
     // Bring the new step's fields into view (not the page hero)
-    requestAnimationFrame(() => {
-      stepContentRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
+    scrollToStepContent(stepContentRef);
   };
 
   // Toggle between month view and date view
@@ -1755,7 +1502,7 @@ const MentorApplicationComponent = () => {
       </Box>
       <Typography
         variant="body2"
-        sx={{ ...stepLeadSx, fontSize: "0.98rem", mb: 2 }}
+        sx={{ ...stepLeadSx, fontSize: "15.5px", mb: 2 }}
       >
         Select the dates you are available. For each date, pick the time slots
         you can mentor. For long hackathons, use the filter to quickly find your
@@ -2033,7 +1780,7 @@ const MentorApplicationComponent = () => {
                       px: 1.6,
                       py: 0.7,
                       ml: { sm: 1.5 },
-                      fontSize: "0.82rem",
+                      fontSize: "13px",
                     }}
                   >
                     Select All Slots
@@ -2215,7 +1962,7 @@ const MentorApplicationComponent = () => {
               mt: 1.5,
               px: 1.6,
               py: 0.7,
-              fontSize: "0.82rem",
+              fontSize: "13px",
             }}
           >
             Clear All
@@ -2340,13 +2087,7 @@ const MentorApplicationComponent = () => {
           <meta name="theme-color" content="#1B3A6B" />
         </Head>
 
-        <section
-          className="ohx-wrap"
-          style={{
-            paddingTop: "clamp(100px, 12vh, 148px)",
-            paddingBottom: "clamp(48px, 8vh, 96px)",
-          }}
-        >
+        <section className="ohx-wrap" style={formSectionStyle}>
           <div style={{ maxWidth: 760, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <Eyebrow>Application received</Eyebrow>
@@ -2574,22 +2315,7 @@ const MentorApplicationComponent = () => {
           />
         )}
 
-        {/* Form persistence notification component */}
-        <FormPersistenceControls
-          onSave={saveToLocalStorage}
-          onRestore={loadFromLocalStorage}
-          onClear={clearSavedData}
-          notification={notification}
-          onCloseNotification={closeNotification}
-        />
-
-        <section
-          className="ohx-wrap"
-          style={{
-            paddingTop: "clamp(100px, 12vh, 148px)",
-            paddingBottom: "clamp(48px, 8vh, 96px)",
-          }}
-        >
+        <section className="ohx-wrap" style={formSectionStyle}>
           <Box ref={formRef}>
             <Box
               sx={{
@@ -2653,7 +2379,7 @@ const MentorApplicationComponent = () => {
                       component="h2"
                       sx={{
                         ...stepTitleSx,
-                        fontSize: { xs: "1.4rem", sm: "1.7rem" },
+                        fontSize: { xs: "22.5px", sm: "27px" },
                         mt: 1,
                       }}
                     >
@@ -2777,7 +2503,7 @@ const MentorApplicationComponent = () => {
                         component="div"
                         sx={{
                           mb: 1,
-                          fontFamily: "var(--display,'Fraunces',Georgia,serif)",
+                          fontFamily: FONT_DISPLAY,
                           fontWeight: 500,
                         }}
                       >
@@ -2819,6 +2545,17 @@ const MentorApplicationComponent = () => {
                   </Box>
                 ) : (
                   <>
+                    {/* Save/restore controls live beside the form they act on
+                        (mt: 0 — the section provides the NavBar clearance) */}
+                    <FormPersistenceControls
+                      sx={{ mt: 0, mb: 2 }}
+                      onSave={saveToLocalStorage}
+                      onRestore={loadFromLocalStorage}
+                      onClear={clearSavedData}
+                      notification={notification}
+                      onCloseNotification={closeNotification}
+                    />
+
                     <Box
                       className="ohx-card"
                       sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}
@@ -2842,7 +2579,7 @@ const MentorApplicationComponent = () => {
                               px: 0.5,
                             },
                             "& .MuiStepLabel-label": {
-                              fontSize: "0.72rem",
+                              fontSize: "11.5px",
                               whiteSpace: "nowrap",
                             },
                             "& .MuiSvgIcon-root": {
@@ -2876,7 +2613,7 @@ const MentorApplicationComponent = () => {
                           component="h2"
                           sx={{
                             ...stepTitleSx,
-                            fontSize: { xs: "1.35rem", sm: "1.55rem" },
+                            fontSize: { xs: "21.5px", sm: "25px" },
                             mt: 1,
                           }}
                         >
@@ -2966,7 +2703,8 @@ const MentorApplicationComponent = () => {
                       >
                         <Box
                           ref={stepContentRef}
-                          sx={{ scrollMarginTop: "96px" }}
+                          tabIndex={-1}
+                          sx={{ scrollMarginTop: "96px", outline: "none" }}
                         >
                           {getStepContent(activeStep)}
                         </Box>
@@ -3032,7 +2770,11 @@ const MentorApplicationComponent = () => {
   };
 
   // Main return - after all hooks have been called
-  return success ? renderSuccessMessage() : renderApplicationForm();
+  return (
+    <ThemeProvider theme={refinedFormTheme}>
+      {success ? renderSuccessMessage() : renderApplicationForm()}
+    </ThemeProvider>
+  );
 };
 
 // Create a new component that uses RequiredAuthProvider

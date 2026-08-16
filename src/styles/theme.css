@@ -71,7 +71,11 @@ https://coolors.co/255957-a98743-58cffb-f0ff00-533747
     var(--color2) 102.78%
   );
 
-  --font-primary: "Inter", sans-serif;
-  --font-secondary: "Space Grotesk", sans-serif;
-  --font-mono: "Fira Code", monospace;
+  /* Font tokens alias the next/font variables defined on <html> by
+     _document.js (see src/styles/fonts.js — the single source of truth).
+     The old Inter / Space Grotesk / Fira Code families were never loaded. */
+  --font-primary: var(--font-body, "Hanken Grotesk", system-ui, sans-serif);
+  --font-secondary: var(--font-body, "Hanken Grotesk", system-ui, sans-serif);
+  --font-mono: ui-monospace, "Fira Code", SFMono-Regular, Menlo, Consolas,
+    monospace;
 }

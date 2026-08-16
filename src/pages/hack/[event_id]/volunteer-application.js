@@ -1,7 +1,9 @@
+import { FONT_DISPLAY } from "../../../styles/fonts";
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
-import { initFacebookPixel, trackEvent } from '../../../lib/ga';
+import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -9,7 +11,6 @@ import {
 } from "@propelauth/react";
 import {
   Typography,
-  Container,
   Box,
   TextField,
   Button,
@@ -20,8 +21,6 @@ import {
   FormHelperText,
   Select,
   MenuItem,
-  Paper,
-  Divider,
   Alert,
   Link,
   OutlinedInput,
@@ -45,47 +44,50 @@ import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
-import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
 import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
-import { PronounsPicker } from "../../../components/ApplicationForm";
+import {
+  PronounsPicker,
+  scrollToStepContent,
+} from "../../../components/ApplicationForm";
 import UploadPhoto from "../../../components/UploadPhoto";
 import GiveButterWidget from "../../../components/GiveButterWidget";
 import ReactMarkdown from "react-markdown";
-import { getEventTimezone, getTimezoneAbbreviation } from "../../../lib/timezoneUtils";
-
-const eventDescriptionMarkdownSx = {
-  mb: 3,
-  "& p": {
-    my: 1.25,
-    lineHeight: 1.7,
-  },
-  "& p:first-of-type": {
-    mt: 0,
-  },
-  "& p:last-child": {
-    mb: 0,
-  },
-  "& ul, & ol": {
-    my: 1.25,
-    pl: 3,
-  },
-  "& li": {
-    mb: 0.5,
-  },
-  "& h1, & h2, & h3, & h4": {
-    mt: 2.5,
-    mb: 1,
-    lineHeight: 1.3,
-    fontWeight: 600,
-  },
-  "& a": {
-    color: "primary.main",
-    textDecoration: "underline",
-  },
-};
+import {
+  getEventTimezone,
+  getTimezoneAbbreviation,
+} from "../../../lib/timezoneUtils";
+import {
+  RefinedRoot,
+  RefinedFonts,
+  Eyebrow,
+  Arrow,
+  Stat,
+} from "../../../components/design/refined";
+import { ThemeProvider } from "@mui/material/styles";
+import {
+  formSectionStyle,
+  refinedFormTheme,
+  refinedFieldSx,
+  refinedChoiceSx,
+  refinedChipSx,
+  refinedInlineLinkSx,
+  refinedSelectMenuProps,
+  stepTitleSx,
+  stepLeadSx,
+  eventMarkdownSx,
+  infoAlertSx,
+  warningAlertSx,
+  successAlertSx,
+  errorAlertSx,
+  emphasisPanelSx,
+  primaryButtonSx,
+  ghostButtonSx,
+  refinedStepperSx,
+  refinedStepperMobileSx,
+} from "../../../components/ApplicationForm/refinedStyles";
 
 const VolunteerApplicationComponent = () => {
   const router = useRouter();
@@ -116,6 +118,9 @@ const VolunteerApplicationComponent = () => {
 
   // Use ref to store uploaded photo URL to avoid race conditions
   const uploadedPhotoUrlRef = useRef("");
+
+  // Scroll target so step navigation lands on the step fields, not the page hero
+  const stepContentRef = useRef(null);
 
   // Available time slots (will be populated from event data)
   const [availabilityOptions, setAvailabilityOptions] = useState([]);
@@ -173,6 +178,7 @@ const VolunteerApplicationComponent = () => {
     state: "",
     inPerson: "",
     experienceLevel: "",
+    shirtSize: "",
     volunteerType: [],
     otherVolunteerType: "",
     skills: [],
@@ -221,6 +227,10 @@ const VolunteerApplicationComponent = () => {
     "Some volunteering experience (1-3 events)",
     "Experienced volunteer (4+ events)",
   ];
+
+  // Keep in sync with the hacker form's shirt-size options
+  // (ApplicationForm/Hacker/LocationDemographicsStep.js)
+  const shirtSizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
 
   // Helper function to determine if event is virtual/global
   const isVirtualEvent = () => {
@@ -281,7 +291,9 @@ const VolunteerApplicationComponent = () => {
   ];
 
   // Set up form with event_id
-  useEffect(() => { initFacebookPixel(); }, []);
+  useEffect(() => {
+    initFacebookPixel();
+  }, []);
 
   useEffect(() => {
     if (event_id && !formInitializedRef.current) {
@@ -357,8 +369,15 @@ const VolunteerApplicationComponent = () => {
   );
 
   // Function to generate time slots based on event dates
-  const generateTimeSlots = (startDate, endDate, slotCountsData = {}, eventTimezone) => {
-    const tzAbbr = eventTimezone ? getTimezoneAbbreviation(new Date(startDate), eventTimezone) : "";
+  const generateTimeSlots = (
+    startDate,
+    endDate,
+    slotCountsData = {},
+    eventTimezone,
+  ) => {
+    const tzAbbr = eventTimezone
+      ? getTimezoneAbbreviation(new Date(startDate), eventTimezone)
+      : "";
     if (!startDate || !endDate) return [];
 
     const start = new Date(startDate + "T00:00:00");
@@ -1026,6 +1045,7 @@ const VolunteerApplicationComponent = () => {
                     inPerson:
                       prevData.inPerson || (prevData.isInPerson ? "Yes" : "No"),
                     experienceLevel: prevData.experienceLevel || "",
+                    shirtSize: prevData.shirtSize || "",
                     volunteerType: parsePreviousArrayField("volunteerType"),
                     otherVolunteerType: prevData.otherVolunteerType || "",
                     skills: parsePreviousArrayField("skills"),
@@ -1321,29 +1341,35 @@ const VolunteerApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
-      trackEvent({ action: 'volunteer_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'volunteer_application' } });
-      // Scroll to top of form for better UX
-      if (formRef?.current) {
-        formRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
+      trackEvent({
+        action: "volunteer_app_step",
+        params: {
+          event_label: steps[activeStep + 1],
+          step: activeStep + 2,
+          event_id,
+          page: "volunteer_application",
+        },
+      });
+      // Land on the new step's fields, not the page hero
+      scrollToStepContent(stepContentRef);
     }
   };
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
-    trackEvent({ action: 'volunteer_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'volunteer_application' } });
+    trackEvent({
+      action: "volunteer_app_step_back",
+      params: {
+        event_label: steps[activeStep - 1],
+        step: activeStep,
+        event_id,
+        page: "volunteer_application",
+      },
+    });
     // Save progress when moving between steps
     handleManualSave();
-    // Scroll to top of form for better UX
-    if (formRef?.current) {
-      formRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
+    // Land on the new step's fields, not the page hero
+    scrollToStepContent(stepContentRef);
   };
 
   const handleSubmit = async (e) => {
@@ -1464,7 +1490,14 @@ const VolunteerApplicationComponent = () => {
       }
 
       setSuccess(true);
-      trackEvent({ action: 'volunteer_app_submit', params: { event_label: 'success', event_id, page: 'volunteer_application' } });
+      trackEvent({
+        action: "volunteer_app_submit",
+        params: {
+          event_label: "success",
+          event_id,
+          page: "volunteer_application",
+        },
+      });
       // Scroll to top of form to show "Application Submitted!" message
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1474,7 +1507,14 @@ const VolunteerApplicationComponent = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
-      trackEvent({ action: 'volunteer_app_submit_error', params: { event_label: err.message, event_id, page: 'volunteer_application' } });
+      trackEvent({
+        action: "volunteer_app_submit_error",
+        params: {
+          event_label: err.message,
+          event_id,
+          page: "volunteer_application",
+        },
+      });
       setError("Failed to submit your application. Please try again.");
     } finally {
       setSubmitting(false);
@@ -1491,9 +1531,16 @@ const VolunteerApplicationComponent = () => {
   // Render basic information form
   const renderBasicInfoForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Basic Information
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 2</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Basic information
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          Tell us who you are so staff and fellow volunteers know who&apos;s on
+          shift.
+        </Typography>
+      </Box>
 
       {/* Required fields */}
       <Box sx={{ mb: 3 }}>
@@ -1505,7 +1552,7 @@ const VolunteerApplicationComponent = () => {
           fullWidth
           value={formData.email || ""}
           onChange={handleFormChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
 
         <TextField
@@ -1515,18 +1562,38 @@ const VolunteerApplicationComponent = () => {
           fullWidth
           value={formData.name || ""}
           onChange={handleFormChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
       </Box>
 
       {/* Optional fields in collapsible section */}
-      <Accordion sx={{ mb: 3 }}>
+      <Accordion
+        elevation={0}
+        sx={{
+          mb: 3,
+          border: "1px solid var(--line)",
+          borderRadius: "8px !important",
+          backgroundColor: "var(--surface)",
+          boxShadow: "none",
+          overflow: "hidden",
+          "&:before": { display: "none" },
+        }}
+      >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="optional-fields-content"
           id="optional-fields-header"
+          sx={{
+            bgcolor: "var(--surface)",
+            color: "var(--ink)",
+            "& .MuiAccordionSummary-expandIconWrapper": {
+              color: "var(--brand)",
+            },
+          }}
         >
-          <Typography variant="subtitle1">Optional Information</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            Optional information
+          </Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Box sx={{ pt: 1 }}>
@@ -1544,7 +1611,7 @@ const VolunteerApplicationComponent = () => {
               fullWidth
               value={formData.company || ""}
               onChange={handleFormChange}
-              sx={{ mb: 3 }}
+              sx={refinedFieldSx}
             />
 
             <TextField
@@ -1553,7 +1620,7 @@ const VolunteerApplicationComponent = () => {
               fullWidth
               value={formData.title || ""}
               onChange={handleFormChange}
-              sx={{ mb: 3 }}
+              sx={refinedFieldSx}
             />
 
             <TextField
@@ -1565,7 +1632,7 @@ const VolunteerApplicationComponent = () => {
               value={formData.bio || ""}
               onChange={handleFormChange}
               helperText="Tell us a bit about yourself (aim for 100-200 words)"
-              sx={{ mb: 3 }}
+              sx={refinedFieldSx}
             />
 
             <UploadPhoto
@@ -1579,7 +1646,7 @@ const VolunteerApplicationComponent = () => {
               accessToken={accessToken}
               orgId={user?.orgId}
               userId={user?.userId}
-              sx={{ mb: 3 }}
+              sx={refinedFieldSx}
             />
 
             <TextField
@@ -1589,7 +1656,7 @@ const VolunteerApplicationComponent = () => {
               fullWidth
               value={formData.linkedin || ""}
               onChange={handleFormChange}
-              sx={{ mb: 3 }}
+              sx={refinedFieldSx}
               placeholder="https://linkedin.com/in/yourprofile"
             />
 
@@ -1602,7 +1669,7 @@ const VolunteerApplicationComponent = () => {
               value={formData.motivation || ""}
               onChange={handleFormChange}
               helperText="Share your motivation for getting involved"
-              sx={{ mb: 0 }}
+              sx={{ ...refinedFieldSx, mb: 0 }}
             />
           </Box>
         </AccordionDetails>
@@ -1613,12 +1680,19 @@ const VolunteerApplicationComponent = () => {
   // Render combined additional details form
   const renderAdditionalDetailsForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Additional Details
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 3</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Additional details
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          A few more details on the causes you care about, plus the code of
+          conduct, before you submit.
+        </Typography>
+      </Box>
 
       <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth sx={{ mb: 3 }}>
+        <FormControl fullWidth sx={refinedFieldSx}>
           <InputLabel id="experience-level-label">
             Volunteer Experience Level
           </InputLabel>
@@ -1629,6 +1703,7 @@ const VolunteerApplicationComponent = () => {
             value={formData.experienceLevel || ""}
             onChange={handleFormChange}
             label="Volunteer Experience Level"
+            MenuProps={refinedSelectMenuProps}
           >
             {experienceLevelOptions.map((option) => (
               <MenuItem key={option} value={option}>
@@ -1644,7 +1719,10 @@ const VolunteerApplicationComponent = () => {
         <FormControl
           fullWidth
           required
-          sx={{ mb: formData.socialCauses?.includes("Other") ? 1 : 3 }}
+          sx={{
+            ...refinedFieldSx,
+            mb: formData.socialCauses?.includes("Other") ? 1 : 3,
+          }}
         >
           <InputLabel id="social-causes-label">
             Social Causes You're Interested In
@@ -1656,10 +1734,11 @@ const VolunteerApplicationComponent = () => {
             value={formData.socialCauses || []}
             onChange={(e) => customHandleMultiSelectChange(e, "socialCauses")}
             input={<OutlinedInput label="Social Causes You're Interested In" />}
+            MenuProps={refinedSelectMenuProps}
             renderValue={(selected) => (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {selected.map((value) => (
-                  <Chip key={value} label={value} />
+                  <Chip key={value} label={value} sx={refinedChipSx} />
                 ))}
               </Box>
             )}
@@ -1687,9 +1766,32 @@ const VolunteerApplicationComponent = () => {
             value={formData.otherSocialCause || ""}
             onChange={handleFormChange}
             helperText="Tell us about your specific interest"
-            sx={{ mb: 3 }}
+            sx={refinedFieldSx}
           />
         )}
+
+        <FormControl fullWidth sx={refinedFieldSx}>
+          <InputLabel id="shirt-size-label">T-Shirt Size (Optional)</InputLabel>
+          <Select
+            labelId="shirt-size-label"
+            id="shirt-size"
+            name="shirtSize"
+            value={formData.shirtSize || ""}
+            onChange={handleFormChange}
+            label="T-Shirt Size (Optional)"
+            MenuProps={refinedSelectMenuProps}
+          >
+            {shirtSizeOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>
+            Helps us order the right sizes for event-day volunteers (subject to
+            availability)
+          </FormHelperText>
+        </FormControl>
 
         <TextField
           label="Any additional information or questions?"
@@ -1699,7 +1801,7 @@ const VolunteerApplicationComponent = () => {
           fullWidth
           value={formData.additionalInfo || ""}
           onChange={handleFormChange}
-          sx={{ mb: 4 }}
+          sx={{ ...refinedFieldSx, mb: 4 }}
         />
 
         <FormControlLabel
@@ -1708,8 +1810,8 @@ const VolunteerApplicationComponent = () => {
               name="codeOfConduct"
               checked={formData.codeOfConduct || false}
               onChange={handleFormChange}
-              color="primary"
               required
+              sx={refinedChoiceSx}
             />
           }
           label={
@@ -1719,15 +1821,16 @@ const VolunteerApplicationComponent = () => {
                 href="/hack/code-of-conduct"
                 target="_blank"
                 rel="noopener noreferrer"
+                sx={refinedInlineLinkSx}
               >
                 Code of Conduct
               </Link>
             </Typography>
           }
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, color: "var(--ink)" }}
         />
 
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
           <Typography variant="body2">
             By submitting this form, you're expressing interest in volunteering
             with Opportunity Hack. We'll review your application and contact you
@@ -1761,15 +1864,31 @@ const VolunteerApplicationComponent = () => {
 
     return (
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-          Availability & Location
-        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Eyebrow>Step 1</Eyebrow>
+          <Typography component="h2" sx={stepTitleSx}>
+            Availability &amp; location
+          </Typography>
+          <Typography variant="body1" sx={stepLeadSx}>
+            Pick every shift where you can help keep things moving — check-in,
+            food, cleanup, photography, or judging support — and tell us where
+            you&apos;ll be joining from.
+          </Typography>
+        </Box>
 
         <Box sx={{ mb: 3 }}>
           {/* Conditionally show in-person attendance field only for physical events */}
           {!isVirtualEvent() && (
-            <FormControl required component="fieldset" sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" gutterBottom>
+            <FormControl
+              required
+              component="fieldset"
+              sx={{ ...emphasisPanelSx, mb: 3 }}
+            >
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                sx={{ fontWeight: 600, color: "var(--ink)" }}
+              >
                 Are you joining us in-person or virtually?
               </Typography>
               <RadioGroup
@@ -1779,12 +1898,12 @@ const VolunteerApplicationComponent = () => {
               >
                 <FormControlLabel
                   value="Yes"
-                  control={<Radio />}
+                  control={<Radio sx={refinedChoiceSx} />}
                   label="Yes, I'll attend in person"
                 />
                 <FormControlLabel
                   value="No"
-                  control={<Radio />}
+                  control={<Radio sx={refinedChoiceSx} />}
                   label="No, I'll participate virtually"
                 />
               </RadioGroup>
@@ -1793,14 +1912,16 @@ const VolunteerApplicationComponent = () => {
 
           {/* Show blocking alert for incompatible selection */}
           {hasIncompatibleSelection && (
-            <Alert
-              severity="warning"
-              sx={{
-                mb: 4,
-                "& .MuiAlert-message": { width: "100%" },
-              }}
-            >
-              <Typography variant="h6" component="div" sx={{ mb: 2 }}>
+            <Alert severity="warning" sx={{ ...warningAlertSx, mb: 4 }}>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  mb: 2,
+                  fontFamily: FONT_DISPLAY,
+                  fontWeight: 500,
+                }}
+              >
                 Virtual Participation Not Available
               </Typography>
               <Typography variant="body1" sx={{ mb: 2 }}>
@@ -1815,34 +1936,34 @@ const VolunteerApplicationComponent = () => {
                 sx={{
                   display: "flex",
                   flexDirection: { xs: "column", sm: "row" },
-                  gap: 2,
+                  gap: 1.5,
                 }}
               >
                 <Button
                   variant="contained"
-                  color="primary"
                   onClick={() => {
                     setFormData((prev) => ({ ...prev, inPerson: "Yes" }));
                   }}
                   startIcon={<span>📍</span>}
+                  sx={primaryButtonSx}
                 >
                   Change to In-Person
                 </Button>
                 <Button
                   variant="outlined"
-                  color="primary"
                   onClick={() => router.push("/hack")}
                   startIcon={<span>🌐</span>}
+                  sx={ghostButtonSx}
                 >
                   Find Virtual Events
                 </Button>
                 <Button
                   variant="outlined"
-                  color="secondary"
                   onClick={() =>
                     router.push(`/hack/${event_id}/mentor-application`)
                   }
                   startIcon={<span>👥</span>}
+                  sx={ghostButtonSx}
                 >
                   Mentor Instead
                 </Button>
@@ -1866,7 +1987,7 @@ const VolunteerApplicationComponent = () => {
                 fullWidth
                 value={formData.country || ""}
                 onChange={handleFormChange}
-                sx={{ mb: 3 }}
+                sx={refinedFieldSx}
               />
 
               <TextField
@@ -1882,15 +2003,21 @@ const VolunteerApplicationComponent = () => {
                 fullWidth
                 value={formData.state || ""}
                 onChange={handleFormChange}
-                sx={{ mb: 3 }}
+                sx={refinedFieldSx}
               />
 
-              <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-                Available Volunteer Slots
+              <Typography
+                component="h3"
+                sx={{
+                  ...stepTitleSx,
+                  fontSize: { xs: "19px", sm: "22.5px" },
+                }}
+              >
+                Available volunteer slots
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ mb: 3, color: "text.secondary" }}
+                sx={{ ...stepLeadSx, fontSize: "15.5px", mb: 2 }}
               >
                 Choose the volunteer roles and time slots that work best for
                 you. Each time block shows different volunteer opportunities
@@ -1905,11 +2032,11 @@ const VolunteerApplicationComponent = () => {
                 value={dateFilter}
                 onChange={handleDateFilterChange}
                 placeholder="Type to filter dates (e.g., 'Monday' or 'Oct')"
-                sx={{ mb: 3, maxWidth: 400 }}
+                sx={{ ...refinedFieldSx, maxWidth: 400 }}
               />
 
               {/* SignupGenius-style table */}
-              <Paper elevation={1} sx={{ overflow: "hidden" }}>
+              <Box className="ohx-card" sx={{ overflow: "hidden" }}>
                 {Object.entries(slotsByDate)
                   .filter(
                     ([date]) =>
@@ -1918,57 +2045,77 @@ const VolunteerApplicationComponent = () => {
                   .map(([date, timeBlocks]) => (
                     <Box
                       key={date}
-                      sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+                      sx={{ borderBottom: "1px solid var(--line)" }}
                     >
                       {/* Date header */}
                       <Box
                         sx={{
-                          bgcolor: "primary.main",
-                          color: "white",
+                          bgcolor: "var(--brand)",
+                          color: "#fff",
                           p: 2,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
+                          flexWrap: "wrap",
+                          gap: 1,
                         }}
                       >
-                        <Typography variant="h6" component="h4">
+                        <Typography
+                          component="h4"
+                          sx={{
+                            fontFamily: FONT_DISPLAY,
+                            fontWeight: 500,
+                            fontSize: "18.5px",
+                          }}
+                        >
                           {date}
                         </Typography>
-                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                          All times in {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))} (event timezone)
+                        <Typography variant="body2" sx={{ opacity: 0.85 }}>
+                          All times in{" "}
+                          {getTimezoneAbbreviation(
+                            new Date(),
+                            getEventTimezone(eventData),
+                          )}{" "}
+                          (event timezone)
                         </Typography>
                       </Box>
 
                       {/* Time blocks and volunteer slots */}
-                      <Box sx={{ bgcolor: "background.paper" }}>
+                      <Box sx={{ bgcolor: "var(--surface)" }}>
                         {Object.entries(timeBlocks).map(
                           ([timeLabel, timeBlockData]) => (
                             <Box
                               key={timeLabel}
                               sx={{
-                                borderBottom: "1px solid",
-                                borderColor: "divider",
+                                borderBottom: "1px solid var(--line)",
                               }}
                             >
                               {/* Time block header */}
                               <Box
                                 sx={{
-                                  bgcolor: "grey.100",
+                                  bgcolor: "var(--surface-2)",
                                   p: 2,
-                                  borderBottom: "1px solid",
-                                  borderColor: "divider",
+                                  borderBottom: "1px solid var(--line)",
                                 }}
                               >
                                 <Typography
                                   variant="subtitle1"
-                                  sx={{ fontWeight: "bold", mb: 0.5 }}
+                                  sx={{
+                                    fontWeight: 600,
+                                    color: "var(--ink)",
+                                    mb: 0.5,
+                                  }}
                                 >
-                                  {timeBlockData.timeBlock.time} {getTimezoneAbbreviation(new Date(), getEventTimezone(eventData))} -{" "}
-                                  {timeBlockData.timeBlock.label}
+                                  {timeBlockData.timeBlock.time}{" "}
+                                  {getTimezoneAbbreviation(
+                                    new Date(),
+                                    getEventTimezone(eventData),
+                                  )}{" "}
+                                  - {timeBlockData.timeBlock.label}
                                 </Typography>
                                 <Typography
                                   variant="body2"
-                                  sx={{ color: "text.secondary" }}
+                                  sx={{ color: "var(--muted)" }}
                                 >
                                   {timeBlockData.timeBlock.blockDescription}
                                 </Typography>
@@ -1999,17 +2146,17 @@ const VolunteerApplicationComponent = () => {
                                         p: 2,
                                         borderRight: {
                                           xs: "none",
-                                          sm: "1px solid",
+                                          sm: "1px solid var(--line)",
                                         },
                                         borderBottom: {
-                                          xs: "1px solid",
+                                          xs: "1px solid var(--line)",
                                           lg: "none",
                                         },
-                                        borderColor: "divider",
-                                        "&:hover": { bgcolor: "grey.50" },
+                                        "&:hover": {
+                                          bgcolor: "var(--surface-2)",
+                                        },
                                         ...(isSelected && {
-                                          bgcolor: "success.light",
-                                          color: "success.contrastText",
+                                          bgcolor: "rgba(27,58,107,0.08)",
                                         }),
                                         display: "flex",
                                         flexDirection: "column",
@@ -2020,16 +2167,18 @@ const VolunteerApplicationComponent = () => {
                                       <Box sx={{ flex: 1, mb: 2 }}>
                                         <Typography
                                           variant="subtitle2"
-                                          sx={{ fontWeight: "medium", mb: 0.5 }}
+                                          sx={{
+                                            fontWeight: 600,
+                                            color: "var(--ink)",
+                                            mb: 0.5,
+                                          }}
                                         >
                                           {slot.roleIcon} {slot.roleName}
                                         </Typography>
                                         <Typography
                                           variant="caption"
                                           sx={{
-                                            color: isSelected
-                                              ? "success.contrastText"
-                                              : "text.secondary",
+                                            color: "var(--muted)",
                                             display: "block",
                                             mb: 1,
                                           }}
@@ -2039,9 +2188,7 @@ const VolunteerApplicationComponent = () => {
                                         <Typography
                                           variant="caption"
                                           sx={{
-                                            color: isSelected
-                                              ? "success.contrastText"
-                                              : "text.secondary",
+                                            color: "var(--muted)",
                                             display: "block",
                                           }}
                                         >
@@ -2054,14 +2201,6 @@ const VolunteerApplicationComponent = () => {
                                       <Box sx={{ mt: "auto" }}>
                                         {slotsRemaining > 0 || isSelected ? (
                                           <Button
-                                            variant={
-                                              isSelected
-                                                ? "contained"
-                                                : "outlined"
-                                            }
-                                            color={
-                                              isSelected ? "success" : "primary"
-                                            }
                                             size="small"
                                             fullWidth
                                             onClick={() => {
@@ -2078,6 +2217,15 @@ const VolunteerApplicationComponent = () => {
                                                 availableDays: newAvailability,
                                               }));
                                             }}
+                                            sx={{
+                                              ...(isSelected
+                                                ? primaryButtonSx
+                                                : ghostButtonSx),
+                                              minWidth: 0,
+                                              px: 1.4,
+                                              py: 0.7,
+                                              fontSize: "13px",
+                                            }}
                                           >
                                             {isSelected
                                               ? "✓ Remove Me"
@@ -2090,8 +2238,14 @@ const VolunteerApplicationComponent = () => {
                                             fullWidth
                                             disabled
                                             sx={{
-                                              color: "error.main",
-                                              borderColor: "error.main",
+                                              minWidth: 0,
+                                              px: 1.4,
+                                              py: 0.7,
+                                              fontSize: "13px",
+                                              textTransform: "none",
+                                              borderRadius: "5px",
+                                              color: "#b04a36",
+                                              borderColor: "#e4c0ba",
                                             }}
                                           >
                                             Full
@@ -2108,17 +2262,18 @@ const VolunteerApplicationComponent = () => {
                       </Box>
                     </Box>
                   ))}
-              </Paper>
+              </Box>
 
               {/* Selected slots summary */}
               {formData.availableDays.length > 0 && (
-                <Paper
-                  elevation={2}
-                  sx={{ mt: 3, p: 3, bgcolor: "success.light" }}
-                >
+                <Box className="ohx-card" sx={{ mt: 3, p: 3 }}>
                   <Typography
-                    variant="h6"
-                    sx={{ mb: 2, color: "success.contrastText" }}
+                    component="h4"
+                    sx={{
+                      ...stepTitleSx,
+                      fontSize: { xs: "17.5px", sm: "20px" },
+                      mb: 2,
+                    }}
                   >
                     Your Volunteer Commitments ({formData.availableDays.length}{" "}
                     slots)
@@ -2137,14 +2292,15 @@ const VolunteerApplicationComponent = () => {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            bgcolor: "rgba(255,255,255,0.1)",
+                            border: "1px solid var(--line)",
+                            bgcolor: "var(--surface-2)",
                             p: 1,
-                            borderRadius: 1,
+                            borderRadius: 1.5,
                           }}
                         >
                           <Typography
                             variant="body2"
-                            sx={{ color: "success.contrastText" }}
+                            sx={{ color: "var(--ink)" }}
                           >
                             {slot.date} - {slot.label}: {slot.roleIcon}{" "}
                             {slot.roleName}
@@ -2160,9 +2316,10 @@ const VolunteerApplicationComponent = () => {
                               }));
                             }}
                             sx={{
-                              color: "success.contrastText",
+                              color: "var(--muted)",
                               minWidth: "auto",
                               p: 0.5,
+                              "&:hover": { color: "var(--ink)" },
                             }}
                           >
                             ✕
@@ -2178,23 +2335,21 @@ const VolunteerApplicationComponent = () => {
                       setFormData((prev) => ({ ...prev, availableDays: [] }));
                     }}
                     sx={{
+                      ...ghostButtonSx,
                       mt: 2,
-                      color: "success.contrastText",
-                      borderColor: "success.contrastText",
-                      "&:hover": {
-                        borderColor: "success.contrastText",
-                        bgcolor: "rgba(255,255,255,0.1)",
-                      },
+                      px: 1.6,
+                      py: 0.7,
+                      fontSize: "13px",
                     }}
                   >
                     Clear All
                   </Button>
-                </Paper>
+                </Box>
               )}
 
               {formData.availableDays.length === 0 &&
                 !hasIncompatibleSelection && (
-                  <Alert severity="info" sx={{ mt: 3 }}>
+                  <Alert severity="info" sx={{ ...infoAlertSx, mt: 3 }}>
                     Please select at least one volunteer slot to continue.
                   </Alert>
                 )}
@@ -2297,58 +2452,86 @@ const VolunteerApplicationComponent = () => {
     : null;
 
   // If form submitted successfully, show success message
-  if (success) {
-    return (
-      <Container>
-        <Head>
-          <title>{pageTitle}</title>
-          <meta name="description" content={pageDescription} />
-          <link rel="canonical" href={canonicalUrl} />
-        </Head>
+  const renderSuccessMessage = () => (
+    <RefinedRoot>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta name="theme-color" content="#1B3A6B" />
+        <RefinedFonts />
+      </Head>
 
-        <Box my={8} textAlign="center">
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{ fontSize: "2.5rem", mb: 4, mt: 12 }}
-          >
-            Application Submitted!
-          </Typography>
+      <section className="ohx-wrap" style={formSectionStyle}>
+        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <Eyebrow>Application received</Eyebrow>
+            <h1 className="ohx-display" style={{ marginTop: 8 }}>
+              Application <span className="ohx-italic">submitted.</span>
+            </h1>
+            <p
+              className="ohx-lead"
+              style={{ margin: "16px auto 0", textAlign: "center" }}
+            >
+              Thanks for stepping up to help run the event. We&apos;ve got your
+              application and our team will follow up soon.
+            </p>
+          </div>
 
-          <Alert severity="success" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            Thank you for applying to volunteer with Opportunity Hack. We'll
-            review your application and contact you with next steps soon.
-          </Alert>
+          <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+            <Alert severity="success" sx={{ ...successAlertSx, mb: 4 }}>
+              <Typography variant="body1">
+                Thank you for applying to volunteer with Opportunity Hack.
+                We&apos;ll review your application and contact you with next
+                steps soon.
+              </Typography>
+            </Alert>
 
-          <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
-            <GiveButterWidget
-              context="success"
-              userId={user?.userId}
-              applicationType="volunteer"
-              size="large"
-              onDonationEvent={(eventData) => {
-                // Track volunteer application donations
-                console.log("Volunteer donation event:", eventData);
-                // You can add additional tracking here
+            <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+              <GiveButterWidget
+                context="success"
+                userId={user?.userId}
+                applicationType="volunteer"
+                size="large"
+                onDonationEvent={(eventData) => {
+                  // Track volunteer application donations
+                  console.log("Volunteer donation event:", eventData);
+                  // You can add additional tracking here
+                }}
+              />
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 1.5,
+                justifyContent: "center",
               }}
-            />
+            >
+              <Button
+                variant="contained"
+                onClick={() => router.push(`/hack/${event_id}`)}
+                sx={primaryButtonSx}
+              >
+                Return to hackathon page
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => router.push("/hack")}
+                sx={ghostButtonSx}
+              >
+                See upcoming events
+              </Button>
+            </Box>
           </Box>
+        </div>
+      </section>
+    </RefinedRoot>
+  );
 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push(`/hack/${event_id}`)}
-            sx={{ mt: 2 }}
-          >
-            Return to Hackathon Page
-          </Button>
-        </Box>
-      </Container>
-    );
-  }
-
-  return (
-    <Container>
+  const renderApplicationForm = () => (
+    <RefinedRoot>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -2392,8 +2575,9 @@ const VolunteerApplicationComponent = () => {
 
         {/* Additional SEO tags */}
         <meta name="application-name" content="Opportunity Hack" />
-        <meta name="theme-color" content="#3f51b5" />
+        <meta name="theme-color" content="#1B3A6B" />
         <meta name="format-detection" content="telephone=no" />
+        <RefinedFonts />
 
         {/* Preconnect to optimize loading */}
         <link
@@ -2413,150 +2597,193 @@ const VolunteerApplicationComponent = () => {
       )}
 
       {/* Form persistence notification component */}
-      <FormPersistenceControls
-        onSave={handleManualSave}
-        onRestore={loadFromLocalStorage}
-        onClear={clearSavedData}
-        notification={notification}
-        onCloseNotification={closeNotification}
-      />
+      <section className="ohx-wrap" style={formSectionStyle}>
+        <Box ref={formRef}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                lg: "minmax(0, 1.1fr) 320px",
+              },
+              gap: { xs: 4, lg: 5 },
+              alignItems: "start",
+              mb: 4,
+            }}
+          >
+            <Box>
+              <Eyebrow>
+                {eventData
+                  ? `${eventData.name} · volunteer application`
+                  : "Volunteer application"}
+              </Eyebrow>
+              <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                Keep the event{" "}
+                <span className="ohx-italic">running like clockwork.</span>
+              </h1>
+              <p className="ohx-lead" style={{ marginTop: 16 }}>
+                Opportunity Hack volunteers are the operations crew — check-in,
+                food, wayfinding, photography, judging logistics — so hackers
+                and mentors can stay heads-down on the work. Pick the shifts
+                that fit your schedule and we&apos;ll take it from there.
+              </p>
 
-      <Box ref={formRef}>
-        <Typography
-          variant="h1"
-          component="h1"
-          sx={{ fontSize: "2.5rem", mb: 2, mt: 0 }}
-        >
-          Volunteer Application
-        </Typography>
-
-        {/* QR Code for Check-in */}
-        <VolunteerCheckInQR
-          eventId={event_id}
-          volunteerId={volunteerId}
-          isSelected={isSelected}
-          volunteerType="volunteer"
-          name={formData.name}
-          isSubmitted={true}
-          qrSize={200}
-          sx={{ mx: "auto", maxWidth: 500 }}
-        />
-
-        {isLoading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box>
-            {/* Header section with responsive layout */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: { xs: "flex-start", md: "flex-start" },
-                gap: 2,
-                mb: 3,
-              }}
-            >
-              {/* Event info */}
-              <Box sx={{ flex: 1 }}>
-                {eventData && (
-                  <>
-                    <Typography
-                      variant="h2"
-                      component="h2"
-                      sx={{ fontSize: "1.75rem", mb: 1 }}
-                    >
-                      {eventData.name}
-                    </Typography>
-
-                    <Typography
-                      variant="h3"
-                      component="h3"
-                      sx={{
-                        fontSize: "1.25rem",
-                        mb: 1,
-                        color: "text.secondary",
-                      }}
-                    >
-                      {eventData.location}
-                    </Typography>
-
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        mb: 1,
-                        color: "text.secondary",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                      }}
-                    >
-                      <Box
-                        component="span"
-                        sx={{ display: "inline-flex", alignItems: "center" }}
-                      >
-                        📆 {eventData.formattedStartDate}
-                      </Box>
-                      {eventData.formattedStartDate !==
-                        eventData.formattedEndDate && (
-                        <>
-                          <Box component="span" sx={{ mx: 0.5 }}>
-                            to
-                          </Box>
-                          <Box
-                            component="span"
-                            sx={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            {eventData.formattedEndDate}
-                          </Box>
-                        </>
-                      )}
-                    </Typography>
-                  </>
-                )}
-              </Box>
-
-              {/* Social proof image */}
               <Box
                 sx={{
-                  width: { xs: "100%", sm: "180px", md: "220px" },
-                  height: { xs: "140px", sm: "120px", md: "150px" },
-                  borderRadius: 2,
-                  overflow: "hidden",
-                  boxShadow: 2,
-                  flexShrink: 0,
-                  alignSelf: { xs: "center", md: "flex-start" },
-                  maxWidth: "100%",
-                  mt: { xs: 0, md: 1 },
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "repeat(2,minmax(0,1fr))",
+                    sm: "repeat(3,minmax(0,1fr))",
+                  },
+                  gap: 2,
+                  mt: 3,
+                  maxWidth: 540,
                 }}
               >
-                <img
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_3.webp"
-                  alt="Volunteers helping at Opportunity Hack"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "block",
-                    objectFit: "cover",
-                  }}
-                />
+                <Box className="ohx-card" sx={{ p: 2.5 }}>
+                  <Stat value={String(steps.length)} label="steps" />
+                </Box>
+                <Box className="ohx-card" sx={{ p: 2.5 }}>
+                  <Stat value="Manual" label="review" />
+                </Box>
+                <Box className="ohx-card" sx={{ p: 2.5 }}>
+                  <Stat value="Flexible" label="shifts" />
+                </Box>
               </Box>
+
+              {eventData && (
+                <Box className="ohx-card" sx={{ mt: 3, p: { xs: 2.5, md: 3 } }}>
+                  <Eyebrow>Event details</Eyebrow>
+                  <Typography
+                    component="h2"
+                    sx={{
+                      ...stepTitleSx,
+                      fontSize: { xs: "22.5px", sm: "27px" },
+                      mt: 1,
+                    }}
+                  >
+                    {eventData.name}
+                  </Typography>
+                  <Typography sx={{ color: "var(--muted)", mb: 1 }}>
+                    {eventData.location}
+                  </Typography>
+                  <Typography sx={{ color: "var(--muted)", lineHeight: 1.7 }}>
+                    {eventData.formattedStartDate}
+                    {eventData.formattedStartDate !== eventData.formattedEndDate
+                      ? ` to ${eventData.formattedEndDate}`
+                      : ""}
+                  </Typography>
+                  {eventData.description && (
+                    <Box sx={eventMarkdownSx}>
+                      <ReactMarkdown>{eventData.description}</ReactMarkdown>
+                    </Box>
+                  )}
+                </Box>
+              )}
             </Box>
 
-            {/* Add ApplicationNav component */}
-            {event_id && (
-              <ApplicationNav eventId={event_id} currentType="volunteer" />
-            )}
+            <Box className="ohx-card" sx={{ p: 2.25 }}>
+              <Box
+                sx={{
+                  position: "relative",
+                  width: "100%",
+                  aspectRatio: "16 / 10",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: "1px solid var(--line)",
+                  mb: 2,
+                }}
+              >
+                <Image
+                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_3.webp"
+                  alt="Volunteers helping at Opportunity Hack"
+                  fill
+                  sizes="(max-width: 1200px) 100vw, 320px"
+                  style={{ objectFit: "cover" }}
+                />
+              </Box>
+              <Typography
+                variant="body1"
+                sx={{ color: "var(--muted)", lineHeight: 1.7, mb: 1.5 }}
+              >
+                Volunteers show up early, stay flexible, and handle the
+                logistics nobody else sees — so participants can focus on
+                building.
+              </Typography>
+              <Link
+                href="/volunteer"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  ...refinedInlineLinkSx,
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  "&:hover": {
+                    ...refinedInlineLinkSx["&:hover"],
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                See how volunteering works <Arrow />
+              </Link>
+            </Box>
+          </Box>
 
-            <Box sx={{ mb: 4 }}>
+          {/* Add ApplicationNav component */}
+          {event_id && (
+            <Box sx={{ mb: 2.5 }}>
+              <ApplicationNav eventId={event_id} currentType="volunteer" />
+            </Box>
+          )}
+
+          {Boolean(volunteerId) && isSelected && (
+            <Box className="ohx-card" sx={{ p: 3, mb: 3, maxWidth: 560 }}>
+              <Eyebrow>Check-in</Eyebrow>
+              <VolunteerCheckInQR
+                eventId={event_id}
+                volunteerId={volunteerId}
+                isSelected={isSelected}
+                volunteerType="volunteer"
+                name={formData.name}
+                isSubmitted={true}
+                qrSize={200}
+                sx={{ mx: "auto", maxWidth: 500 }}
+              />
+            </Box>
+          )}
+
+          {isLoading ? (
+            <Box
+              className="ohx-card"
+              sx={{
+                minHeight: 240,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mt: 3,
+              }}
+            >
+              <CircularProgress sx={{ color: "var(--brand)" }} />
+            </Box>
+          ) : (
+            <Box sx={{ mt: 3 }}>
               {eventData && eventData.isEventPast ? (
-                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                  <Alert severity="warning" sx={{ mb: 3 }}>
-                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
+                <Box
+                  className="ohx-card"
+                  sx={{ p: { xs: 2.5, sm: 3.5 }, mb: 4 }}
+                >
+                  <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      sx={{
+                        mb: 1,
+                        fontFamily: FONT_DISPLAY,
+                        fontWeight: 500,
+                      }}
+                    >
                       This event has already ended
                     </Typography>
                     <Typography variant="body1">
@@ -2566,7 +2793,9 @@ const VolunteerApplicationComponent = () => {
                     </Typography>
                   </Alert>
 
-                  <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+                  <Box
+                    sx={{ mb: 4, display: "flex", justifyContent: "center" }}
+                  >
                     <GiveButterWidget
                       context="event-ended"
                       userId={user?.userId}
@@ -2574,7 +2803,10 @@ const VolunteerApplicationComponent = () => {
                       size="large"
                       onDonationEvent={(eventData) => {
                         // Track volunteer application donations when event ended
-                        console.log("Event ended volunteer donation event:", eventData);
+                        console.log(
+                          "Event ended volunteer donation event:",
+                          eventData,
+                        );
                       }}
                     />
                   </Box>
@@ -2582,103 +2814,127 @@ const VolunteerApplicationComponent = () => {
                   <Box textAlign="center">
                     <Button
                       variant="contained"
-                      color="primary"
                       onClick={() => router.push("/hack")}
-                      sx={{ mt: 2 }}
+                      sx={primaryButtonSx}
                     >
                       View Upcoming Events
                     </Button>
                   </Box>
-                </Paper>
+                </Box>
               ) : (
                 <>
-                  <Stepper
-                    activeStep={activeStep}
-                    alternativeLabel={!isMobile}
-                    orientation={isMobile ? "horizontal" : "horizontal"}
-                    sx={{
-                      mb: 4,
-                      ...(isMobile && {
-                        "& .MuiStepLabel-root": {
-                          padding: "0 4px", // Reduce padding on mobile
-                        },
-                        "& .MuiStepLabel-labelContainer": {
-                          width: "auto", // Let the label container be as small as possible
-                        },
-                        "& .MuiStepLabel-label": {
-                          fontSize: "0.7rem", // Smaller text on mobile
-                          whiteSpace: "nowrap", // Prevent text wrapping
-                        },
-                        "& .MuiSvgIcon-root": {
-                          width: 20, // Smaller icons
-                          height: 20,
-                        },
-                        overflowX: "auto", // Allow horizontal scrolling if needed
-                        "&::-webkit-scrollbar": {
-                          display: "none", // Hide scrollbar on webkit browsers
-                        },
-                        scrollbarWidth: "none", // Hide scrollbar on Firefox
-                      }),
-                    }}
+                  {/* Save/restore controls live beside the form they act on
+                      (mt: 0 — the section provides the NavBar clearance) */}
+                  <FormPersistenceControls
+                    sx={{ mt: 0, mb: 2 }}
+                    onSave={handleManualSave}
+                    onRestore={loadFromLocalStorage}
+                    onClear={clearSavedData}
+                    notification={notification}
+                    onCloseNotification={closeNotification}
+                  />
+
+                  <Box className="ohx-card" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
+                    <Stepper
+                      activeStep={activeStep}
+                      alternativeLabel={!isMobile}
+                      orientation="horizontal"
+                      sx={{
+                        ...refinedStepperSx,
+                        ...(isMobile && refinedStepperMobileSx),
+                      }}
+                    >
+                      {steps.map((label) => (
+                        <Step key={label}>
+                          <StepLabel>
+                            {isMobile
+                              ? // On mobile, show abbreviated labels or just the step number
+                                activeStep === steps.indexOf(label)
+                                ? label
+                                : steps.indexOf(label) + 1
+                              : // On desktop, show full labels
+                                label}
+                          </StepLabel>
+                        </Step>
+                      ))}
+                    </Stepper>
+                  </Box>
+
+                  <Box
+                    className="ohx-card"
+                    sx={{ p: { xs: 2.5, sm: 3, md: 4 }, mb: 4 }}
                   >
-                    {steps.map((label) => (
-                      <Step key={label}>
-                        <StepLabel>
-                          {isMobile
-                            ? // On mobile, show abbreviated labels or just the step number
-                              activeStep === steps.indexOf(label)
-                              ? label
-                              : steps.indexOf(label) + 1
-                            : // On desktop, show full labels
-                              label}
-                        </StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-
-                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                    <Typography variant="body1" paragraph>
-                      Thank you for your interest in volunteering with
-                      Opportunity Hack! Volunteers play a crucial role in the
-                      success of our events and help create a supportive
-                      environment for participants.
-                    </Typography>
-
-                    {eventData && eventData.description && (
-                      <Box sx={eventDescriptionMarkdownSx}>
-                        <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
-                          About this event
-                        </Typography>
-                        <ReactMarkdown>{eventData.description}</ReactMarkdown>
-                      </Box>
-                    )}
-
-                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4 }}>
-                      <Typography variant="body1" sx={{ mb: 1 }}>
-                        <strong>What to expect as a volunteer:</strong>
+                    <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
+                      <Eyebrow>What to expect</Eyebrow>
+                      <Typography
+                        component="h2"
+                        sx={{
+                          ...stepTitleSx,
+                          fontSize: { xs: "21.5px", sm: "25px" },
+                          mt: 1,
+                        }}
+                      >
+                        Volunteering with Opportunity Hack
                       </Typography>
-                      <ul style={{ marginBottom: 0, paddingLeft: "1.5rem" }}>
-                        <li>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: "var(--muted)",
+                          mb: 1.25,
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        Volunteers play a crucial role in the success of our
+                        events and help create a supportive environment for
+                        participants. As a volunteer, you can expect to:
+                      </Typography>
+                      <Box
+                        component="ul"
+                        sx={{ m: 0, pl: 3, color: "var(--ink)" }}
+                      >
+                        <Typography
+                          component="li"
+                          variant="body1"
+                          sx={{ mb: 0.75, lineHeight: 1.7 }}
+                        >
                           Support the organization and logistics of the
                           hackathon
-                        </li>
-                        <li>
+                        </Typography>
+                        <Typography
+                          component="li"
+                          variant="body1"
+                          sx={{ mb: 0.75, lineHeight: 1.7 }}
+                        >
                           Help participants navigate the event and find
                           resources
-                        </li>
-                        <li>
+                        </Typography>
+                        <Typography
+                          component="li"
+                          variant="body1"
+                          sx={{ mb: 0.75, lineHeight: 1.7 }}
+                        >
                           Contribute your skills to make the event a success
-                        </li>
-                        <li>
+                        </Typography>
+                        <Typography
+                          component="li"
+                          variant="body1"
+                          sx={{ mb: 0.75, lineHeight: 1.7 }}
+                        >
                           Connect with a community passionate about social
                           impact
-                        </li>
-                        <li>Gain experience and build your network</li>
-                      </ul>
-                    </Alert>
+                        </Typography>
+                        <Typography
+                          component="li"
+                          variant="body1"
+                          sx={{ lineHeight: 1.7 }}
+                        >
+                          Gain experience and build your network
+                        </Typography>
+                      </Box>
+                    </Box>
 
                     {(error || recaptchaError) && (
-                      <Alert severity="error" sx={{ mb: 4 }}>
+                      <Alert severity="error" sx={{ ...errorAlertSx, mb: 4 }}>
                         {error || recaptchaError}
                       </Alert>
                     )}
@@ -2689,12 +2945,20 @@ const VolunteerApplicationComponent = () => {
                         handleSubmit();
                       }}
                     >
-                      {getStepContent(activeStep)}
+                      <Box
+                        ref={stepContentRef}
+                        tabIndex={-1}
+                        sx={{ scrollMarginTop: "96px", outline: "none" }}
+                      >
+                        {getStepContent(activeStep)}
+                      </Box>
 
                       <Box
                         sx={{
                           display: "flex",
+                          flexDirection: { xs: "column-reverse", sm: "row" },
                           justifyContent: "space-between",
+                          gap: 1.5,
                           mt: 4,
                         }}
                       >
@@ -2702,36 +2966,57 @@ const VolunteerApplicationComponent = () => {
                           disabled={activeStep === 0 || submitting}
                           onClick={handleBack}
                           variant="outlined"
+                          sx={{
+                            ...ghostButtonSx,
+                            opacity: activeStep === 0 ? 0.45 : 1,
+                          }}
                         >
                           Back
                         </Button>
 
                         <Button
                           variant="contained"
-                          color="primary"
                           onClick={handleNext}
                           disabled={submitting || recaptchaLoading}
+                          sx={primaryButtonSx}
+                          endIcon={
+                            activeStep === steps.length - 1 ||
+                            submitting ||
+                            recaptchaLoading ? null : (
+                              <Arrow />
+                            )
+                          }
                         >
                           {activeStep === steps.length - 1 ? (
                             submitting || recaptchaLoading ? (
-                              <CircularProgress size={24} />
+                              <CircularProgress
+                                size={20}
+                                sx={{ color: "#fff" }}
+                              />
                             ) : (
-                              "Submit Application"
+                              "Submit application"
                             )
                           ) : (
-                            "Next"
+                            "Next step"
                           )}
                         </Button>
                       </Box>
                     </form>
-                  </Paper>
+                  </Box>
                 </>
               )}
             </Box>
-          </Box>
-        )}
-      </Box>
-    </Container>
+          )}
+        </Box>
+      </section>
+    </RefinedRoot>
+  );
+
+  // Main return - after all hooks have been called
+  return (
+    <ThemeProvider theme={refinedFormTheme}>
+      {success ? renderSuccessMessage() : renderApplicationForm()}
+    </ThemeProvider>
   );
 };
 
@@ -2750,6 +3035,7 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
     <>
       {/* SEO metadata available to crawlers before authentication */}
       <Head>
+        <RefinedFonts />
         <title>{seoMetadata.title}</title>
         <meta name="description" content={seoMetadata.description} />
         <meta
@@ -2785,7 +3071,7 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
         {/* Additional SEO meta tags */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="Opportunity Hack" />
-        <meta name="theme-color" content="#1976d2" />
+        <meta name="theme-color" content="#1B3A6B" />
       </Head>
 
       {/* Structured Data for SEO */}
@@ -2875,7 +3161,10 @@ const VolunteerApplicationPage = ({ seoMetadata }) => {
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
         displayIfLoggedOut={
           <RedirectToLogin
-            postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
+            postLoginRedirectUrl={
+              currentUrl ||
+              (typeof window !== "undefined" ? window.location.href : undefined)
+            }
           />
         }
       >

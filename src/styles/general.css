@@ -1,11 +1,21 @@
 /* General */
 
+/*
+ * Root font-size is 100% (16px default) — the web standard, so rem respects
+ * user browser settings and MUI's rem-based sizes render as designed.
+ * HISTORY: this was `12px` for years, which silently rendered every rem-based
+ * size at 75% of its face value (see CLAUDE.md "Typography system").
+ * All px values below were frozen at the look they had under the old 12px
+ * root (old rem × 12) when the root was fixed — do NOT convert them back to
+ * rem without re-deriving the values.
+ */
+
 * {
   box-sizing: border-box;
 }
 
 html {
-  font-size: 12px;
+  font-size: 100%;
   text-rendering: geometricPrecision;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
@@ -45,43 +55,43 @@ h6 {
 h1,
 h2,
 h3 {
-  margin-top: 3.2rem;
-  margin-bottom: 1.6rem;
+  margin-top: 38px;
+  margin-bottom: 19px;
 }
 
 h4,
 h5,
 h6 {
-  margin-top: 1.6rem;
-  margin-bottom: 1.6rem;
+  margin-top: 19px;
+  margin-bottom: 19px;
 }
 
 h1 {
-  font-size: 3.2rem;
+  font-size: 38px;
 }
 
 h2 {
-  font-size: 2.8rem;
+  font-size: 34px;
 }
 
 h3 {
-  font-size: 2.4rem;
+  font-size: 29px;
 }
 
 h4 {
-  font-size: 2rem;
+  font-size: 24px;
 }
 
 h5 {
-  font-size: 1.6rem;
+  font-size: 19px;
 }
 
 h6 {
-  font-size: 1.4rem;
+  font-size: 17px;
 }
 
 p {
-  margin: 0 0 1.6rem;
+  margin: 0 0 19px;
 }
 
 strong {
@@ -89,16 +99,16 @@ strong {
 }
 
 small {
-  font-size: 1.2rem;
+  font-size: 14px;
 }
 
 blockquote {
-  padding: 1.6rem 3.2rem;
-  margin: 0 0 3.2rem;
+  padding: 19px 38px;
+  margin: 0 0 38px;
 
   border-left: 8px solid #eee;
 
-  font-size: 1.6rem;
+  font-size: 19px;
   font-style: italic;
 }
 
@@ -132,8 +142,7 @@ img {
 
 code,
 pre {
-  font-family: "Fira Code", source-code-pro, Menlo, Monaco, Consolas,
-    "Courier New", monospace;
+  font-family: var(--font-mono);
   width: 100%;
 }
 
@@ -160,34 +169,6 @@ pre {
   border-radius: 5px;
 }
 
-.button--filter {
-  /* responsive */
-
-  padding: 12rem 1.6rem;
-
-  font-size: 10.6rem;
-  line-height: 1.6rem;
-}
-
-.material-symbols-outlined {
-  color: green;
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 600,
-    'GRAD' 0,
-    'opsz' 48
-}
-
-.alert-notification {
-  color: blue;
-  font-size: 24pt;
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 300,
-    'GRAD' 0,
-    'opsz' 24
-}
-
 .admin-notification {
   color: gold;
   font-variation-settings:
@@ -195,12 +176,6 @@ pre {
     'wght' 300,
     'GRAD' 0,
     'opsz' 24
-}
-
-.indent {
-  margin-top: 6px;
-  margin-left: 10px;
-  font-size: larger;
 }
 
 .checklist-box-list {
@@ -235,7 +210,7 @@ pre {
 .ohack-features {
   /* responsive */
 
-  padding: 3.2rem 6.4rem;
+  padding: 38px 77px;
 }
 
 .ohack-features__title {
@@ -246,10 +221,10 @@ pre {
   /* responsive */
 
   margin-top: 0;
-  margin-bottom: 4.8rem;
+  margin-bottom: 58px;
 
-  font-size: 3.2rem;
-  line-height: 3.2rem;
+  font-size: 38px;
+  line-height: 38px;
 }
 
 .ohack-features__grid {
@@ -258,38 +233,8 @@ pre {
   /* responsive */
 
   grid-template-columns: 1fr 1fr;
-  column-gap: 6.4rem;
-  row-gap: 6.4rem;
-}
-
-.ohack-nonprofit-feature {
-  background-color: var(--color4);/* rgb(187, 220, 252);*/
-  color: var(--black);
-  cursor: pointer;
-
-  /* responsive */
-  padding: 4.8rem;
-  border-radius: 1.6rem;
-}
-
-.ohack-nonprofit-feature-helping {
-  background-color: rgb(130, 177, 152);
-  color: var(--black);
-  cursor: pointer;
-
-  /* responsive */
-  padding: 4.8rem;
-  border-radius: 1.6rem;
-}
-
-.ohack-problemstatement-feature {
-  background-color: rgb(187, 220, 252);
-  color: var(--black);
-  cursor: pointer;
-
-  /* responsive */
-  padding: 4.8rem;
-  border-radius: 1.6rem;
+  column-gap: 77px;
+  row-gap: 77px;
 }
 
 .ohack-feature {
@@ -303,9 +248,9 @@ pre {
 
   /* responsive */
 
-  padding: 4.8rem;
+  padding: 58px;
 
-  border-radius: 1.6rem;
+  border-radius: 19px;
 }
 
 .ohack-feature:hover {
@@ -320,18 +265,18 @@ pre {
 
   color: var(--white); /*rgb(36, 36, 36);*/;
   font-weight: 600;
-  letter-spacing: -0.05rem;
+  letter-spacing: -0.6px;
 
   /* responsive */
 
-  font-size: 2.4rem;
-  line-height: 3.2rem;
+  font-size: 29px;
+  line-height: 38px;
 }
 
 .ohack-feature__icon {
   /* responsive */
 
-  margin-right: 1.6rem;
+  margin-right: 19px;
 }
 
 .ohack-feature:hover .ohack-feature__headline {
@@ -351,8 +296,8 @@ pre {
 
   /* responsive */
 
-  font-size: 1.6rem;
-  line-height: 2.4rem;
+  font-size: 19px;
+  line-height: 29px;
 }
 
 .ohack-feature__callout_mono {
@@ -360,11 +305,11 @@ pre {
 
   color: rgb(0, 0, 0);
   font-weight: 500;
-  font-family: 'Courier New', Courier, monospace;
-  
+  font-family: var(--font-mono);
+
   /* responsive */
-  font-size: 1.6rem;
-  line-height: 2.4rem;
+  font-size: 19px;
+  line-height: 29px;
 }
 
 .ohack-feature__callout {
@@ -377,8 +322,8 @@ pre {
 
   /* responsive */
 
-  font-size: 1.6rem;
-  line-height: 2.4rem;
+  font-size: 19px;
+  line-height: 29px;
 }
 
 .ohack-feature__warning {
@@ -401,88 +346,74 @@ pre {
   list-style-type: none;
 
   /* responsive */
-  font-size: 1.6rem;
-  line-height: 2.4rem;
+  font-size: 19px;
+  line-height: 29px;
 }
 
 @media only screen and (max-width: 900px) {
   .ohack-features__grid {
     grid-template-columns: 1fr;
-    row-gap: 3.2rem;
+    row-gap: 38px;
   }
 
   .ohack-feature {
-    padding: 3.2rem;
-    border-radius: 0.8rem;
+    padding: 38px;
+    border-radius: 10px;
   }
 
   .ohack-feature__headline {
-    font-size: 2rem;
-    line-height: 2.4rem;
+    font-size: 24px;
+    line-height: 29px;
   }
 
   .ohack-feature__icon {
-    height: 3.6rem;
+    height: 43px;
 
-    margin-right: 1.6rem;
+    margin-right: 19px;
   }
 
   .ohack-feature__description {
-    font-size: 1.4rem;
-    line-height: 2.2rem;
+    font-size: 17px;
+    line-height: 26px;
   }
 }
 
 @media only screen and (max-width: 480px) {
   .ohack-features {
-    padding: 1.6rem;
+    padding: 19px;
   }
 
   .ohack-features__title {
-    font-size: 2rem;
-    line-height: 2.8rem;
-    margin-bottom: 2.4rem;
+    font-size: 24px;
+    line-height: 34px;
+    margin-bottom: 29px;
   }
 
   .ohack-features__grid {
     grid-template-columns: 1fr;
-    row-gap: 1.6rem;
+    row-gap: 19px;
   }
 
   .ohack-feature {
-    padding: 3.2rem;
-    border-radius: 0.8rem;
+    padding: 38px;
+    border-radius: 10px;
   }
 
   .ohack-feature__headline {
-    font-size: 2rem;
-    line-height: 2.4rem;
+    font-size: 24px;
+    line-height: 29px;
   }
 
   .ohack-feature__icon {
-    height: 3.6rem;
+    height: 43px;
 
-    margin-right: 1.6rem;
+    margin-right: 19px;
   }
 
   .ohack-feature__description {
-    font-size: 1.4rem;
-    line-height: 2.2rem;
+    font-size: 17px;
+    line-height: 26px;
   }
-}
-
-.headline {
-  font-size: 2.5rem;
-  font-weight: bold;
-}
-.headline span {
-  color: #007bff; 
-}
-
-.headline {
-  line-height: 1.5;
-  margin-top: 20px;
- 
 }
 
 

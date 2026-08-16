@@ -1,3 +1,4 @@
+import { FONT_BODY, FONT_DISPLAY } from "../../../styles/fonts";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
@@ -45,6 +46,11 @@ import FormPersistenceControls from "../../../components/FormPersistenceControls
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import GiveButterWidget from "../../../components/GiveButterWidget";
+import { ThemeProvider } from "@mui/material/styles";
+import {
+  formSectionStyle,
+  refinedFormTheme,
+} from "../../../components/ApplicationForm/refinedStyles";
 import UploadPhoto from "../../../components/UploadPhoto";
 import useProfileApi from "../../../hooks/use-profile-api";
 import {
@@ -154,7 +160,7 @@ const refinedTagSx = {
   border: `1px solid ${RX.line}`,
   backgroundColor: RX.surface2,
   color: RX.muted,
-  fontSize: "0.78rem",
+  fontSize: "12.5px",
   fontWeight: 600,
   lineHeight: 1.35,
 };
@@ -586,11 +592,14 @@ const HackerApplicationComponent = () => {
 
         // Check if event is in the past (with 1-day buffer for end date)
         const now = Moment().tz(eventTz);
-        const forceOpen = eventData.constraints?.application_hacker_force_open === true;
-        const isEventPast = !forceOpen && endDate.clone().add(1, "day").isBefore(now);
+        const forceOpen =
+          eventData.constraints?.application_hacker_force_open === true;
+        const isEventPast =
+          !forceOpen && endDate.clone().add(1, "day").isBefore(now);
 
         // Check if applications are closed (deadline has passed)
-        const isApplicationsClosed = !forceOpen && now.isAfter(applicationDeadline);
+        const isApplicationsClosed =
+          !forceOpen && now.isAfter(applicationDeadline);
 
         // Check if event is online/virtual
         const isOnlineEvent = ["Virtual", "Global", "Online"].some((term) =>
@@ -1727,8 +1736,8 @@ const HackerApplicationComponent = () => {
         : "info";
   const stepperSx = {
     "& .MuiStepLabel-label": {
-      fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
-      fontSize: isMobile ? "0.72rem" : "0.92rem",
+      fontFamily: FONT_BODY,
+      fontSize: isMobile ? "11.5px" : "14.5px",
       fontWeight: 500,
       mt: 1,
       color: RX.muted,
@@ -1834,13 +1843,7 @@ const HackerApplicationComponent = () => {
           }}
         />
 
-        <section
-          className="ohx-wrap"
-          style={{
-            paddingTop: "clamp(100px, 12vh, 148px)",
-            paddingBottom: "clamp(48px, 8vh, 96px)",
-          }}
-        >
+        <section className="ohx-wrap" style={formSectionStyle}>
           <Box sx={{ maxWidth: 760, mx: "auto", textAlign: "center", mb: 4 }}>
             <Eyebrow>Application received</Eyebrow>
             <h1 className="ohx-display" style={{ marginTop: 8 }}>
@@ -1969,21 +1972,7 @@ const HackerApplicationComponent = () => {
         }}
       />
 
-      <FormPersistenceControls
-        onSave={handleManualSave}
-        onRestore={loadFromLocalStorage}
-        onClear={clearSavedData}
-        notification={notification}
-        onCloseNotification={closeNotification}
-      />
-
-      <section
-        className="ohx-wrap"
-        style={{
-          paddingTop: "clamp(100px, 12vh, 148px)",
-          paddingBottom: "clamp(48px, 8vh, 96px)",
-        }}
-      >
+      <section className="ohx-wrap" style={formSectionStyle}>
         <Box ref={formRef}>
           <Box sx={{ maxWidth: 780, mb: 4 }}>
             <Eyebrow>Opportunity Hack application</Eyebrow>
@@ -2027,10 +2016,10 @@ const HackerApplicationComponent = () => {
                 <Typography
                   component="h2"
                   sx={{
-                    fontFamily: "'Fraunces', Georgia, serif",
+                    fontFamily: FONT_DISPLAY,
                     fontWeight: 500,
                     letterSpacing: "-0.015em",
-                    fontSize: { xs: "1.7rem", md: "2.15rem" },
+                    fontSize: { xs: "27px", md: "34.5px" },
                     lineHeight: 1.08,
                     color: RX.ink,
                     mb: 1,
@@ -2038,7 +2027,7 @@ const HackerApplicationComponent = () => {
                 >
                   {eventData?.name || "Loading event details"}
                 </Typography>
-                <Typography sx={{ color: RX.muted, fontSize: "1rem", mb: 2 }}>
+                <Typography sx={{ color: RX.muted, fontSize: "16px", mb: 2 }}>
                   {eventData?.location || "Fetching location and timing"}
                 </Typography>
 
@@ -2129,8 +2118,8 @@ const HackerApplicationComponent = () => {
                     <Typography
                       component="h2"
                       sx={{
-                        fontFamily: "'Fraunces', Georgia, serif",
-                        fontSize: "1.5rem",
+                        fontFamily: FONT_DISPLAY,
+                        fontSize: "24px",
                         fontWeight: 500,
                         mb: 1,
                       }}
@@ -2180,8 +2169,8 @@ const HackerApplicationComponent = () => {
                     <Typography
                       component="h2"
                       sx={{
-                        fontFamily: "'Fraunces', Georgia, serif",
-                        fontSize: "1.5rem",
+                        fontFamily: FONT_DISPLAY,
+                        fontSize: "24px",
                         fontWeight: 500,
                         mb: 1,
                       }}
@@ -2231,6 +2220,17 @@ const HackerApplicationComponent = () => {
                 </Box>
               ) : (
                 <>
+                  {/* Save/restore controls live beside the form they act on
+                      (mt: 0 — the section provides the NavBar clearance) */}
+                  <FormPersistenceControls
+                    sx={{ mt: 0, mb: 2 }}
+                    onSave={handleManualSave}
+                    onRestore={loadFromLocalStorage}
+                    onClear={clearSavedData}
+                    notification={notification}
+                    onCloseNotification={closeNotification}
+                  />
+
                   <Box
                     id="hacker-application-progress"
                     className="ohx-card"
@@ -2261,10 +2261,10 @@ const HackerApplicationComponent = () => {
                         <Typography
                           component="h2"
                           sx={{
-                            fontFamily: "'Fraunces', Georgia, serif",
+                            fontFamily: FONT_DISPLAY,
                             fontWeight: 500,
                             letterSpacing: "-0.01em",
-                            fontSize: { xs: "1.35rem", sm: "1.55rem" },
+                            fontSize: { xs: "21.5px", sm: "25px" },
                             color: RX.ink,
                           }}
                         >
@@ -2337,9 +2337,9 @@ const HackerApplicationComponent = () => {
                         <Typography
                           component="h2"
                           sx={{
-                            fontFamily: "'Fraunces', Georgia, serif",
+                            fontFamily: FONT_DISPLAY,
                             fontWeight: 500,
-                            fontSize: { xs: "1.35rem", sm: "1.6rem" },
+                            fontSize: { xs: "21.5px", sm: "25.5px" },
                             lineHeight: 1.15,
                             color: RX.ink,
                             mb: 1,
@@ -2410,9 +2410,9 @@ const HackerApplicationComponent = () => {
                           <Typography
                             component="h3"
                             sx={{
-                              fontFamily: "'Fraunces', Georgia, serif",
+                              fontFamily: FONT_DISPLAY,
                               fontWeight: 500,
-                              fontSize: { xs: "1.35rem", sm: "1.6rem" },
+                              fontSize: { xs: "21.5px", sm: "25.5px" },
                               lineHeight: 1.15,
                               color: RX.ink,
                               mb: 1,
@@ -2697,7 +2697,9 @@ const HackerApplicationPage = ({ seoMetadata }) => {
           />
         }
       >
-        <HackerApplicationComponent />
+        <ThemeProvider theme={refinedFormTheme}>
+          <HackerApplicationComponent />
+        </ThemeProvider>
       </RequiredAuthProvider>
     </>
   );

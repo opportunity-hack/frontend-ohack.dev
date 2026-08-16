@@ -115,7 +115,7 @@ const GiveFeedback = withRequiredAuthInfo(({ userClass }) => {
     const fetchProfile = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/profile/${userid}`
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${userid}/profile`
         );
         if (response.status === 200) {
           setUserProfile(response.data);

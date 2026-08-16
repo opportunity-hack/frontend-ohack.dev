@@ -3,15 +3,13 @@ import { Pagination, Box } from "@mui/material";
 import ProjectCard from "./ProjectCard";
 import FeaturedProjects from "./FeaturedProjects/FeaturedProjects";
 import { RefinedRoot, Eyebrow, Arrow } from "../design/refined";
+import { ALL_PROJECT_STATUSES, isPausedStatus } from "../../lib/projectStatus";
 
 const PROJECTS_PER_PAGE = 9;
 
 const STATUS_FILTERS = [
   { value: null, label: "All" },
-  { value: "concept", label: "Concept" },
-  { value: "hackathon", label: "Hackathon" },
-  { value: "post-hackathon", label: "Post-hackathon" },
-  { value: "production", label: "Production" },
+  ...ALL_PROJECT_STATUSES.map(({ value, label }) => ({ value, label })),
 ];
 
 const SORT_OPTIONS = [
@@ -44,6 +42,12 @@ export default function ProjectList({ initialProjects = [], events }) {
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
+      // Paused projects aren't asking for work, so they sink below active
+      // ones in the help-oriented sorts (unless the Paused filter is on).
+      if (sortBy === "rank" || sortBy === "needHelp") {
+        const pausedDelta = isPausedStatus(a.status) - isPausedStatus(b.status);
+        if (pausedDelta !== 0) return pausedDelta;
+      }
       switch (sortBy) {
         case "newest":
           return new Date(b.created_at || 0) - new Date(a.created_at || 0);
@@ -68,7 +72,12 @@ export default function ProjectList({ initialProjects = [], events }) {
     const explicit = initialProjects.filter((p) => p.featured);
     if (explicit.length >= 3) return explicit.slice(0, 3);
     return [...initialProjects]
-      .filter((p) => p.status !== "production" && p.status !== "post-hackathon")
+      .filter(
+        (p) =>
+          p.status !== "production" &&
+          p.status !== "post-hackathon" &&
+          !isPausedStatus(p.status)
+      )
       .sort((a, b) => (b.rank || 0) - (a.rank || 0))
       .slice(0, 3);
   }, [initialProjects]);

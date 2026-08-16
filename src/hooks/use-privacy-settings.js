@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthInfo } from '@propelauth/react';
 
+// Keys must match backend model/user.py privacy_fields exactly ("why", not
+// the old "why_are_you_here" — that toggle was a silent no-op server-side).
 const DEFAULT_PRIVACY_SETTINGS = {
   github: "private",
   role: "private",
   company: "private",
-  why_are_you_here: "private",
+  why: "private",
   education: "private",
   expertise: "private",
   linkedin_url: "private",
@@ -15,7 +17,15 @@ const DEFAULT_PRIVACY_SETTINGS = {
   what: "private",
   how: "private",
   hackathon_history: "private",
-  praises: "public"
+  praises: "public",
+  // Portfolio fields — default private (default-private-first)
+  bio: "private",
+  bio_video_url: "private",
+  portfolio_links: "private",
+  teams: "private",
+  certificates: "private",
+  github_history: "private",
+  hearts: "private",
 };
 
 export default function usePrivacySettings() {

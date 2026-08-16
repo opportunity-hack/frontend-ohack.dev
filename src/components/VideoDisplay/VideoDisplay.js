@@ -9,7 +9,7 @@ const VideoWrapper = styled("div")({
   height: 0,
   overflow: "hidden",
   marginBottom: "1rem",
-  "& iframe": {
+  "& iframe, & video": {
     position: "absolute",
     top: 0,
     left: 0,
@@ -17,6 +17,9 @@ const VideoWrapper = styled("div")({
     height: "100%",
   },
 });
+
+// Raw video files (e.g. bio videos uploaded to cdn.ohack.dev)
+const RAW_VIDEO_REGEX = /\.(mp4|webm|mov)(\?|#|$)/i;
 
 const VideoDisplay = ({ url, title }) => {
   const getVideoConfig = (url) => {
@@ -66,6 +69,11 @@ const VideoDisplay = ({ url, title }) => {
       };
     }
 
+    // Raw video file — play with a native <video> (no iframe)
+    if (RAW_VIDEO_REGEX.test(url)) {
+      return { type: 'file', embedUrl: url };
+    }
+
     return null;
   };
 
@@ -87,14 +95,24 @@ const VideoDisplay = ({ url, title }) => {
         </Typography>
       )}
       <VideoWrapper>
-        <iframe
-          src={videoConfig.embedUrl}
-          title={title || "Video"}
-          frameBorder="0"
-          allow={videoConfig.allow}
-          allowFullScreen
-          loading="lazy"
-        />
+        {videoConfig.type === 'file' ? (
+          <video
+            src={videoConfig.embedUrl}
+            title={title || "Video"}
+            controls
+            playsInline
+            preload="metadata"
+          />
+        ) : (
+          <iframe
+            src={videoConfig.embedUrl}
+            title={title || "Video"}
+            frameBorder="0"
+            allow={videoConfig.allow}
+            allowFullScreen
+            loading="lazy"
+          />
+        )}
       </VideoWrapper>
     </Box>
   );

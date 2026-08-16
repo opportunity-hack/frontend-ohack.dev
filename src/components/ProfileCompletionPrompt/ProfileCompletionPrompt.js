@@ -17,7 +17,7 @@ import { useAuthInfo } from '@propelauth/react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import useProfileApi from '../../hooks/use-profile-api';
+import useHeartsSummary from '../../hooks/use-hearts-summary';
 import { trackEvent } from '../../lib/ga';
 
 const STORAGE_KEY_DISMISSED = 'ohack_profile_prompt_dismissed';
@@ -104,7 +104,9 @@ function getProfileCompleteness(profile) {
 const ProfileCompletionPrompt = () => {
   const router = useRouter();
   const { user, isLoggedIn } = useAuthInfo();
-  const { profile, isLoading } = useProfileApi();
+  // Shared module-cached fetch (also feeds the NavBar hearts status) — keeps
+  // the site at one GET /api/users/profile per page load.
+  const { profile, loading: isLoading } = useHeartsSummary();
   const [open, setOpen] = useState(false);
   const [completeness, setCompleteness] = useState(null);
 

@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../styles/fonts";
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
@@ -637,10 +638,7 @@ export default function HackathonEvent({ eventData }) {
         <meta property="og:title" content={metaTitle} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="website" />
-        <meta
-          property="og:url"
-          content={canonicalUrl}
-        />
+        <meta property="og:url" content={canonicalUrl} />
         <meta property="og:image" content={metaImage} />
         <meta
           property="og:image:alt"
@@ -786,7 +784,11 @@ export default function HackathonEvent({ eventData }) {
               role="note"
             >
               This event has ended.{" "}
-              <NextLink href="/hack" className="ohx-link" style={{ fontWeight: 600 }}>
+              <NextLink
+                href="/hack"
+                className="ohx-link"
+                style={{ fontWeight: 600 }}
+              >
                 See upcoming hackathons →
               </NextLink>
             </div>
@@ -1071,7 +1073,7 @@ export default function HackathonEvent({ eventData }) {
                       variant="h5"
                       gutterBottom
                       sx={{
-                        fontFamily: "'Fraunces', Georgia, serif",
+                        fontFamily: FONT_DISPLAY,
                         fontWeight: 500,
                       }}
                     >
@@ -1083,7 +1085,7 @@ export default function HackathonEvent({ eventData }) {
                         variant="h5"
                         gutterBottom
                         sx={{
-                          fontFamily: "'Fraunces', Georgia, serif",
+                          fontFamily: FONT_DISPLAY,
                           fontWeight: 500,
                         }}
                       >
@@ -1609,7 +1611,9 @@ export async function getStaticProps({ params }) {
 
   if (!res.ok) {
     // Rethrow so ISR keeps serving the last good version instead of caching an error
-    throw new Error(`Backend returned ${res.status} for event ${params.event_id}`);
+    throw new Error(
+      `Backend returned ${res.status} for event ${params.event_id}`,
+    );
   }
 
   const data = await res.json();

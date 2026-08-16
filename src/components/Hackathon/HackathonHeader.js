@@ -1,3 +1,4 @@
+import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
 import React from "react";
 import { Box } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -18,14 +19,24 @@ const MUTED = "var(--muted, #5B6270)";
 const ACCENT = "var(--accent, #E2552E)";
 const LINE = "var(--line, #E7E1D4)";
 const BRAND = "var(--brand, #1B3A6B)";
-const DISPLAY = "'Fraunces', Georgia, 'Times New Roman', serif";
-const BODY = "'Hanken Grotesk', system-ui, -apple-system, sans-serif";
+const DISPLAY = FONT_DISPLAY;
+const BODY = FONT_BODY;
 
-const HackathonHeader = ({ title, startDate, endDate, location, description }) => {
+const HackathonHeader = ({
+  title,
+  startDate,
+  endDate,
+  location,
+  description,
+}) => {
   const formatDate = (date) => {
     const d = parseLocalDate(date);
     if (isNaN(d.getTime())) return "TBA";
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
   const formatDateISO = (date) => {
     const d = parseLocalDate(date);
@@ -36,7 +47,15 @@ const HackathonHeader = ({ title, startDate, endDate, location, description }) =
     return `${year}-${month}-${day}`;
   };
 
-  const metaItem = { display: "inline-flex", alignItems: "center", gap: 6, color: MUTED, fontSize: "0.95rem", fontWeight: 500, fontFamily: BODY };
+  const metaItem = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    color: MUTED,
+    fontSize: "0.95rem",
+    fontWeight: 500,
+    fontFamily: BODY,
+  };
 
   return (
     <Box
@@ -44,11 +63,23 @@ const HackathonHeader = ({ title, startDate, endDate, location, description }) =
       role="banner"
       itemScope
       itemType="https://schema.org/Event"
-      sx={{ pt: { xs: "92px", md: "120px" }, pb: { xs: 3, md: 4 }, minHeight: 220 }}
+      sx={{
+        pt: { xs: "92px", md: "120px" },
+        pb: { xs: 3, md: 4 },
+        minHeight: 220,
+      }}
     >
       <p
         className="rise"
-        style={{ fontFamily: BODY, textTransform: "uppercase", letterSpacing: "0.22em", fontSize: "0.72rem", fontWeight: 600, color: MUTED, margin: 0 }}
+        style={{
+          fontFamily: BODY,
+          textTransform: "uppercase",
+          letterSpacing: "0.22em",
+          fontSize: "0.72rem",
+          fontWeight: 600,
+          color: MUTED,
+          margin: 0,
+        }}
       >
         Opportunity Hack · hackathon
       </p>
@@ -71,16 +102,31 @@ const HackathonHeader = ({ title, startDate, endDate, location, description }) =
         {title}
       </h1>
 
-      <div className="rise" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14, animationDelay: "130ms" }}>
+      <div
+        className="rise"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 14,
+          animationDelay: "130ms",
+        }}
+      >
         <span style={metaItem}>
           <CalendarTodayIcon sx={{ fontSize: 18, color: ACCENT }} />
           <span>
-            <time dateTime={formatDateISO(startDate)} itemProp="startDate">{formatDate(startDate)}</time>
+            <time dateTime={formatDateISO(startDate)} itemProp="startDate">
+              {formatDate(startDate)}
+            </time>
             {" – "}
-            <time dateTime={formatDateISO(endDate)} itemProp="endDate">{formatDate(endDate)}</time>
+            <time dateTime={formatDateISO(endDate)} itemProp="endDate">
+              {formatDate(endDate)}
+            </time>
           </span>
         </span>
-        <span aria-hidden="true" style={{ color: LINE }}>·</span>
+        <span aria-hidden="true" style={{ color: LINE }}>
+          ·
+        </span>
         <span style={metaItem} itemProp="location">
           <LocationOnIcon sx={{ fontSize: 18, color: ACCENT }} />
           <span>{location}</span>
@@ -95,8 +141,18 @@ const HackathonHeader = ({ title, startDate, endDate, location, description }) =
             mt: 2.5,
             maxWidth: "62ch",
             animationDelay: "200ms",
-            "& p": { color: MUTED, fontFamily: BODY, fontSize: "1.05rem", lineHeight: 1.65, margin: "0 0 12px" },
-            "& a": { color: BRAND, textDecoration: "underline", textUnderlineOffset: "3px" },
+            "& p": {
+              color: MUTED,
+              fontFamily: BODY,
+              fontSize: "1.05rem",
+              lineHeight: 1.65,
+              margin: "0 0 12px",
+            },
+            "& a": {
+              color: BRAND,
+              textDecoration: "underline",
+              textUnderlineOffset: "3px",
+            },
             "& a:hover": { color: ACCENT },
             "& strong": { color: INK },
           }}
@@ -105,7 +161,15 @@ const HackathonHeader = ({ title, startDate, endDate, location, description }) =
         </Box>
       )}
 
-      <hr style={{ height: 1, border: 0, background: LINE, width: "100%", margin: "28px 0 0" }} />
+      <hr
+        style={{
+          height: 1,
+          border: 0,
+          background: LINE,
+          width: "100%",
+          margin: "28px 0 0",
+        }}
+      />
     </Box>
   );
 };

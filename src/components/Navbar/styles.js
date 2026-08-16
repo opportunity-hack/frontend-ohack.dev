@@ -1,24 +1,25 @@
-import { 
-  Grid, 
-  Button, 
-  Link, 
-  Typography, 
+import { FONT_BODY } from "../../styles/fonts";
+import {
+  Grid,
+  Button,
+  Link,
+  Typography,
   //Drawer,
-   Box 
+  Box,
 } from "@mui/material";
 import { styled } from "@mui/material";
 
 export const LogoContainer = styled(Grid)({
   width: "150px",
   height: "32px",
-  "@media (min-width: 768px)": {  
+  "@media (min-width: 768px)": {
     width: "120px",
-    height: "72px"
+    height: "72px",
   },
   "@media (min-width: 992px)": {
     width: "90px",
-    height: "63px"
-  }
+    height: "63px",
+  },
 });
 
 export const NavbarContainer = styled(Grid)({
@@ -63,7 +64,7 @@ const NAV_BRAND = "#1B3A6B";
 
 export const NavbarButton = styled(Button)({
   textDecoration: "none",
-  fontFamily: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+  fontFamily: FONT_BODY,
   fontSize: "0.95rem",
   fontWeight: 500,
   letterSpacing: "0em",
@@ -82,7 +83,7 @@ export const NavbarButton = styled(Button)({
 });
 export const NavbarLink = styled(Link)({
   textDecoration: "none",
-  fontFamily: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+  fontFamily: FONT_BODY,
   fontSize: "0.95rem",
   fontWeight: 500,
   letterSpacing: "0em",
@@ -96,7 +97,7 @@ export const NavbarLink = styled(Link)({
 });
 
 export const LoginButton = styled(Button)({
-  fontFamily: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",
+  fontFamily: FONT_BODY,
   borderRadius: 5,
   paddingLeft: "1.15rem",
   paddingRight: "1.15rem",

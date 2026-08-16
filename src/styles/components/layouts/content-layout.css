@@ -21,16 +21,16 @@
 .content__body {
   /* responsive */
 
-  font-size: 1.6rem;
-  line-height: 2.4rem;
+  font-size: 19.2px;
+  line-height: 28.8px;
 }
 
 @media only screen and (max-width: 480px) {
   .content-layout {
-    padding: 1.6rem;
+    padding: 19.2px;
   }
 
   .content__title {
-    font-size: 2.4rem;
+    font-size: 28.8px;
   }
 }

@@ -14,7 +14,8 @@ import {
   Alert,
   IconButton,
   Tooltip,
-  Snackbar
+  Snackbar,
+  Link as MuiLink
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -407,6 +408,35 @@ const IntroductionPrompt = () => {
         </Grid>
 
       </Grid>
+
+      {/* Set up your portfolio — profile completion nudge */}
+      <Paper
+        elevation={0}
+        sx={{ p: 3, mt: 4, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}
+      >
+        <Typography variant="h5" gutterBottom sx={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+          While you&apos;re at it: set up your portfolio
+        </Typography>
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
+          Your profile doubles as a shareable portfolio — demo videos, certificates, GitHub
+          contributions, and praise in one link. It&apos;s private by default; three steps make
+          it yours:
+        </Typography>
+        <Box component="ol" sx={{ pl: 3, m: 0, '& li': { mb: 1, fontSize: '1.08rem' } }}>
+          <li>
+            <MuiLink href="/profile#basic" target="_blank" rel="noopener">Complete your Basic Info</MuiLink>
+            {' '}— name, role, GitHub username, and why you&apos;re here.
+          </li>
+          <li>
+            <MuiLink href="/profile#portfolio" target="_blank" rel="noopener">Claim your URL</MuiLink>
+            {' '}— a short link like ohack.dev/u/you for your résumé and bios.
+          </li>
+          <li>
+            Choose your visibility — keep it link-only, or make it public &amp; searchable when
+            you&apos;re ready.
+          </li>
+        </Box>
+      </Paper>
     </Box>
   );
 };

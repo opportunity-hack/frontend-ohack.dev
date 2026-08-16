@@ -6,7 +6,8 @@ import {
   Paper,
   Grid,
   Divider,
-  Alert
+  Alert,
+  Link as MuiLink
 } from '@mui/material';
 import EventIcon from '@mui/icons-material/Event';
 import CodeIcon from '@mui/icons-material/Code';
@@ -60,7 +61,7 @@ const destinations = [
     path: '/projects',
     title: 'Projects',
     description:
-      'Every project we\'ve scoped for a nonprofit, searchable and filterable by status. Each project page shows the description, GitHub repo, and the project\'s Slack channel. To get involved with a project that needs help, sign in and slide its "Want to help?" toggle, then join its Slack channel.'
+      'Every project we\'ve scoped for a nonprofit, searchable and filterable by status. Each project page walks you from the problem description to the "Code & Tasks" section — every GitHub repo with its open Issues — plus the project\'s Slack channel. To get involved with a project that needs help, sign in and slide its "Want to help?" toggle, then join its Slack channel.'
   },
   {
     icon: <VolunteerActivismIcon />,
@@ -104,6 +105,31 @@ const destinations = [
   }
 ];
 
+// Mirrors the actual layout of /project/<id> (ProblemStatement.js) —
+// keep in sync if that page's section order changes
+const projectPageAnatomy = [
+  {
+    title: 'The problem',
+    description:
+      'The project description at the top explains what the nonprofit needs and why it matters. Reference documents below it (slides, requirement docs, demo videos) fill in the full story.'
+  },
+  {
+    title: 'The code',
+    description:
+      'The "Code & Tasks" section lists every GitHub repository for the project — including repos built by teams at past hackathons. Hit the Code button and start with the README.'
+  },
+  {
+    title: 'The plan',
+    description:
+      'Each repo\'s GitHub Issues are the work to be done — open-issue counts and the top open tickets show right on the project page. Pick one that fits your skills. No issues in a repo yet? Pull the code, run it, and write them yourself like a product manager — that\'s a real, visible contribution.'
+  },
+  {
+    title: 'The people',
+    description:
+      'Every project has a Slack channel (#npo-…) where the work is coordinated — join it and say hello. And if the project needs help, slide the "Want to help?" toggle so the community knows you\'re on board.'
+  }
+];
+
 const portfolioSurfaces = [
   {
     icon: <GitHubIcon />,
@@ -125,9 +151,9 @@ const portfolioSurfaces = [
   },
   {
     icon: <BadgeIcon />,
-    title: 'Your public profile',
+    title: 'Your portfolio page',
     description:
-      'Your ohack.dev profile has a public page you can link from a résumé or LinkedIn, tying your history here together.'
+      'Your profile doubles as a portfolio page that collects all of the above in one shareable link — your demo videos, certificates, GitHub contributions, praise, and hearts. Claim a custom URL (ohack.dev/u/you) and link it from your résumé or LinkedIn.'
   },
   {
     icon: <FavoriteIcon />,
@@ -233,6 +259,48 @@ const WebsiteTourSection = () => {
         schedule and countdowns, reach mentors, and — after judging — see the results.
       </Alert>
 
+      {/* Anatomy of a project page */}
+      <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h5" gutterBottom sx={{ fontSize: '1.7rem', fontWeight: 'bold' }}>
+          Anatomy of a project page
+        </Typography>
+        <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', color: 'text.secondary' }}>
+          The fastest way to understand any project on{' '}
+          <Link href="/projects" style={{ color: NAVY }}>ohack.dev/projects</Link>: read it
+          top to bottom as the problem, the code, the plan, and the people.
+        </Typography>
+        {projectPageAnatomy.map((part, index) => (
+          <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'flex-start' }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                backgroundColor: NAVY,
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                fontSize: '1.1rem',
+                flexShrink: 0,
+                mt: 0.3
+              }}
+            >
+              {index + 1}
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
+                {part.title}
+              </Typography>
+              <Typography variant="body1" sx={{ fontSize: '1.1rem', color: 'text.secondary' }}>
+                {part.description}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+      </Paper>
+
       {/* Work in public / portfolio */}
       <Paper
         elevation={0}
@@ -275,6 +343,15 @@ const WebsiteTourSection = () => {
             capture the work to be done. Writing good tickets is a real, visible contribution.
           </Typography>
         </Paper>
+        <Typography variant="body1" sx={{ fontSize: '1.08rem', mt: 2.5 }}>
+          Your portfolio is <strong>private by default</strong> — you choose section by section
+          what shows, and flip one switch when you want search engines to find it. Set it up
+          anytime under{' '}
+          <MuiLink href="/profile#portfolio" target="_blank" rel="noopener">
+            Profile → Portfolio
+          </MuiLink>
+          .
+        </Typography>
       </Paper>
     </Box>
   );

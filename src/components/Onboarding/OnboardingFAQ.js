@@ -82,6 +82,26 @@ const OnboardingFAQ = () => {
       icon: "🚀"
     },
     {
+      question: "Is my profile public?",
+      answer: (
+        <>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
+            <strong>It's private by default.</strong> Your ohack.dev profile doubles as a portfolio page that
+            collects your demo videos, certificates, GitHub contributions, praise, and hearts — but nothing
+            shows publicly until you turn it on, section by section, from your{' '}
+            <a href="/profile#portfolio">Profile → Portfolio</a> tab.
+          </Typography>
+          <Typography paragraph sx={{ fontSize: answerFontSize }}>
+            When you're ready, claim a custom URL (like ohack.dev/u/you) and share it with recruiters or on
+            LinkedIn — the link works even while your portfolio is private. One switch makes it public &amp;
+            searchable so Google can find it too. Sharing that link is the best way to show employers real,
+            verifiable work instead of résumé bullets.
+          </Typography>
+        </>
+      ),
+      icon: "🔒"
+    },
+    {
       question: "Do I need to be an experienced developer to join?",
       answer: (
         <Typography paragraph sx={{ fontSize: answerFontSize }}>
@@ -199,9 +219,10 @@ const OnboardingFAQ = () => {
             </li>
             <li>
               <Typography paragraph sx={{ fontSize: answerFontSize }}>
-                <strong>Check the GitHub repo</strong> - Every project page has a "Code &amp; Tasks" section with a
-                Code and an Issues button for each repository. Reading the README and open issues is the fastest way
-                to find something concrete to pick up.
+                <strong>Check the GitHub repo</strong> - Every project page has a "Code &amp; Tasks" section right
+                below the description, listing each repository — including repos built by teams at past hackathons —
+                with open-issue counts and the top open tickets shown right on the page. Reading the README and open
+                issues is the fastest way to find something concrete to pick up.
               </Typography>
             </li>
             <li>

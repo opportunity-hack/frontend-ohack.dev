@@ -16,20 +16,30 @@ describe('usePrivacySettings', () => {
     fetch.mockClear();
   });
 
-  it('should initialize with default privacy settings', () => {
+  it('should initialize with default-private privacy settings', () => {
     const { result } = renderHook(() => usePrivacySettings());
-    
-    expect(result.current.privacySettings).toEqual({
-      github_username: "public",
-      current_role: "public", 
-      current_company: "public",
-      why_are_you_here: "public",
-      badges: "public",
-      feedback: "public",
-      what: "public",
-      how: "public",
-      hackathon_history: "public"
+    const settings = result.current.privacySettings;
+
+    // Default-private-first: only praises is public by default (matches
+    // backend model/user.py default_public_privacy_fields)
+    expect(settings.praises).toBe('public');
+    Object.entries(settings).forEach(([field, value]) => {
+      if (field !== 'praises') {
+        expect(value).toBe('private');
+      }
     });
+
+    // Keys must match backend privacy_fields — "why", not the old
+    // "why_are_you_here" (that toggle was a silent server-side no-op)
+    expect(settings).toHaveProperty('why');
+    expect(settings).not.toHaveProperty('why_are_you_here');
+
+    // Portfolio-era fields are present and private
+    ['bio', 'bio_video_url', 'portfolio_links', 'teams', 'certificates',
+      'github_history', 'hearts'].forEach((field) => {
+      expect(settings[field]).toBe('private');
+    });
+
     expect(result.current.isLoading).toBe(true);
   });
 

@@ -1,3 +1,4 @@
+import { FONT_DISPLAY } from "../../../styles/fonts";
 import React, {
   useState,
   useEffect,
@@ -5,9 +6,10 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import ReCaptchaProvider from "../../../components/ReCaptchaProvider";
-import { initFacebookPixel, trackEvent } from '../../../lib/ga';
+import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 import {
   useAuthInfo,
   RequiredAuthProvider,
@@ -15,7 +17,6 @@ import {
 } from "@propelauth/react";
 import {
   Typography,
-  Container,
   Box,
   TextField,
   Button,
@@ -26,8 +27,6 @@ import {
   FormHelperText,
   RadioGroup,
   Radio,
-  Paper,
-  Divider,
   Alert,
   Link,
   InputLabel,
@@ -47,9 +46,7 @@ import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
 import SurveyCTA from "../../../components/Survey/SurveyCTA";
-import LoginOrRegister from "../../../components/LoginOrRegister/LoginOrRegister2";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
-import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
 import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
@@ -59,8 +56,17 @@ import useProfileApi from "../../../hooks/use-profile-api";
 import UploadPhoto from "../../../components/UploadPhoto";
 import ReactMarkdown from "react-markdown";
 import {
+  RefinedRoot,
+  RefinedFonts,
+  Eyebrow,
+  Arrow,
+  Stat,
+} from "../../../components/design/refined";
+import {
+  IntroVideoField,
   OHackParticipationSelect,
   PronounsPicker,
+  scrollToStepContent,
 } from "../../../components/ApplicationForm";
 import {
   SchoolRounded,
@@ -70,37 +76,55 @@ import {
   GroupsRounded,
   CheckCircleRounded,
 } from "@mui/icons-material";
+import { ThemeProvider } from "@mui/material/styles";
+import {
+  formSectionStyle,
+  formProseSx,
+  refinedFormTheme,
+  refinedFieldSx,
+  refinedChoiceSx,
+  refinedChipSx,
+  refinedInlineLinkSx,
+  refinedSelectMenuProps,
+  stepTitleSx,
+  stepLeadSx,
+  eventMarkdownSx,
+  infoAlertSx,
+  warningAlertSx,
+  successAlertSx,
+  errorAlertSx,
+  emphasisPanelSx,
+  primaryButtonSx,
+  ghostButtonSx,
+  refinedStepperSx,
+  refinedStepperMobileSx,
+} from "../../../components/ApplicationForm/refinedStyles";
 
-const eventDescriptionMarkdownSx = {
-  mb: 3,
-  "& p": {
-    my: 1.25,
-    lineHeight: 1.7,
-  },
-  "& p:first-of-type": {
-    mt: 0,
-  },
-  "& p:last-child": {
-    mb: 0,
-  },
-  "& ul, & ol": {
-    my: 1.25,
-    pl: 3,
-  },
-  "& li": {
-    mb: 0.5,
-  },
-  "& h1, & h2, & h3, & h4": {
-    mt: 2.5,
-    mb: 1,
-    lineHeight: 1.3,
-    fontWeight: 600,
-  },
-  "& a": {
-    color: "primary.main",
-    textDecoration: "underline",
-  },
+// Judging-window defaults when the event doesn't configure
+// constraints.judge_judging_{start,end}_time (admin → Judges section).
+const DEFAULT_JUDGING_START = "15:00";
+const DEFAULT_JUDGING_END = "17:30";
+
+// "15:00" → "3:00 PM". Falls back to the raw value on unexpected input so a
+// bad constraint never renders an empty schedule.
+const formatTime12h = (hhmm) => {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hhmm || "");
+  if (!match) return hhmm || "";
+  const hours = Number(match[1]);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  return `${hours % 12 || 12}:${match[2]} ${suffix}`;
 };
+
+// The judging window shown across the availability step and enforced by
+// validateAvailability — always derived from event constraints with defaults.
+const getJudgingWindow = (eventData) => ({
+  start: formatTime12h(
+    eventData?.constraints?.judge_judging_start_time || DEFAULT_JUDGING_START,
+  ),
+  end: formatTime12h(
+    eventData?.constraints?.judge_judging_end_time || DEFAULT_JUDGING_END,
+  ),
+});
 
 const JudgeApplicationComponent = () => {
   const router = useRouter();
@@ -145,6 +169,9 @@ const JudgeApplicationComponent = () => {
   // Use ref to store uploaded photo URL to avoid race conditions
   const uploadedPhotoUrlRef = useRef("");
 
+  // Scroll target so step navigation lands on the step fields, not the page hero
+  const stepContentRef = useRef(null);
+
   // Prevent duplicate confirmation dialogs
   const confirmationShownRef = useRef(false);
 
@@ -171,6 +198,7 @@ const JudgeApplicationComponent = () => {
       judgingCommitment: false,
       linkedinProfile: "",
       shortBio: "",
+      introductionVideoUrl: "", // "Tell us about you" video (upload or YouTube/Vimeo/Loom link)
       photoUrl: "",
       pronouns: "",
       country: "",
@@ -289,6 +317,7 @@ const JudgeApplicationComponent = () => {
                   prevData.agreedToCodeOfConduct || prevData.codeOfConduct,
                 ),
                 photoUrl: prevData.photoUrl || "",
+                introductionVideoUrl: prevData.introductionVideoUrl || "",
 
                 // Ensure event_id is always set
                 event_id: event_id,
@@ -376,7 +405,8 @@ const JudgeApplicationComponent = () => {
         }
 
         // Redirect to external application URL if configured
-        const externalUrl = eventData.constraints?.application_judge_external_url;
+        const externalUrl =
+          eventData.constraints?.application_judge_external_url;
         if (externalUrl) {
           window.location.href = externalUrl;
           return;
@@ -528,6 +558,20 @@ const JudgeApplicationComponent = () => {
     setIsLoading,
   ]);
 
+  // Virtual/global events accept online judges; anything else is a physical
+  // venue where judging happens in the room. Same heuristic as the volunteer
+  // form's isVirtualEvent().
+  const isVirtualEvent = () => {
+    if (!eventData?.location) return false;
+    const location = eventData.location.toLowerCase();
+    return (
+      location.includes("global") ||
+      location.includes("virtual") ||
+      location.includes("online") ||
+      location.includes("remote")
+    );
+  };
+
   // Extend handleFormChange to handle otherBackground field
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -614,13 +658,21 @@ const JudgeApplicationComponent = () => {
 
   // Render application closed/passcode required component
   const renderApplicationClosed = () => (
-    <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+    <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3.5 }, mb: 4 }}>
       {/* If there's a passcode, show it as the primary interface */}
       {applicationConstraints.passcode ? (
         <>
-          <Alert severity="warning" sx={{ mb: 4 }}>
-            <Typography variant="h6" component="div" sx={{ mb: 2 }}>
-              Access Code Required
+          <Alert severity="warning" sx={{ ...warningAlertSx, mb: 4 }}>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{
+                mb: 1,
+                fontFamily: FONT_DISPLAY,
+                fontWeight: 500,
+              }}
+            >
+              Access code required
             </Typography>
             <Typography variant="body1">
               Judge applications are closed and require an access code for
@@ -630,8 +682,14 @@ const JudgeApplicationComponent = () => {
           </Alert>
 
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" component="div" sx={{ mb: 2 }}>
-              Enter Access Code
+            <Typography
+              component="h2"
+              sx={{
+                ...stepTitleSx,
+                fontSize: { xs: "21px", sm: "24px" },
+              }}
+            >
+              Enter access code
             </Typography>
 
             <form onSubmit={handlePasscodeSubmit}>
@@ -640,7 +698,8 @@ const JudgeApplicationComponent = () => {
                   display: "flex",
                   gap: 2,
                   alignItems: "flex-start",
-                  mb: 3,
+                  flexWrap: "wrap",
+                  mb: 1,
                 }}
               >
                 <TextField
@@ -650,7 +709,7 @@ const JudgeApplicationComponent = () => {
                   error={!!passcodeError}
                   helperText={passcodeError}
                   size="medium"
-                  sx={{ flexGrow: 1, maxWidth: 400 }}
+                  sx={{ ...refinedFieldSx, flexGrow: 1, maxWidth: 400 }}
                   type="password"
                   autoComplete="off"
                   placeholder="Enter the access code provided by organizers"
@@ -659,41 +718,42 @@ const JudgeApplicationComponent = () => {
                   type="submit"
                   variant="contained"
                   disabled={!passcodeInput.trim()}
-                  sx={{ alignSelf: "stretch", px: 3 }}
+                  sx={{ ...primaryButtonSx, alignSelf: "flex-start" }}
                 >
-                  Unlock Application
+                  Unlock application
                 </Button>
               </Box>
             </form>
           </Box>
 
           {/* Mentoring suggestion section */}
-          <Paper
-            elevation={3}
+          <Box
             sx={{
-              p: 4,
+              ...emphasisPanelSx,
               mb: 4,
-              bgcolor: "secondary.light",
-              color: "white",
               textAlign: "center",
             }}
           >
-            <SchoolRounded sx={{ fontSize: 56, mb: 3 }} />
+            <SchoolRounded
+              sx={{ fontSize: 48, mb: 2, color: "var(--brand)" }}
+            />
             <Typography
-              variant="h4"
-              gutterBottom
-              sx={{ fontWeight: "bold", fontSize: "1.8rem" }}
+              component="h2"
+              sx={{
+                ...stepTitleSx,
+                fontSize: { xs: "22.5px", sm: "25.5px" },
+              }}
             >
-              Consider Mentoring Instead!
+              Consider mentoring instead
             </Typography>
             <Typography
-              variant="h6"
+              variant="body1"
               sx={{
                 mb: 3,
-                maxWidth: "700px",
+                maxWidth: 640,
                 mx: "auto",
-                fontSize: "1.1rem",
-                lineHeight: 1.6,
+                color: "var(--muted)",
+                lineHeight: 1.7,
               }}
             >
               Many of our most valued{" "}
@@ -702,138 +762,125 @@ const JudgeApplicationComponent = () => {
               your career development.
             </Typography>
 
-            <Box
-              sx={{ mb: 4, textAlign: "left", maxWidth: "600px", mx: "auto" }}
-            >
+            <Box sx={{ mb: 3, textAlign: "left", maxWidth: 560, mx: "auto" }}>
               <Typography
                 variant="body1"
                 sx={{
-                  mb: 2,
+                  mb: 1.5,
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1rem",
+                  color: "var(--ink)",
                 }}
               >
-                <CheckCircleRounded sx={{ mr: 2, fontSize: 24 }} />
+                <CheckCircleRounded
+                  sx={{ mr: 1.5, fontSize: 22, color: "var(--brand)" }}
+                />
                 <strong>Professional Recognition:</strong>&nbsp;Demonstrate
                 leadership and expertise
               </Typography>
               <Typography
                 variant="body1"
                 sx={{
-                  mb: 2,
+                  mb: 1.5,
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1rem",
+                  color: "var(--ink)",
                 }}
               >
-                <CheckCircleRounded sx={{ mr: 2, fontSize: 24 }} />
+                <CheckCircleRounded
+                  sx={{ mr: 1.5, fontSize: 22, color: "var(--brand)" }}
+                />
                 <strong>Resume Enhancement:</strong>&nbsp;Show community
                 involvement and technical leadership
               </Typography>
               <Typography
                 variant="body1"
                 sx={{
-                  mb: 2,
+                  mb: 1.5,
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1rem",
+                  color: "var(--ink)",
                 }}
               >
-                <CheckCircleRounded sx={{ mr: 2, fontSize: 24 }} />
+                <CheckCircleRounded
+                  sx={{ mr: 1.5, fontSize: 22, color: "var(--brand)" }}
+                />
                 <strong>Network Building:</strong>&nbsp;Connect directly with
                 innovative teams and industry professionals
               </Typography>
               <Typography
                 variant="body1"
                 sx={{
-                  mb: 2,
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1rem",
+                  color: "var(--ink)",
                 }}
               >
-                <CheckCircleRounded sx={{ mr: 2, fontSize: 24 }} />
+                <CheckCircleRounded
+                  sx={{ mr: 1.5, fontSize: 22, color: "var(--brand)" }}
+                />
                 <strong>Skill Validation:</strong>&nbsp;Showcase your expertise
                 while helping others grow
               </Typography>
             </Box>
 
-            <Typography
-              variant="h6"
-              sx={{ mb: 4, opacity: 0.95, fontSize: "1rem" }}
+            <Alert
+              severity="info"
+              sx={{ ...infoAlertSx, mb: 3, textAlign: "left" }}
             >
-              💡 <strong>Pro tip:</strong> Mentors often get priority
-              consideration for future judging opportunities!
-            </Typography>
+              <Typography variant="body1">
+                <strong>Pro tip:</strong> Mentors often get priority
+                consideration for future judging opportunities!
+              </Typography>
+            </Alert>
 
             <Box
               sx={{
                 display: "flex",
-                gap: 3,
+                gap: 1.5,
                 justifyContent: "center",
                 flexWrap: "wrap",
               }}
             >
               <Button
                 variant="contained"
-                size="large"
                 href={`/hack/${event_id}/mentor-application`}
-                sx={{
-                  bgcolor: "white",
-                  color: "secondary.main",
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
-                  py: 1.5,
-                  px: 3,
-                  "&:hover": {
-                    bgcolor: "grey.100",
-                    transform: "translateY(-2px)",
-                  },
-                }}
+                sx={primaryButtonSx}
                 startIcon={<SchoolRounded />}
               >
-                Apply to Mentor
+                Apply to mentor
               </Button>
               <Button
                 variant="outlined"
-                size="large"
                 href="/about/mentors"
-                sx={{
-                  borderColor: "white",
-                  color: "white",
-                  fontSize: "1rem",
-                  py: 1.5,
-                  px: 3,
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.1)",
-                  },
-                }}
+                sx={ghostButtonSx}
               >
-                Learn About Mentoring
+                Learn about mentoring
               </Button>
             </Box>
-          </Paper>
+          </Box>
 
           {/* GiveButter widget when showing passcode */}
           <Box
             sx={{
               mt: 4,
               pt: 3,
-              borderTop: "1px solid",
-              borderColor: "divider",
+              borderTop: "1px solid var(--line)",
             }}
           >
             <Typography
-              variant="h6"
-              component="div"
-              sx={{ mb: 2, textAlign: "center" }}
+              component="h2"
+              sx={{
+                ...stepTitleSx,
+                fontSize: { xs: "19px", sm: "21.5px" },
+                textAlign: "center",
+              }}
             >
-              Support Our Mission
+              Support our mission
             </Typography>
             <Typography
               variant="body2"
-              sx={{ mb: 3, textAlign: "center", color: "text.secondary" }}
+              sx={{ mb: 3, textAlign: "center", color: "var(--muted)" }}
             >
               While you're here, consider supporting Opportunity Hack's mission
               to connect nonprofits with innovative tech solutions.
@@ -857,52 +904,64 @@ const JudgeApplicationComponent = () => {
       ) : (
         <>
           {/* No passcode available - applications are truly closed */}
-          <Alert severity="info" sx={{ mb: 3 }}>
-            <Typography variant="h6" component="div" sx={{ mb: 2 }}>
-              Judge Applications Are Currently Closed
+          <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{
+                mb: 1,
+                fontFamily: FONT_DISPLAY,
+                fontWeight: 500,
+              }}
+            >
+              Judge applications are currently closed
             </Typography>
-            <Typography variant="body1" sx={{ mb: 2 }}>
+            <Typography variant="body1" sx={{ mb: 1.5 }}>
               We're not accepting new judge applications at this time. This
               could be because:
             </Typography>
-            <Box component="ul" sx={{ pl: 2, mb: 2 }}>
+            <Box component="ul" sx={{ pl: 3, mb: 1.5 }}>
               <li>We've reached our capacity for judges</li>
               <li>The application period has ended</li>
               <li>We're in the final preparation phase</li>
             </Box>
-            <Typography variant="body2" sx={{ fontStyle: "italic" }}>
+            <Typography
+              variant="body2"
+              sx={{ fontStyle: "italic", color: "var(--muted)" }}
+            >
               If you believe you should have access or have questions, please
               contact the event organizers.
             </Typography>
           </Alert>
 
           {/* Mentoring suggestion for closed applications */}
-          <Paper
-            elevation={3}
+          <Box
             sx={{
-              p: 4,
+              ...emphasisPanelSx,
               mb: 4,
-              bgcolor: "secondary.light",
-              color: "white",
               textAlign: "center",
             }}
           >
-            <SchoolRounded sx={{ fontSize: 56, mb: 3 }} />
+            <SchoolRounded
+              sx={{ fontSize: 48, mb: 2, color: "var(--brand)" }}
+            />
             <Typography
-              variant="h4"
-              gutterBottom
-              sx={{ fontWeight: "bold", fontSize: "1.8rem" }}
+              component="h2"
+              sx={{
+                ...stepTitleSx,
+                fontSize: { xs: "22.5px", sm: "25.5px" },
+              }}
             >
-              Perfect Timing to Become a Mentor!
+              Perfect timing to become a mentor
             </Typography>
             <Typography
-              variant="h6"
+              variant="body1"
               sx={{
                 mb: 3,
-                maxWidth: "700px",
+                maxWidth: 640,
                 mx: "auto",
-                fontSize: "1.1rem",
-                lineHeight: 1.6,
+                color: "var(--muted)",
+                lineHeight: 1.7,
               }}
             >
               Since judging spots are full, this is an excellent opportunity to{" "}
@@ -911,58 +970,63 @@ const JudgeApplicationComponent = () => {
               <strong>direct impact and career benefits</strong>.
             </Typography>
 
-            <Box
-              sx={{ mb: 4, textAlign: "left", maxWidth: "600px", mx: "auto" }}
-            >
+            <Box sx={{ mb: 3, textAlign: "left", maxWidth: 560, mx: "auto" }}>
               <Typography
                 variant="body1"
                 sx={{
-                  mb: 2,
+                  mb: 1.5,
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1rem",
+                  color: "var(--ink)",
                 }}
               >
-                <TrendingUpRounded sx={{ mr: 2, fontSize: 24 }} />
+                <TrendingUpRounded
+                  sx={{ mr: 1.5, fontSize: 22, color: "var(--brand)" }}
+                />
                 <strong>Career Advancement:</strong>&nbsp;Showcase leadership
                 skills that employers value
               </Typography>
               <Typography
                 variant="body1"
                 sx={{
-                  mb: 2,
+                  mb: 1.5,
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1rem",
+                  color: "var(--ink)",
                 }}
               >
-                <PersonRounded sx={{ mr: 2, fontSize: 24 }} />
+                <PersonRounded
+                  sx={{ mr: 1.5, fontSize: 22, color: "var(--brand)" }}
+                />
                 <strong>Professional Development:</strong>&nbsp;Build coaching
                 and communication abilities
               </Typography>
               <Typography
                 variant="body1"
                 sx={{
-                  mb: 2,
+                  mb: 1.5,
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1rem",
+                  color: "var(--ink)",
                 }}
               >
-                <GroupsRounded sx={{ mr: 2, fontSize: 24 }} />
+                <GroupsRounded
+                  sx={{ mr: 1.5, fontSize: 22, color: "var(--brand)" }}
+                />
                 <strong>Industry Connections:</strong>&nbsp;Work closely with
                 teams and other mentors
               </Typography>
               <Typography
                 variant="body1"
                 sx={{
-                  mb: 2,
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1rem",
+                  color: "var(--ink)",
                 }}
               >
-                <WorkRounded sx={{ mr: 2, fontSize: 24 }} />
+                <WorkRounded
+                  sx={{ mr: 1.5, fontSize: 22, color: "var(--brand)" }}
+                />
                 <strong>Resume Impact:</strong>&nbsp;Demonstrate community
                 leadership and technical expertise
               </Typography>
@@ -970,88 +1034,61 @@ const JudgeApplicationComponent = () => {
 
             <Alert
               severity="success"
-              sx={{
-                mb: 4,
-                bgcolor: "rgba(255,255,255,0.95)",
-                color: "text.primary",
-              }}
+              sx={{ ...successAlertSx, mb: 3, textAlign: "left" }}
             >
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: "bold", fontSize: "1rem" }}
-              >
-                🚀 Many mentors report that the experience was more valuable
-                than judging for their professional growth!
+              <Typography variant="body1">
+                Many mentors report that the experience was more valuable than
+                judging for their professional growth!
               </Typography>
             </Alert>
 
             <Box
               sx={{
                 display: "flex",
-                gap: 3,
+                gap: 1.5,
                 justifyContent: "center",
                 flexWrap: "wrap",
               }}
             >
               <Button
                 variant="contained"
-                size="large"
                 href={`/hack/${event_id}/mentor-application`}
-                sx={{
-                  bgcolor: "white",
-                  color: "secondary.main",
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
-                  py: 1.5,
-                  px: 3,
-                  "&:hover": {
-                    bgcolor: "grey.100",
-                    transform: "translateY(-2px)",
-                  },
-                }}
+                sx={primaryButtonSx}
                 startIcon={<SchoolRounded />}
               >
-                Apply to Mentor Instead
+                Apply to mentor instead
               </Button>
               <Button
                 variant="outlined"
-                size="large"
                 href="/about/mentors"
-                sx={{
-                  borderColor: "white",
-                  color: "white",
-                  fontSize: "1rem",
-                  py: 1.5,
-                  px: 3,
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.1)",
-                  },
-                }}
+                sx={ghostButtonSx}
               >
-                Learn About Mentoring Benefits
+                Learn about mentoring benefits
               </Button>
             </Box>
-          </Paper>
+          </Box>
 
           {/* GiveButter widget when applications are closed */}
           <Box
             sx={{
               mt: 4,
               pt: 3,
-              borderTop: "1px solid",
-              borderColor: "divider",
+              borderTop: "1px solid var(--line)",
             }}
           >
             <Typography
-              variant="h6"
-              component="div"
-              sx={{ mb: 2, textAlign: "center" }}
+              component="h2"
+              sx={{
+                ...stepTitleSx,
+                fontSize: { xs: "19px", sm: "21.5px" },
+                textAlign: "center",
+              }}
             >
-              Support Our Mission
+              Support our mission
             </Typography>
             <Typography
               variant="body2"
-              sx={{ mb: 3, textAlign: "center", color: "text.secondary" }}
+              sx={{ mb: 3, textAlign: "center", color: "var(--muted)" }}
             >
               While applications are closed, you can still support Opportunity
               Hack's mission to connect nonprofits with innovative tech
@@ -1075,24 +1112,31 @@ const JudgeApplicationComponent = () => {
         </>
       )}
 
-      <Box textAlign="center" sx={{ mt: 4 }}>
+      <Box
+        sx={{
+          mt: 4,
+          display: "flex",
+          gap: 1.5,
+          justifyContent: "center",
+          flexWrap: "wrap",
+        }}
+      >
         <Button
           variant="contained"
-          color="primary"
           onClick={() => router.push("/hack")}
-          sx={{ mr: 2 }}
+          sx={primaryButtonSx}
         >
-          View Other Events
+          View other events
         </Button>
         <Button
           variant="outlined"
-          color="primary"
           onClick={() => router.push(`/hack/${event_id}`)}
+          sx={ghostButtonSx}
         >
-          Return to Event Page
+          Return to event page
         </Button>
       </Box>
-    </Paper>
+    </Box>
   );
 
   // Define steps for stepper
@@ -1112,27 +1156,33 @@ const JudgeApplicationComponent = () => {
       handleSubmit();
     } else {
       setActiveStep((prev) => prev + 1);
-      trackEvent({ action: 'judge_app_step', params: { event_label: steps[activeStep + 1], step: activeStep + 2, event_id, page: 'judge_application' } });
-      // Scroll to top of form for better UX
-      if (formRef?.current) {
-        formRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
+      trackEvent({
+        action: "judge_app_step",
+        params: {
+          event_label: steps[activeStep + 1],
+          step: activeStep + 2,
+          event_id,
+          page: "judge_application",
+        },
+      });
+      // Bring the new step's fields into view (not the page hero)
+      scrollToStepContent(stepContentRef);
     }
   };
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
-    trackEvent({ action: 'judge_app_step_back', params: { event_label: steps[activeStep - 1], step: activeStep, event_id, page: 'judge_application' } });
-    // Scroll to top of form for better UX
-    if (formRef?.current) {
-      formRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
+    trackEvent({
+      action: "judge_app_step_back",
+      params: {
+        event_label: steps[activeStep - 1],
+        step: activeStep,
+        event_id,
+        page: "judge_application",
+      },
+    });
+    // Bring the new step's fields into view (not the page hero)
+    scrollToStepContent(stepContentRef);
   };
 
   const validateBasicInfo = () => {
@@ -1185,6 +1235,13 @@ const JudgeApplicationComponent = () => {
       return false;
     }
 
+    if (!formData.introductionVideoUrl) {
+      setError(
+        "Please add a short video introduction — upload a video file or paste a YouTube, Vimeo, or Loom link",
+      );
+      return false;
+    }
+
     setError("");
     return true;
   };
@@ -1196,6 +1253,25 @@ const JudgeApplicationComponent = () => {
       if (!formData[field]) {
         setError(
           `Please fill out the ${field.replace(/([A-Z])/g, " $1").toLowerCase()} field`,
+        );
+        return false;
+      }
+    }
+
+    // At a physical venue, judging only happens in the room — block remote
+    // applications instead of soft-warning (mirrors the volunteer form).
+    // Runs on both step Next and final submit via validateForm().
+    if (!isVirtualEvent()) {
+      if (formData.inPerson !== "Yes") {
+        setError(
+          "This event's judging happens in person at the venue, so we can't accept remote judges. If you can't be there, consider mentoring (mentors can join virtually) or judging one of our online events.",
+        );
+        return false;
+      }
+      if (formData.canAttendJudging === "No") {
+        const judgingWindow = getJudgingWindow(eventData);
+        setError(
+          `Judges must be at the venue for the judging window (${judgingWindow.start}–${judgingWindow.end} on the final day) — that window is the entire role. If you can only make part of it, choose "Partial" and explain; if you can't make it at all, consider mentoring instead.`,
         );
         return false;
       }
@@ -1338,7 +1414,10 @@ const JudgeApplicationComponent = () => {
       }
 
       setSuccess(true);
-      trackEvent({ action: 'judge_app_submit', params: { event_label: 'success', event_id, page: 'judge_application' } });
+      trackEvent({
+        action: "judge_app_submit",
+        params: { event_label: "success", event_id, page: "judge_application" },
+      });
       // Scroll to top of form to show "Application Submitted!" message
       if (formRef?.current) {
         formRef.current.scrollIntoView({
@@ -1348,7 +1427,14 @@ const JudgeApplicationComponent = () => {
       }
     } catch (err) {
       console.error("Error submitting application:", err);
-      trackEvent({ action: 'judge_app_submit_error', params: { event_label: err.message, event_id, page: 'judge_application' } });
+      trackEvent({
+        action: "judge_app_submit_error",
+        params: {
+          event_label: err.message,
+          event_id,
+          page: "judge_application",
+        },
+      });
       setError(
         `Failed to submit your application. ${err.message || "Please try again."}`,
       );
@@ -1360,16 +1446,23 @@ const JudgeApplicationComponent = () => {
   // Render basic information form
   const renderBasicInfoForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Basic Information
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 1</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Basic information
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          Start with the essentials — who you are, and how teams and our staff
+          can reach you.
+        </Typography>
+      </Box>
 
       {profileLoading && (
         <Alert
           severity="info"
-          sx={{ mb: 3, display: "flex", alignItems: "center" }}
+          sx={{ ...infoAlertSx, mb: 3, display: "flex", alignItems: "center" }}
         >
-          <CircularProgress size={20} sx={{ mr: 2 }} />
+          <CircularProgress size={20} sx={{ mr: 2, color: "var(--brand)" }} />
           <Typography variant="body2">
             Loading your profile information to pre-fill the form...
           </Typography>
@@ -1379,9 +1472,9 @@ const JudgeApplicationComponent = () => {
       {dataLoadingStatus === "loading-backend" && (
         <Alert
           severity="info"
-          sx={{ mb: 3, display: "flex", alignItems: "center" }}
+          sx={{ ...infoAlertSx, mb: 3, display: "flex", alignItems: "center" }}
         >
-          <CircularProgress size={20} sx={{ mr: 2 }} />
+          <CircularProgress size={20} sx={{ mr: 2, color: "var(--brand)" }} />
           <Typography variant="body2">
             Checking for your previous application...
           </Typography>
@@ -1391,9 +1484,9 @@ const JudgeApplicationComponent = () => {
       {dataLoadingStatus === "loading-localStorage" && (
         <Alert
           severity="info"
-          sx={{ mb: 3, display: "flex", alignItems: "center" }}
+          sx={{ ...infoAlertSx, mb: 3, display: "flex", alignItems: "center" }}
         >
-          <CircularProgress size={20} sx={{ mr: 2 }} />
+          <CircularProgress size={20} sx={{ mr: 2, color: "var(--brand)" }} />
           <Typography variant="body2">
             Loading your saved progress...
           </Typography>
@@ -1403,11 +1496,11 @@ const JudgeApplicationComponent = () => {
       {profileDataLoaded &&
         !profileLoading &&
         dataLoadingStatus === "completed" && (
-          <Alert severity="success" sx={{ mb: 3 }}>
+          <Alert severity="success" sx={{ ...successAlertSx, mb: 3 }}>
             <Typography variant="body1">
-              ✓ We've automatically filled in some fields using your existing
+              We've automatically filled in some fields using your existing
               profile information. You can edit any field as needed.{" "}
-              <Link href="/profile" sx={{ fontWeight: "bold" }}>
+              <Link href="/profile" sx={refinedInlineLinkSx}>
                 View/edit your profile
               </Link>
             </Typography>
@@ -1415,7 +1508,7 @@ const JudgeApplicationComponent = () => {
         )}
 
       {dataLoadingStatus === "error" && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
+        <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
           <Typography variant="body2">
             Unable to load previous data, but you can still complete the form.
             Your progress will be saved as you work.
@@ -1432,7 +1525,7 @@ const JudgeApplicationComponent = () => {
           fullWidth
           value={formData.email}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
           helperText={
             profileDataLoaded && formData.email
               ? "Auto-filled from your profile"
@@ -1447,7 +1540,7 @@ const JudgeApplicationComponent = () => {
           fullWidth
           value={formData.name}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
           helperText={
             profileDataLoaded && formData.name
               ? "Auto-filled from your profile"
@@ -1455,12 +1548,14 @@ const JudgeApplicationComponent = () => {
           }
         />
 
-        <PronounsPicker
-          value={formData.pronouns}
-          onChange={(next) =>
-            setFormData((prev) => ({ ...prev, pronouns: next }))
-          }
-        />
+        <Box sx={{ mb: 3 }}>
+          <PronounsPicker
+            value={formData.pronouns}
+            onChange={(next) =>
+              setFormData((prev) => ({ ...prev, pronouns: next }))
+            }
+          />
+        </Box>
 
         <TextField
           label="Your Title"
@@ -1468,7 +1563,7 @@ const JudgeApplicationComponent = () => {
           fullWidth
           value={formData.title}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
           helperText="e.g. Software Engineer, Product Manager, etc."
         />
 
@@ -1478,7 +1573,7 @@ const JudgeApplicationComponent = () => {
           fullWidth
           value={formData.companyName}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
           helperText={
             profileDataLoaded && formData.companyName
               ? "Auto-filled from your profile"
@@ -1497,7 +1592,7 @@ const JudgeApplicationComponent = () => {
               ? "Auto-filled from your profile - Optional link to your LinkedIn profile"
               : "Optional - link to your LinkedIn profile"
           }
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
       </Box>
     </Box>
@@ -1506,21 +1601,31 @@ const JudgeApplicationComponent = () => {
   // Render background and experience form
   const renderBackgroundAndExperienceForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Background & Experience
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 2</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Background and experience
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          Your background shapes the questions you'll ask. Tell us where your
+          expertise lies and why judging matters to you.
+        </Typography>
+      </Box>
 
       <Box sx={{ mb: 3 }}>
         <OHackParticipationSelect
           value={formData.participationCount}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
 
         <FormControl
           fullWidth
           required
-          sx={{ mb: formData.backgroundAreas.includes("Other") ? 1 : 3 }}
+          sx={{
+            ...refinedFieldSx,
+            mb: formData.backgroundAreas.includes("Other") ? 1 : 3,
+          }}
         >
           <InputLabel id="background-areas-label">
             Which areas best describe your background?
@@ -1533,13 +1638,14 @@ const JudgeApplicationComponent = () => {
             onChange={(e) =>
               customHandleMultiSelectChange(e, "backgroundAreas")
             }
+            MenuProps={refinedSelectMenuProps}
             input={
               <OutlinedInput label="Which areas best describe your background?" />
             }
             renderValue={(selected) => (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {selected.map((value) => (
-                  <Chip key={value} label={value} />
+                  <Chip key={value} label={value} sx={refinedChipSx} />
                 ))}
               </Box>
             )}
@@ -1567,7 +1673,7 @@ const JudgeApplicationComponent = () => {
             value={formData.otherBackground}
             onChange={handleChange}
             helperText="Tell us about your specific area of expertise"
-            sx={{ mb: 3 }}
+            sx={refinedFieldSx}
           />
         )}
 
@@ -1580,7 +1686,7 @@ const JudgeApplicationComponent = () => {
           value={formData.biography}
           onChange={handleChange}
           helperText="Tell us about your professional background and expertise"
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
 
         <TextField
@@ -1591,7 +1697,27 @@ const JudgeApplicationComponent = () => {
           fullWidth
           value={formData.whyJudge}
           onChange={handleChange}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
+        />
+
+        <IntroVideoField
+          required
+          value={formData.introductionVideoUrl}
+          onChange={(url) =>
+            setFormData((prev) => ({ ...prev, introductionVideoUrl: url }))
+          }
+          accessToken={accessToken}
+          apiServerUrl={apiServerUrl}
+          onVideoAdded={(method) =>
+            trackEvent({
+              action: "judge_app_intro_video_added",
+              params: {
+                event_label: method,
+                event_id,
+                page: "judge_application",
+              },
+            })
+          }
         />
 
         <UploadPhoto
@@ -1605,7 +1731,7 @@ const JudgeApplicationComponent = () => {
           accessToken={accessToken}
           orgId={user?.orgId}
           userId={user?.userId}
-          sx={{ mb: 3 }}
+          sx={refinedFieldSx}
         />
       </Box>
     </Box>
@@ -1614,202 +1740,255 @@ const JudgeApplicationComponent = () => {
   // Render availability form
   const renderAvailabilityForm = () => {
     const arrivalTime = eventData?.constraints?.judge_venue_arrival_time;
+    const judgingWindow = getJudgingWindow(eventData);
     return (
-    <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Availability & Logistics
-      </Typography>
-
-      <Box sx={{ mb: 3 }}>
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            Important Judging Schedule
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <Eyebrow>Step 3</Eyebrow>
+          <Typography component="h2" sx={stepTitleSx}>
+            Availability and logistics
           </Typography>
-          <Typography variant="body1">
-            Judging starts at 3:00 PM on the last day of the hackathon
-            (typically Sunday). We expect to complete judging and announce the
-            winning teams by 5:30 PM. Your presence during this entire timeframe
-            is crucial. Please plan to arrive 15 to 30 minutes early to ensure you can participate fully.
+          <Typography variant="body1" sx={stepLeadSx}>
+            Judging happens once, at the end — during a fixed window on the
+            final day. Confirm you can be there for it.
           </Typography>
-        </Alert>
+        </Box>
 
-        {arrivalTime && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3 }}>
+          <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              Important judging schedule
+            </Typography>
             <Typography variant="body1">
-              <strong>Please arrive at the venue by {arrivalTime}</strong>
-              {eventData?.location ? ` (${eventData.location})` : ""} on the
-              final day. This gives you time to settle in and review the
-              projects before judging begins.
+              Judging starts at {judgingWindow.start} on the last day of the
+              hackathon (typically Sunday). We expect to complete judging and
+              announce the winning teams by {judgingWindow.end}. Your presence
+              during this entire timeframe is crucial. Please plan to arrive 15
+              to 30 minutes early to ensure you can participate fully.
             </Typography>
           </Alert>
-        )}
 
-        {eventData && eventData.endDate && (
-          <Box
-            sx={{
-              mb: 3,
-              bgcolor: "background.paper",
-              p: 2,
-              borderRadius: 1,
-              border: "1px dashed",
-            }}
-          >
-            <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-              For this event:
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Judging will take place on{" "}
-              <Box component="span" fontWeight="bold">
-                {new Date(eventData.endDate + "T00:00:00Z").toLocaleDateString(
-                  "en-US",
-                  {
+          {arrivalTime && (
+            <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
+              <Typography variant="body1">
+                <strong>
+                  Please arrive at the venue by {formatTime12h(arrivalTime)}
+                </strong>
+                {eventData?.location ? ` (${eventData.location})` : ""} on the
+                final day. This gives you time to settle in and review the
+                projects before judging begins.
+              </Typography>
+            </Alert>
+          )}
+
+          {eventData && eventData.endDate && (
+            <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 700, color: "var(--ink)", mb: 0.75 }}
+              >
+                For this event
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: "var(--muted)", lineHeight: 1.7 }}
+              >
+                Judging will take place on{" "}
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 700, color: "var(--ink)" }}
+                >
+                  {new Date(
+                    eventData.endDate + "T00:00:00Z",
+                  ).toLocaleDateString("en-US", {
                     weekday: "long",
                     year: "numeric",
                     month: "long",
                     day: "numeric",
                     timeZone: "UTC",
-                  },
-                )}
-              </Box>{" "}
-              from{" "}
-              <Box component="span" fontWeight="bold">
-                3:00 PM to approximately 5:30 PM
-              </Box>
-            </Typography>
-          </Box>
-        )}
-
-        <FormControl required component="fieldset" sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Can you commit to being present for the entire judging period (3:00
-            PM to 5:30 PM on the last day)?
-          </Typography>
-          <RadioGroup
-            name="canAttendJudging"
-            value={formData.canAttendJudging}
-            onChange={handleChange}
-          >
-            <FormControlLabel
-              value="Yes"
-              control={<Radio />}
-              label="Yes, I can be present for the entire judging period"
-            />
-            <FormControlLabel
-              value="No"
-              control={<Radio />}
-              label="No, I cannot commit to this time period"
-            />
-            <FormControlLabel
-              value="Partial"
-              control={<Radio />}
-              label="I can attend part of the judging period (please explain in availability)"
-            />
-          </RadioGroup>
-          {formData.canAttendJudging === "No" && (
-            <Alert severity="warning" sx={{ mt: 1 }}>
-              Please note that availability during the judging period is a key
-              requirement for judges. Your application may still be considered,
-              but priority will be given to those who can attend the full
-              judging session.
-            </Alert>
+                  })}
+                </Box>{" "}
+                from{" "}
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 700, color: "var(--ink)" }}
+                >
+                  {judgingWindow.start} to approximately {judgingWindow.end}
+                </Box>
+              </Typography>
+            </Box>
           )}
-        </FormControl>
 
-        <TextField
-          label="Additional availability details"
-          name="availability"
-          multiline
-          rows={2}
-          fullWidth
-          value={formData.availability}
-          onChange={handleChange}
-          helperText="Please specify any additional availability details or constraints"
-          sx={{ mb: 3 }}
-        />
+          <FormControl required component="fieldset" sx={{ mb: 3 }}>
+            <Typography
+              variant="subtitle1"
+              gutterBottom
+              sx={{ fontWeight: 600, color: "var(--ink)" }}
+            >
+              Can you commit to being present for the entire judging period (
+              {judgingWindow.start} to {judgingWindow.end} on the last day)?
+            </Typography>
+            <RadioGroup
+              name="canAttendJudging"
+              value={formData.canAttendJudging}
+              onChange={handleChange}
+            >
+              <FormControlLabel
+                value="Yes"
+                control={<Radio sx={refinedChoiceSx} />}
+                label="Yes, I can be present for the entire judging period"
+              />
+              <FormControlLabel
+                value="No"
+                control={<Radio sx={refinedChoiceSx} />}
+                label="No, I cannot commit to this time period"
+              />
+              <FormControlLabel
+                value="Partial"
+                control={<Radio sx={refinedChoiceSx} />}
+                label="I can attend part of the judging period (please explain in availability)"
+              />
+            </RadioGroup>
+            {formData.canAttendJudging === "No" &&
+              (isVirtualEvent() ? (
+                <Alert severity="warning" sx={{ ...warningAlertSx, mt: 1 }}>
+                  Please note that availability during the judging period is a
+                  key requirement for judges. Your application may still be
+                  considered, but priority will be given to those who can attend
+                  the full judging session.
+                </Alert>
+              ) : (
+                <Alert severity="error" sx={{ ...errorAlertSx, mt: 1 }}>
+                  <Typography variant="body2">
+                    <strong>
+                      The judging window is the entire role at this event
+                    </strong>{" "}
+                    — we can't accept judges who can't be at the venue for it.
+                    If you can make part of the window, choose "Partial" and
+                    explain above. Otherwise,{" "}
+                    <Link
+                      href={`/hack/${event_id}/mentor-application`}
+                      sx={refinedInlineLinkSx}
+                    >
+                      apply to mentor
+                    </Link>{" "}
+                    — mentors help all weekend and can join virtually.
+                  </Typography>
+                </Alert>
+              ))}
+          </FormControl>
 
-        <FormControl required component="fieldset" sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            {eventData &&
-            ["Virtual", "Global", "Online"].some((term) =>
-              eventData.location?.toLowerCase().includes(term.toLowerCase()),
-            )
-              ? "Will you be participating online?"
-              : `Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : " at the event location"}?`}
-          </Typography>
-          
-          {/* Show preference indicator for in-person events */}
-          {eventData &&
-            !["Virtual", "Global", "Online"].some((term) =>
-              eventData.location?.toLowerCase().includes(term.toLowerCase()),
-            ) && (
-              <FormHelperText sx={{ mb: 2, color: "warning.main", fontWeight: "bold" }}>
-                ⭐ In-person participation is strongly preferred for judges
+          <TextField
+            label="Additional availability details"
+            name="availability"
+            multiline
+            rows={2}
+            fullWidth
+            value={formData.availability}
+            onChange={handleChange}
+            helperText="Please specify any additional availability details or constraints"
+            sx={refinedFieldSx}
+          />
+
+          <FormControl required component="fieldset" sx={{ mb: 3 }}>
+            <Typography
+              variant="subtitle1"
+              gutterBottom
+              sx={{ fontWeight: 600, color: "var(--ink)" }}
+            >
+              {isVirtualEvent()
+                ? "Will you be participating online?"
+                : `Are you joining us in-person${eventData?.location ? ` in ${eventData.location}` : " at the event location"}?`}
+            </Typography>
+
+            {/* In-person is a hard requirement at physical venues */}
+            {eventData && !isVirtualEvent() && (
+              <FormHelperText sx={{ mb: 2, color: "#9b5d05", fontWeight: 700 }}>
+                Judging happens at the venue — in-person attendance is required
+                for judges at this event.
               </FormHelperText>
             )}
 
-          <RadioGroup
-            name="inPerson"
-            value={formData.inPerson}
-            onChange={handleChange}
-          >
-            {eventData &&
-            ["Virtual", "Global", "Online"].some((term) =>
-              eventData.location?.toLowerCase().includes(term.toLowerCase()),
-            ) ? (
-              <>
-                <FormControlLabel
-                  value="Yes"
-                  control={<Radio />}
-                  label="Yes, online"
-                />
-                <FormControlLabel
-                  value="No"
-                  control={<Radio />}
-                  label="No, I cannot participate"
-                />
-              </>
-            ) : (
-              <>
-                <FormControlLabel
-                  value="Yes"
-                  control={<Radio />}
-                  label="Yes, I'll be there in-person ✓"
-                />
-                <FormControlLabel
-                  value="No"
-                  control={<Radio />}
-                  label="No, I'll participate remotely"
-                />
-              </>
-            )}
-          </RadioGroup>
+            <RadioGroup
+              name="inPerson"
+              value={formData.inPerson}
+              onChange={handleChange}
+            >
+              {isVirtualEvent() ? (
+                <>
+                  <FormControlLabel
+                    value="Yes"
+                    control={<Radio sx={refinedChoiceSx} />}
+                    label="Yes, online"
+                  />
+                  <FormControlLabel
+                    value="No"
+                    control={<Radio sx={refinedChoiceSx} />}
+                    label="No, I cannot participate"
+                  />
+                </>
+              ) : (
+                <>
+                  <FormControlLabel
+                    value="Yes"
+                    control={<Radio sx={refinedChoiceSx} />}
+                    label="Yes, I'll be there in-person ✓"
+                  />
+                  <FormControlLabel
+                    value="No"
+                    control={<Radio sx={refinedChoiceSx} />}
+                    label="No, I can't attend in person"
+                  />
+                </>
+              )}
+            </RadioGroup>
 
-          {/* Additional context for remote judges at physical events */}
-          {formData.inPerson === "No" &&
-            eventData &&
-            !["Virtual", "Global", "Online"].some((term) =>
-              eventData.location?.toLowerCase().includes(term.toLowerCase()),
-            ) && (
-              <Alert severity="warning" sx={{ mt: 2 }}>
-                <Typography variant="body2">
-                  Please note: Remote judging is possible but in-person judges
-                  are prioritized. If selected, we'll discuss remote judging
-                  logistics with you.
+            {/* Remote judging isn't available at physical events — say so
+                in place and point to real alternatives instead of a dead end */}
+            {formData.inPerson === "No" && eventData && !isVirtualEvent() && (
+              <Alert severity="error" sx={{ ...errorAlertSx, mt: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>We can't accept remote judges for this event</strong>{" "}
+                  — judging happens in person at the venue. You won't be able to
+                  submit this application, but there are two great ways to help
+                  from anywhere:
+                </Typography>
+                <Typography variant="body2" component="div">
+                  •{" "}
+                  <Link
+                    href={`/hack/${event_id}/mentor-application`}
+                    sx={refinedInlineLinkSx}
+                  >
+                    Apply to mentor this event
+                  </Link>{" "}
+                  — mentors support teams all weekend and can join virtually.
+                  <br />•{" "}
+                  <Link href="/hack" sx={refinedInlineLinkSx}>
+                    Judge one of our online events
+                  </Link>{" "}
+                  instead.
                 </Typography>
               </Alert>
             )}
-        </FormControl>
+          </FormControl>
+        </Box>
       </Box>
-    </Box>
     );
   };
 
   // Render review form
   const renderReviewForm = () => (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
-        Review & Submit
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Eyebrow>Step 4</Eyebrow>
+        <Typography component="h2" sx={stepTitleSx}>
+          Review and submit
+        </Typography>
+        <Typography variant="body1" sx={stepLeadSx}>
+          One last pass. Confirm the judging commitment, agree to the code of
+          conduct, and send it to our team.
+        </Typography>
+      </Box>
 
       <TextField
         label="(Optional) Anything else to share?"
@@ -1819,7 +1998,7 @@ const JudgeApplicationComponent = () => {
         fullWidth
         value={formData.additionalInfo}
         onChange={handleChange}
-        sx={{ mb: 4 }}
+        sx={refinedFieldSx}
       />
 
       <FormControlLabel
@@ -1828,17 +2007,17 @@ const JudgeApplicationComponent = () => {
             name="judgingCommitment"
             checked={!!formData.judgingCommitment}
             onChange={handleChange}
-            color="primary"
+            sx={refinedChoiceSx}
             required
           />
         }
         label={
-          <Typography variant="body1">
+          <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
             I will review each project I'm assigned and ask questions tied to
             the judging criteria — Scope, Documentation, Polish, and Security.
           </Typography>
         }
-        sx={{ mb: 2, alignItems: "flex-start" }}
+        sx={{ mb: 2, alignItems: "flex-start", color: "var(--ink)" }}
       />
 
       <FormControlLabel
@@ -1847,26 +2026,27 @@ const JudgeApplicationComponent = () => {
             name="codeOfConduct"
             checked={formData.codeOfConduct}
             onChange={handleChange}
-            color="primary"
+            sx={refinedChoiceSx}
             required
           />
         }
         label={
-          <Typography variant="body1">
+          <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
             I agree to the{" "}
             <Link
               href="/hack/code-of-conduct"
               target="_blank"
               rel="noopener noreferrer"
+              sx={refinedInlineLinkSx}
             >
               Code of Conduct
             </Link>
           </Typography>
         }
-        sx={{ mb: 2 }}
+        sx={{ mb: 2, color: "var(--ink)" }}
       />
 
-      <Alert severity="info" sx={{ mb: 3 }}>
+      <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
         <Typography variant="body1">
           Your application is <strong>pending review</strong> — our staff
           reviews every judge application by hand, which can take up to a week.
@@ -1978,26 +2158,136 @@ const JudgeApplicationComponent = () => {
     },
   };
 
-  // If form submitted successfully, show success message
-  if (success) {
+  const renderSuccessMessage = () => {
     return (
-      <Container>
+      <RefinedRoot>
+        <Head>
+          <title>{pageTitle}</title>
+          <meta name="description" content={pageDescription} />
+          <link rel="canonical" href={canonicalUrl} />
+          <meta name="theme-color" content="#1B3A6B" />
+        </Head>
+
+        {/* Structured Data */}
+        <Script
+          id="judge-application-structured-data"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(judgeApplicationStructuredData),
+          }}
+        />
+
+        <section className="ohx-wrap" style={formSectionStyle}>
+          <div style={{ maxWidth: 760, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <Eyebrow>Application received</Eyebrow>
+              <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                Application <span className="ohx-italic">submitted.</span>
+              </h1>
+              <p
+                className="ohx-lead"
+                style={{ margin: "16px auto 0", textAlign: "center" }}
+              >
+                Thanks for offering your time and expertise. We have your judge
+                application and our team will review it by hand.
+              </p>
+            </div>
+
+            <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+              <Alert severity="success" sx={{ ...successAlertSx, mb: 2 }}>
+                <Typography variant="body1">
+                  Thanks for applying to judge at Opportunity Hack — we've
+                  received your application.
+                </Typography>
+              </Alert>
+
+              <Alert severity="info" sx={{ ...infoAlertSx, mb: 4 }}>
+                <Typography variant="body1">
+                  <strong>Your application is pending review.</strong> Our staff
+                  reviews every judge application — this typically takes up to a
+                  week. You'll get an email when you're approved or if we have
+                  follow-up questions.
+                </Typography>
+              </Alert>
+
+              {Boolean(volunteerId) && isSelected && (
+                <Box sx={{ ...emphasisPanelSx, mb: 4 }}>
+                  <VolunteerCheckInQR
+                    eventId={event_id}
+                    volunteerId={volunteerId}
+                    isSelected={isSelected}
+                    volunteerType="judge"
+                    name={formData.name}
+                    isSubmitted={true}
+                    qrSize={200}
+                    sx={{ mx: "auto", maxWidth: 500 }}
+                  />
+                </Box>
+              )}
+
+              <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
+                <GiveButterWidget
+                  context="success"
+                  userId={user?.userId}
+                  applicationType="judge"
+                  size="large"
+                  onDonationEvent={(eventData) => {
+                    console.log("Judge donation event:", eventData);
+                  }}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 1.5,
+                  justifyContent: "center",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={() => router.push(`/hack/${event_id}`)}
+                  sx={primaryButtonSx}
+                >
+                  Return to hackathon page
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => router.push("/hack")}
+                  sx={ghostButtonSx}
+                >
+                  See upcoming events
+                </Button>
+              </Box>
+            </Box>
+          </div>
+        </section>
+      </RefinedRoot>
+    );
+  };
+
+  const renderApplicationForm = () => {
+    return (
+      <RefinedRoot>
         <Head>
           <title>{pageTitle}</title>
           <meta name="description" content={pageDescription} />
           <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
+          <meta charSet="UTF-8" />
+          <meta
             name="keywords"
             content="hackathon judge, judge application, tech for good, nonprofit hackathon, opportunity hack, judging, volunteer, tech judging"
           />
-          <link rel="canonical" href={canonicalUrl} />
-
-          {/* DNS prefetch and preconnect for performance */}
-          <link rel="dns-prefetch" href="//cdn.ohack.dev" />
-          <link
-            rel="preconnect"
-            href="https://cdn.ohack.dev"
-            crossOrigin="anonymous"
+          <meta name="author" content="Opportunity Hack" />
+          <meta
+            name="robots"
+            content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
           />
+          <link rel="canonical" href={canonicalUrl} />
 
           {/* Open Graph tags */}
           <meta property="og:title" content={pageTitle} />
@@ -2024,9 +2314,18 @@ const JudgeApplicationComponent = () => {
           />
 
           {/* Additional SEO meta tags */}
-          <meta name="robots" content="index, follow" />
-          <meta name="author" content="Opportunity Hack" />
-          <meta name="theme-color" content="#1976d2" />
+          <meta name="application-name" content="Opportunity Hack" />
+          <meta name="theme-color" content="#1B3A6B" />
+          <meta name="format-detection" content="telephone=no" />
+          <RefinedFonts />
+
+          {/* Preconnect to optimize loading */}
+          <link
+            rel="preconnect"
+            href="https://cdn.ohack.dev"
+            crossOrigin="anonymous"
+          />
+          <link rel="dns-prefetch" href="https://cdn.ohack.dev" />
         </Head>
 
         {/* Structured Data */}
@@ -2038,495 +2337,507 @@ const JudgeApplicationComponent = () => {
           }}
         />
 
-        <Box my={8} textAlign="center">
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{ fontSize: "2.5rem", mb: 4, mt: 12 }}
-          >
-            Application Submitted!
-          </Typography>
-
-          <Alert severity="success" sx={{ mb: 2, mx: "auto", maxWidth: 600 }}>
-            <Typography variant="body1">
-              Thanks for applying to judge at Opportunity Hack — we've received
-              your application.
-            </Typography>
-          </Alert>
-
-          <Alert severity="info" sx={{ mb: 4, mx: "auto", maxWidth: 600 }}>
-            <Typography variant="body1">
-              <strong>Your application is pending review.</strong> Our staff
-              reviews every judge application — this typically takes up to a
-              week. You'll get an email when you're approved or if we have
-              follow-up questions.
-            </Typography>
-          </Alert>
-
-          <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
-            <GiveButterWidget
-              context="success"
-              userId={user?.userId}
-              applicationType="judge"
-              size="large"
-              onDonationEvent={(eventData) => {
-                console.log("Judge donation event:", eventData);
-              }}
-            />
-          </Box>
-
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => router.push(`/hack/${event_id}`)}
-            sx={{ mt: 2 }}
-          >
-            Return to Hackathon Page
-          </Button>
-        </Box>
-      </Container>
-    );
-  }
-
-  return (
-    <Container>
-      <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="hackathon judge, judge application, tech for good, nonprofit hackathon, opportunity hack, judging, volunteer, tech judging"
-        />
-        <link rel="canonical" href={canonicalUrl} />
-
-        {/* DNS prefetch and preconnect for performance */}
-        <link rel="dns-prefetch" href="//cdn.ohack.dev" />
-        <link
-          rel="preconnect"
-          href="https://cdn.ohack.dev"
-          crossOrigin="anonymous"
-        />
-
-        {/* Open Graph tags */}
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:image" content={imageUrl} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta
-          property="og:image:alt"
-          content="Judges evaluating tech solutions at Opportunity Hack"
-        />
-        <meta property="og:site_name" content="Opportunity Hack" />
-
-        {/* Twitter Card tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content={imageUrl} />
-        <meta
-          name="twitter:image:alt"
-          content="Judges evaluating tech solutions at Opportunity Hack"
-        />
-
-        {/* Additional SEO meta tags */}
-        <meta name="robots" content="index, follow" />
-        <meta name="author" content="Opportunity Hack" />
-        <meta name="theme-color" content="#1976d2" />
-      </Head>
-
-      {/* Structured Data */}
-      <Script
-        id="judge-application-structured-data"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(judgeApplicationStructuredData),
-        }}
-      />
-
-      {/* Form persistence notification component */}
-      <FormPersistenceControls
-        onSave={saveToLocalStorage}
-        onRestore={loadFromLocalStorage}
-        onClear={clearSavedData}
-        notification={notification}
-        onCloseNotification={closeNotification}
-      />
-
-      <Box ref={formRef}>
-        <Typography
-          variant="h1"
-          component="h1"
-          sx={{ fontSize: "2.5rem", mb: 2, mt: 0 }}
-        >
-          Judge Application
-        </Typography>
-
-        {/* Feedback CTA — selected judges, once the event is live or ended */}
-        {isSelected && (
-          <SurveyCTA
-            eventId={event_id}
-            startDate={eventData?.startDate}
-            endDate={eventData?.endDate}
-          />
-        )}
-
-        {/* QR Code for Check-in */}
-        <VolunteerCheckInQR
-          eventId={event_id}
-          volunteerId={volunteerId}
-          isSelected={isSelected}
-          volunteerType="judge"
-          name={formData.name}
-          isSubmitted={true}
-          qrSize={200}
-          sx={{ mx: "auto", maxWidth: 500 }}
-        />
-
-        {isLoading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box>
-            {/* Header section with responsive layout */}
+        <section className="ohx-wrap" style={formSectionStyle}>
+          <Box ref={formRef}>
             <Box
               sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: { xs: "flex-start", md: "flex-start" },
-                gap: 2,
-                mb: 3,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  lg: "minmax(0, 1.1fr) 320px",
+                },
+                gap: { xs: 4, lg: 5 },
+                alignItems: "start",
+                mb: 4,
               }}
             >
-              {/* Event info */}
-              <Box sx={{ flex: 1 }}>
+              <Box>
+                <Eyebrow>
+                  {eventData
+                    ? `${eventData.name} · judge application`
+                    : "Judge application"}
+                </Eyebrow>
+                <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                  Decide what{" "}
+                  <span className="ohx-italic">ships for nonprofits.</span>
+                </h1>
+                <p className="ohx-lead" style={{ marginTop: 16 }}>
+                  Judges are the last mentors a team gets. You'll score finished
+                  projects against a real rubric — Scope, Documentation, Polish,
+                  Security — and ask the questions a five-minute demo can't
+                  answer, then help decide which builds go on to help a
+                  nonprofit.
+                </p>
+
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "repeat(2,minmax(0,1fr))",
+                      sm: "repeat(3,minmax(0,1fr))",
+                    },
+                    gap: 2,
+                    mt: 3,
+                    maxWidth: 540,
+                  }}
+                >
+                  {/* Values must stay consistent with the claims on
+                      /hackathon-judge-opportunities (4–6 hrs) and
+                      /hackathon-judging-criteria (8–10 projects) */}
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat value="4–6 hrs" label="total commitment" />
+                  </Box>
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat value="8–10" label="projects to score" />
+                  </Box>
+                  <Box className="ohx-card" sx={{ p: 2.5 }}>
+                    <Stat value="Since 2013" label="hacking for good" />
+                  </Box>
+                </Box>
+
                 {eventData && (
-                  <>
+                  <Box
+                    className="ohx-card"
+                    sx={{ mt: 3, p: { xs: 2.5, md: 3 } }}
+                  >
+                    <Eyebrow>Event details</Eyebrow>
                     <Typography
-                      variant="h2"
                       component="h2"
-                      sx={{ fontSize: "1.75rem", mb: 1 }}
+                      sx={{
+                        ...stepTitleSx,
+                        fontSize: { xs: "22.5px", sm: "27px" },
+                        mt: 1,
+                      }}
                     >
                       {eventData.name}
                     </Typography>
-
-                    <Typography
-                      variant="h3"
-                      component="h3"
-                      sx={{
-                        fontSize: "1.25rem",
-                        mb: 1,
-                        color: "text.secondary",
-                      }}
-                    >
+                    <Typography sx={{ color: "var(--muted)", mb: 1 }}>
                       {eventData.location}
                     </Typography>
-
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        mb: 1,
-                        color: "text.secondary",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                      }}
-                    >
-                      <Box
-                        component="span"
-                        sx={{ display: "inline-flex", alignItems: "center" }}
-                      >
-                        📆 {eventData.formattedStartDate}
-                      </Box>
+                    <Typography sx={{ color: "var(--muted)", lineHeight: 1.7 }}>
+                      {eventData.formattedStartDate}
                       {eventData.formattedStartDate !==
-                        eventData.formattedEndDate && (
-                        <>
-                          <Box component="span" sx={{ mx: 0.5 }}>
-                            to
-                          </Box>
-                          <Box
-                            component="span"
-                            sx={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            {eventData.formattedEndDate}
-                          </Box>
-                        </>
-                      )}
+                      eventData.formattedEndDate
+                        ? ` to ${eventData.formattedEndDate}`
+                        : ""}
                     </Typography>
-                  </>
-                )}
-              </Box>
-
-              {/* Social proof image */}
-              <Box
-                sx={{
-                  width: { xs: "100%", sm: "180px", md: "220px" },
-                  height: { xs: "140px", sm: "120px", md: "150px" },
-                  borderRadius: 2,
-                  overflow: "hidden",
-                  boxShadow: 2,
-                  flexShrink: 0,
-                  alignSelf: { xs: "center", md: "flex-start" },
-                  maxWidth: "100%",
-                  mt: { xs: 0, md: 1 },
-                }}
-              >
-                <img
-                  src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp"
-                  alt="Professional judges evaluating innovative tech solutions at Opportunity Hack"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "block",
-                    objectFit: "cover",
-                  }}
-                />
-              </Box>
-            </Box>
-
-            {/* Add ApplicationNav component */}
-            <ApplicationNav eventId={event_id} currentType="judge" />
-
-            <Box sx={{ mb: 4 }}>
-              {eventData && eventData.isEventPast ? (
-                <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                  <Alert severity="warning" sx={{ mb: 3 }}>
-                    <Typography variant="h6" component="div" sx={{ mb: 1 }}>
-                      This event has already ended
-                    </Typography>
-                    <Typography variant="body1">
-                      Applications are no longer being accepted for judges as
-                      this hackathon has already concluded. Please check our
-                      upcoming events for future judging opportunities.
-                    </Typography>
-                  </Alert>
-
-                  <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
-                    <GiveButterWidget
-                      context="event-ended"
-                      userId={user?.userId}
-                      applicationType="judge"
-                      size="large"
-                      onDonationEvent={(eventData) => {
-                        // Track judge application donations when event ended
-                        console.log("Event ended judge donation event:", eventData);
-                      }}
-                    />
-                  </Box>
-
-                  <Box textAlign="center">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => router.push("/hack")}
-                      sx={{ mt: 2 }}
-                    >
-                      View Upcoming Events
-                    </Button>
-                  </Box>
-                </Paper>
-              ) : !applicationConstraints.isUnlocked ? (
-                // Show application closed UI with optional passcode unlock
-                renderApplicationClosed()
-              ) : (
-                <>
-                  {/* Show success message when application is unlocked via passcode */}
-                  {applicationConstraints.passcode &&
-                    applicationConstraints.isUnlocked && (
-                      <Alert severity="success" sx={{ mb: 3 }}>
-                        <Typography variant="body2">
-                          ✓ Access granted! You can now proceed with your judge
-                          application.
-                        </Typography>
-                      </Alert>
-                    )}
-
-                  <Stepper
-                    activeStep={activeStep}
-                    alternativeLabel={!isMobile}
-                    orientation={isMobile ? "horizontal" : "horizontal"}
-                    sx={{
-                      mb: 4,
-                      ...(isMobile && {
-                        "& .MuiStepLabel-root": {
-                          padding: "0 4px", // Reduce padding on mobile
-                        },
-                        "& .MuiStepLabel-labelContainer": {
-                          width: "auto", // Let the label container be as small as possible
-                        },
-                        "& .MuiStepLabel-label": {
-                          fontSize: "0.7rem", // Smaller text on mobile
-                          whiteSpace: "nowrap", // Prevent text wrapping
-                        },
-                        "& .MuiSvgIcon-root": {
-                          width: 20, // Smaller icons
-                          height: 20,
-                        },
-                        overflowX: "auto", // Allow horizontal scrolling if needed
-                        "&::-webkit-scrollbar": {
-                          display: "none", // Hide scrollbar on webkit browsers
-                        },
-                        scrollbarWidth: "none", // Hide scrollbar on Firefox
-                      }),
-                    }}
-                  >
-                    {steps.map((label) => (
-                      <Step key={label}>
-                        <StepLabel>
-                          {isMobile
-                            ? // On mobile, show abbreviated labels or just the step number
-                              activeStep === steps.indexOf(label)
-                              ? label
-                              : steps.indexOf(label) + 1
-                            : // On desktop, show full labels
-                              label}
-                        </StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-
-                  <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                    <Typography
-                      variant="h5"
-                      component="h2"
-                      sx={{ fontWeight: 600, mb: 1.5 }}
-                    >
-                      Judge at Opportunity Hack
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
-                      Strong judging is what makes the work teams put in
-                      meaningful — for them, and for the nonprofits they're
-                      building for. As a judge, you'll review every project
-                      you're assigned and ask questions that probe gaps in the
-                      judging criteria so teams get real, useful feedback.
-                    </Typography>
-
-                    {eventData && eventData.description && (
-                      <Box sx={eventDescriptionMarkdownSx}>
-                        <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
-                          About this event
-                        </Typography>
+                    {eventData.description && (
+                      <Box sx={eventMarkdownSx}>
                         <ReactMarkdown>{eventData.description}</ReactMarkdown>
                       </Box>
                     )}
+                  </Box>
+                )}
+              </Box>
 
-                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
+              <Box className="ohx-card" sx={{ p: 2.25 }}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    width: "100%",
+                    aspectRatio: "16 / 10",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    border: "1px solid var(--line)",
+                    mb: 2,
+                  }}
+                >
+                  <Image
+                    src="https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp"
+                    alt="Professional judges evaluating innovative tech solutions at Opportunity Hack"
+                    fill
+                    sizes="(max-width: 1200px) 100vw, 320px"
+                    style={{ objectFit: "cover" }}
+                  />
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "var(--muted)", lineHeight: 1.7, mb: 1.5 }}
+                >
+                  The best judges don't just score. They ask the one question
+                  that shows whether a team actually understood the nonprofit's
+                  problem.
+                </Typography>
+                <Link
+                  href="/about/judges"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    ...refinedInlineLinkSx,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    "&:hover": {
+                      ...refinedInlineLinkSx["&:hover"],
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  Read the judging guide <Arrow />
+                </Link>
+              </Box>
+            </Box>
+
+            <Box sx={{ mb: 2.5 }}>
+              <ApplicationNav eventId={event_id} currentType="judge" />
+            </Box>
+
+            {/* Feedback CTA — selected judges, once the event is live or ended */}
+            {isSelected && (
+              <SurveyCTA
+                eventId={event_id}
+                startDate={eventData?.startDate}
+                endDate={eventData?.endDate}
+              />
+            )}
+
+            {Boolean(volunteerId) && isSelected && (
+              <Box className="ohx-card" sx={{ p: 3, mb: 3, maxWidth: 560 }}>
+                <Eyebrow>Check-in</Eyebrow>
+                <VolunteerCheckInQR
+                  eventId={event_id}
+                  volunteerId={volunteerId}
+                  isSelected={isSelected}
+                  volunteerType="judge"
+                  name={formData.name}
+                  isSubmitted={true}
+                  qrSize={200}
+                  sx={{ mx: "auto", maxWidth: 500 }}
+                />
+              </Box>
+            )}
+
+            {isLoading ? (
+              <Box
+                className="ohx-card"
+                sx={{
+                  minHeight: 240,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mt: 3,
+                }}
+              >
+                <CircularProgress sx={{ color: "var(--brand)" }} />
+              </Box>
+            ) : (
+              <Box sx={{ mt: 3 }}>
+                {eventData && eventData.isEventPast ? (
+                  <Box
+                    className="ohx-card"
+                    sx={{ p: { xs: 2.5, sm: 3.5 }, mb: 4 }}
+                  >
+                    <Alert severity="warning" sx={{ ...warningAlertSx, mb: 3 }}>
                       <Typography
-                        variant="body1"
-                        sx={{ fontWeight: 600, mb: 1 }}
-                      >
-                        What good judging looks like
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 1 }}>
-                        We score on four pillars — Scope, Documentation, Polish,
-                        and Security (
-                        <Link
-                          href="/hackathon-judging-criteria"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ fontWeight: 600 }}
-                        >
-                          read the full rubric
-                        </Link>
-                        ). When the team hasn't covered a pillar in their pitch,
-                        ask probing questions to find out:
-                      </Typography>
-                      <Box component="ul" sx={{ m: 0, pl: 3 }}>
-                        <Typography component="li" variant="body1">
-                          <strong>Scope:</strong> "Which user problem does this
-                          solve, and how did you decide what to leave out?"
-                        </Typography>
-                        <Typography component="li" variant="body1">
-                          <strong>Documentation:</strong> "If a new contributor
-                          joined Monday, where would they start?"
-                        </Typography>
-                        <Typography component="li" variant="body1">
-                          <strong>Polish:</strong> "Walk me through the happy
-                          path — what does the nonprofit see?"
-                        </Typography>
-                        <Typography component="li" variant="body1">
-                          <strong>Security:</strong> "Where does sensitive data
-                          live, and who has access?"
-                        </Typography>
-                      </Box>
-                    </Alert>
-
-                    <Alert severity="info" sx={{ mb: 4 }}>
-                      <Typography variant="body1">
-                        New to judging at Opportunity Hack? Visit our{" "}
-                        <Link
-                          href="/about/judges"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ fontWeight: "bold" }}
-                        >
-                          Judges Information Page
-                        </Link>{" "}
-                        for the full process and commitment.
-                      </Typography>
-                    </Alert>
-
-                    {(error || recaptchaError) && (
-                      <Alert severity="error" sx={{ mb: 4 }}>
-                        {error || recaptchaError}
-                      </Alert>
-                    )}
-
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSubmit();
-                      }}
-                    >
-                      {getStepContent(activeStep)}
-
-                      <Box
+                        variant="h6"
+                        component="div"
                         sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          mt: 4,
+                          mb: 1,
+                          fontFamily: FONT_DISPLAY,
+                          fontWeight: 500,
                         }}
                       >
-                        <Button
-                          disabled={activeStep === 0 || submitting}
-                          onClick={handleBack}
-                          variant="outlined"
-                        >
-                          Back
-                        </Button>
+                        This event has already ended
+                      </Typography>
+                      <Typography variant="body1">
+                        Applications are no longer being accepted for judges as
+                        this hackathon has already concluded. Please check our
+                        upcoming events for future judging opportunities.
+                      </Typography>
+                    </Alert>
 
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={handleNext}
-                          disabled={submitting || recaptchaLoading}
+                    <Box
+                      sx={{ mb: 4, display: "flex", justifyContent: "center" }}
+                    >
+                      <GiveButterWidget
+                        context="event-ended"
+                        userId={user?.userId}
+                        applicationType="judge"
+                        size="large"
+                        onDonationEvent={(eventData) => {
+                          // Track judge application donations when event ended
+                          console.log(
+                            "Event ended judge donation event:",
+                            eventData,
+                          );
+                        }}
+                      />
+                    </Box>
+
+                    <Box textAlign="center">
+                      <Button
+                        variant="contained"
+                        onClick={() => router.push("/hack")}
+                        sx={primaryButtonSx}
+                      >
+                        View upcoming events
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : !applicationConstraints.isUnlocked ? (
+                  // Show application closed UI with optional passcode unlock
+                  renderApplicationClosed()
+                ) : (
+                  <>
+                    {/* Show success message when application is unlocked via passcode */}
+                    {applicationConstraints.passcode &&
+                      applicationConstraints.isUnlocked && (
+                        <Alert
+                          severity="success"
+                          sx={{ ...successAlertSx, mb: 3 }}
                         >
-                          {activeStep === steps.length - 1 ? (
-                            submitting || recaptchaLoading ? (
-                              <CircularProgress size={24} />
-                            ) : (
-                              "Submit Application"
-                            )
-                          ) : (
-                            "Next"
-                          )}
-                        </Button>
+                          <Typography variant="body2">
+                            Access granted! You can now proceed with your judge
+                            application.
+                          </Typography>
+                        </Alert>
+                      )}
+
+                    {/* Save/restore controls live beside the form they act on
+                        (mt: 0 — the section provides the NavBar clearance) */}
+                    <FormPersistenceControls
+                      sx={{ mt: 0, mb: 2 }}
+                      onSave={saveToLocalStorage}
+                      onRestore={loadFromLocalStorage}
+                      onClear={clearSavedData}
+                      notification={notification}
+                      onCloseNotification={closeNotification}
+                    />
+
+                    <Box
+                      className="ohx-card"
+                      sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}
+                    >
+                      <Stepper
+                        activeStep={activeStep}
+                        alternativeLabel={!isMobile}
+                        orientation="horizontal"
+                        sx={{
+                          ...refinedStepperSx,
+                          ...(isMobile && refinedStepperMobileSx),
+                        }}
+                      >
+                        {steps.map((label) => (
+                          <Step key={label}>
+                            <StepLabel>
+                              {isMobile
+                                ? activeStep === steps.indexOf(label)
+                                  ? label
+                                  : steps.indexOf(label) + 1
+                                : label}
+                            </StepLabel>
+                          </Step>
+                        ))}
+                      </Stepper>
+                    </Box>
+
+                    <Box
+                      className="ohx-card"
+                      sx={{ p: { xs: 2.5, sm: 3, md: 4 }, mb: 4 }}
+                    >
+                      <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
+                        <Eyebrow>What we expect</Eyebrow>
+                        <Typography
+                          component="h2"
+                          sx={{
+                            ...stepTitleSx,
+                            fontSize: { xs: "21.5px", sm: "25px" },
+                            mt: 1,
+                          }}
+                        >
+                          What good judging looks like
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            ...formProseSx,
+                            color: "var(--ink)",
+                            mb: 1.25,
+                            lineHeight: 1.7,
+                          }}
+                        >
+                          Strong judging is what makes the work teams put in
+                          meaningful — for them, and for the nonprofits they're
+                          building for. As a judge, you'll review every project
+                          you're assigned and ask questions that probe gaps in
+                          the judging criteria so teams get real, useful
+                          feedback.
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            ...formProseSx,
+                            color: "var(--ink)",
+                            mb: 1,
+                            fontWeight: 600,
+                          }}
+                        >
+                          We score on four pillars — Scope, Documentation,
+                          Polish, and Security (
+                          <Link
+                            href="/hackathon-judging-criteria"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={refinedInlineLinkSx}
+                          >
+                            read the full rubric
+                          </Link>
+                          ). When the team hasn't covered a pillar in their
+                          pitch, ask probing questions to find out:
+                        </Typography>
+                        <Box
+                          component="ul"
+                          sx={{
+                            ...formProseSx,
+                            m: 0,
+                            pl: 3,
+                            color: "var(--ink)",
+                          }}
+                        >
+                          <Typography
+                            component="li"
+                            variant="body1"
+                            sx={{ mb: 0.75, lineHeight: 1.7 }}
+                          >
+                            <strong>Scope:</strong> "Which user problem does
+                            this solve, and how did you decide what to leave
+                            out?"
+                          </Typography>
+                          <Typography
+                            component="li"
+                            variant="body1"
+                            sx={{ mb: 0.75, lineHeight: 1.7 }}
+                          >
+                            <strong>Documentation:</strong> "If a new
+                            contributor joined Monday, where would they start?"
+                          </Typography>
+                          <Typography
+                            component="li"
+                            variant="body1"
+                            sx={{ mb: 0.75, lineHeight: 1.7 }}
+                          >
+                            <strong>Polish:</strong> "Walk me through the happy
+                            path — what does the nonprofit see?"
+                          </Typography>
+                          <Typography
+                            component="li"
+                            variant="body1"
+                            sx={{ lineHeight: 1.7 }}
+                          >
+                            <strong>Security:</strong> "Where does sensitive
+                            data live, and who has access?"
+                          </Typography>
+                        </Box>
                       </Box>
-                    </form>
-                  </Paper>
-                </>
-              )}
-            </Box>
+
+                      <Alert
+                        severity="info"
+                        icon={<InfoIcon />}
+                        sx={{ ...infoAlertSx, mb: 4 }}
+                      >
+                        <Typography variant="body1">
+                          New to judging at Opportunity Hack? Visit our{" "}
+                          <Link
+                            href="/about/judges"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={refinedInlineLinkSx}
+                          >
+                            Judges Information Page
+                          </Link>{" "}
+                          for the full process and commitment.
+                        </Typography>
+                      </Alert>
+
+                      {(error || recaptchaError) && (
+                        <Alert severity="error" sx={{ ...errorAlertSx, mb: 4 }}>
+                          {error || recaptchaError}
+                        </Alert>
+                      )}
+
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSubmit();
+                        }}
+                      >
+                        <Box
+                          ref={stepContentRef}
+                          tabIndex={-1}
+                          sx={{ scrollMarginTop: "96px", outline: "none" }}
+                        >
+                          {getStepContent(activeStep)}
+                        </Box>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: {
+                              xs: "column-reverse",
+                              sm: "row",
+                            },
+                            justifyContent: "space-between",
+                            gap: 1.5,
+                            mt: 4,
+                          }}
+                        >
+                          <Button
+                            disabled={activeStep === 0 || submitting}
+                            onClick={handleBack}
+                            variant="outlined"
+                            sx={{
+                              ...ghostButtonSx,
+                              opacity: activeStep === 0 ? 0.45 : 1,
+                            }}
+                          >
+                            Back
+                          </Button>
+
+                          <Button
+                            variant="contained"
+                            onClick={handleNext}
+                            disabled={submitting || recaptchaLoading}
+                            sx={primaryButtonSx}
+                            endIcon={
+                              activeStep === steps.length - 1 ||
+                              submitting ||
+                              recaptchaLoading ? null : (
+                                <Arrow />
+                              )
+                            }
+                          >
+                            {activeStep === steps.length - 1 ? (
+                              submitting || recaptchaLoading ? (
+                                <CircularProgress
+                                  size={20}
+                                  sx={{ color: "#fff" }}
+                                />
+                              ) : (
+                                "Submit application"
+                              )
+                            ) : (
+                              "Next step"
+                            )}
+                          </Button>
+                        </Box>
+                      </form>
+                    </Box>
+                  </>
+                )}
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
-    </Container>
+        </section>
+      </RefinedRoot>
+    );
+  };
+
+  // Main return - after all hooks have been called
+  return (
+    <ThemeProvider theme={refinedFormTheme}>
+      {success ? renderSuccessMessage() : renderApplicationForm()}
+    </ThemeProvider>
   );
 };
 
@@ -2545,6 +2856,7 @@ const JudgeApplicationPage = ({ seoMetadata }) => {
     <>
       {/* SEO metadata available to crawlers before authentication */}
       <Head>
+        <RefinedFonts />
         <title>{seoMetadata.title}</title>
         <meta name="description" content={seoMetadata.description} />
         <meta
@@ -2580,7 +2892,7 @@ const JudgeApplicationPage = ({ seoMetadata }) => {
         {/* Additional SEO meta tags */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="Opportunity Hack" />
-        <meta name="theme-color" content="#1976d2" />
+        <meta name="theme-color" content="#1B3A6B" />
       </Head>
 
       {/* Structured Data for SEO */}
@@ -2670,7 +2982,10 @@ const JudgeApplicationPage = ({ seoMetadata }) => {
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
         displayIfLoggedOut={
           <RedirectToLogin
-            postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
+            postLoginRedirectUrl={
+              currentUrl ||
+              (typeof window !== "undefined" ? window.location.href : undefined)
+            }
           />
         }
       >

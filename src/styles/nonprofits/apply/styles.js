@@ -1,17 +1,17 @@
-import { 
-  Grid, 
-  Typography, 
-  Chip, 
-  Link, 
+import {
+  Grid,
+  Typography,
+  Chip,
+  Link,
   // TODO: Are we planning on doing anything with Tooltip thematically?
-  // Tooltip 
+  // Tooltip
 } from "@mui/material";
 import { styled as styling } from "@mui/material";
 
 export const LayoutContainer = styling(Grid)({
   justifyContent: "center",
   alignContent: "center",
-  paddingTop: "9rem",  
+  paddingTop: "108px",
   backgroundColor: "white",
 });
 
@@ -20,24 +20,20 @@ export const ContentContainer = styling(Grid)({
   // width: "75%",
 });
 
-export const HeadlineDetails=styling(Grid)({
-  padding: '1rem',
-  marginTop: '2rem',
-  marginBottom: '2rem',
-  borderBottom: '2px solid #c0c0c0', // Slightly darker bottom border
-  borderTop: '1px solid #e0e0e0',   
-  borderLeft: '1px solid #e0e0e0',   
-  borderRight: '1px solid #e0e0e0',  
+export const HeadlineDetails = styling(Grid)({
+  padding: "12px",
+  marginTop: "24px",
+  marginBottom: "24px",
+  borderBottom: "2px solid #c0c0c0", // Slightly darker bottom border
+  borderTop: "1px solid #e0e0e0",
+  borderLeft: "1px solid #e0e0e0",
+  borderRight: "1px solid #e0e0e0",
   width: "100vw",
-
-
 });
-
-
 
 export const TitleBanner = styling(Grid)({
   width: "100%",
-  height: "20rem",
+  height: "240px",
   // backgroundAttachment: "fixed",
   // backgroundPosition: "center",
   // backgroundRepeat: "no-repeat",
@@ -50,28 +46,28 @@ export const TitleBanner = styling(Grid)({
 
 export const TitleContainer = styling(Grid)((props) => ({
   backgroundColor: "#f5f7f7",
-  padding: "3.5rem 12.5%",
+  padding: "42px 12.5%",
   borderBottom: "1px solid #e7e7e7",
 
   [props.theme.breakpoints.down("md")]: {
-    padding: "3.5rem 7.5%",
+    padding: "42px 7.5%",
   },
 }));
 
 export const DetailsContainer = styling(Grid)({
-  paddingRight: "0.5rem",
+  paddingRight: "6px",
 });
 
 export const CardContainer = styling(Grid)({
   backgroundColor: "white",
-  padding: "3rem",
+  padding: "36px",
 });
 
 export const TitleStyled = styling(Typography)({
   fontWeight: "500",
   alignItems: "center",
   display: "flex",
-  paddingBottom: "1rem",
+  paddingBottom: "12px",
 });
 
 export const TitleChipContainer = styling(Grid)((props) => ({
@@ -86,10 +82,10 @@ export const TitleChipContainer = styling(Grid)((props) => ({
 }));
 
 export const ProjectsChip = styling(Chip)((props) => ({
-  fontSize: "1.25rem",
-  marginLeft: "3rem",
-  letterSpacing: "0.05rem",
-  padding: "0 0.5rem 0 1rem",
+  fontSize: "15px",
+  marginLeft: "36px",
+  letterSpacing: "0.6px",
+  padding: "0 6px 0 12px",
 
   [props.theme.breakpoints.down("sm")]: {
     marginLeft: "0",
@@ -97,20 +93,20 @@ export const ProjectsChip = styling(Chip)((props) => ({
 }));
 
 export const DescriptionStyled = styling(Typography)({
-  fontSize: "1.25rem",  
-  letterSpacing: "0.05rem",
-  padding: "0 0.5rem 0 1rem"  
+  fontSize: "15px",
+  letterSpacing: "0.6px",
+  padding: "0 6px 0 12px",
 });
 
 export const ChannelChip = styling(Chip)({
   padding: "0",
-  fontSize: "1.25rem",
+  fontSize: "15px",
   fontWeight: 500,
-  height: "2.25rem",
-  borderRadius: "0.5rem",
+  height: "27px",
+  borderRadius: "6px",
   backgroundColor: "white",
   "& span": {
-    padding: "0 0.4rem",
+    padding: "0 4.8px",
   },
 });
 export const LinkStyled = styling(Link)({
@@ -128,6 +124,6 @@ export const ProjectsContainer = styling(Grid)((props) => ({
 export const ProjectsGrid = styling(Grid)({
   display: "grid",
   // gridTemplateColumns: "1fr 1fr",
-  columnGap: "3.5rem",
-  rowGap: "3.5rem",
+  columnGap: "42px",
+  rowGap: "42px",
 });
