@@ -2632,6 +2632,7 @@ const JudgeApplicationComponent = () => {
                       }
                       onVerifiedChange={setTrainingVerified}
                       eventId={event_id}
+                      accessToken={accessToken}
                     />
 
                     {trainingVerified && (

@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import OpenInNewRounded from "@mui/icons-material/OpenInNewRounded";
+import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import SchoolRounded from "@mui/icons-material/SchoolRounded";
 import { Eyebrow } from "../design/refined";
 import { trackEvent } from "../../lib/ga";
@@ -36,14 +37,27 @@ import {
 export const JUDGE_TRAINING_BUNDLE_URL =
   "https://lms.ohack.dev/bundles/kn7ect1nhxqkcn2tp32tbypzdx8ckjx6";
 
-// Anonymous certificate verification — the LMS's Convex deployment exposes
-// certificates:getCertificateByShareToken publicly (same query its own
-// /certificate/:token page and unfurl bot use). CORS is open, so we can
-// verify pasted links straight from the browser.
-const LMS_CONVEX_QUERY_URL = `${
+// The LMS's Convex deployment. Its Functions HTTP API is used two ways:
+// - anonymously: certificates:getCertificateByShareToken verifies a pasted
+//   link (same query the LMS's own /certificate/:token page uses);
+// - authenticated: lms.ohack.dev signs in through the SAME PropelAuth
+//   instance as www.ohack.dev (auth.ohack.dev, registered as a trusted
+//   customJwt issuer with EXTERNAL_AUTH_TRUST_EMAILS=true), so the judge's
+//   own accessToken can call externalAuth:ensureExternalUser and
+//   certificates:getMyCertificates via `Authorization: Bearer` to
+//   auto-detect earned certificates without any copy/paste.
+// CORS is open on both. Dev caveat: localhost logs into a propelauthtest
+// issuer the production LMS does not trust — authed calls fail there and the
+// gate falls back to manual paste.
+const LMS_CONVEX_BASE =
   process.env.NEXT_PUBLIC_LMS_CONVEX_URL ||
-  "https://majestic-trout-419.convex.cloud"
-}/api/query`;
+  "https://majestic-trout-419.convex.cloud";
+const LMS_CONVEX_QUERY_URL = `${LMS_CONVEX_BASE}/api/query`;
+const LMS_CONVEX_MUTATION_URL = `${LMS_CONVEX_BASE}/api/mutation`;
+
+// Minimum gap between automatic checks (mount/refocus). The explicit
+// "Check again" button bypasses it.
+const AUTO_CHECK_THROTTLE_MS = 15000;
 
 // Accepts a full LMS certificate URL or a bare 64-hex share token.
 const CERT_TOKEN_RE = /^[0-9a-f]{64}$/i;
@@ -56,6 +70,8 @@ export const extractCertToken = (input) => {
   const match = CERT_URL_RE.exec(value);
   return match ? match[1].toLowerCase() : null;
 };
+
+const certUrlForToken = (token) => `https://lms.ohack.dev/certificate/${token}`;
 
 // The two required certificates. `match` runs against the certificate's
 // quizTitle + targetTitle (snapshotted at issuance), so it keeps working if
@@ -97,6 +113,85 @@ const verifyCertToken = async (token) => {
   return body.value || null;
 };
 
+// Authenticated Convex function call. Throws { code: "auth"|"network"|"server" }
+// so callers can tell "this login isn't trusted by the LMS" (expected in dev,
+// or on an untrusted issuer) apart from transient failures.
+const callLmsAuthed = async (url, path, accessToken) => {
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ path, args: {}, format: "json" }),
+    });
+  } catch (err) {
+    throw Object.assign(new Error(`LMS unreachable: ${err.message}`), {
+      code: "network",
+    });
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw Object.assign(new Error(`LMS auth rejected: ${response.status}`), {
+      code: "auth",
+    });
+  }
+  if (!response.ok) {
+    throw Object.assign(new Error(`LMS call failed: ${response.status}`), {
+      code: "server",
+    });
+  }
+  const body = await response.json();
+  if (body?.status !== "success") {
+    const message = body?.errorMessage || "LMS call failed";
+    throw Object.assign(new Error(message), {
+      code: /auth|unauthenticated|identity/i.test(message) ? "auth" : "server",
+    });
+  }
+  return body.value;
+};
+
+const ensureExternalUserOnLms = (accessToken) =>
+  callLmsAuthed(
+    LMS_CONVEX_MUTATION_URL,
+    "externalAuth:ensureExternalUser",
+    accessToken,
+  );
+
+const fetchMyLmsCertificates = (accessToken) =>
+  callLmsAuthed(
+    LMS_CONVEX_QUERY_URL,
+    "certificates:getMyCertificates",
+    accessToken,
+  );
+
+// Assign the caller's certificates to the two required slots. Pure so it's
+// unit-testable: newest issuedAt wins when a quiz was passed more than once,
+// and a shareToken is never assigned to two slots (mirrors the manual
+// duplicate rule).
+export const matchCertsToSlots = (certs) => {
+  const used = new Set();
+  const out = {};
+  for (const spec of JUDGE_TRAINING_CERTS) {
+    const candidates = (certs || [])
+      .filter((c) =>
+        spec.match.test(`${c.quizTitle || ""} ${c.targetTitle || ""}`),
+      )
+      .filter(
+        (c) =>
+          typeof c.shareToken === "string" &&
+          !used.has(c.shareToken.toLowerCase()),
+      )
+      .sort((a, b) => (b.issuedAt || 0) - (a.issuedAt || 0));
+    if (candidates[0]) {
+      out[spec.field] = candidates[0];
+      used.add(candidates[0].shareToken.toLowerCase());
+    }
+  }
+  return out;
+};
+
 const slotStatusMessage = (slot, spec) => {
   switch (slot.status) {
     case "invalid":
@@ -116,21 +211,36 @@ const slotStatusMessage = (slot, spec) => {
   }
 };
 
+const SLOT_PROBLEM_STATUSES = [
+  "invalid",
+  "notfound",
+  "duplicate",
+  "mismatch",
+  "error",
+];
+
 /**
  * Hard gate for the judge application: links applicants to the LMS judge
- * training bundle and verifies both quiz certificates live before the
- * application form is allowed to render. Certificate URLs live in the
- * parent's formData (so they persist and submit with the application);
- * verification state lives here.
+ * training bundle and confirms both quiz certificates before the application
+ * form is allowed to render.
  *
- * Judge-form only — rendered inside RefinedRoot, so .ohx-* classes and CSS
- * vars are safe to use directly.
+ * Detection is automatic first: because both sites share one PropelAuth
+ * login, the gate calls the LMS with the judge's own access token
+ * (ensureExternalUser → getMyCertificates), fills the certificate URL fields
+ * itself, and re-checks when the tab regains focus — the judge just finishes
+ * the videos and comes back. Manual paste remains as a fallback (training
+ * done under a different account, dev environments, LMS unreachable).
+ *
+ * Certificate URLs live in the parent's formData (so they persist and submit
+ * with the application); verification state lives here. Judge-form only —
+ * rendered inside RefinedRoot, so .ohx-* classes and CSS vars are safe.
  */
 const JudgeTrainingGate = ({
   values,
   onValueChange,
   onVerifiedChange,
   eventId,
+  accessToken,
 }) => {
   // slot state per field: { status, cert }
   // status: empty | invalid | checking | verified | mismatch | duplicate | notfound | error
@@ -143,10 +253,43 @@ const JudgeTrainingGate = ({
     ),
   );
   const [showInputs, setShowInputs] = useState(true);
+  // Auto-detect state: is a check in flight, and what did the last one find?
+  const [autoChecking, setAutoChecking] = useState(false);
+  const [autoOutcome, setAutoOutcome] = useState(null); // null | matched | partial | none | unavailable
+  const [manualOpen, setManualOpen] = useState(false);
+
   const tokenCacheRef = useRef(new Map()); // token -> cert | null
   const evaluateRunRef = useRef(0);
   const verifiedRef = useRef(false);
   const trackedVerifiedRef = useRef(new Set());
+
+  // Auto-detect plumbing. PropelAuth rotates the access token on tab refocus,
+  // and the parent's onValueChange is an inline arrow — both are read through
+  // refs so runAutoDetect stays identity-stable (CLAUDE.md token-rotation
+  // pattern) and the mount/refocus triggers never refire on re-renders.
+  const accessTokenRef = useRef(accessToken);
+  const valuesRef = useRef(values);
+  const slotsRef = useRef(slots);
+  const onValueChangeRef = useRef(onValueChange);
+  const ensureRanRef = useRef(false); // ensureExternalUser once per mount
+  const autoInFlightRef = useRef(false); // single-flight (also StrictMode)
+  const autoRunRef = useRef(0); // stale-response guard
+  const lastAutoCheckRef = useRef(0); // throttle clock
+  const authFailedRef = useRef(false); // stop refocus retries after an auth reject
+  const autoDetectedFieldsRef = useRef(new Set()); // GA once per slot
+
+  useEffect(() => {
+    accessTokenRef.current = accessToken;
+  }, [accessToken]);
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
+  useEffect(() => {
+    slotsRef.current = slots;
+  }, [slots]);
+  useEffect(() => {
+    onValueChangeRef.current = onValueChange;
+  }, [onValueChange]);
 
   const introValue = values[JUDGE_TRAINING_CERTS[0].field] || "";
   const toolValue = values[JUDGE_TRAINING_CERTS[1].field] || "";
@@ -204,13 +347,137 @@ const JudgeTrainingGate = ({
   }, [introValue, toolValue]);
 
   // Debounced re-verification whenever either link changes (covers typing,
-  // paste, localStorage restore, and previous-submission hydration).
+  // paste, auto-detect fills, localStorage restore, and previous-submission
+  // hydration). Auto-detected tokens verify straight from the seeded cache.
   useEffect(() => {
     const handle = setTimeout(() => {
       evaluate();
     }, 600);
     return () => clearTimeout(handle);
   }, [evaluate]);
+
+  // Ask the LMS which certificates this login has already earned, seed the
+  // verification cache, and fill the URL fields. All volatile inputs come
+  // through refs — identity must stay stable across parent re-renders.
+  const runAutoDetect = useCallback(
+    async (reason /* "mount" | "refocus" | "manual" */) => {
+      if (verifiedRef.current) return; // gate already open
+      if (autoInFlightRef.current) return; // single-flight
+      if (reason === "refocus" && authFailedRef.current) return; // untrusted issuer — don't spam
+      if (
+        reason !== "manual" &&
+        Date.now() - lastAutoCheckRef.current < AUTO_CHECK_THROTTLE_MS
+      ) {
+        return;
+      }
+      const token = accessTokenRef.current;
+      if (!token) return;
+
+      const runId = ++autoRunRef.current;
+      autoInFlightRef.current = true;
+      setAutoChecking(true);
+      try {
+        // First-time identities need the account link before the query
+        // returns anything. Idempotent server-side; once per mount here.
+        if (!ensureRanRef.current) {
+          await ensureExternalUserOnLms(token);
+          ensureRanRef.current = true;
+        }
+        const certs = await fetchMyLmsCertificates(token);
+        if (autoRunRef.current !== runId) return; // stale
+
+        const matched = matchCertsToSlots(certs);
+        for (const spec of JUDGE_TRAINING_CERTS) {
+          const cert = matched[spec.field];
+          if (!cert) continue;
+          const shareToken = cert.shareToken.toLowerCase();
+          tokenCacheRef.current.set(shareToken, cert);
+          // A verified value wins regardless of source — never overwrite it.
+          if (slotsRef.current[spec.field]?.status === "verified") continue;
+          // No-op write guard (also prevents any write→effect loop).
+          const currentToken = extractCertToken(valuesRef.current[spec.field]);
+          if (currentToken === shareToken) continue;
+          // Don't clobber a field the judge is actively typing in.
+          if (
+            typeof document !== "undefined" &&
+            document.activeElement?.name === spec.field
+          ) {
+            continue;
+          }
+          onValueChangeRef.current(spec.field, certUrlForToken(shareToken));
+          if (!autoDetectedFieldsRef.current.has(spec.key)) {
+            autoDetectedFieldsRef.current.add(spec.key);
+            trackEvent({
+              action: "judge_app_training_autodetected",
+              params: {
+                event_label: spec.key,
+                event_id: eventId,
+                page: "judge_application",
+              },
+            });
+          }
+        }
+
+        const matchedCount = Object.keys(matched).length;
+        setAutoOutcome(
+          matchedCount >= JUDGE_TRAINING_CERTS.length
+            ? "matched"
+            : matchedCount > 0
+              ? "partial"
+              : "none",
+        );
+        lastAutoCheckRef.current = Date.now();
+        trackEvent({
+          action: "judge_app_training_autocheck",
+          params: {
+            event_label: reason,
+            value: matchedCount,
+            event_id: eventId,
+            page: "judge_application",
+          },
+        });
+      } catch (err) {
+        if (autoRunRef.current !== runId) return;
+        if (err?.code === "auth") authFailedRef.current = true;
+        setAutoOutcome("unavailable");
+        lastAutoCheckRef.current = Date.now();
+        trackEvent({
+          action: "judge_app_training_autocheck_failed",
+          params: {
+            event_label: err?.code || "unknown",
+            event_id: eventId,
+            page: "judge_application",
+          },
+        });
+        console.error("LMS auto-detect failed:", err);
+      } finally {
+        if (autoRunRef.current === runId) {
+          autoInFlightRef.current = false;
+          setAutoChecking(false);
+        }
+      }
+    },
+    [eventId],
+  );
+
+  // Kick off auto-detect when a login token becomes available. Keyed on
+  // token PRESENCE, never its value — PropelAuth rotates it on every refocus.
+  const hasToken = Boolean(accessToken);
+  useEffect(() => {
+    if (!hasToken) return;
+    runAutoDetect("mount");
+  }, [hasToken, runAutoDetect]);
+
+  // The magic moment: the judge finishes a video on the LMS tab and comes
+  // back here — re-check automatically (throttled).
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") runAutoDetect("refocus");
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [runAutoDetect]);
 
   const allVerified = useMemo(
     () =>
@@ -258,6 +525,64 @@ const JudgeTrainingGate = ({
   const anyChecking = JUDGE_TRAINING_CERTS.some(
     (spec) => slots[spec.field]?.status === "checking",
   );
+  const anySlotProblem = JUDGE_TRAINING_CERTS.some((spec) =>
+    SLOT_PROBLEM_STATUSES.includes(slots[spec.field]?.status),
+  );
+  const verifiedSpecs = JUDGE_TRAINING_CERTS.filter(
+    (spec) => slots[spec.field]?.status === "verified",
+  );
+  const remainingSpecs = JUDGE_TRAINING_CERTS.filter(
+    (spec) => slots[spec.field]?.status !== "verified",
+  );
+
+  // Manual paste is the fallback, not the headline: collapsed until asked
+  // for, but auto-expanded when auto-detect can't run or a value has a
+  // problem the judge needs to see (and whenever re-opened post-verification).
+  const manualVisible =
+    manualOpen ||
+    allVerified ||
+    autoOutcome === "unavailable" ||
+    anySlotProblem;
+
+  const openLmsButton = (
+    <Button
+      variant="contained"
+      href={JUDGE_TRAINING_BUNDLE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      startIcon={<SchoolRounded />}
+      endIcon={<OpenInNewRounded />}
+      sx={primaryButtonSx}
+      onClick={() =>
+        trackEvent({
+          action: "judge_app_training_link_click",
+          params: { event_id: eventId, page: "judge_application" },
+        })
+      }
+    >
+      {verifiedSpecs.length === 1 && remainingSpecs.length === 1
+        ? `Finish “${remainingSpecs[0].videoTitle}”`
+        : "Open judge training"}
+    </Button>
+  );
+
+  const checkAgainButton = (
+    <Button
+      variant="outlined"
+      onClick={() => runAutoDetect("manual")}
+      disabled={autoChecking || !hasToken}
+      startIcon={
+        autoChecking ? (
+          <CircularProgress size={16} sx={{ color: "var(--brand)" }} />
+        ) : (
+          <RefreshRounded />
+        )
+      }
+      sx={ghostButtonSx}
+    >
+      {autoChecking ? "Checking…" : "I'm done — check again"}
+    </Button>
+  );
 
   const renderCertField = (spec) => {
     const slot = slots[spec.field] || { status: "empty", cert: null };
@@ -297,8 +622,18 @@ const JudgeTrainingGate = ({
             variant="body2"
             sx={{ mt: -2, mb: 2, color: "#1b7f3b", fontWeight: 600 }}
           >
-            ✓ Verified — {slot.cert.recipientName}, “{slot.cert.quizTitle}”,
-            score {Math.round(slot.cert.score)}%
+            {/* Auto-detected certs (getMyCertificates) carry no
+                recipientName — render only the parts we have */}
+            ✓ Verified —{" "}
+            {[
+              slot.cert.recipientName,
+              `“${slot.cert.quizTitle}”`,
+              Number.isFinite(slot.cert.score)
+                ? `score ${Math.round(slot.cert.score)}%`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(", ")}
           </Typography>
         )}
       </Box>
@@ -341,59 +676,111 @@ const JudgeTrainingGate = ({
           <Typography variant="body1" sx={stepLeadSx}>
             Every judge completes two short training videos before applying —{" "}
             <strong>Judge Intro</strong> and{" "}
-            <strong>Using the judging tool</strong>. Watch both, pass each
-            knowledge check, and paste your two certificate links below to
-            unlock the application.
+            <strong>Using the judging tool</strong>. Pass both knowledge checks
+            and we'll detect your certificates automatically.
           </Typography>
 
           <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
             <Box component="ol" sx={{ m: 0, pl: 3, color: "var(--ink)" }}>
               <Typography component="li" variant="body1" sx={{ mb: 0.75 }}>
-                Open the judge training on our learning site (a free account —
-                any email works).
+                Open the judge training on our learning site and sign in{" "}
+                <strong>with the same account you use here</strong> — it's the
+                same login.
               </Typography>
               <Typography component="li" variant="body1" sx={{ mb: 0.75 }}>
                 Watch both videos and pass each short knowledge check.
               </Typography>
-              <Typography component="li" variant="body1" sx={{ mb: 0.75 }}>
-                Each pass earns a certificate — open it and copy its link
-                (lms.ohack.dev/certificate/…).
-              </Typography>
               <Typography component="li" variant="body1">
-                Paste both links below. We verify them instantly.
+                Come back to this tab — we detect your certificates
+                automatically. (You can also paste the certificate links
+                manually.)
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ mb: 3 }}>
-            <Button
-              variant="contained"
-              href={JUDGE_TRAINING_BUNDLE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              startIcon={<SchoolRounded />}
-              endIcon={<OpenInNewRounded />}
-              sx={primaryButtonSx}
-              onClick={() =>
-                trackEvent({
-                  action: "judge_app_training_link_click",
-                  params: { event_id: eventId, page: "judge_application" },
-                })
-              }
-            >
-              Open judge training
-            </Button>
+          <Box
+            sx={{
+              mb: 3,
+              display: "flex",
+              gap: 1.5,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            {openLmsButton}
+            {(autoOutcome !== null || autoChecking) && checkAgainButton}
           </Box>
 
-          {renderCertField(JUDGE_TRAINING_CERTS[0])}
-          {renderCertField(JUDGE_TRAINING_CERTS[1])}
-
-          {anyChecking && (
+          {/* Auto-detect status */}
+          {autoChecking && autoOutcome === null && (
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
+            >
+              <CircularProgress size={18} sx={{ color: "var(--brand)" }} />
+              <Typography variant="body2" sx={{ color: "var(--muted)" }}>
+                Checking your training record on the LMS…
+              </Typography>
+            </Box>
+          )}
+          {autoOutcome === "none" && !allVerified && (
             <Alert severity="info" sx={{ ...infoAlertSx, mb: 2 }}>
               <Typography variant="body2">
-                Verifying your certificates with the LMS…
+                No training certificates found on your LMS account yet. Finish
+                both videos and come back to this tab — we'll pick them up
+                automatically. Did the training under a different account? Paste
+                your certificate links below instead.
               </Typography>
             </Alert>
+          )}
+          {autoOutcome === "unavailable" && (
+            <Alert severity="warning" sx={{ ...warningAlertSx, mb: 2 }}>
+              <Typography variant="body2">
+                We couldn't check your LMS account automatically — paste your
+                certificate links below instead.
+              </Typography>
+            </Alert>
+          )}
+          {verifiedSpecs.length === 1 && (
+            <Alert severity="success" sx={{ ...successAlertSx, mb: 2 }}>
+              <Typography variant="body2">
+                <strong>
+                  “{verifiedSpecs[0].videoTitle}” verified — 1 of 2 complete.
+                </strong>{" "}
+                Finish “{remainingSpecs[0].videoTitle}” and come back.
+              </Typography>
+            </Alert>
+          )}
+
+          {manualVisible ? (
+            <>
+              {renderCertField(JUDGE_TRAINING_CERTS[0])}
+              {renderCertField(JUDGE_TRAINING_CERTS[1])}
+
+              {anyChecking && (
+                <Alert severity="info" sx={{ ...infoAlertSx, mb: 2 }}>
+                  <Typography variant="body2">
+                    Verifying your certificates with the LMS…
+                  </Typography>
+                </Alert>
+              )}
+            </>
+          ) : (
+            <Box sx={{ mb: 2 }}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setManualOpen(true);
+                  trackEvent({
+                    action: "judge_app_training_manual_fallback_open",
+                    params: { event_id: eventId, page: "judge_application" },
+                  });
+                }}
+                sx={{ ...ghostButtonSx, border: "none" }}
+              >
+                Paste certificate links instead
+              </Button>
+            </Box>
           )}
 
           {allVerified ? (
