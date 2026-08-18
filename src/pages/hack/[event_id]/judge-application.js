@@ -64,6 +64,7 @@ import {
 } from "../../../components/design/refined";
 import {
   IntroVideoField,
+  JudgeTrainingGate,
   OHackParticipationSelect,
   PronounsPicker,
   scrollToStepContent,
@@ -158,6 +159,10 @@ const JudgeApplicationComponent = () => {
   const [passcodeInput, setPasscodeInput] = useState("");
   const [passcodeError, setPasscodeError] = useState("");
 
+  // LMS training gate — true once both certificate links verify against the
+  // LMS. The stepper + form only render when this is true.
+  const [trainingVerified, setTrainingVerified] = useState(false);
+
   // reCAPTCHA integration
   const {
     initializeRecaptcha,
@@ -199,6 +204,10 @@ const JudgeApplicationComponent = () => {
       linkedinProfile: "",
       shortBio: "",
       introductionVideoUrl: "", // "Tell us about you" video (upload or YouTube/Vimeo/Loom link)
+      // LMS judge-training certificate links (JudgeTrainingGate) — the whole
+      // form stays locked until both verify against the LMS
+      judgeTrainingIntroCertUrl: "",
+      judgeTrainingToolCertUrl: "",
       photoUrl: "",
       pronouns: "",
       country: "",
@@ -318,6 +327,13 @@ const JudgeApplicationComponent = () => {
                 ),
                 photoUrl: prevData.photoUrl || "",
                 introductionVideoUrl: prevData.introductionVideoUrl || "",
+
+                // Training certificates — re-verified by JudgeTrainingGate on
+                // load, which unlocks the form for returning judges
+                judgeTrainingIntroCertUrl:
+                  prevData.judgeTrainingIntroCertUrl || "",
+                judgeTrainingToolCertUrl:
+                  prevData.judgeTrainingToolCertUrl || "",
 
                 // Ensure event_id is always set
                 event_id: event_id,
@@ -1294,6 +1310,15 @@ const JudgeApplicationComponent = () => {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
+    // Belt-and-braces: the form isn't reachable until the training gate
+    // verifies, but never submit without it either.
+    if (!trainingVerified) {
+      setError(
+        "Please complete the judge training videos and verify both certificate links before submitting.",
+      );
+      return;
+    }
+
     if (!formData.judgingCommitment) {
       setError(
         "Please confirm you'll review each project and ask questions tied to the judging criteria.",
@@ -1353,6 +1378,9 @@ const JudgeApplicationComponent = () => {
         backgroundAreas: backgroundAreasFormatted, // Include both formats for compatibility
         volunteer_type: "judge",
         isInPerson: formData.inPerson === "Yes",
+        // Cert URLs themselves ride along in formData
+        // (judgeTrainingIntroCertUrl / judgeTrainingToolCertUrl)
+        judgeTrainingCompleted: trainingVerified,
         // Don't set this value so that any updates will stay as-is on the backend
         // isSelected: false, // Default to false, admin will select later
         agreedToCodeOfConduct: Boolean(formData.codeOfConduct),
@@ -2594,235 +2622,256 @@ const JudgeApplicationComponent = () => {
                         </Alert>
                       )}
 
-                    {/* Save/restore controls live beside the form they act on
-                        (mt: 0 — the section provides the NavBar clearance) */}
-                    <FormPersistenceControls
-                      sx={{ mt: 0, mb: 2 }}
-                      onSave={saveToLocalStorage}
-                      onRestore={loadFromLocalStorage}
-                      onClear={clearSavedData}
-                      notification={notification}
-                      onCloseNotification={closeNotification}
+                    {/* Hard gate: the stepper + form below only render once
+                        both LMS training certificates verify. Cert URLs live
+                        in formData so they persist and submit with the app. */}
+                    <JudgeTrainingGate
+                      values={formData}
+                      onValueChange={(field, value) =>
+                        setFormData((prev) => ({ ...prev, [field]: value }))
+                      }
+                      onVerifiedChange={setTrainingVerified}
+                      eventId={event_id}
+                      accessToken={accessToken}
                     />
 
-                    <Box
-                      className="ohx-card"
-                      sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}
-                    >
-                      <Stepper
-                        activeStep={activeStep}
-                        alternativeLabel={!isMobile}
-                        orientation="horizontal"
-                        sx={{
-                          ...refinedStepperSx,
-                          ...(isMobile && refinedStepperMobileSx),
-                        }}
-                      >
-                        {steps.map((label) => (
-                          <Step key={label}>
-                            <StepLabel>
-                              {isMobile
-                                ? activeStep === steps.indexOf(label)
-                                  ? label
-                                  : steps.indexOf(label) + 1
-                                : label}
-                            </StepLabel>
-                          </Step>
-                        ))}
-                      </Stepper>
-                    </Box>
-
-                    <Box
-                      className="ohx-card"
-                      sx={{ p: { xs: 2.5, sm: 3, md: 4 }, mb: 4 }}
-                    >
-                      <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
-                        <Eyebrow>What we expect</Eyebrow>
-                        <Typography
-                          component="h2"
-                          sx={{
-                            ...stepTitleSx,
-                            fontSize: { xs: "21.5px", sm: "25px" },
-                            mt: 1,
-                          }}
-                        >
-                          What good judging looks like
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            ...formProseSx,
-                            color: "var(--ink)",
-                            mb: 1.25,
-                            lineHeight: 1.7,
-                          }}
-                        >
-                          Strong judging is what makes the work teams put in
-                          meaningful — for them, and for the nonprofits they're
-                          building for. As a judge, you'll review every project
-                          you're assigned and ask questions that probe gaps in
-                          the judging criteria so teams get real, useful
-                          feedback.
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            ...formProseSx,
-                            color: "var(--ink)",
-                            mb: 1,
-                            fontWeight: 600,
-                          }}
-                        >
-                          We score on four pillars — Scope, Documentation,
-                          Polish, and Security (
-                          <Link
-                            href="/hackathon-judging-criteria"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={refinedInlineLinkSx}
-                          >
-                            read the full rubric
-                          </Link>
-                          ). When the team hasn't covered a pillar in their
-                          pitch, ask probing questions to find out:
-                        </Typography>
-                        <Box
-                          component="ul"
-                          sx={{
-                            ...formProseSx,
-                            m: 0,
-                            pl: 3,
-                            color: "var(--ink)",
-                          }}
-                        >
-                          <Typography
-                            component="li"
-                            variant="body1"
-                            sx={{ mb: 0.75, lineHeight: 1.7 }}
-                          >
-                            <strong>Scope:</strong> "Which user problem does
-                            this solve, and how did you decide what to leave
-                            out?"
-                          </Typography>
-                          <Typography
-                            component="li"
-                            variant="body1"
-                            sx={{ mb: 0.75, lineHeight: 1.7 }}
-                          >
-                            <strong>Documentation:</strong> "If a new
-                            contributor joined Monday, where would they start?"
-                          </Typography>
-                          <Typography
-                            component="li"
-                            variant="body1"
-                            sx={{ mb: 0.75, lineHeight: 1.7 }}
-                          >
-                            <strong>Polish:</strong> "Walk me through the happy
-                            path — what does the nonprofit see?"
-                          </Typography>
-                          <Typography
-                            component="li"
-                            variant="body1"
-                            sx={{ lineHeight: 1.7 }}
-                          >
-                            <strong>Security:</strong> "Where does sensitive
-                            data live, and who has access?"
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      <Alert
-                        severity="info"
-                        icon={<InfoIcon />}
-                        sx={{ ...infoAlertSx, mb: 4 }}
-                      >
-                        <Typography variant="body1">
-                          New to judging at Opportunity Hack? Visit our{" "}
-                          <Link
-                            href="/about/judges"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={refinedInlineLinkSx}
-                          >
-                            Judges Information Page
-                          </Link>{" "}
-                          for the full process and commitment.
-                        </Typography>
-                      </Alert>
-
-                      {(error || recaptchaError) && (
-                        <Alert severity="error" sx={{ ...errorAlertSx, mb: 4 }}>
-                          {error || recaptchaError}
-                        </Alert>
-                      )}
-
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          handleSubmit();
-                        }}
-                      >
-                        <Box
-                          ref={stepContentRef}
-                          tabIndex={-1}
-                          sx={{ scrollMarginTop: "96px", outline: "none" }}
-                        >
-                          {getStepContent(activeStep)}
-                        </Box>
+                    {trainingVerified && (
+                      <>
+                        {/* Save/restore controls live beside the form they act on
+                            (mt: 0 — the section provides the NavBar clearance) */}
+                        <FormPersistenceControls
+                          sx={{ mt: 0, mb: 2 }}
+                          onSave={saveToLocalStorage}
+                          onRestore={loadFromLocalStorage}
+                          onClear={clearSavedData}
+                          notification={notification}
+                          onCloseNotification={closeNotification}
+                        />
 
                         <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: {
-                              xs: "column-reverse",
-                              sm: "row",
-                            },
-                            justifyContent: "space-between",
-                            gap: 1.5,
-                            mt: 4,
-                          }}
+                          className="ohx-card"
+                          sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}
                         >
-                          <Button
-                            disabled={activeStep === 0 || submitting}
-                            onClick={handleBack}
-                            variant="outlined"
+                          <Stepper
+                            activeStep={activeStep}
+                            alternativeLabel={!isMobile}
+                            orientation="horizontal"
                             sx={{
-                              ...ghostButtonSx,
-                              opacity: activeStep === 0 ? 0.45 : 1,
+                              ...refinedStepperSx,
+                              ...(isMobile && refinedStepperMobileSx),
                             }}
                           >
-                            Back
-                          </Button>
-
-                          <Button
-                            variant="contained"
-                            onClick={handleNext}
-                            disabled={submitting || recaptchaLoading}
-                            sx={primaryButtonSx}
-                            endIcon={
-                              activeStep === steps.length - 1 ||
-                              submitting ||
-                              recaptchaLoading ? null : (
-                                <Arrow />
-                              )
-                            }
-                          >
-                            {activeStep === steps.length - 1 ? (
-                              submitting || recaptchaLoading ? (
-                                <CircularProgress
-                                  size={20}
-                                  sx={{ color: "#fff" }}
-                                />
-                              ) : (
-                                "Submit application"
-                              )
-                            ) : (
-                              "Next step"
-                            )}
-                          </Button>
+                            {steps.map((label) => (
+                              <Step key={label}>
+                                <StepLabel>
+                                  {isMobile
+                                    ? activeStep === steps.indexOf(label)
+                                      ? label
+                                      : steps.indexOf(label) + 1
+                                    : label}
+                                </StepLabel>
+                              </Step>
+                            ))}
+                          </Stepper>
                         </Box>
-                      </form>
-                    </Box>
+
+                        <Box
+                          className="ohx-card"
+                          sx={{ p: { xs: 2.5, sm: 3, md: 4 }, mb: 4 }}
+                        >
+                          <Box sx={{ ...emphasisPanelSx, mb: 3 }}>
+                            <Eyebrow>What we expect</Eyebrow>
+                            <Typography
+                              component="h2"
+                              sx={{
+                                ...stepTitleSx,
+                                fontSize: { xs: "21.5px", sm: "25px" },
+                                mt: 1,
+                              }}
+                            >
+                              What good judging looks like
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                ...formProseSx,
+                                color: "var(--ink)",
+                                mb: 1.25,
+                                lineHeight: 1.7,
+                              }}
+                            >
+                              Strong judging is what makes the work teams put in
+                              meaningful — for them, and for the nonprofits
+                              they're building for. As a judge, you'll review
+                              every project you're assigned and ask questions
+                              that probe gaps in the judging criteria so teams
+                              get real, useful feedback.
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                ...formProseSx,
+                                color: "var(--ink)",
+                                mb: 1,
+                                fontWeight: 600,
+                              }}
+                            >
+                              We score on four pillars — Scope, Documentation,
+                              Polish, and Security (
+                              <Link
+                                href="/hackathon-judging-criteria"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                sx={refinedInlineLinkSx}
+                              >
+                                read the full rubric
+                              </Link>
+                              ). When the team hasn't covered a pillar in their
+                              pitch, ask probing questions to find out:
+                            </Typography>
+                            <Box
+                              component="ul"
+                              sx={{
+                                ...formProseSx,
+                                m: 0,
+                                pl: 3,
+                                color: "var(--ink)",
+                              }}
+                            >
+                              <Typography
+                                component="li"
+                                variant="body1"
+                                sx={{ mb: 0.75, lineHeight: 1.7 }}
+                              >
+                                <strong>Scope:</strong> "Which user problem does
+                                this solve, and how did you decide what to leave
+                                out?"
+                              </Typography>
+                              <Typography
+                                component="li"
+                                variant="body1"
+                                sx={{ mb: 0.75, lineHeight: 1.7 }}
+                              >
+                                <strong>Documentation:</strong> "If a new
+                                contributor joined Monday, where would they
+                                start?"
+                              </Typography>
+                              <Typography
+                                component="li"
+                                variant="body1"
+                                sx={{ mb: 0.75, lineHeight: 1.7 }}
+                              >
+                                <strong>Polish:</strong> "Walk me through the
+                                happy path — what does the nonprofit see?"
+                              </Typography>
+                              <Typography
+                                component="li"
+                                variant="body1"
+                                sx={{ lineHeight: 1.7 }}
+                              >
+                                <strong>Security:</strong> "Where does sensitive
+                                data live, and who has access?"
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Alert
+                            severity="info"
+                            icon={<InfoIcon />}
+                            sx={{ ...infoAlertSx, mb: 4 }}
+                          >
+                            <Typography variant="body1">
+                              New to judging at Opportunity Hack? Visit our{" "}
+                              <Link
+                                href="/about/judges"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                sx={refinedInlineLinkSx}
+                              >
+                                Judges Information Page
+                              </Link>{" "}
+                              for the full process and commitment.
+                            </Typography>
+                          </Alert>
+
+                          {(error || recaptchaError) && (
+                            <Alert
+                              severity="error"
+                              sx={{ ...errorAlertSx, mb: 4 }}
+                            >
+                              {error || recaptchaError}
+                            </Alert>
+                          )}
+
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              handleSubmit();
+                            }}
+                          >
+                            <Box
+                              ref={stepContentRef}
+                              tabIndex={-1}
+                              sx={{ scrollMarginTop: "96px", outline: "none" }}
+                            >
+                              {getStepContent(activeStep)}
+                            </Box>
+
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: {
+                                  xs: "column-reverse",
+                                  sm: "row",
+                                },
+                                justifyContent: "space-between",
+                                gap: 1.5,
+                                mt: 4,
+                              }}
+                            >
+                              <Button
+                                disabled={activeStep === 0 || submitting}
+                                onClick={handleBack}
+                                variant="outlined"
+                                sx={{
+                                  ...ghostButtonSx,
+                                  opacity: activeStep === 0 ? 0.45 : 1,
+                                }}
+                              >
+                                Back
+                              </Button>
+
+                              <Button
+                                variant="contained"
+                                onClick={handleNext}
+                                disabled={submitting || recaptchaLoading}
+                                sx={primaryButtonSx}
+                                endIcon={
+                                  activeStep === steps.length - 1 ||
+                                  submitting ||
+                                  recaptchaLoading ? null : (
+                                    <Arrow />
+                                  )
+                                }
+                              >
+                                {activeStep === steps.length - 1 ? (
+                                  submitting || recaptchaLoading ? (
+                                    <CircularProgress
+                                      size={20}
+                                      sx={{ color: "#fff" }}
+                                    />
+                                  ) : (
+                                    "Submit application"
+                                  )
+                                ) : (
+                                  "Next step"
+                                )}
+                              </Button>
+                            </Box>
+                          </form>
+                        </Box>
+                      </>
+                    )}
                   </>
                 )}
               </Box>
