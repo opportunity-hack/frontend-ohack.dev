@@ -256,6 +256,7 @@ const JudgeTrainingGate = ({
   // Auto-detect state: is a check in flight, and what did the last one find?
   const [autoChecking, setAutoChecking] = useState(false);
   const [autoOutcome, setAutoOutcome] = useState(null); // null | matched | partial | none | unavailable
+  const [autoErrorCode, setAutoErrorCode] = useState(null); // auth | network | server
   const [manualOpen, setManualOpen] = useState(false);
 
   const tokenCacheRef = useRef(new Map()); // token -> cert | null
@@ -426,6 +427,7 @@ const JudgeTrainingGate = ({
               ? "partial"
               : "none",
         );
+        setAutoErrorCode(null);
         lastAutoCheckRef.current = Date.now();
         trackEvent({
           action: "judge_app_training_autocheck",
@@ -440,6 +442,7 @@ const JudgeTrainingGate = ({
         if (autoRunRef.current !== runId) return;
         if (err?.code === "auth") authFailedRef.current = true;
         setAutoOutcome("unavailable");
+        setAutoErrorCode(err?.code || "unknown");
         lastAutoCheckRef.current = Date.now();
         trackEvent({
           action: "judge_app_training_autocheck_failed",
@@ -735,8 +738,9 @@ const JudgeTrainingGate = ({
           {autoOutcome === "unavailable" && (
             <Alert severity="warning" sx={{ ...warningAlertSx, mb: 2 }}>
               <Typography variant="body2">
-                We couldn't check your LMS account automatically — paste your
-                certificate links below instead.
+                {autoErrorCode === "auth"
+                  ? "Automatic detection isn't available here — this environment's login isn't linked to the LMS. Paste your certificate links below instead."
+                  : "We couldn't reach the LMS to check your account automatically — paste your certificate links below instead."}
               </Typography>
             </Alert>
           )}
