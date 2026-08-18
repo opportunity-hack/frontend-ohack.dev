@@ -121,6 +121,8 @@ const ApplicationReviewCard = ({
           "state",
           "linkedinProfile",
           "introductionVideoUrl",
+          "judgeTrainingIntroCertUrl",
+          "judgeTrainingToolCertUrl",
           "backgroundAreas",
         ],
         additionalFields: [
@@ -402,6 +404,9 @@ const ApplicationReviewCard = ({
       otherBackground: "Other Background",
       linkedinProfile: "LinkedIn Profile",
       introductionVideoUrl: "Intro Video",
+      judgeTrainingIntroCertUrl: "Training Cert: Judge Intro",
+      judgeTrainingToolCertUrl: "Training Cert: Judging Tool",
+      judgeTrainingCompleted: "Judge Training Completed",
       shirtSize: "T-Shirt Size",
       photoUrl: "Photo",
       status: "Status",
@@ -606,6 +611,8 @@ const ApplicationReviewCard = ({
                   "website",
                   "linkedinProfile",
                   "introductionVideoUrl",
+                  "judgeTrainingIntroCertUrl",
+                  "judgeTrainingToolCertUrl",
                 ].includes(field);
 
                 return (
@@ -730,6 +737,8 @@ const ApplicationReviewCard = ({
                   "website",
                   "linkedinProfile",
                   "introductionVideoUrl",
+                  "judgeTrainingIntroCertUrl",
+                  "judgeTrainingToolCertUrl",
                 ].includes(field);
 
                 return (
@@ -1349,6 +1358,8 @@ const ApplicationReviewCard = ({
                       "portfolio",
                       "website",
                       "introductionVideoUrl",
+                      "judgeTrainingIntroCertUrl",
+                      "judgeTrainingToolCertUrl",
                     ].includes(key);
                     const displayVal = Array.isArray(val)
                       ? val.join(", ")
