@@ -46,9 +46,11 @@ export const JUDGE_TRAINING_BUNDLE_URL =
 //   own accessToken can call externalAuth:ensureExternalUser and
 //   certificates:getMyCertificates via `Authorization: Bearer` to
 //   auto-detect earned certificates without any copy/paste.
-// CORS is open on both. Dev caveat: localhost logs into a propelauthtest
-// issuer the production LMS does not trust — authed calls fail there and the
-// gate falls back to manual paste.
+// CORS is open on both. The LMS trusts BOTH our PropelAuth instances
+// (auth.ohack.dev via PROPELAUTH_URL; the propelauthtest instance that
+// test.ohack.dev/previews/localhost log into, via EXTERNAL_AUTH_ISSUERS —
+// added 2026-08-18), so auto-detect works in every environment. If a login's
+// issuer ever isn't trusted, the gate degrades to manual paste.
 const LMS_CONVEX_BASE =
   process.env.NEXT_PUBLIC_LMS_CONVEX_URL ||
   "https://majestic-trout-419.convex.cloud";
