@@ -63,6 +63,7 @@ import {
   Stat,
 } from "../../../components/design/refined";
 import {
+  DietaryRestrictionsSelect,
   IntroVideoField,
   JudgeTrainingGate,
   OHackParticipationSelect,
@@ -193,6 +194,7 @@ const JudgeApplicationComponent = () => {
       availability: "",
       canAttendJudging: "", // New field for judging availability confirmation
       inPerson: "",
+      dietaryRestrictions: "",
       additionalInfo: "",
       companyName: "",
       codeOfConduct: false,
@@ -314,6 +316,7 @@ const JudgeApplicationComponent = () => {
                 availability: prevData.availability || "",
                 canAttendJudging: prevData.canAttendJudging || "",
                 inPerson: prevData.inPerson || "",
+                dietaryRestrictions: prevData.dietaryRestrictions || "",
 
                 // Additional info
                 additionalInfo: prevData.additionalInfo || "",
@@ -1999,6 +2002,18 @@ const JudgeApplicationComponent = () => {
               </Alert>
             )}
           </FormControl>
+
+          {/* Meals are served at the venue — only in-person judges need this */}
+          {!isVirtualEvent() && formData.inPerson === "Yes" && (
+            <DietaryRestrictionsSelect
+              value={formData.dietaryRestrictions || ""}
+              onChange={(next) =>
+                setFormData((prev) => ({ ...prev, dietaryRestrictions: next }))
+              }
+              MenuProps={refinedSelectMenuProps}
+              sx={refinedFieldSx}
+            />
+          )}
         </Box>
       </Box>
     );

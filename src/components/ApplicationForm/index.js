@@ -5,6 +5,12 @@ export { default as ProfileAutofillNotice } from "./ProfileAutofillNotice";
 export { default as PronounsPicker } from "./PronounsPicker";
 export { CURATED_PRONOUNS } from "./PronounsPicker";
 export { default as MealMenu } from "./MealMenu";
+export { default as DietaryRestrictionsSelect } from "./DietaryRestrictionsSelect";
+export {
+  DIETARY_RESTRICTION_OPTIONS,
+  parseDietaryRestrictions,
+  serializeDietaryRestrictions,
+} from "./DietaryRestrictionsSelect";
 export { default as IntroVideoField } from "./IntroVideoField";
 export { default as JudgeTrainingGate } from "./JudgeTrainingGate";
 export {
