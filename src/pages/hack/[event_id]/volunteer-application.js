@@ -49,6 +49,7 @@ import FormPersistenceControls from "../../../components/FormPersistenceControls
 import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import {
+  DietaryRestrictionsSelect,
   PronounsPicker,
   scrollToStepContent,
 } from "../../../components/ApplicationForm";
@@ -177,6 +178,7 @@ const VolunteerApplicationComponent = () => {
     country: "",
     state: "",
     inPerson: "",
+    dietaryRestrictions: "",
     experienceLevel: "",
     shirtSize: "",
     volunteerType: [],
@@ -1044,6 +1046,7 @@ const VolunteerApplicationComponent = () => {
                     state: prevData.state || "",
                     inPerson:
                       prevData.inPerson || (prevData.isInPerson ? "Yes" : "No"),
+                    dietaryRestrictions: prevData.dietaryRestrictions || "",
                     experienceLevel: prevData.experienceLevel || "",
                     shirtSize: prevData.shirtSize || "",
                     volunteerType: parsePreviousArrayField("volunteerType"),
@@ -1908,6 +1911,21 @@ const VolunteerApplicationComponent = () => {
                 />
               </RadioGroup>
             </FormControl>
+          )}
+
+          {/* Meals are served at the venue — only in-person volunteers need this */}
+          {!isVirtualEvent() && formData.inPerson === "Yes" && (
+            <DietaryRestrictionsSelect
+              value={formData.dietaryRestrictions || ""}
+              onChange={(next) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  dietaryRestrictions: next,
+                }))
+              }
+              MenuProps={refinedSelectMenuProps}
+              sx={refinedFieldSx}
+            />
           )}
 
           {/* Show blocking alert for incompatible selection */}

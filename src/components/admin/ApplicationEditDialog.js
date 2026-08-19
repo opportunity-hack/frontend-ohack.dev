@@ -254,6 +254,7 @@ const ApplicationEditDialog = ({
             { name: 'mentorshipAreas', label: 'Preferred Mentorship Areas', type: 'multiselect', options: ['Technical Guidance', 'Project Planning', 'Team Dynamics', 'Presentation Skills', 'Career Advice', 'Industry Insights'] },
             { name: 'availability', label: 'Availability', type: 'multiselect', options: ['Friday Evening', 'Saturday Morning', 'Saturday Afternoon', 'Saturday Evening', 'Sunday Morning', 'Sunday Afternoon'] },
             { name: 'previousMentoring', label: 'Previous Mentoring Experience', type: 'textarea', rows: 3 },
+            { name: 'dietaryRestrictions', label: 'Dietary Restrictions', type: 'text' },
             { name: 'additionalInfo', label: 'Additional Information', type: 'textarea', rows: 3 }
           ]
         }
@@ -279,6 +280,7 @@ const ApplicationEditDialog = ({
             { name: 'judgingExperience', label: 'Previous Judging Experience', type: 'textarea', rows: 3 },
             { name: 'criteriaPreferences', label: 'Preferred Judging Criteria', type: 'multiselect', options: ['Technical Innovation', 'Social Impact', 'User Experience', 'Business Viability', 'Presentation Quality', 'Team Collaboration'] },
             { name: 'availability', label: 'Judging Availability', type: 'multiselect', options: ['Saturday Evening Presentations', 'Sunday Morning Presentations', 'Sunday Afternoon Final Judging'] },
+            { name: 'dietaryRestrictions', label: 'Dietary Restrictions', type: 'text' },
             { name: 'additionalInfo', label: 'Additional Information', type: 'textarea', rows: 3 }
           ]
         }
@@ -298,6 +300,7 @@ const ApplicationEditDialog = ({
             { name: 'availability', label: 'Availability', type: 'multiselect', options: ['Friday Setup', 'Saturday Full Day', 'Sunday Full Day', 'Sunday Cleanup'] },
             { name: 'previousVolunteering', label: 'Previous Volunteering Experience', type: 'textarea', rows: 3 },
             { name: 'motivation', label: 'Why do you want to volunteer?', type: 'textarea', rows: 3 },
+            { name: 'dietaryRestrictions', label: 'Dietary Restrictions', type: 'text' },
             { name: 'additionalInfo', label: 'Additional Information', type: 'textarea', rows: 3 }
           ]
         }

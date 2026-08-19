@@ -53,6 +53,7 @@ import {
   Stat,
 } from "../../../components/design/refined";
 import {
+  DietaryRestrictionsSelect,
   OHackParticipationSelect,
   PronounsPicker,
   scrollToStepContent,
@@ -173,6 +174,7 @@ const MentorApplicationComponent = () => {
     picture: "",
     linkedin: "",
     inPerson: "",
+    dietaryRestrictions: "",
     expertise: [], // Changed from string to array
     otherExpertise: "", // New field for "Other" option
     participationCount: "",
@@ -550,6 +552,7 @@ const MentorApplicationComponent = () => {
                 picture: prevData.photoUrl || prevData.picture || "",
                 linkedin: prevData.linkedinProfile || prevData.linkedin || "",
                 inPerson: prevData.isInPerson ? "Yes!" : "No, I'll be virtual",
+                dietaryRestrictions: prevData.dietaryRestrictions || "",
                 expertise: (prevData.expertise || "")
                   .split(", ")
                   .filter(Boolean),
@@ -1543,6 +1546,18 @@ const MentorApplicationComponent = () => {
             />
           </RadioGroup>
         </FormControl>
+      )}
+
+      {/* Meals are provided on site — only in-person mentors need this */}
+      {!isVirtualEvent() && formData.inPerson === "Yes!" && (
+        <DietaryRestrictionsSelect
+          value={formData.dietaryRestrictions || ""}
+          onChange={(next) =>
+            setFormData((prev) => ({ ...prev, dietaryRestrictions: next }))
+          }
+          MenuProps={refinedSelectMenuProps}
+          sx={refinedFieldSx}
+        />
       )}
 
       {/* Location fields - conditional labels and requirements */}
