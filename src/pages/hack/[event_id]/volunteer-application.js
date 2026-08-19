@@ -50,6 +50,7 @@ import { useFormPersistence } from "../../../hooks/use-form-persistence";
 import { useRecaptcha } from "../../../hooks/use-recaptcha";
 import {
   DietaryRestrictionsSelect,
+  MealSchedule,
   PronounsPicker,
   scrollToStepContent,
 } from "../../../components/ApplicationForm";
@@ -855,6 +856,7 @@ const VolunteerApplicationComponent = () => {
             "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
           isEventPast,
           timezone: eventData.timezone,
+          constraints: eventData.constraints || {},
         });
 
         // Generate time slots based on event dates with actual slot counts
@@ -1913,7 +1915,15 @@ const VolunteerApplicationComponent = () => {
             </FormControl>
           )}
 
-          {/* Meals are served at the venue — only in-person volunteers need this */}
+          {/* Meals are served at the venue — only in-person volunteers need
+              this. MealSchedule renders nothing when the event has no meals
+              configured. */}
+          {!isVirtualEvent() && formData.inPerson === "Yes" && (
+            <MealSchedule
+              meals={eventData?.constraints?.meals || []}
+              note={eventData?.constraints?.meals_note || ""}
+            />
+          )}
           {!isVirtualEvent() && formData.inPerson === "Yes" && (
             <DietaryRestrictionsSelect
               value={formData.dietaryRestrictions || ""}

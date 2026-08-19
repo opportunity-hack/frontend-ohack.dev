@@ -67,6 +67,13 @@ describe("MealSchedule", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("renders nothing when the meals prop is missing entirely", () => {
+    // The mentor/judge/volunteer forms pass `constraints?.meals || []`
+    // straight through — the component must own the empty case.
+    const { container } = render(<MealSchedule />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it("shows each meal with a human-readable time and no inputs", () => {
     render(<MealSchedule meals={meals} />);
     expect(screen.getByText("Meal schedule")).toBeInTheDocument();

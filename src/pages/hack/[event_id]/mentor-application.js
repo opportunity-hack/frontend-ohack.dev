@@ -54,6 +54,7 @@ import {
 } from "../../../components/design/refined";
 import {
   DietaryRestrictionsSelect,
+  MealSchedule,
   OHackParticipationSelect,
   PronounsPicker,
   scrollToStepContent,
@@ -459,6 +460,7 @@ const MentorApplicationComponent = () => {
             "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
           isEventPast,
           timezone: eventData.timezone,
+          constraints: eventData.constraints || {},
         });
 
         // Generate time slots based on event dates
@@ -1548,7 +1550,14 @@ const MentorApplicationComponent = () => {
         </FormControl>
       )}
 
-      {/* Meals are provided on site — only in-person mentors need this */}
+      {/* Meals are provided on site — only in-person mentors need this.
+          MealSchedule renders nothing when the event has no meals configured. */}
+      {!isVirtualEvent() && formData.inPerson === "Yes!" && (
+        <MealSchedule
+          meals={eventData?.constraints?.meals || []}
+          note={eventData?.constraints?.meals_note || ""}
+        />
+      )}
       {!isVirtualEvent() && formData.inPerson === "Yes!" && (
         <DietaryRestrictionsSelect
           value={formData.dietaryRestrictions || ""}

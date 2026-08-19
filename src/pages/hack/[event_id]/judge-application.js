@@ -66,6 +66,7 @@ import {
   DietaryRestrictionsSelect,
   IntroVideoField,
   JudgeTrainingGate,
+  MealSchedule,
   OHackParticipationSelect,
   PronounsPicker,
   scrollToStepContent,
@@ -2003,7 +2004,14 @@ const JudgeApplicationComponent = () => {
             )}
           </FormControl>
 
-          {/* Meals are served at the venue — only in-person judges need this */}
+          {/* Meals are served at the venue — only in-person judges need this.
+              MealSchedule renders nothing when the event has no meals configured. */}
+          {!isVirtualEvent() && formData.inPerson === "Yes" && (
+            <MealSchedule
+              meals={eventData?.constraints?.meals || []}
+              note={eventData?.constraints?.meals_note || ""}
+            />
+          )}
           {!isVirtualEvent() && formData.inPerson === "Yes" && (
             <DietaryRestrictionsSelect
               value={formData.dietaryRestrictions || ""}
