@@ -5,6 +5,14 @@ export { default as ProfileAutofillNotice } from "./ProfileAutofillNotice";
 export { default as PronounsPicker } from "./PronounsPicker";
 export { CURATED_PRONOUNS } from "./PronounsPicker";
 export { default as MealMenu } from "./MealMenu";
+export { default as MealSchedule } from "./MealSchedule";
+export {
+  MEALS_MODE_MENU,
+  MEALS_MODE_SCHEDULE,
+  MEALS_NOTE_MAX_LENGTH,
+  getMealsMode,
+  formatMealTime,
+} from "./MealSchedule";
 export { default as DietaryRestrictionsSelect } from "./DietaryRestrictionsSelect";
 export {
   DIETARY_RESTRICTION_OPTIONS,

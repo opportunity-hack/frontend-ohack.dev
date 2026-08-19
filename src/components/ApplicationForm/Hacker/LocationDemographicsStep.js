@@ -13,7 +13,13 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { DietaryRestrictionsSelect, MealMenu } from "../index";
+import {
+  DietaryRestrictionsSelect,
+  MealMenu,
+  MealSchedule,
+  MEALS_MODE_SCHEDULE,
+  getMealsMode,
+} from "../index";
 import {
   AGE_RANGE_OPTIONS,
   ARIZONA_COUNTY_OPTIONS,
@@ -242,7 +248,13 @@ const LocationDemographicsStep = ({
 
       {!eventData?.isOnlineEvent &&
         Array.isArray(eventData?.constraints?.meals) &&
-        eventData.constraints.meals.length > 0 && (
+        eventData.constraints.meals.length > 0 &&
+        (getMealsMode(eventData.constraints) === MEALS_MODE_SCHEDULE ? (
+          <MealSchedule
+            meals={eventData.constraints.meals}
+            note={eventData.constraints.meals_note || ""}
+          />
+        ) : (
           <MealMenu
             meals={eventData.constraints.meals}
             selections={formData.mealSelections || {}}
@@ -250,7 +262,7 @@ const LocationDemographicsStep = ({
               setFormData((prev) => ({ ...prev, mealSelections: next }))
             }
           />
-        )}
+        ))}
     </Box>
   </Box>
 );
