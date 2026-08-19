@@ -105,6 +105,10 @@ Patterns that must stay in place to keep Google Search Console CWV green:
 - Iframes (YouTube, Instagram, Calendar) must be wrapped in an aspect-ratio container (the existing pattern is `paddingBottom: '56.25%'` with `height: 0` + absolutely-positioned iframe) or given a fixed pixel height.
 - `initFacebookPixel` in `src/lib/ga/index.js` is idempotent via `pixelInitPromise`. Don't add `ReactPixel.init` calls outside of it.
 
+## Admin Nonprofit Applications (`/admin/nonprofit/application`)
+
+Reviewer-first table (`src/components/admin/NonprofitApplicationTable.js`): 4 merged columns instead of the old 10 raw-field ones — legacy duplicate fields are collapsed per row via exported accessors `applicationOrganization` (`organization||charityName`), `applicationContactName` (`name||contactName`), `applicationIdeaText` (`idea||technicalProblem`). The page's sort/filter (`src/pages/admin/nonprofit/application.js`) uses the SAME accessors — keep them as the single source if fields change. Idea column takes ~46% width, 3-line clamp; "Show more" unclamps in place, and a full-width detail panel appears only for fields with no column (technicalProblem-alongside-idea, solutionBenefits, notes). Don't re-add per-field columns — that's the smushed-Idea regression this replaced. Header row hides below `md` (mobile uses the stacked `data-label` cards). No backend change; data is the `project_applications` collection via `GET /api/messages/npo/applications`.
+
 ## Admin Profile Search (`/admin/profile`)
 
 Search-first people-finder. Single file: `src/pages/admin/profile/index.js`. Backend `GET /api/messages/admin/profiles` returns all users; filtering is client-side across ~14 fields (no server-side search). Auth: `userClass.hasPermission("profile.admin")`.
