@@ -46,7 +46,7 @@ const MealSchedule = ({ meals = [], note = "" }) => {
         Meal schedule
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        Meals are served at the times below — there's nothing to pre-select.
+        Meals are served at the times below
       </Typography>
       {note && (
         <Typography variant="body1" sx={{ mb: 2 }}>
