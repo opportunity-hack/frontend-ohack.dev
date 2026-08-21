@@ -1792,11 +1792,10 @@ const JudgeApplicationComponent = () => {
               Important judging schedule
             </Typography>
             <Typography variant="body1">
-              Judging starts at {judgingWindow.start} on the last day of the
+              Judging starts at <strong>{judgingWindow.start}</strong> on the last day of the
               hackathon (typically Sunday). We expect to complete judging and
-              announce the winning teams by {judgingWindow.end}. Your presence
-              during this entire timeframe is crucial. Please plan to arrive 15
-              to 30 minutes early to ensure you can participate fully.
+              announce the winning teams by <strong>{judgingWindow.end}</strong>. Your presence
+              during this entire timeframe is crucial.
             </Typography>
           </Alert>
 
