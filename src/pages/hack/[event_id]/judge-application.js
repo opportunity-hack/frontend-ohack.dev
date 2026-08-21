@@ -187,7 +187,6 @@ const JudgeApplicationComponent = () => {
     () => ({
       timestamp: new Date().toISOString(),
       email: "",
-      selected: false,
       name: "",
       title: "",
       biography: "",
@@ -2114,9 +2113,6 @@ const JudgeApplicationComponent = () => {
           approved or if we have follow-up questions.
         </Typography>
       </Alert>
-
-      {/* Selected field is not shown to users but stored in state */}
-      <input type="hidden" name="selected" value={formData.selected} />
     </Box>
   );
 

@@ -193,7 +193,8 @@ const VolunteerApplicationComponent = () => {
     codeOfConduct: false,
     additionalInfo: "",
     event_id: event_id || "",
-    isSelected: false,
+    // No isSelected here on purpose: approval is staff-owned and server-
+    // authoritative. Sending it would un-approve an approved volunteer on edit.
     photoUrl: "", // Add field for photo URL
     availableDays: [], // Add field for available days/time slots
   };

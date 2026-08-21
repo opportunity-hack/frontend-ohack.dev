@@ -232,7 +232,8 @@ const SponsorApplicationComponent = () => {
     howHeard: "",
     additionalNotes: "",
     event_id: event_id || "",
-    isSelected: false,
+    // No isSelected here on purpose: approval is staff-owned and server-
+    // authoritative. Sending it would un-approve an approved sponsor on edit.
   };
 
   // Form navigation state
@@ -731,7 +732,8 @@ const SponsorApplicationComponent = () => {
             "", // Map logo to photoUrl for consistency
           type: "sponsors",
           volunteer_type: "sponsor",
-          isSelected: false,
+          // Don't send isSelected — the backend keeps its own value so an
+          // update never un-approves an already-approved sponsor.
           logoUrl:
             uploadedLogoUrlRef.current ||
             formData.logoUrl ||

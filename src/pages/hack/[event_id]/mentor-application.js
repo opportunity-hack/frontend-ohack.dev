@@ -195,7 +195,8 @@ const MentorApplicationComponent = () => {
     shortBio: "",
     photoUrl: "",
     event_id: "",
-    isSelected: false,
+    // No isSelected here on purpose: approval is staff-owned and server-
+    // authoritative. Sending it would un-approve an approved mentor on edit.
   };
 
   // Use form persistence hook
