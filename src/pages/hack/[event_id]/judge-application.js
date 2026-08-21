@@ -2106,10 +2106,12 @@ const JudgeApplicationComponent = () => {
 
       <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
         <Typography variant="body1">
-          Your application is <strong>pending review</strong> — our staff
-          reviews every judge application by hand, which can take up to a week.
-          We'll email you once you're approved or if we have follow-up
-          questions.
+          Upon submission, your application is{" "}
+          <strong>pending review</strong> — our staff reviews every judge
+          application by hand, which can take up to 14 business days. We'd
+          love to make this faster, but we all have full-time jobs and help
+          our community during off-hours. We'll email you once you're
+          approved or if we have follow-up questions.
         </Typography>
       </Alert>
 
@@ -2261,10 +2263,12 @@ const JudgeApplicationComponent = () => {
 
               <Alert severity="info" sx={{ ...infoAlertSx, mb: 4 }}>
                 <Typography variant="body1">
-                  <strong>Your application is pending review.</strong> Our staff
-                  reviews every judge application — this typically takes up to a
-                  week. You'll get an email when you're approved or if we have
-                  follow-up questions.
+                  <strong>Your application is pending review.</strong> Our
+                  staff reviews every judge application by hand, which can
+                  take up to 14 business days. We'd love to make this faster,
+                  but we all have full-time jobs and help our community
+                  during off-hours. You'll get an email when you're approved
+                  or if we have follow-up questions.
                 </Typography>
               </Alert>
 

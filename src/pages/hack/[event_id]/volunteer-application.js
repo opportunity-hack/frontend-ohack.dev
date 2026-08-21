@@ -1837,9 +1837,12 @@ const VolunteerApplicationComponent = () => {
 
         <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
           <Typography variant="body2">
-            By submitting this form, you're expressing interest in volunteering
-            with Opportunity Hack. We'll review your application and contact you
-            with next steps soon.
+            By submitting this form, your application is{" "}
+            <strong>pending review</strong> — our staff reviews every
+            volunteer application by hand, which can take up to 14 business
+            days. We'd love to make this faster, but we all have full-time
+            jobs and help our community during off-hours. We'll email you
+            once you're approved or if we have follow-up questions.
           </Typography>
         </Alert>
       </Box>
@@ -2507,11 +2510,21 @@ const VolunteerApplicationComponent = () => {
           </div>
 
           <Box className="ohx-card" sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
-            <Alert severity="success" sx={{ ...successAlertSx, mb: 4 }}>
+            <Alert severity="success" sx={{ ...successAlertSx, mb: 2 }}>
               <Typography variant="body1">
-                Thank you for applying to volunteer with Opportunity Hack.
-                We&apos;ll review your application and contact you with next
-                steps soon.
+                Thank you for applying to volunteer with Opportunity Hack
+                — we&apos;ve received your application.
+              </Typography>
+            </Alert>
+
+            <Alert severity="info" sx={{ ...infoAlertSx, mb: 4 }}>
+              <Typography variant="body1">
+                <strong>Your application is pending review.</strong> Our
+                staff reviews every volunteer application by hand, which can
+                take up to 14 business days. We&apos;d love to make this
+                faster, but we all have full-time jobs and help our
+                community during off-hours. You&apos;ll get an email when
+                you&apos;re approved or if we have follow-up questions.
               </Typography>
             </Alert>
 
