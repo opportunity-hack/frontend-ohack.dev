@@ -46,6 +46,12 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, parseISO } from "date-fns";
 import SectionContainer from "../SectionContainer";
 import MenuCatalogPicker from "../catalog/MenuCatalogPicker";
+import MealSchedule, {
+  MEALS_MODE_MENU,
+  MEALS_MODE_SCHEDULE,
+  MEALS_NOTE_MAX_LENGTH,
+  getMealsMode,
+} from "../../../ApplicationForm/MealSchedule";
 import {
   computeAllMealsCostCents,
   computeItemCostCents,
@@ -142,7 +148,7 @@ const ItemCostRow = ({ item, headcount }) => {
   );
 };
 
-const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalog, dragHandleProps, eventStart, eventEnd, headcount }) => {
+const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalog, dragHandleProps, eventStart, eventEnd, headcount, scheduleOnly = false }) => {
   const updateField = (field, value) => onUpdate({ ...meal, [field]: value });
   const updateItem = (itemIndex, field, value) => {
     const items = (meal.items || []).map((it, i) => (i === itemIndex ? { ...it, [field]: value } : it));
@@ -169,7 +175,7 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalo
           <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }}>
             {meal.name || `Meal ${mealIndex + 1}`}
           </Typography>
-          {mealCost > 0 && (
+          {!scheduleOnly && mealCost > 0 && (
             <Chip
               label={formatUSD(mealCost)}
               size="small"
@@ -191,7 +197,7 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalo
         </Stack>
 
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 5 }}>
+          <Grid size={{ xs: 12, sm: scheduleOnly ? 6 : 5 }}>
             <TextField
               label="Name"
               fullWidth
@@ -201,7 +207,7 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalo
               placeholder="Saturday Lunch"
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 5 }}>
+          <Grid size={{ xs: 12, sm: scheduleOnly ? 6 : 5 }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DateTimePicker
                 label="Time"
@@ -213,19 +219,21 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalo
               />
             </LocalizationProvider>
           </Grid>
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <TextField
-              label="People eating"
-              type="number"
-              size="small"
-              fullWidth
-              value={meal.headcount_override ?? ""}
-              onChange={(e) => updateField("headcount_override", e.target.value === "" ? null : Number(e.target.value))}
-              placeholder={String(headcount || 0)}
-              inputProps={{ min: 0 }}
-              helperText={meal.headcount_override == null ? `default ${headcount}` : "override"}
-            />
-          </Grid>
+          {!scheduleOnly && (
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <TextField
+                label="People eating"
+                type="number"
+                size="small"
+                fullWidth
+                value={meal.headcount_override ?? ""}
+                onChange={(e) => updateField("headcount_override", e.target.value === "" ? null : Number(e.target.value))}
+                placeholder={String(headcount || 0)}
+                inputProps={{ min: 0 }}
+                helperText={meal.headcount_override == null ? `default ${headcount}` : "override"}
+              />
+            </Grid>
+          )}
         </Grid>
 
         {meal.time && !parsedTime && (
@@ -266,7 +274,15 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalo
           </FormControl>
         </Stack>
 
-        {meal.catering_provided !== false && (
+        {scheduleOnly && (meal.items || []).length > 0 && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1.5 }}>
+            {(meal.items || []).length} menu item{(meal.items || []).length === 1 ? "" : "s"} hidden
+            while "Times only" is on — the items are kept and come back if you
+            switch to full menus.
+          </Typography>
+        )}
+
+        {!scheduleOnly && meal.catering_provided !== false && (
           <Box sx={{ mt: 2, pl: 2, borderLeft: "3px solid", borderColor: "primary.light" }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Menu options</Typography>
@@ -381,13 +397,22 @@ const MealEditor = ({ meal, mealIndex, onUpdate, onRemove, onClone, onOpenCatalo
   );
 };
 
-const HackerPreview = ({ meals }) => {
+const HackerPreview = ({ meals, mealsMode = MEALS_MODE_MENU, note = "" }) => {
   if (!meals || meals.length === 0) {
     return (
       <Alert severity="info" sx={{ mt: 1 }}>
-        Hackers won't see a meal selector until you add at least one slot.
+        Hackers won't see{" "}
+        {mealsMode === MEALS_MODE_SCHEDULE
+          ? "the meal schedule"
+          : "a meal selector"}{" "}
+        until you add at least one slot.
       </Alert>
     );
+  }
+  // Times-only mode renders the exact component the hacker application uses,
+  // so the preview can't drift from reality.
+  if (mealsMode === MEALS_MODE_SCHEDULE) {
+    return <MealSchedule meals={meals} note={note} />;
   }
   return (
     <Stack spacing={2}>
@@ -496,6 +521,9 @@ const MealsSection = ({ admin }) => {
   const { hackathon, setConstraint, markSectionDirty, dirtySections, commitSection, discardSection, saveState } = admin;
   const meals = hackathon.constraints?.meals || [];
   const headcount = hackathon.constraints?.meals_estimated_headcount ?? 50;
+  const mealsMode = getMealsMode(hackathon.constraints);
+  const scheduleOnly = mealsMode === MEALS_MODE_SCHEDULE;
+  const mealsNote = hackathon.constraints?.meals_note || "";
   const dirty = dirtySections.has("meals");
   const saving = saveState.status === "saving";
   const [showPreview, setShowPreview] = useState(true);
@@ -519,8 +547,26 @@ const MealsSection = ({ admin }) => {
   const updateOne = (index, value) =>
     updateMeals(meals.map((m, i) => (i === index ? value : m)));
   const removeOne = (index) => updateMeals(meals.filter((_, i) => i !== index));
+  // Times-only slots start with no items — a leftover blank item would fail
+  // the backend's validate_meals (items need a non-empty name) even though
+  // the items editor is hidden in that mode.
   const addNew = (presetName) =>
-    updateMeals([...meals, blankMeal(presetName ? { name: presetName } : {})]);
+    updateMeals([
+      ...meals,
+      blankMeal({
+        ...(presetName ? { name: presetName } : {}),
+        ...(scheduleOnly ? { items: [] } : {}),
+      }),
+    ]);
+
+  const setMealsMode = (mode) => {
+    setConstraint("meals_mode", mode);
+    markSectionDirty("meals", true);
+  };
+  const setMealsNote = (note) => {
+    setConstraint("meals_note", note);
+    markSectionDirty("meals", true);
+  };
   const cloneOne = (index) => {
     const src = meals[index];
     const dup = {
@@ -565,7 +611,11 @@ const MealsSection = ({ admin }) => {
   return (
     <SectionContainer
       title="Meals & Catering"
-      description="Configure meals, pick items from a vendor catalog (Fat Freddy's seeded), and see live cost estimates. Drag to reorder. Hackers pick one option per slot."
+      description={
+        scheduleOnly
+          ? "Publish a simple meal schedule — hackers see the times, with nothing to pre-select. Drag to reorder."
+          : "Configure meals, pick items from a vendor catalog (Fat Freddy's seeded), and see live cost estimates. Drag to reorder. Hackers pick one option per slot."
+      }
       actions={
         <ToggleButtonGroup
           value={showPreview ? "preview" : "edit"}
@@ -583,29 +633,69 @@ const MealsSection = ({ admin }) => {
       onDiscard={() => discardSection("meals")}
     >
       <Stack spacing={2.5} sx={{ mb: 3 }}>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
-          <TextField
-            label="Estimated headcount"
-            type="number"
+        <Box>
+          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+            What hackers see
+          </Typography>
+          <ToggleButtonGroup
+            value={mealsMode}
+            exclusive
             size="small"
-            value={headcount}
-            onChange={(e) => setHeadcount(Math.max(0, parseInt(e.target.value, 10) || 0))}
-            inputProps={{ min: 0, step: 1 }}
-            helperText="Used for cost estimates and per-meal defaults"
-            sx={{ maxWidth: 220 }}
-          />
-          <Button
-            size="medium"
-            variant="outlined"
-            startIcon={<CatalogIcon />}
-            onClick={() => openCatalogFor(null)}
-            disabled
-            sx={{ visibility: "hidden" }}
+            onChange={(_, v) => v && setMealsMode(v)}
           >
-            Browse menu
-          </Button>
-        </Stack>
-        <CostSummary meals={meals} headcount={headcount} />
+            <ToggleButton value={MEALS_MODE_MENU}>
+              Full menus — hackers pick items
+            </ToggleButton>
+            <ToggleButton value={MEALS_MODE_SCHEDULE}>
+              Times only — just show the schedule
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+            {scheduleOnly
+              ? "The hacker application shows meal names and times only — no item selection."
+              : "The hacker application asks each hacker to pick one item per meal slot."}
+          </Typography>
+        </Box>
+        {scheduleOnly ? (
+          <TextField
+            label="Note shown to hackers (optional)"
+            size="small"
+            fullWidth
+            multiline
+            minRows={2}
+            value={mealsNote}
+            onChange={(e) => setMealsNote(e.target.value)}
+            inputProps={{ maxLength: MEALS_NOTE_MAX_LENGTH }}
+            placeholder="We'll provide breakfast, lunch, and dinner — vegetarian and vegan options at every meal."
+            helperText={`Shown above the meal schedule on the hacker application (${mealsNote.length}/${MEALS_NOTE_MAX_LENGTH})`}
+          />
+        ) : (
+          <>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
+              <TextField
+                label="Estimated headcount"
+                type="number"
+                size="small"
+                value={headcount}
+                onChange={(e) => setHeadcount(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                inputProps={{ min: 0, step: 1 }}
+                helperText="Used for cost estimates and per-meal defaults"
+                sx={{ maxWidth: 220 }}
+              />
+              <Button
+                size="medium"
+                variant="outlined"
+                startIcon={<CatalogIcon />}
+                onClick={() => openCatalogFor(null)}
+                disabled
+                sx={{ visibility: "hidden" }}
+              >
+                Browse menu
+              </Button>
+            </Stack>
+            <CostSummary meals={meals} headcount={headcount} />
+          </>
+        )}
       </Stack>
 
       <Grid container spacing={3}>
@@ -636,6 +726,7 @@ const MealsSection = ({ admin }) => {
                               eventStart={eventStart}
                               eventEnd={eventEnd}
                               headcount={headcount}
+                              scheduleOnly={scheduleOnly}
                             />
                           </Box>
                         )}
@@ -674,9 +765,11 @@ const MealsSection = ({ admin }) => {
             <Box sx={{ position: { md: "sticky" }, top: { md: 80 } }}>
               <Typography variant="overline" color="text.secondary">Hacker preview</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                Roughly how the meal selector renders on the hacker application.
+                {scheduleOnly
+                  ? "Exactly how the meal schedule renders on the hacker application."
+                  : "Roughly how the meal selector renders on the hacker application."}
               </Typography>
-              <HackerPreview meals={meals} />
+              <HackerPreview meals={meals} mealsMode={mealsMode} note={mealsNote} />
             </Box>
           </Grid>
         )}
