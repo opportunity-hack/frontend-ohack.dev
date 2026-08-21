@@ -2062,9 +2062,13 @@ const JudgeApplicationComponent = () => {
           />
         }
         label={
-          <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
+          <Typography
+            component="span"
+            variant="body1"
+            sx={{ lineHeight: 1.7, display: "inline" }}
+          >
             I will review each project I'm assigned and ask questions tied to
-            the judging criteria — Scope, Documentation, Polish, and Security.
+            the judging criteria: Scope, Documentation, Polish, Security, and Accessibility in order to help find the best solution to help nonprofits, humans, and the world.
           </Typography>
         }
         sx={{ mb: 2, alignItems: "flex-start", color: "var(--ink)" }}
@@ -2081,7 +2085,11 @@ const JudgeApplicationComponent = () => {
           />
         }
         label={
-          <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
+          <Typography
+            component="span"
+            variant="body1"
+            sx={{ lineHeight: 1.7, display: "inline" }}
+          >
             I agree to the{" "}
             <Link
               href="/hack/code-of-conduct"
