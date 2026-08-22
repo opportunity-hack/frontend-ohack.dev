@@ -31,6 +31,7 @@ import {
   Article as ArticleIcon,
   Feedback as FeedbackIcon,
   SmartToy as SmartToyIcon,
+  WorkOutline as WorkOutlineIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -112,6 +113,12 @@ const adminPages = [
     label: "Blog",
     description: "Write, edit, and manage blog posts with markdown + SEO",
     icon: <ArticleIcon fontSize="large" style={{ color: "#093170" }} />
+  },
+  {
+    path: "/admin/jobs",
+    label: "Volunteer Jobs",
+    description: "Manage /jobs listings and review organizer applications",
+    icon: <WorkOutlineIcon fontSize="large" style={{ color: "#093170" }} />
   },
   {
     path: "/admin/feedback",
