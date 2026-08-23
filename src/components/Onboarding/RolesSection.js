@@ -149,6 +149,9 @@ const RolesSection = () => {
         All applications live on the event pages — pick an upcoming hackathon at{' '}
         <Link href="/hack" style={{ fontWeight: 600 }}>ohack.dev/hack</Link> and you&apos;ll find
         the hacker, mentor, judge, and volunteer application forms right on the event&apos;s page.
+        Want a bigger, ongoing role? We also recruit volunteer organizers (social media, event
+        operations, mentor program) at{' '}
+        <Link href="/jobs" style={{ fontWeight: 600 }}>ohack.dev/jobs</Link>.
       </Alert>
 
       {/* Videos */}

@@ -407,10 +407,12 @@ export default function AboutUsPage() {
           <Eyebrow>Start your journey</Eyebrow>
           <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 12 }}>Find your role</h2>
           <p className="ohx-muted" style={{ margin: "0 auto 28px", maxWidth: "52ch" }}>
-            Hack solutions, mentor teams, volunteer at events, or judge projects — there&apos;s a place for you.
+            Hack solutions, mentor teams, volunteer at events, judge projects — or take an
+            organizer role and help run Opportunity Hack itself.
           </p>
           <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/volunteer" className="ohx-btn ohx-btn--primary">Explore roles <Arrow /></Link>
+            <Link href="/jobs" className="ohx-btn ohx-btn--ghost">See organizer jobs</Link>
             <Link href="/signup" className="ohx-btn ohx-btn--ghost">Join the community</Link>
           </div>
         </section>

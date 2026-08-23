@@ -74,7 +74,7 @@ const DURATION_OPTIONS = [
   "Through the Fall 2026 event",
   "3–6 months",
   "6–12 months",
-  "As long as I'm useful",
+  "Ongoing — I'd love to stick around",
 ];
 
 const CHANNEL_OPTIONS = ["Slack", "Email", "Either works"];
