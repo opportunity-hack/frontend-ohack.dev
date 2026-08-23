@@ -52,6 +52,7 @@ const hackathonMenuItems = [
 const getInvolvedMenuItems = [
   ["Onboarding", "/onboarding"],
   ["Volunteer", "/volunteer"],
+  ["Volunteer Jobs", "/jobs"],
   ["Become a Hacker", "/about/hackers"],
   ["Become a Mentor", "/about/mentors"],
   ["Become a Judge", "/about/judges"],
