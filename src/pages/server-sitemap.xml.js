@@ -63,6 +63,17 @@ export async function getServerSideProps(ctx) {
     console.error('[server-sitemap] portfolios fetch failed:', e.message);
   }
 
+  // Volunteer job listing pages (published + recently closed)
+  try {
+    const data = await fetchJson(`${API_URL}/api/jobs`);
+    const listings = data.listings || [];
+    for (const l of listings) {
+      if (l.slug) fields.push({ loc: `${BASE_URL}/jobs/${l.slug}`, lastmod: now, priority: '0.8', changefreq: 'weekly' });
+    }
+  } catch (e) {
+    console.error('[server-sitemap] jobs fetch failed:', e.message);
+  }
+
   ctx.res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
   return getServerSideSitemapLegacy(ctx, fields);
 }
