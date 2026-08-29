@@ -31,6 +31,7 @@ import {
   LinkedIn as LinkedInIcon,
 } from '@mui/icons-material';
 import ApplicationReviewCard from './ApplicationReviewCard';
+import { normalizeEmail } from '../../hooks/use-judge-training-status';
 
 const getLinkedInUrl = (app) => {
   const raw = app.linkedin || app.linkedinProfile || app.linkedinUrl || '';
@@ -47,6 +48,10 @@ const ApplicationReviewList = ({
   onBatchReject,
   isLoading = false,
   eventId,
+  // Judge training/video review (judge tab only; see useJudgeTrainingStatus)
+  trainingStatusByEmail,
+  trainingLmsAccess,
+  onPlayVideo,
   // Filter state props
   filter,
   statusFilter,
@@ -670,6 +675,11 @@ const ApplicationReviewList = ({
                 onReject={handleReject}
                 onEdit={onEdit}
                 isLoading={isLoading}
+                trainingStatus={
+                  trainingStatusByEmail?.[normalizeEmail(application.email)]
+                }
+                lmsAccess={trainingLmsAccess}
+                onPlayVideo={onPlayVideo}
               />
             </Box>
           ))}
