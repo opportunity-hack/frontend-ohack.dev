@@ -39,10 +39,55 @@ import { styled } from "@mui/system";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
-import { Email as EmailIcon, VolunteerActivism as CertificateIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
+import { Email as EmailIcon, VolunteerActivism as CertificateIcon, OpenInNew as OpenInNewIcon, PlayCircleFilled as PlayCircleIcon } from '@mui/icons-material';
 import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
 import NextLink from 'next/link';
 import HackerDepositChip from "./HackerDepositChip";
+import { JUDGE_TRAINING_CERTS } from "../../lib/lmsClient";
+import { normalizeEmail } from "../../hooks/use-judge-training-status";
+
+// Compact judge-training summary for the table/mobile chip. `entry` is one
+// value from useJudgeTrainingStatus's statusByEmail (undefined while the LMS
+// check is pending or unavailable — then fall back to the application's own
+// judgeTrainingCompleted flag). Returns { label, color, tooltip } or null.
+const trainingChipConfig = (entry, volunteer, lmsAccess) => {
+  if (!entry) {
+    return volunteer.judgeTrainingCompleted
+      ? {
+          label: "✓ Trained",
+          color: "success",
+          tooltip: "Marked complete at submit (LMS check pending)",
+        }
+      : null;
+  }
+  const rows = JUDGE_TRAINING_CERTS.map((spec) => {
+    const slot = entry.slots?.[spec.key];
+    const done = slot?.state === "verified" || slot?.rollup?.passed;
+    const state = slot?.state || "missing";
+    let line = `${spec.videoTitle}: ${
+      state === "verified" ? "verified" : state.replace(/_/g, " ")
+    }`;
+    if (state === "verified" && typeof slot?.cert?.score === "number") {
+      line += ` (${Math.round(slot.cert.score)}%)`;
+    }
+    if (lmsAccess === "full" && slot?.rollup) {
+      const rollup = slot.rollup;
+      line += ` — ${rollup.attemptCount} attempt${
+        rollup.attemptCount === 1 ? "" : "s"
+      }, best ${Math.round(rollup.bestScore)}%`;
+    }
+    return { done, line };
+  });
+  const doneCount = rows.filter((row) => row.done).length;
+  const tooltip = rows.map((row) => row.line).join("\n");
+  if (doneCount === rows.length) {
+    return { label: "✓ Trained", color: "success", tooltip };
+  }
+  if (doneCount > 0) {
+    return { label: `${doneCount} of ${rows.length}`, color: "warning", tooltip };
+  }
+  return { label: "✗ Not trained", color: "error", tooltip };
+};
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
@@ -206,6 +251,10 @@ const VolunteerTable = ({
   // Deposit refund (hackers only)
   depositEnabled = false,
   onDepositClick,
+  // Judge training/video review (judges only; see useJudgeTrainingStatus)
+  trainingStatusByEmail,
+  trainingLmsAccess,
+  onPlayVideo,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState({ open: false, message: '' });
   const [resendStatuses, setResendStatuses] = useState({}); // { resend_id: { last_event, ... } }
@@ -371,7 +420,6 @@ const VolunteerTable = ({
     for (let i = 0; i < unique.length; i += 100) {
       fetchResendStatuses(unique.slice(i, i + 100));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [volunteers, accessToken, orgId]);
 
   // Helper to get sent emails from either new sent_emails or legacy messages_sent
@@ -428,6 +476,8 @@ const VolunteerTable = ({
         ...baseColumns,
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
         { id: "status", label: "Status", minWidth: 90 }, // Reduced from 120
+        { id: "training", label: "Training", minWidth: 90, sortable: false },
+        { id: "introVideo", label: "Video", minWidth: 56, sortable: false },
         { id: "title", label: "Title", minWidth: 100, priority: 2 }, // Reduced from 150
         { id: "background", label: "Background", minWidth: 120, priority: 3 }, // Reduced from 150
       ];
@@ -534,6 +584,50 @@ const VolunteerTable = ({
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
+      case "training": {
+        const chip = trainingChipConfig(
+          trainingStatusByEmail?.[normalizeEmail(volunteer.email)],
+          volunteer,
+          trainingLmsAccess,
+        );
+        if (!chip) {
+          return (
+            <Typography variant="caption" color="text.secondary">
+              —
+            </Typography>
+          );
+        }
+        return (
+          <Tooltip
+            title={<span style={{ whiteSpace: "pre-line" }}>{chip.tooltip}</span>}
+          >
+            <Chip
+              label={chip.label}
+              size="small"
+              color={chip.color}
+              variant="outlined"
+            />
+          </Tooltip>
+        );
+      }
+      case "introVideo":
+        return volunteer.introductionVideoUrl ? (
+          <Tooltip title="Play intro video">
+            <IconButton
+              size="small"
+              aria-label="Play intro video"
+              onClick={() =>
+                onPlayVideo?.(volunteer.introductionVideoUrl, volunteer.name)
+              }
+            >
+              <PlayCircleIcon fontSize="small" color="primary" />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Typography variant="caption" color="text.secondary">
+            —
+          </Typography>
+        );
       case "deposit":
         return (
           <HackerDepositChip
@@ -1643,6 +1737,34 @@ const VolunteerTable = ({
                   </Box>
                 )}
 
+                {type === 'judges' && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center', mb: 1 }}>
+                    {(() => {
+                      const chip = trainingChipConfig(
+                        trainingStatusByEmail?.[normalizeEmail(volunteer.email)],
+                        volunteer,
+                        trainingLmsAccess,
+                      );
+                      return chip ? (
+                        <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{chip.tooltip}</span>}>
+                          <Chip label={chip.label} size="small" color={chip.color} variant="outlined" />
+                        </Tooltip>
+                      ) : null;
+                    })()}
+                    {volunteer.introductionVideoUrl && onPlayVideo && (
+                      <Tooltip title="Play intro video">
+                        <IconButton
+                          size="small"
+                          aria-label="Play intro video"
+                          onClick={() => onPlayVideo(volunteer.introductionVideoUrl, volunteer.name)}
+                        >
+                          <PlayCircleIcon fontSize="small" color="primary" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                )}
+
                 {type === 'judges' && volunteer.background && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                     Background: {volunteer.background.substring(0, 60)}{volunteer.background.length > 60 ? '...' : ''}
@@ -1884,6 +2006,11 @@ const VolunteerTable = ({
                       })
                     }}
                   >
+                    {column.sortable === false ? (
+                      <Typography variant="caption" fontWeight="bold">
+                        {column.label}
+                      </Typography>
+                    ) : (
                     <TableSortLabel
                       active={orderBy === column.id}
                       direction={orderBy === column.id ? order : "asc"}
@@ -1936,6 +2063,7 @@ const VolunteerTable = ({
                         )}
                       </Typography>
                     </TableSortLabel>
+                    )}
                   </StyledTableCell>
                 );
               })}

@@ -32,139 +32,30 @@ import {
   warningAlertSx,
 } from "./refinedStyles";
 
-// The judge-training bundle on the OHack LMS (two videos, each with a
-// knowledge check that issues a shareable certificate on a passing score).
-export const JUDGE_TRAINING_BUNDLE_URL =
-  "https://lms.ohack.dev/bundles/kn7ect1nhxqkcn2tp32tbypzdx8ckjx6";
+// Convex transport + cert-token helpers live in the shared LMS client (also
+// used by the admin judge-review surfaces). Re-exported so this component's
+// public API is unchanged for existing importers.
+import {
+  JUDGE_TRAINING_BUNDLE_URL,
+  JUDGE_TRAINING_CERTS,
+  certUrlForToken,
+  extractCertToken,
+  lmsMutation,
+  lmsQuery,
+  verifyCertToken,
+} from "../../lib/lmsClient";
 
-// The LMS's Convex deployment. Its Functions HTTP API is used two ways:
-// - anonymously: certificates:getCertificateByShareToken verifies a pasted
-//   link (same query the LMS's own /certificate/:token page uses);
-// - authenticated: lms.ohack.dev signs in through the SAME PropelAuth
-//   instance as www.ohack.dev (auth.ohack.dev, registered as a trusted
-//   customJwt issuer with EXTERNAL_AUTH_TRUST_EMAILS=true), so the judge's
-//   own accessToken can call externalAuth:ensureExternalUser and
-//   certificates:getMyCertificates via `Authorization: Bearer` to
-//   auto-detect earned certificates without any copy/paste.
-// CORS is open on both. Dev caveat: localhost logs into a propelauthtest
-// issuer the production LMS does not trust — authed calls fail there and the
-// gate falls back to manual paste.
-const LMS_CONVEX_BASE =
-  process.env.NEXT_PUBLIC_LMS_CONVEX_URL ||
-  "https://majestic-trout-419.convex.cloud";
-const LMS_CONVEX_QUERY_URL = `${LMS_CONVEX_BASE}/api/query`;
-const LMS_CONVEX_MUTATION_URL = `${LMS_CONVEX_BASE}/api/mutation`;
+export { JUDGE_TRAINING_BUNDLE_URL, JUDGE_TRAINING_CERTS, extractCertToken };
 
 // Minimum gap between automatic checks (mount/refocus). The explicit
 // "Check again" button bypasses it.
 const AUTO_CHECK_THROTTLE_MS = 15000;
 
-// Accepts a full LMS certificate URL or a bare 64-hex share token.
-const CERT_TOKEN_RE = /^[0-9a-f]{64}$/i;
-const CERT_URL_RE = /lms\.ohack\.dev\/certificate\/([0-9a-f]{64})/i;
-
-export const extractCertToken = (input) => {
-  const value = (input || "").trim();
-  if (!value) return null;
-  if (CERT_TOKEN_RE.test(value)) return value.toLowerCase();
-  const match = CERT_URL_RE.exec(value);
-  return match ? match[1].toLowerCase() : null;
-};
-
-const certUrlForToken = (token) => `https://lms.ohack.dev/certificate/${token}`;
-
-// The two required certificates. `match` runs against the certificate's
-// quizTitle + targetTitle (snapshotted at issuance), so it keeps working if
-// the LMS titles get lightly reworded — keep these in sync with the bundle's
-// video/quiz names ("Judge Intro" / "Using the judging tool").
-export const JUDGE_TRAINING_CERTS = [
-  {
-    field: "judgeTrainingIntroCertUrl",
-    key: "intro",
-    videoTitle: "Judge Intro",
-    match: /judge\s*intro/i,
-  },
-  {
-    field: "judgeTrainingToolCertUrl",
-    key: "tool",
-    videoTitle: "Using the judging tool",
-    match: /judging\s*tool/i,
-  },
-];
-
-const verifyCertToken = async (token) => {
-  const response = await fetch(LMS_CONVEX_QUERY_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      path: "certificates:getCertificateByShareToken",
-      args: { shareToken: token },
-      format: "json",
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`Certificate lookup failed: ${response.status}`);
-  }
-  const body = await response.json();
-  if (body?.status !== "success") {
-    throw new Error("Certificate lookup failed");
-  }
-  // null value = token doesn't resolve to a certificate
-  return body.value || null;
-};
-
-// Authenticated Convex function call. Throws { code: "auth"|"network"|"server" }
-// so callers can tell "this login isn't trusted by the LMS" (expected in dev,
-// or on an untrusted issuer) apart from transient failures.
-const callLmsAuthed = async (url, path, accessToken) => {
-  let response;
-  try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ path, args: {}, format: "json" }),
-    });
-  } catch (err) {
-    throw Object.assign(new Error(`LMS unreachable: ${err.message}`), {
-      code: "network",
-    });
-  }
-  if (response.status === 401 || response.status === 403) {
-    throw Object.assign(new Error(`LMS auth rejected: ${response.status}`), {
-      code: "auth",
-    });
-  }
-  if (!response.ok) {
-    throw Object.assign(new Error(`LMS call failed: ${response.status}`), {
-      code: "server",
-    });
-  }
-  const body = await response.json();
-  if (body?.status !== "success") {
-    const message = body?.errorMessage || "LMS call failed";
-    throw Object.assign(new Error(message), {
-      code: /auth|unauthenticated|identity/i.test(message) ? "auth" : "server",
-    });
-  }
-  return body.value;
-};
-
 const ensureExternalUserOnLms = (accessToken) =>
-  callLmsAuthed(
-    LMS_CONVEX_MUTATION_URL,
-    "externalAuth:ensureExternalUser",
-    accessToken,
-  );
+  lmsMutation("externalAuth:ensureExternalUser", {}, accessToken);
 
 const fetchMyLmsCertificates = (accessToken) =>
-  callLmsAuthed(
-    LMS_CONVEX_QUERY_URL,
-    "certificates:getMyCertificates",
-    accessToken,
-  );
+  lmsQuery("certificates:getMyCertificates", {}, accessToken);
 
 // Assign the caller's certificates to the two required slots. Pure so it's
 // unit-testable: newest issuedAt wins when a quiz was passed more than once,
