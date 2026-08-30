@@ -133,8 +133,19 @@ const BatchEmailDialog = ({
   eventId,
   onComplete,
   isSelectedUsers = true, // true for selected/approved users, false for not-selected/rejected users
+  onSnack, // optional page-level snackbar; there is no SnackbarProvider in the app, so notistack calls are silently swallowed without this
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar: notistackEnqueue } = useSnackbar();
+  const enqueueSnackbar = React.useCallback(
+    (message, options = {}) => {
+      if (onSnack) {
+        onSnack(message, options.variant || "info");
+      } else {
+        notistackEnqueue(message, options);
+      }
+    },
+    [onSnack, notistackEnqueue],
+  );
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customMessage, setCustomMessage] = useState(false);
@@ -262,7 +273,6 @@ const BatchEmailDialog = ({
     }
     // messageText intentionally omitted: the untouched-guard reads it via
     // closure and re-running this effect per keystroke would be wasteful.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isSelectedUsers, eventId, volunteerType, recipientType, templates]);
 
   const handleTemplateSelect = (template) => {

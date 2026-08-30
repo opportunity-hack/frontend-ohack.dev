@@ -1,14 +1,19 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/router";
 import { Typography, Tabs, Tab, Box } from "@mui/material";
-import { Email as EmailIcon, Share as ShareIcon } from "@mui/icons-material";
+import {
+  Email as EmailIcon,
+  Send as SendIcon,
+  Share as ShareIcon,
+} from "@mui/icons-material";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 
 import AdminPage from "../../../components/admin/AdminPage";
 import EmailTemplateManager from "../../../components/admin/EmailTemplateManager";
+import EmailCommunication from "../../../components/admin/EmailCommunication";
 import SocialMediaManagement from "../../../components/admin/SocialMediaManagement";
 
-const TAB_SLUGS = ["templates", "social"];
+const TAB_SLUGS = ["templates", "email", "social"];
 
 const CommunicationAdminPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
@@ -76,6 +81,7 @@ const CommunicationAdminPage = withRequiredAuthInfo(({ userClass }) => {
           iconPosition="start"
           label="Email Templates"
         />
+        <Tab icon={<SendIcon />} iconPosition="start" label="Email" />
         <Tab icon={<ShareIcon />} iconPosition="start" label="Social Media" />
       </Tabs>
 
@@ -87,6 +93,13 @@ const CommunicationAdminPage = withRequiredAuthInfo(({ userClass }) => {
         />
       )}
       {activeTab === 1 && (
+        <EmailCommunication
+          accessToken={accessToken}
+          orgId={orgId}
+          onSnack={handleSnackbar}
+        />
+      )}
+      {activeTab === 2 && (
         <Box>
           <SocialMediaManagement onSnackbar={handleSnackbar} />
         </Box>
