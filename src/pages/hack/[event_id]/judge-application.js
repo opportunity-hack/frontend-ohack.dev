@@ -1261,6 +1261,13 @@ const JudgeApplicationComponent = () => {
       return false;
     }
 
+    if (!formData.photoUrl && !uploadedPhotoUrlRef.current) {
+      setError(
+        "Please upload a photo of yourself — it appears next to your name on the event's DevPost site and on ohack.dev",
+      );
+      return false;
+    }
+
     setError("");
     return true;
   };
@@ -1751,19 +1758,41 @@ const JudgeApplicationComponent = () => {
           }
         />
 
-        <UploadPhoto
-          value={formData.photoUrl}
-          onChange={handlePhotoUpload}
-          onError={handlePhotoError}
-          label="A photo of you we can use on the DevPost site"
-          helperText="Please upload a professional photo of yourself"
-          directory="judges"
-          apiServerUrl={apiServerUrl}
-          accessToken={accessToken}
-          orgId={user?.orgId}
-          userId={user?.userId}
-          sx={refinedFieldSx}
-        />
+        <Box
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 2,
+            border: "1px solid var(--line)",
+            backgroundColor: "var(--surface-2)",
+            mb: 3,
+          }}
+        >
+          <UploadPhoto
+            required
+            value={formData.photoUrl}
+            onChange={handlePhotoUpload}
+            onError={handlePhotoError}
+            label="A photo of you — shown publicly"
+            helperText="Unlike your video above, this photo is public: it appears next to your name on the event's DevPost site and on ohack.dev. A clear, professional headshot works best."
+            directory="judges"
+            apiServerUrl={apiServerUrl}
+            accessToken={accessToken}
+            orgId={user?.orgId}
+            userId={user?.userId}
+            sx={{
+              "& .MuiInputLabel-root": {
+                whiteSpace: "normal",
+                fontWeight: 600,
+                color: "var(--ink)",
+              },
+              "& .MuiFormHelperText-root": {
+                color: "var(--muted)",
+                fontSize: "14.5px",
+                lineHeight: 1.6,
+              },
+            }}
+          />
+        </Box>
       </Box>
     </Box>
   );
