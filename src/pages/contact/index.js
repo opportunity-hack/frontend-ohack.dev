@@ -10,19 +10,20 @@ import {
   MenuItem,
   Paper,
   Grid,
-  FormControl,
   FormControlLabel,
-  FormHelperText,
   Checkbox,
   CircularProgress,
   Alert,
-  Collapse,
   Card,
   CardContent,
   Divider,
   Link,
-  IconButton,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -65,6 +66,8 @@ const INQUIRY_TYPES = [
     description: "Information about becoming a mentor",
     link: "/hack",
     linkText: "Apply to Mentor",
+    confirmUrl: "/about/mentors",
+    confirmUrlText: "Mentor Guide",
   },
   {
     value: "judge",
@@ -72,6 +75,8 @@ const INQUIRY_TYPES = [
     description: "Information about becoming a judge",
     link: "/hack",
     linkText: "Apply to Judge",
+    confirmUrl: "/about/judges",
+    confirmUrlText: "Judge Guide",
   },
   {
     value: "sponsor",
@@ -92,8 +97,8 @@ const INQUIRY_TYPES = [
     value: "nonprofit",
     label: "Nonprofit Information",
     description: "Information for nonprofits interested in participating",
-    link: "/nonprofits",
-    linkText: "Nonprofit Details",
+    link: "/nonprofits/apply",
+    linkText: "Apply as a Nonprofit",
   },
   {
     value: "technical",
@@ -105,18 +110,6 @@ const INQUIRY_TYPES = [
     label: "Other",
     description: "Any other inquiries not covered above",
   },
-  { 
-    value: 'prize', 
-    label: 'Prize Claim',
-    description: 'Request to claim your prize after reaching a milestone or achievement',
-    link: '/profile',
-    linkText: 'View Your Badges'
-  },
-  { 
-    value: 'other', 
-    label: 'Other',
-    description: 'Any other inquiries not covered above'
-  }
 ];
 
 // Initial form state
@@ -152,6 +145,9 @@ const ContactPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, pendingType: null });
+  // Derived: the full INQUIRY_TYPES entry for the pending confirmation
+  const pendingConfirmType = INQUIRY_TYPES.find((t) => t.value === confirmDialog.pendingType) ?? null;
 
   // Get inquiry type from URL query if available
   useEffect(() => {
@@ -182,6 +178,15 @@ const ContactPage = () => {
     const { name, value, checked } = e.target;
     const newValue = e.target.type === "checkbox" ? checked : value;
 
+    // Intercept mentor/judge selection — show confirmation dialog first
+    if (name === "inquiryType") {
+      const selectedType = INQUIRY_TYPES.find((t) => t.value === value);
+      if (selectedType?.confirmUrl) {
+        setConfirmDialog({ open: true, pendingType: value });
+        return;
+      }
+    }
+
     setFormState((prev) => ({
       ...prev,
       [name]: newValue,
@@ -194,6 +199,16 @@ const ContactPage = () => {
         [name]: "",
       }));
     }
+  };
+
+  const handleConfirmRead = () => {
+    setFormState((prev) => ({ ...prev, inquiryType: String(confirmDialog.pendingType) }));
+    setFormErrors((prev) => ({ ...prev, inquiryType: "" }));
+    setConfirmDialog({ open: false, pendingType: null });
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmDialog({ open: false, pendingType: null });
   };
 
   // Validate form
@@ -661,6 +676,46 @@ const ContactPage = () => {
           </Grid>
         </Box>
       </Container>
+
+      {/* Mentor / Judge read-confirmation dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleCancelConfirm}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Before you apply as a {pendingConfirmType?.label}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Please take a moment to read our{" "}
+            <strong>{pendingConfirmType?.confirmUrlText}</strong> so you
+            know what to expect. It covers the responsibilities, time
+            commitment, and selection criteria.
+          </DialogContentText>
+          {pendingConfirmType?.confirmUrl && (
+            <Button
+              variant="outlined"
+              component="a"
+              href={pendingConfirmType.confirmUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              endIcon={<FaExternalLinkAlt size={12} />}
+            >
+              Read the {pendingConfirmType.confirmUrlText}
+            </Button>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleCancelConfirm} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmRead} variant="contained" color="primary">
+            I&apos;ve read it — continue
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
