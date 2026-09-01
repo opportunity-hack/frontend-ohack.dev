@@ -307,6 +307,20 @@ const VolunteerPage = () => {
               </div>
             ))}
           </div>
+
+          {/* Organizer roles cross-link → /jobs */}
+          <div className="ohx-card" style={{ marginTop: 24, padding: "26px", borderLeft: "3px solid var(--accent)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 18, justifyContent: "space-between" }}>
+            <div style={{ maxWidth: "56ch" }}>
+              <h3 className="ohx-display" style={{ fontSize: "1.3rem", margin: 0 }}>Want a bigger role? Help run Opportunity Hack.</h3>
+              <p className="ohx-muted" style={{ margin: "10px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>
+                We&apos;re looking for volunteer organizers — social media, event operations
+                (Phoenix), and mentor program lead. Real titles, real references, real impact.
+              </p>
+            </div>
+            <Link href="/jobs" className="ohx-btn ohx-btn--primary" onClick={() => track("roles_cta", "jobs_page")}>
+              See organizer roles <Arrow />
+            </Link>
+          </div>
         </section>
 
         {/* ADDITIONAL RESOURCES */}

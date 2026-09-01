@@ -323,7 +323,8 @@ const HackerApplicationComponent = () => {
     additionalInfo: "",
     requiredQuestionAnswers: [],
     event_id: event_id || "",
-    isSelected: false,
+    // No isSelected here on purpose: approval is staff-owned and server-
+    // authoritative. Sending it would un-approve an approved hacker on edit.
   };
 
   // Use form persistence hook
@@ -821,7 +822,6 @@ const HackerApplicationComponent = () => {
                     photoUrl: prevData.photoUrl || "",
                     inPerson:
                       prevData.inPerson || (prevData.isInPerson ? "Yes" : "No"),
-                    isSelected: prevData.isSelected || false,
                     shirtSize: prevData.shirtSize || "",
                     participationCount: prevData.participationCount || "",
                     county: prevData.county || "",
@@ -1348,7 +1348,6 @@ const HackerApplicationComponent = () => {
     return () => {
       cancelledFlag = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event_id]);
 
   const handleSubmit = async (e) => {

@@ -28,8 +28,15 @@ import {
   Collapse,
   Card,
   CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from "@mui/material";
-import { Share as ShareIcon, ContentCopy as CopyIcon } from "@mui/icons-material";
+import {
+  Share as ShareIcon,
+  ContentCopy as CopyIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 
 // Import components individually to avoid circular dependencies
 import AdminPage from "../../../components/admin/AdminPage";
@@ -44,7 +51,9 @@ import BulkCertificateDialog from "../../../components/admin/BulkCertificateDial
 import HackerDepositRefundDialog from "../../../components/admin/HackerDepositRefundDialog";
 import HackerDepositBulkRefundDialog from "../../../components/admin/HackerDepositBulkRefundDialog";
 import { getDepositState } from "../../../components/admin/HackerDepositChip";
+import VideoDisplay from "../../../components/VideoDisplay/VideoDisplay";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
+import useJudgeTrainingStatus from "../../../hooks/use-judge-training-status";
 
 // Define initial state outside component to prevent re-initialization
 const INITIAL_VOLUNTEERS_STATE = {
@@ -149,6 +158,9 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   const [volunteersForBulkCertificate, setVolunteersForBulkCertificate] = useState([]);
   const [volunteerTypeForBulkCertificate, setVolunteerTypeForBulkCertificate] = useState('');
   const [shareSnackbar, setShareSnackbar] = useState({ open: false, message: '' });
+  // One page-level player dialog serves both the table and review views
+  // (TeamList pattern — never an iframe per row/card).
+  const [videoDialog, setVideoDialog] = useState({ open: false, url: null, name: null });
 
   // Filter state management
   const [filterStates, setFilterStates] = useState({
@@ -284,6 +296,27 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
     setSelectedEventId(externalEventId);
     initializedFromUrlRef.current = true;
   }, [embedded, externalEventId, selectedEventId]);
+
+  const handlePlayVideo = useCallback((url, name) => {
+    setVideoDialog({ open: true, url, name });
+  }, []);
+  const handleCloseVideo = useCallback(() => {
+    // Keep url/name during the close animation.
+    setVideoDialog((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  // LMS training status for the Judges tab (tab 1). Gated on the tab so the
+  // other tabs never call the LMS; one fetch feeds both table and review
+  // views. (Declared before the !isAdmin early return to keep hook order
+  // stable.)
+  const {
+    statusByEmail: trainingStatusByEmail,
+    lmsAccess: trainingLmsAccess,
+  } = useJudgeTrainingStatus({
+    accessToken,
+    judges: volunteers.judges,
+    enabled: isAdmin && tabValue === 1 && volunteers.judges.length > 0,
+  });
 
   // Early return if not admin to prevent further execution
   if (!isAdmin) {
@@ -1640,6 +1673,9 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
                 orgId={orgId}
                 depositEnabled={depositEnabled}
                 onDepositClick={handleDepositClick}
+                trainingStatusByEmail={trainingStatusByEmail}
+                trainingLmsAccess={trainingLmsAccess}
+                onPlayVideo={handlePlayVideo}
               />
               {sortedVolunteers.length === 0 && (
                 <Box sx={{ mt: 2, textAlign: "center" }}>
@@ -1661,6 +1697,9 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
               onBatchReject={handleBatchRejectApplications}
               isLoading={loading}
               eventId={selectedEventId}
+              trainingStatusByEmail={trainingStatusByEmail}
+              trainingLmsAccess={trainingLmsAccess}
+              onPlayVideo={handlePlayVideo}
               // Controlled filter state
               filter={getCurrentFilterState().filter}
               statusFilter={getCurrentFilterState().statusFilter}
@@ -1681,6 +1720,31 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
           )}
         </Box>
       )}
+
+      {/* Intro-video player — one dialog for every row/card */}
+      <Dialog
+        open={videoDialog.open}
+        onClose={handleCloseVideo}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+        >
+          {`${videoDialog.name || "Judge"} — intro video`}
+          <IconButton aria-label="Close video" onClick={handleCloseVideo} size="small">
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {videoDialog.url && (
+            <VideoDisplay
+              url={videoDialog.url}
+              title={`${videoDialog.name || "Judge"} intro video`}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <VolunteerEditDialog
         open={editDialogOpen}

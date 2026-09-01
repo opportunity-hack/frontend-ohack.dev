@@ -33,13 +33,269 @@ import {
   Edit as EditIcon,
   Gavel as StatusIcon,
   OpenInNew as OpenInNewIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  HelpOutline as HelpOutlineIcon,
 } from "@mui/icons-material";
+import LiteVideoThumbnail from "../VideoDisplay/LiteVideoThumbnail";
+import {
+  JUDGE_TRAINING_BUNDLE_URL,
+  JUDGE_TRAINING_CERTS,
+} from "../../lib/lmsClient";
 
 // Resolve LinkedIn URL from any of the field names forms use
 const getLinkedInUrl = (app) => {
   const raw = app.linkedin || app.linkedinProfile || app.linkedinUrl || "";
   if (!raw) return null;
   return raw.startsWith("http") ? raw : `https://${raw}`;
+};
+
+// Fields rendered as external links wherever they appear on the card.
+const LINK_FIELDS = [
+  "linkedin",
+  "linkedinProfile",
+  "linkedinUrl",
+  "github",
+  "portfolio",
+  "website",
+  "introductionVideoUrl",
+  "judgeTrainingIntroCertUrl",
+  "judgeTrainingToolCertUrl",
+];
+
+const TRAINING_SLOT_COPY = {
+  missing: "No certificate on the application",
+  invalid: "Malformed certificate link",
+  not_found: "Certificate not found on the LMS",
+  mismatch: "Certificate is for a different quiz",
+  error: "Couldn't verify — LMS unreachable",
+};
+
+const formatIssuedDate = (ms) => {
+  if (!ms) return null;
+  const date = new Date(ms);
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString();
+};
+
+// One row of the training panel: verification result for a single required
+// certificate, plus attempt data when the admin has LMS access.
+const TrainingSlotRow = ({ spec, slot, lmsAccess }) => {
+  const state = slot?.state || "missing";
+  const verified = state === "verified";
+  const rollup = slot?.rollup;
+  const detailParts = [];
+  if (verified) {
+    if (typeof slot.cert?.score === "number") {
+      detailParts.push(`score ${Math.round(slot.cert.score)}%`);
+    }
+    const issued = formatIssuedDate(slot.cert?.issuedAt);
+    if (issued) detailParts.push(`issued ${issued}`);
+  }
+  return (
+    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, mt: 1 }}>
+      {verified ? (
+        <CheckCircleIcon fontSize="small" color="success" sx={{ mt: 0.25 }} />
+      ) : state === "missing" || state === "error" ? (
+        <HelpOutlineIcon fontSize="small" color="disabled" sx={{ mt: 0.25 }} />
+      ) : (
+        <CancelIcon fontSize="small" color="error" sx={{ mt: 0.25 }} />
+      )}
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          {spec.videoTitle}
+          {verified && detailParts.length > 0 && (
+            <Typography component="span" variant="body2" color="text.secondary">
+              {` — ${detailParts.join(" · ")}`}
+            </Typography>
+          )}
+          {slot?.certUrl && state !== "invalid" && (
+            <>
+              {" "}
+              <Link
+                href={slot.certUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="body2"
+              >
+                View cert
+              </Link>
+            </>
+          )}
+        </Typography>
+        {!verified && (
+          <Typography variant="caption" color="text.secondary">
+            {TRAINING_SLOT_COPY[state]}
+            {state === "mismatch" && slot?.cert && (
+              <> (it&apos;s for “{slot.cert.targetTitle || slot.cert.quizTitle}”)</>
+            )}
+          </Typography>
+        )}
+        {lmsAccess === "full" && rollup && (
+          <Typography variant="caption" color="text.secondary" display="block">
+            {`attempts ${rollup.attemptCount} · best ${Math.round(rollup.bestScore)}%`}
+            {rollup.passed
+              ? rollup.attemptsToPass
+                ? ` · passed on attempt ${rollup.attemptsToPass}`
+                : " · passed"
+              : " · not passed yet"}
+          </Typography>
+        )}
+        {!verified && rollup?.passed && (
+          <Chip
+            label="Passed on LMS"
+            size="small"
+            color="info"
+            variant="outlined"
+            sx={{ mt: 0.5 }}
+          />
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+// Judge-only panel: intro-video thumbnail beside LMS training verification.
+// Module-scope on purpose (defining it inside the card remounts it on every
+// parent state tick — the SectionBlock lesson).
+const JudgeTrainingPanel = ({
+  application,
+  trainingStatus,
+  lmsAccess,
+  onPlayVideo,
+}) => {
+  const videoUrl = application.introductionVideoUrl;
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        gap: 2,
+        mb: 2,
+      }}
+    >
+      <Box sx={{ flexShrink: 0 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+          Intro video
+        </Typography>
+        {videoUrl ? (
+          onPlayVideo ? (
+            <LiteVideoThumbnail
+              url={videoUrl}
+              width={280}
+              height={158}
+              label="Watch intro video"
+              onClick={() => onPlayVideo(videoUrl, application.name)}
+            />
+          ) : (
+            <Link href={videoUrl} target="_blank" rel="noopener noreferrer">
+              Watch intro video
+            </Link>
+          )
+        ) : (
+          <Box
+            sx={{
+              width: 280,
+              maxWidth: "100%",
+              height: 158,
+              border: "1px dashed",
+              borderColor: "divider",
+              borderRadius: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              No intro video
+            </Typography>
+          </Box>
+        )}
+      </Box>
+      <Box
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 1,
+          p: 1.5,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            flexWrap: "wrap",
+          }}
+        >
+          <Typography variant="subtitle2">Judge training</Typography>
+          <Chip
+            label={
+              application.judgeTrainingCompleted
+                ? "Marked complete at submit"
+                : "Not marked at submit"
+            }
+            size="small"
+            color={application.judgeTrainingCompleted ? "success" : "default"}
+            variant="outlined"
+          />
+        </Box>
+        {trainingStatus ? (
+          JUDGE_TRAINING_CERTS.map((spec) => (
+            <TrainingSlotRow
+              key={spec.key}
+              spec={spec}
+              slot={trainingStatus.slots?.[spec.key]}
+              lmsAccess={lmsAccess}
+            />
+          ))
+        ) : (
+          // No verification data (hook disabled / card used standalone /
+          // still checking): fall back to the stored links.
+          <Box sx={{ mt: 1 }}>
+            {JUDGE_TRAINING_CERTS.map((spec) =>
+              application[spec.field] ? (
+                <Typography variant="body2" key={spec.key}>
+                  {spec.videoTitle}:{" "}
+                  <Link
+                    href={application[spec.field]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ wordBreak: "break-all" }}
+                  >
+                    View cert
+                  </Link>
+                </Typography>
+              ) : (
+                <Typography variant="body2" color="text.secondary" key={spec.key}>
+                  {spec.videoTitle}: no certificate on the application
+                </Typography>
+              ),
+            )}
+            {lmsAccess === null && (
+              <Typography variant="caption" color="text.secondary">
+                Checking LMS training status…
+              </Typography>
+            )}
+          </Box>
+        )}
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+          {lmsAccess === "certs-only" &&
+            "Attempt details need an LMS admin/editor account. "}
+          {lmsAccess === "unavailable" &&
+            "LMS unreachable — showing stored links only. "}
+          <Link
+            href={JUDGE_TRAINING_BUNDLE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open training bundle
+          </Link>
+        </Typography>
+      </Box>
+    </Box>
+  );
 };
 
 const ApplicationReviewCard = ({
@@ -49,6 +305,9 @@ const ApplicationReviewCard = ({
   onReject,
   onEdit,
   isLoading = false,
+  trainingStatus,
+  lmsAccess,
+  onPlayVideo,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -89,6 +348,7 @@ const ApplicationReviewCard = ({
           "portfolio",
           "motivation",
           "socialCauses",
+          "dietaryRestrictions",
         ],
         statusField: "isSelected",
       },
@@ -107,12 +367,15 @@ const ApplicationReviewCard = ({
           "linkedin",
           "availability",
           "previousMentoring",
+          "dietaryRestrictions",
         ],
         statusField: "isSelected",
       },
       judge: {
         title: "Judge Application",
         primaryFields: ["name", "email", "title", "companyName", "status"],
+        // introductionVideoUrl + the training cert URLs render in the
+        // JudgeTrainingPanel, not as raw field rows.
         secondaryFields: [
           "inPerson",
           "canAttendJudging",
@@ -120,7 +383,6 @@ const ApplicationReviewCard = ({
           "country",
           "state",
           "linkedinProfile",
-          "introductionVideoUrl",
           "backgroundAreas",
         ],
         additionalFields: [
@@ -130,6 +392,7 @@ const ApplicationReviewCard = ({
           "additionalInfo",
           "pronouns",
           "otherBackground",
+          "dietaryRestrictions",
           "photoUrl",
         ],
         statusField: "isSelected",
@@ -153,6 +416,7 @@ const ApplicationReviewCard = ({
           "portfolio",
           "otherSocialCause",
           "shirtSize",
+          "dietaryRestrictions",
           "additionalInfo",
         ],
         statusField: "isSelected",
@@ -402,7 +666,11 @@ const ApplicationReviewCard = ({
       otherBackground: "Other Background",
       linkedinProfile: "LinkedIn Profile",
       introductionVideoUrl: "Intro Video",
+      judgeTrainingIntroCertUrl: "Training Cert: Judge Intro",
+      judgeTrainingToolCertUrl: "Training Cert: Judging Tool",
+      judgeTrainingCompleted: "Judge Training Completed",
       shirtSize: "T-Shirt Size",
+      dietaryRestrictions: "Dietary Restrictions",
       photoUrl: "Photo",
       status: "Status",
       // Sponsor-specific fields
@@ -591,6 +859,16 @@ const ApplicationReviewCard = ({
           })}
         </Grid>
 
+        {/* Judge-only: intro video + LMS training verification */}
+        {applicationType === "judge" && (
+          <JudgeTrainingPanel
+            application={application}
+            trainingStatus={trainingStatus}
+            lmsAccess={lmsAccess}
+            onPlayVideo={onPlayVideo}
+          />
+        )}
+
         {/* Secondary information (visible when collapsed) */}
         {!expanded && (
           <Box sx={{ mb: 2 }}>
@@ -599,14 +877,7 @@ const ApplicationReviewCard = ({
                 const value = application[field];
                 if (!value) return null;
 
-                const isLink = [
-                  "linkedin",
-                  "github",
-                  "portfolio",
-                  "website",
-                  "linkedinProfile",
-                  "introductionVideoUrl",
-                ].includes(field);
+                const isLink = LINK_FIELDS.includes(field);
 
                 return (
                   <Grid size={{ xs: 12, sm: 6 }} key={field}>
@@ -706,7 +977,7 @@ const ApplicationReviewCard = ({
                       }),
                     }}
                   >
-                    {renderField(field, value)}
+                    {renderField(field, value, LINK_FIELDS.includes(field))}
                   </Typography>
                 </Grid>
               );
@@ -723,14 +994,7 @@ const ApplicationReviewCard = ({
                 const value = application[field];
                 if (!value) return null;
 
-                const isLink = [
-                  "linkedin",
-                  "github",
-                  "portfolio",
-                  "website",
-                  "linkedinProfile",
-                  "introductionVideoUrl",
-                ].includes(field);
+                const isLink = LINK_FIELDS.includes(field);
 
                 return (
                   <Grid size={{ xs: 12 }} key={field}>
@@ -1300,6 +1564,11 @@ const ApplicationReviewCard = ({
               "status",
               "timestamp",
               "event_id",
+              // rendered by JudgeTrainingPanel
+              "introductionVideoUrl",
+              "judgeTrainingIntroCertUrl",
+              "judgeTrainingToolCertUrl",
+              "judgeTrainingCompleted",
               // internal / audit fields never shown to reviewers
               "id",
               "user_id",
@@ -1341,15 +1610,7 @@ const ApplicationReviewCard = ({
                 </Typography>
                 <Grid container spacing={2}>
                   {extraEntries.map(([key, val]) => {
-                    const isLink = [
-                      "linkedin",
-                      "linkedinProfile",
-                      "linkedinUrl",
-                      "github",
-                      "portfolio",
-                      "website",
-                      "introductionVideoUrl",
-                    ].includes(key);
+                    const isLink = LINK_FIELDS.includes(key);
                     const displayVal = Array.isArray(val)
                       ? val.join(", ")
                       : typeof val === "object"

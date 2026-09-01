@@ -10,6 +10,7 @@ import {
   RadioGroup,
   Typography,
 } from "@mui/material";
+import { formatMealTime } from "./MealSchedule";
 
 const MealMenu = ({ meals = [], selections = {}, onChange }) => {
   if (!meals || meals.length === 0) return null;
@@ -48,7 +49,7 @@ const MealMenu = ({ meals = [], selections = {}, onChange }) => {
             </Typography>
             {meal.time && (
               <Typography variant="body2" color="text.secondary">
-                {meal.time}
+                {formatMealTime(meal.time)}
               </Typography>
             )}
           </Box>

@@ -53,6 +53,8 @@ import {
   Stat,
 } from "../../../components/design/refined";
 import {
+  DietaryRestrictionsSelect,
+  MealSchedule,
   OHackParticipationSelect,
   PronounsPicker,
   scrollToStepContent,
@@ -173,6 +175,7 @@ const MentorApplicationComponent = () => {
     picture: "",
     linkedin: "",
     inPerson: "",
+    dietaryRestrictions: "",
     expertise: [], // Changed from string to array
     otherExpertise: "", // New field for "Other" option
     participationCount: "",
@@ -192,7 +195,8 @@ const MentorApplicationComponent = () => {
     shortBio: "",
     photoUrl: "",
     event_id: "",
-    isSelected: false,
+    // No isSelected here on purpose: approval is staff-owned and server-
+    // authoritative. Sending it would un-approve an approved mentor on edit.
   };
 
   // Use form persistence hook
@@ -457,6 +461,7 @@ const MentorApplicationComponent = () => {
             "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
           isEventPast,
           timezone: eventData.timezone,
+          constraints: eventData.constraints || {},
         });
 
         // Generate time slots based on event dates
@@ -550,6 +555,7 @@ const MentorApplicationComponent = () => {
                 picture: prevData.photoUrl || prevData.picture || "",
                 linkedin: prevData.linkedinProfile || prevData.linkedin || "",
                 inPerson: prevData.isInPerson ? "Yes!" : "No, I'll be virtual",
+                dietaryRestrictions: prevData.dietaryRestrictions || "",
                 expertise: (prevData.expertise || "")
                   .split(", ")
                   .filter(Boolean),
@@ -1545,6 +1551,25 @@ const MentorApplicationComponent = () => {
         </FormControl>
       )}
 
+      {/* Meals are provided on site — only in-person mentors need this.
+          MealSchedule renders nothing when the event has no meals configured. */}
+      {!isVirtualEvent() && formData.inPerson === "Yes!" && (
+        <MealSchedule
+          meals={eventData?.constraints?.meals || []}
+          note={eventData?.constraints?.meals_note || ""}
+        />
+      )}
+      {!isVirtualEvent() && formData.inPerson === "Yes!" && (
+        <DietaryRestrictionsSelect
+          value={formData.dietaryRestrictions || ""}
+          onChange={(next) =>
+            setFormData((prev) => ({ ...prev, dietaryRestrictions: next }))
+          }
+          MenuProps={refinedSelectMenuProps}
+          sx={refinedFieldSx}
+        />
+      )}
+
       {/* Location fields - conditional labels and requirements */}
       <FormControl fullWidth required sx={refinedFieldSx}>
         <InputLabel id="country-label">
@@ -2051,10 +2076,12 @@ const MentorApplicationComponent = () => {
 
       <Alert severity="info" sx={{ ...infoAlertSx, mb: 3 }}>
         <Typography variant="body1">
-          Your application is <strong>pending review</strong> — our staff
-          reviews every mentor application by hand, which can take up to a week.
-          We'll email you once you're approved or if we have follow-up
-          questions.
+          Upon submission, your application is{" "}
+          <strong>pending review</strong> — our staff reviews every mentor
+          application by hand, which can take up to 14 business days. We'd
+          love to make this faster, but we all have full-time jobs and help
+          our community during off-hours. We'll email you once you're
+          approved or if we have follow-up questions.
         </Typography>
       </Alert>
     </Box>
@@ -2113,10 +2140,12 @@ const MentorApplicationComponent = () => {
 
               <Alert severity="info" sx={{ ...infoAlertSx, mb: 4 }}>
                 <Typography variant="body1">
-                  <strong>Your application is pending review.</strong> Our staff
-                  reviews every mentor application — this typically takes up to
-                  a week. You&apos;ll get an email when you&apos;re approved or
-                  if we have follow-up questions.
+                  <strong>Your application is pending review.</strong> Our
+                  staff reviews every mentor application by hand, which can
+                  take up to 14 business days. We&apos;d love to make this
+                  faster, but we all have full-time jobs and help our
+                  community during off-hours. You&apos;ll get an email when
+                  you&apos;re approved or if we have follow-up questions.
                 </Typography>
               </Alert>
 

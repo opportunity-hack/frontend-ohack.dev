@@ -13,7 +13,13 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { MealMenu } from "../index";
+import {
+  DietaryRestrictionsSelect,
+  MealMenu,
+  MealSchedule,
+  MEALS_MODE_SCHEDULE,
+  getMealsMode,
+} from "../index";
 import {
   AGE_RANGE_OPTIONS,
   ARIZONA_COUNTY_OPTIONS,
@@ -232,20 +238,23 @@ const LocationDemographicsStep = ({
 
       {/* Only show dietary restrictions for non-online events */}
       {!eventData?.isOnlineEvent && (
-        <TextField
-          label="Dietary Restrictions (Optional)"
-          name="dietaryRestrictions"
-          fullWidth
+        <DietaryRestrictionsSelect
           value={formData.dietaryRestrictions || ""}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-          helperText="Please let us know about any dietary restrictions for in-person attendees"
+          onChange={(next) =>
+            setFormData((prev) => ({ ...prev, dietaryRestrictions: next }))
+          }
         />
       )}
 
       {!eventData?.isOnlineEvent &&
         Array.isArray(eventData?.constraints?.meals) &&
-        eventData.constraints.meals.length > 0 && (
+        eventData.constraints.meals.length > 0 &&
+        (getMealsMode(eventData.constraints) === MEALS_MODE_SCHEDULE ? (
+          <MealSchedule
+            meals={eventData.constraints.meals}
+            note={eventData.constraints.meals_note || ""}
+          />
+        ) : (
           <MealMenu
             meals={eventData.constraints.meals}
             selections={formData.mealSelections || {}}
@@ -253,7 +262,7 @@ const LocationDemographicsStep = ({
               setFormData((prev) => ({ ...prev, mealSelections: next }))
             }
           />
-        )}
+        ))}
     </Box>
   </Box>
 );

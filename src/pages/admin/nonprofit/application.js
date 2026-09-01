@@ -2,9 +2,26 @@ import React, { useState, useEffect } from "react";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import { Box, Grid, CircularProgress, TextField, Button } from "@mui/material";
 import AdminPage from "../../../components/admin/AdminPage";
-import NonprofitApplicationTable from "../../../components/admin/NonprofitApplicationTable";
+import NonprofitApplicationTable, {
+  applicationOrganization,
+  applicationContactName,
+  applicationIdeaText,
+} from "../../../components/admin/NonprofitApplicationTable";
 import NonprofitApplicationEditDialog from "../../../components/admin/NonprofitApplicationEditDialog";
 import { Typography } from "@mui/material";
+
+// Sort on the merged fields the table displays, so legacy rows that only
+// carry charityName/contactName don't all collapse to the top as "".
+const sortValue = (application, key) => {
+  switch (key) {
+    case "organization":
+      return applicationOrganization(application).toLowerCase();
+    case "name":
+      return applicationContactName(application).toLowerCase();
+    default:
+      return application[key] || "";
+  }
+};
 
 const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
@@ -42,7 +59,6 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         setApplications(data.applications || []);
       } else {
         throw new Error("Failed to fetch nonprofit applications");
@@ -117,10 +133,10 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const sortedApplications = applications
+  const sortedApplications = [...applications]
     .sort((a, b) => {
-      const valueA = a[orderBy] || "";
-      const valueB = b[orderBy] || "";
+      const valueA = sortValue(a, orderBy);
+      const valueB = sortValue(b, orderBy);
       if (valueA < valueB) {
         return order === "asc" ? -1 : 1;
       }
@@ -130,12 +146,15 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
       return 0;
     })
     .filter((application) => {
-      const searchValue = filter.toLowerCase();
-      return (
-        (application.name || "").toLowerCase().includes(searchValue) ||
-        (application.organization || "").toLowerCase().includes(searchValue) ||
-        (application.email || "").toLowerCase().includes(searchValue)
-      );
+      const searchValue = filter.toLowerCase().trim();
+      if (!searchValue) return true;
+      return [
+        applicationContactName(application),
+        applicationOrganization(application),
+        application.email || "",
+        applicationIdeaText(application),
+        application.notes || "",
+      ].some((field) => field.toLowerCase().includes(searchValue));
     });
 
   if (!isAdmin) {
@@ -163,7 +182,7 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
           <Grid size={{ xs: true }}>
             <TextField
               fullWidth
-              label="Filter by Name, Organization, or Email"
+              label="Search name, organization, email, or idea text"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
@@ -172,9 +191,16 @@ const AdminNonprofitPage = withRequiredAuthInfo(({ userClass }) => {
       </Box>
 
       {loading ? (
-        <CircularProgress />
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
       ) : (
         <Box sx={{ mt: 2 }}>
+          <Typography sx={{ mb: 1.5, color: "text.secondary", fontSize: 14 }}>
+            {filter.trim()
+              ? `${sortedApplications.length} of ${applications.length} applications match`
+              : `${applications.length} applications`}
+          </Typography>
           <NonprofitApplicationTable
             applications={sortedApplications}
             orderBy={orderBy}
