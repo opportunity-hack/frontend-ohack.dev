@@ -52,8 +52,9 @@ export default function MyApp({ Component, pageProps }) {
   const { openGraphData = [] } = pageProps;
   const router = useRouter();
   
-  // Check if this is the print-timeline page
-  const isPrintTimelinePage = router.pathname === '/hack/[event_id]/print-timeline';
+  // Print-only routes render without the site chrome (NavBar/Footer). The
+  // welcome-guide page provides its own "Back to event" link.
+  const isPrintPage = router.pathname === '/hack/[event_id]/print';
   
   return (
     <>
@@ -119,9 +120,9 @@ export default function MyApp({ Component, pageProps }) {
             <ShoppingCartProvider>
             <CssBaseline>
               <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                {!isPrintTimelinePage && <NavBar />}
+                {!isPrintPage && <NavBar />}
                 <Component {...pageProps} />
-                {!isPrintTimelinePage && <Footer />}
+                {!isPrintPage && <Footer />}
               </Box>
             </CssBaseline>
             <OnboardingDialog />

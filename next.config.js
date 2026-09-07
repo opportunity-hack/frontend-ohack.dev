@@ -98,6 +98,14 @@ module.exports = {
         destination: "/hack/:event_id/mentor-checkin",
         permanent: false,
       },
+      // The old auto-printing timeline page (with hardcoded placeholder
+      // WiFi/parking/emergency text) was replaced by the welcome-guide print
+      // page. Keep the URL working, pre-selecting just the schedule.
+      {
+        source: "/hack/:event_id/print-timeline",
+        destination: "/hack/:event_id/print?sections=schedule",
+        permanent: false,
+      },
     ];
   },
 
