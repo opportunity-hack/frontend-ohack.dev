@@ -172,6 +172,23 @@ const EventProgress = styled(LinearProgress)(({ theme }) => ({
   borderRadius: "3px 3px 0 0",
 }));
 
+// Shared look for the header's Agenda / Print-guide buttons (refined ghost button)
+const headerButtonSx = {
+  minWidth: "auto",
+  px: 2,
+  py: 1,
+  borderRadius: 2,
+  textTransform: "none",
+  fontSize: "0.8rem",
+  color: "#1B3A6B",
+  borderColor: "var(--line, #E7E1D4)",
+  "&:hover": {
+    backgroundColor: "#1B3A6B",
+    color: "#fff",
+    borderColor: "#1B3A6B",
+  },
+};
+
 const EventCountdown = ({ countdowns, eventId, eventTimezone }) => {
   const etz = eventTimezone || DEFAULT_EVENT_TIMEZONE;
   const [timeLeft, setTimeLeft] = useState(null);
@@ -245,9 +262,9 @@ const EventCountdown = ({ countdowns, eventId, eventTimezone }) => {
     });
   };
 
-  const handlePrintTimeline = () => {
+  const handlePrintGuide = () => {
     if (eventId) {
-      window.open(`/hack/${eventId}/print-timeline`, "_blank");
+      window.open(`/hack/${eventId}/print`, "_blank");
     }
   };
 
@@ -472,32 +489,35 @@ const EventCountdown = ({ countdowns, eventId, eventTimezone }) => {
           >
             Event Timeline
           </Typography>
-          <Tooltip title="View Full Agenda" arrow>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleViewAgenda}
-              startIcon={<EventNoteIcon />}
-              endIcon={<OpenInNewIcon sx={{ fontSize: "16px" }} />}
-              sx={{
-                minWidth: "auto",
-                px: 2,
-                py: 1,
-                borderRadius: 2,
-                textTransform: "none",
-                fontSize: "0.8rem",
-                color: "#1B3A6B",
-                borderColor: "var(--line, #E7E1D4)",
-                "&:hover": {
-                  backgroundColor: "#1B3A6B",
-                  color: "#fff",
-                  borderColor: "#1B3A6B",
-                },
-              }}
+          <Box display="flex" gap={1} flexShrink={0}>
+            <Tooltip title="View Full Agenda" arrow>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleViewAgenda}
+                startIcon={<EventNoteIcon />}
+                endIcon={<OpenInNewIcon sx={{ fontSize: "16px" }} />}
+                sx={headerButtonSx}
+              >
+                {isMobile ? "" : "Agenda"}
+              </Button>
+            </Tooltip>
+            <Tooltip
+              title="Print a welcome guide: schedule, mentors, judges, volunteers + QR code to this page"
+              arrow
             >
-              {isMobile ? "" : "Agenda"}
-            </Button>
-          </Tooltip>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handlePrintGuide}
+                startIcon={<PrintIcon />}
+                endIcon={<OpenInNewIcon sx={{ fontSize: "16px" }} />}
+                sx={headerButtonSx}
+              >
+                {isMobile ? "" : "Print guide"}
+              </Button>
+            </Tooltip>
+          </Box>
         </Box>
         <LinearProgress
           variant="determinate"
