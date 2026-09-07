@@ -49,7 +49,7 @@ import {
 } from '@mui/icons-material';
 import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
 import NextLink from 'next/link';
-import HackerDepositChip from "./HackerDepositChip";
+import HackerDepositChip, { getDepositLabel } from "./HackerDepositChip";
 import { JUDGE_TRAINING_CERTS } from "../../lib/lmsClient";
 import { normalizeEmail } from "../../hooks/use-judge-training-status";
 
@@ -96,6 +96,77 @@ const trainingChipConfig = (entry, volunteer, lmsAccess) => {
   return { label: "✗ Not trained", color: "error", tooltip };
 };
 
+// ---- CSV export + print helpers (module scope: pure, no component state) ----
+
+// Escape a value for CSV (handle commas, quotes, newlines)
+const escapeCsvValue = (value) => {
+  const str = value == null ? "" : String(value);
+  if (/[",\r\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+};
+
+const escapeHtml = (value) =>
+  String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+// Admin-audit columns that add noise on paper. CSV export keeps every column.
+const PRINT_HIDDEN_COLUMNS = new Set([
+  "id",
+  "slack_user_id",
+  "messages_sent",
+  "certificates",
+  "introVideo",
+  "created_timestamp",
+]);
+
+// Build a self-contained HTML document for printing. The workbench renders
+// inside the hackathon admin layout whose content box is an `overflowY: auto`
+// scroll container (see HackathonAdminLayout) — `window.print()` there prints
+// only the visible slice of the table, so we print a plain document instead.
+const buildPrintDocument = ({ title, subtitle, columns, rows }) => {
+  const head = columns
+    .map((col) => `<th>${escapeHtml(col.label)}</th>`)
+    .join("");
+  const body = rows
+    .map(
+      (cells) =>
+        `<tr>${cells.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`,
+    )
+    .join("");
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>${escapeHtml(title)}</title>
+<style>
+  @page { size: landscape; margin: 0.4in; }
+  body { margin: 0; padding: 12px; color: #111; font: 10px/1.35 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  h1 { font-size: 16px; margin: 0 0 2px; }
+  .meta { color: #555; margin: 0 0 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { display: table-header-group; }
+  th, td { border: 1px solid #bbb; padding: 3px 5px; text-align: left; vertical-align: top; word-break: break-word; }
+  th { background: #f0f0f0; font-weight: 600; }
+  tr { page-break-inside: avoid; break-inside: avoid; }
+  @media screen { body { max-width: 100%; } }
+</style>
+</head>
+<body>
+<h1>${escapeHtml(title)}</h1>
+<p class="meta">${escapeHtml(subtitle)}</p>
+<table>
+<thead><tr>${head}</tr></thead>
+<tbody>${body}</tbody>
+</table>
+</body>
+</html>`;
+};
+
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
   overflowX: "auto",
@@ -105,20 +176,6 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
     minWidth: 800, // Minimum width to force horizontal scroll when needed
     tableLayout: "auto", // Allow flexible column sizing
     whiteSpace: "nowrap", // Prevent text wrapping in cells
-  },
-  // Print-friendly styles
-  "@media print": {
-    overflow: "visible",
-    maxWidth: "none",
-    "& .MuiTable-root": {
-      minWidth: "auto",
-      fontSize: "10px",
-    },
-    "& .MuiTableCell-root": {
-      padding: "4px 6px",
-      fontSize: "10px",
-      border: "1px solid #ccc",
-    },
   },
   // Better mobile scrolling
   WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
@@ -478,13 +535,27 @@ const VolunteerTable = ({
       case "pronouns":
         return volunteer.pronouns || "";
       case "company":
-        return volunteer.company || "";
+        return volunteer.company || volunteer.companyName || volunteer.schoolOrganization || "";
       case "isInPerson":
         return volunteer.isInPerson ? "Yes" : "No";
       case "isSelected":
         return volunteer.isSelected ? "Yes" : "No";
       case "checkedIn":
         return volunteer.checkedIn === true ? "Yes" : volunteer.checkedIn === false ? "No" : "Not set";
+      case "certificates":
+        return String(Array.isArray(volunteer.certificates) ? volunteer.certificates.length : 0);
+      case "introVideo":
+        return volunteer.introductionVideoUrl || "";
+      case "deposit":
+        return getDepositLabel(volunteer);
+      case "training": {
+        const chip = trainingChipConfig(
+          trainingStatusByEmail?.[normalizeEmail(volunteer.email)],
+          volunteer,
+          trainingLmsAccess,
+        );
+        return chip ? chip.label.replace(/^[✓✗]\s*/, "") : "";
+      }
       case "slack_user_id":
         return volunteer.slack_user_id || "";
       case "status":
@@ -498,7 +569,7 @@ const VolunteerTable = ({
       case "participationCount":
         return volunteer.participationCount != null ? String(volunteer.participationCount) : "";
       case "linkedin":
-        return volunteer.linkedin || "";
+        return volunteer.linkedin || volunteer.linkedinProfile || "";
       case "expertise":
         return volunteer.expertise || "";
       case "country":
@@ -543,16 +614,7 @@ const VolunteerTable = ({
       default:
         return volunteer[columnId] != null ? String(volunteer[columnId]) : "";
     }
-  }, [getSentEmails]);
-
-  // Escape a value for CSV (handle commas, quotes, newlines)
-  const escapeCsvValue = (value) => {
-    const str = String(value);
-    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
+  }, [getSentEmails, trainingStatusByEmail, trainingLmsAccess]);
 
   const columns = useMemo(() => {
     const baseColumns = [
@@ -708,11 +770,13 @@ const VolunteerTable = ({
       ...rows.map(row => row.join(','))
     ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // UTF-8 BOM so Excel opens accented names correctly
+    const blob = new Blob(["\uFEFF", csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
+    const eventId = filteredVolunteers[0]?.event_id;
     link.setAttribute('href', url);
-    link.setAttribute('download', `${type}-export.csv`);
+    link.setAttribute('download', `${eventId ? `${eventId}-` : ''}${type}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -722,10 +786,36 @@ const VolunteerTable = ({
     setCopyFeedback({ open: true, message: `Exported ${filteredVolunteers.length} ${type} to CSV` });
   }, [filteredVolunteers, columns, type, getPlainCellValue]);
 
-  // Print the current table
+  // Print the current table as a standalone document (see buildPrintDocument)
   const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
+    if (filteredVolunteers.length === 0) return;
+    const printColumns = columns.filter((col) => !PRINT_HIDDEN_COLUMNS.has(col.id));
+    const eventId = filteredVolunteers[0]?.event_id;
+    const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+    const filterLabel =
+      checkedInFilter === 'yes' ? 'checked in only' :
+      checkedInFilter === 'no' ? 'not checked in only' : 'all';
+    const html = buildPrintDocument({
+      title: eventId ? `${typeLabel} — ${eventId}` : typeLabel,
+      subtitle: `${filteredVolunteers.length} ${type} (${filterLabel}) · printed ${new Date().toLocaleString()}`,
+      columns: printColumns,
+      rows: filteredVolunteers.map((volunteer) =>
+        printColumns.map((col) => getPlainCellValue(volunteer, col.id)),
+      ),
+    });
+
+    const win = window.open('', '_blank');
+    if (!win) {
+      setCopyFeedback({ open: true, message: 'Allow pop-ups for this site to print the table' });
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    // Give the new document a tick to lay out before opening the print dialog
+    win.setTimeout(() => win.print(), 250);
+  }, [filteredVolunteers, columns, type, checkedInFilter, getPlainCellValue]);
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {

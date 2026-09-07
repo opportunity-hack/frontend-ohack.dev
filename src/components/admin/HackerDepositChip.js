@@ -68,6 +68,13 @@ const CONFIG = {
   },
 };
 
+// Plain-text label for exports/printing (mirrors the chip text)
+export const getDepositLabel = (volunteer) => {
+  const state = getDepositState(volunteer);
+  const cfg = CONFIG[state.kind];
+  return cfg ? cfg.label(state.amountCents) : "";
+};
+
 const HackerDepositChip = ({ volunteer, onClick }) => {
   const state = getDepositState(volunteer);
   const cfg = CONFIG[state.kind];
