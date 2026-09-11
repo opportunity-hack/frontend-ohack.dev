@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 
 // MUI Components
 import Tooltip from "@mui/material/Tooltip";
@@ -45,6 +45,14 @@ import {
 import Events from "../Events/Events";
 import ReferenceItem from "../ReferenceItem/ReferenceItem";
 import { HelpDialog, UnhelpDialog } from "../HelpDialog/HelpDialog";
+import HelpersRoster from "./HelpersRoster";
+import {
+  normalizeHelpers,
+  countHelpers,
+  findCurrentUserHelper,
+  upsertHelper,
+  removeHelper,
+} from "./helpersData";
 
 // Navy-branded help toggle switch — hoisted so it isn't re-created on every render
 const MaterialUISwitch = styled(Switch)({
@@ -262,8 +270,16 @@ export default function ProblemStatement({
   const [tabValue, setTabValue] = useState("Events");
   const [expandedSection, setExpandedSection] = useState("references");
   const { profile, handle_help_toggle } = useProfileApi();
-  const [helperProfiles, setHelperProfiles] = useState({});
-  const [isCheckingHelperStatus, setIsCheckingHelperStatus] = useState(false);
+  // Who's helping (issue #359): seeded from the static `helping` array so the
+  // counts render on the server, then replaced by ONE batched roster fetch
+  // (names/avatars, deduped, oldest first). This replaced the old loop that
+  // fetched a full profile per helper entry just to find the current user.
+  const [helpers, setHelpers] = useState(() =>
+    normalizeHelpers(problem_statement?.helping),
+  );
+  const [helpersLoading, setHelpersLoading] = useState(false);
+  const [helpersEnriched, setHelpersEnriched] = useState(false);
+  const helpersRequestRef = useRef(0);
 
   // Code & Tasks: lazy live GitHub issue data, keyed by normalized repo link
   const [codeSectionVisible, setCodeSectionVisible] = useState(false);
@@ -315,76 +331,51 @@ export default function ProblemStatement({
     }
   }, [problem_statement_id, problem_statement?.events]);
 
-  useEffect(() => {
-    if (problem_statement?.helping?.length > 0) {
-      setIsCheckingHelperStatus(true);
-      const helperProfileMap = {};
-      const fetchPromises = [];
-
-      problem_statement.helping.forEach((helper) => {
-        if (helper.user) {
-          const fetchPromise = fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/${helper.user}/profile`
-          )
-            .then((response) => {
-              if (!response.ok) throw new Error("Failed to fetch helper profile");
-              return response.json();
-            })
-            .then((data) => {
-              helperProfileMap[helper.user] = data;
-              return data;
-            })
-            .catch((error) => {
-              console.error(
-                `Error fetching helper profile for user ${helper.user}:`,
-                error
-              );
-              return null;
-            });
-
-          fetchPromises.push(fetchPromise);
-        }
-      });
-
-      Promise.all(fetchPromises)
-        .then(() => {
-          setHelperProfiles(helperProfileMap);
-          setIsCheckingHelperStatus(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching helper profiles:", error);
-          setIsCheckingHelperStatus(false);
-        });
-    }
-  }, [problem_statement?.helping]);
-
-  useEffect(() => {
-    if (
-      !isCheckingHelperStatus &&
-      problem_statement?.helping?.length > 0 &&
-      user &&
-      Object.keys(helperProfiles).length > 0
-    ) {
-      const currentUserHelper = problem_statement.helping.find((helper) => {
-        if (
-          helper.user &&
-          helperProfiles[helper.user] &&
-          helperProfiles[helper.user].propel_id
-        ) {
-          return helperProfiles[helper.user].propel_id === user.userId;
-        }
-        return helper.slack_user === profile?.user_id;
-      });
-
-      if (currentUserHelper) {
-        setHelpedChecked("checked");
-        setHelpingType(currentUserHelper.type);
-      } else {
-        setHelpedChecked("");
-        setHelpingType("");
+  const loadHelpers = useCallback(async (psId) => {
+    if (!psId) return;
+    const requestId = ++helpersRequestRef.current;
+    setHelpersLoading(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements/${psId}/helpers`,
+      );
+      if (!response.ok) return; // older backend / 404 → keep the static fallback
+      const data = await response.json();
+      if (requestId !== helpersRequestRef.current) return;
+      if (Array.isArray(data?.helpers)) {
+        setHelpers(data.helpers);
+        setHelpersEnriched(true);
       }
+    } catch (error) {
+      // Static fallback (counts without names) keeps rendering
+    } finally {
+      if (requestId === helpersRequestRef.current) setHelpersLoading(false);
     }
-  }, [problem_statement, user, profile, helperProfiles, isCheckingHelperStatus]);
+  }, []);
+
+  // Key on the CONTENT of `helping`, not the array identity — the parent
+  // re-creates the problem statement object on client refetches, which
+  // otherwise re-fired this (two roster requests per page load).
+  const helpingSignature = JSON.stringify(problem_statement?.helping || []);
+  useEffect(() => {
+    setHelpers(normalizeHelpers(JSON.parse(helpingSignature)));
+    setHelpersEnriched(false);
+    loadHelpers(problem_statement?.id);
+  }, [problem_statement?.id, helpingSignature, loadHelpers]);
+
+  // Reflect the signed-in user's own roster row in the toggle. Matches on the
+  // db id first (own-profile payload carries `id`), OAuth user_id as fallback.
+  useEffect(() => {
+    if (!user || !profile?.id) return;
+    const mine = findCurrentUserHelper(helpers, profile);
+    if (mine) {
+      setHelpedChecked("checked");
+      setHelpingType(mine.type || "hacker");
+    } else {
+      setHelpedChecked("");
+      setHelpingType("");
+    }
+  }, [helpers, user, profile]);
 
   // Fetch enriched event data (with full team docs) once the by-id events
   // have loaded and given us the event_id slugs. The enriched endpoint is
@@ -663,7 +654,25 @@ export default function ProblemStatement({
     setOpen(false);
     setHelpedChecked("checked");
     setHelpingType(helperType);
-    handle_help_toggle("helping", problem_statement.id, helperType, effectiveNpoId);
+    // Optimistic: show yourself in the roster immediately, then reconcile
+    // with the server once the toggle has been written (cache is cleared
+    // server-side on every toggle).
+    setHelpers((prev) =>
+      upsertHelper(prev, {
+        db_id: profile?.id || null,
+        user_id: profile?.user_id || null,
+        name: profile?.name || null,
+        nickname: profile?.nickname || null,
+        profile_image: profile?.profile_image || null,
+        type: helperType,
+        since: new Date().toISOString(),
+      }),
+    );
+    Promise.resolve(
+      handle_help_toggle("helping", problem_statement.id, helperType, effectiveNpoId),
+    )
+      .catch(() => {})
+      .then(() => loadHelpers(problem_statement.id));
   };
 
   const handleCancel = () => {
@@ -698,7 +707,12 @@ export default function ProblemStatement({
     setOpenUnhelp(false);
     setHelpedChecked("");
     setHelpingType("");
-    handle_help_toggle("not_helping", problem_statement.id, "", effectiveNpoId);
+    setHelpers((prev) => removeHelper(prev, profile));
+    Promise.resolve(
+      handle_help_toggle("not_helping", problem_statement.id, "", effectiveNpoId),
+    )
+      .catch(() => {})
+      .then(() => loadHelpers(problem_statement.id));
   };
 
   const handleCloseUnhelpCancel = () => {
@@ -730,14 +744,11 @@ export default function ProblemStatement({
     );
   }
 
-  let countOfHackers = 0;
-  let countOfMentors = 0;
-  if (problem_statement.helping?.length > 0) {
-    problem_statement.helping.forEach((help) => {
-      if (help.type === "mentor") countOfMentors++;
-      else if (help.type === "hacker") countOfHackers++;
-    });
-  }
+  // One row per person — the raw `helping` array carries legacy duplicate
+  // clicks, so counting it directly over-reports.
+  const helperCounts = countHelpers(helpers);
+  const countOfHackers = helperCounts.hacker;
+  const countOfMentors = helperCounts.mentor;
 
   const totalContributors = countOfHackers + countOfMentors;
   const eventsCount = hackathonEvents.length;
@@ -1189,6 +1200,24 @@ export default function ProblemStatement({
           ))}
         </div>
 
+        {/* Who's helping — social proof right under the counts (issue #359).
+            The "Want to help?" toggle lives in this panel's footer so the
+            roster and the ask read as one unit; the toggle stays hidden on
+            production/paused projects except for existing helpers. */}
+        <HelpersRoster
+          helpers={helpers}
+          loading={helpersLoading}
+          enriched={helpersEnriched}
+          slackChannel={problem_statement.slack_channel}
+          profile={profile}
+          offerHelp={offerHelpToggle}
+          helpToggle={
+            offerHelpToggle || help_checked === "checked"
+              ? renderHelpToggle()
+              : null
+          }
+        />
+
         {/* Project description */}
         <div style={{ marginBottom: 28 }}>
           <p className="ohx-eyebrow" style={{ marginBottom: 10 }}>
@@ -1355,12 +1384,6 @@ export default function ProblemStatement({
             </div>
           )}
         </div>
-
-        {/* Help toggle — hidden on production and paused projects, except for
-            existing helpers so they can still toggle themselves off */}
-        {(offerHelpToggle || help_checked === "checked") && (
-          <div style={{ marginBottom: 28 }}>{renderHelpToggle()}</div>
-        )}
 
         {/* CTA */}
         {renderCallToAction()}
