@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import StepHeader from './StepHeader';
+import { DonateCard } from '../design/DonateNudge';
 
 const ValueCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -234,6 +235,13 @@ const MissionOverview = () => {
         We work with nonprofits of all sizes and focus areas who could benefit from technology solutions 
         but may lack the resources or expertise to implement them on their own.
       </Typography>
+
+      {/* Quiet funding note — one per page, links to the general fund. */}
+      <DonateCard placement="onboarding_mission" style={{ marginTop: 32 }}>
+        Opportunity Hack is a volunteer-run 501(c)(3). Everything we build is free for the
+        nonprofits we serve; donations cover venues, meals, and the hosting that keeps
+        finished projects online.
+      </DonateCard>
     </Box>
   );
 };

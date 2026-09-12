@@ -18,6 +18,7 @@ import FeedIcon from '@mui/icons-material/Feed';
 import { useEnv } from '../../context/env.context';
 import InteractiveFAQ from '../Hackathon/InteractiveFAQ';
 import StepHeader from './StepHeader';
+import { DonateLink } from '../design/DonateNudge';
 
 /**
  * OnboardingFAQ component
@@ -503,6 +504,8 @@ const OnboardingFAQ = () => {
           for hackathon expenses, technical infrastructure, and occasionally small stipends for long-term project maintenance. We're 
           committed to transparency in our finances, and information about our sponsors and how funds are used is available upon request. 
           As a nonprofit initiative ourselves, we're focused on maximizing impact rather than generating revenue.
+          Individual gifts matter too: you can{' '}
+          <DonateLink placement="onboarding_faq">support our general fund on Givebutter</DonateLink>.
         </Typography>
       ),
       icon: "💰"
