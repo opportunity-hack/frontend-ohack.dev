@@ -1256,6 +1256,10 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         } else if (orderBy === "participationCount") {
           valueA = parseParticipationYear(a?.participationCount);
           valueB = parseParticipationYear(b?.participationCount);
+        } else if (orderBy === "company") {
+          // Judges store `companyName` (VolunteerTable renders both).
+          valueA = (a?.company || a?.companyName || "").toLowerCase();
+          valueB = (b?.company || b?.companyName || "").toLowerCase();
         } else {
           valueA = (a?.[orderBy] || "").toString().toLowerCase();
           valueB = (b?.[orderBy] || "").toString().toLowerCase();

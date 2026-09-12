@@ -46,10 +46,33 @@ import HackerDepositChip from "./HackerDepositChip";
 import { JUDGE_TRAINING_CERTS } from "../../lib/lmsClient";
 import { normalizeEmail } from "../../hooks/use-judge-training-status";
 
+// Attempt history for one training slot, as a short phrase or null.
+// Prefers the admin rollup (needs an LMS admin/editor role; also covers
+// judges who attempted but haven't passed), else the attempt fields the
+// anonymous certificate lookup returns (LMS ≥ Sep 2026 — exact user, works
+// for every admin, verified slots only).
+const attemptsSummary = (slot, lmsAccess) => {
+  const rollup = lmsAccess === "full" ? slot?.rollup : null;
+  const count = rollup?.attemptCount ?? slot?.cert?.attemptCount;
+  if (typeof count !== "number") return null;
+  const toPass = rollup?.attemptsToPass ?? slot?.cert?.attemptsToPass;
+  let text = `${count} attempt${count === 1 ? "" : "s"}`;
+  if (rollup && !rollup.passed) {
+    if (typeof rollup.bestScore === "number") {
+      text += `, best ${Math.round(rollup.bestScore)}%`;
+    }
+    text += ", not passed yet";
+  } else if (toPass && count > 1) {
+    text += `, passed on attempt ${toPass}`;
+  }
+  return text;
+};
+
 // Compact judge-training summary for the table/mobile chip. `entry` is one
 // value from useJudgeTrainingStatus's statusByEmail (undefined while the LMS
 // check is pending or unavailable — then fall back to the application's own
 // judgeTrainingCompleted flag). Returns { label, color, tooltip } or null.
+// Tooltip = one line per required cert (state, score, attempts).
 const trainingChipConfig = (entry, volunteer, lmsAccess) => {
   if (!entry) {
     return volunteer.judgeTrainingCompleted
@@ -60,26 +83,33 @@ const trainingChipConfig = (entry, volunteer, lmsAccess) => {
         }
       : null;
   }
+  let anyAttempts = false;
   const rows = JUDGE_TRAINING_CERTS.map((spec) => {
     const slot = entry.slots?.[spec.key];
-    const done = slot?.state === "verified" || slot?.rollup?.passed;
     const state = slot?.state || "missing";
-    let line = `${spec.videoTitle}: ${
-      state === "verified" ? "verified" : state.replace(/_/g, " ")
-    }`;
-    if (state === "verified" && typeof slot?.cert?.score === "number") {
-      line += ` (${Math.round(slot.cert.score)}%)`;
+    const verified = state === "verified";
+    const passedOnLms = Boolean(slot?.rollup?.passed);
+    let status = verified
+      ? "verified"
+      : passedOnLms
+        ? "passed on LMS, no cert link"
+        : state.replace(/_/g, " ");
+    if (verified && typeof slot?.cert?.score === "number") {
+      status += ` (${Math.round(slot.cert.score)}%)`;
     }
-    if (lmsAccess === "full" && slot?.rollup) {
-      const rollup = slot.rollup;
-      line += ` — ${rollup.attemptCount} attempt${
-        rollup.attemptCount === 1 ? "" : "s"
-      }, best ${Math.round(rollup.bestScore)}%`;
-    }
-    return { done, line };
+    const attempts = attemptsSummary(slot, lmsAccess);
+    if (attempts) anyAttempts = true;
+    return {
+      done: verified || passedOnLms,
+      line: `${spec.videoTitle}: ${status}${attempts ? ` · ${attempts}` : ""}`,
+    };
   });
   const doneCount = rows.filter((row) => row.done).length;
-  const tooltip = rows.map((row) => row.line).join("\n");
+  const lines = rows.map((row) => row.line);
+  if (!anyAttempts && lmsAccess === "certs-only") {
+    lines.push("Attempt counts unavailable — needs an LMS admin role");
+  }
+  const tooltip = lines.join("\n");
   if (doneCount === rows.length) {
     return { label: "✓ Trained", color: "success", tooltip };
   }
@@ -88,6 +118,11 @@ const trainingChipConfig = (entry, volunteer, lmsAccess) => {
   }
   return { label: "✗ Not trained", color: "error", tooltip };
 };
+
+// Company lives under `company` on most application types but `companyName`
+// on judge (and some sponsor) applications — read both everywhere.
+export const companyOf = (volunteer) =>
+  volunteer?.company || volunteer?.companyName || "";
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
@@ -472,14 +507,28 @@ const VolunteerTable = ({
         { id: "state", label: "State", minWidth: 60, priority: 3 }, // Reduced from 100
       ];
     } else if (type === "judges") {
+      // Review-critical columns (status, training, video, title, company)
+      // sit right after Name so judges can be screened without horizontal
+      // scrolling; the shared base columns follow.
+      const base = Object.fromEntries(baseColumns.map((col) => [col.id, col]));
       return [
-        ...baseColumns,
-        { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
-        { id: "status", label: "Status", minWidth: 90 }, // Reduced from 120
+        base.id,
+        base.name,
+        { id: "status", label: "Status", minWidth: 90 },
         { id: "training", label: "Training", minWidth: 90, sortable: false },
         { id: "introVideo", label: "Video", minWidth: 56, sortable: false },
-        { id: "title", label: "Title", minWidth: 100, priority: 2 }, // Reduced from 150
-        { id: "background", label: "Background", minWidth: 120, priority: 3 }, // Reduced from 150
+        { id: "title", label: "Title", minWidth: 100 },
+        base.company,
+        base.created_timestamp,
+        base.messages_sent,
+        base.certificates,
+        base.email,
+        base.pronouns,
+        base.isInPerson,
+        base.isSelected,
+        base.slack_user_id,
+        { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
+        { id: "background", label: "Background", minWidth: 120, priority: 3 },
       ];
     } else if (type === "volunteers") {
       return [
@@ -1559,8 +1608,14 @@ const VolunteerTable = ({
             />
           </Tooltip>
         );
+      case "company":
       default:
-        const value = volunteer[column.id];
+        // Judge applications store the field as `companyName` (see
+        // ApplicationEditDialog "Company Name"); other types use `company`.
+        const value =
+          column.id === "company"
+            ? companyOf(volunteer)
+            : volunteer[column.id];
         if (typeof value === 'string' && value.length > 15) {
           return (
             <Tooltip title={value}>
@@ -1609,7 +1664,7 @@ const VolunteerTable = ({
           const primaryText = volunteer.name || 'Unknown';
           const secondaryTexts = [
             volunteer.email,
-            volunteer.company,
+            companyOf(volunteer),
             volunteer.title
           ].filter(Boolean);
 
