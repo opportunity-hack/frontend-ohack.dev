@@ -130,7 +130,7 @@ const TrainingSlotRow = ({ spec, slot, lmsAccess }) => {
             )}
           </Typography>
         )}
-        {lmsAccess === "full" && rollup && (
+        {lmsAccess === "full" && rollup ? (
           <Typography variant="caption" color="text.secondary" display="block">
             {`attempts ${rollup.attemptCount} · best ${Math.round(rollup.bestScore)}%`}
             {rollup.passed
@@ -139,7 +139,16 @@ const TrainingSlotRow = ({ spec, slot, lmsAccess }) => {
                 : " · passed"
               : " · not passed yet"}
           </Typography>
-        )}
+        ) : typeof slot?.cert?.attemptCount === "number" ? (
+          // Attempt fields from the anonymous certificate lookup (LMS ≥ Sep
+          // 2026) — available to every admin, no LMS role needed.
+          <Typography variant="caption" color="text.secondary" display="block">
+            {`attempts ${slot.cert.attemptCount}`}
+            {slot.cert.attemptsToPass && slot.cert.attemptCount > 1
+              ? ` · passed on attempt ${slot.cert.attemptsToPass}`
+              : ""}
+          </Typography>
+        ) : null}
         {!verified && rollup?.passed && (
           <Chip
             label="Passed on LMS"
