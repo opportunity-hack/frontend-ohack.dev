@@ -51,6 +51,10 @@ export default function useNonprofit( nonprofit_id ){
         // If it does, then we know that the submission was successful
         // If it doesn't, then we know that the submission failed        
         if (data.message) {
+            // GA4 key event — fired on successful submission only.
+            if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+                window.gtag('event', 'npo_form_submit', { form_name: 'nonprofit_application' });
+            }
             onComplete(data.message, true);
         } else {
             onComplete(data.statusText, false);

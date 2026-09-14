@@ -39,6 +39,10 @@ export const trackEvent = ({ action, params }) => {
 | `login_slack` | User logs in via Slack | `{ current_page: [path] }` | Track where users login from |
 | `signup_slack` | User signs up via Slack | `{ current_page: [path] }` | Identify signup sources |
 | `CompleteRegistration` | User completes registration | `{}` | Measure signup completion rate |
+| `Login Email Set` | Logged-in user identified to analytics (Navbar) | `{}` | Session-level login signal |
+| `user_identify` | Emitted by `ga.set(email)` alongside `gtag('set','user_data')` | `{ event_category: "user", event_label: "user", email_hash }` | Ties sessions to a hashed identity |
+
+**Dedupe (Sep 2026):** `Login Email Set` and `user_identify` fire at most **once per email per page session**. The Navbar effect keys on `user?.email` (a string) with a `useRef` guard — never on the `user` object, whose identity changes across renders and previously produced ~130K junk hits per 90 days.
 
 ### Content Interaction
 
@@ -93,6 +97,22 @@ This enables:
 - User segmentation in analytics
 - Tracking profile completion rates
 - Identifying most commonly filled profile fields
+
+## Donation & Conversion Events
+
+`donation_interaction` (from the Givebutter widget) is the **primary donation signal**. `donation_completed` and `npo_form_submit` exist purely so GA4 can mark them as **key events** — GA4 key events match on event *name* only, not on a parameter, so a single event with a type parameter can't be used as a conversion.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `donation_interaction` | `GiveButterWidget.js` `trackDonationEvent` | `{ event_category: "GiveButter", event_label: "<context>_<eventType>", custom_parameter_user_id, custom_parameter_application_type }` | Fires for `widget_loaded`, `donation_started`, `donation_completed`. Primary funnel signal; keep it. |
+| `donation_completed` | `GiveButterWidget.js` (`donation_completed` case only) | `{ value: <amount>, currency: "USD" }` | **GA4 key event.** Fired in addition to `donation_interaction`. `value` omitted when the widget doesn't report a numeric amount. |
+| `donation_click` | `design/DonateNudge.js` `trackDonateClick(placement)` | `{ event_category: "donation", event_label: "donate_click", placement, destination: "givebutter" }` | Link-out clicks to the Givebutter general fund (homepage band, onboarding, FAQ). Not a completed donation. |
+| `npo_form_submit` | `pages/nonprofits/apply/index.js` `handleSubmit` (live form) and `hooks/use-nonprofit.js` `handle_npo_form_submission` (legacy, uncalled) | `{ form_name: "nonprofit_application" }` | **GA4 key event.** Fires only after a successful `response.ok` / `data.message`. Complements the structured `form_complete` event on the same path. |
+
+### Google Ads
+
+- The Ads tag is configured in `_document.js` from `NEXT_PUBLIC_GOOGLE_ADS_ID` (account **371-489-1437**, `AW-3714891437` — the account linked to GA4 property ohack-dev). Unset → no Ads `config` call at all. The old hardcoded `AW-11474351176` was the wrong account.
+- Blog conversion (`SingleNews.js` `gaButton`): the `send_to` conversion ping is **gated off** until a new conversion action is created in account 371-489-1437 and its label pasted into `GOOGLE_ADS_BLOG_CONVERSION_LABEL` (see the TODO in that file). The retired label `JCk6COG-q4kZEMjost8q` does not work under the new account.
 
 ## Business Intelligence Applications
 

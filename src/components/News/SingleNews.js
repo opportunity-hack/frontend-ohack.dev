@@ -31,8 +31,14 @@ import Link from 'next/link';
 // Lazy-load the markdown renderer so the legacy HTML path stays light.
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: true });
 
+// TODO(google-ads): the old label `JCk6COG-q4kZEMjost8q` belonged to the retired
+// Ads account AW-11474351176 and will NOT work under the current account.
+// Create a new conversion action in Google Ads account 371-489-1437
+// (NEXT_PUBLIC_GOOGLE_ADS_ID = AW-3714891437) and paste its label here.
+// While this is null the Ads conversion ping in gaButton() is skipped on purpose.
+const GOOGLE_ADS_BLOG_CONVERSION_LABEL = null;
+
 const markdownImageRenderer = ({ src, alt }) => (
-  // eslint-disable-next-line @next/next/no-img-element
   <img
     src={src}
     alt={alt || ''}
@@ -69,14 +75,17 @@ function SingleNews( {newsItem} ) {
   
   const gaButton = async (action, actionName) => {
     console.log("gaButton", "action:", action, "actionName:", actionName);
-    
-    // Track Google Ads conversion
-    trackEvent({ 
-      action: "conversion",
-      params: {
-        send_to: "AW-11474351176/JCk6COG-q4kZEMjost8q"  
-      }      
-    });
+
+    // Track Google Ads conversion — only once a label exists for the
+    // current Ads account (see GOOGLE_ADS_BLOG_CONVERSION_LABEL above).
+    if (process.env.NEXT_PUBLIC_GOOGLE_ADS_ID && GOOGLE_ADS_BLOG_CONVERSION_LABEL) {
+      trackEvent({
+        action: "conversion",
+        params: {
+          send_to: `${process.env.NEXT_PUBLIC_GOOGLE_ADS_ID}/${GOOGLE_ADS_BLOG_CONVERSION_LABEL}`,
+        },
+      });
+    }
 
     // Track regular event
     trackEvent({
