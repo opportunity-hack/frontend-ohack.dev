@@ -1,679 +1,538 @@
-import React, { useState } from "react";
+// THE volunteer-application edit dialog — one component for both the Table
+// view (pencil icon) and Review mode ("Edit details"). Schema-driven from
+// `volunteer/applicationSchema.js`; controlled (own formData), diff-based
+// save.
+//
+// Two decisions live in a pinned bar above the fields and travel on separate
+// transports (see buildPatch): Review = `status` (generic PATCH), Roster =
+// `isSelected` (dedicated select route). Nothing decision-related is ever
+// inside an accordion — that was the bug this dialog replaces.
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Box,
-  Typography,
-  Switch,
-  IconButton,
-  TextareaAutosize,
   Accordion,
-  AccordionSummary,
   AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Autocomplete,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   FormControl,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  InputAdornment,
   InputLabel,
-  Select,
+  Link,
   MenuItem,
-  useTheme,
+  Paper,
+  Select,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
   useMediaQuery,
-  Stack,
+  useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import PublicIcon from "@mui/icons-material/Public";
+import RateReviewIcon from "@mui/icons-material/RateReview";
 import {
-  mentorHeaderMapping,
-  transformMentorData,
-} from "./mentorHeaderMappings";
-import { judgeHeaderMapping, transformJudgeData } from "./judgeHeaderMappings";
+  normalizeStatus,
+  rosterConflict,
+  rosterReady,
+  statusMeta,
+} from "../../lib/applicationStatus";
+import {
+  buildCreatePayload,
+  buildPatch,
+  getEditableSections,
+  getSchema,
+  getSystemSection,
+  hasChanges,
+  toFormData,
+  toSingularType,
+  typeOf,
+} from "./volunteer/applicationSchema";
+import { StatusPicker } from "./volunteer/StatusControls";
+import { ROSTER_CONSEQUENCES, RosterToggle } from "./volunteer/RosterControls";
+import { applyBulkRow } from "./volunteer/bulkPaste";
+
+// ---------------------------------------------------------------------------
+// Module-scope pieces (never define components inside the dialog body — a
+// remount on every keystroke would wipe in-progress edits).
+// ---------------------------------------------------------------------------
+
+const isHttpUrl = (v) => typeof v === "string" && /^https?:\/\/\S+$/i.test(v.trim());
+
+const FULL_WIDTH_TYPES = new Set(["textarea", "multiselect", "artifacts"]);
+
+const SectionHeader = ({ title }) => (
+  <Grid size={{ xs: 12 }}>
+    <Typography
+      variant="overline"
+      component="h3"
+      sx={{ color: "text.secondary", letterSpacing: 1, display: "block", mt: 1 }}
+    >
+      {title}
+    </Typography>
+    <Divider />
+  </Grid>
+);
+
+const ArtifactsEditor = ({ value, onChange, disabled }) => {
+  const artifacts = Array.isArray(value) ? value : [];
+  const update = (index, key, v) => {
+    const next = artifacts.map((a, i) => (i === index ? { ...a, [key]: v } : a));
+    onChange(next);
+  };
+  return (
+    <Box>
+      {artifacts.map((artifact, index) => (
+        <Grid container spacing={1} key={index} sx={{ mb: 1 }} alignItems="center">
+          <Grid size={{ xs: 12, sm: 2 }}>
+            <TextField label="Type" size="small" fullWidth value={artifact?.type || ""} disabled={disabled}
+              onChange={(e) => update(index, "type", e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 3 }}>
+            <TextField label="Label" size="small" fullWidth value={artifact?.label || ""} disabled={disabled}
+              onChange={(e) => update(index, "label", e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 3 }}>
+            <TextField label="Comment" size="small" fullWidth value={artifact?.comment || ""} disabled={disabled}
+              onChange={(e) => update(index, "comment", e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 10, sm: 3 }}>
+            <TextField label="URL" size="small" fullWidth value={artifact?.url?.[0] || ""} disabled={disabled}
+              onChange={(e) => update(index, "url", [e.target.value])} />
+          </Grid>
+          <Grid size={{ xs: 2, sm: 1 }}>
+            <IconButton aria-label="Remove artifact" disabled={disabled}
+              onClick={() => onChange(artifacts.filter((_, i) => i !== index))}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Grid>
+        </Grid>
+      ))}
+      <Button size="small" startIcon={<AddIcon />} disabled={disabled}
+        onClick={() => onChange([...artifacts, { type: "", label: "", comment: "", url: [""] }])}>
+        Add artifact
+      </Button>
+    </Box>
+  );
+};
+
+const SchemaField = ({ field, value, onChange, disabled }) => {
+  const label = field.label;
+  const set = (v) => onChange(field.key, field.normalize ? field.normalize(v) : v);
+
+  switch (field.type) {
+    case "readonly":
+      return (
+        <TextField label={label} size="small" fullWidth value={value ?? ""} disabled
+          InputProps={{ readOnly: true }} />
+      );
+    case "switch":
+      return (
+        <FormControlLabel
+          sx={{ ml: 0, mt: 0.5 }}
+          control={<Switch size="small" checked={Boolean(value)} disabled={disabled} onChange={(e) => set(e.target.checked)} />}
+          label={<Typography variant="body2">{label}</Typography>}
+        />
+      );
+    case "textarea":
+      return (
+        <TextField label={label} size="small" fullWidth multiline minRows={3} maxRows={12}
+          value={value ?? ""} disabled={disabled} onChange={(e) => set(e.target.value)} />
+      );
+    case "select":
+    case "yesno": {
+      const options = field.options || [];
+      const current = value ?? "";
+      const hasCurrent = !current || options.includes(current);
+      return (
+        <FormControl size="small" fullWidth disabled={disabled}>
+          <InputLabel>{label}</InputLabel>
+          <Select label={label} value={current} onChange={(e) => set(e.target.value)} displayEmpty={false}>
+            <MenuItem value="">
+              <em>Not set</em>
+            </MenuItem>
+            {!hasCurrent && (
+              <MenuItem value={current}>{`${current} (legacy)`}</MenuItem>
+            )}
+            {options.map((opt) => (
+              <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      );
+    }
+    case "multiselect":
+      return (
+        <Autocomplete
+          multiple
+          freeSolo
+          size="small"
+          disabled={disabled}
+          options={field.options || []}
+          value={Array.isArray(value) ? value : []}
+          onChange={(_e, next) => set(next.map((v) => (typeof v === "string" ? v.trim() : v)).filter(Boolean))}
+          renderTags={(tagValue, getTagProps) =>
+            tagValue.map((option, index) => (
+              <Chip size="small" label={option} {...getTagProps({ index })} key={`${option}-${index}`} />
+            ))
+          }
+          renderInput={(params) => (
+            <TextField {...params} label={label} helperText="Type and press Enter to add a value" />
+          )}
+        />
+      );
+    case "artifacts":
+      return <ArtifactsEditor value={value} onChange={(v) => onChange(field.key, v)} disabled={disabled} />;
+    case "url":
+      return (
+        <TextField
+          label={label} size="small" fullWidth type="url" value={value ?? ""} disabled={disabled}
+          onChange={(e) => set(e.target.value)}
+          InputProps={{
+            endAdornment: isHttpUrl(value) ? (
+              <InputAdornment position="end">
+                <IconButton size="small" component={Link} href={value} target="_blank" rel="noopener noreferrer" aria-label={`Open ${label}`}>
+                  <OpenInNewIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
+          }}
+        />
+      );
+    case "email":
+      return (
+        <TextField label={label} size="small" fullWidth type="email" value={value ?? ""} disabled={disabled}
+          onChange={(e) => set(e.target.value)} />
+      );
+    default:
+      return (
+        <TextField label={label} size="small" fullWidth value={value ?? ""} disabled={disabled}
+          onChange={(e) => set(e.target.value)} />
+      );
+  }
+};
+
+// The pinned two-pane decision bar: Review (status) | Event roster (isSelected).
+const DecisionBar = ({ decision, onStatus, onRoster, disabled, original, isMobile }) => {
+  const meta = statusMeta(decision.status);
+  const preview = { status: decision.status, isSelected: decision.isSelected };
+  const ready = rosterReady(preview);
+  const conflict = rosterConflict(preview);
+  return (
+    <Box sx={{ position: "sticky", top: 0, zIndex: 2, bgcolor: "background.paper", pt: 1, pb: 1.5 }}>
+      <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }} sx={{ borderRight: { sm: 1 }, borderColor: { sm: "divider" }, pr: { sm: 2 } }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1 }}>
+              <RateReviewIcon fontSize="small" color="action" />
+              <Typography variant="overline" sx={{ lineHeight: 1, color: "text.secondary" }}>Review</Typography>
+            </Box>
+            <StatusPicker value={decision.status} onChange={onStatus} disabled={disabled} label="Application status" />
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+              {meta.description}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1 }}>
+              <PublicIcon fontSize="small" color={decision.isSelected ? "primary" : "action"} />
+              <Typography variant="overline" sx={{ lineHeight: 1, color: "text.secondary" }}>Event roster</Typography>
+            </Box>
+            <RosterToggle checked={decision.isSelected} onChange={onRoster} disabled={disabled} />
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+              {ROSTER_CONSEQUENCES}
+            </Typography>
+          </Grid>
+        </Grid>
+      </Paper>
+      {(ready || conflict) && (
+        <Alert severity="warning" sx={{ mt: 1, py: 0 }} icon={false}>
+          <Typography variant="body2">
+            {ready
+              ? `${meta.label} but not on the roster — they won't see participant tools or appear on the event page yet.`
+              : `On the roster although the review is ${meta.label.toLowerCase()} — they still show on the event page. Remove them?`}
+          </Typography>
+        </Alert>
+      )}
+      {isMobile && original?.email && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+          {original.email}
+        </Typography>
+      )}
+    </Box>
+  );
+};
+
+const formatDate = (v) => {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? String(v) : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+};
+
+// ---------------------------------------------------------------------------
 
 const VolunteerEditDialog = ({
   open,
   onClose,
   volunteer,
+  volunteerType,
   onSave,
-  onChange,
-  isAdding,
+  isAdding = false,
+  saving = false,
 }) => {
-  const [bulkData, setBulkData] = useState("");
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  if (!volunteer) return null;
+  const type = useMemo(() => typeOf(volunteer, volunteerType) || toSingularType(volunteerType) || "volunteer", [volunteer, volunteerType]);
+  const schema = getSchema(type);
+  const sections = useMemo(() => getEditableSections(type), [type]);
+  const systemSection = useMemo(() => getSystemSection(type), [type]);
 
-  const transformPhotoUrl = (url) => {
-    return url.replace(
-      "https://storage.googleapis.com/ohack-dev_cdn",
-      "https://cdn.ohack.dev"
-    );
-  };
+  const [formData, setFormData] = useState({});
+  const [decision, setDecision] = useState({ status: "pending", isSelected: false });
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [copied, setCopied] = useState(false);
 
-  const handlePhotoUrlChange = (e) => {
-    const transformedUrl = transformPhotoUrl(e.target.value);
-    onChange("photoUrl", transformedUrl);
-  };
-
-  // Helper function to render individual fields
-  const renderField = (field, volunteer, onChange) => {
-    const fieldSize = isMobile ? "medium" : "medium";
-    const fieldMargin = isMobile ? "normal" : "dense";
-
-    if (field.type === "switch") {
-      return (
-        <Box
-          key={field.name}
-          display="flex"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{
-            py: isMobile ? 1 : 0.5,
-            px: isMobile ? 1 : 0,
-            minHeight: isMobile ? 56 : 'auto',
-          }}
-        >
-          <Typography variant={isMobile ? "body2" : "body2"}>
-            {field.label}:
-          </Typography>
-          <Switch
-            checked={volunteer[field.name] || false}
-            onChange={(e) => onChange(field.name, e.target.checked)}
-            size={isMobile ? "medium" : "small"}
-          />
-        </Box>
-      );
-    } else if (field.type === "select") {
-      return (
-        <FormControl key={field.name} fullWidth margin={fieldMargin} size={fieldSize}>
-          <InputLabel>{field.label}</InputLabel>
-          <Select
-            value={volunteer[field.name] || field.defaultValue || ""}
-            onChange={(e) => onChange(field.name, e.target.value)}
-            label={field.label}
-            disabled={field.readOnly}
-            MenuProps={{
-              PaperProps: {
-                style: {
-                  maxHeight: isMobile ? 300 : 224,
-                },
-              },
-            }}
-          >
-            {field.options && field.options.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      );
-    } else if (field.type === "textarea") {
-      return (
-        <TextField
-          key={field.name}
-          margin={fieldMargin}
-          label={field.label}
-          multiline
-          rows={isMobile ? 3 : 4}
-          fullWidth
-          size={fieldSize}
-          value={volunteer[field.name] || ""}
-          onChange={(e) => onChange(field.name, e.target.value)}
-          InputProps={{
-            readOnly: field.readOnly,
-          }}
-          sx={{
-            '& .MuiInputBase-root': {
-              fontSize: isMobile ? '16px' : '14px', // Prevent zoom on iOS
-            },
-          }}
-        />
-      );
-    } else {
-      return (
-        <TextField
-          key={field.name}
-          margin={fieldMargin}
-          label={field.label}
-          type={field.type}
-          fullWidth
-          size={fieldSize}
-          value={volunteer[field.name] || ""}
-          onChange={
-            field.onChange || ((e) => onChange(field.name, e.target.value))
-          }
-          InputProps={{
-            readOnly: field.readOnly,
-          }}
-          sx={{
-            '& .MuiInputBase-root': {
-              fontSize: isMobile ? '16px' : '14px', // Prevent zoom on iOS
-            },
-          }}
-        />
-      );
-    }
-  };
-
-  const commonFields = [
-    { name: "name", label: "Name", type: "text" },
-    {
-      name: "photoUrl",
-      label: "Photo URL",
-      type: "text",
-      onChange: handlePhotoUrlChange,
-    },
-    { name: "linkedinProfile", label: "LinkedIn Profile", type: "text" },
-    { name: "isInPerson", label: "In Person", type: "switch" },
-    { name: "isSelected", label: "Selected", type: "switch" },
-    { name: "pronouns", label: "Pronouns", type: "text" },
-    { name: "slack_user_id", label: "Slack User ID", type: "text" },
-  ];
-
-  const typeSpecificFields = (() => {
-    switch (volunteer.type) {
-      case "mentors":
-        return [
-          { name: "expertise", label: "Expertise", type: "text" },
-          { name: "company", label: "Company", type: "text" },
-          { name: "shortBio", label: "Short Bio", type: "textarea" },
-          {
-            name: "participationCount",
-            label: "Participation Count",
-            type: "text",
-          },
-          { name: "country", label: "Country", type: "text" },
-          { name: "state", label: "State", type: "text" },
-          { name: "availability", label: "Availability", type: "text" },
-          {
-            name: "softwareEngineeringSpecifics",
-            label: "Software Engineering Specifics",
-            type: "text",
-          },
-          {
-            name: "agreedToCodeOfConduct",
-            label: "Agreed to Code of Conduct",
-            type: "switch",
-          },
-          { name: "shirtSize", label: "Shirt Size", type: "text" },
-        ];
-      case "judges":
-        return {
-          basic: [
-            { name: "email", label: "Email", type: "email" },
-            { name: "title", label: "Job Title", type: "text" },
-            { name: "companyName", label: "Company Name", type: "text" },
-            { name: "country", label: "Country", type: "text" },
-            { name: "state", label: "State", type: "text" },
-          ],
-          experience: [
-            { name: "background", label: "Background", type: "text" },
-            { name: "backgroundAreas", label: "Background Areas", type: "text" },
-            { name: "otherBackground", label: "Other Background", type: "text" },
-            {
-              name: "participationCount",
-              label: "Participation Count",
-              type: "text",
-            },
-          ],
-          bios: [
-            {
-              name: "biography",
-              label: "Biography",
-              type: "textarea",
-            },
-            {
-              name: "shortBio",
-              label: "Short Bio",
-              type: "textarea",
-            },
-            {
-              name: "shortBiography",
-              label: "Short Biography",
-              type: "textarea",
-            },
-            { name: "whyJudge", label: "Why Judge", type: "textarea" },
-          ],
-          availability: [
-            { name: "availability", label: "Availability", type: "text" },
-            { name: "canAttendJudging", label: "Can Attend Judging", type: "text" },
-            {
-              name: "additionalInfo",
-              label: "Additional Info",
-              type: "textarea",
-            },
-          ],
-          agreements: [
-            {
-              name: "agreedToCodeOfConduct",
-              label: "Agreed to Code of Conduct",
-              type: "switch",
-            },
-            {
-              name: "codeOfConduct",
-              label: "Code of Conduct",
-              type: "switch",
-            },
-            { name: "selected", label: "Selected (Legacy)", type: "switch" },
-            {
-              name: "status",
-              label: "Application Status",
-              type: "select",
-              defaultValue: "pending",
-              options: [
-                { value: "pending", label: "Pending Review" },
-                { value: "approved", label: "Approved" },
-                { value: "denied", label: "Denied" },
-                { value: "verified_travel", label: "Verified Travel" },
-                { value: "confirmed", label: "Confirmed" },
-                { value: "withdrew", label: "Withdrew" },
-                { value: "no_show", label: "No Show" },
-              ],
-            },
-          ],
-          system: [
-            { name: "user_id", label: "User ID", type: "text", readOnly: true },
-            { name: "created_by", label: "Created By", type: "text", readOnly: true },
-            { name: "updated_by", label: "Updated By", type: "text", readOnly: true },
-            { name: "created_timestamp", label: "Created", type: "text", readOnly: true },
-            { name: "updated_timestamp", label: "Updated", type: "text", readOnly: true },
-            { name: "timestamp", label: "Timestamp", type: "text", readOnly: true },
-            { name: "event_id", label: "Event ID", type: "text", readOnly: true },
-            { name: "id", label: "ID", type: "text", readOnly: true },
-            { name: "volunteer_type", label: "Volunteer Type", type: "text", readOnly: true },
-            { name: "type", label: "Type", type: "text", readOnly: true },
-          ],
-        };
-      case "volunteers":
-        return [
-          { name: "company", label: "Company", type: "text" },
-          { name: "shortBio", label: "Short Bio", type: "textarea" },
-          { name: "volunteerType", label: "Volunteer Type", type: "text" },
-          { name: "skills", label: "Skills", type: "text" },
-          { name: "country", label: "Country", type: "text" },
-          { name: "state", label: "State", type: "text" },
-          { name: "availability", label: "Availability", type: "text" },
-          { name: "motivation", label: "Motivation", type: "textarea" },
-          {
-            name: "socialCauses",
-            label: "Social Causes",
-            type: "text",
-          },
-          {
-            name: "agreedToCodeOfConduct",
-            label: "Agreed to Code of Conduct",
-            type: "switch",
-          },
-        ];
-      case "hackers":
-        return [
-          { name: "participantType", label: "Participant Type", type: "text" },
-          { name: "schoolOrganization", label: "School/Organization", type: "text" },
-          { name: "experienceLevel", label: "Experience Level", type: "text" },
-          { name: "primaryRoles", label: "Primary Roles", type: "text" },
-          { name: "skills", label: "Skills", type: "text" },
-          { name: "country", label: "Country", type: "text" },
-          { name: "state", label: "State", type: "text" },
-          { name: "teamStatus", label: "Team Status", type: "text" },
-          { name: "teamCode", label: "Team Code", type: "text" },
-          { name: "socialCauses", label: "Social Causes", type: "text" },
-          { name: "bio", label: "Bio", type: "textarea" },
-          {
-            name: "agreedToCodeOfConduct",
-            label: "Agreed to Code of Conduct",
-            type: "switch",
-          },
-        ];
-      case "sponsors":
-        return [
-          { name: "title", label: "Title", type: "text" },
-          { name: "companyName", label: "Company Name", type: "text" },
-          { name: "sponsorshipTier", label: "Sponsorship Tier", type: "text" },
-          { name: "sponsorshipDetails", label: "Sponsorship Details", type: "textarea" },
-          { name: "volunteerType", label: "Volunteer Roles", type: "text" },
-          { name: "volunteerCount", label: "Volunteer Count", type: "text" },
-          { name: "volunteerHours", label: "Volunteer Hours", type: "text" },
-          { name: "howHeard", label: "How Heard", type: "text" },
-          { name: "logoUrl", label: "Logo URL", type: "text" },
-          {
-            name: "additionalInfo",
-            label: "Additional Info",
-            type: "textarea",
-          },
-        ];
-      default:
-        return [];
-    }
-  })();
-
-  // Handle different field structures
-  const isJudgeWithSections = volunteer.type === "judges" && typeof typeSpecificFields === 'object' && !Array.isArray(typeSpecificFields);
-  const fields = isJudgeWithSections ? commonFields : [...commonFields, ...typeSpecificFields];
-
-  const handleArtifactChange = (index, field, value) => {
-    const newArtifacts = [...(volunteer.artifacts || [])];
-    newArtifacts[index] = { ...newArtifacts[index], [field]: value };
-    onChange("artifacts", newArtifacts);
-  };
-
-  const addArtifact = () => {
-    const newArtifacts = [
-      ...(volunteer.artifacts || []),
-      { type: "", label: "", comment: "", url: [""] },
-    ];
-    onChange("artifacts", newArtifacts);
-  };
-
-  const removeArtifact = (index) => {
-    const newArtifacts = volunteer.artifacts.filter((_, i) => i !== index);
-    onChange("artifacts", newArtifacts);
-  };
-
-  const handleBulkDataChange = (e) => {
-    setBulkData(e.target.value);
-  };
-
-  const processBulkData = () => {
-    const lines = bulkData.trim().split("\n");
-    const headers = lines[0].split("\t").map((header) => header.trim());
-
-    let dataValues = [];
-    let currentValue = "";
-    let inQuotes = false;
-
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i];
-      for (let j = 0; j < line.length; j++) {
-        const char = line[j];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === "\t" && !inQuotes) {
-          dataValues.push(currentValue.trim());
-          currentValue = "";
-        } else {
-          currentValue += char;
-        }
-      }
-      if (inQuotes) {
-        currentValue += "\n";
-      } else {
-        dataValues.push(currentValue.trim());
-        break;
-      }
-    }
-
-    const rawData = {};
-    headers.forEach((header, index) => {
-      if (index < dataValues.length) {
-        let value = dataValues[index];
-        // Remove surrounding quotes and replace double quotes with single quotes
-        value = value.replace(/^"(.*)"$/, "$1").replace(/""/g, '"');
-        rawData[header] = value;
-      }
+  // Reset ONLY when the dialog opens or the target row changes — never on
+  // every `volunteer` reference, or optimistic list updates would clobber
+  // in-progress edits.
+  const rowId = volunteer?.id || null;
+  useEffect(() => {
+    if (!open) return;
+    setFormData(toFormData(volunteer || {}, type));
+    setDecision({
+      status: normalizeStatus(volunteer?.status),
+      isSelected: Boolean(volunteer?.isSelected),
     });
+    setConfirmDiscard(false);
+    setBulkText("");
+  }, [open, rowId, isAdding, type]);
 
-    console.log("Raw data:", rawData); // For debugging
+  const diff = useMemo(
+    () => buildPatch(volunteer || {}, formData, type, decision),
+    [volunteer, formData, type, decision]
+  );
+  const dirty = isAdding ? Boolean(formData.name || formData.email) : hasChanges(diff);
+  const changedCount = Object.keys(diff.patch || {}).filter((k) => k !== "id" && k !== "status").length;
 
-    let transformedData;
-    if (volunteer.type === "mentors") {
-      transformedData = transformMentorData(rawData);
-    } else if (volunteer.type === "judges") {
-      transformedData = transformJudgeData(rawData);
-    } else {
-      transformedData = rawData;
+  const setField = useCallback((key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (saving) return;
+    if (dirty) {
+      setConfirmDiscard(true);
+      return;
     }
+    onClose?.();
+  }, [dirty, saving, onClose]);
 
-    console.log("Transformed data:", transformedData); // For debugging
+  const handleSave = useCallback(() => {
+    if (!onSave || saving) return;
+    if (isAdding) {
+      onSave({
+        create: buildCreatePayload(formData, type, decision),
+        roster: decision.isSelected ? true : null,
+      });
+      return;
+    }
+    if (!dirty) return;
+    onSave(diff);
+  }, [onSave, saving, isAdding, formData, type, decision, dirty, diff]);
 
-    Object.keys(transformedData).forEach((key) => {
-      onChange(key, transformedData[key]);
+  const handleApplyBulk = useCallback(() => {
+    const mapped = applyBulkRow(bulkText, type);
+    if (!mapped || Object.keys(mapped).length === 0) return;
+    setFormData((prev) => ({ ...prev, ...toFormData({ ...prev, ...mapped }, type) }));
+    setBulkText("");
+  }, [bulkText, type]);
+
+  const copyId = useCallback(() => {
+    if (!rowId || typeof navigator === "undefined" || !navigator.clipboard) return;
+    navigator.clipboard.writeText(rowId).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     });
+  }, [rowId]);
 
-    setBulkData("");
-  };
+  if (!open) return null;
+
+  const title = isAdding
+    ? `Add ${schema.title.toLowerCase()}`
+    : `Edit ${schema.title.toLowerCase()} — ${volunteer?.name || "application"}`;
+  const applied = formatDate(volunteer?.timestamp || volunteer?.created_timestamp);
+
+  const footerSummary = isAdding
+    ? decision.isSelected
+      ? "New application · roster: on"
+      : "New application"
+    : [
+        changedCount > 0 ? `${changedCount} field${changedCount === 1 ? "" : "s"} changed` : null,
+        diff.patch?.status ? `status → ${statusMeta(diff.patch.status).label}` : null,
+        diff.roster === null ? null : `roster: ${diff.roster ? "on" : "off"}`,
+      ]
+        .filter(Boolean)
+        .join(" · ") || "No changes";
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
-      maxWidth={isMobile ? false : "md"}
+      onClose={requestClose}
+      maxWidth="md"
       fullWidth
-      fullScreen={isSmallMobile}
-      sx={{
-        '& .MuiDialog-paper': {
-          ...(isMobile && !isSmallMobile && {
-            margin: theme.spacing(1),
-            width: 'calc(100% - 16px)',
-            maxHeight: 'calc(100% - 16px)',
-          }),
-        },
-      }}
+      fullScreen={isMobile}
+      aria-labelledby="volunteer-edit-title"
     >
-      <DialogTitle sx={{ pb: 1 }}>
-        <Typography variant={isMobile ? "h6" : "h5"} component="h2">
-          {isAdding ? `Add ${volunteer.type}` : `Edit ${volunteer.type}`}
+      <DialogTitle id="volunteer-edit-title" sx={{ pb: 0.5, pr: 6 }}>
+        <Typography variant={isMobile ? "h6" : "h5"} component="h2" sx={{ lineHeight: 1.2 }}>
+          {title}
         </Typography>
+        {!isAdding && (
+          <Typography variant="body2" color="text.secondary" component="div" sx={{ mt: 0.5, display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+            {volunteer?.email && <span>{volunteer.email}</span>}
+            {applied && <span>· applied {applied}</span>}
+            {rowId && (
+              <Tooltip title={copied ? "Copied" : "Copy id"}>
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  icon={<ContentCopyIcon sx={{ fontSize: 14 }} />}
+                  label={`id ${String(rowId).slice(0, 8)}…`}
+                  onClick={copyId}
+                  sx={{ fontFamily: "monospace" }}
+                />
+              </Tooltip>
+            )}
+          </Typography>
+        )}
+        <IconButton aria-label="Close" onClick={requestClose} size="small" sx={{ position: "absolute", right: 8, top: 8 }} disabled={saving}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
       </DialogTitle>
-      <DialogContent sx={{ pb: 1 }}>
-        {isAdding && (
-          <Box mb={2}>
-            <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ mb: 1 }}>
-              Bulk Add from Google Sheets
-            </Typography>
-            <TextareaAutosize
-              minRows={isMobile ? 2 : 3}
-              placeholder="Paste tab-separated data here..."
-              value={bulkData}
-              onChange={handleBulkDataChange}
-              style={{
-                width: "100%",
-                marginBottom: "10px",
-                fontSize: isMobile ? '14px' : '16px',
-                fontFamily: theme.typography.fontFamily,
-                padding: theme.spacing(1),
-                borderRadius: theme.spacing(0.5),
-                border: `1px solid ${theme.palette.divider}`,
-              }}
-            />
-            <Button
-              onClick={processBulkData}
-              variant="contained"
-              color="primary"
-              size={isMobile ? "small" : "medium"}
-              fullWidth={isMobile}
-            >
-              Process Bulk Data
-            </Button>
-          </Box>
+
+      <DialogContent dividers sx={{ pt: 0 }}>
+        <DecisionBar
+          decision={decision}
+          onStatus={(status) => setDecision((d) => ({ ...d, status: normalizeStatus(status) }))}
+          onRoster={(on) => setDecision((d) => ({ ...d, isSelected: Boolean(on) }))}
+          disabled={saving}
+          original={volunteer}
+          isMobile={isMobile}
+        />
+
+        {isAdding && (type === "judge" || type === "mentor") && (
+          <Accordion variant="outlined" sx={{ mb: 1 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="body2">Paste a row from Google Sheets</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <TextField
+                multiline minRows={3} fullWidth size="small"
+                placeholder="Header row + one data row, tab-separated"
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                sx={{ mb: 1 }}
+              />
+              <Button size="small" variant="outlined" onClick={handleApplyBulk} disabled={!bulkText.trim()}>
+                Fill fields from row
+              </Button>
+            </AccordionDetails>
+          </Accordion>
         )}
-        {/* Render basic fields first */}
-        {fields.map((field) => renderField(field, volunteer, onChange))}
 
-        {/* Render judge-specific sections */}
-        {isJudgeWithSections && (
-          <Box mt={2}>
-            {/* Basic Information */}
-            <Accordion defaultExpanded={!isMobile}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant={isMobile ? "subtitle1" : "h6"}>
-                  Basic Information
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={isMobile ? 1.5 : 2}>
-                  {typeSpecificFields.basic.map((field) =>
-                    renderField(field, volunteer, onChange)
-                  )}
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
+        <Grid container spacing={2} sx={{ mt: 0.5 }}>
+          {sections.map((section) => (
+            <React.Fragment key={section.id}>
+              <SectionHeader title={section.title} />
+              {section.fields
+                .filter((field) => field.type !== "readonly")
+                .map((field) => (
+                  <Grid size={{ xs: 12, sm: FULL_WIDTH_TYPES.has(field.type) ? 12 : 6 }} key={field.key}>
+                    {field.key === "photoUrl" ? (
+                      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                        <Avatar src={isHttpUrl(formData.photoUrl) ? formData.photoUrl : undefined} sx={{ width: 40, height: 40 }} />
+                        <Box sx={{ flex: 1 }}>
+                          <SchemaField field={field} value={formData[field.key]} onChange={setField} disabled={saving} />
+                        </Box>
+                      </Box>
+                    ) : (
+                      <SchemaField field={field} value={formData[field.key]} onChange={setField} disabled={saving} />
+                    )}
+                  </Grid>
+                ))}
+            </React.Fragment>
+          ))}
+        </Grid>
 
-            {/* Experience & Background */}
-            <Accordion defaultExpanded={!isMobile}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant={isMobile ? "subtitle1" : "h6"}>
-                  Experience & Background
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={isMobile ? 1.5 : 2}>
-                  {typeSpecificFields.experience.map((field) =>
-                    renderField(field, volunteer, onChange)
-                  )}
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-
-            {/* Biography & Motivation */}
-            <Accordion defaultExpanded={!isMobile}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant={isMobile ? "subtitle1" : "h6"}>
-                  Biography & Motivation
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={isMobile ? 1.5 : 2}>
-                  {typeSpecificFields.bios.map((field) =>
-                    renderField(field, volunteer, onChange)
-                  )}
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-
-            {/* Availability */}
-            <Accordion defaultExpanded={!isMobile}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant={isMobile ? "subtitle1" : "h6"}>
-                  Availability & Additional Info
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={isMobile ? 1.5 : 2}>
-                  {typeSpecificFields.availability.map((field) =>
-                    renderField(field, volunteer, onChange)
-                  )}
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-
-            {/* Agreements */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant={isMobile ? "subtitle1" : "h6"}>
-                  Agreements & Status
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  {typeSpecificFields.agreements.map((field) =>
-                    renderField(field, volunteer, onChange)
-                  )}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-
-            {/* System Information */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">System Information</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  {typeSpecificFields.system.map((field) =>
-                    renderField(field, volunteer, onChange)
-                  )}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          </Box>
+        {!isAdding && (
+          <Accordion variant="outlined" sx={{ mt: 2 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="body2" color="text.secondary">System (read-only)</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={1.5}>
+                {systemSection.fields
+                  .filter((field) => volunteer?.[field.key] !== undefined && volunteer?.[field.key] !== null && volunteer?.[field.key] !== "")
+                  .map((field) => (
+                    <Grid size={{ xs: 12, sm: 6 }} key={field.key}>
+                      <SchemaField field={field} value={typeof volunteer[field.key] === "object" ? JSON.stringify(volunteer[field.key]) : String(volunteer[field.key])} onChange={() => {}} disabled />
+                    </Grid>
+                  ))}
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
         )}
-        {volunteer.type === "volunteers" && (
-          <>
-            <Typography variant="h6" style={{ marginTop: 16 }}>
-              Artifacts
-            </Typography>
-            {volunteer.artifacts?.map((artifact, index) => (
-              <Box
-                key={index}
-                display="flex"
-                alignItems="center"
-                marginBottom={2}
-              >
-                <TextField
-                  label="Type"
-                  value={artifact.type}
-                  onChange={(e) =>
-                    handleArtifactChange(index, "type", e.target.value)
-                  }
-                  style={{ marginRight: 8 }}
-                />
-                <TextField
-                  label="Label"
-                  value={artifact.label}
-                  onChange={(e) =>
-                    handleArtifactChange(index, "label", e.target.value)
-                  }
-                  style={{ marginRight: 8 }}
-                />
-                <TextField
-                  label="Comment"
-                  value={artifact.comment}
-                  onChange={(e) =>
-                    handleArtifactChange(index, "comment", e.target.value)
-                  }
-                  style={{ marginRight: 8 }}
-                />
-                <TextField
-                  label="URL"
-                  value={artifact.url?.[0] || ""}
-                  onChange={(e) =>
-                    handleArtifactChange(index, "url", [e.target.value])
-                  }
-                  style={{ marginRight: 8 }}
-                />
-                <IconButton onClick={() => removeArtifact(index)}>
-                  <DeleteIcon />
-                </IconButton>
+
+        {confirmDiscard && (
+          <Alert
+            severity="warning"
+            sx={{ mt: 2 }}
+            action={
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button size="small" onClick={() => setConfirmDiscard(false)}>Keep editing</Button>
+                <Button size="small" color="warning" variant="contained" onClick={() => { setConfirmDiscard(false); onClose?.(); }}>
+                  Discard
+                </Button>
               </Box>
-            ))}
-            <Button startIcon={<AddIcon />} onClick={addArtifact}>
-              Add Artifact
-            </Button>
-          </>
+            }
+          >
+            Discard unsaved changes?
+          </Alert>
         )}
       </DialogContent>
-      <DialogActions
-        sx={{
-          px: 3,
-          pb: isMobile ? 2 : 1,
-          pt: 1,
-          flexDirection: isMobile ? 'column-reverse' : 'row',
-          gap: isMobile ? 1 : 0.5,
-        }}
-      >
-        <Button
-          onClick={onClose}
-          size={isMobile ? "medium" : "medium"}
-          fullWidth={isMobile}
-          sx={{ order: isMobile ? 2 : 1 }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={onSave}
-          color="primary"
-          variant="contained"
-          size={isMobile ? "medium" : "medium"}
-          fullWidth={isMobile}
-          sx={{ order: isMobile ? 1 : 2 }}
-        >
-          {isAdding ? "Add" : "Save"}
-        </Button>
+
+      <DialogActions sx={{ px: 3, py: 1.5, justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+        <Typography variant="caption" color="text.secondary">{footerSummary}</Typography>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button onClick={requestClose} disabled={saving}>Cancel</Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            disabled={saving || !dirty}
+            startIcon={saving ? <CircularProgress size={14} color="inherit" /> : null}
+          >
+            {isAdding ? "Add" : "Save changes"}
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
