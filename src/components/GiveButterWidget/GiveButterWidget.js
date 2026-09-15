@@ -123,9 +123,20 @@ const GiveButterWidget = ({
           case 'donation_started':
             trackDonationEvent('donation_started');
             break;
-          case 'donation_completed':
+          case 'donation_completed': {
             trackDonationEvent('donation_completed', event.detail.amount);
+            // Distinct GA4 event so it can be marked as a key event.
+            // GA4 key events can't filter on a parameter, so the
+            // `donation_interaction` event above isn't enough on its own.
+            if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+              const amount = Number(event.detail.amount);
+              window.gtag('event', 'donation_completed', {
+                currency: 'USD',
+                ...(Number.isFinite(amount) ? { value: amount } : {}),
+              });
+            }
             break;
+          }
           default:
             break;
         }

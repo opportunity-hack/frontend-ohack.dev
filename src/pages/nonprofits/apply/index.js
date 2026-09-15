@@ -21,7 +21,7 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import * as ga from '../../../lib/ga';
 import ScrollTracker from '../../../components/ScrollTracker';
 import JourneyTracker, { JourneyTypes } from '../../../components/JourneyTracker';
-import { RefinedRoot, RefinedFonts, Eyebrow, Arrow, Stat } from '../../../components/design/refined';
+import { RefinedRoot, Eyebrow, Arrow, Stat } from '../../../components/design/refined';
 
 // Debounce utility
 const debounce = (func, delay) => {
@@ -262,6 +262,11 @@ function Apply({ title, description, openGraphData }) {
       }
       const timeToComplete = formStartTime ? Math.round((new Date() - formStartTime) / 1000) : null;
       ga.trackForm('nonprofit_application', ga.EventAction.COMPLETE, null, timeToComplete);
+      // GA4 key event — distinct name so it can be marked as a key event
+      // (the structured `form_complete` above can't be filtered by form_name).
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        window.gtag('event', 'npo_form_submit', { form_name: 'nonprofit_application' });
+      }
       ga.trackJourneyStep(JourneyTypes.NONPROFIT.name, JourneyTypes.NONPROFIT.steps.SUBMIT_APPLICATION, {
         organization_provided: !!formData.organization,
         is_nonprofit: formData.isNonProfit,
@@ -313,7 +318,6 @@ function Apply({ title, description, openGraphData }) {
             }
           }
         `}</script>
-        <RefinedFonts />
       </Head>
 
       <JourneyTracker journey={JourneyTypes.NONPROFIT.name} step={JourneyTypes.NONPROFIT.steps.START_APPLICATION} />

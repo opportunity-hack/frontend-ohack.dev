@@ -1,5 +1,5 @@
 import { FONT_BODY } from "../../styles/fonts";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
@@ -97,10 +97,19 @@ export default function NavBar() {
   const [anchorElGetInvolved, setAnchorElGetInvolved] = React.useState(null);
   const [anchorElHackathons, setAnchorElHackathons] = React.useState(null);
 
+  // Identify the user to analytics at most ONCE per email per page session.
+  // Depend on the email string, not the `user` object — PropelAuth hands back a
+  // new object identity on many renders, and keying on it re-fired
+  // `user_identify` + `Login Email Set` dozens of times per visit (70K+/60K
+  // junk events per 90 days in GA4). The ref guards against re-mounts too.
+  const userEmail = user?.email;
+  const identifiedEmailRef = useRef(null);
   useEffect(() => {
-    if (isLoggedIn && user?.email) {
+    if (isLoggedIn && userEmail && identifiedEmailRef.current !== userEmail) {
+      identifiedEmailRef.current = userEmail;
+
       // Set user data for analytics
-      set(user.email);
+      set(userEmail);
 
       // Track login event
       trackEvent({
@@ -109,9 +118,9 @@ export default function NavBar() {
       });
     }
 
-    // Initialize Facebook Pixel
+    // Initialize Facebook Pixel (idempotent)
     initFacebookPixel();
-  }, [isLoggedIn, user]);
+  }, [isLoggedIn, userEmail]);
 
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
