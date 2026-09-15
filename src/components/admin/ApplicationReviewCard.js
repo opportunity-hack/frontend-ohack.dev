@@ -17,6 +17,7 @@ import {
   Link,
   Divider,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import {
   Check as CheckIcon,
@@ -31,37 +32,35 @@ import {
   School as SchoolIcon,
   LocationOn as LocationIcon,
   Edit as EditIcon,
-  Gavel as StatusIcon,
   OpenInNew as OpenInNewIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   HelpOutline as HelpOutlineIcon,
 } from "@mui/icons-material";
 import LiteVideoThumbnail from "../VideoDisplay/LiteVideoThumbnail";
+import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { normalizeStatus, rosterConflict, rosterReady } from "../../lib/applicationStatus";
+import {
+  LINK_FIELDS,
+  getFieldLabel as schemaFieldLabel,
+  getRenderedKeys,
+  getReviewFields,
+  linkedinUrlOf,
+  readFieldValue,
+} from "./volunteer/applicationSchema";
+import { InlineStatusSelect } from "./volunteer/StatusControls";
+import { RosterToggle } from "./volunteer/RosterControls";
 import {
   JUDGE_TRAINING_BUNDLE_URL,
   JUDGE_TRAINING_CERTS,
 } from "../../lib/lmsClient";
 
-// Resolve LinkedIn URL from any of the field names forms use
-const getLinkedInUrl = (app) => {
-  const raw = app.linkedin || app.linkedinProfile || app.linkedinUrl || "";
-  if (!raw) return null;
-  return raw.startsWith("http") ? raw : `https://${raw}`;
-};
-
-// Fields rendered as external links wherever they appear on the card.
-const LINK_FIELDS = [
-  "linkedin",
-  "linkedinProfile",
-  "linkedinUrl",
-  "github",
-  "portfolio",
-  "website",
-  "introductionVideoUrl",
-  "judgeTrainingIntroCertUrl",
-  "judgeTrainingToolCertUrl",
-];
+// A field value the card should skip (never render "Not provided" rows for
+// things the applicant never filled in). Switch-type fields that are false
+// are skipped too — a missing "agreed" is not information.
+const isBlankValue = (v) =>
+  v === undefined || v === null || v === "" || v === false || (Array.isArray(v) && v.length === 0);
 
 const TRAINING_SLOT_COPY = {
   missing: "No certificate on the application",
@@ -307,12 +306,16 @@ const JudgeTrainingPanel = ({
   );
 };
 
+// Two decision axes, kept apart on purpose:
+//   Review  — `status`      → header InlineStatusSelect + footer quick buttons
+//   Roster  — `isSelected`  → footer RosterToggle pill (never a status chip)
 const ApplicationReviewCard = ({
   application,
   applicationType,
-  onApprove,
-  onReject,
+  onStatusChange,
+  onRosterChange,
   onEdit,
+  pending = false,
   isLoading = false,
   trainingStatus,
   lmsAccess,
@@ -324,176 +327,33 @@ const ApplicationReviewCard = ({
     setExpanded(!expanded);
   };
 
-  const handleApprove = () => {
-    onApprove(application);
-  };
-
-  const handleReject = () => {
-    onReject(application);
-  };
-
   const handleEdit = () => {
     if (onEdit) {
       onEdit(application);
     }
   };
 
-  // Get the configuration for this application type
-  const getFieldConfig = (type) => {
-    const configs = {
-      hacker: {
-        title: "Hacker Application",
-        primaryFields: ["name", "email", "experienceLevel", "primaryRoles"],
-        secondaryFields: [
-          "schoolOrganization",
-          "participantType",
-          "skills",
-          "teamStatus",
-        ],
-        additionalFields: [
-          "bio",
-          "linkedin",
-          "github",
-          "portfolio",
-          "motivation",
-          "socialCauses",
-          "dietaryRestrictions",
-        ],
-        statusField: "isSelected",
-      },
-      mentor: {
-        title: "Mentor Application",
-        primaryFields: ["name", "email", "company", "title"],
-        secondaryFields: [
-          "expertise",
-          "yearsExperience",
-          "mentorshipAreas",
-          "aiToolsUsed",
-          "aiToolsExperience",
-        ],
-        additionalFields: [
-          "bio",
-          "linkedin",
-          "availability",
-          "previousMentoring",
-          "dietaryRestrictions",
-        ],
-        statusField: "isSelected",
-      },
-      judge: {
-        title: "Judge Application",
-        primaryFields: ["name", "email", "title", "companyName", "status"],
-        // introductionVideoUrl + the training cert URLs render in the
-        // JudgeTrainingPanel, not as raw field rows.
-        secondaryFields: [
-          "inPerson",
-          "canAttendJudging",
-          "participationCount",
-          "country",
-          "state",
-          "linkedinProfile",
-          "backgroundAreas",
-        ],
-        additionalFields: [
-          "biography",
-          "whyJudge",
-          "availability",
-          "additionalInfo",
-          "pronouns",
-          "otherBackground",
-          "dietaryRestrictions",
-          "photoUrl",
-        ],
-        statusField: "isSelected",
-      },
-      volunteer: {
-        title: "Volunteer Application",
-        primaryFields: ["name", "email", "title", "company", "experienceLevel"],
-        secondaryFields: [
-          "socialCauses",
-          "availability",
-          "availableDays",
-          "skills",
-          "previousVolunteering",
-        ],
-        additionalFields: [
-          "bio",
-          "shortBio",
-          "motivation",
-          "linkedin",
-          "linkedinProfile",
-          "portfolio",
-          "otherSocialCause",
-          "shirtSize",
-          "dietaryRestrictions",
-          "additionalInfo",
-        ],
-        statusField: "isSelected",
-      },
-      sponsor: {
-        title: "Sponsor Application",
-        primaryFields: [
-          "companyName",
-          "name",
-          "email",
-          "sponsorshipTypes",
-          "title",
-        ],
-        secondaryFields: [
-          "volunteerType",
-          "volunteerCount",
-          "volunteerHours",
-          "phoneNumber",
-          "preferredContact",
-          "useLogo",
-        ],
-        additionalFields: [
-          "company",
-          "industry",
-          "employeeCount",
-          "bio",
-          "website",
-          "specialRequests",
-          "howHeard",
-          "otherInvolvement",
-          "logoUrl",
-        ],
-        statusField: "isSelected",
-      },
-    };
-    return configs[type] || configs.hacker;
-  };
-
-  const config = getFieldConfig(applicationType);
-  const isApproved = application[config.statusField];
-
-  // Helper function to get status chip configuration
-  const getStatusChipConfig = (status) => {
-    const statusConfigs = {
-      pending: { label: "Pending Review", color: "default", icon: null },
-      approved: { label: "Approved", color: "success", icon: <CheckIcon /> },
-      denied: { label: "Denied", color: "error", icon: <CloseIcon /> },
-      verified_travel: {
-        label: "Verified Travel",
-        color: "info",
-        icon: <StatusIcon />,
-      },
-      confirmed: { label: "Confirmed", color: "primary", icon: <CheckIcon /> },
-      withdrew: { label: "Withdrew", color: "warning", icon: <CloseIcon /> },
-      no_show: { label: "No Show", color: "error", icon: <CloseIcon /> },
-    };
-    return statusConfigs[status] || statusConfigs.pending;
-  };
+  // Field lists come from the shared schema (one source for dialog, card,
+  // table and search). Decision fields are not in these lists.
+  const review = getReviewFields(applicationType);
+  const typeTitle = `${applicationType.charAt(0).toUpperCase()}${applicationType.slice(1)} Application`;
+  const onRoster = Boolean(application.isSelected);
+  const currentStatus = normalizeStatus(application.status);
+  const rosterHint = rosterReady(application)
+    ? "Reviewed favorably but not on the roster — they won't see participant tools yet."
+    : rosterConflict(application)
+      ? "On the roster but the review is closed — remove them?"
+      : null;
 
   // Helper function to format field values
   const formatFieldValue = (field, value) => {
     if (!value) return "Not provided";
 
     // Handle boolean fields with Yes/No
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
     if (field === "inPerson") {
-      if (typeof value === "boolean") {
-        return value ? "Yes" : "No";
-      }
       return value; // If it's already a string like "Yes"/"No"
     }
 
@@ -624,90 +484,17 @@ const ApplicationReviewCard = ({
     return formattedValue;
   };
 
-  // Helper function to get field label
-  const getFieldLabel = (field) => {
-    const labelMap = {
-      name: "Name",
-      email: "Email",
-      experienceLevel: "Experience",
-      primaryRoles: "Primary Roles",
-      schoolOrganization: "School/Organization",
-      participantType: "Type",
-      skills: "Skills",
-      teamStatus: "Team Status",
-      bio: "Bio",
-      linkedin: "LinkedIn",
-      github: "GitHub",
-      portfolio: "Portfolio",
-      motivation: "Motivation",
-      socialCauses: "Social Causes",
-      company: "Company",
-      title: "Title",
-      expertise: "Expertise",
-      yearsExperience: "Years Experience",
-      mentorshipAreas: "Mentorship Areas",
-      aiToolsUsed: "AI Tools Used",
-      aiToolsExperience: "AI Tools Experience",
-      judgingExperience: "Judging Experience",
-      volunteerRole: "Volunteer Role",
-      availability: "Availability",
-      previousVolunteering: "Previous Volunteering",
-      previousMentoring: "Previous Mentoring",
-      criteriaPreferences: "Criteria Preferences",
-      companyName: "Company",
-      contactName: "Contact Name",
-      sponsorshipLevel: "Sponsorship Level",
-      industry: "Industry",
-      employeeCount: "Employee Count",
-      website: "Website",
-      specialRequests: "Special Requests",
-      // Judge-specific fields
-      participationCount: "OHack Participation",
-      backgroundAreas: "Background Areas",
-      canAttendJudging: "Can Attend Judging",
-      inPerson: "In Person",
-      biography: "Biography",
-      whyJudge: "Why Judge?",
-      additionalInfo: "Additional Information",
-      pronouns: "Pronouns",
-      country: "Country",
-      state: "State",
-      otherBackground: "Other Background",
-      linkedinProfile: "LinkedIn Profile",
-      introductionVideoUrl: "Intro Video",
-      judgeTrainingIntroCertUrl: "Training Cert: Judge Intro",
-      judgeTrainingToolCertUrl: "Training Cert: Judging Tool",
-      judgeTrainingCompleted: "Judge Training Completed",
-      shirtSize: "T-Shirt Size",
-      dietaryRestrictions: "Dietary Restrictions",
-      photoUrl: "Photo",
-      status: "Status",
-      // Sponsor-specific fields
-      sponsorshipTypes: "Sponsorship Types",
-      volunteerType: "Volunteer Type",
-      volunteerCount: "Volunteer Count",
-      volunteerHours: "Volunteer Hours",
-      phoneNumber: "Phone Number",
-      preferredContact: "Preferred Contact",
-      useLogo: "Use Logo",
-      howHeard: "How Heard About Event",
-      otherInvolvement: "Other Involvement",
-      logoUrl: "Logo URL",
-      // Volunteer-specific fields
-      availableDays: "Time Slots",
-      otherSocialCause: "Other Social Cause",
-      shortBio: "Short Bio",
-      previousVolunteering: "Previous Volunteering",
-    };
-    return labelMap[field] || field.charAt(0).toUpperCase() + field.slice(1);
-  };
+  // Labels come from the schema (aliases resolve to the canonical label).
+  const getFieldLabel = (field) => schemaFieldLabel(applicationType, field);
 
   return (
     <Card
       sx={{
         mb: 2,
-        border: isApproved ? "2px solid #4caf50" : "1px solid #e0e0e0",
-        bgcolor: isApproved ? "#f1f8e9" : "background.paper",
+        // Tint = ON THE ROSTER (navy), not review status.
+        border: onRoster ? "2px solid" : "1px solid",
+        borderColor: onRoster ? "primary.main" : "divider",
+        bgcolor: onRoster ? "rgba(27, 58, 107, 0.04)" : "background.paper",
       }}
     >
       <CardContent>
@@ -744,14 +531,14 @@ const ApplicationReviewCard = ({
                 {application.name || "No name provided"}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {config.title}
+                {typeTitle}
               </Typography>
               {/* LinkedIn + OHack profile quick-access chips */}
               <Box
                 sx={{ display: "flex", gap: 0.5, mt: 0.5, flexWrap: "wrap" }}
               >
                 {(() => {
-                  const liUrl = getLinkedInUrl(application);
+                  const liUrl = linkedinUrlOf(application);
                   return liUrl ? (
                     <Chip
                       icon={
@@ -806,19 +593,13 @@ const ApplicationReviewCard = ({
               flexShrink: 0,
             }}
           >
-            {/* Show status for judges, or approval status for others */}
-            {applicationType === "judge" && application.status ? (
-              <Chip {...getStatusChipConfig(application.status)} size="small" />
-            ) : (
-              isApproved && (
-                <Chip
-                  label="APPROVED"
-                  color="success"
-                  size="small"
-                  icon={<CheckIcon />}
-                />
-              )
-            )}
+            {/* Review axis: application status, inline for every type */}
+            <InlineStatusSelect
+              value={application.status}
+              onChange={(next) => onStatusChange?.(application, next)}
+              pending={pending}
+              disabled={isLoading || !onStatusChange}
+            />
             <IconButton onClick={handleExpand} size="small">
               {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </IconButton>
@@ -827,9 +608,10 @@ const ApplicationReviewCard = ({
 
         {/* Primary information (always visible) */}
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          {config.primaryFields.map((field) => {
-            const value = application[field];
-            if (!value) return null;
+          {review.primary.map((fld) => {
+            const field = fld.key;
+            const value = readFieldValue(application, fld);
+            if (isBlankValue(value)) return null;
 
             return (
               <Grid size={{ xs: 12, sm: 6 }} key={field}>
@@ -843,24 +625,13 @@ const ApplicationReviewCard = ({
                   {field === "company" && (
                     <SchoolIcon fontSize="small" color="action" />
                   )}
-                  {field === "status" && (
-                    <StatusIcon fontSize="small" color="action" />
-                  )}
                   <Box>
                     <Typography variant="body2" color="text.secondary">
                       {getFieldLabel(field)}
                     </Typography>
-                    {field === "status" ? (
-                      <Chip
-                        {...getStatusChipConfig(value)}
-                        size="small"
-                        sx={{ mt: 0.5 }}
-                      />
-                    ) : (
-                      <Typography variant="body1">
-                        {renderField(field, value)}
-                      </Typography>
-                    )}
+                    <Typography variant="body1">
+                      {renderField(field, value)}
+                    </Typography>
                   </Box>
                 </Box>
               </Grid>
@@ -882,11 +653,12 @@ const ApplicationReviewCard = ({
         {!expanded && (
           <Box sx={{ mb: 2 }}>
             <Grid container spacing={2}>
-              {config.secondaryFields.slice(0, 6).map((field) => {
-                const value = application[field];
-                if (!value) return null;
+              {review.secondary.slice(0, 6).map((fld) => {
+                const field = fld.key;
+                const value = readFieldValue(application, fld);
+                if (isBlankValue(value)) return null;
 
-                const isLink = LINK_FIELDS.includes(field);
+                const isLink = Boolean(fld.isLink) || LINK_FIELDS.includes(field);
 
                 return (
                   <Grid size={{ xs: 12, sm: 6 }} key={field}>
@@ -956,9 +728,10 @@ const ApplicationReviewCard = ({
 
           {/* All secondary fields when expanded */}
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            {config.secondaryFields.map((field) => {
-              const value = application[field];
-              if (!value) return null;
+            {review.secondary.map((fld) => {
+              const field = fld.key;
+              const value = readFieldValue(application, fld);
+              if (isBlankValue(value)) return null;
 
               return (
                 <Grid size={{ xs: 12, sm: 6 }} key={field}>
@@ -986,7 +759,7 @@ const ApplicationReviewCard = ({
                       }),
                     }}
                   >
-                    {renderField(field, value, LINK_FIELDS.includes(field))}
+                    {renderField(field, value, Boolean(fld.isLink) || LINK_FIELDS.includes(field))}
                   </Typography>
                 </Grid>
               );
@@ -999,11 +772,12 @@ const ApplicationReviewCard = ({
               Additional Information
             </Typography>
             <Grid container spacing={2}>
-              {config.additionalFields.map((field) => {
-                const value = application[field];
-                if (!value) return null;
+              {review.additional.map((fld) => {
+                const field = fld.key;
+                const value = readFieldValue(application, fld);
+                if (isBlankValue(value)) return null;
 
-                const isLink = LINK_FIELDS.includes(field);
+                const isLink = Boolean(fld.isLink) || LINK_FIELDS.includes(field);
 
                 return (
                   <Grid size={{ xs: 12 }} key={field}>
@@ -1564,43 +1338,9 @@ const ApplicationReviewCard = ({
 
           {/* All submitted fields — shows anything the applicant filled in that isn't already displayed above */}
           {(() => {
-            const alreadyRendered = new Set([
-              ...config.primaryFields,
-              ...config.secondaryFields,
-              ...config.additionalFields,
-              "name",
-              "photoUrl",
-              "status",
-              "timestamp",
-              "event_id",
-              // rendered by JudgeTrainingPanel
-              "introductionVideoUrl",
-              "judgeTrainingIntroCertUrl",
-              "judgeTrainingToolCertUrl",
-              "judgeTrainingCompleted",
-              // internal / audit fields never shown to reviewers
-              "id",
-              "user_id",
-              "user_db_id",
-              "propel_id",
-              "slack_user_id",
-              "volunteer_type",
-              "isSelected",
-              "created_by",
-              "created_timestamp",
-              "updated_by",
-              "updated_timestamp",
-              "sent_emails",
-              "certificates",
-              "profile_image",
-              "checkedIn",
-              "checkedInBy",
-              "checkedInAt",
-              "checkInTime",
-              "checkInTimeList",
-              "isCheckedIn",
-              "timeSlot",
-            ]);
+            // Every key the card (or JudgeTrainingPanel) already accounts
+            // for, incl. aliases/mirrors, system, decision and hidden keys.
+            const alreadyRendered = getRenderedKeys(applicationType);
             const extraEntries = Object.entries(application).filter(
               ([key, val]) => {
                 if (alreadyRendered.has(key)) return false;
@@ -1658,14 +1398,14 @@ const ApplicationReviewCard = ({
         </Collapse>
       </CardContent>
 
-      {/* Action buttons */}
+      {/* Footer: [Edit] · review quick actions · │ · roster pill */}
       <CardActions
         sx={{
-          justifyContent: "space-between",
           p: 2,
+          display: "flex",
           flexDirection: { xs: "column", sm: "row" },
           alignItems: { xs: "stretch", sm: "center" },
-          gap: { xs: 1, sm: 0 },
+          gap: 1.5,
         }}
       >
         <Button
@@ -1675,32 +1415,69 @@ const ApplicationReviewCard = ({
           disabled={isLoading}
           size="small"
         >
-          Edit Details
+          Edit details
         </Button>
 
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<CloseIcon />}
-            onClick={handleReject}
-            disabled={isLoading}
-            size="small"
-          >
-            Reject
-          </Button>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", flex: 1 }}>
           <Button
             variant="contained"
             color="success"
-            startIcon={
-              isLoading ? <CircularProgress size={16} /> : <CheckIcon />
-            }
-            onClick={handleApprove}
-            disabled={isApproved || isLoading}
             size="small"
+            startIcon={<CheckIcon />}
+            onClick={() => onStatusChange?.(application, "approved")}
+            disabled={isLoading || pending || !onStatusChange || currentStatus === "approved"}
           >
-            {isApproved ? "Approved" : "Approve"}
+            Approve
           </Button>
+          <Button
+            variant="outlined"
+            color="warning"
+            size="small"
+            startIcon={<PlaylistAddIcon />}
+            onClick={() => onStatusChange?.(application, "waitlisted")}
+            disabled={isLoading || pending || !onStatusChange || currentStatus === "waitlisted"}
+          >
+            Waitlist
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            startIcon={<CloseIcon />}
+            onClick={() => onStatusChange?.(application, "denied")}
+            disabled={isLoading || pending || !onStatusChange || currentStatus === "denied"}
+          >
+            Deny
+          </Button>
+        </Box>
+
+        <Divider orientation="vertical" flexItem sx={{ display: { xs: "none", sm: "block" } }} />
+
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 0.5,
+            border: 1,
+            borderColor: onRoster ? "primary.main" : "divider",
+            borderRadius: 1,
+            px: 1,
+            py: 0.25,
+            alignSelf: { xs: "stretch", sm: "center" },
+            justifyContent: { xs: "space-between", sm: "flex-start" },
+          }}
+        >
+          <RosterToggle
+            checked={onRoster}
+            onChange={(on) => onRosterChange?.(application, on)}
+            pending={pending}
+            disabled={isLoading || !onRosterChange}
+          />
+          {rosterHint && (
+            <Tooltip title={rosterHint}>
+              <WarningAmberIcon color="warning" fontSize="small" />
+            </Tooltip>
+          )}
         </Box>
       </CardActions>
     </Card>
