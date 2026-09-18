@@ -13,7 +13,8 @@ NEXT_PUBLIC_GOOGLE_ANALYTICS=DISABLED
 NEXT_PUBLIC_FACEBOOK_PIXEL_ID=DISABLED
 # Google Ads account 371-489-1437 (the one linked to GA4 property ohack-dev).
 # Leave unset to skip the Ads tag entirely.
-NEXT_PUBLIC_GOOGLE_ADS_ID=AW-3714891437
+# Google Ads *tag* id for account 371-489-1437 (not the customer id).
+NEXT_PUBLIC_GOOGLE_ADS_ID=AW-11474351176
 
 # reCAPTCHA v3 (get keys from https://www.google.com/recaptcha/admin)
 NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY=<TODO>

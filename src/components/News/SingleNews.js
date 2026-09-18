@@ -31,12 +31,12 @@ import Link from 'next/link';
 // Lazy-load the markdown renderer so the legacy HTML path stays light.
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: true });
 
-// TODO(google-ads): the old label `JCk6COG-q4kZEMjost8q` belonged to the retired
-// Ads account AW-11474351176 and will NOT work under the current account.
-// Create a new conversion action in Google Ads account 371-489-1437
-// (NEXT_PUBLIC_GOOGLE_ADS_ID = AW-3714891437) and paste its label here.
-// While this is null the Ads conversion ping in gaButton() is skipped on purpose.
-const GOOGLE_ADS_BLOG_CONVERSION_LABEL = null;
+// Google Ads blog conversion. Account 371-489-1437's Google tag is AW-11474351176
+// (NEXT_PUBLIC_GOOGLE_ADS_ID — an Ads *tag* id is not the customer id). This label is
+// the "News button click" conversion action (type id 7767630437) in that account.
+// The older label `JCk6COG-q4kZEMjost8q` was a deleted action in the same account.
+// Set to null to skip the Ads conversion ping in gaButton().
+const GOOGLE_ADS_BLOG_CONVERSION_LABEL = "2qwxCOXE8vccEMjost8q";
 
 const markdownImageRenderer = ({ src, alt }) => (
   <img

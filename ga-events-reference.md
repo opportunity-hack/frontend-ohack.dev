@@ -111,8 +111,9 @@ This enables:
 
 ### Google Ads
 
-- The Ads tag is configured in `_document.js` from `NEXT_PUBLIC_GOOGLE_ADS_ID` (account **371-489-1437**, `AW-3714891437` — the account linked to GA4 property ohack-dev). Unset → no Ads `config` call at all. The old hardcoded `AW-11474351176` was the wrong account.
-- Blog conversion (`SingleNews.js` `gaButton`): the `send_to` conversion ping is **gated off** until a new conversion action is created in account 371-489-1437 and its label pasted into `GOOGLE_ADS_BLOG_CONVERSION_LABEL` (see the TODO in that file). The retired label `JCk6COG-q4kZEMjost8q` does not work under the new account.
+- The Ads tag is configured in `_document.js` from `NEXT_PUBLIC_GOOGLE_ADS_ID` = `AW-11474351176`, which is the **Google tag id** of account **371-489-1437** (an Ads tag id is not the customer id; `AW-3714891437` was briefly shipped in Sep 2026 and pinged a nonexistent tag). Unset → no Ads `config` call at all.
+- Blog conversion (`SingleNews.js` `gaButton`): every `gaButton` call sends `conversion` with `send_to: AW-11474351176/2qwxCOXE8vccEMjost8q` — the "News button click" conversion action (secondary, page-view category) in that account. The older label `JCk6COG-q4kZEMjost8q` was a deleted action in the same account. Setting `GOOGLE_ADS_BLOG_CONVERSION_LABEL = null` skips the ping.
+- GA4's Google tag `G-EM3BV6M5EF` is combined with `AW-11474351176` (destinations: ohack.dev GA4 + Opportunity Hack Inc. Ads only). `AW-10941512308` is the cancelled Ads account 659-034-6027 and was split off on 2026-09-17 — never re-add it as a tag id or destination.
 
 ## Business Intelligence Applications
 
