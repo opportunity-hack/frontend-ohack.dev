@@ -21,31 +21,44 @@ import {
   AccordionDetails,
   useMediaQuery,
   useTheme,
+  Stack,
 } from '@mui/material';
 import {
-  Check as CheckIcon,
-  Close as CloseIcon,
   FilterList as FilterIcon,
   Sort as SortIcon,
   ExpandMore as ExpandMoreIcon,
   LinkedIn as LinkedInIcon,
 } from '@mui/icons-material';
+import PublicIcon from '@mui/icons-material/Public';
+import PublicOffIcon from '@mui/icons-material/PublicOff';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ApplicationReviewCard from './ApplicationReviewCard';
 import { normalizeEmail } from '../../hooks/use-judge-training-status';
-
-const getLinkedInUrl = (app) => {
-  const raw = app.linkedin || app.linkedinProfile || app.linkedinUrl || '';
-  return raw ? (raw.startsWith('http') ? raw : `https://${raw}`) : null;
-};
+import {
+  APPLICATION_STATUSES,
+  isKnownStatus,
+  normalizeStatus,
+  rosterConflict,
+  rosterReady,
+  statusLabel,
+  statusSortIndex,
+} from '../../lib/applicationStatus';
+import { DECISION_PRESETS, filterByDecision, linkedinUrlOf } from './volunteer/applicationSchema';
+import { StatusChip, StatusPicker } from './volunteer/StatusControls';
+import { RosterChip } from './volunteer/RosterControls';
 
 const ApplicationReviewList = ({
   applications = [],
   applicationType,
-  onApprove,
-  onReject,
+  // Review axis (status) + roster axis (isSelected) — separate callbacks,
+  // separate transports in the workbench. Bulk roster goes through the
+  // parent's confirm dialog.
+  onStatusChange,
+  onRosterChange,
   onEdit,
-  onBatchApprove,
-  onBatchReject,
+  onBatchStatus,
+  onBatchRoster,
+  pendingIds,
   isLoading = false,
   eventId,
   // Judge training/video review (judge tab only; see useJudgeTrainingStatus)
@@ -55,6 +68,8 @@ const ApplicationReviewList = ({
   // Filter state props
   filter,
   statusFilter,
+  selectedFilter,
+  preset,
   inPersonFilter,
   checkedInFilter,
   sortBy,
@@ -63,6 +78,8 @@ const ApplicationReviewList = ({
   // Filter change callbacks
   onFilterChange,
   onStatusFilterChange,
+  onSelectedFilterChange,
+  onPresetChange,
   onInPersonFilterChange,
   onCheckedInFilterChange,
   onSortByChange,
@@ -77,6 +94,8 @@ const ApplicationReviewList = ({
   // Use controlled props if provided, otherwise fall back to local state
   const [localFilter, setLocalFilter] = useState('');
   const [localStatusFilter, setLocalStatusFilter] = useState('all');
+  const [localSelectedFilter, setLocalSelectedFilter] = useState('all');
+  const [localPreset, setLocalPreset] = useState('none');
   const [localInPersonFilter, setLocalInPersonFilter] = useState('all');
   const [localCheckedInFilter, setLocalCheckedInFilter] = useState('all');
   const [localSortBy, setLocalSortBy] = useState('timestamp');
@@ -86,6 +105,8 @@ const ApplicationReviewList = ({
   // Use controlled values if provided, otherwise use local state
   const currentFilter = filter !== undefined ? filter : localFilter;
   const currentStatusFilter = statusFilter !== undefined ? statusFilter : localStatusFilter;
+  const currentSelectedFilter = selectedFilter !== undefined ? selectedFilter : localSelectedFilter;
+  const currentPreset = preset !== undefined ? preset : localPreset;
   const currentInPersonFilter = inPersonFilter !== undefined ? inPersonFilter : localInPersonFilter;
   const currentCheckedInFilter = checkedInFilter !== undefined ? checkedInFilter : localCheckedInFilter;
   const currentSortBy = sortBy !== undefined ? sortBy : localSortBy;
@@ -109,6 +130,22 @@ const ApplicationReviewList = ({
     }
   };
   
+  const handleSelectedFilterChange = (value) => {
+    if (onSelectedFilterChange) {
+      onSelectedFilterChange(value);
+    } else {
+      setLocalSelectedFilter(value);
+    }
+  };
+
+  const handlePresetChange = (value) => {
+    if (onPresetChange) {
+      onPresetChange(value);
+    } else {
+      setLocalPreset(value);
+    }
+  };
+
   const handleInPersonFilterChange = (value) => {
     if (onInPersonFilterChange) {
       onInPersonFilterChange(value);
@@ -149,13 +186,28 @@ const ApplicationReviewList = ({
     }
   };
 
-  // Statistics
+  // Statistics — two axes. Review = status counts; Roster = isSelected + the
+  // two mismatch presets that bridge them.
   const stats = useMemo(() => {
     const total = applications.length;
-    const approved = applications.filter(app => app.isSelected).length;
-    const pending = total - approved;
-    
-    return { total, approved, pending };
+    const statusCounts = {};
+    applications.forEach((app) => {
+      const v = normalizeStatus(app?.status);
+      statusCounts[v] = (statusCounts[v] || 0) + 1;
+    });
+    const statusEntries = Object.entries(statusCounts).sort(
+      (a, b) => statusSortIndex(a[0]) - statusSortIndex(b[0]) || a[0].localeCompare(b[0])
+    );
+    const onRoster = applications.filter((app) => Boolean(app?.isSelected)).length;
+    return {
+      total,
+      statusEntries,
+      onRoster,
+      offRoster: total - onRoster,
+      ready: applications.filter(rosterReady).length,
+      conflict: applications.filter(rosterConflict).length,
+      legacyValues: statusEntries.map(([v]) => v).filter((v) => !isKnownStatus(v)),
+    };
   }, [applications]);
 
   // Filtered and sorted applications
@@ -175,17 +227,12 @@ const ApplicationReviewList = ({
       );
     }
 
-    // Apply status filter
-    if (currentStatusFilter !== 'all') {
-      if (currentStatusFilter === 'approved') {
-        filtered = filtered.filter(app => app.isSelected);
-      } else if (currentStatusFilter === 'pending') {
-        filtered = filtered.filter(app => !app.isSelected);
-      } else if (applicationType === 'judge') {
-        // For judges, also support filtering by specific status values
-        filtered = filtered.filter(app => app.status === currentStatusFilter);
-      }
-    }
+    // Decision filters: status (review axis), roster (isSelected), presets.
+    filtered = filterByDecision(filtered, {
+      statusFilter: currentStatusFilter,
+      selectedFilter: currentSelectedFilter,
+      preset: currentPreset,
+    });
 
     // Apply in-person filter (for judges)
     if (currentInPersonFilter !== 'all' && applicationType === 'judge') {
@@ -208,9 +255,9 @@ const ApplicationReviewList = ({
     // Apply LinkedIn filter
     if (linkedInFilter !== 'all') {
       if (linkedInFilter === 'has') {
-        filtered = filtered.filter(app => !!getLinkedInUrl(app));
+        filtered = filtered.filter(app => !!linkedinUrlOf(app));
       } else if (linkedInFilter === 'missing') {
-        filtered = filtered.filter(app => !getLinkedInUrl(app));
+        filtered = filtered.filter(app => !linkedinUrlOf(app));
       }
     }
 
@@ -223,6 +270,9 @@ const ApplicationReviewList = ({
       if (currentSortBy === 'timestamp') {
         aValue = new Date(aValue || 0);
         bValue = new Date(bValue || 0);
+      } else if (currentSortBy === 'status') {
+        aValue = statusSortIndex(a.status);
+        bValue = statusSortIndex(b.status);
       } else if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
         bValue = (bValue || '').toLowerCase();
@@ -234,34 +284,7 @@ const ApplicationReviewList = ({
     });
 
     return filtered;
-  }, [applications, currentFilter, currentStatusFilter, currentInPersonFilter, currentCheckedInFilter, linkedInFilter, currentSortBy, currentSortOrder, applicationType]);
-
-  // Handle individual application actions
-  const handleApprove = useCallback(async (application) => {
-    try {
-      await onApprove(application);
-      setSelectedApplications(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(application.id || application.timestamp);
-        return newSet;
-      });
-    } catch (error) {
-      console.error('Error approving application:', error);
-    }
-  }, [onApprove]);
-
-  const handleReject = useCallback(async (application) => {
-    try {
-      await onReject(application);
-      setSelectedApplications(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(application.id || application.timestamp);
-        return newSet;
-      });
-    } catch (error) {
-      console.error('Error rejecting application:', error);
-    }
-  }, [onReject]);
+  }, [applications, currentFilter, currentStatusFilter, currentSelectedFilter, currentPreset, currentInPersonFilter, currentCheckedInFilter, linkedInFilter, currentSortBy, currentSortOrder, applicationType]);
 
   // Handle batch actions
   const handleSelectApplication = (application, checked) => {
@@ -286,44 +309,23 @@ const ApplicationReviewList = ({
     }
   };
 
-  const handleBatchApprove = async () => {
-    const selectedApps = processedApplications.filter(app => 
-      selectedApplications.has(app.id || app.timestamp)
-    );
-    
-    if (selectedApps.length === 0) return;
-    
-    try {
-      if (onBatchApprove) {
-        await onBatchApprove(selectedApps);
-      } else {
-        // Fallback to individual approvals
-        await Promise.all(selectedApps.map(app => onApprove(app)));
-      }
-      setSelectedApplications(new Set());
-    } catch (error) {
-      console.error('Error batch approving applications:', error);
-    }
+  const selectedApps = useMemo(
+    () => processedApplications.filter((app) => selectedApplications.has(app.id || app.timestamp)),
+    [processedApplications, selectedApplications]
+  );
+  const readyApps = useMemo(() => applications.filter(rosterReady), [applications]);
+
+  const handleBatchStatusChange = (status) => {
+    if (!status || selectedApps.length === 0) return;
+    onBatchStatus?.(selectedApps, status);
+    setSelectedApplications(new Set());
   };
 
-  const handleBatchReject = async () => {
-    const selectedApps = processedApplications.filter(app => 
-      selectedApplications.has(app.id || app.timestamp)
-    );
-    
+  // Roster changes are consequential: the parent confirms before writing, so
+  // the selection is kept (the admin may cancel).
+  const handleBatchRosterChange = (direction) => {
     if (selectedApps.length === 0) return;
-    
-    try {
-      if (onBatchReject) {
-        await onBatchReject(selectedApps);
-      } else {
-        // Fallback to individual rejections
-        await Promise.all(selectedApps.map(app => onReject(app)));
-      }
-      setSelectedApplications(new Set());
-    } catch (error) {
-      console.error('Error batch rejecting applications:', error);
-    }
+    onBatchRoster?.(selectedApps, direction);
   };
 
   const isAllSelected = processedApplications.length > 0 && 
@@ -332,44 +334,61 @@ const ApplicationReviewList = ({
 
   return (
     <Box>
-      {/* Statistics */}
+      {/* Statistics — Review row (status) and Roster row (isSelected) */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
+        <Typography variant="h6" sx={{ mb: 1.5 }}>
           {applicationType.charAt(0).toUpperCase() + applicationType.slice(1)} Applications Overview
         </Typography>
-        
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary">
-                {stats.total}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Applications
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="success.main">
-                {stats.approved}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Approved
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="warning.main">
-                {stats.pending}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Pending Review
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
+
+        <Typography variant="overline" color="text.secondary" sx={{ display: 'block', lineHeight: 1.5 }}>
+          Review
+        </Typography>
+        <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 1.5 }}>
+          <Chip label={`Total ${stats.total}`} size="small" variant="outlined" />
+          {stats.statusEntries.map(([value, count]) => (
+            <StatusChip
+              key={value}
+              status={value}
+              label={`${statusLabel(value)} ${count}`}
+              onClick={() => handleStatusFilterChange(currentStatusFilter === value ? 'all' : value)}
+              variant={currentStatusFilter === value ? 'filled' : 'outlined'}
+            />
+          ))}
+        </Stack>
+
+        <Typography variant="overline" color="text.secondary" sx={{ display: 'block', lineHeight: 1.5 }}>
+          Roster
+        </Typography>
+        <Stack direction="row" flexWrap="wrap" gap={1}>
+          <RosterChip
+            on
+            count={stats.onRoster}
+            selected={currentSelectedFilter === 'yes'}
+            onClick={() => handleSelectedFilterChange(currentSelectedFilter === 'yes' ? 'all' : 'yes')}
+          />
+          <RosterChip
+            on={false}
+            count={stats.offRoster}
+            selected={currentSelectedFilter === 'no'}
+            onClick={() => handleSelectedFilterChange(currentSelectedFilter === 'no' ? 'all' : 'no')}
+          />
+          <Chip
+            icon={<PublicIcon />}
+            label={`Ready for roster ${stats.ready}`}
+            size="small"
+            color="primary"
+            variant={currentPreset === 'ready' ? 'filled' : 'outlined'}
+            onClick={() => handlePresetChange(currentPreset === 'ready' ? 'none' : 'ready')}
+          />
+          <Chip
+            icon={<WarningAmberIcon />}
+            label={`Roster conflicts ${stats.conflict}`}
+            size="small"
+            color="warning"
+            variant={currentPreset === 'conflict' ? 'filled' : 'outlined'}
+            onClick={() => handlePresetChange(currentPreset === 'conflict' ? 'none' : 'conflict')}
+          />
+        </Stack>
       </Paper>
 
       {/* Filters and Controls — collapsed accordion on mobile, plain Paper on desktop */}
@@ -397,15 +416,32 @@ const ApplicationReviewList = ({
                   label="Status"
                 >
                   <MenuItem value="all">All</MenuItem>
-                  <MenuItem value="pending">Pending</MenuItem>
-                  <MenuItem value="approved">Approved</MenuItem>
-                  {applicationType === 'judge' && [
-                    <MenuItem key="denied" value="denied">Denied</MenuItem>,
-                    <MenuItem key="verified_travel" value="verified_travel">Verified Travel</MenuItem>,
-                    <MenuItem key="confirmed" value="confirmed">Confirmed</MenuItem>,
-                    <MenuItem key="withdrew" value="withdrew">Withdrew</MenuItem>,
-                    <MenuItem key="no_show" value="no_show">No Show</MenuItem>
-                  ]}
+                  {APPLICATION_STATUSES.map((meta) => (
+                    <MenuItem key={meta.value} value={meta.value}>{meta.label}</MenuItem>
+                  ))}
+                  {stats.legacyValues.map((v) => (
+                    <MenuItem key={v} value={v}>{`${v} (legacy)`}</MenuItem>
+                  ))}
+                  {currentStatusFilter !== 'all' &&
+                    !isKnownStatus(currentStatusFilter) &&
+                    !stats.legacyValues.includes(currentStatusFilter) && (
+                      <MenuItem value={currentStatusFilter}>{`${currentStatusFilter} (legacy)`}</MenuItem>
+                    )}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Roster</InputLabel>
+                <Select
+                  value={currentSelectedFilter}
+                  onChange={(e) => handleSelectedFilterChange(e.target.value)}
+                  label="Roster"
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="yes">On roster</MenuItem>
+                  <MenuItem value="no">Not on roster</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -467,6 +503,7 @@ const ApplicationReviewList = ({
                   label="Sort by"
                 >
                   <MenuItem value="timestamp">Date</MenuItem>
+                  <MenuItem value="status">Status</MenuItem>
                   <MenuItem value="name">Name</MenuItem>
                   <MenuItem value="email">Email</MenuItem>
                   <MenuItem value="experienceLevel">Experience</MenuItem>
@@ -520,34 +557,57 @@ const ApplicationReviewList = ({
               />
               {selectedApplications.size > 0 && (
                 <>
+                  {/* Review axis */}
+                  <StatusPicker
+                    allowEmpty
+                    value=""
+                    label="Set status"
+                    fullWidth={false}
+                    disabled={isLoading}
+                    sx={{ minWidth: 200 }}
+                    onChange={handleBatchStatusChange}
+                  />
+                  <Divider orientation="vertical" flexItem />
+                  {/* Roster axis — confirmed by the parent before writing */}
                   <Button
                     variant="contained"
-                    color="success"
-                    startIcon={<CheckIcon />}
-                    onClick={handleBatchApprove}
+                    color="primary"
+                    startIcon={<PublicIcon />}
+                    onClick={() => handleBatchRosterChange(true)}
                     disabled={isLoading}
                     size="small"
                   >
-                    Approve Selected ({selectedApplications.size})
+                    Add to roster ({selectedApplications.size})
                   </Button>
                   <Button
                     variant="outlined"
-                    color="error"
-                    startIcon={<CloseIcon />}
-                    onClick={handleBatchReject}
+                    color="inherit"
+                    startIcon={<PublicOffIcon />}
+                    onClick={() => handleBatchRosterChange(false)}
                     disabled={isLoading}
                     size="small"
                   >
-                    Reject Selected ({selectedApplications.size})
+                    Remove from roster ({selectedApplications.size})
                   </Button>
                 </>
               )}
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<PublicIcon />}
+                onClick={() => onBatchRoster?.(readyApps, true)}
+                disabled={isLoading || readyApps.length === 0}
+                size="small"
+                sx={{ ml: 'auto' }}
+              >
+                Add all ready ({readyApps.length})
+              </Button>
             </Box>
           </Box>
         );
 
         if (isMobile) {
-          const hasActiveFilters = !!(currentFilter || currentStatusFilter !== 'all' || currentCheckedInFilter !== 'all' || linkedInFilter !== 'all');
+          const hasActiveFilters = !!(currentFilter || currentStatusFilter !== 'all' || currentSelectedFilter !== 'all' || currentPreset !== 'none' || currentCheckedInFilter !== 'all' || linkedInFilter !== 'all');
           return (
             <Accordion sx={{ mb: 3 }} defaultExpanded={false}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -593,10 +653,29 @@ const ApplicationReviewList = ({
         
         {currentStatusFilter !== 'all' && (
           <Chip
-            label={`Status: ${currentStatusFilter}`}
+            label={`Status: ${statusLabel(currentStatusFilter)}`}
             onDelete={() => handleStatusFilterChange('all')}
             size="small"
             variant="outlined"
+          />
+        )}
+
+        {currentSelectedFilter !== 'all' && (
+          <Chip
+            label={`Roster: ${currentSelectedFilter === 'yes' ? 'On roster' : 'Not on roster'}`}
+            onDelete={() => handleSelectedFilterChange('all')}
+            size="small"
+            variant="outlined"
+          />
+        )}
+
+        {currentPreset !== 'none' && DECISION_PRESETS[currentPreset] && (
+          <Chip
+            label={DECISION_PRESETS[currentPreset].label}
+            onDelete={() => handlePresetChange('none')}
+            size="small"
+            variant="outlined"
+            color={currentPreset === 'ready' ? 'primary' : 'warning'}
           />
         )}
 
@@ -638,12 +717,14 @@ const ApplicationReviewList = ({
               : 'No applications match your current filters'
             }
           </Typography>
-          {currentFilter || currentStatusFilter !== 'all' || currentInPersonFilter !== 'all' || currentCheckedInFilter !== 'all' || linkedInFilter !== 'all' ? (
+          {currentFilter || currentStatusFilter !== 'all' || currentSelectedFilter !== 'all' || currentPreset !== 'none' || currentInPersonFilter !== 'all' || currentCheckedInFilter !== 'all' || linkedInFilter !== 'all' ? (
             <Button
               variant="outlined"
               onClick={() => {
                 handleFilterChange('');
                 handleStatusFilterChange('all');
+                handleSelectedFilterChange('all');
+                handlePresetChange('none');
                 handleInPersonFilterChange('all');
                 handleCheckedInFilterChange('all');
                 setLinkedInFilter('all');
@@ -671,9 +752,10 @@ const ApplicationReviewList = ({
               <ApplicationReviewCard
                 application={application}
                 applicationType={applicationType}
-                onApprove={handleApprove}
-                onReject={handleReject}
+                onStatusChange={onStatusChange}
+                onRosterChange={onRosterChange}
                 onEdit={onEdit}
+                pending={Boolean(pendingIds?.has?.(application.id))}
                 isLoading={isLoading}
                 trainingStatus={
                   trainingStatusByEmail?.[normalizeEmail(application.email)]

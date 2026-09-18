@@ -3,6 +3,7 @@ import {
   JUDGE_TRAINING_CERTS,
   certUrlForToken,
   extractCertToken,
+  lmsMutation,
   lmsQuery,
   verifyCertToken,
 } from "../lib/lmsClient";
@@ -18,6 +19,28 @@ export const normalizeEmail = (email) => (email || "").trim().toLowerCase();
 const ROLLUP_TTL_MS = 60 * 1000;
 let rollupCache = { fetchedAt: 0, promise: null };
 
+// The LMS resolves an external (PropelAuth) identity ONLY through the
+// authIdentities link that externalAuth:ensureExternalUser creates
+// (email-linked to an existing LMS account under EXTERNAL_AUTH_TRUST_EMAILS).
+// Without that link every admin query below resolves to "no user" and
+// soft-degrades to []/null → certs-only, even for LMS owners. The judge
+// form's gate already does this; the admin side must too. Idempotent
+// server-side; once per page load here, rejections evicted for retry.
+let ensureLinkPromise = null;
+const ensureLmsAccountLinked = (accessToken) => {
+  if (!ensureLinkPromise) {
+    ensureLinkPromise = lmsMutation(
+      "externalAuth:ensureExternalUser",
+      {},
+      accessToken,
+    ).catch((err) => {
+      ensureLinkPromise = null;
+      throw err;
+    });
+  }
+  return ensureLinkPromise;
+};
+
 // Attempt/completion rollups keyed by normalized email:
 // Map<email, { intro?: rollup, tool?: rollup }> where rollup =
 // { attemptCount, bestScore, passed, attemptsToPass, lastAttemptAt }.
@@ -25,7 +48,11 @@ let rollupCache = { fetchedAt: 0, promise: null };
 // (owner/admin/editor). listQuizzes/getQuizResults soft-degrade to []/null
 // without the role, so an empty quiz match is treated as an auth failure
 // rather than rendered as "nobody attempted anything".
+// Note the join is by EMAIL — a judge who trained under a different LMS
+// login than their application email gets no rollup; the certificate's own
+// attemptCount/attemptsToPass (anonymous lookup, exact user) covers them.
 const fetchRollupsByEmail = async (accessToken) => {
+  await ensureLmsAccountLinked(accessToken);
   const quizzes = await lmsQuery("quizzes:listQuizzes", {}, accessToken);
   const slotQuizzes = JUDGE_TRAINING_CERTS.map((spec) => ({
     spec,
@@ -124,7 +151,8 @@ const resolveSlot = (spec, rawValue, certResults, rollup) => {
  * Returns { statusByEmail, lmsAccess, loading, refresh }:
  * - statusByEmail[normalizedEmail] = { slots: { intro, tool }, complete },
  *   each slot { state, certUrl, cert, rollup } with state one of
- *   verified | mismatch | not_found | invalid | missing | error.
+ *   verified | mismatch | not_found | invalid | missing | error. `cert`
+ *   carries attemptCount/attemptsToPass when the LMS deploy returns them.
  * - lmsAccess: null (not yet checked) | "full" | "certs-only" | "unavailable".
  *
  * Token-rotation stability (CLAUDE.md): the access token is read through a

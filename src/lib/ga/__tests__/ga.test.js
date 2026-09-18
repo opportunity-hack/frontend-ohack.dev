@@ -78,11 +78,9 @@ describe('Google Analytics Module', () => {
       page_title: 'Test Page Title',
       custom_param: 'value'
     });
-    expect(mockGtag).toHaveBeenCalledWith('event', 'page_view', expect.objectContaining({
-      page_path: url,
-      page_title: 'Test Page Title',
-      custom_param: 'value'
-    }));
+    // pageview deliberately does NOT emit a separate page_view event — the
+    // gtag('config', …) call above already records one (see lib/ga/index.js).
+    expect(mockGtag).toHaveBeenCalledTimes(1);
   });
 
   test('trackEvent should send event to GA and Facebook Pixel', () => {

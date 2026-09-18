@@ -24,10 +24,10 @@ import { useAuthInfo } from "@propelauth/react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import {
   RefinedRoot,
-  RefinedFonts,
   Eyebrow,
   Arrow,
 } from "../../components/design/refined";
+import { DonateLink } from "../../components/design/DonateNudge";
 
 const FRAUNCES = FONT_DISPLAY;
 const HANKEN = FONT_BODY;
@@ -369,7 +369,6 @@ function OnboardingComponent() {
           content="Welcome to Opportunity Hack! Let's get you onboarded and ready to contribute to our mission."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <RefinedFonts />
       </Head>
 
       <JourneyTracker
@@ -517,6 +516,14 @@ function OnboardingComponent() {
           >
             You&apos;ve completed the Opportunity Hack member onboarding —
             you&apos;re all set to start contributing.
+          </DialogContentText>
+          <DialogContentText sx={{ fontSize: "0.98rem", mt: 1.5 }}>
+            Opportunity Hack is volunteer-run and free for the nonprofits we
+            serve. If you&apos;d like to help keep it that way,{" "}
+            <DonateLink placement="onboarding_complete" plain>
+              make a donation
+            </DonateLink>
+            .
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center", pb: 2 }}>

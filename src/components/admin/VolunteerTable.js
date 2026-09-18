@@ -22,7 +22,6 @@ import {
   Card,
   CardContent,
   CardActions,
-  Divider,
   Stack,
   Grid,
   List,
@@ -36,20 +35,58 @@ import {
   MenuItem,
 } from "@mui/material";
 import { styled } from "@mui/system";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
+import PublicIcon from "@mui/icons-material/Public";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Email as EmailIcon, VolunteerActivism as CertificateIcon, OpenInNew as OpenInNewIcon, PlayCircleFilled as PlayCircleIcon } from '@mui/icons-material';
 import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
 import NextLink from 'next/link';
 import HackerDepositChip from "./HackerDepositChip";
 import { JUDGE_TRAINING_CERTS } from "../../lib/lmsClient";
 import { normalizeEmail } from "../../hooks/use-judge-training-status";
+import {
+  APPLICATION_STATUSES,
+  isKnownStatus,
+  normalizeStatus,
+  rosterConflict,
+  rosterReady,
+  statusLabel,
+} from "../../lib/applicationStatus";
+import { InlineStatusSelect } from "./volunteer/StatusControls";
+import { RosterToggle, ROSTER_CONSEQUENCES } from "./volunteer/RosterControls";
+import { filterByDecision } from "./volunteer/applicationSchema";
+
+// The roster column is its own zone (review axis = status, roster axis =
+// isSelected); a hairline on its left keeps the two from reading as one.
+const ROSTER_ZONE_SX = { borderLeft: 1, borderColor: "divider" };
+
+// Attempt history for one training slot, as a short phrase or null.
+// Prefers the admin rollup (needs an LMS admin/editor role; also covers
+// judges who attempted but haven't passed), else the attempt fields the
+// anonymous certificate lookup returns (LMS ≥ Sep 2026 — exact user, works
+// for every admin, verified slots only).
+const attemptsSummary = (slot, lmsAccess) => {
+  const rollup = lmsAccess === "full" ? slot?.rollup : null;
+  const count = rollup?.attemptCount ?? slot?.cert?.attemptCount;
+  if (typeof count !== "number") return null;
+  const toPass = rollup?.attemptsToPass ?? slot?.cert?.attemptsToPass;
+  let text = `${count} attempt${count === 1 ? "" : "s"}`;
+  if (rollup && !rollup.passed) {
+    if (typeof rollup.bestScore === "number") {
+      text += `, best ${Math.round(rollup.bestScore)}%`;
+    }
+    text += ", not passed yet";
+  } else if (toPass && count > 1) {
+    text += `, passed on attempt ${toPass}`;
+  }
+  return text;
+};
 
 // Compact judge-training summary for the table/mobile chip. `entry` is one
 // value from useJudgeTrainingStatus's statusByEmail (undefined while the LMS
 // check is pending or unavailable — then fall back to the application's own
 // judgeTrainingCompleted flag). Returns { label, color, tooltip } or null.
+// Tooltip = one line per required cert (state, score, attempts).
 const trainingChipConfig = (entry, volunteer, lmsAccess) => {
   if (!entry) {
     return volunteer.judgeTrainingCompleted
@@ -60,26 +97,33 @@ const trainingChipConfig = (entry, volunteer, lmsAccess) => {
         }
       : null;
   }
+  let anyAttempts = false;
   const rows = JUDGE_TRAINING_CERTS.map((spec) => {
     const slot = entry.slots?.[spec.key];
-    const done = slot?.state === "verified" || slot?.rollup?.passed;
     const state = slot?.state || "missing";
-    let line = `${spec.videoTitle}: ${
-      state === "verified" ? "verified" : state.replace(/_/g, " ")
-    }`;
-    if (state === "verified" && typeof slot?.cert?.score === "number") {
-      line += ` (${Math.round(slot.cert.score)}%)`;
+    const verified = state === "verified";
+    const passedOnLms = Boolean(slot?.rollup?.passed);
+    let status = verified
+      ? "verified"
+      : passedOnLms
+        ? "passed on LMS, no cert link"
+        : state.replace(/_/g, " ");
+    if (verified && typeof slot?.cert?.score === "number") {
+      status += ` (${Math.round(slot.cert.score)}%)`;
     }
-    if (lmsAccess === "full" && slot?.rollup) {
-      const rollup = slot.rollup;
-      line += ` — ${rollup.attemptCount} attempt${
-        rollup.attemptCount === 1 ? "" : "s"
-      }, best ${Math.round(rollup.bestScore)}%`;
-    }
-    return { done, line };
+    const attempts = attemptsSummary(slot, lmsAccess);
+    if (attempts) anyAttempts = true;
+    return {
+      done: verified || passedOnLms,
+      line: `${spec.videoTitle}: ${status}${attempts ? ` · ${attempts}` : ""}`,
+    };
   });
   const doneCount = rows.filter((row) => row.done).length;
-  const tooltip = rows.map((row) => row.line).join("\n");
+  const lines = rows.map((row) => row.line);
+  if (!anyAttempts && lmsAccess === "certs-only") {
+    lines.push("Attempt counts unavailable — needs an LMS admin role");
+  }
+  const tooltip = lines.join("\n");
   if (doneCount === rows.length) {
     return { label: "✓ Trained", color: "success", tooltip };
   }
@@ -88,6 +132,11 @@ const trainingChipConfig = (entry, volunteer, lmsAccess) => {
   }
   return { label: "✗ Not trained", color: "error", tooltip };
 };
+
+// Company lives under `company` on most application types but `companyName`
+// on judge (and some sponsor) applications — read both everywhere.
+export const companyOf = (volunteer) =>
+  volunteer?.company || volunteer?.companyName || "";
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   width: "100%",
@@ -178,41 +227,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const SelectedChip = styled(Chip)(({ theme }) => ({
-  backgroundColor: theme.palette.success.main,
-  color: theme.palette.common.white,
-}));
-
-const NotSelectedChip = styled(Chip)(({ theme }) => ({
-  backgroundColor: theme.palette.error.main,
-  color: theme.palette.common.white,
-}));
-
-const StatusChip = styled(Chip)(({ theme, statustype }) => {
-  const getStatusColors = (status) => {
-    switch (status) {
-      case 'pending':
-        return { backgroundColor: theme.palette.grey[500], color: theme.palette.common.white };
-      case 'approved':
-        return { backgroundColor: theme.palette.success.main, color: theme.palette.common.white };
-      case 'denied':
-        return { backgroundColor: theme.palette.error.main, color: theme.palette.common.white };
-      case 'verified_travel':
-        return { backgroundColor: theme.palette.info.main, color: theme.palette.common.white };
-      case 'confirmed':
-        return { backgroundColor: theme.palette.primary.main, color: theme.palette.common.white };
-      case 'withdrew':
-        return { backgroundColor: theme.palette.warning.main, color: theme.palette.common.white };
-      case 'no_show':
-        return { backgroundColor: theme.palette.error.dark, color: theme.palette.common.white };
-      default:
-        return { backgroundColor: theme.palette.grey[300], color: theme.palette.text.primary };
-    }
-  };
-  
-  return getStatusColors(statustype);
-});
-
 const ClickableCell = styled(Typography)(({ theme }) => ({
   cursor: 'pointer',
   display: 'block',
@@ -239,12 +253,22 @@ const VolunteerTable = ({
   onEditVolunteer,
   onMessageVolunteer,
   onSlackInvite,
+  // onBatchEmail(volunteers, type, audience) — audience: "roster" | "denied" | "waitlisted"
   onBatchEmail,
-  onBatchEmailNotSelected,
   onBulkCertificate, // New prop for bulk certificate sending
+  // Decision controls: `status` (review axis) and `isSelected` (roster axis)
+  onStatusChange,
+  onRosterChange,
+  pendingIds = new Set(),
   // Filter props
   checkedInFilter = 'all',
   onCheckedInFilterChange,
+  statusFilter = 'all',
+  onStatusFilterChange,
+  selectedFilter = 'all',
+  onSelectedFilterChange,
+  preset = 'none',
+  onPresetChange,
   // Auth props for Resend status lookup
   accessToken,
   orgId,
@@ -449,6 +473,7 @@ const VolunteerTable = ({
     const baseColumns = [
       { id: "id", label: "ID", minWidth: 50 },
       { id: "name", label: "Name", minWidth: 100 },
+      { id: "status", label: "Status", minWidth: 130 },
       { id: "created_timestamp", label: "Created", minWidth: 50 },
       { id: "messages_sent", label: "Msgs", minWidth: 20 },
       { id: "certificates", label: "Certs", minWidth: 20 },
@@ -456,7 +481,7 @@ const VolunteerTable = ({
       { id: "pronouns", label: "Pronouns", minWidth: 80, priority: 3 }, // Increased from 70 for better spacing
       { id: "company", label: "Company", minWidth: 90, priority: 2 }, // Reduced from 120
       { id: "isInPerson", label: "In Person", minWidth: 70 }, // Reduced from 100
-      { id: "isSelected", label: "Selected", minWidth: 80 }, // Reduced from 100
+      { id: "isSelected", label: "Roster", minWidth: 90 },
       { id: "slack_user_id", label: "Slack", minWidth: 40, priority: 3 }, // Reduced from 50
     ];
 
@@ -472,19 +497,34 @@ const VolunteerTable = ({
         { id: "state", label: "State", minWidth: 60, priority: 3 }, // Reduced from 100
       ];
     } else if (type === "judges") {
+      // Review-critical columns (status, training, video, title, company)
+      // sit right after Name so judges can be screened without horizontal
+      // scrolling; the shared base columns follow.
+      const base = Object.fromEntries(baseColumns.map((col) => [col.id, col]));
       return [
-        ...baseColumns,
-        { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
-        { id: "status", label: "Status", minWidth: 90 }, // Reduced from 120
+        base.id,
+        base.name,
+        { id: "status", label: "Status", minWidth: 130 },
         { id: "training", label: "Training", minWidth: 90, sortable: false },
         { id: "introVideo", label: "Video", minWidth: 56, sortable: false },
-        { id: "title", label: "Title", minWidth: 100, priority: 2 }, // Reduced from 150
-        { id: "background", label: "Background", minWidth: 120, priority: 3 }, // Reduced from 150
+        { id: "title", label: "Title", minWidth: 100 },
+        base.company,
+        base.created_timestamp,
+        base.messages_sent,
+        base.certificates,
+        base.email,
+        base.pronouns,
+        base.isInPerson,
+        base.isSelected,
+        base.slack_user_id,
+        { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
+        { id: "background", label: "Background", minWidth: 120, priority: 3 },
       ];
     } else if (type === "volunteers") {
       return [
         { id: "id", label: "ID", minWidth: 40, priority: 3 },
         { id: "name", label: "Name", minWidth: 100 },
+        { id: "status", label: "Status", minWidth: 130 },
         { id: "messages_sent", label: "Msgs", minWidth: 20, priority: 3 },
         { id: "certificates", label: "Certs", minWidth: 20, priority: 3 },
         { id: "email", label: "Email", minWidth: 120, priority: 2 },
@@ -495,7 +535,7 @@ const VolunteerTable = ({
         { id: "company", label: "Company", minWidth: 90, priority: 2 },
         { id: "socialCauses", label: "Causes", minWidth: 100, priority: 3 },        
         { id: "isInPerson", label: "In Person", minWidth: 70, priority: 2 },
-        { id: "isSelected", label: "Selected", minWidth: 80 },
+        { id: "isSelected", label: "Roster", minWidth: 90 },
         { id: "pronouns", label: "Pronouns", minWidth: 80, priority: 3 },
         { id: "slack_user_id", label: "Slack", minWidth: 40, priority: 3 },
         { id: "artifacts", label: "Contrib.", minWidth: 100, priority: 3 },
@@ -548,11 +588,37 @@ const VolunteerTable = ({
     ).length;
   }, [volunteers]);
 
-  const notSelectedForEmailCount = useMemo(() => {
-    return volunteers.filter((volunteer) =>
-      !volunteer.isSelected && volunteer.email && volunteer.email.trim() !== '' && volunteer.id
-    ).length;
-  }, [volunteers]);
+  // Rejection/waitlist emails key on the REVIEW status, never on !isSelected
+  // ("not on roster" also covers pending and approved-but-unpublished people).
+  const emailableWithStatus = useCallback(
+    (wanted) =>
+      volunteers.filter(
+        (volunteer) =>
+          normalizeStatus(volunteer.status) === wanted &&
+          volunteer.email &&
+          volunteer.email.trim() !== '' &&
+          volunteer.id
+      ).length,
+    [volunteers]
+  );
+  const deniedForEmailCount = useMemo(() => emailableWithStatus("denied"), [emailableWithStatus]);
+  const waitlistedForEmailCount = useMemo(() => emailableWithStatus("waitlisted"), [emailableWithStatus]);
+
+  const readyForRosterCount = useMemo(() => volunteers.filter(rosterReady).length, [volunteers]);
+  const rosterConflictCount = useMemo(() => volunteers.filter(rosterConflict).length, [volunteers]);
+
+  // Legacy (non-catalog) status values present in this list, so the Status
+  // filter can still target them. The active filter value is kept in the
+  // list even if the last matching row disappears (MUI Select out-of-range).
+  const legacyStatusValues = useMemo(() => {
+    const seen = new Set();
+    volunteers.forEach((volunteer) => {
+      const v = normalizeStatus(volunteer.status);
+      if (!isKnownStatus(v)) seen.add(v);
+    });
+    if (statusFilter && statusFilter !== 'all' && !isKnownStatus(statusFilter)) seen.add(statusFilter);
+    return Array.from(seen).sort();
+  }, [volunteers, statusFilter]);
 
   const eligibleForCertificateCount = useMemo(() => {
     // Only mentors and judges can receive certificates
@@ -562,7 +628,7 @@ const VolunteerTable = ({
     ).length;
   }, [volunteers, type]);
 
-  // Filter volunteers based on checked-in status
+  // Filter volunteers based on checked-in status + decision filters
   const filteredVolunteers = useMemo(() => {
     let filtered = volunteers;
 
@@ -579,8 +645,10 @@ const VolunteerTable = ({
       }
     }
 
+    filtered = filterByDecision(filtered, { statusFilter, selectedFilter, preset });
+
     return filtered;
-  }, [volunteers, checkedInFilter]);
+  }, [volunteers, checkedInFilter, statusFilter, selectedFilter, preset]);
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
@@ -698,18 +766,14 @@ const VolunteerTable = ({
           <Chip label="No" size="small" color="default" sx={{ minWidth: 45, fontSize: '0.75rem' }} />
         );
       case "isSelected":
-        return volunteer[column.id] ? (
-          <Tooltip title="Selected">
-            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <CheckCircleIcon color="success" fontSize="small" />
-            </Box>
-          </Tooltip>
-        ) : (
-          <Tooltip title="Not Selected">
-            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <CancelIcon color="error" fontSize="small" />
-            </Box>
-          </Tooltip>
+        return (
+          <RosterToggle
+            compact
+            checked={volunteer.isSelected}
+            onChange={(on) => onRosterChange?.(volunteer, on)}
+            pending={pendingIds?.has(volunteer.id)}
+            disabled={!onRosterChange}
+          />
         );
       case "checkedIn":
         const checkedIn = volunteer.checkedIn;
@@ -748,22 +812,12 @@ const VolunteerTable = ({
           </Tooltip>
         );
       case "status":
-        const status = volunteer.status || "pending";
-        const statusLabels = {
-          pending: "Pending",
-          approved: "Approved",
-          denied: "Denied",
-          verified_travel: "Verified",
-          confirmed: "Confirmed",
-          withdrew: "Withdrew",
-          no_show: "No Show",
-        };
         return (
-          <StatusChip
-            statustype={status}
-            label={statusLabels[status] || status}
-            size="small"
-            sx={{ fontSize: '0.7rem', minWidth: 60 }}
+          <InlineStatusSelect
+            value={volunteer.status}
+            onChange={(next) => onStatusChange?.(volunteer, next)}
+            pending={pendingIds?.has(volunteer.id)}
+            disabled={!onStatusChange}
           />
         );
       case "messages_sent":
@@ -1559,8 +1613,14 @@ const VolunteerTable = ({
             />
           </Tooltip>
         );
+      case "company":
       default:
-        const value = volunteer[column.id];
+        // Judge applications store the field as `companyName` (the schema's
+        // judge `companyName` field); other types use `company`.
+        const value =
+          column.id === "company"
+            ? companyOf(volunteer)
+            : volunteer[column.id];
         if (typeof value === 'string' && value.length > 15) {
           return (
             <Tooltip title={value}>
@@ -1600,16 +1660,10 @@ const VolunteerTable = ({
     return (
       <Stack spacing={1.5}>
         {volunteers.map((volunteer, index) => {
-          const getStatusColor = (isSelected, checkedIn) => {
-            if (isSelected && checkedIn) return 'success';
-            if (isSelected) return 'primary';
-            return 'default';
-          };
-
           const primaryText = volunteer.name || 'Unknown';
           const secondaryTexts = [
             volunteer.email,
-            volunteer.company,
+            companyOf(volunteer),
             volunteer.title
           ].filter(Boolean);
 
@@ -1617,9 +1671,9 @@ const VolunteerTable = ({
             <Card
               key={volunteer.id || `${volunteer.name}-${index}`}
               sx={{
-                backgroundColor: volunteer.isSelected ? "#e8f5e9" : "inherit",
+                backgroundColor: volunteer.isSelected ? "rgba(27,58,107,0.06)" : "inherit",
                 border: volunteer.isSelected ? '1px solid' : 'none',
-                borderColor: volunteer.isSelected ? 'success.light' : 'transparent'
+                borderColor: volunteer.isSelected ? 'primary.light' : 'transparent'
               }}
             >
               <CardContent sx={{ pb: 1 }}>
@@ -1668,13 +1722,13 @@ const VolunteerTable = ({
                   </Typography>
                 </Box>
 
-                {/* Status Chips Row */}
-                <Box sx={{ display: 'flex', gap: 0.5, mb: 1, flexWrap: 'wrap' }}>
-                  <Chip
-                    label={volunteer.isSelected ? 'Selected' : 'Not Selected'}
-                    size="small"
-                    color={getStatusColor(volunteer.isSelected, volunteer.checkedIn)}
-                    variant={volunteer.isSelected ? 'filled' : 'outlined'}
+                {/* Status Chips Row: review status first, roster toggle last */}
+                <Box sx={{ display: 'flex', gap: 0.5, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <InlineStatusSelect
+                    value={volunteer.status}
+                    onChange={(next) => onStatusChange?.(volunteer, next)}
+                    pending={pendingIds?.has(volunteer.id)}
+                    disabled={!onStatusChange}
                   />
                   {volunteer.isInPerson && (
                     <Chip label="In Person" size="small" color="info" variant="outlined" />
@@ -1709,6 +1763,13 @@ const VolunteerTable = ({
                       }
                     />
                   )}
+                  <RosterToggle
+                    compact
+                    checked={volunteer.isSelected}
+                    onChange={(on) => onRosterChange?.(volunteer, on)}
+                    pending={pendingIds?.has(volunteer.id)}
+                    disabled={!onRosterChange}
+                  />
                 </Box>
 
                 {/* Key Info for Specific Types */}
@@ -1851,12 +1912,92 @@ const VolunteerTable = ({
           </Select>
         </FormControl>
 
+        <FormControl size="small" sx={{ minWidth: 170 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={statusFilter}
+            onChange={(e) => onStatusFilterChange?.(e.target.value)}
+            label="Status"
+          >
+            <MenuItem value="all">All</MenuItem>
+            {APPLICATION_STATUSES.map((meta) => (
+              <MenuItem key={meta.value} value={meta.value}>
+                {statusLabel(meta.value)}
+              </MenuItem>
+            ))}
+            {legacyStatusValues.map((v) => (
+              <MenuItem key={v} value={v}>
+                {`${v} (legacy)`}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Roster</InputLabel>
+          <Select
+            value={selectedFilter}
+            onChange={(e) => onSelectedFilterChange?.(e.target.value)}
+            label="Roster"
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="yes">On roster</MenuItem>
+            <MenuItem value="no">Not on roster</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Tooltip title="Approved / travel verified / confirmed, but not yet on the roster">
+          <Chip
+            icon={<PublicIcon />}
+            label={`Ready for roster (${readyForRosterCount})`}
+            color="primary"
+            variant={preset === "ready" ? "filled" : "outlined"}
+            onClick={() => onPresetChange?.(preset === "ready" ? "none" : "ready")}
+            size="small"
+          />
+        </Tooltip>
+        <Tooltip title="On the roster although the review closed negatively (denied / withdrew / no-show)">
+          <Chip
+            icon={<WarningAmberIcon />}
+            label={`Roster conflicts (${rosterConflictCount})`}
+            color="warning"
+            variant={preset === "conflict" ? "filled" : "outlined"}
+            onClick={() => onPresetChange?.(preset === "conflict" ? "none" : "conflict")}
+            size="small"
+          />
+        </Tooltip>
+
         {checkedInFilter !== 'all' && (
           <Chip
             label={`Checked In: ${checkedInFilter === 'yes' ? 'Yes' : 'No'}`}
             onDelete={() => onCheckedInFilterChange && onCheckedInFilterChange('all')}
             size="small"
             variant="outlined"
+          />
+        )}
+        {statusFilter !== 'all' && (
+          <Chip
+            label={`Status: ${statusLabel(statusFilter)}`}
+            onDelete={() => onStatusFilterChange?.('all')}
+            size="small"
+            variant="outlined"
+          />
+        )}
+        {selectedFilter !== 'all' && (
+          <Chip
+            label={`Roster: ${selectedFilter === 'yes' ? 'On roster' : 'Not on roster'}`}
+            onDelete={() => onSelectedFilterChange?.('all')}
+            size="small"
+            variant="outlined"
+          />
+        )}
+        {preset !== 'none' && (
+          <Chip
+            label={preset === 'ready' ? 'Ready for roster' : 'Roster conflicts'}
+            onDelete={() => onPresetChange?.('none')}
+            size="small"
+            variant="outlined"
+            color={preset === 'ready' ? 'primary' : 'warning'}
           />
         )}
 
@@ -1886,7 +2027,7 @@ const VolunteerTable = ({
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={1}>
         <Box>
           <Typography variant="subtitle1" sx={{ fontSize: isMobile ? '0.9rem' : '0.95rem' }}>
-            {type}: {filteredVolunteers.length} of {volunteers.length} | Selected: {selectedCount}
+            {type}: {filteredVolunteers.length} of {volunteers.length} | On roster: {selectedCount}
           </Typography>
           {type === 'volunteers' && !isMobile && (
             <Typography variant="caption" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
@@ -1896,11 +2037,11 @@ const VolunteerTable = ({
         </Box>
         <Box display="flex" gap={0.5} flexWrap="wrap">
           {onBatchEmail && eligibleForEmailCount > 0 && (
-            <Tooltip title={`Send Email to ${eligibleForEmailCount} selected`}>
+            <Tooltip title={`Email roster (${eligibleForEmailCount})`}>
               <Button
                 variant="contained"
                 color="secondary"
-                onClick={() => onBatchEmail(volunteers, type, true)}
+                onClick={() => onBatchEmail(volunteers, type, "roster")}
                 size={isMobile ? 'small' : 'small'}
                 sx={{ minWidth: 'auto', px: 1 }}
               >
@@ -1943,18 +2084,34 @@ const VolunteerTable = ({
               </Button>
             </Tooltip>
           )}
-          {onBatchEmailNotSelected && notSelectedForEmailCount > 0 && (
-            <Tooltip title={`Send rejection email to ${notSelectedForEmailCount}`}>
+          {onBatchEmail && deniedForEmailCount > 0 && (
+            <Tooltip title={`Email denied applicants (${deniedForEmailCount}) — status = denied`}>
               <Button
                 variant="outlined"
                 color="warning"
-                onClick={() => onBatchEmailNotSelected(volunteers, type, false)}
+                onClick={() => onBatchEmail(volunteers, type, "denied")}
                 size={isMobile ? 'small' : 'small'}
                 sx={{ minWidth: 'auto', px: 1 }}
               >
                 <EmailIcon fontSize="small" />
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
-                  {notSelectedForEmailCount}
+                  {deniedForEmailCount}
+                </Typography>
+              </Button>
+            </Tooltip>
+          )}
+          {onBatchEmail && waitlistedForEmailCount > 0 && (
+            <Tooltip title={`Email waitlisted (${waitlistedForEmailCount})`}>
+              <Button
+                variant="outlined"
+                color="info"
+                onClick={() => onBatchEmail(volunteers, type, "waitlisted")}
+                size={isMobile ? 'small' : 'small'}
+                sx={{ minWidth: 'auto', px: 1 }}
+              >
+                <EmailIcon fontSize="small" />
+                <Typography variant="caption" sx={{ ml: 0.5 }}>
+                  {waitlistedForEmailCount}
                 </Typography>
               </Button>
             </Tooltip>
@@ -1993,6 +2150,7 @@ const VolunteerTable = ({
                     sx={{ 
                       minWidth: column.minWidth,
                       display: displayStyle,
+                      ...(column.id === 'isSelected' && ROSTER_ZONE_SX),
                       // Highlight availability column
                       ...(column.id === 'availability' && {
                         backgroundColor: 'primary.light',
@@ -2034,7 +2192,13 @@ const VolunteerTable = ({
                           })
                         }}
                       >
-                        {column.label}
+                        {column.id === 'isSelected' ? (
+                          <Tooltip title={`Event roster — ${ROSTER_CONSEQUENCES}`}>
+                            <span>{column.label}</span>
+                          </Tooltip>
+                        ) : (
+                          column.label
+                        )}
                         {column.id === 'availability' && (
                           <Chip 
                             label="📅" 
@@ -2140,6 +2304,7 @@ const VolunteerTable = ({
                       data-label={column.label}
                       sx={{ 
                         display: displayStyle,
+                        ...(column.id === 'isSelected' && ROSTER_ZONE_SX),
                         // Make availability column sticky and highlighted
                         ...(column.id === 'availability' && {
                           backgroundColor: 'rgba(25, 118, 210, 0.08)', // Light blue background

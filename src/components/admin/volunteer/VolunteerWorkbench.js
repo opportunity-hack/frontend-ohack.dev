@@ -43,7 +43,6 @@ import AdminPage from "../../../components/admin/AdminPage";
 import VolunteerTable from "../../../components/admin/VolunteerTable";
 import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";  
 import ApplicationReviewList from "../../../components/admin/ApplicationReviewList";
-import ApplicationEditDialog from "../../../components/admin/ApplicationEditDialog";
 import VolunteerCommunication from "../../../components/admin/VolunteerCommunication";
 import SlackInviteDialog from "../../../components/admin/SlackInviteDialog";
 import BatchEmailDialog from "../../../components/admin/BatchEmailDialog";
@@ -54,6 +53,9 @@ import { getDepositState } from "../../../components/admin/HackerDepositChip";
 import VideoDisplay from "../../../components/VideoDisplay/VideoDisplay";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 import useJudgeTrainingStatus from "../../../hooks/use-judge-training-status";
+import { statusLabel, statusSortIndex } from "../../../lib/applicationStatus";
+import { getSearchValues } from "./applicationSchema";
+import { RosterConfirmDialog } from "./RosterControls";
 
 // Define initial state outside component to prevent re-initialization
 const INITIAL_VOLUNTEERS_STATE = {
@@ -71,6 +73,23 @@ const INITIAL_SNACKBAR_STATE = {
 };
 
 // Move this function outside component to avoid circular dependency issues
+const PLURAL_TYPES = ["mentors", "judges", "volunteers", "hackers", "sponsors"];
+
+// Per-tab filter state. `statusFilter` is the REVIEW axis (application
+// status), `selectedFilter` the ROSTER axis (isSelected), `preset` the two
+// mismatch views that bridge them ("ready" / "conflict").
+const DEFAULT_FILTER_STATE = {
+  filter: '',
+  statusFilter: 'all',
+  selectedFilter: 'all',
+  preset: 'none',
+  inPersonFilter: 'all',
+  checkedInFilter: 'all',
+  sortBy: 'timestamp',
+  sortOrder: 'desc',
+  showBatchActions: false,
+};
+
 const getCurrentVolunteerType = (currentTabValue) => {
   switch (currentTabValue) {
     case 0:
@@ -133,7 +152,15 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   const [filter, setFilter] = useState("");
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingVolunteer, setEditingVolunteer] = useState(null);
+  // Edit dialog: the row is derived LIVE from `volunteers` by id (never a
+  // snapshot) so optimistic decision writes can't leave the dialog stale.
+  const [editingVolunteerId, setEditingVolunteerId] = useState(null);
+  const [addDraft, setAddDraft] = useState(null);
+  const [saving, setSaving] = useState(false);
+  // Per-row in-flight decision writes (replaces the whole-table spinner).
+  const [pendingIds, setPendingIds] = useState(() => new Set());
+  // Bulk roster changes confirm first: { apps, direction }
+  const [rosterConfirm, setRosterConfirm] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState("");
   // Full event doc for the selected event — used to read constraints
@@ -143,8 +170,6 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   const [depositDialogVolunteer, setDepositDialogVolunteer] = useState(null);
   const [bulkRefundDialogOpen, setBulkRefundDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState("table"); // "table" or "review"
-  const [applicationEditDialogOpen, setApplicationEditDialogOpen] = useState(false);
-  const [editingApplication, setEditingApplication] = useState(null);
   const [communicationDialogOpen, setCommunicationDialogOpen] = useState(false);
   const [selectedVolunteerForMessage, setSelectedVolunteerForMessage] = useState(null);
   const [slackInviteDialogOpen, setSlackInviteDialogOpen] = useState(false);
@@ -153,7 +178,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   const [batchEmailDialogOpen, setBatchEmailDialogOpen] = useState(false);
   const [volunteersForBatchEmail, setVolunteersForBatchEmail] = useState([]);
   const [volunteerTypeForBatchEmail, setVolunteerTypeForBatchEmail] = useState('');
-  const [isSelectedUsersForEmail, setIsSelectedUsersForEmail] = useState(true);
+  const [emailAudience, setEmailAudience] = useState("roster"); // roster | denied | waitlisted
   const [bulkCertificateDialogOpen, setBulkCertificateDialogOpen] = useState(false);
   const [volunteersForBulkCertificate, setVolunteersForBulkCertificate] = useState([]);
   const [volunteerTypeForBulkCertificate, setVolunteerTypeForBulkCertificate] = useState('');
@@ -163,53 +188,9 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   const [videoDialog, setVideoDialog] = useState({ open: false, url: null, name: null });
 
   // Filter state management
-  const [filterStates, setFilterStates] = useState({
-    mentors: {
-      filter: '',
-      statusFilter: 'all',
-      inPersonFilter: 'all',
-      checkedInFilter: 'all',
-      sortBy: 'timestamp',
-      sortOrder: 'desc',
-      showBatchActions: false
-    },
-    judges: {
-      filter: '',
-      statusFilter: 'all',
-      inPersonFilter: 'all',
-      checkedInFilter: 'all',
-      sortBy: 'timestamp',
-      sortOrder: 'desc',
-      showBatchActions: false
-    },
-    volunteers: {
-      filter: '',
-      statusFilter: 'all',
-      inPersonFilter: 'all',
-      checkedInFilter: 'all',
-      sortBy: 'timestamp',
-      sortOrder: 'desc',
-      showBatchActions: false
-    },
-    hackers: {
-      filter: '',
-      statusFilter: 'all',
-      inPersonFilter: 'all',
-      checkedInFilter: 'all',
-      sortBy: 'timestamp',
-      sortOrder: 'desc',
-      showBatchActions: false
-    },
-    sponsors: {
-      filter: '',
-      statusFilter: 'all',
-      inPersonFilter: 'all',
-      checkedInFilter: 'all',
-      sortBy: 'timestamp',
-      sortOrder: 'desc',
-      showBatchActions: false
-    }
-  });
+  const [filterStates, setFilterStates] = useState(() =>
+    Object.fromEntries(PLURAL_TYPES.map((t) => [t, { ...DEFAULT_FILTER_STATE }]))
+  );
 
   // Refs for scroll position preservation
   const scrollContainerRef = useRef(null);
@@ -340,6 +321,8 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
       tab,
       filter,
       statusFilter,
+      selectedFilter,
+      preset,
       inPersonFilter,
       checkedInFilter,
       sortBy,
@@ -397,12 +380,14 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
       if (currentType) {
         const filterToApply = volunteer_id ? volunteer_id : (filter || '');
 
-        if (filterToApply || statusFilter || inPersonFilter || checkedInFilter || sortBy || sortOrder || showBatchActions) {
+        if (filterToApply || statusFilter || selectedFilter || preset || inPersonFilter || checkedInFilter || sortBy || sortOrder || showBatchActions) {
           setFilterStates(prev => ({
             ...prev,
             [currentType]: {
               filter: filterToApply,
               statusFilter: statusFilter || 'all',
+              selectedFilter: selectedFilter || 'all',
+              preset: preset || 'none',
               inPersonFilter: inPersonFilter || 'all',
               checkedInFilter: checkedInFilter || 'all',
               sortBy: sortBy || 'timestamp',
@@ -441,6 +426,12 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
       }
       if (currentFilterState.statusFilter !== 'all') {
         queryParams.set('statusFilter', currentFilterState.statusFilter);
+      }
+      if (currentFilterState.selectedFilter !== 'all') {
+        queryParams.set('selectedFilter', currentFilterState.selectedFilter);
+      }
+      if (currentFilterState.preset && currentFilterState.preset !== 'none') {
+        queryParams.set('preset', currentFilterState.preset);
       }
       if (currentFilterState.inPersonFilter !== 'all') {
         queryParams.set('inPersonFilter', currentFilterState.inPersonFilter);
@@ -680,10 +671,6 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
     return `${currentTab} - ${eventName}`;
   }, [getCurrentEventName, tabValue]);
 
-  const handleEditChange = useCallback((field, value) => {
-    setEditingVolunteer((prev) => ({ ...prev, [field]: value }));
-  }, []);
-
   // Filter state management helpers
   const updateFilterState = useCallback((field, value) => {
     const currentType = getCurrentVolunteerType(tabValue);
@@ -700,152 +687,22 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
 
   const getCurrentFilterState = useCallback(() => {
     const currentType = getCurrentVolunteerType(tabValue);
-    return filterStates[currentType] || {
-      filter: '',
-      statusFilter: 'all',
-      inPersonFilter: 'all',
-      checkedInFilter: 'all',
-      sortBy: 'timestamp',
-      sortOrder: 'desc',
-      showBatchActions: false
-    };
+    return filterStates[currentType] || DEFAULT_FILTER_STATE;
   }, [tabValue, filterStates]);
 
-  // Get searchable fields for each volunteer type
-  const getSearchableFields = useCallback((volunteer, type) => {
-    // Helper function to safely get field value
-    const getFieldValue = (field) => {
-      if (field === null || field === undefined) return '';
-      if (typeof field === 'string') return field.trim();
-      if (typeof field === 'boolean') return field.toString();
-      if (Array.isArray(field)) return field.join(' ');
-      return field.toString();
-    };
-
-    const commonFields = [
-      volunteer.name,
-      volunteer.email,
-      volunteer.pronouns,
-      volunteer.company,
-      volunteer.companyName,
-      volunteer.linkedinProfile
-    ];
-
-    switch (type) {
-      case "mentors":
-        return [
-          ...commonFields,
-          volunteer.expertise,
-          volunteer.country,
-          volunteer.state,
-          volunteer.title,
-          volunteer.bio,
-          volunteer.availability,
-          volunteer.mentorshipAreas,
-          volunteer.previousMentoring
-        ].map(getFieldValue);
-
-      case "judges":
-        return [
-          ...commonFields,
-          volunteer.title,
-          volunteer.background,
-          volunteer.backgroundAreas,
-          volunteer.biography,
-          volunteer.shortBio,
-          volunteer.shortBiography,
-          volunteer.whyJudge,
-          volunteer.additionalInfo,
-          volunteer.availability,
-          volunteer.canAttendJudging,
-          volunteer.participationCount,
-          volunteer.otherBackground,
-          volunteer.country,
-          volunteer.state,
-          volunteer.inPerson
-        ].map(getFieldValue);
-
-      case "volunteers":
-        return [
-          ...commonFields,
-          volunteer.title,
-          volunteer.volunteerType,
-          volunteer.volunteerRole,
-          volunteer.experienceLevel,
-          volunteer.availability,
-          volunteer.availableDays,
-          volunteer.skills,
-          volunteer.previousVolunteering,
-          volunteer.motivation,
-          volunteer.bio,
-          volunteer.shortBio,
-          volunteer.socialCauses,
-          volunteer.otherSocialCause,
-          volunteer.linkedin,
-          volunteer.linkedinProfile,
-          volunteer.portfolio,
-          ...(volunteer.artifacts || []).map(artifact => [
-            artifact.label,
-            artifact.comment
-          ]).flat()
-        ].map(getFieldValue);
-
-      case "hackers":
-        return [
-          ...commonFields,
-          volunteer.participantType,
-          volunteer.experienceLevel,
-          volunteer.teamStatus,
-          volunteer.primaryRoles,
-          volunteer.skills,
-          volunteer.schoolOrganization,
-          volunteer.bio,
-          volunteer.motivation,
-          volunteer.socialCauses,
-          volunteer.github,
-          volunteer.portfolio
-        ].map(getFieldValue);
-
-      case "sponsors":
-        return [
-          ...commonFields,
-          volunteer.sponsorshipTypes,
-          volunteer.sponsorshipTier,
-          volunteer.sponsorshipDetails,
-          volunteer.sponsorshipLevel,
-          volunteer.title,
-          volunteer.contactName,
-          volunteer.industry,
-          volunteer.employeeCount,
-          volunteer.website,
-          volunteer.specialRequests,
-          volunteer.bio,
-          volunteer.volunteerType,
-          volunteer.volunteerCount,
-          volunteer.volunteerHours,
-          volunteer.phoneNumber,
-          volunteer.preferredContact,
-          volunteer.useLogo,
-          volunteer.howHeard,
-          volunteer.otherInvolvement
-        ].map(getFieldValue);
-
-      default:
-        return commonFields.map(getFieldValue);
-    }
+  // ONE edit entry point for both Table view and Review mode.
+  const handleEditVolunteer = useCallback((volunteer) => {
+    if (!volunteer?.id) return;
+    setEditingVolunteerId(volunteer.id);
+    setIsAdding(false);
+    setEditDialogOpen(true);
   }, []);
 
-  const handleEditVolunteer = useCallback(
-    (volunteer) => {
-      setEditingVolunteer({
-        ...volunteer,
-        type: getCurrentVolunteerType(tabValue),
-      });
-      setIsAdding(false);
-      setEditDialogOpen(true);
-    },
-    [tabValue]
-  );
+  const handleCloseEdit = useCallback(() => {
+    setEditDialogOpen(false);
+    setEditingVolunteerId(null);
+    setAddDraft(null);
+  }, []);
 
   const handleMessageVolunteer = useCallback((volunteer) => {
     setSelectedVolunteerForMessage({
@@ -872,15 +729,19 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
     setVolunteerTypeForSlackInvite('');
   }, []);
 
-  const handleBatchEmail = useCallback((volunteers, type, isSelected = true) => {
+  // audience: "roster" (isSelected) | "denied" | "waitlisted" (by status).
+  // Rejection emails key on status — NOT on "not selected", which under the
+  // two-axis model also covers pending and approved-but-unpublished people.
+  const handleBatchEmail = useCallback((volunteers, type, audience = "roster") => {
     setVolunteersForBatchEmail(volunteers);
     setVolunteerTypeForBatchEmail(type);
-    setIsSelectedUsersForEmail(isSelected);
+    setEmailAudience(typeof audience === "string" ? audience : audience === false ? "denied" : "roster");
     setBatchEmailDialogOpen(true);
   }, []);
 
   const handleBatchEmailComplete = useCallback((summary) => {
-    const messageType = isSelectedUsersForEmail ? 'Batch emails' : 'Rejection emails';
+    const messageType =
+      emailAudience === "denied" ? 'Denial emails' : emailAudience === "waitlisted" ? 'Waitlist emails' : 'Roster emails';
     setSnackbar({
       open: true,
       message: `${messageType} completed: ${summary.successful} successful, ${summary.failed} failed`,
@@ -889,8 +750,8 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
     setBatchEmailDialogOpen(false);
     setVolunteersForBatchEmail([]);
     setVolunteerTypeForBatchEmail('');
-    setIsSelectedUsersForEmail(true);
-  }, [isSelectedUsersForEmail]);
+    setEmailAudience("roster");
+  }, [emailAudience]);
 
   const handleBulkCertificate = useCallback((volunteers, type) => {
     setVolunteersForBulkCertificate(volunteers);
@@ -913,315 +774,234 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   }, [fetchVolunteers]);
 
   const handleAddSingleVolunteer = useCallback(() => {
-    setEditingVolunteer({
-      type: getCurrentVolunteerType(tabValue),
+    setAddDraft({
+      volunteer_type: getCurrentVolunteerTypeSingular(tabValue),
       name: "",
-      photoUrl: "",
-      linkedinProfile: "",
-      isInPerson: false,
+      email: "",
       isSelected: false,
-      pronouns: "",
-      slack_user_id: "",
+      status: "pending",
     });
     setIsAdding(true);
     setEditDialogOpen(true);
   }, [tabValue]);
 
-  const handleSaveEdit = useCallback(async () => {
-    if (!selectedEventId) return;
-    
-    setLoading(true);
-    try {
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${getCurrentVolunteerTypeSingular(tabValue)}`;
-      const method = isAdding ? "POST" : "PATCH";
+  // ---------------------------------------------------------------------
+  // Decision writes — two transports, one optimistic layer.
+  //   review  (status)      → generic hackathon PATCH `{ id, status }`
+  //   roster  (isSelected)  → dedicated select route `{ selected }`
+  // `isSelected` never travels in a PATCH body from the admin UI; the select
+  // route is the single server-side writer (clears the participant's own
+  // caches, audits to Slack).
+  // ---------------------------------------------------------------------
+  const authHeaders = useCallback(() => ({
+    authorization: `Bearer ${accessToken}`,
+    "content-type": "application/json",
+    "X-Org-Id": orgId,
+  }), [accessToken, orgId]);
 
-      const volunteerData = {
-        ...editingVolunteer,
-        timestamp: isAdding
-          ? new Date().toISOString()
-          : editingVolunteer.timestamp,
-      };
+  const patchVolunteer = useCallback(async (patch) => {
+    const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${getCurrentVolunteerTypeSingular(tabValue)}`;
+    const res = await fetch(url, { method: "PATCH", headers: authHeaders(), body: JSON.stringify(patch) });
+    if (!res.ok) throw new Error(`PATCH failed (${res.status})`);
+    return res;
+  }, [selectedEventId, tabValue, authHeaders]);
 
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          "content-type": "application/json",
-          "X-Org-Id": orgId,
-        },
-        body: JSON.stringify(volunteerData),
-      });
+  const selectVolunteer = useCallback(async (id, selected) => {
+    const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/volunteer/${id}/select`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ selected: Boolean(selected) }),
+    });
+    if (!res.ok) throw new Error(`Roster update failed (${res.status})`);
+    return res;
+  }, [authHeaders]);
 
-      if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: isAdding
-            ? "Volunteer added successfully"
-            : "Volunteer updated successfully",
-          severity: "success",
-        });
-        // Reset data flag to force refresh after editing
-        dataLoadedRef.current = false;
-        fetchVolunteers();
-      } else {
-        throw new Error(
-          isAdding ? "Failed to add volunteer" : "Failed to update volunteer"
-        );
-      }
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: `Failed to ${isAdding ? "add" : "update"} volunteer. Please try again.`,
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-      setEditDialogOpen(false);
-    }
-  }, [
-    editingVolunteer,
-    isAdding,
-    accessToken,
-    orgId,
-    fetchVolunteers,
-    tabValue,
-    selectedEventId,
-  ]);
+  const applyLocal = useCallback((id, changes) => {
+    const plural = getCurrentVolunteerType(tabValue);
+    setVolunteers((prev) => ({
+      ...prev,
+      [plural]: (prev[plural] || []).map((v) => (v?.id === id ? { ...v, ...changes } : v)),
+    }));
+  }, [tabValue]);
 
-  // Application review functions
-  const handleApproveApplication = useCallback(async (application) => {
-    if (!selectedEventId) return;
-    
-    setLoading(true);
-    try {
-      const currentType = getCurrentVolunteerTypeSingular(tabValue);
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
-      
-      const updatedApplication = {
-        ...application,
-        isSelected: true
-      };
-
-      const response = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          "content-type": "application/json",
-          "X-Org-Id": orgId,
-        },
-        body: JSON.stringify(updatedApplication),
-      });
-
-      if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: "Application approved successfully",
-          severity: "success",
-        });
-        fetchVolunteers();
-      } else {
-        throw new Error("Failed to approve application");
-      }
-    } catch (error) {
-      console.error('Error approving application:', error);
-      setSnackbar({
-        open: true,
-        message: "Failed to approve application. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, orgId, fetchVolunteers, tabValue, selectedEventId]);
-
-  const handleRejectApplication = useCallback(async (application) => {
-    if (!selectedEventId) return;
-    
-    setLoading(true);
-    try {
-      const currentType = getCurrentVolunteerTypeSingular(tabValue);
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
-      
-      const updatedApplication = {
-        ...application,
-        isSelected: false
-      };
-
-      const response = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          "content-type": "application/json",
-          "X-Org-Id": orgId,
-        },
-        body: JSON.stringify(updatedApplication),
-      });
-
-      if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: "Application rejected successfully",
-          severity: "success",
-        });
-        fetchVolunteers();
-      } else {
-        throw new Error("Failed to reject application");
-      }
-    } catch (error) {
-      console.error('Error rejecting application:', error);
-      setSnackbar({
-        open: true,
-        message: "Failed to reject application. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, orgId, fetchVolunteers, tabValue, selectedEventId]);
-
-  const handleBatchApproveApplications = useCallback(async (applications) => {
-    if (!selectedEventId || applications.length === 0) return;
-    
-    setLoading(true);
-    try {
-      const currentType = getCurrentVolunteerTypeSingular(tabValue);
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
-      
-      // Process applications in batches
-      await Promise.all(applications.map(async (application) => {
-        const updatedApplication = {
-          ...application,
-          isSelected: true
-        };
-
-        const response = await fetch(url, {
-          method: "PATCH",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            "content-type": "application/json",
-            "X-Org-Id": orgId,
-          },
-          body: JSON.stringify(updatedApplication),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to approve application for ${application.name || 'Unknown'}`);
-        }
-      }));
-
-      setSnackbar({
-        open: true,
-        message: `Successfully approved ${applications.length} applications`,
-        severity: "success",
-      });
-      fetchVolunteers();
-    } catch (error) {
-      console.error('Error batch approving applications:', error);
-      setSnackbar({
-        open: true,
-        message: "Failed to approve some applications. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, orgId, fetchVolunteers, tabValue, selectedEventId]);
-
-  const handleBatchRejectApplications = useCallback(async (applications) => {
-    if (!selectedEventId || applications.length === 0) return;
-    
-    setLoading(true);
-    try {
-      const currentType = getCurrentVolunteerTypeSingular(tabValue);
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
-      
-      // Process applications in batches
-      await Promise.all(applications.map(async (application) => {
-        const updatedApplication = {
-          ...application,
-          isSelected: false
-        };
-
-        const response = await fetch(url, {
-          method: "PATCH",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            "content-type": "application/json",
-            "X-Org-Id": orgId,
-          },
-          body: JSON.stringify(updatedApplication),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to reject application for ${application.name || 'Unknown'}`);
-        }
-      }));
-
-      setSnackbar({
-        open: true,
-        message: `Successfully rejected ${applications.length} applications`,
-        severity: "success",
-      });
-      fetchVolunteers();
-    } catch (error) {
-      console.error('Error batch rejecting applications:', error);
-      setSnackbar({
-        open: true,
-        message: "Failed to reject some applications. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, orgId, fetchVolunteers, tabValue, selectedEventId]);
-
-  // Application edit functions
-  const handleEditApplication = useCallback((application) => {
-    setEditingApplication(application);
-    setApplicationEditDialogOpen(true);
+  const markPending = useCallback((ids, on) => {
+    setPendingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+      return next;
+    });
   }, []);
 
-  const handleSaveApplicationEdit = useCallback(async (updatedApplication) => {
-    if (!selectedEventId) return;
-    
-    setLoading(true);
-    try {
-      const currentType = getCurrentVolunteerTypeSingular(tabValue);
-      const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${currentType}`;
-      
-      const response = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          "content-type": "application/json",
-          "X-Org-Id": orgId,
-        },
-        body: JSON.stringify(updatedApplication),
-      });
+  const snack = useCallback((message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+    // Embedded mode: AdminPage's Snackbar isn't mounted, the host page owns it.
+    if (embedded && typeof onSnack === "function") onSnack(message, severity);
+  }, [embedded, onSnack]);
 
-      if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: "Application updated successfully",
-          severity: "success",
-        });
-        fetchVolunteers();
-        setApplicationEditDialogOpen(false);
-        setEditingApplication(null);
-      } else {
-        throw new Error("Failed to update application");
-      }
+  // Optimistic single write with revert.
+  const writeDecision = useCallback(async (application, changes, send, successMsg) => {
+    const id = application?.id;
+    if (!id) return;
+    const previous = Object.fromEntries(Object.keys(changes).map((k) => [k, application[k]]));
+    applyLocal(id, changes);
+    markPending([id], true);
+    try {
+      await send();
+      snack(successMsg, "success");
     } catch (error) {
-      console.error('Error updating application:', error);
-      setSnackbar({
-        open: true,
-        message: "Failed to update application. Please try again.",
-        severity: "error",
-      });
+      console.error("Decision write failed:", error);
+      applyLocal(id, previous);
+      snack(`Couldn't update ${application.name || "application"}. Please try again.`, "error");
     } finally {
-      setLoading(false);
+      markPending([id], false);
     }
-  }, [accessToken, orgId, fetchVolunteers, tabValue, selectedEventId]);
+  }, [applyLocal, markPending, snack]);
+
+  const handleStatusChange = useCallback((application, status) =>
+    writeDecision(
+      application,
+      { status },
+      () => patchVolunteer({ id: application.id, status }),
+      `${application.name || "Application"}: ${statusLabel(status)}`,
+    ), [writeDecision, patchVolunteer]);
+
+  const handleRosterChange = useCallback((application, selected) =>
+    writeDecision(
+      application,
+      { isSelected: Boolean(selected) },
+      () => selectVolunteer(application.id, selected),
+      `${application.name || "Application"}: ${selected ? "added to" : "removed from"} the roster`,
+    ), [writeDecision, selectVolunteer]);
+
+  // Batch: allSettled + per-item revert + one summary snackbar.
+  const handleBatchDecision = useCallback(async (apps, changes, sendOne, label) => {
+    const valid = (apps || []).filter((a) => a?.id);
+    if (valid.length === 0) return;
+    valid.forEach((a) => applyLocal(a.id, changes));
+    markPending(valid.map((a) => a.id), true);
+    const results = await Promise.allSettled(valid.map((a) => sendOne(a)));
+    let failed = 0;
+    results.forEach((r, i) => {
+      if (r.status === "rejected") {
+        failed += 1;
+        const a = valid[i];
+        applyLocal(a.id, Object.fromEntries(Object.keys(changes).map((k) => [k, a[k]])));
+      }
+    });
+    markPending(valid.map((a) => a.id), false);
+    snack(
+      failed ? `${valid.length - failed} ${label}, ${failed} failed` : `${valid.length} ${label}`,
+      failed ? "warning" : "success",
+    );
+  }, [applyLocal, markPending, snack]);
+
+  const handleBatchStatus = useCallback((apps, status) =>
+    handleBatchDecision(
+      apps,
+      { status },
+      (a) => patchVolunteer({ id: a.id, status }),
+      `set to ${statusLabel(status)}`,
+    ), [handleBatchDecision, patchVolunteer]);
+
+  const runBatchRoster = useCallback((apps, selected) =>
+    handleBatchDecision(
+      apps,
+      { isSelected: Boolean(selected) },
+      (a) => selectVolunteer(a.id, selected),
+      selected ? "added to the roster" : "removed from the roster",
+    ), [handleBatchDecision, selectVolunteer]);
+
+  // Bulk roster changes are consequential and un-emailed → confirm first.
+  const handleBatchRoster = useCallback((apps, direction) => {
+    const dir = Boolean(direction);
+    const valid = (apps || []).filter((a) => a?.id && Boolean(a.isSelected) !== dir);
+    setRosterConfirm({ apps: valid, direction: dir });
+  }, []);
+
+  const handleRosterConfirm = useCallback(async () => {
+    if (!rosterConfirm) return;
+    const { apps, direction } = rosterConfirm;
+    setRosterConfirm(null);
+    await runBatchRoster(apps, direction);
+  }, [rosterConfirm, runBatchRoster]);
+
+  // Live row for the edit dialog (see "Stale selected item snapshots" in CLAUDE.md).
+  const editingVolunteer = useMemo(() => {
+    if (isAdding) return addDraft;
+    if (!editingVolunteerId) return null;
+    const list = volunteers?.[getCurrentVolunteerType(tabValue)] || [];
+    return list.find((v) => v?.id === editingVolunteerId) || null;
+  }, [isAdding, addDraft, editingVolunteerId, volunteers, tabValue]);
+
+  // Dialog hands back { patch, roster } (edit) or { create, roster } (add).
+  // Fields + status ride the PATCH; the roster switch rides the select route.
+  const handleSaveEdit = useCallback(async ({ patch, roster = null, create } = {}) => {
+    if (!selectedEventId) return;
+    setSaving(true);
+    try {
+      if (isAdding) {
+        const url = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${selectedEventId}/${getCurrentVolunteerTypeSingular(tabValue)}`;
+        const res = await fetch(url, { method: "POST", headers: authHeaders(), body: JSON.stringify(create) });
+        if (!res.ok) throw new Error(`POST failed (${res.status})`);
+        dataLoadedRef.current = false;
+        await fetchVolunteers();
+        snack(
+          roster === true
+            ? "Volunteer added. Use the roster toggle on their row to add them to the roster."
+            : "Volunteer added",
+          roster === true ? "info" : "success",
+        );
+        handleCloseEdit();
+        return;
+      }
+
+      const id = patch?.id;
+      if (!id) throw new Error("Missing id");
+      const { id: _omit, ...changes } = patch;
+      const changedCount = Object.keys(changes).length;
+      if (changedCount > 0) {
+        applyLocal(id, changes);
+        await patchVolunteer(patch);
+      }
+      if (roster !== null && roster !== undefined) {
+        try {
+          applyLocal(id, { isSelected: roster });
+          await selectVolunteer(id, roster);
+        } catch (rosterError) {
+          console.error("Roster update failed:", rosterError);
+          applyLocal(id, { isSelected: !roster });
+          snack(
+            changedCount > 0
+              ? "Details saved. Roster change failed — try the toggle again."
+              : "Roster change failed — try the toggle again.",
+            "warning",
+          );
+          handleCloseEdit();
+          return;
+        }
+      }
+      const rosterMsg = roster === null || roster === undefined ? "" : roster ? " · added to roster" : " · removed from roster";
+      snack(
+        changedCount > 0
+          ? `Saved ${changedCount} change${changedCount === 1 ? "" : "s"}${rosterMsg}`
+          : rosterMsg
+            ? rosterMsg.replace(" · ", "").replace(/^./, (c) => c.toUpperCase())
+            : "No changes",
+        "success",
+      );
+      handleCloseEdit();
+    } catch (error) {
+      console.error("Save failed:", error);
+      snack(isAdding ? "Failed to add volunteer. Please try again." : "Save failed — reloading the list.", "error");
+      if (!isAdding) {
+        dataLoadedRef.current = false;
+        fetchVolunteers();
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [selectedEventId, isAdding, tabValue, authHeaders, fetchVolunteers, applyLocal, patchVolunteer, selectVolunteer, snack, handleCloseEdit]);
 
   const sortedVolunteers = useMemo(() => {
     const currentVolunteers = volunteers?.[getCurrentVolunteerType(tabValue)] || [];
@@ -1256,6 +1036,13 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         } else if (orderBy === "participationCount") {
           valueA = parseParticipationYear(a?.participationCount);
           valueB = parseParticipationYear(b?.participationCount);
+        } else if (orderBy === "status") {
+          valueA = statusSortIndex(a?.status);
+          valueB = statusSortIndex(b?.status);
+        } else if (orderBy === "company") {
+          // Judges store `companyName` (VolunteerTable renders both).
+          valueA = (a?.company || a?.companyName || "").toLowerCase();
+          valueB = (b?.company || b?.companyName || "").toLowerCase();
         } else {
           valueA = (a?.[orderBy] || "").toString().toLowerCase();
           valueB = (b?.[orderBy] || "").toString().toLowerCase();
@@ -1275,15 +1062,11 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         
         const searchValue = filter.toLowerCase();
         const currentType = getCurrentVolunteerType(tabValue);
-        const searchableFields = getSearchableFields(volunteer, currentType);
-        
-        return searchableFields.some(field => {
-          // Field is already processed by getFieldValue in getSearchableFields
-          if (!field || field === '') return false;
-          return field.toLowerCase().includes(searchValue);
-        });
+        return getSearchValues(volunteer, currentType).some((v) =>
+          v.toLowerCase().includes(searchValue)
+        );
       });
-  }, [volunteers, getSearchableFields, orderBy, order, filter, tabValue]);
+  }, [volunteers, orderBy, order, filter, tabValue]);
 
   // Add error boundary-like behavior
   if (!router) {
@@ -1665,8 +1448,16 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
                 onMessageVolunteer={handleMessageVolunteer}
                 onSlackInvite={handleSlackInvite}
                 onBatchEmail={handleBatchEmail}
-                onBatchEmailNotSelected={handleBatchEmail}
                 onBulkCertificate={handleBulkCertificate}
+                onStatusChange={handleStatusChange}
+                onRosterChange={handleRosterChange}
+                pendingIds={pendingIds}
+                statusFilter={getCurrentFilterState().statusFilter}
+                onStatusFilterChange={(value) => updateFilterState('statusFilter', value)}
+                selectedFilter={getCurrentFilterState().selectedFilter}
+                onSelectedFilterChange={(value) => updateFilterState('selectedFilter', value)}
+                preset={getCurrentFilterState().preset}
+                onPresetChange={(value) => updateFilterState('preset', value)}
                 checkedInFilter={getCurrentFilterState().checkedInFilter}
                 onCheckedInFilterChange={(value) => updateFilterState('checkedInFilter', value)}
                 accessToken={accessToken}
@@ -1690,11 +1481,12 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
             <ApplicationReviewList
               applications={sortedVolunteers}
               applicationType={getCurrentVolunteerTypeSingular(tabValue)}
-              onApprove={handleApproveApplication}
-              onReject={handleRejectApplication}
-              onEdit={handleEditApplication}
-              onBatchApprove={handleBatchApproveApplications}
-              onBatchReject={handleBatchRejectApplications}
+              onStatusChange={handleStatusChange}
+              onRosterChange={handleRosterChange}
+              onEdit={handleEditVolunteer}
+              onBatchStatus={handleBatchStatus}
+              onBatchRoster={handleBatchRoster}
+              pendingIds={pendingIds}
               isLoading={loading}
               eventId={selectedEventId}
               trainingStatusByEmail={trainingStatusByEmail}
@@ -1703,6 +1495,8 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
               // Controlled filter state
               filter={getCurrentFilterState().filter}
               statusFilter={getCurrentFilterState().statusFilter}
+              selectedFilter={getCurrentFilterState().selectedFilter}
+              preset={getCurrentFilterState().preset}
               inPersonFilter={getCurrentFilterState().inPersonFilter}
               checkedInFilter={getCurrentFilterState().checkedInFilter}
               sortBy={getCurrentFilterState().sortBy}
@@ -1711,6 +1505,8 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
               // Filter change callbacks
               onFilterChange={(value) => updateFilterState('filter', value)}
               onStatusFilterChange={(value) => updateFilterState('statusFilter', value)}
+              onSelectedFilterChange={(value) => updateFilterState('selectedFilter', value)}
+              onPresetChange={(value) => updateFilterState('preset', value)}
               onInPersonFilterChange={(value) => updateFilterState('inPersonFilter', value)}
               onCheckedInFilterChange={(value) => updateFilterState('checkedInFilter', value)}
               onSortByChange={(value) => updateFilterState('sortBy', value)}
@@ -1746,25 +1542,24 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         </DialogContent>
       </Dialog>
 
+      {/* ONE edit dialog for both views; receives the live row by id. */}
       <VolunteerEditDialog
         open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
+        onClose={handleCloseEdit}
         volunteer={editingVolunteer}
+        volunteerType={getCurrentVolunteerTypeSingular(tabValue)}
         onSave={handleSaveEdit}
-        onChange={handleEditChange}
         isAdding={isAdding}
+        saving={saving}
       />
 
-      <ApplicationEditDialog
-        open={applicationEditDialogOpen}
-        onClose={() => {
-          setApplicationEditDialogOpen(false);
-          setEditingApplication(null);
-        }}
-        application={editingApplication}
-        applicationType={getCurrentVolunteerTypeSingular(tabValue)}
-        onSave={handleSaveApplicationEdit}
-        isLoading={loading}
+      {/* Bulk roster changes confirm first (consequential, un-emailed). */}
+      <RosterConfirmDialog
+        open={Boolean(rosterConfirm)}
+        count={rosterConfirm?.apps?.length || 0}
+        direction={rosterConfirm?.direction ?? true}
+        onClose={() => setRosterConfirm(null)}
+        onConfirm={handleRosterConfirm}
       />
 
       {/* Volunteer Communication Dialog */}
@@ -1810,7 +1605,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
           setBatchEmailDialogOpen(false);
           setVolunteersForBatchEmail([]);
           setVolunteerTypeForBatchEmail('');
-          setIsSelectedUsersForEmail(true);
+          setEmailAudience("roster");
         }}
         volunteers={volunteersForBatchEmail}
         volunteerType={volunteerTypeForBatchEmail}
@@ -1818,7 +1613,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         orgId={orgId}
         eventId={selectedEventId}
         onComplete={handleBatchEmailComplete}
-        isSelectedUsers={isSelectedUsersForEmail}
+        audience={emailAudience}
       />
 
       {/* Bulk Certificate Dialog */}

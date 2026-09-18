@@ -36,6 +36,7 @@ import { trackEvent } from '../../lib/ga';
 import axios from 'axios';
 import { useAuthInfo } from '@propelauth/react';
 import StepHeader from './StepHeader';
+import { DonateLink } from '../design/DonateNudge';
 
 // Styled components
 const RatingContainer = styled(Box)(({ theme }) => ({
@@ -360,6 +361,10 @@ const FeedbackSection = () => {
                 {contactForFollowup ? 
                   `We'll be in touch with you soon at ${email} to discuss your feedback further.` : 
                   'You can edit your feedback if you\'d like to make any changes.'}
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '1.05rem', color: 'text.secondary', maxWidth: '46ch', mx: 'auto' }}>
+                If you'd like to help keep Opportunity Hack free for the nonprofits we serve, you can{' '}
+                <DonateLink placement="onboarding_feedback_thanks">make a donation</DonateLink>.
               </Typography>
               <Button 
                 variant="outlined" 

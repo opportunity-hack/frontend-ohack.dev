@@ -14,11 +14,11 @@ import * as ga from "../lib/ga";
 import { sponsors } from "../data/sponsorData";
 import {
   RefinedRoot,
-  RefinedFonts,
   Eyebrow,
   Stat,
   Arrow,
 } from "../components/design/refined";
+import { DonateLink } from "../components/design/DonateNudge";
 
 // Newsletter form is kept (it's a real conversion surface) but rendered inside
 // a calm band rather than competing with the hero.
@@ -137,7 +137,6 @@ export default function Home() {
           content="Since 2013, Opportunity Hack has connected 3,000+ developers with 200+ nonprofits to build free software for social good. Join our annual hackathon at ASU."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <RefinedFonts />
       </Head>
 
       <RefinedRoot>
@@ -365,10 +364,14 @@ export default function Home() {
               />
             ))}
           </div>
-          <div style={{ marginTop: 32, display: "flex", flexWrap: "wrap", gap: 24, justifyContent: "center" }}>
+          <p className="ohx-muted" style={{ marginTop: 26, marginBottom: 0, fontSize: 15 }}>
+            …and by individual donors who keep every project free for the nonprofits we serve.
+          </p>
+          <div style={{ marginTop: 22, display: "flex", flexWrap: "wrap", gap: 24, justifyContent: "center" }}>
             <Link href="/sponsor" className="ohx-link">
               Become a sponsor <Arrow />
             </Link>
+            <DonateLink placement="home_sponsors" />
             <Link href="/recruit-tech-talent" className="ohx-link">
               Hiring? Recruit tech talent <Arrow />
             </Link>

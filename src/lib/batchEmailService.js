@@ -12,6 +12,7 @@
  */
 
 import { replacePlaceholders } from "./messageTemplates";
+import { normalizeStatus } from "./applicationStatus";
 
 // Recipients sourced from Slack carry a Slack ID in user.id, which is NOT a
 // user-doc id — they must go down the email-only path, never /api/admin/{id}/message.
@@ -388,15 +389,35 @@ class BatchEmailService {
   }
 
   /**
-   * Filter users who are NOT selected and have email addresses (for rejection emails)
+   * Filter users who are NOT on the roster and have email addresses.
+   * @deprecated Rejection emails must key on `status === "denied"` — use
+   * `filterUsersByAudience(users, "denied")`. "Not selected" also covers
+   * pending and approved-but-unpublished applicants.
    * @param {Array} users - Array of user objects
-   * @returns {Array} Filtered users ready for rejection email sending
+   * @returns {Array} Filtered users
    */
   static filterNotSelectedUsers(users) {
     return users.filter(
       (user) =>
         !user.isSelected && user.email && user.email.trim() !== "" && user.id, // Must have an ID for the API endpoint
     );
+  }
+
+  /**
+   * Audience-based recipient filter for the volunteer admin.
+   *  - "roster"     → isSelected (on the public event page / participant tools)
+   *  - "denied"     → application status === "denied"   (review axis)
+   *  - "waitlisted" → application status === "waitlisted"
+   * All audiences also require an email and a doc id.
+   * @param {Array} users
+   * @param {"roster"|"denied"|"waitlisted"} audience
+   */
+  static filterUsersByAudience(users, audience = "roster") {
+    const hasContact = (user) => user.email && user.email.trim() !== "" && user.id;
+    if (audience === "roster") return BatchEmailService.filterEligibleUsers(users);
+    const wanted = audience === "denied" ? "denied" : audience === "waitlisted" ? "waitlisted" : null;
+    if (!wanted) return [];
+    return users.filter((user) => normalizeStatus(user.status) === wanted && hasContact(user));
   }
 
   /**

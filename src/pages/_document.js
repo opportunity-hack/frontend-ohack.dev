@@ -36,7 +36,7 @@ export default function Document() {
                             gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}', {
                                 page_path: window.location.pathname,
                             });
-                            gtag('config', 'AW-11474351176');
+                            ${process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ? `gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ADS_ID}');` : ''}
                         `,
           }}
         />

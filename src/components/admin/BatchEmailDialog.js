@@ -132,7 +132,11 @@ const BatchEmailDialog = ({
   orgId,
   eventId,
   onComplete,
-  isSelectedUsers = true, // true for selected/approved users, false for not-selected/rejected users
+  // audience: "roster" (isSelected — on the event page), "denied" or
+  // "waitlisted" (application status). Rejection emails key on STATUS, never
+  // on "not selected" — that also covers pending / approved-unpublished people.
+  audience,
+  isSelectedUsers = true, // legacy boolean; ignored when `audience` is given
   onSnack, // optional page-level snackbar; there is no SnackbarProvider in the app, so notistack calls are silently swallowed without this
 }) => {
   const { enqueueSnackbar: notistackEnqueue } = useSnackbar();
@@ -178,9 +182,19 @@ const BatchEmailDialog = ({
   const autoAppliedMessageRef = React.useRef(null);
 
   // Filter eligible users when volunteers change based on context
-  const allEligibleUsers = isSelectedUsers
-    ? BatchEmailService.filterEligibleUsers(volunteers)
-    : BatchEmailService.filterNotSelectedUsers(volunteers);
+  const effectiveAudience =
+    audience || (isSelectedUsers === false ? "denied" : "roster");
+  const isRosterAudience = effectiveAudience === "roster";
+  const audienceNoun =
+    effectiveAudience === "denied"
+      ? "denied"
+      : effectiveAudience === "waitlisted"
+        ? "waitlisted"
+        : "on-roster";
+  const allEligibleUsers = BatchEmailService.filterUsersByAudience(
+    volunteers,
+    effectiveAudience,
+  );
   const eligibleUsers = allEligibleUsers.filter(
     (u) => !removedEmails.has(u.email),
   );
@@ -209,12 +223,21 @@ const BatchEmailDialog = ({
       setRemovedEmails(new Set());
       setProgressAction("Sending");
       autoAppliedMessageRef.current = null;
-    } else if (!isSelectedUsers) {
-      // Auto-suggest the appropriate denial template for not-selected users
+    } else if (!isRosterAudience) {
+      // Auto-suggest the matching template for the audience: denial
+      // templates for status=denied, the hacker waitlist template for
+      // status=waitlisted (other types have no waitlist template yet).
+      const isJudge = volunteerType === "judge" || volunteerType === "judges";
+      const isHacker = volunteerType === "hacker" || volunteerType === "hackers";
       const templateId =
-        volunteerType === "judge" || volunteerType === "judges"
-          ? "judge_application_denied"
-          : "application_denied";
+        effectiveAudience === "waitlisted"
+          ? isHacker
+            ? "hacker_waitlisted"
+            : null
+          : isJudge
+            ? "judge_application_denied"
+            : "application_denied";
+      if (!templateId) return;
       // Prefer the admin-managed version; fall back to the hardcoded one
       const denialTemplate =
         getTemplateById(templateId, templates) || getTemplateById(templateId);
@@ -273,7 +296,7 @@ const BatchEmailDialog = ({
     }
     // messageText intentionally omitted: the untouched-guard reads it via
     // closure and re-running this effect per keystroke would be wasteful.
-  }, [open, isSelectedUsers, eventId, volunteerType, recipientType, templates]);
+  }, [open, effectiveAudience, isRosterAudience, eventId, volunteerType, recipientType, templates]);
 
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template);
@@ -605,9 +628,11 @@ const BatchEmailDialog = ({
         <Box display="flex" alignItems="center" gap={1}>
           <EmailIcon color="primary" />
           <Typography variant="h6">
-            {isSelectedUsers
-              ? `Send Batch Email to Selected ${volunteerType}`
-              : `Send Rejection Email to Not Selected ${volunteerType}`}
+            {isRosterAudience
+              ? `Email the ${volunteerType} roster`
+              : effectiveAudience === "waitlisted"
+                ? `Email waitlisted ${volunteerType}`
+                : `Email denied ${volunteerType}`}
           </Typography>
         </Box>
         <Stepper activeStep={currentStep} sx={{ mt: 2 }}>
@@ -623,9 +648,8 @@ const BatchEmailDialog = ({
         {/* Eligible Users Summary */}
         <Alert severity="info" sx={{ mb: 2 }}>
           <Typography variant="body2">
-            Found <strong>{eligibleUsers.length}</strong>{" "}
-            {isSelectedUsers ? "selected" : "not selected"}{" "}
-            {volunteerType.toLowerCase()}
+            Found <strong>{eligibleUsers.length}</strong> {audienceNoun}{" "}
+            {volunteerType.toLowerCase()}{" "}
             with email addresses out of <strong>
               {volunteers.length}
             </strong>{" "}
@@ -635,9 +659,11 @@ const BatchEmailDialog = ({
 
         {eligibleUsers.length === 0 ? (
           <Alert severity="warning">
-            No eligible users found. Users must be{" "}
-            {isSelectedUsers ? "selected" : "not selected"} and have email
-            addresses to receive emails.
+            No eligible users found. Users must be {audienceNoun}
+            {isRosterAudience
+              ? " (on the event roster)"
+              : ` (application status “${effectiveAudience}”)`}{" "}
+            and have email addresses to receive emails.
           </Alert>
         ) : (
           <>
@@ -750,7 +776,7 @@ const BatchEmailDialog = ({
             {/* Step 1: Review & Customize */}
             {currentStep === 1 && (
               <Box>
-                {!isSelectedUsers &&
+                {!isRosterAudience &&
                   selectedTemplate?.id === "application_denied" && (
                     <Alert severity="info" sx={{ mb: 2 }}>
                       <Typography variant="body2">
