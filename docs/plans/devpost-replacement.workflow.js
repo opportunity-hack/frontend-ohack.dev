@@ -66,7 +66,7 @@ const fronts = await pipeline(
   WS,
   (ws) =>
     agent(
-      `Execute ${ws.key} (${ws.title}) of the plan. You are in an isolated git worktree of ${FRONT}; create and commit on a branch named ws/${ws.key.toLowerCase()} inside it. WS-0 modules already exist on the base branch - import them, never recreate. A backend bound to the TEST Firestore runs on http://localhost:6060 (the only backend you may use; endpoints with Slack side effects are verified via pytest, see the plan's Verification safety rule); every new endpoint must degrade gracefully on 404. Run eslint + prettier on touched files and npm test for any test you add. ${COMMON}`,
+      `Execute ${ws.key} (${ws.title}) of the plan. You are in an isolated git worktree of ${FRONT}; first run: ln -s ${FRONT}/node_modules node_modules && cp -n ${FRONT}/.env .env (the worktree has neither); create and commit on a branch named ws/${ws.key.toLowerCase()} inside it (never commit node_modules or .env). WS-0 modules already exist on the base branch - import them, never recreate. A backend bound to the TEST Firestore runs on http://localhost:6060 (the only backend you may use; endpoints with Slack side effects are verified via pytest, see the plan's Verification safety rule); every new endpoint must degrade gracefully on 404. Run eslint + prettier on touched files and npm test for any test you add. ${COMMON}`,
       { label: ws.key, phase: 'Frontend', model: 'sonnet', isolation: 'worktree', schema: RESULT },
     ),
   (res, ws) =>
