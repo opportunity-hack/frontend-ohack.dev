@@ -46,6 +46,18 @@ const Confetti = dynamic(() => import("react-confetti"), {
 const DEFAULT_SLATE_SIZE = 5;
 const DEFAULT_MAX_PICKS = 2;
 
+// Reason-specific notices for the ballot-submit 403/400 codes (Part 3:
+// POST .../peer-vote/ballot). Each gets its own copy rather than a shared
+// generic string, and each of these is a slate refetch (not a hard stop) —
+// unlike the 409 codes below, which map onto their own terminal state cards.
+const BALLOT_ERROR_NOTICES = {
+  not_eligible: "You're no longer eligible to vote for this event.",
+  peer_vote_disabled: "Voting has been turned off for this event.",
+  no_slate: "We couldn't find your slate — we've refreshed it.",
+  invalid_picks:
+    "One or more of your picks are no longer valid — we've refreshed your slate.",
+};
+
 // --- Small shared presentational pieces (module-scope — see the codebase's
 // repeated "SectionBlock remount" lesson: components with their own state or
 // that are toggled by fast-changing parent state must not be redefined on
@@ -365,6 +377,34 @@ export default function PeerVotePage() {
     eventIdRef.current = eventId;
   }, [eventId]);
   const statusRef = useRef(null);
+  // `peer_vote_view` should fire once per distinct status this page visit
+  // shows the person, not once per fetch — without this it re-fires on
+  // every visibilitychange poll while `upcoming` and on every 409-triggered
+  // refetch after a ballot error, inflating the view count.
+  const firedViewStatusesRef = useRef(new Set());
+  const fireViewOnce = useCallback((statusValue, evId) => {
+    if (firedViewStatusesRef.current.has(statusValue)) return;
+    firedViewStatusesRef.current.add(statusValue);
+    trackEvent({
+      action: "peer_vote_view",
+      params: {
+        event_label: statusValue,
+        event_id: evId,
+        page: "hackers_choice_vote",
+      },
+    });
+  }, []);
+  // setTimeout handles for the post-submit confetti and the "Link copied"
+  // share affordance — cleared on unmount so a fast confirm→navigate-away
+  // doesn't setState on an unmounted component.
+  const confettiTimeoutRef = useRef(null);
+  const shareTimeoutRef = useRef(null);
+  useEffect(() => {
+    return () => {
+      if (confettiTimeoutRef.current) clearTimeout(confettiTimeoutRef.current);
+      if (shareTimeoutRef.current) clearTimeout(shareTimeoutRef.current);
+    };
+  }, []);
 
   const loadSlate = useCallback(async () => {
     const evId = eventIdRef.current;
@@ -381,32 +421,18 @@ export default function PeerVotePage() {
         data.status === "voted" || data.status === "voided" ? "view" : "edit",
       );
       setPhase("loaded");
-      trackEvent({
-        action: "peer_vote_view",
-        params: {
-          event_label: data.status,
-          event_id: evId,
-          page: "hackers_choice_vote",
-        },
-      });
+      fireViewOnce(data.status, evId);
     } catch (err) {
       if (isNotFound(err)) {
         setSlateData({ status: "disabled" });
         statusRef.current = "disabled";
         setPhase("loaded");
-        trackEvent({
-          action: "peer_vote_view",
-          params: {
-            event_label: "disabled",
-            event_id: evId,
-            page: "hackers_choice_vote",
-          },
-        });
+        fireViewOnce("disabled", evId);
       } else {
         setPhase("error");
       }
     }
-  }, []);
+  }, [fireViewOnce]);
 
   useEffect(() => {
     // Deliberately keyed on token *presence*, not value — see the comment above.
@@ -430,6 +456,15 @@ export default function PeerVotePage() {
   // timezone and the default slate size. Routed through the shared
   // teamDashboardApi wrapper rather than a bare fetch (best-effort still —
   // errors are swallowed the same way).
+  //
+  // Known deviation from the WS-D plan (Part 4/appendix D list only the
+  // slate fetch): this is a second, heavier public call — the full event
+  // doc, including every enriched team's project_* fields — fetched purely
+  // for three scalar fields. Accepted rather than fixed here because
+  // trimming it needs a backend contract change (having the slate response
+  // itself carry event_title/timezone/slate_size) that's out of scope for
+  // this frontend-only workstream; flagged for a follow-up on the slate
+  // endpoint.
   useEffect(() => {
     if (!eventId) return undefined;
     let cancelled = false;
@@ -503,14 +538,33 @@ export default function PeerVotePage() {
         // resize for the entire session.
         setWindowSize({ width: window.innerWidth, height: window.innerHeight });
         setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 4000);
+        if (confettiTimeoutRef.current)
+          clearTimeout(confettiTimeoutRef.current);
+        confettiTimeoutRef.current = setTimeout(
+          () => setShowConfetti(false),
+          4000,
+        );
       }
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setNotice(
-          "Voting is closed or one of your picks changed — we refreshed your slate.",
-        );
-        await loadSlate();
+      if (err instanceof ApiError) {
+        const code = err.body?.error;
+        if (err.status === 409 && code === "ballot_voided") {
+          // VoidedState already explains the ballot was voided — no notice
+          // needed on top of it (that was the "contradictory copy" bug).
+          setNotice(null);
+          await loadSlate();
+        } else if (err.status === 409 && code === "voting_closed") {
+          setNotice("Voting has closed.");
+          await loadSlate();
+        } else if (
+          (err.status === 403 || err.status === 400) &&
+          BALLOT_ERROR_NOTICES[code]
+        ) {
+          setNotice(BALLOT_ERROR_NOTICES[code]);
+          await loadSlate();
+        } else {
+          setSubmitError("Couldn't submit your picks — please try again.");
+        }
       } else {
         setSubmitError("Couldn't submit your picks — please try again.");
       }
@@ -530,7 +584,11 @@ export default function PeerVotePage() {
         .writeText(url)
         .then(() => {
           setShareCopied(true);
-          setTimeout(() => setShareCopied(false), 2000);
+          if (shareTimeoutRef.current) clearTimeout(shareTimeoutRef.current);
+          shareTimeoutRef.current = setTimeout(
+            () => setShareCopied(false),
+            2000,
+          );
         })
         .catch(() => {});
     }

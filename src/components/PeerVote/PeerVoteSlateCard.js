@@ -35,12 +35,29 @@ function CardMedia({ item, onPlayVideo }) {
   }
   if (item?.demo_video_url) {
     return (
-      <LiteVideoThumbnail
-        url={item.demo_video_url}
-        onClick={() => onPlayVideo?.(item.demo_video_url, item.name)}
-        width={480}
-        height={270}
-      />
+      // LiteVideoThumbnail caps its own <button> at `maxWidth: width` (see
+      // VideoDisplay/LiteVideoThumbnail.js) so it doesn't blow up past its
+      // intended size on the pages that render it small. This card's media
+      // box is a 16:9 slot that can be wider than that cap on a roomy
+      // auto-fill grid (unlike the thumbnail branch above, which fills
+      // edge-to-edge via sx), so override the cap here rather than in the
+      // shared component — bumping the default there would ripple into
+      // every other surface that renders it at a fixed width.
+      <Box
+        sx={{
+          width: "100%",
+          height: "100%",
+          "& > button": { width: "100%", maxWidth: "none" },
+        }}
+      >
+        <LiteVideoThumbnail
+          url={item.demo_video_url}
+          onClick={() => onPlayVideo?.(item.demo_video_url, item.name)}
+          width={480}
+          height={270}
+          label={`Watch ${item.name || "team"} demo`}
+        />
+      </Box>
     );
   }
   const initial = (item?.name || "?").trim().charAt(0).toUpperCase() || "?";
