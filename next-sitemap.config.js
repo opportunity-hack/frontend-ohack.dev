@@ -14,6 +14,7 @@ module.exports = {
     "/hackathon/[hackathon_id]",
     "/project/[project_id]",
     "/hack/[event_id]",
+    "/hack/[event_id]/vote",
     "/jobs/[slug]",
     // Dynamic routes covered by /server-sitemap.xml instead
     "https://api.test.ohack.dev/",

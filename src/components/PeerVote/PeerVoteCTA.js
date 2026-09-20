@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import NextLink from "next/link";
 import { deriveVoteWindow } from "./peerVoteState";
+import { trackEvent } from "../../lib/ga";
 
 /**
  * Discoverability CTA linking to the Hackers' Choice vote
@@ -88,6 +89,12 @@ export default function PeerVoteCTA({ eventId, deadlines, constraints, variant =
       </div>
       <NextLink
         href={`/hack/${eventId}/vote`}
+        onClick={() =>
+          trackEvent({
+            action: "peer_vote_cta_click",
+            params: { event_label: variant, event_id: eventId },
+          })
+        }
         style={{
           display: "inline-flex",
           alignItems: "center",
