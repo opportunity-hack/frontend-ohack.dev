@@ -13,7 +13,11 @@ import {
 
 // Refined-token consensus dot colors (calmer than the loud MUI palette ones
 // used on the event-list version) — keeps the team page on-brand.
-const SCORE_DOT_COLORS = { green: "#3a7d44", yellow: "#c77d1a", red: "#c0392b" };
+const SCORE_DOT_COLORS = {
+  green: "#3a7d44",
+  yellow: "#c77d1a",
+  red: "#c0392b",
+};
 
 /**
  * Compact, refined-styled at-a-glance summary of a team's mentor support,
@@ -30,9 +34,11 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
   const lastTouchedBy = team?.mentor_last_touched_by_name;
   const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
   const hasAnyRating = Object.values(ratingsByMentor).some(
-    (perMentor) => perMentor && Object.keys(perMentor).length > 0
+    (perMentor) => perMentor && Object.keys(perMentor).length > 0,
   );
-  const hasActivity = doneCount > 0 || openFlags > 0 || !!lastTouchedAt || hasAnyRating;
+  const hasActivity =
+    doneCount > 0 || openFlags > 0 || !!lastTouchedAt || hasAnyRating;
+  const isHeadsDown = team?.mentor_help_wanted === false;
 
   const href = `/hack/${eventId}/team/${teamId}/mentor`;
 
@@ -44,7 +50,14 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
         ...(openFlags > 0 ? { borderLeft: "3px solid var(--accent)" } : {}),
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: hasActivity ? 1.5 : 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: hasActivity ? 1.5 : 1,
+        }}
+      >
         <Box className="ohx-eyebrow">Mentor support</Box>
         <NextLink
           href={href}
@@ -55,9 +68,28 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
         </NextLink>
       </Box>
 
+      {isHeadsDown && (
+        <Box
+          sx={{
+            color: "var(--muted)",
+            fontSize: "0.88rem",
+            mb: hasActivity ? 1 : 0,
+          }}
+        >
+          Heads-down — team asked mentors to hold off.
+        </Box>
+      )}
+
       {hasActivity ? (
         <>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1,
+              alignItems: "center",
+            }}
+          >
             <span
               className={`ohx-tag${doneCount === MENTOR_COVERAGE_TOTAL ? " ohx-tag--accent" : ""}`}
             >
@@ -77,7 +109,15 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
           </Box>
 
           {hasAnyRating && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.25, flexWrap: "wrap" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                mt: 1.25,
+                flexWrap: "wrap",
+              }}
+            >
               <Box
                 sx={{
                   fontSize: "0.66rem",
@@ -91,7 +131,9 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
               </Box>
               <Box sx={{ display: "flex", gap: 0.4 }}>
                 {JUDGING_CRITERIA.map((c) => {
-                  const consensus = consensusForCriterion(ratingsByMentor[c.slug]);
+                  const consensus = consensusForCriterion(
+                    ratingsByMentor[c.slug],
+                  );
                   const label = consensus
                     ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label}`
                     : `${c.label}: not rated yet`;
@@ -104,9 +146,13 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
                         width: 12,
                         height: 12,
                         borderRadius: "50%",
-                        bgcolor: consensus ? SCORE_DOT_COLORS[consensus] : "transparent",
+                        bgcolor: consensus
+                          ? SCORE_DOT_COLORS[consensus]
+                          : "transparent",
                         border: "1px solid",
-                        borderColor: consensus ? SCORE_DOT_COLORS[consensus] : "var(--line)",
+                        borderColor: consensus
+                          ? SCORE_DOT_COLORS[consensus]
+                          : "var(--line)",
                       }}
                     />
                   );

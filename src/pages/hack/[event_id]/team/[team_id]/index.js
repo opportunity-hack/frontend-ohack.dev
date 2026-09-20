@@ -3,12 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
-import {
-  Box,
-  Grid,
-  CircularProgress,
-  Avatar,
-} from "@mui/material";
+import { Box, Grid, CircularProgress, Avatar } from "@mui/material";
 import {
   GitHub as GitHubIcon,
   VideoLibrary as VideoIcon,
@@ -16,48 +11,54 @@ import {
   Launch as LaunchIcon,
   Link as LinkIcon,
   CheckRounded as CheckRoundedIcon,
+  Description as DescriptionIcon,
 } from "@mui/icons-material";
 import { FaSlack, FaHeart } from "react-icons/fa";
 import {
   isWinningStatus,
   getWinningStatus,
   isJoiningDisabled,
-  TEAM_STATUS_OPTIONS,
 } from "../../../../../constants/teamStatus";
 import { parseLocalDate } from "../../../../../lib/dateUtils";
-import { RefinedFonts, RefinedRoot, Eyebrow } from "../../../../../components/design/refined";
+import { RefinedRoot, Eyebrow } from "../../../../../components/design/refined";
 import useTeamMembership from "../../../../../hooks/use-team-membership";
 import TeamBreadcrumbs from "../../../../../components/Teams/TeamBreadcrumbs";
 import SurveyCTA from "../../../../../components/Survey/SurveyCTA";
 import TeamMentorSummaryCard from "../../../../../components/Teams/TeamMentorSummaryCard";
 import TeamCompletionSummaryCard from "../../../../../components/Teams/TeamCompletionSummaryCard";
+import TeamProjectSection from "../../../../../components/Teams/TeamProjectSection";
+import {
+  COMPLETION_VISIBLE_STATUSES,
+  SCROLL_OFFSET,
+  statusLabel,
+} from "../../../../../components/Teams/teamPageData";
+import {
+  getSubmissionStatus,
+  submissionLabel,
+  isProjectStoryMissing,
+  projectThumbUrl,
+  buildTeamDescription,
+  buildTeamOgImage,
+  buildProjectJsonLd,
+} from "../../../../../components/Teams/projectMeta";
 
 const VideoDisplay = dynamic(
   () => import("../../../../../components/VideoDisplay/VideoDisplay"),
-  { ssr: false }
+  { ssr: false },
 );
-
-const COMPLETION_VISIBLE_STATUSES = new Set(["DEPLOYED", "NONPROFIT_SIGNOFF"]);
-const SCROLL_OFFSET = 96; // clears the 64px fixed navbar + breathing room
-const OG_IMAGE = "https://i.imgur.com/xYrA32J.png";
-
-// Converts a raw team status string to a human-readable label, never leaking
-// the raw enum value to visitors.
-function statusLabel(status) {
-  if (!status) return null;
-  const found = TEAM_STATUS_OPTIONS.find((o) => o.value === status);
-  if (found) return found.label;
-  // Unknown value — title-case the raw enum as a safe fallback.
-  return status
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 // Module-scope SectionBlock so React never treats it as a new component type
 // on re-renders triggered by IntersectionObserver / copiedId changes, which
 // would unmount MentorTeamPanel, TeamCompletionChecklist, etc.
-const SectionBlock = ({ id, title, icon, headed = true, copiedId, onCopyLink, children }) => (
+const SectionBlock = ({
+  id,
+  title,
+  icon,
+  headed = true,
+  copiedId,
+  onCopyLink,
+  children,
+}) => (
   <Box
     component="section"
     id={id}
@@ -78,7 +79,11 @@ const SectionBlock = ({ id, title, icon, headed = true, copiedId, onCopyLink, ch
         <Box
           component="h2"
           className="ohx-display"
-          sx={{ fontSize: "clamp(1.4rem, 2.6vw, 1.9rem)", color: "var(--ink)", m: 0 }}
+          sx={{
+            fontSize: "clamp(1.4rem, 2.6vw, 1.9rem)",
+            color: "var(--ink)",
+            m: 0,
+          }}
         >
           {title}
         </Box>
@@ -115,9 +120,6 @@ const SectionBlock = ({ id, title, icon, headed = true, copiedId, onCopyLink, ch
 // Lightweight refined shell used by loading / error / content states.
 const Shell = ({ children, maxWidth = 1120 }) => (
   <RefinedRoot>
-    <Head>
-      <RefinedFonts />
-    </Head>
     <Box
       className="ohx-wrap"
       sx={{ maxWidth, pt: "clamp(96px, 12vh, 150px)", pb: { xs: 8, md: 12 } }}
@@ -139,9 +141,13 @@ export default function TeamDetailPage({
   const [team, setTeam] = useState(teamData || null);
   const [event, setEvent] = useState(eventData || null);
   const [error, setError] = useState(null);
-  const [problemStatements, setProblemStatements] = useState(problemStatementsData || []);
+  const [problemStatements, setProblemStatements] = useState(
+    problemStatementsData || [],
+  );
   // nonprofitData: { name, description } | null
-  const [nonprofitData, setNonprofitData] = useState(initialNonprofitData || null);
+  const [nonprofitData, setNonprofitData] = useState(
+    initialNonprofitData || null,
+  );
   const [activeId, setActiveId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
@@ -161,10 +167,10 @@ export default function TeamDetailPage({
       try {
         const [teamRes, eventRes] = await Promise.all([
           fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${team_id}`
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${team_id}`,
           ),
           fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`,
           ),
         ]);
 
@@ -201,13 +207,12 @@ export default function TeamDetailPage({
     };
 
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event_id, team_id]);
 
   const fetchNonprofitData = async (nonprofitId) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${nonprofitId}`
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${nonprofitId}`,
       );
       if (res.ok) {
         const data = await res.json();
@@ -235,7 +240,7 @@ export default function TeamDetailPage({
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
         if (visible[0]) setActiveId(visible[0].target.id);
       },
-      { rootMargin: `-${SCROLL_OFFSET}px 0px -55% 0px`, threshold: 0 }
+      { rootMargin: `-${SCROLL_OFFSET}px 0px -55% 0px`, threshold: 0 },
     );
     els.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
@@ -322,17 +327,34 @@ export default function TeamDetailPage({
   const hasGithubLinks = team.github_links?.length > 0;
   const memberCount = Array.isArray(team.users) ? team.users.length : 0;
   const showCompletionChecklist =
-    isWinningStatus(team.status) || COMPLETION_VISIBLE_STATUSES.has(team.status);
+    isWinningStatus(team.status) ||
+    COMPLETION_VISIBLE_STATUSES.has(team.status);
   const eventHasStarted = (() => {
     if (!event?.start_date) return false;
     const start = parseLocalDate(event.start_date);
     return !Number.isNaN(start.getTime()) && start <= new Date();
   })();
-  const hasLinks = !!(team.slack_channel || hasGithubLinks || team.devpost_link);
+  const hasLinks = !!(
+    team.slack_channel ||
+    hasGithubLinks ||
+    team.devpost_link
+  );
   const winning = isWinningStatus(team.status);
   const winningMeta = winning ? getWinningStatus(team.status) : null;
   const humanStatus = statusLabel(team.status);
   const nonprofitName = nonprofitData?.name || null;
+  const submissionStatus = getSubmissionStatus(team);
+  const submissionMasthead = submissionLabel(team, event?.timezone);
+  const projectThumb = projectThumbUrl(team);
+  const hasAnyProjectData = !!(
+    team.project_tagline ||
+    team.project_story ||
+    (Array.isArray(team.project_built_with) &&
+      team.project_built_with.length > 0) ||
+    (Array.isArray(team.project_links) && team.project_links.length > 0) ||
+    projectThumb ||
+    submissionStatus !== null
+  );
 
   // Event ended = after 23:59:59 on end_date in local time.
   const eventEnded = (() => {
@@ -350,31 +372,50 @@ export default function TeamDetailPage({
     !eventEnded &&
     !isJoiningDisabled(team.status);
 
-  const missingDevpost = isOnTeam && !team.devpost_link;
+  const missingStory = isOnTeam && isProjectStoryMissing(team);
   const missingDemo = isOnTeam && !team.demo_video_url;
-  const showMemberNudge = missingDevpost || missingDemo;
+  const notSubmitted = isOnTeam && submissionStatus === "draft";
+  const showMemberNudge = missingStory || missingDemo;
 
   const hasNonprofitSection = !!(nonprofitName && team.selected_nonprofit_id);
+  const showProjectSection =
+    hasAnyProjectData || (membershipChecked && isOnTeam);
 
   // Build the TOC from the sections that actually render.
   const sections = [];
-  if (eventHasStarted) sections.push({ id: "mentor-support", name: "Mentor support" });
-  if (showCompletionChecklist) sections.push({ id: "completion", name: "Project completion" });
+  if (showProjectSection) sections.push({ id: "project", name: "Project" });
+  if (eventHasStarted)
+    sections.push({ id: "mentor-support", name: "Mentor support" });
+  if (showCompletionChecklist)
+    sections.push({ id: "completion", name: "Project completion" });
   if (hasLinks) sections.push({ id: "links", name: "Links & resources" });
   if (team.demo_video_url) sections.push({ id: "demo", name: "Demo video" });
-  if (hasNonprofitSection) sections.push({ id: "nonprofit", name: "Nonprofit partner" });
+  if (hasNonprofitSection)
+    sections.push({ id: "nonprofit", name: "Nonprofit partner" });
   if (problemStatements.length > 0)
     sections.push({
       id: "problems",
-      name: problemStatements.length > 1 ? "Problem statements" : "Problem statement",
+      name:
+        problemStatements.length > 1
+          ? "Problem statements"
+          : "Problem statement",
     });
   sections.push({ id: "members", name: "Team members" });
 
   const pageTitle = `${teamName} | ${eventName} | Opportunity Hack`;
-  const pageDescription = nonprofitName
-    ? `Team ${teamName} is building for ${nonprofitName} at ${eventName}. ${memberCount} member${memberCount !== 1 ? "s" : ""}.`
-    : `Team ${teamName} participating in ${eventName}. ${memberCount} member${memberCount !== 1 ? "s" : ""}.`;
   const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/team/${team_id}`;
+  const eventUrl = `https://www.ohack.dev/hack/${event_id}`;
+  const pageDescription = buildTeamDescription(team, {
+    nonprofitName,
+    eventName,
+    memberCount,
+  });
+  const { image: ogImage, card: twitterCard } = buildTeamOgImage(team);
+  const projectJsonLd = buildProjectJsonLd(team, {
+    canonicalUrl,
+    eventName,
+    eventUrl,
+  });
 
   return (
     <RefinedRoot>
@@ -386,17 +427,26 @@ export default function TeamDetailPage({
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:image" content={OG_IMAGE} />
-        <meta name="twitter:card" content="summary_large_image" />
+        <meta property="og:image" content={ogImage} />
+        <meta name="twitter:card" content={twitterCard} />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content={OG_IMAGE} />
-        <RefinedFonts />
+        <meta name="twitter:image" content={ogImage} />
+        {projectJsonLd && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(projectJsonLd) }}
+          />
+        )}
       </Head>
 
       <Box
         className="ohx-wrap"
-        sx={{ maxWidth: 1120, pt: "clamp(96px, 12vh, 150px)", pb: { xs: 8, md: 12 } }}
+        sx={{
+          maxWidth: 1120,
+          pt: "clamp(96px, 12vh, 150px)",
+          pb: { xs: 8, md: 12 },
+        }}
       >
         {/* Breadcrumb trail — the spine shared by /mentor and /completion */}
         <TeamBreadcrumbs
@@ -415,7 +465,14 @@ export default function TeamDetailPage({
             {teamName}
           </Box>
 
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1,
+              alignItems: "center",
+            }}
+          >
             {/* Active/Inactive dot — when inactive, this is the only status indicator */}
             <span
               className="ohx-tag"
@@ -450,6 +507,12 @@ export default function TeamDetailPage({
             <span className="ohx-tag">
               {memberCount} member{memberCount !== 1 ? "s" : ""}
             </span>
+
+            {/* Submission tag — omitted entirely for legacy teams with no
+                project fields at all (getSubmissionStatus returns null) */}
+            {submissionStatus !== null && (
+              <span className="ohx-tag">{submissionMasthead.tag}</span>
+            )}
           </Box>
 
           {/* Meta line — never show raw nonprofit ID */}
@@ -467,7 +530,10 @@ export default function TeamDetailPage({
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                 <FaHeart style={{ color: "var(--accent)", fontSize: 13 }} />
                 <span>
-                  <Box component="span" sx={{ color: "var(--ink)", fontWeight: 600 }}>
+                  <Box
+                    component="span"
+                    sx={{ color: "var(--ink)", fontWeight: 600 }}
+                  >
                     Nonprofit:
                   </Box>{" "}
                   <NextLink
@@ -494,7 +560,8 @@ export default function TeamDetailPage({
           timezone={event?.timezone}
         />
 
-        {/* Member nudge — one combined notice for missing links */}
+        {/* Member nudge — one combined notice for a missing story/demo video.
+            DevPost is optional now and no longer nagged here. */}
         {showMemberNudge && (
           <Box
             className="ohx-card"
@@ -510,14 +577,17 @@ export default function TeamDetailPage({
             }}
           >
             <Box sx={{ color: "var(--muted)", fontSize: "0.92rem" }}>
-              Your team hasn't added{" "}
-              {[missingDevpost && "a DevPost link", missingDemo && "a demo video"]
+              Your project page is missing{" "}
+              {[missingStory && "a story", missingDemo && "a demo video"]
                 .filter(Boolean)
-                .join(" or ")}{" "}
-              yet.
+                .join(" and ")}
+              .{notSubmitted ? " It isn't submitted yet." : ""}
             </Box>
-            <NextLink href={`/hack/${event_id}/manageteam`} className="ohx-link">
-              Add them in Manage team →
+            <NextLink
+              href={`/hack/${event_id}/manageteam#project`}
+              className="ohx-link"
+            >
+              Finish it on your dashboard →
             </NextLink>
           </Box>
         )}
@@ -584,9 +654,12 @@ export default function TeamDetailPage({
                         borderRadius: "6px",
                         px: 1.25,
                         py: 0.85,
-                        transition: "background-color .18s ease, color .18s ease",
+                        transition:
+                          "background-color .18s ease, color .18s ease",
                         color: active ? "#fff" : "var(--muted)",
-                        backgroundColor: active ? "var(--brand)" : "transparent",
+                        backgroundColor: active
+                          ? "var(--brand)"
+                          : "transparent",
                         "&:hover": {
                           color: active ? "#fff" : "var(--ink)",
                           backgroundColor: active
@@ -605,18 +678,59 @@ export default function TeamDetailPage({
 
           {/* Content column */}
           <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
+            {/* Project — the public write-up, first on the page */}
+            {showProjectSection && (
+              <SectionBlock
+                id="project"
+                title="Project"
+                icon={
+                  <DescriptionIcon
+                    sx={{ color: "var(--accent)", fontSize: 24 }}
+                  />
+                }
+                copiedId={copiedId}
+                onCopyLink={copySectionLink}
+              >
+                <TeamProjectSection
+                  team={team}
+                  eventId={event_id}
+                  eventTimezone={event?.timezone}
+                  isOnTeam={isOnTeam}
+                  membershipChecked={membershipChecked}
+                />
+              </SectionBlock>
+            )}
+
             {/* Mentor Support — compact summary; full panel lives at /mentor */}
             {eventHasStarted && (
-              <SectionBlock id="mentor-support" headed={false} copiedId={copiedId} onCopyLink={copySectionLink}>
-                <TeamMentorSummaryCard team={team} eventId={event_id} teamId={team.id} />
+              <SectionBlock
+                id="mentor-support"
+                headed={false}
+                copiedId={copiedId}
+                onCopyLink={copySectionLink}
+              >
+                <TeamMentorSummaryCard
+                  team={team}
+                  eventId={event_id}
+                  teamId={team.id}
+                />
               </SectionBlock>
             )}
 
             {/* Project Completion (winning teams only) — compact summary; full
                 checklist lives at /completion */}
             {showCompletionChecklist && (
-              <SectionBlock id="completion" headed={false} copiedId={copiedId} onCopyLink={copySectionLink}>
-                <TeamCompletionSummaryCard team={team} eventId={event_id} teamId={team.id} />
+              <SectionBlock
+                id="completion"
+                headed={false}
+                copiedId={copiedId}
+                onCopyLink={copySectionLink}
+              >
+                <TeamCompletionSummaryCard
+                  team={team}
+                  eventId={event_id}
+                  teamId={team.id}
+                />
               </SectionBlock>
             )}
 
@@ -625,7 +739,9 @@ export default function TeamDetailPage({
               <SectionBlock
                 id="links"
                 title="Links & resources"
-                icon={<LaunchIcon sx={{ color: "var(--accent)", fontSize: 24 }} />}
+                icon={
+                  <LaunchIcon sx={{ color: "var(--accent)", fontSize: 24 }} />
+                }
                 copiedId={copiedId}
                 onCopyLink={copySectionLink}
               >
@@ -640,7 +756,9 @@ export default function TeamDetailPage({
                         className="ohx-card ohx-card--hover"
                         sx={linkTileSx}
                       >
-                        <FaSlack style={{ fontSize: 22, color: "var(--accent)" }} />
+                        <FaSlack
+                          style={{ fontSize: 22, color: "var(--accent)" }}
+                        />
                         <Box sx={{ minWidth: 0 }}>
                           <Box sx={linkTileLabelSx}>Slack channel</Box>
                           <Box sx={linkTileValueSx}>#{team.slack_channel}</Box>
@@ -651,7 +769,10 @@ export default function TeamDetailPage({
                   {hasGithubLinks &&
                     team.github_links.map((link, i) => {
                       const url = typeof link === "string" ? link : link?.link;
-                      const name = typeof link === "object" && link?.name ? link.name : null;
+                      const name =
+                        typeof link === "object" && link?.name
+                          ? link.name
+                          : null;
                       if (!url) return null;
                       return (
                         <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
@@ -663,10 +784,14 @@ export default function TeamDetailPage({
                             className="ohx-card ohx-card--hover"
                             sx={linkTileSx}
                           >
-                            <GitHubIcon sx={{ fontSize: 22, color: "var(--ink)" }} />
+                            <GitHubIcon
+                              sx={{ fontSize: 22, color: "var(--ink)" }}
+                            />
                             <Box sx={{ minWidth: 0 }}>
                               <Box sx={linkTileLabelSx}>GitHub repository</Box>
-                              <Box sx={linkTileValueSx}>{name || "View code"}</Box>
+                              <Box sx={linkTileValueSx}>
+                                {name || "View code"}
+                              </Box>
                             </Box>
                           </Box>
                         </Grid>
@@ -682,7 +807,9 @@ export default function TeamDetailPage({
                         className="ohx-card ohx-card--hover"
                         sx={linkTileSx}
                       >
-                        <LaunchIcon sx={{ fontSize: 22, color: "var(--accent)" }} />
+                        <LaunchIcon
+                          sx={{ fontSize: 22, color: "var(--accent)" }}
+                        />
                         <Box sx={{ minWidth: 0 }}>
                           <Box sx={linkTileLabelSx}>DevPost submission</Box>
                           <Box sx={linkTileValueSx}>View submission</Box>
@@ -699,12 +826,17 @@ export default function TeamDetailPage({
               <SectionBlock
                 id="demo"
                 title="Demo video"
-                icon={<VideoIcon sx={{ color: "var(--accent)", fontSize: 24 }} />}
+                icon={
+                  <VideoIcon sx={{ color: "var(--accent)", fontSize: 24 }} />
+                }
                 copiedId={copiedId}
                 onCopyLink={copySectionLink}
               >
                 <Box className="ohx-card" sx={{ p: { xs: 1.5, md: 2 } }}>
-                  <VideoDisplay url={team.demo_video_url} title={`${teamName} Demo`} />
+                  <VideoDisplay
+                    url={team.demo_video_url}
+                    title={`${teamName} Demo`}
+                  />
                 </Box>
               </SectionBlock>
             )}
@@ -714,7 +846,9 @@ export default function TeamDetailPage({
               <SectionBlock
                 id="nonprofit"
                 title="Nonprofit partner"
-                icon={<FaHeart style={{ color: "var(--accent)", fontSize: 18 }} />}
+                icon={
+                  <FaHeart style={{ color: "var(--accent)", fontSize: 18 }} />
+                }
                 copiedId={copiedId}
                 onCopyLink={copySectionLink}
               >
@@ -731,7 +865,9 @@ export default function TeamDetailPage({
                     </NextLink>
                   </Box>
                   {nonprofitData?.description && (
-                    <Box sx={{ color: "var(--muted)", lineHeight: 1.6, mb: 1.5 }}>
+                    <Box
+                      sx={{ color: "var(--muted)", lineHeight: 1.6, mb: 1.5 }}
+                    >
                       {nonprofitData.description.length > 240
                         ? `${nonprofitData.description.substring(0, 240)}…`
                         : nonprofitData.description}
@@ -756,7 +892,9 @@ export default function TeamDetailPage({
                     ? "Problem statements"
                     : "Problem statement"
                 }
-                icon={<FaHeart style={{ color: "var(--accent)", fontSize: 18 }} />}
+                icon={
+                  <FaHeart style={{ color: "var(--accent)", fontSize: 18 }} />
+                }
                 copiedId={copiedId}
                 onCopyLink={copySectionLink}
               >
@@ -775,7 +913,11 @@ export default function TeamDetailPage({
                     >
                       <Box
                         className="ohx-display"
-                        sx={{ fontSize: "1.2rem", color: "var(--ink)", mb: 0.5 }}
+                        sx={{
+                          fontSize: "1.2rem",
+                          color: "var(--ink)",
+                          mb: 0.5,
+                        }}
                       >
                         {ps.title || "Untitled Problem Statement"}
                       </Box>
@@ -788,7 +930,10 @@ export default function TeamDetailPage({
                       )}
                       {ps.id && (
                         <Box sx={{ mt: 1 }}>
-                          <NextLink href={`/project/${ps.id}`} className="ohx-link">
+                          <NextLink
+                            href={`/project/${ps.id}`}
+                            className="ohx-link"
+                          >
                             View full project details
                             <span className="ohx-arrow" aria-hidden="true">
                               →
@@ -814,9 +959,12 @@ export default function TeamDetailPage({
                 {memberCount > 0 ? (
                   <Grid container spacing={2}>
                     {team.users.map((user, index) => {
-                      const isObject = typeof user === "object" && user !== null;
+                      const isObject =
+                        typeof user === "object" && user !== null;
                       const displayName = isObject
-                        ? user.name || user.nickname || `Team member #${index + 1}`
+                        ? user.name ||
+                          user.nickname ||
+                          `Team member #${index + 1}`
                         : `Team member #${index + 1}`;
                       const profileImage = isObject ? user.profile_image : null;
                       const dbId = isObject ? user.id : user;
@@ -870,7 +1018,10 @@ export default function TeamDetailPage({
                           {dbId ? (
                             <NextLink
                               href={`/profile/${dbId}`}
-                              style={{ textDecoration: "none", color: "inherit" }}
+                              style={{
+                                textDecoration: "none",
+                                color: "inherit",
+                              }}
                             >
                               {tileInner}
                             </NextLink>
@@ -966,17 +1117,22 @@ async function fetchProblemStatementDetails(problemStatementIds) {
       if (typeof psId === "object" && psId !== null) return psId;
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${psId}`
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${psId}`,
         );
         if (res.ok) {
           const data = await res.json();
-          return { id: psId, title: data.title, description: data.description, ...data };
+          return {
+            id: psId,
+            title: data.title,
+            description: data.description,
+            ...data,
+          };
         }
       } catch (err) {
         console.error(`Error fetching problem statement ${psId}:`, err);
       }
       return { id: psId, title: null, description: null };
-    })
+    }),
   );
 
   return results;
@@ -988,8 +1144,12 @@ export async function getStaticProps({ params }) {
   let teamRes, eventRes;
   try {
     [teamRes, eventRes] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${team_id}`),
-      fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`),
+      fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${team_id}`,
+      ),
+      fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`,
+      ),
     ]);
   } catch (networkErr) {
     // Network failure — rethrow so ISR keeps serving the last good version.
@@ -1007,7 +1167,9 @@ export async function getStaticProps({ params }) {
 
   let problemStatementsData = [];
   if (teamData.problem_statements?.length > 0) {
-    problemStatementsData = await fetchProblemStatementDetails(teamData.problem_statements);
+    problemStatementsData = await fetchProblemStatementDetails(
+      teamData.problem_statements,
+    );
   }
 
   // Fetch nonprofit name + description if team has selected_nonprofit_id
@@ -1015,7 +1177,7 @@ export async function getStaticProps({ params }) {
   if (teamData.selected_nonprofit_id) {
     try {
       const npoRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${teamData.selected_nonprofit_id}`
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${teamData.selected_nonprofit_id}`,
       );
       if (npoRes.ok) {
         const npoJson = await npoRes.json();
