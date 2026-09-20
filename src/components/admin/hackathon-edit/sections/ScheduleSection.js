@@ -37,67 +37,36 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import dynamic from "next/dynamic";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import SectionContainer from "../SectionContainer";
-import { DEFAULT_EVENT_TIMEZONE } from "../../../../lib/timezoneUtils";
+import {
+  DEFAULT_EVENT_TIMEZONE,
+  toIsoWithTimezone,
+  safeParse,
+} from "../../../../lib/timezoneUtils";
 
-const TimezoneSelect = dynamic(() => import("react-timezone-select"), { ssr: false });
+const TimezoneSelect = dynamic(() => import("react-timezone-select"), {
+  ssr: false,
+});
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false });
 
-const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-
-// ISO formatter that bakes a chosen timezone offset into the saved string,
-// matching the existing CountdownManagement save format expected by the
-// backend and the public countdown component.
-const toIsoWithTimezone = (date, timezone) => {
-  if (!date) return "";
-  const d = date instanceof Date ? date : new Date(date);
-  if (isNaN(d.getTime())) return "";
-  const pad = (n) => n.toString().padStart(2, "0");
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-    timeZoneName: "short",
-  });
-  const parts = formatter.formatToParts(d).reduce((acc, p) => {
-    acc[p.type] = p.value;
-    return acc;
-  }, {});
-  const tzPart = formatter.formatToParts(d).find((p) => p.type === "timeZoneName");
-  let offset = "+0000";
-  if (tzPart) {
-    const m = tzPart.value.match(/([+-])(\d{2}):?(\d{2})/);
-    if (m) offset = `${m[1]}${m[2]}${m[3]}`;
-    else {
-      const tz = d.getTimezoneOffset();
-      const sign = tz <= 0 ? "+" : "-";
-      offset = `${sign}${pad(Math.abs(Math.floor(tz / 60)))}${pad(Math.abs(tz % 60))}`;
-    }
-  }
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${offset}`;
-};
-
-const safeParse = (value) => {
-  if (!value) return null;
-  try {
-    const d = parseISO(value);
-    if (!isNaN(d.getTime())) return d;
-  } catch {}
-  const d = new Date(value);
-  return isNaN(d.getTime()) ? null : d;
-};
+const newId = () =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 const formatDayHeader = (date, timezone) =>
-  date.toLocaleDateString("en-US", { timeZone: timezone, weekday: "long", month: "short", day: "numeric" });
+  date.toLocaleDateString("en-US", {
+    timeZone: timezone,
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 
 const formatTimeOfDay = (date, timezone) =>
-  date.toLocaleTimeString("en-US", { timeZone: timezone, hour: "numeric", minute: "2-digit" });
+  date.toLocaleTimeString("en-US", {
+    timeZone: timezone,
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
 const PRESETS = [
   { key: "kickoff", label: "Kickoff", icon: KickoffIcon, addHours: 0 },
@@ -118,7 +87,16 @@ const buildPresetTime = (preset, eventStart, eventEnd) => {
   return d;
 };
 
-const CountdownCard = ({ countdown, index, timezone, dragHandleProps, onUpdate, onDelete, eventStart, eventEnd }) => {
+const CountdownCard = ({
+  countdown,
+  index,
+  timezone,
+  dragHandleProps,
+  onUpdate,
+  onDelete,
+  eventStart,
+  eventEnd,
+}) => {
   const [expanded, setExpanded] = useState(false);
   const time = safeParse(countdown.time);
 
@@ -138,15 +116,24 @@ const CountdownCard = ({ countdown, index, timezone, dragHandleProps, onUpdate, 
               variant="standard"
               placeholder={`Countdown ${index + 1}`}
               fullWidth
-              InputProps={{ disableUnderline: !countdown.name, sx: { fontWeight: 600, fontSize: "1rem" } }}
+              InputProps={{
+                disableUnderline: !countdown.name,
+                sx: { fontWeight: 600, fontSize: "1rem" },
+              }}
             />
             <Typography variant="caption" color="text.secondary">
-              {time ? `${formatDayHeader(time, timezone)} · ${formatTimeOfDay(time, timezone)}` : "No time set"}
+              {time
+                ? `${formatDayHeader(time, timezone)} · ${formatTimeOfDay(time, timezone)}`
+                : "No time set"}
             </Typography>
           </Box>
           <Tooltip title={expanded ? "Hide details" : "Edit details"}>
             <IconButton size="small" onClick={() => setExpanded((v) => !v)}>
-              {expanded ? <CollapseIcon fontSize="small" /> : <ExpandIcon fontSize="small" />}
+              {expanded ? (
+                <CollapseIcon fontSize="small" />
+              ) : (
+                <ExpandIcon fontSize="small" />
+              )}
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
@@ -157,13 +144,22 @@ const CountdownCard = ({ countdown, index, timezone, dragHandleProps, onUpdate, 
         </Stack>
 
         {expanded && (
-          <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid", borderColor: "divider" }}>
+          <Box
+            sx={{
+              mt: 2,
+              pt: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
+          >
             <Stack spacing={2}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DateTimePicker
                   label="Time"
                   value={time}
-                  onChange={(d) => update("time", d ? toIsoWithTimezone(d, timezone) : "")}
+                  onChange={(d) =>
+                    update("time", d ? toIsoWithTimezone(d, timezone) : "")
+                  }
                   minDateTime={eventStart}
                   maxDateTime={eventEnd}
                   slotProps={{ textField: { size: "small", fullWidth: true } }}
@@ -181,7 +177,9 @@ const CountdownCard = ({ countdown, index, timezone, dragHandleProps, onUpdate, 
               />
               {countdown.description && (
                 <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "grey.50" }}>
-                  <Typography variant="caption" color="text.secondary">Preview</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Preview
+                  </Typography>
                   <Box sx={{ "& p": { my: 0.5 } }}>
                     <ReactMarkdown>{countdown.description}</ReactMarkdown>
                   </Box>
@@ -196,7 +194,15 @@ const CountdownCard = ({ countdown, index, timezone, dragHandleProps, onUpdate, 
 };
 
 const ScheduleSection = ({ admin }) => {
-  const { hackathon, setField, markSectionDirty, dirtySections, commitSection, discardSection, saveState } = admin;
+  const {
+    hackathon,
+    setField,
+    markSectionDirty,
+    dirtySections,
+    commitSection,
+    discardSection,
+    saveState,
+  } = admin;
   const countdowns = hackathon.countdowns || [];
   const dirty = dirtySections.has("schedule");
   const saving = saveState.status === "saving";
@@ -205,12 +211,16 @@ const ScheduleSection = ({ admin }) => {
   const [timezone, setTimezone] = useState(eventTimezone);
 
   const eventStart = useMemo(
-    () => (hackathon.start_date ? new Date(`${hackathon.start_date}T00:00:00`) : null),
-    [hackathon.start_date]
+    () =>
+      hackathon.start_date
+        ? new Date(`${hackathon.start_date}T00:00:00`)
+        : null,
+    [hackathon.start_date],
   );
   const eventEnd = useMemo(
-    () => (hackathon.end_date ? new Date(`${hackathon.end_date}T23:59:59`) : null),
-    [hackathon.end_date]
+    () =>
+      hackathon.end_date ? new Date(`${hackathon.end_date}T23:59:59`) : null,
+    [hackathon.end_date],
   );
 
   const updateAll = (next) => {
@@ -218,8 +228,10 @@ const ScheduleSection = ({ admin }) => {
     markSectionDirty("schedule", true);
   };
 
-  const updateOne = (index, value) => updateAll(countdowns.map((c, i) => (i === index ? value : c)));
-  const removeOne = (index) => updateAll(countdowns.filter((_, i) => i !== index));
+  const updateOne = (index, value) =>
+    updateAll(countdowns.map((c, i) => (i === index ? value : c)));
+  const removeOne = (index) =>
+    updateAll(countdowns.filter((_, i) => i !== index));
 
   const addPreset = (preset) => {
     const time = buildPresetTime(preset, eventStart, eventEnd);
@@ -238,7 +250,12 @@ const ScheduleSection = ({ admin }) => {
     const time = eventStart || new Date();
     updateAll([
       ...countdowns,
-      { id: newId(), name: "", description: "", time: toIsoWithTimezone(time, timezone) },
+      {
+        id: newId(),
+        name: "",
+        description: "",
+        time: toIsoWithTimezone(time, timezone),
+      },
     ]);
   };
 
@@ -285,9 +302,25 @@ const ScheduleSection = ({ admin }) => {
       title="Schedule"
       description="Countdowns shown publicly on the hackathon page. Pick presets to seed common moments — Kickoff, Lunch, Judging, Awards. Edits are explicit-save."
       actions={
-        <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ minHeight: 0 }}>
-          <Tab value="timeline" icon={<TimelineViewIcon fontSize="small" />} iconPosition="start" label="Timeline" sx={{ minHeight: 0, py: 0.5 }} />
-          <Tab value="list" icon={<ListViewIcon fontSize="small" />} iconPosition="start" label="List" sx={{ minHeight: 0, py: 0.5 }} />
+        <Tabs
+          value={view}
+          onChange={(_, v) => setView(v)}
+          sx={{ minHeight: 0 }}
+        >
+          <Tab
+            value="timeline"
+            icon={<TimelineViewIcon fontSize="small" />}
+            iconPosition="start"
+            label="Timeline"
+            sx={{ minHeight: 0, py: 0.5 }}
+          />
+          <Tab
+            value="list"
+            icon={<ListViewIcon fontSize="small" />}
+            iconPosition="start"
+            label="List"
+            sx={{ minHeight: 0, py: 0.5 }}
+          />
         </Tabs>
       }
       dirty={dirty}
@@ -296,7 +329,9 @@ const ScheduleSection = ({ admin }) => {
       onDiscard={() => discardSection("schedule")}
     >
       <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Display timezone</Typography>
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+          Display timezone
+        </Typography>
         <Box sx={{ maxWidth: 360 }}>
           <TimezoneSelect
             value={{ value: timezone, label: timezone }}
@@ -304,7 +339,8 @@ const ScheduleSection = ({ admin }) => {
           />
         </Box>
         <Typography variant="caption" color="text.secondary">
-          Times you set are saved with this timezone offset. Defaults to the event's timezone ({eventTimezone}).
+          Times you set are saved with this timezone offset. Defaults to the
+          event's timezone ({eventTimezone}).
         </Typography>
       </Box>
 
@@ -323,14 +359,20 @@ const ScheduleSection = ({ admin }) => {
             {preset.label}
           </Button>
         ))}
-        <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={addBlank}>
+        <Button
+          size="small"
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={addBlank}
+        >
           Custom
         </Button>
       </Box>
 
       {countdowns.length === 0 && (
         <Alert severity="info">
-          No countdowns yet. Quick-add a Kickoff to get started, or use Custom for a one-off.
+          No countdowns yet. Quick-add a Kickoff to get started, or use Custom
+          for a one-off.
         </Alert>
       )}
 
@@ -338,14 +380,34 @@ const ScheduleSection = ({ admin }) => {
         <Stack spacing={3}>
           {grouped.map((group) => (
             <Box key={group.key}>
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "primary.main" }} />
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={1}
+                sx={{ mb: 1 }}
+              >
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    bgcolor: "primary.main",
+                  }}
+                />
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                  {group.date ? formatDayHeader(group.date, timezone) : "No date set"}
+                  {group.date
+                    ? formatDayHeader(group.date, timezone)
+                    : "No date set"}
                 </Typography>
                 <Box sx={{ flex: 1, height: 1, bgcolor: "divider", ml: 1 }} />
               </Stack>
-              <Box sx={{ pl: 2, borderLeft: "2px solid", borderColor: "primary.light" }}>
+              <Box
+                sx={{
+                  pl: 2,
+                  borderLeft: "2px solid",
+                  borderColor: "primary.light",
+                }}
+              >
                 {group.items.map((item) => (
                   <CountdownCard
                     key={item.id || item._origIndex}
@@ -374,7 +436,11 @@ const ScheduleSection = ({ admin }) => {
             {(provided) => (
               <Box {...provided.droppableProps} ref={provided.innerRef}>
                 {countdowns.map((c, idx) => (
-                  <Draggable key={c.id || idx} draggableId={String(c.id || `c-${idx}`)} index={idx}>
+                  <Draggable
+                    key={c.id || idx}
+                    draggableId={String(c.id || `c-${idx}`)}
+                    index={idx}
+                  >
                     {(p) => (
                       <Box ref={p.innerRef} {...p.draggableProps}>
                         <CountdownCard

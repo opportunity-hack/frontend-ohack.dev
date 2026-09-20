@@ -6,6 +6,8 @@
  * **and** the viewer's local timezone when they differ.
  */
 
+import { parseISO } from "date-fns";
+
 /** Default timezone for events that don't have one stored yet. */
 export const DEFAULT_EVENT_TIMEZONE = "America/Phoenix";
 
@@ -44,6 +46,65 @@ export function getTimezoneAbbreviation(date, timezone) {
   } catch {
     return timezone;
   }
+}
+
+/**
+ * ISO formatter that bakes a chosen timezone offset into the saved string
+ * (e.g. "2026-10-10T15:00:00-0700"). Used by the Schedule and Deadlines
+ * admin sections so times are saved unambiguously regardless of the
+ * browser's own timezone.
+ */
+export function toIsoWithTimezone(date, timezone) {
+  if (!date) return "";
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n) => n.toString().padStart(2, "0");
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZoneName: "short",
+  });
+  const parts = formatter.formatToParts(d).reduce((acc, p) => {
+    acc[p.type] = p.value;
+    return acc;
+  }, {});
+  const tzPart = formatter
+    .formatToParts(d)
+    .find((p) => p.type === "timeZoneName");
+  let offset = "+0000";
+  if (tzPart) {
+    const m = tzPart.value.match(/([+-])(\d{2}):?(\d{2})/);
+    if (m) offset = `${m[1]}${m[2]}${m[3]}`;
+    else {
+      const tz = d.getTimezoneOffset();
+      const sign = tz <= 0 ? "+" : "-";
+      offset = `${sign}${pad(Math.abs(Math.floor(tz / 60)))}${pad(Math.abs(tz % 60))}`;
+    }
+  }
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${offset}`;
+}
+
+/**
+ * Parses an ISO-ish string into a Date, tolerating both strict ISO 8601
+ * strings (via `date-fns`'s `parseISO`) and looser inputs. Returns null
+ * rather than an Invalid Date.
+ */
+export function safeParse(value) {
+  if (!value) return null;
+  try {
+    const d = parseISO(value);
+    if (!isNaN(d.getTime())) return d;
+  } catch {
+    // fall through to the looser Date constructor below
+  }
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 /**

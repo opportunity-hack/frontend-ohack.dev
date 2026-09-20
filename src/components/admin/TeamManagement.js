@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Autocomplete,
   Box,
@@ -43,14 +43,14 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon
-} from '@mui/material';
-import { 
-  FaEdit, 
-  FaTrash, 
-  FaStar, 
-  FaGithub, 
-  FaSlack, 
+  ListItemIcon,
+} from "@mui/material";
+import {
+  FaEdit,
+  FaTrash,
+  FaStar,
+  FaGithub,
+  FaSlack,
   FaSort,
   FaSearch,
   FaUsers,
@@ -69,21 +69,73 @@ import {
   FaBug,
   FaLink,
   FaVideo,
-  FaPlus
-} from 'react-icons/fa';
-import axios from 'axios';
-import { useAuthInfo } from '@propelauth/react';
-import { useSnackbar } from 'notistack';
-import { useRouter } from 'next/router';
-import useHackathonEvents from '../../hooks/use-hackathon-events';
-import UserSearchDialog from './UserSearchDialog';
-import TeamFieldPopover from './TeamFieldPopover';
-import LiteVideoThumbnail from '../VideoDisplay/LiteVideoThumbnail';
-import { TEAM_STATUS_OPTIONS, getStatusOption, WINNING_STATUSES, isWinningStatus } from '../../constants/teamStatus';
+  FaPlus,
+  FaFileDownload,
+} from "react-icons/fa";
+import axios from "axios";
+import { useAuthInfo } from "@propelauth/react";
+import { useSnackbar } from "notistack";
+import { useRouter } from "next/router";
+import useHackathonEvents from "../../hooks/use-hackathon-events";
+import UserSearchDialog from "./UserSearchDialog";
+import TeamFieldPopover from "./TeamFieldPopover";
+import LiteVideoThumbnail from "../VideoDisplay/LiteVideoThumbnail";
+import {
+  TEAM_STATUS_OPTIONS,
+  getStatusOption,
+  WINNING_STATUSES,
+  isWinningStatus,
+} from "../../constants/teamStatus";
+import {
+  getSubmissionStatus,
+  formatDeadline,
+  isProjectStoryMissing,
+} from "../Teams/projectMeta";
+import ProjectStoryMarkdown from "../Teams/ProjectStoryMarkdown";
+import { DEFAULT_EVENT_TIMEZONE } from "../../lib/timezoneUtils";
+import { buildSubmissionsCsv } from "./teamSubmissionsCsv";
+import * as ga from "../../lib/ga";
+
+// Submission-status chip shown in the table's "Submission" column and the
+// filter chips row. Module-scope per the SectionBlock remount lesson (see
+// CLAUDE.md) — this file re-renders often (per-row GitHub prefetches).
+const SUBMISSION_CHIP_CONFIG = {
+  submitted: { label: "Submitted", color: "success", variant: "outlined" },
+  late: { label: "Late", color: "warning", variant: "outlined" },
+  draft: { label: "Draft", color: "default", variant: "outlined" },
+};
+
+const SubmissionChip = ({ team, tz }) => {
+  const status = getSubmissionStatus(team);
+  if (!status) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        —
+      </Typography>
+    );
+  }
+  const config = SUBMISSION_CHIP_CONFIG[status] || SUBMISSION_CHIP_CONFIG.draft;
+  const submittedAt = team.project_submitted_at
+    ? formatDeadline(team.project_submitted_at, tz)
+    : null;
+  const chip = (
+    <Chip
+      size="small"
+      label={config.label}
+      color={config.color}
+      variant={config.variant}
+    />
+  );
+  return submittedAt ? (
+    <Tooltip title={`Submitted ${submittedAt}`}>{chip}</Tooltip>
+  ) : (
+    chip
+  );
+};
 
 // GitHub Issue Templates for different hackathon phases
 // Returns templates with event-specific URLs based on the provided eventId
-const getGithubIssueTemplates = (eventId = 'EVENT_ID') => ({
+const getGithubIssueTemplates = (eventId = "EVENT_ID") => ({
   PHASE_1: {
     title: "First Check-in",
     body: `Hey there! It's only been a week, but based on our [timeline](https://www.ohack.dev/hack/${eventId}#countdown), we want to check-in with all teams.
@@ -99,7 +151,7 @@ Here's what we're looking for:
 - [ ] Anything else on your mind? Please share anything else we might have missed that is top of mind for you
 
 Click all of the boxes as you go through these with your team, add comments to this with any questions you have or add them in Slack, either way!`,
-    phase: "Phase 1"
+    phase: "Phase 1",
   },
   PHASE_2: {
     title: "Second Check-in",
@@ -120,7 +172,7 @@ Here's what we're looking for:
 **Remember**: It's better to have a simple, working solution that solves a real problem than a complex, broken one. Focus on core value first, polish later.
 
 Click all boxes as you complete them and add detailed comments below. If you're behind schedule or facing major challenges, reach out in Slack - we're here to help you succeed!`,
-    phase: "Phase 2"
+    phase: "Phase 2",
   },
   PHASE_3: {
     title: "Third Check-in - Almost Feature Complete & Demo Prep",
@@ -141,7 +193,7 @@ Here's what we need to see:
 **Focus Areas**: User experience, demonstration readiness, and compelling storytelling about your impact.
 
 Click all boxes as you complete them and add detailed updates in the comments. We're here to help you shine in the final stretch!`,
-    phase: "Phase 3"
+    phase: "Phase 3",
   },
   PHASE_4: {
     title: "Final Check-in - Submission Ready",
@@ -163,8 +215,8 @@ Final submission checklist:
 **Remember**: You've built something amazing that will help nonprofits create more impact. Be proud of your work and tell that story confidently! You also have a portfolio piece that you can share with future employers.
 
 This is your moment to shine. Check off these items, add final comments, and get ready to show the world the incredible solution you've created!`,
-    phase: "Phase 4"
-  }
+    phase: "Phase 4",
+  },
 });
 
 // Add message templates after TEAM_STATUS_OPTIONS
@@ -175,22 +227,25 @@ const MESSAGE_TEMPLATES = {
       {
         id: "github_check",
         title: "GitHub Progress Check",
-        message: "Hi team! 👋\n\nPlease check the GitHub issue above to give us a general sense that your project to support nonprofits is on track for this summer. We'd love to see:\n\n• Current progress status\n• Any blockers you're facing\n• Timeline for key milestones\n\nThanks for keeping us updated! 🚀",
-        icon: "🔍"
+        message:
+          "Hi team! 👋\n\nPlease check the GitHub issue above to give us a general sense that your project to support nonprofits is on track for this summer. We'd love to see:\n\n• Current progress status\n• Any blockers you're facing\n• Timeline for key milestones\n\nThanks for keeping us updated! 🚀",
+        icon: "🔍",
       },
       {
         id: "first_checkin_complete",
         title: "First Check-in Complete",
-        message: "Thanks for completing our first check-in! 🎉\n\nYour team is now locked from adding new members. This helps ensure stability as we move into the main development phase.\n\nNext steps:\n• Focus on your nonprofit project\n• Regular progress updates\n• Reach out if you need any support\n\nKeep up the great work! 💪",
-        icon: "✅"
+        message:
+          "Thanks for completing our first check-in! 🎉\n\nYour team is now locked from adding new members. This helps ensure stability as we move into the main development phase.\n\nNext steps:\n• Focus on your nonprofit project\n• Regular progress updates\n• Reach out if you need any support\n\nKeep up the great work! 💪",
+        icon: "✅",
       },
       {
         id: "progress_reminder",
         title: "Progress Update Reminder",
-        message: "Hi team! 👋\n\nJust a friendly reminder to update your progress in GitHub. Regular updates help us:\n\n• Provide better support\n• Track overall hackathon progress\n• Celebrate your achievements\n\nThanks for being awesome! 🌟",
-        icon: "⏰"
-      }
-    ]
+        message:
+          "Hi team! 👋\n\nJust a friendly reminder to update your progress in GitHub. Regular updates help us:\n\n• Provide better support\n• Track overall hackathon progress\n• Celebrate your achievements\n\nThanks for being awesome! 🌟",
+        icon: "⏰",
+      },
+    ],
   },
   APPROVAL: {
     category: "Approval & Assignment",
@@ -198,16 +253,18 @@ const MESSAGE_TEMPLATES = {
       {
         id: "nonprofit_assigned",
         title: "Nonprofit Assignment Confirmation",
-        message: "Congratulations! 🎉\n\nYour team has been officially assigned to work with [NONPROFIT_NAME]. This is an exciting opportunity to make a real impact!\n\nNext steps:\n• Review the nonprofit's requirements\n• Schedule your kickoff meeting\n• Set up your development environment\n\nWe're here to support you throughout this journey. Let's build something amazing together! 🚀",
-        icon: "🎯"
+        message:
+          "Congratulations! 🎉\n\nYour team has been officially assigned to work with [NONPROFIT_NAME]. This is an exciting opportunity to make a real impact!\n\nNext steps:\n• Review the nonprofit's requirements\n• Schedule your kickoff meeting\n• Set up your development environment\n\nWe're here to support you throughout this journey. Let's build something amazing together! 🚀",
+        icon: "🎯",
       },
       {
         id: "team_approved",
         title: "Team Approval",
-        message: "Welcome to the approved teams! 🌟\n\nYour team has been reviewed and approved for the hackathon. You're now ready to start making a difference!\n\nWhat's next:\n• Review your assigned nonprofit\n• Plan your project approach\n• Start coding and creating\n\nExcited to see what you'll build! 💻✨",
-        icon: "✅"
-      }
-    ]
+        message:
+          "Welcome to the approved teams! 🌟\n\nYour team has been reviewed and approved for the hackathon. You're now ready to start making a difference!\n\nWhat's next:\n• Review your assigned nonprofit\n• Plan your project approach\n• Start coding and creating\n\nExcited to see what you'll build! 💻✨",
+        icon: "✅",
+      },
+    ],
   },
   SUPPORT: {
     category: "Support & Guidance",
@@ -215,16 +272,18 @@ const MESSAGE_TEMPLATES = {
       {
         id: "need_help",
         title: "Offering Help",
-        message: "Hi team! 👋\n\nWe noticed you might need some support. Our team is here to help with:\n\n• Technical challenges\n• Project planning\n• Nonprofit communication\n• Resource access\n\nDon't hesitate to reach out - we're all in this together! 🤝",
-        icon: "🆘"
+        message:
+          "Hi team! 👋\n\nWe noticed you might need some support. Our team is here to help with:\n\n• Technical challenges\n• Project planning\n• Nonprofit communication\n• Resource access\n\nDon't hesitate to reach out - we're all in this together! 🤝",
+        icon: "🆘",
       },
       {
         id: "technical_resources",
         title: "Technical Resources",
-        message: "Here are some helpful resources for your project: 🛠️\n\n• Documentation: [link]\n• Code examples: [link]\n• Best practices guide: [link]\n• Community forum: [link]\n\nFeel free to ask questions anytime. Happy coding! 💻",
-        icon: "📚"
-      }
-    ]
+        message:
+          "Here are some helpful resources for your project: 🛠️\n\n• Documentation: [link]\n• Code examples: [link]\n• Best practices guide: [link]\n• Community forum: [link]\n\nFeel free to ask questions anytime. Happy coding! 💻",
+        icon: "📚",
+      },
+    ],
   },
   MILESTONE: {
     category: "Milestones & Deadlines",
@@ -232,17 +291,19 @@ const MESSAGE_TEMPLATES = {
       {
         id: "deadline_reminder",
         title: "Deadline Reminder",
-        message: "Friendly reminder! ⏰\n\nYour next milestone is coming up on [DATE]. Please make sure to:\n\n• Complete your current tasks\n• Update your GitHub repository\n• Prepare for the next phase\n\nYou've got this! If you need any support, just let us know. 💪",
-        icon: "📅"
+        message:
+          "Friendly reminder! ⏰\n\nYour next milestone is coming up on [DATE]. Please make sure to:\n\n• Complete your current tasks\n• Update your GitHub repository\n• Prepare for the next phase\n\nYou've got this! If you need any support, just let us know. 💪",
+        icon: "📅",
       },
       {
         id: "milestone_achieved",
         title: "Milestone Celebration",
-        message: "Fantastic work! 🎉\n\nYou've successfully reached an important milestone. Your progress is impressive and your nonprofit partner is going to love what you're building!\n\nKeep up the momentum - you're making a real difference! 🌟",
-        icon: "🏆"
-      }
-    ]
-  }
+        message:
+          "Fantastic work! 🎉\n\nYou've successfully reached an important milestone. Your progress is impressive and your nonprofit partner is going to love what you're building!\n\nKeep up the momentum - you're making a real difference! 🌟",
+        icon: "🏆",
+      },
+    ],
+  },
 };
 
 // Component for managing teams in the admin panel.
@@ -255,10 +316,10 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
   const router = useRouter();
-  
+
   // Fetch hackathons using the hook
   const { hackathons = [] } = useHackathonEvents(false) || {};
-  const [selectedHackathon, setSelectedHackathon] = useState('');
+  const [selectedHackathon, setSelectedHackathon] = useState("");
 
   // Stable option list — prevents MUI Autocomplete from resetting inputValue on re-render
   const hackathonOptions = React.useMemo(
@@ -272,13 +333,30 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         })
         .map((h) => ({
           id: h.id,
-          label: `${h.event_id}${h.start_date ? ' \u00b7 ' + new Date(h.start_date).toLocaleDateString() : ''}`,
+          label: `${h.event_id}${h.start_date ? " \u00b7 " + new Date(h.start_date).toLocaleDateString() : ""}`,
         })),
-    [hackathons]
+    [hackathons],
   );
   const selectedHackathonOption = React.useMemo(
     () => hackathonOptions.find((o) => o.id === selectedHackathon) ?? null,
-    [hackathonOptions, selectedHackathon]
+    [hackathonOptions, selectedHackathon],
+  );
+  // Event timezone for formatting submission timestamps (Submission column,
+  // dialog story tab). Falls back to the site default when the selected
+  // event doesn't carry one yet.
+  const selectedEventTz = React.useMemo(
+    () =>
+      hackathons.find((h) => h?.id === selectedHackathon)?.timezone ||
+      DEFAULT_EVENT_TIMEZONE,
+    [hackathons, selectedHackathon],
+  );
+  // The public event_id slug (vs. selectedHackathon, which is the Firestore
+  // doc id) — used for public team-page links and the CSV filename.
+  const selectedEventSlug = React.useMemo(
+    () =>
+      hackathons.find((h) => h?.id === selectedHackathon)?.event_id ||
+      selectedHackathon,
+    [hackathons, selectedHackathon],
   );
 
   // State for teams data and UI
@@ -299,6 +377,10 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const [teamData, setTeamData] = useState(null);
   const [nonprofitOptions, setNonprofitOptions] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
+  // Whether the read-only story preview in the edit Dialog has been switched
+  // to an editable textarea. Reset per-team so opening a different team
+  // always starts on the calmer preview.
+  const [storyEditOpen, setStoryEditOpen] = useState(false);
   const [tableLoading, setTableLoading] = useState(false); // Add a separate loading state for table operations
 
   // Dialog states
@@ -319,12 +401,12 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const [creatingIssue, setCreatingIssue] = useState(false);
   const [githubIssues, setGithubIssues] = useState({});
   const [loadingIssues, setLoadingIssues] = useState(false);
-  const [issueFilter, setIssueFilter] = useState('all');
+  const [issueFilter, setIssueFilter] = useState("all");
   const [expandedRepo, setExpandedRepo] = useState(null);
   const [githubIssueSummaries, setGithubIssueSummaries] = useState({}); // Add state for table issue summaries
 
   // Status / completeness filter applied above the team table
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState("all");
 
   // Inline quick-edit popover (for video and devpost columns)
   const [popoverState, setPopoverState] = useState({
@@ -348,12 +430,20 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
 
     const { event_id } = router.query;
 
-    if (event_id && Array.isArray(hackathons) && hackathons.some(h => h?.id === event_id)) {
+    if (
+      event_id &&
+      Array.isArray(hackathons) &&
+      hackathons.some((h) => h?.id === event_id)
+    ) {
       setSelectedHackathon(event_id);
-    } else if (Array.isArray(hackathons) && hackathons.length > 0 && !selectedHackathon) {
+    } else if (
+      Array.isArray(hackathons) &&
+      hackathons.length > 0 &&
+      !selectedHackathon
+    ) {
       // Sort hackathons by date (descending) and use the most recent one
       const sortedHackathons = [...hackathons]
-        .filter(h => h?.start_date) // Filter out invalid entries
+        .filter((h) => h?.start_date) // Filter out invalid entries
         .sort((a, b) => {
           const dateA = new Date(a.start_date);
           const dateB = new Date(b.start_date);
@@ -365,35 +455,44 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
       }
     }
   }, [embeddedHackathonId, hackathons, router?.query, selectedHackathon]);
-  
+
   // Update URL when selectedHackathon changes
   useEffect(() => {
     // Host page owns the URL when embedded — never write back, or we'd
     // clobber the [event_id] path param and the ?section= query.
     if (embeddedHackathonId) return;
-    if (!router?.replace || !selectedHackathon || !Array.isArray(hackathons) || hackathons.length === 0) {
+    if (
+      !router?.replace ||
+      !selectedHackathon ||
+      !Array.isArray(hackathons) ||
+      hackathons.length === 0
+    ) {
       return;
     }
 
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
-      queryParams.set('event_id', selectedHackathon);
-      
+      queryParams.set("event_id", selectedHackathon);
+
       // Preserve existing tab parameter
       if (router.query.tab) {
-        queryParams.set('tab', router.query.tab.toString());
+        queryParams.set("tab", router.query.tab.toString());
       }
-      
+
       const newUrl = `${router.pathname}?${queryParams.toString()}`;
-      
+
       const newQuery = Object.fromEntries(queryParams);
-      router.replace({
-        pathname: router.pathname,
-        query: newQuery
-      }, undefined, { shallow: true });
+      router.replace(
+        {
+          pathname: router.pathname,
+          query: newQuery,
+        },
+        undefined,
+        { shallow: true },
+      );
     } catch (error) {
-      console.warn('Failed to update URL:', error);
+      console.warn("Failed to update URL:", error);
     }
   }, [embeddedHackathonId, selectedHackathon, router, hackathons]);
 
@@ -412,26 +511,38 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     const filtered = teams.filter((team) => {
       // Search filter
       const nameMatch = team.name?.toLowerCase().includes(searchLower);
-      const slackMatch = team.slack_channel?.toLowerCase().includes(searchLower);
-      const memberMatch = team.team_members?.some(
-        (member) => member?.name?.toLowerCase().includes(searchLower)
+      const slackMatch = team.slack_channel
+        ?.toLowerCase()
+        .includes(searchLower);
+      const memberMatch = team.team_members?.some((member) =>
+        member?.name?.toLowerCase().includes(searchLower),
       );
-      const matchesSearch = !searchLower || nameMatch || slackMatch || memberMatch;
+      const matchesSearch =
+        !searchLower || nameMatch || slackMatch || memberMatch;
       if (!matchesSearch) return false;
 
       // Chip filter
       switch (activeFilter) {
-        case 'winning':
+        case "winning":
           return isWinningStatus(team.status);
-        case 'in_review':
-          return (team.status || 'IN_REVIEW') === 'IN_REVIEW';
-        case 'active':
-          return team.active === 'True' || team.active === true;
-        case 'missing_devpost':
-          return !team.devpost_link;
-        case 'missing_video':
+        case "in_review":
+          return (team.status || "IN_REVIEW") === "IN_REVIEW";
+        case "active":
+          return team.active === "True" || team.active === true;
+        case "missing_story":
+          return isProjectStoryMissing(team);
+        case "not_submitted":
+          return (
+            getSubmissionStatus(team) !== "submitted" &&
+            getSubmissionStatus(team) !== "late"
+          );
+        case "late":
+          return getSubmissionStatus(team) === "late";
+        case "missing_video":
           return !team.demo_video_url;
-        case 'all':
+        case "missing_devpost":
+          return !team.devpost_link;
+        case "all":
         default:
           return true;
       }
@@ -464,26 +575,33 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const fetchGithubIssueSummaryRaw = async (repo) => {
     const repoKey = `${repo.link}-summary`;
     try {
-      const urlParts = repo.link.split('/');
+      const urlParts = repo.link.split("/");
       const org = urlParts[urlParts.length - 2];
       const repoName = urlParts[urlParts.length - 1];
 
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues`,
         {
-          params: { org, repo: repoName, state: 'all' },
+          params: { org, repo: repoName, state: "all" },
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
         const issues = response.data.issues || [];
-        const openCount = issues.filter((issue) => issue.state === 'open').length;
-        const closedCount = issues.filter((issue) => issue.state === 'closed').length;
-        return [repoKey, { open: openCount, closed: closedCount, total: issues.length }];
+        const openCount = issues.filter(
+          (issue) => issue.state === "open",
+        ).length;
+        const closedCount = issues.filter(
+          (issue) => issue.state === "closed",
+        ).length;
+        return [
+          repoKey,
+          { open: openCount, closed: closedCount, total: issues.length },
+        ];
       }
     } catch (error) {
       console.error("Error fetching GitHub issues summary:", error);
@@ -502,7 +620,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.teams) {
@@ -531,7 +649,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         if (reposToFetch.length > 0) {
           (async () => {
             const results = await Promise.all(
-              reposToFetch.map((repo) => fetchGithubIssueSummaryRaw(repo))
+              reposToFetch.map((repo) => fetchGithubIssueSummaryRaw(repo)),
             );
             const next = {};
             results.forEach((entry) => {
@@ -577,7 +695,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
       const list = all?.data?.nonprofits || [];
       applyList(list, "all");
@@ -591,7 +709,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       const scoped = response?.data?.nonprofits || [];
@@ -624,7 +742,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
       if (response.data && response.data.team) {
         // Ensure team_members is always an array to prevent rendering issues
@@ -632,7 +750,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           ...response.data.team,
           team_members: response.data.team.team_members || [],
           active: response.data.team.active === "True",
-        };      
+        };
         setSelectedTeam(team);
         setTeamData(team);
       }
@@ -665,25 +783,25 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     // setGithubIssues call. Calling fetchGithubIssues in a forEach would
     // setState once per repo, triggering N renders of the full edit dialog.
     const reposToFetch = (team.github_links || []).filter(
-      (repo) => repo?.link && !githubIssues[`${repo.link}-all`]
+      (repo) => repo?.link && !githubIssues[`${repo.link}-all`],
     );
     if (reposToFetch.length > 0) {
       (async () => {
         const results = await Promise.all(
           reposToFetch.map(async (repo) => {
             try {
-              const urlParts = repo.link.split('/');
+              const urlParts = repo.link.split("/");
               const org = urlParts[urlParts.length - 2];
               const repoName = urlParts[urlParts.length - 1];
               const response = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/github/issues`,
                 {
-                  params: { org, repo: repoName, state: 'all' },
+                  params: { org, repo: repoName, state: "all" },
                   headers: {
                     Authorization: `Bearer ${accessToken}`,
                     "X-Org-Id": orgId,
                   },
-                }
+                },
               );
               if (response.data?.success) {
                 return [`${repo.link}-all`, response.data.issues || []];
@@ -692,7 +810,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
               console.error("Error prefetching GitHub issues:", error);
             }
             return null;
-          })
+          }),
         );
         const next = {};
         results.forEach((entry) => {
@@ -709,6 +827,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     setSelectedTemplate(null);
     setCustomMessage(false);
     setMessageText("");
+    setStoryEditOpen(false);
     setEditDialogOpen(true);
   };
 
@@ -723,23 +842,26 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   // Low-level PATCH helper used by both the full edit Dialog save and inline Popover quick-edits.
   // `partial` should include `id` and whatever fields to update. Caller is responsible for
   // showing snackbars and refreshing list state if it cares about them.
-  const patchTeam = useCallback(async (partial) => {
-    const response = await axios.patch(
-      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,
-      partial,
-      {
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          "content-type": "application/json",
-          "X-Org-Id": orgId,
+  const patchTeam = useCallback(
+    async (partial) => {
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/edit`,
+        partial,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            "content-type": "application/json",
+            "X-Org-Id": orgId,
+          },
         },
+      );
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || "Update failed");
       }
-    );
-    if (!response.data?.success) {
-      throw new Error(response.data?.message || "Update failed");
-    }
-    return response.data;
-  }, [accessToken, orgId]);
+      return response.data;
+    },
+    [accessToken, orgId],
+  );
 
   // Save team updates from the full edit Dialog
   const handleSaveTeam = async () => {
@@ -762,19 +884,22 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
 
   // Optimistic inline-edit save used by TeamFieldPopover.
   // Updates the local teams list immediately so the table reflects the change without a full refetch.
-  const handleQuickPatch = useCallback(async (team, partial) => {
-    try {
-      await patchTeam({ id: team.id, ...partial });
-      setTeams((prev) =>
-        prev.map((t) => (t.id === team.id ? { ...t, ...partial } : t))
-      );
-      enqueueSnackbar("Team updated", { variant: "success" });
-    } catch (error) {
-      console.error("Quick-edit failed:", error);
-      enqueueSnackbar("Failed to update team", { variant: "error" });
-      throw error;
-    }
-  }, [patchTeam, enqueueSnackbar]);
+  const handleQuickPatch = useCallback(
+    async (team, partial) => {
+      try {
+        await patchTeam({ id: team.id, ...partial });
+        setTeams((prev) =>
+          prev.map((t) => (t.id === team.id ? { ...t, ...partial } : t)),
+        );
+        enqueueSnackbar("Team updated", { variant: "success" });
+      } catch (error) {
+        console.error("Quick-edit failed:", error);
+        enqueueSnackbar("Failed to update team", { variant: "error" });
+        throw error;
+      }
+    },
+    [patchTeam, enqueueSnackbar],
+  );
 
   // Demo-video URL validator shared by the Popover and the full edit Dialog
   const validateDemoVideoUrl = (value) => {
@@ -788,6 +913,27 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
       /loom\.com\/(share|embed)\/[a-zA-Z0-9]+/i.test(trimmed) ||
       /drive\.google\.com\/file\/d\//i.test(trimmed);
     return valid ? null : "Enter a YouTube, Vimeo, Loom, or Google Drive URL.";
+  };
+
+  // Export the currently-filtered submissions list as a CSV file. Pure CSV
+  // building lives in teamSubmissionsCsv.js — this just turns the string
+  // into a download.
+  const handleExportSubmissionsCsv = () => {
+    const csv = buildSubmissionsCsv(filteredTeams, nonprofitMap);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `submissions-${selectedEventSlug}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    ga.trackStructuredEvent(
+      ga.EventCategory.ADMIN,
+      "admin_submissions_csv_export",
+      selectedEventSlug,
+    );
   };
 
   const openVideoPopover = (event, team) => {
@@ -810,7 +956,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/admin/${teamData.id}/message`,
         {
-          message: messageText,          
+          message: messageText,
         },
         {
           headers: {
@@ -818,7 +964,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             "Content-Type": "application/json",
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
@@ -848,7 +994,10 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     setSelectedTemplate(template);
     // Replace nonprofit placeholder if applicable
     let message = template.message;
-    if (teamData?.selected_nonprofit_id && message.includes('[NONPROFIT_NAME]')) {
+    if (
+      teamData?.selected_nonprofit_id &&
+      message.includes("[NONPROFIT_NAME]")
+    ) {
       const nonprofitName = getNonprofitName(teamData.selected_nonprofit_id);
       message = message.replace(/\[NONPROFIT_NAME\]/g, nonprofitName);
     }
@@ -866,7 +1015,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   // Handle team approval and nonprofit assignment
   const handleApproveTeam = async () => {
     if (!teamData || !teamData.id || !teamData.selected_nonprofit_id) {
-      enqueueSnackbar("Please select a nonprofit before approving the team", { variant: "error" });
+      enqueueSnackbar("Please select a nonprofit before approving the team", {
+        variant: "error",
+      });
       return;
     }
 
@@ -876,7 +1027,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/approve`,
         {
           teamId: teamData.id,
-          nonprofitId: teamData.selected_nonprofit_id
+          nonprofitId: teamData.selected_nonprofit_id,
         },
         {
           headers: {
@@ -884,26 +1035,29 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             "Content-Type": "application/json",
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
         enqueueSnackbar("Team approved successfully", { variant: "success" });
         setApprovalDialogOpen(false);
-        
+
         // Update team status to reflect approval
         const updatedTeamData = {
           ...teamData,
-          status: "NONPROFIT_SELECTED"
+          status: "NONPROFIT_SELECTED",
         };
         setTeamData(updatedTeamData);
-        
+
         // Refresh the teams list
         fetchTeams(selectedHackathon);
       }
     } catch (error) {
       console.error("Error approving team:", error);
-      enqueueSnackbar(error.response?.data?.message || "Failed to approve team", { variant: "error" });
+      enqueueSnackbar(
+        error.response?.data?.message || "Failed to approve team",
+        { variant: "error" },
+      );
     } finally {
       setLoading(false);
     }
@@ -915,8 +1069,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
       // Reload team details to reflect the new member
       loadTeamDetails(teamData.id);
       // Show success message
-      enqueueSnackbar(`${user.name || 'User'} added to team successfully`, { 
-        variant: "success" 
+      enqueueSnackbar(`${user.name || "User"} added to team successfully`, {
+        variant: "success",
       });
     }
   };
@@ -933,20 +1087,26 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
-        enqueueSnackbar(response.data.message || "Team member removed successfully", {
-          variant: "success",
-        });
-        
+        enqueueSnackbar(
+          response.data.message || "Team member removed successfully",
+          {
+            variant: "success",
+          },
+        );
+
         // Reload team details immediately after successful removal
         await loadTeamDetails(teamData.id);
       }
     } catch (error) {
       console.error("Error removing team member:", error);
-      enqueueSnackbar(error.response?.data?.message || "Failed to remove team member", { variant: "error" });
+      enqueueSnackbar(
+        error.response?.data?.message || "Failed to remove team member",
+        { variant: "error" },
+      );
     } finally {
       setTableLoading(false); // End loading
     }
@@ -963,7 +1123,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
       if (response.data && response.data.success) {
         enqueueSnackbar("Team deleted successfully", { variant: "success" });
@@ -977,7 +1137,6 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
       setTableLoading(false); // End loading
     }
   };
-  
 
   // Set a member as team lead
   const handleSetTeamLead = async (memberId) => {
@@ -992,20 +1151,26 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             "Content-Type": "application/json",
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
-        enqueueSnackbar(response.data.message || "Team lead updated successfully", {
-          variant: "success",
-        });
-        
+        enqueueSnackbar(
+          response.data.message || "Team lead updated successfully",
+          {
+            variant: "success",
+          },
+        );
+
         // Reload team details immediately after successful update
         await loadTeamDetails(teamData.id);
       }
     } catch (error) {
       console.error("Error updating team lead:", error);
-      enqueueSnackbar(error.response?.data?.message || "Failed to update team lead", { variant: "error" });
+      enqueueSnackbar(
+        error.response?.data?.message || "Failed to update team lead",
+        { variant: "error" },
+      );
     } finally {
       setTableLoading(false); // End loading
     }
@@ -1024,20 +1189,26 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             "Content-Type": "application/json",
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
-        enqueueSnackbar(response.data.message || "GitHub username updated successfully", {
-          variant: "success",
-        });
-        
+        enqueueSnackbar(
+          response.data.message || "GitHub username updated successfully",
+          {
+            variant: "success",
+          },
+        );
+
         // Reload team details immediately after successful update
         await loadTeamDetails(teamData.id);
       }
     } catch (error) {
       console.error("Error updating GitHub username:", error);
-      enqueueSnackbar(error.response?.data?.message || "Failed to update GitHub username", { variant: "error" });
+      enqueueSnackbar(
+        error.response?.data?.message || "Failed to update GitHub username",
+        { variant: "error" },
+      );
     } finally {
       setTableLoading(false); // End loading
     }
@@ -1049,7 +1220,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
 
     // Close the confirmation dialog first for better UX
     setConfirmDialogOpen(false);
-    
+
     switch (confirmDialogAction) {
       case "removeMember":
         await handleRemoveMember(confirmDialogData);
@@ -1077,9 +1248,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   };
 
   // Fetch GitHub issues for a repository
-  const fetchGithubIssues = async (repo, state = 'all') => {
+  const fetchGithubIssues = async (repo, state = "all") => {
     const repoKey = `${repo.link}-${state}`;
-    
+
     // Don't refetch if we already have the data
     if (githubIssues[repoKey] && !loadingIssues) {
       return githubIssues[repoKey];
@@ -1088,7 +1259,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     setLoadingIssues(true);
     try {
       // Extract org and repo from the GitHub URL
-      const urlParts = repo.link.split('/');
+      const urlParts = repo.link.split("/");
       const org = urlParts[urlParts.length - 2];
       const repoName = urlParts[urlParts.length - 1];
 
@@ -1098,20 +1269,20 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           params: {
             org: org,
             repo: repoName,
-            state: state
+            state: state,
           },
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
         const issues = response.data.issues || [];
-        setGithubIssues(prev => ({
+        setGithubIssues((prev) => ({
           ...prev,
-          [repoKey]: issues
+          [repoKey]: issues,
         }));
         return issues;
       }
@@ -1127,15 +1298,17 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   // Handle GitHub issue creation
   const handleCreateGithubIssue = async () => {
     if (!selectedIssueTemplate) return;
-    
+
     // Use selectedRepo or the only repo if there's just one
-    const repoToUse = selectedRepo || (teamData?.github_links?.length === 1 ? teamData.github_links[0] : null);
+    const repoToUse =
+      selectedRepo ||
+      (teamData?.github_links?.length === 1 ? teamData.github_links[0] : null);
     if (!repoToUse) return;
 
     setCreatingIssue(true);
     try {
       // Extract org and repo from the GitHub URL
-      const urlParts = repoToUse.link.split('/');
+      const urlParts = repoToUse.link.split("/");
       const org = urlParts[urlParts.length - 2];
       const repo = urlParts[urlParts.length - 1];
 
@@ -1145,7 +1318,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           repo: repo,
           org: org,
           title: selectedIssueTemplate.title,
-          body: selectedIssueTemplate.body
+          body: selectedIssueTemplate.body,
         },
         {
           headers: {
@@ -1153,13 +1326,13 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             "Content-Type": "application/json",
             "X-Org-Id": orgId,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
         enqueueSnackbar(
           `GitHub issue "${selectedIssueTemplate.title}" created successfully`,
-          { variant: "success" }
+          { variant: "success" },
         );
         setGithubIssueDialogOpen(false);
         setSelectedIssueTemplate(null);
@@ -1193,8 +1366,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     } catch (error) {
       console.error("Error creating GitHub issue:", error);
       enqueueSnackbar(
-        error.response?.data?.message || "Failed to create GitHub issue", 
-        { variant: "error" }
+        error.response?.data?.message || "Failed to create GitHub issue",
+        { variant: "error" },
       );
     } finally {
       setCreatingIssue(false);
@@ -1238,9 +1411,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         <CardContent>
           {!hasRankings && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              This team has no nonprofit rankings on file — the team
-              creation / nonprofit matching flow was not completed for this
-              hackathon. You can still manually assign a nonprofit below.
+              This team has no nonprofit rankings on file — the team creation /
+              nonprofit matching flow was not completed for this hackathon. You
+              can still manually assign a nonprofit below.
             </Alert>
           )}
           {!hasOptions && (
@@ -1253,8 +1426,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           )}
           {hasOptions && nonprofitSource === "all" && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              Showing all nonprofits as a fallback because none are attached
-              to this hackathon.
+              Showing all nonprofits as a fallback because none are attached to
+              this hackathon.
             </Alert>
           )}
 
@@ -1312,14 +1485,16 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                 <Typography variant="body2" color="text.secondary">
                   {teamData.selected_nonprofit_id
                     ? `Approving notifies the team and assigns them to ${getNonprofitName(
-                        teamData.selected_nonprofit_id
+                        teamData.selected_nonprofit_id,
                       )}.`
                     : "Choose a nonprofit above, then approve — this notifies the team and sets their status to Nonprofit Selected."}
                 </Typography>
               </Box>
               <Tooltip
                 title={
-                  teamData.selected_nonprofit_id ? "" : "Select a nonprofit first"
+                  teamData.selected_nonprofit_id
+                    ? ""
+                    : "Select a nonprofit first"
                 }
               >
                 <span>
@@ -1340,7 +1515,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
               This team has been approved
               {teamData.selected_nonprofit_id
                 ? ` and assigned to ${getNonprofitName(
-                    teamData.selected_nonprofit_id
+                    teamData.selected_nonprofit_id,
                   )}`
                 : ""}
               .
@@ -1364,7 +1539,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                   <TableBody>
                     {rankings.map((ranking, index) => {
                       const nonprofit = nonprofitOptions.find(
-                        (n) => n.id === ranking.nonprofit_id
+                        (n) => n.id === ranking.nonprofit_id,
                       );
                       const isSelected =
                         teamData.selected_nonprofit_id === ranking.nonprofit_id;
@@ -1409,17 +1584,21 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     if (!teamData) return null;
 
     // Always ensure team_members is an array, even if it's null or undefined
-    const teamMembers = Array.isArray(teamData.team_members) ? teamData.team_members : [];
-    
+    const teamMembers = Array.isArray(teamData.team_members)
+      ? teamData.team_members
+      : [];
+
     return (
       <Card elevation={1} sx={{ mb: 3 }}>
         <CardHeader
           title="Team Members"
           subheader="Manage team composition"
           action={
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Button
-                startIcon={tableLoading ? <CircularProgress size={16} /> : <FaUserPlus />}
+                startIcon={
+                  tableLoading ? <CircularProgress size={16} /> : <FaUserPlus />
+                }
                 onClick={() => setUserSearchDialogOpen(true)}
                 color="primary"
                 variant="contained"
@@ -1427,19 +1606,19 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                 disabled={tableLoading}
               >
                 Find User
-              </Button>              
+              </Button>
             </Box>
           }
         />
         <Divider />
         <CardContent>
           {tableLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress size={40} />
             </Box>
           ) : teamMembers.length === 0 ? (
             // Only show the "No team members" message when we're certain the array is empty
-            <Box sx={{ py: 2, textAlign: 'center' }}>
+            <Box sx={{ py: 2, textAlign: "center" }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 No team members yet. Add members to build your team.
               </Typography>
@@ -1473,20 +1652,24 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                       <TableCell>{member.name || "Unnamed Member"}</TableCell>
                       <TableCell>{member.user_id || "N/A"}</TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <TextField
                             size="small"
                             variant="outlined"
                             value={member.github || ""}
                             placeholder="GitHub username"
                             onChange={(e) => {
-                              const updatedMembers = teamMembers.map(
-                                (m) =>
-                                  m.id === member.id
-                                    ? { ...m, github: e.target.value }
-                                    : m
+                              const updatedMembers = teamMembers.map((m) =>
+                                m.id === member.id
+                                  ? { ...m, github: e.target.value }
+                                  : m,
                               );
-                              handleTeamDataChange("team_members", updatedMembers);
+                              handleTeamDataChange(
+                                "team_members",
+                                updatedMembers,
+                              );
                             }}
                             InputProps={{
                               startAdornment: (
@@ -1499,7 +1682,10 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                                   <IconButton
                                     size="small"
                                     onClick={() =>
-                                      handleUpdateGithub(member.id, member.github)
+                                      handleUpdateGithub(
+                                        member.id,
+                                        member.github,
+                                      )
                                     }
                                     disabled={!member.github}
                                   >
@@ -1528,7 +1714,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                               confirmAction(
                                 "setLead",
                                 member.id,
-                                `Make ${member.name || "this member"} the team lead?`
+                                `Make ${member.name || "this member"} the team lead?`,
                               )
                             }
                           />
@@ -1543,7 +1729,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                               confirmAction(
                                 "removeMember",
                                 member.id,
-                                `Remove ${member.name || "this member"} from the team?`
+                                `Remove ${member.name || "this member"} from the team?`,
                               )
                             }
                           >
@@ -1735,17 +1921,22 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                     ),
                   }}
                 />
-                {teamData.demo_video_url && !validateDemoVideoUrl(teamData.demo_video_url) && (
-                  <Box sx={{ maxWidth: 320 }}>
-                    <LiteVideoThumbnail
-                      url={teamData.demo_video_url}
-                      label="Preview"
-                      onClick={() =>
-                        window.open(teamData.demo_video_url, '_blank', 'noopener,noreferrer')
-                      }
-                    />
-                  </Box>
-                )}
+                {teamData.demo_video_url &&
+                  !validateDemoVideoUrl(teamData.demo_video_url) && (
+                    <Box sx={{ maxWidth: 320 }}>
+                      <LiteVideoThumbnail
+                        url={teamData.demo_video_url}
+                        label="Preview"
+                        onClick={() =>
+                          window.open(
+                            teamData.demo_video_url,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      />
+                    </Box>
+                  )}
 
                 <TextField
                   fullWidth
@@ -1768,6 +1959,126 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             </CardContent>
           </Card>
         </Grid>
+
+        <Grid size={{ xs: 12 }}>
+          <Card elevation={1} sx={{ mb: 3 }}>
+            <CardHeader
+              title="Project Submission"
+              subheader="What the team wrote for judges and the public project page."
+              action={
+                <Button
+                  size="small"
+                  component="a"
+                  href={`/hack/${selectedEventSlug}/team/${teamData.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  startIcon={<FaExternalLinkAlt size={12} />}
+                >
+                  Open public page
+                </Button>
+              }
+            />
+            <Divider />
+            <CardContent>
+              <Stack spacing={2}>
+                <TextField
+                  fullWidth
+                  label="Tagline"
+                  value={teamData.project_tagline || ""}
+                  onChange={(e) =>
+                    handleTeamDataChange(
+                      "project_tagline",
+                      e.target.value.slice(0, 140),
+                    )
+                  }
+                  placeholder="One sentence describing the project"
+                  helperText={`${(teamData.project_tagline || "").length}/140`}
+                  inputProps={{ maxLength: 140 }}
+                />
+
+                <FormControl fullWidth>
+                  <InputLabel id="submission-status-select-label">
+                    Submission status
+                  </InputLabel>
+                  <Select
+                    labelId="submission-status-select-label"
+                    label="Submission status"
+                    value={getSubmissionStatus(teamData) || ""}
+                    displayEmpty
+                    onChange={(e) =>
+                      handleTeamDataChange(
+                        "project_submission_status",
+                        e.target.value || null,
+                      )
+                    }
+                  >
+                    <MenuItem value="">
+                      <em>Not submitted (legacy/draft)</em>
+                    </MenuItem>
+                    <MenuItem value="draft">Draft</MenuItem>
+                    <MenuItem value="submitted">Submitted</MenuItem>
+                    <MenuItem value="late">Late</MenuItem>
+                  </Select>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 0.5, display: "block" }}
+                  >
+                    Override only — e.g. accept a late submission.
+                  </Typography>
+                </FormControl>
+
+                <Box>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{ mb: 1 }}
+                  >
+                    <Typography variant="subtitle2">Project story</Typography>
+                    <Button
+                      size="small"
+                      onClick={() => setStoryEditOpen((v) => !v)}
+                    >
+                      {storyEditOpen ? "Preview" : "Edit story"}
+                    </Button>
+                  </Stack>
+                  {storyEditOpen ? (
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={8}
+                      value={teamData.project_story || ""}
+                      onChange={(e) =>
+                        handleTeamDataChange("project_story", e.target.value)
+                      }
+                      placeholder="Markdown supported — the same content the team edits from their dashboard."
+                    />
+                  ) : teamData.project_story ? (
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        maxHeight: 240,
+                        overflow: "auto",
+                        bgcolor: "grey.50",
+                      }}
+                    >
+                      <ProjectStoryMarkdown
+                        markdown={teamData.project_story}
+                        demoteBy={2}
+                      />
+                    </Paper>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No story written yet.
+                    </Typography>
+                  )}
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
     );
   };
@@ -1782,14 +2093,16 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           title="GitHub Repositories & Issues"
           subheader="Manage team repositories and create hackathon phase issues"
           action={
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Button
                 startIcon={<FaBug />}
                 onClick={() => setGithubIssueDialogOpen(true)}
                 color="secondary"
                 variant="contained"
                 size="small"
-                disabled={!teamData.github_links || teamData.github_links.length === 0}
+                disabled={
+                  !teamData.github_links || teamData.github_links.length === 0
+                }
               >
                 Create Issue
               </Button>
@@ -1813,7 +2126,14 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           {teamData.github_links && teamData.github_links.length > 0 ? (
             <Box>
               {/* Issues Filter Controls */}
-              <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  mb: 3,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <Typography variant="subtitle1" fontWeight="bold">
                   Repositories & Issues
                 </Typography>
@@ -1846,12 +2166,20 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                   <Card key={index} variant="outlined" sx={{ mb: 2 }}>
                     <CardHeader
                       title={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
                             <FaGithub />
                             <Typography variant="h6">{repo.name}</Typography>
                           </Box>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Box sx={{ display: "flex", gap: 1 }}>
                             <Chip
                               size="small"
                               label={`${summary.open} open`}
@@ -1868,8 +2196,19 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                         </Box>
                       }
                       subheader={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                          <Typography variant="body2" color="text.secondary" noWrap>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            mt: 1,
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            noWrap
+                          >
                             {repo.link}
                           </Typography>
                           <IconButton
@@ -1885,7 +2224,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                         </Box>
                       }
                       action={
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: "flex", gap: 1 }}>
                           <Tooltip title="Create Phase Issue">
                             <IconButton
                               size="small"
@@ -1896,10 +2235,17 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                               }}
                             >
                               <FaBug />
-                              <Box component="span" sx={{ fontSize: '8px', ml: 0.5 }}>+</Box>
+                              <Box
+                                component="span"
+                                sx={{ fontSize: "8px", ml: 0.5 }}
+                              >
+                                +
+                              </Box>
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title={isExpanded ? "Hide Issues" : "Show Issues"}>
+                          <Tooltip
+                            title={isExpanded ? "Hide Issues" : "Show Issues"}
+                          >
                             <IconButton
                               size="small"
                               onClick={() => {
@@ -1920,18 +2266,29 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                         </Box>
                       }
                     />
-                    
+
                     {/* Expandable Issues List */}
                     {isExpanded && (
                       <CardContent sx={{ pt: 0 }}>
                         {loadingIssues ? (
-                          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              py: 2,
+                            }}
+                          >
                             <CircularProgress size={24} />
                           </Box>
                         ) : issues.length > 0 ? (
                           <Box>
-                            <Typography variant="subtitle2" gutterBottom sx={{ mb: 2 }}>
-                              Issues ({issueFilter === 'all' ? 'all' : issueFilter})
+                            <Typography
+                              variant="subtitle2"
+                              gutterBottom
+                              sx={{ mb: 2 }}
+                            >
+                              Issues (
+                              {issueFilter === "all" ? "all" : issueFilter})
                             </Typography>
                             <List dense>
                               {issues.slice(0, 10).map((issue, issueIndex) => (
@@ -1939,13 +2296,19 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                                   key={issueIndex}
                                   sx={{
                                     border: 1,
-                                    borderColor: 'divider',
+                                    borderColor: "divider",
                                     borderRadius: 1,
                                     mb: 1,
-                                    bgcolor: issue.state === 'open' ? 'success.light' : 'grey.100',
-                                    '&:hover': {
-                                      bgcolor: issue.state === 'open' ? 'success.main' : 'grey.200',
-                                    }
+                                    bgcolor:
+                                      issue.state === "open"
+                                        ? "success.light"
+                                        : "grey.100",
+                                    "&:hover": {
+                                      bgcolor:
+                                        issue.state === "open"
+                                          ? "success.main"
+                                          : "grey.200",
+                                    },
                                   }}
                                   button
                                   component="a"
@@ -1963,37 +2326,58 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                                   </ListItemIcon>
                                   <ListItemText
                                     primary={
-                                      <Typography variant="body2" fontWeight="medium" noWrap>
+                                      <Typography
+                                        variant="body2"
+                                        fontWeight="medium"
+                                        noWrap
+                                      >
                                         #{issue.number}: {issue.title}
                                       </Typography>
                                     }
                                     secondary={
-                                      <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
-                                        <Typography variant="caption" color="text.secondary">
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          gap: 2,
+                                          mt: 0.5,
+                                        }}
+                                      >
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                        >
                                           {formatDate(issue.created_at)}
                                         </Typography>
                                         {issue.assignee && (
-                                          <Typography variant="caption" color="text.secondary">
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                          >
                                             @{issue.assignee.login}
                                           </Typography>
                                         )}
-                                        {issue.labels && issue.labels.length > 0 && (
-                                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                            {issue.labels.slice(0, 2).map((label, labelIndex) => (
-                                              <Chip
-                                                key={labelIndex}
-                                                size="small"
-                                                label={label.name}
-                                                sx={{
-                                                  height: 16,
-                                                  fontSize: '0.65rem',
-                                                  backgroundColor: `#${label.color}`,
-                                                  color: 'white'
-                                                }}
-                                              />
-                                            ))}
-                                          </Box>
-                                        )}
+                                        {issue.labels &&
+                                          issue.labels.length > 0 && (
+                                            <Box
+                                              sx={{ display: "flex", gap: 0.5 }}
+                                            >
+                                              {issue.labels
+                                                .slice(0, 2)
+                                                .map((label, labelIndex) => (
+                                                  <Chip
+                                                    key={labelIndex}
+                                                    size="small"
+                                                    label={label.name}
+                                                    sx={{
+                                                      height: 16,
+                                                      fontSize: "0.65rem",
+                                                      backgroundColor: `#${label.color}`,
+                                                      color: "white",
+                                                    }}
+                                                  />
+                                                ))}
+                                            </Box>
+                                          )}
                                       </Box>
                                     }
                                   />
@@ -2004,7 +2388,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                               ))}
                             </List>
                             {issues.length > 10 && (
-                              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                              <Box sx={{ textAlign: "center", mt: 2 }}>
                                 <Button
                                   size="small"
                                   component="a"
@@ -2019,7 +2403,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                           </Box>
                         ) : (
                           <Alert severity="info" sx={{ mt: 1 }}>
-                            No {issueFilter === 'all' ? '' : issueFilter} issues found for this repository.
+                            No {issueFilter === "all" ? "" : issueFilter} issues
+                            found for this repository.
                           </Alert>
                         )}
                       </CardContent>
@@ -2030,7 +2415,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             </Box>
           ) : (
             <Alert severity="info">
-              No GitHub repositories have been linked to this team yet. Add repositories first to create hackathon phase issues.
+              No GitHub repositories have been linked to this team yet. Add
+              repositories first to create hackathon phase issues.
             </Alert>
           )}
         </CardContent>
@@ -2052,7 +2438,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         <CardContent>
           <Box sx={{ mb: 2, display: "flex", gap: 2, alignItems: "center" }}>
             <Typography variant="body2" gutterBottom>
-              Send a message to #{teamData.slack_channel || 'team-channel'}
+              Send a message to #{teamData.slack_channel || "team-channel"}
             </Typography>
             <Button
               startIcon={<FaPaperPlane />}
@@ -2110,29 +2496,29 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
 
   // Helper function to get nonprofit name from id
   const getNonprofitName = (nonprofitId) => {
-    return nonprofitId && nonprofitMap[nonprofitId] 
-      ? nonprofitMap[nonprofitId] 
+    return nonprofitId && nonprofitMap[nonprofitId]
+      ? nonprofitMap[nonprofitId]
       : "Not assigned";
   };
 
   // Helper function to get issue status color
   const getIssueStatusColor = (state) => {
     switch (state) {
-      case 'open':
-        return 'success';
-      case 'closed':
-        return 'default';
+      case "open":
+        return "success";
+      case "closed":
+        return "default";
       default:
-        return 'info';
+        return "info";
     }
   };
 
   // Helper function to format date
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -2140,8 +2526,10 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const getIssuesSummary = (repo) => {
     const repoKey = `${repo.link}-all`;
     const issues = githubIssues[repoKey] || [];
-    const openCount = issues.filter(issue => issue.state === 'open').length;
-    const closedCount = issues.filter(issue => issue.state === 'closed').length;
+    const openCount = issues.filter((issue) => issue.state === "open").length;
+    const closedCount = issues.filter(
+      (issue) => issue.state === "closed",
+    ).length;
     return { total: issues.length, open: openCount, closed: closedCount };
   };
 
@@ -2149,7 +2537,13 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const renderGitHubCell = (team) => {
     if (!team.github_links || team.github_links.length === 0) {
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            color: "text.secondary",
+          }}
+        >
           <FaGithub style={{ marginRight: 4, opacity: 0.5 }} />
           <Typography variant="body2" color="text.secondary">
             No repos
@@ -2162,44 +2556,50 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     if (team.github_links.length === 1) {
       const repo = team.github_links[0];
       const repoKey = `${repo.link}-summary`;
-      const summary = githubIssueSummaries[repoKey] || { open: 0, closed: 0, total: 0 };
-      
+      const summary = githubIssueSummaries[repoKey] || {
+        open: 0,
+        closed: 0,
+        total: 0,
+      };
+
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Link
             href={repo.link}
             target="_blank"
             rel="noopener noreferrer"
-            sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              textDecoration: 'none',
-              color: 'primary.main',
-              '&:hover': {
-                textDecoration: 'underline'
-              }
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              textDecoration: "none",
+              color: "primary.main",
+              "&:hover": {
+                textDecoration: "underline",
+              },
             }}
           >
             <FaGithub style={{ marginRight: 4 }} />
             <Typography variant="body2" noWrap sx={{ maxWidth: 120 }}>
-              {repo.name || 'Repository'}
+              {repo.name || "Repository"}
             </Typography>
             <FaExternalLinkAlt size={12} style={{ marginLeft: 4 }} />
           </Link>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Tooltip title={`${summary.open} open issues, ${summary.closed} closed issues`}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Tooltip
+              title={`${summary.open} open issues, ${summary.closed} closed issues`}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <Chip
                   size="small"
                   label={summary.open}
                   color="success"
-                  sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
+                  sx={{ minWidth: 40, height: 20, fontSize: "0.7rem" }}
                 />
                 <Chip
                   size="small"
                   label={summary.closed}
                   color="default"
-                  sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
+                  sx={{ minWidth: 40, height: 20, fontSize: "0.7rem" }}
                 />
               </Box>
             </Tooltip>
@@ -2221,18 +2621,25 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     }
 
     // If there are multiple repositories, show aggregate counts and dropdown
-    const totalSummary = team.github_links.reduce((acc, repo) => {
-      const repoKey = `${repo.link}-summary`;
-      const summary = githubIssueSummaries[repoKey] || { open: 0, closed: 0, total: 0 };
-      return {
-        open: acc.open + summary.open,
-        closed: acc.closed + summary.closed,
-        total: acc.total + summary.total
-      };
-    }, { open: 0, closed: 0, total: 0 });
+    const totalSummary = team.github_links.reduce(
+      (acc, repo) => {
+        const repoKey = `${repo.link}-summary`;
+        const summary = githubIssueSummaries[repoKey] || {
+          open: 0,
+          closed: 0,
+          total: 0,
+        };
+        return {
+          open: acc.open + summary.open,
+          closed: acc.closed + summary.closed,
+          total: acc.total + summary.total,
+        };
+      },
+      { open: 0, closed: 0, total: 0 },
+    );
 
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Chip
           icon={<FaGithub />}
           label={`${team.github_links.length} repos`}
@@ -2242,25 +2649,27 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           onClick={() => {
             // Open the first repository or show all in the edit dialog
             if (team.github_links[0]) {
-              window.open(team.github_links[0].link, '_blank');
+              window.open(team.github_links[0].link, "_blank");
             }
           }}
-          sx={{ cursor: 'pointer' }}
+          sx={{ cursor: "pointer" }}
         />
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Tooltip title={`Total: ${totalSummary.open} open issues, ${totalSummary.closed} closed issues across all repositories`}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Tooltip
+            title={`Total: ${totalSummary.open} open issues, ${totalSummary.closed} closed issues across all repositories`}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <Chip
                 size="small"
                 label={totalSummary.open}
                 color="success"
-                sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
+                sx={{ minWidth: 40, height: 20, fontSize: "0.7rem" }}
               />
               <Chip
                 size="small"
                 label={totalSummary.closed}
                 color="default"
-                sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
+                sx={{ minWidth: 40, height: 20, fontSize: "0.7rem" }}
               />
             </Box>
           </Tooltip>
@@ -2286,8 +2695,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             Team Management
           </Typography>
           <Typography variant="body1" paragraph>
-            Manage teams, assign nonprofits, and monitor team progress across all
-            hackathons.
+            Manage teams, assign nonprofits, and monitor team progress across
+            all hackathons.
           </Typography>
         </Box>
       )}
@@ -2300,10 +2709,14 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                 fullWidth
                 options={hackathonOptions}
                 value={selectedHackathonOption}
-                onChange={(_, option) => setSelectedHackathon(option?.id ?? '')}
+                onChange={(_, option) => setSelectedHackathon(option?.id ?? "")}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
                 renderInput={(params) => (
-                  <TextField {...params} label="Select Hackathon" placeholder="Type to search…" />
+                  <TextField
+                    {...params}
+                    label="Select Hackathon"
+                    placeholder="Type to search…"
+                  />
                 )}
                 noOptionsText="No hackathons found"
               />
@@ -2335,17 +2748,32 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
 
         {/* Filter chips — quick scoping for demo/judging-day workflows */}
         {selectedHackathon && (
-          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              gap: 1,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mr: 0.5 }}
+            >
               Show:
             </Typography>
             {[
-              { key: 'all',             label: 'All' },
-              { key: 'winning',         label: 'Winning' },
-              { key: 'in_review',       label: 'In review' },
-              { key: 'active',          label: 'Active' },
-              { key: 'missing_devpost', label: 'Missing DevPost' },
-              { key: 'missing_video',   label: 'Missing Video' },
+              { key: "all", label: "All" },
+              { key: "winning", label: "Winning" },
+              { key: "in_review", label: "In review" },
+              { key: "active", label: "Active" },
+              { key: "missing_story", label: "Missing story" },
+              { key: "not_submitted", label: "Not submitted" },
+              { key: "late", label: "Late" },
+              { key: "missing_video", label: "Missing Video" },
+              { key: "missing_devpost", label: "Missing DevPost" },
             ].map((f) => {
               const selected = activeFilter === f.key;
               return (
@@ -2354,12 +2782,22 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                   label={f.label}
                   size="small"
                   clickable
-                  color={selected ? 'primary' : 'default'}
-                  variant={selected ? 'filled' : 'outlined'}
+                  color={selected ? "primary" : "default"}
+                  variant={selected ? "filled" : "outlined"}
                   onClick={() => setActiveFilter(f.key)}
                 />
               );
             })}
+            <Box sx={{ flex: 1 }} />
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<FaFileDownload />}
+              disabled={filteredTeams.length === 0}
+              onClick={handleExportSubmissionsCsv}
+            >
+              Export submissions CSV
+            </Button>
           </Box>
         )}
       </Paper>
@@ -2459,6 +2897,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                     <TableCell>GitHub</TableCell>
                     <TableCell>DevPost</TableCell>
                     <TableCell>Demo Video</TableCell>
+                    <TableCell>Submission</TableCell>
+                    <TableCell>Story</TableCell>
                     <TableCell>Nonprofit</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
@@ -2495,12 +2935,12 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                                 href={`https://opportunity-hack.slack.com/app_redirect?channel=${team.slack_channel}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                sx={{ 
-                                  textDecoration: 'none',
+                                sx={{
+                                  textDecoration: "none",
                                   color: theme.palette.primary.main,
-                                  '&:hover': {
-                                    textDecoration: 'underline'
-                                  }
+                                  "&:hover": {
+                                    textDecoration: "underline",
+                                  },
                                 }}
                               >
                                 {team.slack_channel}
@@ -2531,9 +2971,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                             />
                           )}
                         </TableCell>
-                        <TableCell>
-                          {renderGitHubCell(team)}
-                        </TableCell>
+                        <TableCell>{renderGitHubCell(team)}</TableCell>
                         <TableCell>
                           {team.devpost_link ? (
                             <Link
@@ -2541,21 +2979,23 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                               target="_blank"
                               rel="noopener noreferrer"
                               sx={{
-                                textDecoration: 'none',
+                                textDecoration: "none",
                                 color: theme.palette.primary.main,
-                                display: 'flex',
-                                alignItems: 'center',
+                                display: "flex",
+                                alignItems: "center",
                                 gap: 0.5,
-                                '&:hover': {
-                                  textDecoration: 'underline'
-                                }
+                                "&:hover": {
+                                  textDecoration: "underline",
+                                },
                               }}
                             >
                               <FaLink size={12} />
                               DevPost
                             </Link>
                           ) : (
-                            <Typography variant="body2" color="text.secondary">—</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              —
+                            </Typography>
                           )}
                         </TableCell>
                         <TableCell>
@@ -2581,6 +3021,23 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                           )}
                         </TableCell>
                         <TableCell>
+                          <SubmissionChip team={team} tz={selectedEventTz} />
+                        </TableCell>
+                        <TableCell>
+                          {isProjectStoryMissing(team) ? (
+                            <Typography variant="body2" color="text.secondary">
+                              —
+                            </Typography>
+                          ) : (
+                            <Chip
+                              size="small"
+                              label="Written"
+                              color="info"
+                              variant="outlined"
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {getNonprofitName(team.selected_nonprofit_id)}
                         </TableCell>
                         <TableCell>
@@ -2602,7 +3059,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                                   confirmAction(
                                     "deleteTeam",
                                     team.id,
-                                    `Delete team ${team.name}? This cannot be undone.`
+                                    `Delete team ${team.name}? This cannot be undone.`,
                                   )
                                 }
                               >
@@ -2705,7 +3162,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         fullWidth
       >
         <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <FaPaperPlane />
             Send Message to #{teamData?.slack_channel}
           </Box>
@@ -2720,58 +3177,76 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                 <Typography variant="body2" color="text.secondary" paragraph>
                   Select from common messages or write a custom one
                 </Typography>
-                
-                {Object.entries(MESSAGE_TEMPLATES).map(([categoryKey, category]) => (
-                  <Box key={categoryKey} sx={{ mb: 3 }}>
-                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                      {category.category}
-                    </Typography>
-                    <Grid container spacing={2}>
-                      {category.templates.map((template) => (
-                        <Grid size={{ xs: 12, sm: 6 }} key={template.id}>
-                          <Card 
-                            variant="outlined" 
-                            sx={{ 
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              '&:hover': {
-                                borderColor: 'primary.main',
-                                boxShadow: 1
-                              }
-                            }}
-                            onClick={() => handleTemplateSelect(template)}
-                          >
-                            <CardContent sx={{ pb: 2 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                <Typography variant="h6" component="span">
-                                  {template.icon}
+
+                {Object.entries(MESSAGE_TEMPLATES).map(
+                  ([categoryKey, category]) => (
+                    <Box key={categoryKey} sx={{ mb: 3 }}>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                        gutterBottom
+                      >
+                        {category.category}
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {category.templates.map((template) => (
+                          <Grid size={{ xs: 12, sm: 6 }} key={template.id}>
+                            <Card
+                              variant="outlined"
+                              sx={{
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                "&:hover": {
+                                  borderColor: "primary.main",
+                                  boxShadow: 1,
+                                },
+                              }}
+                              onClick={() => handleTemplateSelect(template)}
+                            >
+                              <CardContent sx={{ pb: 2 }}>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                    mb: 1,
+                                  }}
+                                >
+                                  <Typography variant="h6" component="span">
+                                    {template.icon}
+                                  </Typography>
+                                  <Typography
+                                    variant="subtitle2"
+                                    fontWeight="bold"
+                                  >
+                                    {template.title}
+                                  </Typography>
+                                </Box>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 3,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
+                                  {template.message}
                                 </Typography>
-                                <Typography variant="subtitle2" fontWeight="bold">
-                                  {template.title}
-                                </Typography>
-                              </Box>
-                              <Typography 
-                                variant="body2" 
-                                color="text.secondary"
-                                sx={{
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 3,
-                                  WebkitBoxOrient: 'vertical',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}
-                              >
-                                {template.message}
-                              </Typography>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </Box>
-                ))}
-                
-                <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  ),
+                )}
+
+                <Box
+                  sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}
+                >
                   <Button
                     fullWidth
                     variant="outlined"
@@ -2786,15 +3261,24 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
 
             {(selectedTemplate || customMessage) && (
               <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 2,
+                  }}
+                >
                   <Typography variant="h6">
                     {selectedTemplate ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <span>{selectedTemplate.icon}</span>
                         {selectedTemplate.title}
                       </Box>
                     ) : (
-                      'Custom Message'
+                      "Custom Message"
                     )}
                   </Typography>
                   <Button
@@ -2808,7 +3292,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                     Back to Templates
                   </Button>
                 </Box>
-                
+
                 <TextField
                   fullWidth
                   multiline
@@ -2818,13 +3302,15 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder="Type your message to the team..."
                   variant="outlined"
-                  helperText={`Message will be sent to #${teamData?.slack_channel || 'team-channel'}`}
+                  helperText={`Message will be sent to #${teamData?.slack_channel || "team-channel"}`}
                 />
-                
+
                 {selectedTemplate && (
                   <Alert severity="info" sx={{ mt: 2 }}>
                     <Typography variant="body2">
-                      💡 Feel free to customize this template before sending. The message above can be edited to fit your specific needs.
+                      💡 Feel free to customize this template before sending.
+                      The message above can be edited to fit your specific
+                      needs.
                     </Typography>
                   </Alert>
                 )}
@@ -2840,7 +3326,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
               variant="contained"
               color="primary"
               disabled={loading || !messageText.trim()}
-              startIcon={loading ? <CircularProgress size={16} /> : <FaPaperPlane />}
+              startIcon={
+                loading ? <CircularProgress size={16} /> : <FaPaperPlane />
+              }
             >
               Send Message
             </Button>
@@ -2859,19 +3347,32 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         <DialogContent>
           <Box sx={{ py: 2 }}>
             <Typography variant="body1" gutterBottom>
-              You are about to approve team <strong>{teamData?.name}</strong> and assign them to:
+              You are about to approve team <strong>{teamData?.name}</strong>{" "}
+              and assign them to:
             </Typography>
-            
-            <Box sx={{ my: 2, p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+
+            <Box
+              sx={{
+                my: 2,
+                p: 2,
+                bgcolor: "background.paper",
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+            >
               <Typography variant="subtitle1" color="primary" fontWeight="bold">
-                {teamData?.selected_nonprofit_id ? getNonprofitName(teamData.selected_nonprofit_id) : "No nonprofit selected"}
+                {teamData?.selected_nonprofit_id
+                  ? getNonprofitName(teamData.selected_nonprofit_id)
+                  : "No nonprofit selected"}
               </Typography>
             </Box>
-            
+
             <Typography variant="body2" color="text.secondary">
-              This will notify the team and update their status to "Nonprofit Selected".
+              This will notify the team and update their status to "Nonprofit
+              Selected".
             </Typography>
-            
+
             {!teamData?.selected_nonprofit_id && (
               <Alert severity="warning" sx={{ mt: 2 }}>
                 Please select a nonprofit before approving the team.
@@ -2886,7 +3387,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
             variant="contained"
             color="success"
             disabled={loading || !teamData?.selected_nonprofit_id}
-            startIcon={loading ? <CircularProgress size={16} /> : <FaCheckCircle />}
+            startIcon={
+              loading ? <CircularProgress size={16} /> : <FaCheckCircle />
+            }
           >
             Confirm Approval
           </Button>
@@ -2928,7 +3431,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         fullWidth
       >
         <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <FaBug />
             Create GitHub Issue
           </Box>
@@ -2936,142 +3439,172 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         <DialogContent>
           <Box sx={{ mt: 1 }}>
             {/* Repository Selection */}
-            {!selectedRepo && teamData?.github_links && teamData.github_links.length > 1 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Select Repository
-                </Typography>
-                <Grid container spacing={2}>
-                  {teamData.github_links.map((repo, index) => (
-                    <Grid size={{ xs: 12, sm: 6 }} key={index}>
-                      <Card 
-                        variant="outlined" 
-                        sx={{ 
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            borderColor: 'primary.main',
-                            boxShadow: 1
-                          }
-                        }}
-                        onClick={() => setSelectedRepo(repo)}
-                      >
-                        <CardContent sx={{ pb: 2 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                            <FaGithub />
-                            <Typography variant="subtitle2" fontWeight="bold">
-                              {repo.name}
+            {!selectedRepo &&
+              teamData?.github_links &&
+              teamData.github_links.length > 1 && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Select Repository
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {teamData.github_links.map((repo, index) => (
+                      <Grid size={{ xs: 12, sm: 6 }} key={index}>
+                        <Card
+                          variant="outlined"
+                          sx={{
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            "&:hover": {
+                              borderColor: "primary.main",
+                              boxShadow: 1,
+                            },
+                          }}
+                          onClick={() => setSelectedRepo(repo)}
+                        >
+                          <CardContent sx={{ pb: 2 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                mb: 1,
+                              }}
+                            >
+                              <FaGithub />
+                              <Typography variant="subtitle2" fontWeight="bold">
+                                {repo.name}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              noWrap
+                            >
+                              {repo.link}
                             </Typography>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary" noWrap>
-                            {repo.link}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            )}
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              )}
 
             {/* Template Selection */}
-            {(selectedRepo || (teamData?.github_links && teamData.github_links.length === 1)) && !selectedIssueTemplate && (
-              <Box>
-                <Typography variant="h6" gutterBottom>
-                  Select Issue Template
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Choose a hackathon phase template to create a check-in issue
-                </Typography>
-                
-                <Grid container spacing={2}>
-                  {Object.entries(getGithubIssueTemplates(selectedHackathon)).map(([templateKey, template]) => (
-                    <Grid size={{ xs: 12, sm: 6 }} key={templateKey}>
-                      <Card 
-                        variant="outlined" 
-                        sx={{ 
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            borderColor: 'primary.main',
-                            boxShadow: 1
-                          }
-                        }}
-                        onClick={() => setSelectedIssueTemplate(template)}
-                      >
-                        <CardContent sx={{ pb: 2 }}>
-                          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                            {template.phase}
-                          </Typography>
-                          <Typography variant="h6" gutterBottom>
-                            {template.title}
-                          </Typography>
-                          <Typography 
-                            variant="body2" 
-                            color="text.secondary"
-                            sx={{
-                              display: '-webkit-box',
-                              WebkitLineClamp: 3,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            {template.body}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            )}
+            {(selectedRepo ||
+              (teamData?.github_links && teamData.github_links.length === 1)) &&
+              !selectedIssueTemplate && (
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Select Issue Template
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    Choose a hackathon phase template to create a check-in issue
+                  </Typography>
+
+                  <Grid container spacing={2}>
+                    {Object.entries(
+                      getGithubIssueTemplates(selectedHackathon),
+                    ).map(([templateKey, template]) => (
+                      <Grid size={{ xs: 12, sm: 6 }} key={templateKey}>
+                        <Card
+                          variant="outlined"
+                          sx={{
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            "&:hover": {
+                              borderColor: "primary.main",
+                              boxShadow: 1,
+                            },
+                          }}
+                          onClick={() => setSelectedIssueTemplate(template)}
+                        >
+                          <CardContent sx={{ pb: 2 }}>
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight="bold"
+                              gutterBottom
+                            >
+                              {template.phase}
+                            </Typography>
+                            <Typography variant="h6" gutterBottom>
+                              {template.title}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{
+                                display: "-webkit-box",
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {template.body}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              )}
 
             {/* Confirmation and Preview */}
-            {selectedIssueTemplate && (selectedRepo || (teamData?.github_links && teamData.github_links.length === 1)) && (
-              <Box>
-                <Typography variant="h6" gutterBottom>
-                  Review Issue Details
-                </Typography>
-                
-                <Alert severity="info" sx={{ mb: 3 }}>
-                  <Typography variant="body2">
-                    This will create a new issue in the repository: <strong>{selectedRepo?.name || teamData.github_links[0]?.name}</strong>
+            {selectedIssueTemplate &&
+              (selectedRepo ||
+                (teamData?.github_links &&
+                  teamData.github_links.length === 1)) && (
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Review Issue Details
                   </Typography>
-                </Alert>
-                
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Issue Title:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {selectedIssueTemplate.title}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Issue Body:
-                  </Typography>
-                  <Paper variant="outlined" sx={{ p: 2, maxHeight: 300, overflow: 'auto' }}>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        fontFamily: 'monospace', 
-                        whiteSpace: 'pre-wrap',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      {selectedIssueTemplate.body}
+
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    <Typography variant="body2">
+                      This will create a new issue in the repository:{" "}
+                      <strong>
+                        {selectedRepo?.name || teamData.github_links[0]?.name}
+                      </strong>
                     </Typography>
-                  </Paper>
+                  </Alert>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Issue Title:
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {selectedIssueTemplate.title}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Issue Body:
+                    </Typography>
+                    <Paper
+                      variant="outlined"
+                      sx={{ p: 2, maxHeight: 300, overflow: "auto" }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "monospace",
+                          whiteSpace: "pre-wrap",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        {selectedIssueTemplate.body}
+                      </Typography>
+                    </Paper>
+                  </Box>
                 </Box>
-              </Box>
-            )}
+              )}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={() => {
               setGithubIssueDialogOpen(false);
               setSelectedIssueTemplate(null);
@@ -3080,17 +3613,22 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           >
             Cancel
           </Button>
-          {selectedIssueTemplate && (selectedRepo || (teamData?.github_links && teamData.github_links.length === 1)) && (
-            <Button
-              onClick={handleCreateGithubIssue}
-              variant="contained"
-              color="primary"
-              disabled={creatingIssue}
-              startIcon={creatingIssue ? <CircularProgress size={16} /> : <FaBug />}
-            >
-              {creatingIssue ? 'Creating Issue...' : 'Create Issue'}
-            </Button>
-          )}
+          {selectedIssueTemplate &&
+            (selectedRepo ||
+              (teamData?.github_links &&
+                teamData.github_links.length === 1)) && (
+              <Button
+                onClick={handleCreateGithubIssue}
+                variant="contained"
+                color="primary"
+                disabled={creatingIssue}
+                startIcon={
+                  creatingIssue ? <CircularProgress size={16} /> : <FaBug />
+                }
+              >
+                {creatingIssue ? "Creating Issue..." : "Create Issue"}
+              </Button>
+            )}
         </DialogActions>
       </Dialog>
 
@@ -3118,26 +3656,30 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
         team={popoverState.team}
         field={popoverState.field}
         label={
-          popoverState.field === 'demo_video_url'
-            ? 'Demo Video URL'
-            : popoverState.field === 'devpost_link'
-            ? 'DevPost Link'
-            : 'Value'
+          popoverState.field === "demo_video_url"
+            ? "Demo Video URL"
+            : popoverState.field === "devpost_link"
+              ? "DevPost Link"
+              : "Value"
         }
         placeholder={
-          popoverState.field === 'demo_video_url'
-            ? 'https://youtu.be/...'
-            : popoverState.field === 'devpost_link'
-            ? 'https://devpost.com/software/...'
-            : ''
+          popoverState.field === "demo_video_url"
+            ? "https://youtu.be/..."
+            : popoverState.field === "devpost_link"
+              ? "https://devpost.com/software/..."
+              : ""
         }
         helperText={
-          popoverState.field === 'demo_video_url'
-            ? 'YouTube, Vimeo, Loom, or Google Drive'
-            : ''
+          popoverState.field === "demo_video_url"
+            ? "YouTube, Vimeo, Loom, or Google Drive"
+            : ""
         }
-        validate={popoverState.field === 'demo_video_url' ? validateDemoVideoUrl : undefined}
-        previewKind={popoverState.field === 'demo_video_url' ? 'video' : 'none'}
+        validate={
+          popoverState.field === "demo_video_url"
+            ? validateDemoVideoUrl
+            : undefined
+        }
+        previewKind={popoverState.field === "demo_video_url" ? "video" : "none"}
         onSave={handleQuickPatch}
       />
     </div>
