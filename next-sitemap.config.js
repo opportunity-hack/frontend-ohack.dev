@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
   siteUrl: process.env.SITE_URL || "https://www.ohack.dev",

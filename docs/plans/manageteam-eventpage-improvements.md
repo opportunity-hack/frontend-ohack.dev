@@ -46,6 +46,8 @@ Auth-gated page (the letters page sets this; manageteam/findteam don't).
 
 ## Part B — `manageteam.js` design conformance (refined rewrite)
 
+> **Superseded (Sep 2026).** Part B was replaced by the Team Dashboard rewrite in `docs/plans/team-dashboard-devpost-replacement.md` (Part 2.1 / Part 4 WS-B / Appendix B), shipped on `feat/team-dashboard-devpost-replacement`. `TeamStatusPanel.js` and `FormStepper.js` no longer exist; the current composition and invariants are documented in `CLAUDE.md` → "Team Dashboard". The text below is kept for history only.
+
 This page is pre-refined-era: multi-gradient Papers, emoji headers, rainbow status colors, two competing waiting-video panels, `Typography variant="h3"` mid-page. Rewrite to the refined system, **keeping all logic/endpoints intact**:
 
 1. **Chrome:** `<RefinedFonts/>` in Head, wrap in `<RefinedRoot>` + `.ohx-wrap`. Editorial masthead: eyebrow = event title (linked back to `/hack/[event_id]`), one `<h1>` — "Your team" (or "Create a team" when no team exists). Replace the "← Back to Hackathon" outlined button with a quiet `.ohx-link`.

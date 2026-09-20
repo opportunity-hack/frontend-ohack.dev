@@ -75,26 +75,35 @@ export function toIsoWithTimezone(date, timezone) {
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
-    timeZoneName: "short",
   });
   const parts = formatter.formatToParts(d).reduce((acc, p) => {
     acc[p.type] = p.value;
     return acc;
   }, {});
-  const tzPart = formatter
-    .formatToParts(d)
-    .find((p) => p.type === "timeZoneName");
-  let offset = "+00:00";
-  if (tzPart) {
-    const m = tzPart.value.match(/([+-])(\d{2}):?(\d{2})/);
-    if (m) offset = `${m[1]}${m[2]}:${m[3]}`;
-    else {
-      const tz = d.getTimezoneOffset();
-      const sign = tz <= 0 ? "+" : "-";
-      offset = `${sign}${pad(Math.abs(Math.floor(tz / 60)))}:${pad(Math.abs(tz % 60))}`;
-    }
-  }
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${offset}`;
+  // Some engines render midnight as "24" with hour12:false — normalise.
+  const hour = parts.hour === "24" ? "00" : parts.hour;
+  // Derive the event-timezone offset from the wall-clock parts themselves
+  // (wall-clock-as-UTC minus the real instant), NOT from the browser's own
+  // `getTimezoneOffset()` and NOT from the `timeZoneName` string. The old
+  // implementation regexed `timeZoneName: "short"`, which for America/Phoenix
+  // is "MST" (no digits) and then fell back to the BROWSER offset — an admin
+  // in any other timezone silently saved a deadline hours off. This derivation
+  // is exact for every IANA zone (DST included) and needs no name parsing.
+  const wallClockAsUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(hour),
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  const offsetMinutes = Math.round(
+    (wallClockAsUtc - Math.floor(d.getTime() / 1000) * 1000) / 60000,
+  );
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const abs = Math.abs(offsetMinutes);
+  const offset = `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+  return `${parts.year}-${parts.month}-${parts.day}T${hour}:${parts.minute}:${parts.second}${offset}`;
 }
 
 /**
