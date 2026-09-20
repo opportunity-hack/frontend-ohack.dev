@@ -48,6 +48,12 @@ export default function TeamDashboard({
     message: "",
     severity: "success",
   });
+  // Shared between `DeliverablesChecklist`'s "Submit project" row and
+  // `ProjectWriteupEditor`'s own submit button/dialog — both need to open
+  // and reflect the SAME confirm dialog and in-flight state (Part 9: the
+  // checklist button used to just scroll to #project instead of submitting).
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!team?.id || typeof window === "undefined") return;
@@ -82,6 +88,7 @@ export default function TeamDashboard({
   const deliverables = deriveDeliverables({
     team,
     activity: activitySummary,
+    activityStatus: activity.status,
     slackConfirmed,
   });
 
@@ -111,11 +118,8 @@ export default function TeamDashboard({
             deliverables={deliverables}
             slackConfirmed={slackConfirmed}
             onSlackConfirmChange={handleSlackConfirmChange}
-            onSubmit={() =>
-              document
-                .getElementById("project")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
+            onSubmit={() => setConfirmOpen(true)}
+            submitting={submitting}
           />
 
           <HackersChoiceCard
@@ -126,13 +130,22 @@ export default function TeamDashboard({
 
           <ProjectWriteupEditor
             team={team}
+            event={event}
             accessToken={accessToken}
             projectApi={projectApi}
             onNotify={notify}
+            canSubmit={deliverables.canSubmit}
+            submitBlockedReason={deliverables.submitBlockedReason}
+            confirmOpen={confirmOpen}
+            onOpenConfirm={() => setConfirmOpen(true)}
+            onCloseConfirm={() => setConfirmOpen(false)}
+            submitting={submitting}
+            onSubmittingChange={setSubmitting}
           />
 
           <DemoVideoEditor
             team={team}
+            event={event}
             accessToken={accessToken}
             onTeamUpdated={onTeamUpdated}
             onNotify={notify}
@@ -142,6 +155,7 @@ export default function TeamDashboard({
             team={team}
             event={event}
             byRepo={activity.byRepo}
+            status={activity.status}
             containerRef={codeCardRef}
           />
 
@@ -150,6 +164,7 @@ export default function TeamDashboard({
             eventId={eventId}
             accessToken={accessToken}
             onTeamUpdated={onTeamUpdated}
+            onNotify={notify}
           />
 
           <SlackCoachCard team={team} eventId={eventId} />
@@ -165,6 +180,7 @@ export default function TeamDashboard({
 
           <DevPostEditor
             team={team}
+            event={event}
             accessToken={accessToken}
             onTeamUpdated={onTeamUpdated}
             onNotify={notify}

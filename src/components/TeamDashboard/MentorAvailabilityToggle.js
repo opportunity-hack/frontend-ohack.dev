@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import { setMentorAvailability, isNotFound } from "../../lib/teamDashboardApi";
 import { trackEvent, EventCategory } from "../../lib/ga";
@@ -6,13 +6,13 @@ import { trackEvent, EventCategory } from "../../lib/ga";
 const OPEN = {
   value: "open",
   label: "Open to mentors",
-  color: "#2f6e50",
+  color: "var(--success, #2F6E50)",
   helper: "Mentors may drop into your channel to check in.",
 };
 const HEADS_DOWN = {
   value: "heads_down",
   label: "Heads-down",
-  color: "#b04a36",
+  color: "var(--danger, #B04A36)",
   helper: "Mentors will hold off unless you ask in #ask-a-mentor.",
 };
 
@@ -24,10 +24,21 @@ export default function MentorAvailabilityToggle({
   team,
   accessToken,
   onTeamUpdated,
+  onNotify,
 }) {
   const [open, setOpen] = useState(team?.mentor_help_wanted !== false);
   const [hidden, setHidden] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Resync when a fresh `team` merges in `mentor_help_wanted` from
+  // elsewhere — a teammate's edit picked up on `use-public-team.js`'s
+  // `visibilitychange` refetch, or another tab's own toggle. Skipped while
+  // `saving` so an in-flight optimistic update isn't clobbered by the
+  // (not-yet-updated) value it's about to replace.
+  useEffect(() => {
+    if (saving) return;
+    setOpen(team?.mentor_help_wanted !== false);
+  }, [team?.mentor_help_wanted]);
 
   if (hidden) return null;
 
@@ -48,7 +59,14 @@ export default function MentorAvailabilityToggle({
       });
     } catch (err) {
       setOpen(prev);
-      if (isNotFound(err)) setHidden(true);
+      if (isNotFound(err)) {
+        setHidden(true);
+      } else {
+        onNotify?.(
+          "Couldn't update mentor availability. Please try again.",
+          "error",
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -93,7 +111,7 @@ export default function MentorAvailabilityToggle({
                 cursor: "pointer",
                 fontWeight: 600,
                 fontSize: "0.95rem",
-                background: selected ? opt.color : "#fff",
+                background: selected ? opt.color : "var(--paper, #fff)",
                 color: selected ? "#fff" : "var(--ink, #16181D)",
               }}
             >

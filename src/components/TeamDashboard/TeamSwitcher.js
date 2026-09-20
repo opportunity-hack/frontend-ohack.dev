@@ -1,10 +1,6 @@
 import React from "react";
 import { Box, Tab, Tabs } from "@mui/material";
-import { TEAM_STATUS_OPTIONS } from "../../constants/teamStatus";
-
-function shortStatus(status) {
-  return TEAM_STATUS_OPTIONS.find((o) => o.value === status)?.label || status;
-}
+import { statusLabel } from "../Teams/teamPageData";
 
 export default function TeamSwitcher({ teams, activeId, onChange }) {
   if (!teams || teams.length <= 1) return null;
@@ -33,7 +29,7 @@ export default function TeamSwitcher({ teams, activeId, onChange }) {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <span>{team.name}</span>
                 <span className="ohx-tag" style={{ fontSize: "0.7rem" }}>
-                  {shortStatus(team.status)}
+                  {statusLabel(team.status)}
                 </span>
               </Box>
             }

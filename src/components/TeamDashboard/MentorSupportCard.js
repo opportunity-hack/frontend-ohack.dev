@@ -25,6 +25,7 @@ export default function MentorSupportCard({
   eventId,
   accessToken,
   onTeamUpdated,
+  onNotify,
 }) {
   const checklist = team?.mentor_checklist || {};
   const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
@@ -48,6 +49,7 @@ export default function MentorSupportCard({
         team={team}
         accessToken={accessToken}
         onTeamUpdated={onTeamUpdated}
+        onNotify={onNotify}
       />
 
       <Box sx={{ fontWeight: 600, mb: 1 }}>What mentors check with you</Box>
@@ -64,7 +66,11 @@ export default function MentorSupportCard({
                 fontSize: "0.92rem",
               }}
             >
-              <span style={{ color: done ? "#2f6e50" : "var(--faint)" }}>
+              <span
+                style={{
+                  color: done ? "var(--success, #2F6E50)" : "var(--faint)",
+                }}
+              >
                 {done ? "✓" : "○"}
               </span>
               <span style={{ color: done ? "var(--muted)" : "var(--ink)" }}>

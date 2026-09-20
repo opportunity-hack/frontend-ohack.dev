@@ -1,25 +1,35 @@
 import React from "react";
-import { Box, Stack, TextField, Typography, Grid, InputAdornment, Tooltip, IconButton } from "@mui/material";
+import {
+  Box,
+  Stack,
+  TextField,
+  Typography,
+  Grid,
+  InputAdornment,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import dynamic from "next/dynamic";
 import SectionContainer from "../SectionContainer";
 import { DEFAULT_EVENT_TIMEZONE } from "../../../../lib/timezoneUtils";
+import { githubOrgSlug } from "../../../../lib/githubLinks";
 
-const TimezoneSelect = dynamic(() => import("react-timezone-select"), { ssr: false });
-
-// Normalize whatever the admin typed (full URL, @handle, trailing slash) into a
-// bare GitHub org slug so we can build a clean github.com/<org> link.
-const githubOrgSlug = (raw) => {
-  if (!raw) return "";
-  let s = String(raw).trim();
-  s = s.replace(/^https?:\/\/(www\.)?github\.com\//i, "");
-  s = s.replace(/^@/, "").replace(/\/.*$/, "").trim();
-  return s;
-};
+const TimezoneSelect = dynamic(() => import("react-timezone-select"), {
+  ssr: false,
+});
 
 const OverviewSection = ({ admin }) => {
-  const { hackathon, setField, markSectionDirty, dirtySections, commitSection, discardSection, saveState } = admin;
+  const {
+    hackathon,
+    setField,
+    markSectionDirty,
+    dirtySections,
+    commitSection,
+    discardSection,
+    saveState,
+  } = admin;
   const dirty = dirtySections.has("overview-dates");
   const saving = saveState.status === "saving";
 
@@ -76,7 +86,9 @@ const OverviewSection = ({ admin }) => {
           </Grid>
         </Grid>
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>Event timezone</Typography>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Event timezone
+          </Typography>
           <TimezoneSelect
             value={{
               value: hackathon.timezone || DEFAULT_EVENT_TIMEZONE,
@@ -85,7 +97,8 @@ const OverviewSection = ({ admin }) => {
             onChange={(tz) => setDateField("timezone", tz.value)}
           />
           <Typography variant="caption" color="text.secondary">
-            Used as the default timezone for countdowns. Save when you change this.
+            Used as the default timezone for countdowns. Save when you change
+            this.
           </Typography>
         </Box>
         <Grid container spacing={2}>
@@ -141,7 +154,9 @@ const OverviewSection = ({ admin }) => {
             ),
             endAdornment: githubOrgSlug(hackathon.github_org) ? (
               <InputAdornment position="end">
-                <Tooltip title={`Open github.com/${githubOrgSlug(hackathon.github_org)}`}>
+                <Tooltip
+                  title={`Open github.com/${githubOrgSlug(hackathon.github_org)}`}
+                >
                   <IconButton
                     edge="end"
                     size="small"
@@ -163,7 +178,9 @@ const OverviewSection = ({ admin }) => {
           fullWidth
           value={hackathon.mentor_slack_channel || ""}
           onChange={(e) => setField("mentor_slack_channel", e.target.value)}
-          placeholder={`${hackathon.event_id || "your-event"}-mentors`.replace(/_/g, "-").toLowerCase()}
+          placeholder={`${hackathon.event_id || "your-event"}-mentors`
+            .replace(/_/g, "-")
+            .toLowerCase()}
           helperText="Heartbeats for raised mentor flags get posted here. Defaults to <event_id>-mentors if empty."
         />
       </Stack>

@@ -1,8 +1,24 @@
 import React, { useState } from "react";
-import { Box, TextField } from "@mui/material";
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  IconButton,
+  TextField,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import DashboardSection from "./DashboardSection";
 import LiteVideoThumbnail from "../VideoDisplay/LiteVideoThumbnail";
-import { saveTeamDemoVideo } from "../../lib/teamDashboardApi";
+import VideoDisplay from "../VideoDisplay/VideoDisplay";
+import {
+  saveTeamDemoVideo,
+  isSubmissionsClosed,
+  isNotTeamMember,
+} from "../../lib/teamDashboardApi";
+import {
+  formatDeadlineMoment,
+  getEventTimezone,
+} from "../../lib/timezoneUtils";
 import { trackEvent, EventCategory } from "../../lib/ga";
 
 // Verbatim from the retired TeamStatusPanel.js — accepts YouTube, Vimeo,
@@ -26,12 +42,14 @@ function isValidDemoVideoUrl(url) {
  */
 export default function DemoVideoEditor({
   team,
+  event,
   accessToken,
   onTeamUpdated,
   onNotify,
 }) {
   const [value, setValue] = useState(team?.demo_video_url || "");
   const [saving, setSaving] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const showError = value && !isValidDemoVideoUrl(value);
 
@@ -59,8 +77,22 @@ export default function DemoVideoEditor({
           event_label: team?.id,
         },
       });
-    } catch {
-      onNotify?.("Failed to update demo video. Please try again.", "error");
+    } catch (err) {
+      if (isSubmissionsClosed(err)) {
+        onNotify?.(
+          err.body?.late_until
+            ? `Submissions are closed, but late submissions are open until ${formatDeadlineMoment(err.body.late_until, getEventTimezone(event))}.`
+            : "Submissions are closed for this event.",
+          "error",
+        );
+      } else if (isNotTeamMember(err)) {
+        onNotify?.(
+          "You're not a member of this team, so this can't be saved.",
+          "error",
+        );
+      } else {
+        onNotify?.("Failed to update demo video. Please try again.", "error");
+      }
     } finally {
       setSaving(false);
     }
@@ -89,6 +121,7 @@ export default function DemoVideoEditor({
               url={team.demo_video_url}
               width={320}
               height={180}
+              onClick={() => setVideoOpen(true)}
             />
           ) : (
             <Box
@@ -134,6 +167,27 @@ export default function DemoVideoEditor({
           </button>
         </Box>
       </Box>
+
+      <Dialog
+        open={videoOpen}
+        onClose={() => setVideoOpen(false)}
+        maxWidth="md"
+        fullWidth
+        aria-label="Demo video"
+      >
+        <DialogContent dividers sx={{ position: "relative" }}>
+          <IconButton
+            aria-label="Close demo video"
+            onClick={() => setVideoOpen(false)}
+            sx={{ position: "absolute", right: 8, top: 8, zIndex: 1 }}
+          >
+            <CloseIcon />
+          </IconButton>
+          {videoOpen && team?.demo_video_url && (
+            <VideoDisplay url={team.demo_video_url} title="Demo video" />
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardSection>
   );
 }

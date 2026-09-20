@@ -7,8 +7,10 @@ import React, {
 } from "react";
 import dynamic from "next/dynamic";
 import {
+  Alert,
   Autocomplete,
   Box,
+  Button,
   Chip,
   Dialog,
   DialogActions,
@@ -21,6 +23,11 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import DashboardSection from "./DashboardSection";
 import { trackEvent, EventCategory } from "../../lib/ga";
+import { warningAlertSx } from "../ApplicationForm/refinedStyles";
+import {
+  formatDeadlineMoment,
+  getEventTimezone,
+} from "../../lib/timezoneUtils";
 import { STORY_LEAD } from "./copy";
 
 const MDEditor = dynamic(
@@ -97,7 +104,9 @@ function SaveIndicator({ saveState }) {
   if (saveState.status === "error")
     return (
       <span style={{ color: "var(--accent, #E2552E)" }}>
-        Couldn&apos;t save — we&apos;ll retry on your next edit
+        {saveState.error
+          ? saveState.error
+          : "Couldn't save — we'll retry on your next edit"}
       </span>
     );
   return null;
@@ -106,17 +115,32 @@ function SaveIndicator({ saveState }) {
 /**
  * Project tagline + story + built-with + links + thumbnail, with 1.5s
  * autosave (via `projectApi`) and a confirm-and-submit flow.
+ *
+ * `confirmOpen`/`onOpenConfirm`/`onCloseConfirm` and `submitting`/
+ * `onSubmittingChange` are lifted to `TeamDashboard` so the "Submit your
+ * project" row in `DeliverablesChecklist` (a different `DashboardSection`)
+ * can open and reflect the SAME confirm dialog and in-flight state, instead
+ * of that button being a dead scroll-only stand-in. `canSubmit`/
+ * `submitBlockedReason` come from the same `deriveDeliverables()` call the
+ * checklist uses, so this button can't be clicked into a guaranteed-400
+ * "incomplete" submit just because it doesn't share the checklist's gating.
  */
 export default function ProjectWriteupEditor({
   team,
+  event,
   accessToken,
   projectApi,
   onNotify,
+  canSubmit,
+  submitBlockedReason,
+  confirmOpen,
+  onOpenConfirm,
+  onCloseConfirm,
+  submitting,
+  onSubmittingChange,
 }) {
   const { draft, setField, saveState, submit } = projectApi;
   const [preview, setPreview] = useState("edit");
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [closedNotice, setClosedNotice] = useState(null);
@@ -158,10 +182,7 @@ export default function ProjectWriteupEditor({
       const url = await uploadProjectImage(team.id, file, accessToken);
       setField("project_thumbnail_url", url);
     } catch {
-      onNotify?.(
-        "Couldn't upload that image. Try again or paste a URL instead.",
-        "error",
-      );
+      onNotify?.("Couldn't upload that image. Please try again.", "error");
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -187,8 +208,8 @@ export default function ProjectWriteupEditor({
   };
 
   const handleSubmit = async () => {
-    setConfirmOpen(false);
-    setSubmitting(true);
+    onCloseConfirm?.();
+    onSubmittingChange?.(true);
     setClosedNotice(null);
     try {
       const res = await submit();
@@ -221,11 +242,22 @@ export default function ProjectWriteupEditor({
         );
       }
     } finally {
-      setSubmitting(false);
+      onSubmittingChange?.(false);
     }
   };
 
   const isUnavailable = saveState.status === "unavailable";
+
+  // A single source for the "submissions closed" banner: the autosave hook's
+  // own `closed` status (set the moment a background save 409s) takes
+  // priority since it's the freshest; `closedNotice` (set from a `submit()`
+  // 409, which can happen even with no pending autosave) fills in only when
+  // the hook hasn't already flagged it — otherwise the same notice rendered
+  // twice.
+  const closedInfo =
+    saveState.status === "closed"
+      ? { deadline: saveState.deadline, lateUntil: saveState.lateUntil }
+      : closedNotice;
 
   return (
     <DashboardSection id="project" eyebrow="Your project" title="Project story">
@@ -239,50 +271,17 @@ export default function ProjectWriteupEditor({
         </Box>
       )}
 
-      {saveState.status === "closed" && (
-        <Box
-          sx={{
-            mb: 2,
-            p: 1.5,
-            borderRadius: 1,
-            border: "1px solid #e7d1aa",
-            bgcolor: "#faf3e5",
-            color: "#5c4108",
-            fontSize: "0.9rem",
-          }}
-        >
+      {closedInfo && (
+        <Alert severity="warning" sx={{ ...warningAlertSx, mb: 2 }}>
           Submissions closed
-          {saveState.deadline
-            ? ` ${new Date(saveState.deadline).toLocaleString()}`
+          {closedInfo.deadline
+            ? ` ${formatDeadlineMoment(closedInfo.deadline, getEventTimezone(event))}`
             : ""}
           .
-          {saveState.lateUntil
-            ? " Late submissions are still open."
+          {closedInfo.lateUntil
+            ? ` Late submissions are open until ${formatDeadlineMoment(closedInfo.lateUntil, getEventTimezone(event))}.`
             : " Reach out in #ask-a-mentor if something went wrong."}
-        </Box>
-      )}
-
-      {closedNotice && (
-        <Box
-          sx={{
-            mb: 2,
-            p: 1.5,
-            borderRadius: 1,
-            border: "1px solid #e7d1aa",
-            bgcolor: "#faf3e5",
-            color: "#5c4108",
-            fontSize: "0.9rem",
-          }}
-        >
-          Submissions closed
-          {closedNotice.deadline
-            ? ` ${new Date(closedNotice.deadline).toLocaleString()}`
-            : ""}
-          .
-          {closedNotice.lateUntil
-            ? " Late submissions are still open."
-            : " Reach out in #ask-a-mentor if something went wrong."}
-        </Box>
+        </Alert>
       )}
 
       <TextField
@@ -437,12 +436,31 @@ export default function ProjectWriteupEditor({
             onChange={handleThumbnailFile}
             disabled={uploading}
           />
-          <TextField
-            label="Or paste an image URL"
-            value={draft.project_thumbnail_url || ""}
-            onChange={(e) => setField("project_thumbnail_url", e.target.value)}
-            sx={{ mt: 1.5, minWidth: 280 }}
-          />
+          {/* No "paste a URL" fallback here: the backend only accepts images
+              uploaded through this same picker (an own-CDN URL under
+              teams/<id>/), so a pasted external URL would always 400. */}
+          <Box
+            sx={{
+              mt: 1.5,
+              fontSize: "0.85rem",
+              color: "var(--muted)",
+              maxWidth: 320,
+            }}
+          >
+            {uploading
+              ? "Uploading…"
+              : "PNG, JPG, or WebP — uploaded and hosted on our CDN."}
+          </Box>
+          {draft.project_thumbnail_url && !uploading && (
+            <button
+              type="button"
+              className="ohx-btn ohx-btn--ghost"
+              style={{ marginTop: 8 }}
+              onClick={() => setField("project_thumbnail_url", "")}
+            >
+              Remove thumbnail
+            </button>
+          )}
         </Box>
       </Box>
 
@@ -460,21 +478,40 @@ export default function ProjectWriteupEditor({
         <Box sx={{ fontSize: "0.85rem" }}>
           <SaveIndicator saveState={saveState} />
         </Box>
-        <button
-          type="button"
-          className="ohx-btn ohx-btn--primary"
-          onClick={() => setConfirmOpen(true)}
-          disabled={submitting || isUnavailable || !!team?.project_submitted_at}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: 0.5,
+          }}
         >
-          {team?.project_submitted_at
-            ? "Submitted ✓"
-            : submitting
-              ? "Submitting…"
-              : "Submit project"}
-        </button>
+          <button
+            type="button"
+            className="ohx-btn ohx-btn--primary"
+            onClick={() => onOpenConfirm?.()}
+            disabled={
+              submitting ||
+              isUnavailable ||
+              !!team?.project_submitted_at ||
+              !canSubmit
+            }
+          >
+            {team?.project_submitted_at
+              ? "Submitted ✓"
+              : submitting
+                ? "Submitting…"
+                : "Submit project"}
+          </button>
+          {!team?.project_submitted_at && submitBlockedReason && (
+            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+              {submitBlockedReason}
+            </span>
+          )}
+        </Box>
       </Box>
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+      <Dialog open={!!confirmOpen} onClose={() => onCloseConfirm?.()}>
         <DialogTitle>Submit your project?</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -483,22 +520,47 @@ export default function ProjectWriteupEditor({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <button
-            type="button"
-            className="ohx-btn ohx-btn--ghost"
-            style={{ borderColor: "var(--line, #E7E1D4)" }}
-            onClick={() => setConfirmOpen(false)}
+          {/* MUI Dialog renders through a Portal outside <RefinedRoot>'s DOM
+              subtree, so `.ohx-btn` (a `& .ohx-btn` descendant selector
+              scoped to that subtree) and the `var(--x)` custom properties
+              (defined on the RefinedRoot element itself, not :root) never
+              reach here. Use plain MUI Buttons with literal-fallback sx
+              instead of native `.ohx-btn` buttons in any Portal content. */}
+          <Button
+            onClick={() => onCloseConfirm?.()}
+            sx={{
+              color: "var(--ink, #16181D)",
+              borderColor: "var(--line, #E7E1D4)",
+              fontFamily: "var(--body, inherit)",
+              fontWeight: 600,
+              textTransform: "none",
+              "&:hover": {
+                borderColor: "var(--ink, #16181D)",
+                backgroundColor: "rgba(0,0,0,0.02)",
+              },
+            }}
+            variant="outlined"
           >
             Not yet
-          </button>
-          <button
-            type="button"
-            className="ohx-btn ohx-btn--primary"
-            style={{ background: "var(--brand, #1B3A6B)" }}
+          </Button>
+          <Button
             onClick={handleSubmit}
+            variant="contained"
+            sx={{
+              backgroundColor: "var(--brand, #1B3A6B)",
+              color: "#fff",
+              fontFamily: "var(--body, inherit)",
+              fontWeight: 600,
+              textTransform: "none",
+              boxShadow: "none",
+              "&:hover": {
+                backgroundColor: "var(--brand-ink, #0E2547)",
+                boxShadow: "none",
+              },
+            }}
           >
             Submit
-          </button>
+          </Button>
         </DialogActions>
       </Dialog>
 

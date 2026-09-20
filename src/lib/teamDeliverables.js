@@ -189,10 +189,26 @@ export function summarizeGithubActivity(byRepo) {
  * (the DevPost link is optional; the Definition of Done row only appears
  * for winning/completion-eligible teams and is its own finish line, not
  * part of the main count).
+ *
+ * `activityStatus` is `use-github-activity`'s own `status` ('loading' |
+ * 'ready'), separate from the summarized `activity` counts. GitHub activity
+ * only loads once `CodeActivityCard` scrolls near (a fire-once
+ * IntersectionObserver, below the fold) — until then `commitsExist` is
+ * necessarily `false` even for a team that HAS commits. Without this the
+ * "code" row would render "todo / No commits yet" (a false claim) for as
+ * long as the user hasn't scrolled that far, instead of an honest "we
+ * haven't checked yet".
  */
-export function deriveDeliverables({ team, activity, slackConfirmed } = {}) {
+export function deriveDeliverables({
+  team,
+  activity,
+  slackConfirmed,
+  activityStatus = "ready",
+} = {}) {
   const repoExists = hasRepoLink(team);
   const commitsExist = Number(activity?.commits?.total_recent || 0) > 0;
+  const activityUnknown =
+    repoExists && !commitsExist && activityStatus !== "ready";
   const story = hasStory(team);
   const video = hasVideo(team);
   const submitted = isSubmitted(team);
@@ -215,13 +231,21 @@ export function deriveDeliverables({ team, activity, slackConfirmed } = {}) {
     {
       key: "code",
       label: "Push code to your repo",
-      state: !repoExists ? "locked" : commitsExist ? "done" : "todo",
+      state: !repoExists
+        ? "locked"
+        : commitsExist
+          ? "done"
+          : activityUnknown
+            ? "pending"
+            : "todo",
       href: "#code",
       hint: !repoExists
         ? "Repository not yet created"
         : commitsExist
           ? null
-          : "No commits yet",
+          : activityUnknown
+            ? "Checking your repo's activity…"
+            : "No commits yet",
     },
     {
       key: "story",

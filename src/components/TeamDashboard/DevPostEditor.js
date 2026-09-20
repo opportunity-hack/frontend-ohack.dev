@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import { Box, TextField } from "@mui/material";
 import DashboardSection from "./DashboardSection";
-import { saveTeamDevpost } from "../../lib/teamDashboardApi";
+import {
+  saveTeamDevpost,
+  isSubmissionsClosed,
+  isNotTeamMember,
+} from "../../lib/teamDashboardApi";
+import {
+  formatDeadlineMoment,
+  getEventTimezone,
+} from "../../lib/timezoneUtils";
 import { trackEvent, EventCategory } from "../../lib/ga";
 
 // Verbatim from the retired TeamStatusPanel.js.
@@ -18,6 +26,7 @@ function isValidDevPostUrl(url) {
  */
 export default function DevPostEditor({
   team,
+  event,
   accessToken,
   onTeamUpdated,
   onNotify,
@@ -48,8 +57,22 @@ export default function DevPostEditor({
           event_label: team?.id,
         },
       });
-    } catch {
-      onNotify?.("Failed to update DevPost link. Please try again.", "error");
+    } catch (err) {
+      if (isSubmissionsClosed(err)) {
+        onNotify?.(
+          err.body?.late_until
+            ? `Submissions are closed, but late submissions are open until ${formatDeadlineMoment(err.body.late_until, getEventTimezone(event))}.`
+            : "Submissions are closed for this event.",
+          "error",
+        );
+      } else if (isNotTeamMember(err)) {
+        onNotify?.(
+          "You're not a member of this team, so this can't be saved.",
+          "error",
+        );
+      } else {
+        onNotify?.("Failed to update DevPost link. Please try again.", "error");
+      }
     } finally {
       setSaving(false);
     }

@@ -18,7 +18,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_SERVER_URL;
 
 export class ApiError extends Error {
   constructor(status, body) {
-    const message = (body && (body.error || body.message)) || `Request failed (${status})`;
+    const message =
+      (body && (body.error || body.message)) || `Request failed (${status})`;
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -44,7 +45,11 @@ async function request(path, { method = "GET", token, body } = {}) {
     headers["Content-Type"] = "application/json";
     payload = JSON.stringify(body);
   }
-  const res = await fetch(`${API_BASE}${path}`, { method, headers, body: payload });
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: payload,
+  });
   const data = await parseBody(res);
   if (!res.ok) throw new ApiError(res.status, data);
   return data;
@@ -52,7 +57,11 @@ async function request(path, { method = "GET", token, body } = {}) {
 
 /** True when `error` is the 409 the backend returns once a deadline has passed. */
 export function isSubmissionsClosed(error) {
-  return error instanceof ApiError && error.status === 409 && error.body?.error === "submissions_closed";
+  return (
+    error instanceof ApiError &&
+    error.status === 409 &&
+    error.body?.error === "submissions_closed"
+  );
 }
 
 /** True when `error` is a 404 — the standard "feature not on this backend yet" signal. */
@@ -60,10 +69,48 @@ export function isNotFound(error) {
   return error instanceof ApiError && error.status === 404;
 }
 
+/** True when `error` is the 403 `self_serve_team_edit` returns for a caller who isn't on the team. */
+export function isNotTeamMember(error) {
+  return (
+    error instanceof ApiError &&
+    error.status === 403 &&
+    error.body?.error === "not_team_member"
+  );
+}
+
+/** True when `error` is the 400 `validate_project_payload` returns — `error.body.errors` is `[{field, reason}]`. */
+export function isInvalidProject(error) {
+  return (
+    error instanceof ApiError &&
+    error.status === 400 &&
+    error.body?.error === "invalid_project"
+  );
+}
+
+const PROJECT_FIELD_LABELS = {
+  project_tagline: "Tagline",
+  project_story: "Story",
+  project_built_with: "Built with",
+  project_links: "Links",
+  project_thumbnail_url: "Thumbnail",
+  project_images: "Images",
+};
+
+/** Turns `[{field, reason}]` from an `invalid_project` error into one readable line per field. */
+export function formatProjectErrors(errors) {
+  if (!Array.isArray(errors) || errors.length === 0)
+    return "Couldn't save those changes.";
+  return errors
+    .map((e) => `${PROJECT_FIELD_LABELS[e.field] || e.field}: ${e.reason}`)
+    .join(" · ");
+}
+
 // --- Submission window + team project (Part 3: /api/team/<id>/project*, /api/hackathons/<id>/submissions/window) ---
 
 export function getSubmissionWindow(eventId) {
-  return request(`/api/hackathons/${encodeURIComponent(eventId)}/submissions/window`);
+  return request(
+    `/api/hackathons/${encodeURIComponent(eventId)}/submissions/window`,
+  );
 }
 
 export function saveTeamProject(teamId, payload, token) {
@@ -99,17 +146,22 @@ export function saveTeamDemoVideo(teamId, demoVideoUrl, token) {
 }
 
 export function setMentorAvailability(teamId, open, token) {
-  return request(`/api/team/${encodeURIComponent(teamId)}/mentor-availability`, {
-    method: "POST",
-    token,
-    body: { open: !!open },
-  });
+  return request(
+    `/api/team/${encodeURIComponent(teamId)}/mentor-availability`,
+    {
+      method: "POST",
+      token,
+      body: { open: !!open },
+    },
+  );
 }
 
 // --- GitHub activity (Part 3: GET /api/github/activity) ---
 
 export function getGithubActivity(org, repo) {
-  return request(`/api/github/activity?org=${encodeURIComponent(org)}&repo=${encodeURIComponent(repo)}`);
+  return request(
+    `/api/github/activity?org=${encodeURIComponent(org)}&repo=${encodeURIComponent(repo)}`,
+  );
 }
 
 // --- Roster + self-check (Part 3: GET /api/messages/team/<id>, GET /api/volunteer/<id>/me) ---
@@ -119,23 +171,34 @@ export function getPublicTeam(teamId) {
 }
 
 export function getHackerSelfStatus(eventId, token) {
-  return request(`/api/volunteer/${encodeURIComponent(eventId)}/me?type=hacker`, { token });
+  return request(
+    `/api/volunteer/${encodeURIComponent(eventId)}/me?type=hacker`,
+    { token },
+  );
 }
 
 // --- Hackers' Choice peer vote (Part 3: /api/hackathons/<id>/peer-vote/*) ---
 
 export function getPeerVoteSlate(eventId, token) {
-  return request(`/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/slate`, { token });
+  return request(
+    `/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/slate`,
+    { token },
+  );
 }
 
 export function submitPeerVoteBallot(eventId, picks, token) {
-  return request(`/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/ballot`, {
-    method: "POST",
-    token,
-    body: { picks },
-  });
+  return request(
+    `/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/ballot`,
+    {
+      method: "POST",
+      token,
+      body: { picks },
+    },
+  );
 }
 
 export function getPeerVoteSummary(eventId) {
-  return request(`/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/summary`);
+  return request(
+    `/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/summary`,
+  );
 }

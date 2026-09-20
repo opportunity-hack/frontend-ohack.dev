@@ -49,9 +49,11 @@ describe("TeamMasthead", () => {
         team={{ id: "t1", name: "Team Rocket", status: "FOUNDING_ENGINEERS" }}
       />,
     );
-    expect(
-      screen.getByText("🏆 Founding Engineers - 1st Place"),
-    ).toBeInTheDocument();
+    // The short WINNING_STATUSES label ("1st Place"), not the long
+    // TEAM_STATUS_OPTIONS one ("Founding Engineers - 1st Place") — matches
+    // getWinningStatus() and the same convention on the public team page
+    // (team/[team_id]/index.js: `🏆 ${winningMeta.label}`).
+    expect(screen.getByText("🏆 1st Place")).toBeInTheDocument();
   });
 
   it("skips the status tag for INACTIVE (the dot elsewhere already conveys it)", () => {

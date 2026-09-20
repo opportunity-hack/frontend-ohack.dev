@@ -199,6 +199,37 @@ describe("deriveDeliverables", () => {
     expect(byKey.code.hint).toBe("No commits yet");
   });
 
+  it("marks code as pending (not todo/'No commits yet') while GitHub activity hasn't loaded yet, even for a team that DOES have commits", () => {
+    const team = {
+      ...baseTeam,
+      github_links: [{ link: "https://github.com/org/repo" }],
+    };
+    const result = deriveDeliverables({
+      team,
+      // `activitySummary` starts at zero commits before the fire-once
+      // IntersectionObserver in `use-github-activity` has fetched anything —
+      // `activityStatus: "loading"` is what distinguishes that from an
+      // honest zero.
+      activity: { commits: { total_recent: 0 } },
+      activityStatus: "loading",
+    });
+    const byKey = Object.fromEntries(result.items.map((i) => [i.key, i]));
+    expect(byKey.code.state).toBe("pending");
+    expect(byKey.code.hint).toBe("Checking your repo's activity…");
+    // Doesn't count as done, but isn't a false "No commits yet" claim either.
+    expect(result.done).toBe(0);
+  });
+
+  it("does not report pending when there's no repo at all, regardless of activityStatus", () => {
+    const result = deriveDeliverables({
+      team: baseTeam,
+      activity: { commits: { total_recent: 0 } },
+      activityStatus: "loading",
+    });
+    const byKey = Object.fromEntries(result.items.map((i) => [i.key, i]));
+    expect(byKey.code.state).toBe("locked");
+  });
+
   it("allows submitting once story and video are both present", () => {
     const team = {
       ...baseTeam,

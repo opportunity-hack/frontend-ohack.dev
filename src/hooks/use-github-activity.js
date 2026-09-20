@@ -68,9 +68,21 @@ export default function useGithubActivity(team, ref) {
               getGithubActivity(r.org, r.repo),
               fetchIssuesFor(r.org, r.repo),
             ]);
+            // `activity.repo` is the GitHub API repo object
+            // ({html_url, default_branch, pushed_at, open_issues_count,
+            // stargazers_count}) — spreading it directly over `r` would
+            // clobber `r.repo`, the plain repo NAME string from
+            // `repoEntriesFromTeam`, which the git-quickstart snippet
+            // needs as a string. Keep them as separate keys.
+            const { repo: repoInfo, ...activityRest } = activity || {};
             return [
               normalizeRepoLink(r.link),
-              { ...r, ...activity, topOpen: issues?.topOpen || [] },
+              {
+                ...r,
+                ...activityRest,
+                repoInfo,
+                topOpen: issues?.topOpen || [],
+              },
             ];
           } catch (err) {
             if (isNotFound(err))

@@ -27,7 +27,13 @@ export default function DeadlineStrip({ deadlines, event, team }) {
   const countdown = useCountdown(state.target?.toISOString());
 
   useEffect(() => {
-    if (viewedRef.current) return;
+    // Skip 'none' — the strip renders nothing in that state (see the early
+    // return below), so a "view" event for it would misreport a view of a
+    // component that isn't on the page. Waits (rather than firing once on
+    // whatever the first render's kind happens to be) so a transitional
+    // 'none' before `event`/`deadlines` load doesn't get recorded instead
+    // of the real state.
+    if (viewedRef.current || state.kind === "none") return;
     viewedRef.current = true;
     trackEvent({
       action: "team_deadline_strip_view",
@@ -36,7 +42,7 @@ export default function DeadlineStrip({ deadlines, event, team }) {
         event_label: state.kind,
       },
     });
-  }, []);
+  }, [state.kind]);
 
   if (state.kind === "none") return null;
 
@@ -111,7 +117,6 @@ export default function DeadlineStrip({ deadlines, event, team }) {
   return (
     <Box
       className="ohx-card"
-      role="status"
       sx={{
         minHeight: 64,
         display: "flex",
@@ -127,6 +132,10 @@ export default function DeadlineStrip({ deadlines, event, team }) {
       }}
     >
       {body}
+      {/* This visually-hidden span is the ONLY live region here — the card
+          itself is not `role="status"`. Making both live would announce the
+          same content change twice; this one alone is naturally throttled
+          because its text only changes when the hour value changes. */}
       <span
         aria-live="polite"
         className="sr-only"

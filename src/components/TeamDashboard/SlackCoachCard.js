@@ -33,20 +33,22 @@ function TipButton({ tip, label, onClick, feedbackLabel = "Copied ✓" }) {
       style={{ marginRight: 8, marginBottom: 8 }}
     >
       {copied ? feedbackLabel : label}
-      {copied && (
-        <span
-          aria-live="polite"
-          className="sr-only"
-          style={{
-            position: "absolute",
-            width: 1,
-            height: 1,
-            overflow: "hidden",
-          }}
-        >
-          {feedbackLabel}
-        </span>
-      )}
+      {/* Always mounted (not just while `copied`) — a screen reader needs a
+          live region to already exist in the DOM before its text changes to
+          announce it; inserting a brand-new element with the text already
+          set is commonly missed. */}
+      <span
+        aria-live="polite"
+        className="sr-only"
+        style={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          overflow: "hidden",
+        }}
+      >
+        {copied ? feedbackLabel : ""}
+      </span>
     </button>
   );
 }

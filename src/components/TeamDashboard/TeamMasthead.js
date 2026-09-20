@@ -1,15 +1,16 @@
 import React from "react";
 import { Box } from "@mui/material";
-import {
-  TEAM_STATUS_OPTIONS,
-  isWinningStatus,
-} from "../../constants/teamStatus";
+import { getWinningStatus } from "../../constants/teamStatus";
+import { statusLabel } from "../Teams/teamPageData";
 import { H1_HAS_TEAM, H1_NO_TEAM } from "./copy";
 
-function statusLabel(status) {
-  const opt = TEAM_STATUS_OPTIONS.find((o) => o.value === status);
-  const label = opt?.label || status;
-  return isWinningStatus(status) ? `🏆 ${label}` : label;
+// Same "never render the raw enum" rule as the public team page
+// (CLAUDE.md invariant #1): the base label always comes from the shared
+// `statusLabel()`, and only a winning status gets the 🏆 prefix — sourced
+// from `getWinningStatus()`, not re-derived here.
+function teamStatusTag(status) {
+  const winning = getWinningStatus(status);
+  return winning ? `🏆 ${winning.label}` : statusLabel(status);
 }
 
 export default function TeamMasthead({
@@ -59,7 +60,7 @@ export default function TeamMasthead({
             }}
           >
             {team.status !== "INACTIVE" && (
-              <span className="ohx-tag">{statusLabel(team.status)}</span>
+              <span className="ohx-tag">{teamStatusTag(team.status)}</span>
             )}
             {nonprofitName && <span className="ohx-tag">{nonprofitName}</span>}
             {Array.isArray(team.awards) &&

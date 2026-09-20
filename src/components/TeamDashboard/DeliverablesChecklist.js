@@ -3,7 +3,13 @@ import { Box, LinearProgress } from "@mui/material";
 import DashboardSection from "./DashboardSection";
 import { DELIVERABLES_TITLE, DELIVERABLES_LEAD } from "./copy";
 
-const ICONS = { done: "✓", todo: "→", locked: "🔒", optional: "·" };
+const ICONS = {
+  done: "✓",
+  todo: "→",
+  pending: "…",
+  locked: "🔒",
+  optional: "·",
+};
 
 function Row({
   item,
@@ -32,7 +38,7 @@ function Row({
           minWidth: 22,
           textAlign: "center",
           color: isDone
-            ? "#2f6e50"
+            ? "var(--success, #2F6E50)"
             : isLocked
               ? "var(--faint)"
               : "var(--muted)",
@@ -87,13 +93,14 @@ function Row({
         </button>
       ) : (
         !isDone &&
-        item.state !== "optional" && (
+        item.state !== "optional" &&
+        !isLocked && (
           <a
             href={item.href}
             className="ohx-link"
             style={{ whiteSpace: "nowrap", fontSize: "0.9rem" }}
           >
-            {isLocked ? "" : "Go →"}
+            Go →
           </a>
         )
       )}

@@ -2,12 +2,15 @@ import React from "react";
 import { Box, Skeleton } from "@mui/material";
 import DashboardSection from "./DashboardSection";
 import { relativeTime } from "../Teams/mentorCoverage";
-import { repoEntriesFromTeam } from "../../lib/githubLinks";
+import { repoEntriesFromTeam, githubOrgSlug } from "../../lib/githubLinks";
 import { CODE_EMPTY } from "./copy";
 
 function RepoBlock({ entry }) {
   const commits = entry.commits;
-  const repo = entry.repo;
+  // `entry.repoInfo` is the GitHub API repo object (open_issues_count,
+  // etc.) — `entry.repo` stays the plain repo NAME string used below in
+  // the git-quickstart snippet (see use-github-activity.js).
+  const repo = entry.repoInfo;
   return (
     <Box sx={{ mb: 3, "&:last-child": { mb: 0 } }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
@@ -113,6 +116,7 @@ export default function CodeActivityCard({
   team,
   event,
   byRepo,
+  status,
   containerRef,
 }) {
   const entries = Object.values(byRepo || {});
@@ -121,8 +125,18 @@ export default function CodeActivityCard({
   // fetched activity for them. Without this distinction, every team WITH a
   // real repo briefly rendered "Repository not yet created" on every page
   // load, because the card sits below the fold and `byRepo` starts empty.
+  //
+  // Loading is driven by `use-github-activity`'s own `status`, NOT by
+  // `repoEntriesFromTeam(team).length > 0` — that counts every raw
+  // `github_links` entry, while the hook only fetches (and only ever fills
+  // `byRepo` for) links it can parse into an org+repo. A team whose only
+  // link is unparsable/non-GitHub would otherwise show this Skeleton
+  // forever, since `entries` would never gain a row to end the "loading"
+  // state. The hook itself resolves `status` to "ready" immediately when it
+  // has nothing to fetch, so gating on `status` self-corrects.
   const hasRepoLinks = repoEntriesFromTeam(team).length > 0;
-  const isLoadingActivity = hasRepoLinks && entries.length === 0;
+  const isLoadingActivity =
+    hasRepoLinks && entries.length === 0 && status !== "ready";
 
   return (
     <Box ref={containerRef}>
@@ -135,11 +149,15 @@ export default function CodeActivityCard({
               sx={{ borderRadius: 1 }}
             />
           ) : entries.length === 0 ? (
-            <Box>
-              <Box sx={{ color: "var(--muted)", mb: 1 }}>{CODE_EMPTY}</Box>
-              {event?.github_org && (
+            // No repo links on the team doc at all — distinct from a repo
+            // that exists but has no commits yet (that state renders per-repo
+            // inside RepoBlock as CODE_EMPTY). Showing both messages together
+            // here was contradictory ("push your first commit" + "not yet
+            // created").
+            <Box sx={{ color: "var(--muted)" }}>
+              {githubOrgSlug(event?.github_org) ? (
                 <a
-                  href={`https://github.com/${event.github_org}`}
+                  href={`https://github.com/${githubOrgSlug(event.github_org)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ohx-link"
@@ -147,6 +165,8 @@ export default function CodeActivityCard({
                   Repository not yet created — it&apos;s made when your team is
                   approved.
                 </a>
+              ) : (
+                "Repository not yet created — it's made when your team is approved."
               )}
             </Box>
           ) : (
