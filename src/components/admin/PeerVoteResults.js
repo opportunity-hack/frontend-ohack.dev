@@ -30,6 +30,7 @@ import {
 } from "@mui/icons-material";
 import axios from "axios";
 import * as ga from "../../lib/ga";
+import { FONT_MONO } from "../../styles/fonts";
 
 const LOW_EXPOSURE_THRESHOLD = 3;
 
@@ -125,6 +126,7 @@ const PeerVoteResults = ({
         } else {
           setError(
             err?.response?.data?.message ||
+              err?.response?.data?.error ||
               "Failed to load Hackers' Choice results.",
           );
         }
@@ -164,10 +166,22 @@ const PeerVoteResults = ({
       setVoidTarget(null);
       load({ background: true });
     } catch (err) {
-      onSnack?.(
-        err?.response?.data?.message || "Failed to void that ballot.",
-        "error",
-      );
+      const status = err?.response?.status;
+      const body = err?.response?.data;
+      // void_ballot (peer_votes_service.py) returns {"error": ...}, not
+      // {"message": ...} — reading body?.message here always fell through
+      // to the generic fallback even when the backend explained why.
+      if (status === 404 && body?.error === "Ballot not found") {
+        onSnack?.(
+          "That ballot no longer exists — refresh and try again.",
+          "warning",
+        );
+      } else {
+        onSnack?.(
+          body?.message || body?.error || "Failed to void that ballot.",
+          "error",
+        );
+      }
     } finally {
       setVoiding(false);
     }
@@ -199,10 +213,27 @@ const PeerVoteResults = ({
       setPublishConfirmOpen(false);
       load({ background: true });
     } catch (err) {
-      onSnack?.(
-        err?.response?.data?.message || "Failed to publish results.",
-        "error",
-      );
+      const status = err?.response?.status;
+      const body = err?.response?.data;
+      // publish_results (peer_votes_service.py) returns {"error": ...}, not
+      // {"message": ...} — reading body?.message here rendered the generic
+      // fallback even for the exact 409 "no ballots" case Part 3 specifies.
+      if (status === 409 && body?.error === "no_ballots") {
+        onSnack?.("Can't publish yet — no ballots have been cast.", "warning");
+      } else if (
+        status === 400 &&
+        body?.error === "Winning team not found in results"
+      ) {
+        onSnack?.(
+          "Couldn't find the winning team in the results — refresh and try again.",
+          "error",
+        );
+      } else {
+        onSnack?.(
+          body?.message || body?.error || "Failed to publish results.",
+          "error",
+        );
+      }
     } finally {
       setPublishing(false);
     }
@@ -392,7 +423,7 @@ const PeerVoteResults = ({
                   <TableCell>
                     <Typography
                       variant="body2"
-                      sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
+                      sx={{ fontFamily: FONT_MONO, fontSize: "0.8rem" }}
                     >
                       {b.voter_propel_id}
                     </Typography>
@@ -455,7 +486,7 @@ const PeerVoteResults = ({
         <DialogContent>
           <DialogContentText>
             The ballot for voter{" "}
-            <strong style={{ fontFamily: "monospace" }}>
+            <strong style={{ fontFamily: FONT_MONO }}>
               {voidTarget?.voter_propel_id}
             </strong>{" "}
             ({voidTarget?.picks_count ?? 0} pick

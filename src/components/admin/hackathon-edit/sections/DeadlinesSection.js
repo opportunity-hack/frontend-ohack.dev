@@ -302,6 +302,18 @@ const DeadlinesSection = ({ admin, accessToken, orgId, onSnack }) => {
                       Math.max(3, Number(e.target.value) || 5),
                     );
                     setConstraint("peer_vote_slate_size", v);
+                    // The backend (validate_hackathon_data_partial in
+                    // common/utils/validators.py) silently _skip()s and
+                    // pops an out-of-range max_picks rather than erroring,
+                    // so lowering the slate size without re-clamping here
+                    // let the UI keep showing a max_picks value that was
+                    // never actually persisted.
+                    const newCeiling = Math.max(1, v - 1);
+                    if (
+                      Number(constraints.peer_vote_max_picks ?? 2) > newCeiling
+                    ) {
+                      setConstraint("peer_vote_max_picks", newCeiling);
+                    }
                   }}
                   inputProps={{ min: 3, max: 10 }}
                   sx={{ width: 160 }}
