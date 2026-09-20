@@ -9,7 +9,10 @@
  * only — no fetching, no window/document.
  */
 
-import { getTimezoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from "../../lib/timezoneUtils";
+import {
+  getTimezoneAbbreviation,
+  DEFAULT_EVENT_TIMEZONE,
+} from "../../lib/timezoneUtils";
 import { repoEntriesFromTeam } from "../../lib/githubLinks";
 import { OG_IMAGE } from "./teamPageData";
 
@@ -35,7 +38,8 @@ export function getSubmissionStatus(team) {
   const status = team.project_submission_status;
   const submittedAt = team.project_submitted_at;
   if (!status && !submittedAt) return null;
-  if (status === "submitted" || status === "late" || status === "draft") return status;
+  if (status === "submitted" || status === "late" || status === "draft")
+    return status;
   // Status field absent/unrecognized but a submission timestamp exists —
   // treat as submitted rather than surfacing an unknown enum value.
   return submittedAt ? "submitted" : "draft";
@@ -50,13 +54,18 @@ export function submissionLabel(team, tz) {
   const status = getSubmissionStatus(team);
   if (status === null) return { tag: null, line: null };
 
-  const when = team?.project_submitted_at ? formatDeadline(team.project_submitted_at, tz) : null;
+  const when = team?.project_submitted_at
+    ? formatDeadline(team.project_submitted_at, tz)
+    : null;
 
   if (status === "submitted") {
     return { tag: "Submitted", line: when ? `Submitted ${when}` : "Submitted" };
   }
   if (status === "late") {
-    return { tag: "Submitted late", line: when ? `Submitted late ${when}` : "Submitted late" };
+    return {
+      tag: "Submitted late",
+      line: when ? `Submitted late ${when}` : "Submitted late",
+    };
   }
   return { tag: "In progress", line: "Draft — not yet submitted." };
 }
@@ -114,14 +123,19 @@ export function buildTeamOgImage(team) {
  * Prefers the team's own tagline; otherwise composes one from what's known
  * about the project (nonprofit, event, member count).
  */
-export function buildTeamDescription(team, { nonprofitName, eventName, memberCount } = {}) {
+export function buildTeamDescription(
+  team,
+  { nonprofitName, eventName, memberCount } = {},
+) {
   if (team?.project_tagline) return clamp(team.project_tagline, 200);
 
   const name = team?.name || "This team";
   let base = `${name}'s Opportunity Hack project`;
   if (nonprofitName) base += ` for ${nonprofitName}`;
   if (eventName) base += ` at ${eventName}`;
-  base += memberCount ? ` — ${memberCount} member${memberCount === 1 ? "" : "s"}.` : ".";
+  base += memberCount
+    ? ` — ${memberCount} member${memberCount === 1 ? "" : "s"}.`
+    : ".";
   return clamp(base, 200);
 }
 
@@ -137,16 +151,49 @@ export function isProjectStoryMissing(team) {
 }
 
 /**
+ * True when a team has real, hand-entered project content: a tagline,
+ * story, built-with tags, links, an uploaded thumbnail, or a recorded
+ * submission status. This is the single gate for "does the Project section
+ * have anything to show" — shared by the public team page and
+ * `TeamProjectSection`.
+ *
+ * Deliberately does NOT count `projectThumbUrl()`'s YouTube-poster fallback
+ * — a legacy team with only a demo video and no story/links/etc. shouldn't
+ * get a "Project" section (TOC entry + masthead tag) that's just a static,
+ * non-clickable copy of the poster already shown in the Demo video section
+ * below. Only a real, uploaded `project_thumbnail_url` counts here.
+ */
+export function hasProjectContent(team) {
+  if (!team) return false;
+  return !!(
+    team.project_tagline ||
+    team.project_story ||
+    (Array.isArray(team.project_built_with) &&
+      team.project_built_with.length > 0) ||
+    (Array.isArray(team.project_links) &&
+      team.project_links.some((l) => l?.url)) ||
+    team.project_thumbnail_url ||
+    getSubmissionStatus(team) !== null
+  );
+}
+
+/**
  * A `SoftwareSourceCode` JSON-LD node describing the team's project, or
  * null when there's nothing yet worth describing (no story, no repo, no
  * thumbnail) — legacy/empty teams should emit no structured data at all
  * rather than an empty shell.
  */
-export function buildProjectJsonLd(team, { canonicalUrl, eventName, eventUrl } = {}) {
+export function buildProjectJsonLd(
+  team,
+  { canonicalUrl, eventName, eventUrl } = {},
+) {
   if (!team) return null;
   const repoUrl = firstRepoUrl(team);
   const image = projectThumbUrl(team);
-  const hasContent = !isProjectStoryMissing(team) || !!repoUrl || !!image;
+  // Gate on real project content (or a linked repo) — not the derived
+  // YouTube-poster fallback in `image`, or a team with only a demo video
+  // would get a SoftwareSourceCode node describing... a video poster.
+  const hasContent = hasProjectContent(team) || !!repoUrl;
   if (!hasContent) return null;
 
   const node = {

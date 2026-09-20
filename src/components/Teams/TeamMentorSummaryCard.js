@@ -41,6 +41,7 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
   );
   const hasActivity =
     doneCount > 0 || openFlags > 0 || !!lastTouchedAt || hasAnyRating;
+  const isHeadsDown = team?.mentor_help_wanted === false;
 
   const href = `/hack/${eventId}/team/${teamId}/mentor`;
 
@@ -69,6 +70,18 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
           Open mentor support →
         </NextLink>
       </Box>
+
+      {isHeadsDown && (
+        <Box
+          sx={{
+            color: "var(--muted)",
+            fontSize: "0.88rem",
+            mb: hasActivity ? 1 : 0,
+          }}
+        >
+          Heads-down — team asked mentors to hold off.
+        </Box>
+      )}
 
       {hasActivity ? (
         <>

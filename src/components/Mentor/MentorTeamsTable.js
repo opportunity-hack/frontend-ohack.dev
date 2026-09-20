@@ -1,12 +1,21 @@
 import React, { useMemo, useState } from "react";
 import NextLink from "next/link";
-import { Avatar, AvatarGroup, Box, Tooltip, useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { FaSlack, FaGithub, FaExternalLinkAlt, FaVideo, FaHeart } from "react-icons/fa";
 import {
-  isWinningStatus,
-  getWinningStatus,
-} from "../../constants/teamStatus";
+  Avatar,
+  AvatarGroup,
+  Box,
+  Tooltip,
+  useMediaQuery,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import {
+  FaSlack,
+  FaGithub,
+  FaExternalLinkAlt,
+  FaVideo,
+  FaHeart,
+} from "react-icons/fa";
+import { isWinningStatus, getWinningStatus } from "../../constants/teamStatus";
 import { statusLabel } from "../Teams/teamPageData";
 import {
   MENTOR_COVERAGE_TOTAL,
@@ -35,7 +44,9 @@ function deriveTeam(team, nonprofitMap) {
     name: team?.name || "Unnamed Team",
     teamNumber: team?.team_number,
     status: team?.status,
-    statusText: winning ? getWinningStatus(team.status)?.label : statusLabel(team?.status),
+    statusText: winning
+      ? getWinningStatus(team.status)?.label
+      : statusLabel(team?.status),
     winning,
     isActive,
     nonprofitName: team?.selected_nonprofit_id
@@ -56,6 +67,9 @@ function deriveTeam(team, nonprofitMap) {
     })(),
     devpostUrl: team?.devpost_link || null,
     demoUrl: team?.demo_video_url || null,
+    // Signal only — absent/true means "open to mentors" (see CLAUDE.md
+    // "mentor_help_wanted absent ⇒ true").
+    isHeadsDown: team?.mentor_help_wanted === false,
   };
 }
 
@@ -77,8 +91,18 @@ const SORTS = [
 function StatusTag({ d }) {
   if (!d.isActive) {
     return (
-      <span className="ohx-tag" style={{ gap: 6, display: "inline-flex", alignItems: "center" }}>
-        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--faint)" }} />
+      <span
+        className="ohx-tag"
+        style={{ gap: 6, display: "inline-flex", alignItems: "center" }}
+      >
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: "var(--faint)",
+          }}
+        />
         Inactive
       </span>
     );
@@ -105,6 +129,22 @@ function CoverageCell({ d }) {
   );
 }
 
+function AvailabilityCell({ d }) {
+  return (
+    <Tooltip
+      title={
+        d.isHeadsDown
+          ? "Team asked for heads-down time — check Slack before dropping in"
+          : "Team is open to mentors"
+      }
+    >
+      <span className={`ohx-tag${d.isHeadsDown ? " ohx-tag--accent" : ""}`}>
+        {d.isHeadsDown ? "Heads-down" : "Open"}
+      </span>
+    </Tooltip>
+  );
+}
+
 function FlagsCell({ d }) {
   if (d.openFlags > 0) {
     return (
@@ -113,12 +153,20 @@ function FlagsCell({ d }) {
       </span>
     );
   }
-  return <Box component="span" sx={{ color: "var(--faint)" }}>—</Box>;
+  return (
+    <Box component="span" sx={{ color: "var(--faint)" }}>
+      —
+    </Box>
+  );
 }
 
 function Members({ d }) {
   if (d.memberCount === 0) {
-    return <Box component="span" sx={{ color: "var(--faint)" }}>—</Box>;
+    return (
+      <Box component="span" sx={{ color: "var(--faint)" }}>
+        —
+      </Box>
+    );
   }
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
@@ -137,7 +185,10 @@ function Members({ d }) {
           const name = typeof u === "object" ? u.name || u.nickname : null;
           const img = typeof u === "object" ? u.profile_image : null;
           return (
-            <Tooltip key={(typeof u === "object" && u.id) || i} title={name || "Team member"}>
+            <Tooltip
+              key={(typeof u === "object" && u.id) || i}
+              title={name || "Team member"}
+            >
               <Avatar src={img} alt={name || "member"}>
                 {(name || "?")[0]}
               </Avatar>
@@ -155,7 +206,9 @@ function Members({ d }) {
 function LinkIcons({ d, eventId }) {
   const icon = { fontSize: 15 };
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.1, flexWrap: "wrap" }}>
+    <Box
+      sx={{ display: "flex", alignItems: "center", gap: 1.1, flexWrap: "wrap" }}
+    >
       {d.slackChannel && (
         <Tooltip title={`#${d.slackChannel}`}>
           <Box
@@ -171,33 +224,59 @@ function LinkIcons({ d, eventId }) {
       )}
       {d.githubUrl && (
         <Tooltip title="GitHub repository">
-          <Box component="a" href={d.githubUrl} target="_blank" rel="noopener noreferrer" sx={{ color: "var(--ink)", display: "inline-flex" }}>
+          <Box
+            component="a"
+            href={d.githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ color: "var(--ink)", display: "inline-flex" }}
+          >
             <FaGithub style={icon} />
           </Box>
         </Tooltip>
       )}
       {d.devpostUrl && (
         <Tooltip title="DevPost submission">
-          <Box component="a" href={d.devpostUrl} target="_blank" rel="noopener noreferrer" sx={{ color: "var(--muted)", display: "inline-flex" }}>
+          <Box
+            component="a"
+            href={d.devpostUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ color: "var(--muted)", display: "inline-flex" }}
+          >
             <FaExternalLinkAlt style={icon} />
           </Box>
         </Tooltip>
       )}
       {d.demoUrl && (
         <Tooltip title="Demo video">
-          <Box component="a" href={d.demoUrl} target="_blank" rel="noopener noreferrer" sx={{ color: "var(--muted)", display: "inline-flex" }}>
+          <Box
+            component="a"
+            href={d.demoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ color: "var(--muted)", display: "inline-flex" }}
+          >
             <FaVideo style={icon} />
           </Box>
         </Tooltip>
       )}
-      <NextLink href={`/hack/${eventId}/team/${d.id}/mentor`} className="ohx-link" style={{ fontSize: "0.82rem" }}>
+      <NextLink
+        href={`/hack/${eventId}/team/${d.id}/mentor`}
+        className="ohx-link"
+        style={{ fontSize: "0.82rem" }}
+      >
         Mentor →
       </NextLink>
     </Box>
   );
 }
 
-export default function MentorTeamsTable({ teams = [], eventId, nonprofits = [] }) {
+export default function MentorTeamsTable({
+  teams = [],
+  eventId,
+  nonprofits = [],
+}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [query, setQuery] = useState("");
@@ -214,12 +293,12 @@ export default function MentorTeamsTable({ teams = [], eventId, nonprofits = [] 
 
   const derived = useMemo(
     () => teams.map((t) => deriveTeam(t, nonprofitMap)).filter((d) => d.id),
-    [teams, nonprofitMap]
+    [teams, nonprofitMap],
   );
 
   const attentionCount = useMemo(
     () => derived.filter((d) => d.needsAttention).length,
-    [derived]
+    [derived],
   );
 
   const rows = useMemo(() => {
@@ -236,14 +315,18 @@ export default function MentorTeamsTable({ teams = [], eventId, nonprofits = [] 
       );
     });
 
-    const touchMs = (d) => (d.lastTouchedAt ? new Date(d.lastTouchedAt).getTime() : 0);
+    const touchMs = (d) =>
+      d.lastTouchedAt ? new Date(d.lastTouchedAt).getTime() : 0;
     list = [...list].sort((a, b) => {
       if (sortBy === "name") return a.name.localeCompare(b.name);
-      if (sortBy === "members") return b.memberCount - a.memberCount || a.name.localeCompare(b.name);
-      if (sortBy === "touch") return touchMs(b) - touchMs(a) || a.name.localeCompare(b.name);
+      if (sortBy === "members")
+        return b.memberCount - a.memberCount || a.name.localeCompare(b.name);
+      if (sortBy === "touch")
+        return touchMs(b) - touchMs(a) || a.name.localeCompare(b.name);
       // "attention": flags desc, then never/oldest touch first, then name
       if (b.openFlags !== a.openFlags) return b.openFlags - a.openFlags;
-      if (a.needsAttention !== b.needsAttention) return a.needsAttention ? -1 : 1;
+      if (a.needsAttention !== b.needsAttention)
+        return a.needsAttention ? -1 : 1;
       if (touchMs(a) !== touchMs(b)) return touchMs(a) - touchMs(b);
       return a.name.localeCompare(b.name);
     });
@@ -264,7 +347,15 @@ export default function MentorTeamsTable({ teams = [], eventId, nonprofits = [] 
   };
 
   const controls = (
-    <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 1.5, alignItems: { md: "center" }, mb: 2.5 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        gap: 1.5,
+        alignItems: { md: "center" },
+        mb: 2.5,
+      }}
+    >
       <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
         <Box
           component="input"
@@ -321,7 +412,10 @@ export default function MentorTeamsTable({ teams = [], eventId, nonprofits = [] 
 
   if (derived.length === 0) {
     return (
-      <Box className="ohx-card" sx={{ p: { xs: 2.5, md: 3.5 }, color: "var(--muted)" }}>
+      <Box
+        className="ohx-card"
+        sx={{ p: { xs: 2.5, md: 3.5 }, color: "var(--muted)" }}
+      >
         No teams have registered for this event yet.
       </Box>
     );
@@ -340,27 +434,71 @@ export default function MentorTeamsTable({ teams = [], eventId, nonprofits = [] 
             <Box
               key={d.id}
               className="ohx-card"
-              sx={{ p: 2, ...(d.openFlags > 0 ? { borderLeft: "3px solid var(--accent)" } : {}) }}
+              sx={{
+                p: 2,
+                ...(d.openFlags > 0
+                  ? { borderLeft: "3px solid var(--accent)" }
+                  : {}),
+              }}
             >
-              <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "baseline" }}>
-                <NextLink href={`/hack/${eventId}/team/${d.id}`} className="ohx-link" style={{ fontSize: "1.02rem", fontWeight: 600 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 1,
+                  alignItems: "baseline",
+                }}
+              >
+                <NextLink
+                  href={`/hack/${eventId}/team/${d.id}`}
+                  className="ohx-link"
+                  style={{ fontSize: "1.02rem", fontWeight: 600 }}
+                >
                   {d.name}
                 </NextLink>
                 <StatusTag d={d} />
               </Box>
               {d.nonprofitName && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "var(--muted)", fontSize: "0.85rem", mt: 0.5 }}>
-                  <FaHeart style={{ color: "var(--accent)", fontSize: 11 }} /> {d.nonprofitName}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    color: "var(--muted)",
+                    fontSize: "0.85rem",
+                    mt: 0.5,
+                  }}
+                >
+                  <FaHeart style={{ color: "var(--accent)", fontSize: 11 }} />{" "}
+                  {d.nonprofitName}
                 </Box>
               )}
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mt: 1.25 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  alignItems: "center",
+                  mt: 1.25,
+                }}
+              >
                 <CoverageCell d={d} />
+                <AvailabilityCell d={d} />
                 <FlagsCell d={d} />
                 <span className="ohx-tag">
-                  {d.lastTouchedAt ? `Touched ${relativeTime(d.lastTouchedAt)}` : "Never touched"}
+                  {d.lastTouchedAt
+                    ? `Touched ${relativeTime(d.lastTouchedAt)}`
+                    : "Never touched"}
                 </span>
               </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mt: 1.5,
+                }}
+              >
                 <Members d={d} />
                 <LinkIcons d={d} eventId={eventId} />
               </Box>
@@ -399,20 +537,44 @@ export default function MentorTeamsTable({ teams = [], eventId, nonprofits = [] 
       {controls}
       <Box sx={{ color: "var(--muted)", fontSize: "0.85rem", mb: 1.5 }}>
         {rows.length} of {derived.length} teams
-        {filter === "all" && attentionCount > 0 ? ` · ${attentionCount} need attention` : ""}
+        {filter === "all" && attentionCount > 0
+          ? ` · ${attentionCount} need attention`
+          : ""}
       </Box>
       <Box className="ohx-card" sx={{ overflowX: "auto", p: 0 }}>
-        <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", minWidth: 880 }}>
+        <Box
+          component="table"
+          sx={{ width: "100%", borderCollapse: "collapse", minWidth: 980 }}
+        >
           <Box component="thead">
             <Box component="tr">
-              <Box component="th" sx={thSx}>Team</Box>
-              <Box component="th" sx={thSx}>Status</Box>
-              <Box component="th" sx={thSx}>Nonprofit</Box>
-              <Box component="th" sx={thSx}>Members</Box>
-              <Box component="th" sx={thSx}>Coverage</Box>
-              <Box component="th" sx={thSx}>Flags</Box>
-              <Box component="th" sx={thSx}>Last touch</Box>
-              <Box component="th" sx={thSx}>Links</Box>
+              <Box component="th" sx={thSx}>
+                Team
+              </Box>
+              <Box component="th" sx={thSx}>
+                Status
+              </Box>
+              <Box component="th" sx={thSx}>
+                Nonprofit
+              </Box>
+              <Box component="th" sx={thSx}>
+                Members
+              </Box>
+              <Box component="th" sx={thSx}>
+                Coverage
+              </Box>
+              <Box component="th" sx={thSx}>
+                Availability
+              </Box>
+              <Box component="th" sx={thSx}>
+                Flags
+              </Box>
+              <Box component="th" sx={thSx}>
+                Last touch
+              </Box>
+              <Box component="th" sx={thSx}>
+                Links
+              </Box>
             </Box>
           </Box>
           <Box component="tbody">
@@ -422,37 +584,84 @@ export default function MentorTeamsTable({ teams = [], eventId, nonprofits = [] 
                 key={d.id}
                 sx={{
                   opacity: d.isActive ? 1 : 0.6,
-                  ...(d.openFlags > 0 ? { background: "var(--accent-soft)" } : {}),
-                  "&:hover": { background: d.openFlags > 0 ? "var(--accent-soft)" : "var(--surface-2)" },
+                  ...(d.openFlags > 0
+                    ? { background: "var(--accent-soft)" }
+                    : {}),
+                  "&:hover": {
+                    background:
+                      d.openFlags > 0
+                        ? "var(--accent-soft)"
+                        : "var(--surface-2)",
+                  },
                 }}
               >
                 <Box component="td" sx={tdSx}>
-                  <NextLink href={`/hack/${eventId}/team/${d.id}`} className="ohx-link" style={{ fontWeight: 600 }}>
+                  <NextLink
+                    href={`/hack/${eventId}/team/${d.id}`}
+                    className="ohx-link"
+                    style={{ fontWeight: 600 }}
+                  >
                     {d.name}
                   </NextLink>
                   {d.teamNumber != null && (
-                    <Box component="span" sx={{ color: "var(--faint)", fontSize: "0.78rem", ml: 0.75 }}>
+                    <Box
+                      component="span"
+                      sx={{
+                        color: "var(--faint)",
+                        fontSize: "0.78rem",
+                        ml: 0.75,
+                      }}
+                    >
                       #{d.teamNumber}
                     </Box>
                   )}
                 </Box>
-                <Box component="td" sx={tdSx}><StatusTag d={d} /></Box>
-                <Box component="td" sx={{ ...tdSx, color: d.nonprofitName ? "var(--muted)" : "var(--faint)", maxWidth: 200 }}>
+                <Box component="td" sx={tdSx}>
+                  <StatusTag d={d} />
+                </Box>
+                <Box
+                  component="td"
+                  sx={{
+                    ...tdSx,
+                    color: d.nonprofitName ? "var(--muted)" : "var(--faint)",
+                    maxWidth: 200,
+                  }}
+                >
                   {d.nonprofitName || "—"}
                 </Box>
-                <Box component="td" sx={tdSx}><Members d={d} /></Box>
-                <Box component="td" sx={tdSx}><CoverageCell d={d} /></Box>
-                <Box component="td" sx={tdSx}><FlagsCell d={d} /></Box>
-                <Box component="td" sx={{ ...tdSx, color: d.lastTouchedAt ? "var(--muted)" : "var(--faint)", whiteSpace: "nowrap" }}>
+                <Box component="td" sx={tdSx}>
+                  <Members d={d} />
+                </Box>
+                <Box component="td" sx={tdSx}>
+                  <CoverageCell d={d} />
+                </Box>
+                <Box component="td" sx={tdSx}>
+                  <AvailabilityCell d={d} />
+                </Box>
+                <Box component="td" sx={tdSx}>
+                  <FlagsCell d={d} />
+                </Box>
+                <Box
+                  component="td"
+                  sx={{
+                    ...tdSx,
+                    color: d.lastTouchedAt ? "var(--muted)" : "var(--faint)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {d.lastTouchedAt ? (
-                    <Tooltip title={d.lastTouchedBy ? `by ${d.lastTouchedBy}` : ""}>
+                    <Tooltip
+                      title={d.lastTouchedBy ? `by ${d.lastTouchedBy}` : ""}
+                    >
                       <span>{relativeTime(d.lastTouchedAt)}</span>
                     </Tooltip>
                   ) : (
                     "Never"
                   )}
                 </Box>
-                <Box component="td" sx={tdSx}><LinkIcons d={d} eventId={eventId} /></Box>
+                <Box component="td" sx={tdSx}>
+                  <LinkIcons d={d} eventId={eventId} />
+                </Box>
               </Box>
             ))}
           </Box>

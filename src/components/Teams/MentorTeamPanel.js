@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import NextLink from "next/link";
 import { useAuthInfo } from "@propelauth/react";
 import {
@@ -120,7 +126,14 @@ function NoteRow({ note, canDelete, onDelete }) {
       </ListItemIcon>
       <ListItemText
         primary={
-          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "baseline",
+              gap: 1,
+              flexWrap: "wrap",
+            }}
+          >
             <Typography variant="body2" fontWeight={600}>
               {note.author_name || "A mentor"}
             </Typography>
@@ -169,7 +182,15 @@ function FlagCard({ flag, isOwner, canMentor, onTakeOver, onResolve }) {
         backgroundColor: severityMeta.chipBg,
       }}
     >
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 1,
+          alignItems: "center",
+          mb: 1,
+        }}
+      >
         <Chip
           size="small"
           color={severityMeta.color}
@@ -215,7 +236,12 @@ function FlagCard({ flag, isOwner, canMentor, onTakeOver, onResolve }) {
 
 // ------------------------- main component -------------------------------
 
-export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) {
+export default function MentorTeamPanel({
+  team,
+  event,
+  eventId,
+  onTeamUpdate,
+}) {
   const { user, accessToken, isLoggedIn } = useAuthInfo();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -226,11 +252,15 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
   const [pendingSlug, setPendingSlug] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const [snackbar, setSnackbar] = useState({ open: false, severity: "success", message: "" });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    severity: "success",
+    message: "",
+  });
   const showSnack = useCallback(
     (message, severity = "success") =>
       setSnackbar({ open: true, severity, message }),
-    []
+    [],
   );
 
   // confirm / dialog state
@@ -275,8 +305,9 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
   // -- derived state from team
   const checklist = team?.mentor_checklist || {};
   const notes = useMemo(
-    () => (Array.isArray(team?.mentor_notes) ? [...team.mentor_notes].reverse() : []),
-    [team?.mentor_notes]
+    () =>
+      Array.isArray(team?.mentor_notes) ? [...team.mentor_notes].reverse() : [],
+    [team?.mentor_notes],
   );
   const flagsAll = Array.isArray(team?.mentor_flags) ? team.mentor_flags : [];
   const openFlags = useMemo(
@@ -284,12 +315,12 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
       flagsAll
         .filter((f) => !f.resolved_at)
         .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")),
-    [flagsAll]
+    [flagsAll],
   );
   const doneCount = coverageDoneCount(checklist);
   const ratingsByMentor = useMemo(
     () => latestRatingsByMentor(team?.mentor_ratings),
-    [team?.mentor_ratings]
+    [team?.mentor_ratings],
   );
   const myPropelId = user?.userId || null;
 
@@ -319,7 +350,7 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         onTeamUpdate({ ...resp.team, id: team.id });
       }
     },
-    [team?.id, onTeamUpdate]
+    [team?.id, onTeamUpdate],
   );
 
   const post = useCallback(
@@ -335,7 +366,7 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
       }
       return data;
     },
-    [accessToken]
+    [accessToken],
   );
 
   const del = useCallback(
@@ -350,7 +381,7 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
       }
       return data;
     },
-    [accessToken]
+    [accessToken],
   );
 
   // -- handlers
@@ -439,7 +470,9 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
   const takeOverFlag = async (flagId) => {
     setBusy(true);
     try {
-      const data = await post(`/api/team/${team.id}/mentor/flags/${flagId}/take-over`);
+      const data = await post(
+        `/api/team/${team.id}/mentor/flags/${flagId}/take-over`,
+      );
       updateTeamFromResponse(data);
       showSnack("You now own this flag");
     } catch (e) {
@@ -457,7 +490,7 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
     try {
       const data = await post(
         `/api/team/${team.id}/mentor/flags/${resolveFlag.id}/resolve`,
-        { resolution_note: note }
+        { resolution_note: note },
       );
       updateTeamFromResponse(data);
       setResolveFlag(null);
@@ -521,12 +554,35 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [refresh]);
 
+  // Signal only — a team can ask mentors to hold off (see CLAUDE.md
+  // "mentor_help_wanted absent ⇒ true"). No behaviour change, just a heads-up.
+  const isHeadsDown = team?.mentor_help_wanted === false;
+
   // -- header pills
   const headerPills = (
-    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ alignItems: "center" }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      flexWrap="wrap"
+      useFlexGap
+      sx={{ alignItems: "center" }}
+    >
+      {isHeadsDown && (
+        <Chip
+          size="small"
+          color="warning"
+          label="Team asked for heads-down time — check Slack before dropping in"
+        />
+      )}
       <Chip
         size="small"
-        color={doneCount === MENTOR_COVERAGE_TOTAL ? "success" : doneCount > 0 ? "primary" : "default"}
+        color={
+          doneCount === MENTOR_COVERAGE_TOTAL
+            ? "success"
+            : doneCount > 0
+              ? "primary"
+              : "default"
+        }
         label={`${doneCount} / ${MENTOR_COVERAGE_TOTAL} covered`}
         sx={{ fontWeight: 700 }}
       />
@@ -545,7 +601,9 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         label={
           team?.mentor_last_touched_at
             ? `Last touch ${relativeTime(team.mentor_last_touched_at)}${
-                team.mentor_last_touched_by_name ? ` · ${team.mentor_last_touched_by_name}` : ""
+                team.mentor_last_touched_by_name
+                  ? ` · ${team.mentor_last_touched_by_name}`
+                  : ""
               }`
             : "No mentor touch yet"
         }
@@ -554,7 +612,11 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         <Chip
           size="small"
           variant="outlined"
-          label={daysSinceEnd === 0 ? "Event ended today" : `Event ended ${daysSinceEnd}d ago`}
+          label={
+            daysSinceEnd === 0
+              ? "Event ended today"
+              : `Event ended ${daysSinceEnd}d ago`
+          }
         />
       )}
     </Stack>
@@ -565,7 +627,8 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
     <Box>
       {openFlags.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          No open mentor flags. {canInteract ? "Raise one below if a team needs attention." : ""}
+          No open mentor flags.{" "}
+          {canInteract ? "Raise one below if a team needs attention." : ""}
         </Typography>
       ) : (
         openFlags.map((f) => (
@@ -615,10 +678,15 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
           },
         }}
       />
-      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-        Each item wants sign-off from {COVERAGE_TARGET_MENTORS} different mentors — check
-        the ones you&apos;ve personally covered. An item turns green once{" "}
-        {COVERAGE_TARGET_MENTORS} mentors have it. You can clear your own check anytime.
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: "block", mb: 1 }}
+      >
+        Each item wants sign-off from {COVERAGE_TARGET_MENTORS} different
+        mentors — check the ones you&apos;ve personally covered. An item turns
+        green once {COVERAGE_TARGET_MENTORS} mentors have it. You can clear your
+        own check anytime.
       </Typography>
       <List disablePadding>
         {MENTOR_COVERAGE_ITEMS.map((item, idx) => {
@@ -647,21 +715,27 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
             <React.Fragment key={item.slug}>
               {idx > 0 && <Divider component="li" />}
               <ListItem
-                onClick={clickable ? () => handleCoverageClick(item) : undefined}
+                onClick={
+                  clickable ? () => handleCoverageClick(item) : undefined
+                }
                 sx={{
                   py: 1.25,
                   cursor: clickable ? "pointer" : "default",
                   backgroundColor: covered
                     ? "rgba(76,175,80,0.07)"
                     : count > 0
-                    ? "rgba(72,219,251,0.05)"
-                    : "transparent",
+                      ? "rgba(72,219,251,0.05)"
+                      : "transparent",
                   alignItems: "flex-start",
-                  "&:hover": clickable ? { backgroundColor: "rgba(72,219,251,0.1)" } : {},
+                  "&:hover": clickable
+                    ? { backgroundColor: "rgba(72,219,251,0.1)" }
+                    : {},
                 }}
                 secondaryAction={
                   lockedForMe ? (
-                    <Tooltip title={`Fully covered by ${COVERAGE_TARGET_MENTORS} mentors`}>
+                    <Tooltip
+                      title={`Fully covered by ${COVERAGE_TARGET_MENTORS} mentors`}
+                    >
                       {countChip}
                     </Tooltip>
                   ) : (
@@ -695,21 +769,32 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
                   }
                   secondary={
                     <Box component="span" sx={{ display: "block", mt: 0.25 }}>
-                      <Typography variant="caption" color="text.secondary" component="span" sx={{ display: "block" }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        component="span"
+                        sx={{ display: "block" }}
+                      >
                         {item.blurb}
                       </Typography>
                       {count > 0 && (
                         <Typography
                           variant="caption"
                           component="span"
-                          sx={{ display: "block", mt: 0.5, color: "text.secondary" }}
+                          sx={{
+                            display: "block",
+                            mt: 0.5,
+                            color: "text.secondary",
+                          }}
                         >
                           {checks
                             .map(
                               (c) =>
                                 `${c.propel_id === myPropelId ? "You" : c.name || "A mentor"}${
-                                  c.checked_at ? ` · ${relativeTime(c.checked_at)}` : ""
-                                }`
+                                  c.checked_at
+                                    ? ` · ${relativeTime(c.checked_at)}`
+                                    : ""
+                                }`,
                             )
                             .join("  ·  ")}
                         </Typography>
@@ -718,7 +803,12 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
                         <Typography
                           variant="caption"
                           component="span"
-                          sx={{ display: "block", mt: 0.25, color: "primary.main", fontWeight: 600 }}
+                          sx={{
+                            display: "block",
+                            mt: 0.25,
+                            color: "primary.main",
+                            fontWeight: 600,
+                          }}
                         >
                           + Add your check
                         </Typography>
@@ -746,7 +836,12 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
           target="_blank"
           rel="noopener noreferrer"
           variant="caption"
-          sx={{ ml: "auto", display: "inline-flex", alignItems: "center", gap: 0.25 }}
+          sx={{
+            ml: "auto",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 0.25,
+          }}
         >
           Full rubric <OpenInNewIcon sx={{ fontSize: 12 }} />
         </Link>
@@ -758,8 +853,20 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
           const consensus = consensusForCriterion(byMentor);
           return (
             <Paper key={c.slug} variant="outlined" sx={{ p: 1.5 }}>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 0.5 }}>
-                <Typography variant="subtitle2" fontWeight={700} sx={{ minWidth: 120 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  alignItems: "center",
+                  mb: 0.5,
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  fontWeight={700}
+                  sx={{ minWidth: 120 }}
+                >
                   {c.label}
                 </Typography>
                 {consensus && (
@@ -777,11 +884,19 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
                   />
                 )}
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 1 }}
+              >
                 {c.blurb}
               </Typography>
               {canInteract && (
-                <ButtonGroup size="small" variant="outlined" sx={{ flexWrap: "wrap" }}>
+                <ButtonGroup
+                  size="small"
+                  variant="outlined"
+                  sx={{ flexWrap: "wrap" }}
+                >
                   {["green", "yellow", "red"].map((s) => (
                     <Button
                       key={s}
@@ -834,7 +949,9 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
       {notes.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No mentor notes yet.
-          {canInteract ? " Be the first — observations help the next mentor on shift." : ""}
+          {canInteract
+            ? " Be the first — observations help the next mentor on shift."
+            : ""}
         </Typography>
       ) : (
         <List disablePadding>
@@ -843,7 +960,11 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
               {idx > 0 && <Divider component="li" />}
               <NoteRow
                 note={n}
-                canDelete={canInteract && n.author_propel_id === myPropelId && !n.deleted_at}
+                canDelete={
+                  canInteract &&
+                  n.author_propel_id === myPropelId &&
+                  !n.deleted_at
+                }
                 onDelete={() => deleteNote(n.id)}
               />
             </React.Fragment>
@@ -867,15 +988,20 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
           {isLoggedIn ? (
             eventId ? (
               <>
-                You're not registered as an approved mentor for this event. Want to help?{" "}
-                <Link component={NextLink} href={`/hack/${eventId}/mentor-application`}>
+                You're not registered as an approved mentor for this event. Want
+                to help?{" "}
+                <Link
+                  component={NextLink}
+                  href={`/hack/${eventId}/mentor-application`}
+                >
                   Apply as a mentor →
                 </Link>
               </>
             ) : (
               <>
-                Approved mentors can mark coverage, raise flags, rate judging-readiness,
-                and leave public notes. Want to mentor an upcoming event?{" "}
+                Approved mentors can mark coverage, raise flags, rate
+                judging-readiness, and leave public notes. Want to mentor an
+                upcoming event?{" "}
                 <Link component={NextLink} href="/hack">
                   Browse hackathons →
                 </Link>
@@ -883,8 +1009,9 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
             )
           ) : (
             <>
-              Approved mentors can mark coverage, raise flags, rate judging-readiness,
-              and leave public notes. Log in if you're mentoring this event.
+              Approved mentors can mark coverage, raise flags, rate
+              judging-readiness, and leave public notes. Log in if you're
+              mentoring this event.
             </>
           )}
         </>
@@ -896,7 +1023,10 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
   const sections = [
     {
       key: "concerns",
-      title: openFlags.length > 0 ? `Open concerns (${openFlags.length})` : "Open concerns",
+      title:
+        openFlags.length > 0
+          ? `Open concerns (${openFlags.length})`
+          : "Open concerns",
       icon: <FlagIcon fontSize="small" />,
       defaultExpanded: openFlags.length > 0,
       content: renderOpenConcerns(),
@@ -945,7 +1075,9 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
           mb: 2,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}
+        >
           <MentorIcon color="primary" />
           <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
             Mentor support
@@ -975,7 +1107,11 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
       {isMobile ? (
         <Stack spacing={1}>
           {sections.map((s) => (
-            <Accordion key={s.key} defaultExpanded={s.defaultExpanded} disableGutters>
+            <Accordion
+              key={s.key}
+              defaultExpanded={s.defaultExpanded}
+              disableGutters
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   {s.icon}
@@ -992,7 +1128,9 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         <Stack spacing={3} divider={<Divider flexItem />}>
           {sections.map((s) => (
             <Box key={s.key}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
+              >
                 {s.icon}
                 <Typography variant="subtitle1" fontWeight={700}>
                   {s.title}
@@ -1015,9 +1153,9 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         <DialogTitle>Raise a mentor flag</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            This posts into the team's Slack channel and heartbeats the per-event mentor channel
-            so other mentors don't duplicate effort. You'll be set as the owner — others can take
-            over from this panel.
+            This posts into the team's Slack channel and heartbeats the
+            per-event mentor channel so other mentors don't duplicate effort.
+            You'll be set as the owner — others can take over from this panel.
           </DialogContentText>
           <Select
             value={raiseFlagSeverity}
@@ -1063,7 +1201,8 @@ export default function MentorTeamPanel({ team, event, eventId, onTeamUpdate }) 
         <DialogTitle>Resolve this flag</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            Briefly note what was done. The team Slack channel will get a resolution message.
+            Briefly note what was done. The team Slack channel will get a
+            resolution message.
           </DialogContentText>
           <TextField
             fullWidth
