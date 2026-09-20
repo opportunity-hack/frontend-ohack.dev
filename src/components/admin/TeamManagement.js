@@ -867,10 +867,19 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const handleSaveTeam = async () => {
     setLoading(true);
     try {
-      await patchTeam({
+      const payload = {
         ...teamData,
         active: teamData.active ? "True" : "False",
-      });
+      };
+      // "Not submitted (legacy/draft)" clears the field locally to null so
+      // the Select can show the empty option, but the backend's
+      // PROJECT_SUBMISSION_STATUSES allowlist 400s on an explicit null —
+      // omit the key entirely so it's a no-op (leaves any prior value
+      // untouched) rather than failing the whole team save.
+      if (payload.project_submission_status == null) {
+        delete payload.project_submission_status;
+      }
+      await patchTeam(payload);
       enqueueSnackbar("Team updated successfully", { variant: "success" });
       setEditDialogOpen(false);
       fetchTeams(selectedHackathon);

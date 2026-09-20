@@ -384,6 +384,14 @@ function collectKeysForSections(sectionSet) {
     } else if (s === "schedule") {
       keys.add("countdowns");
     } else if (s === "deadlines") {
+      // Deliberately also owns `countdowns` (not just `deadlines`) — the
+      // Deadlines and Schedule sections share the same top-level
+      // `countdowns` array. This means `discardSection("deadlines")`
+      // reverts any unsaved Schedule-section countdown edits too, and
+      // `commitSection("deadlines")` (which pushes the whole draft) will
+      // publish unsaved Schedule edits along with it. Acceptable given the
+      // hook's design, but keep it in mind if the two sections ever drift
+      // apart into separate save flows.
       keys.add("deadlines");
       keys.add("countdowns");
     } else if (s === "meals" || s === "screening" || s === "deposit") {

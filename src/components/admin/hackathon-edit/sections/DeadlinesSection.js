@@ -175,15 +175,26 @@ const DeadlinesSection = ({ admin, accessToken, orgId, onSnack }) => {
     } catch (err) {
       const status = err?.response?.status;
       const body = err?.response?.data;
+      // send_deadline_reminders (submissions_service.py) returns
+      // {"error": ...}, not {"message": ...} — reading body?.message here
+      // rendered a generic fallback even when the backend explained why.
       if (status === 409 && body?.error === "already_sent") {
         onSnack?.(
           "That reminder has already been sent for this deadline.",
           "info",
         );
+      } else if (status === 409 && body?.error === "no_deadline") {
+        onSnack?.(
+          "Set a submission deadline before sending this reminder.",
+          "warning",
+        );
       } else if (status === 404) {
         onSnack?.("Reminders aren't available on this backend yet.", "warning");
       } else {
-        onSnack?.(body?.message || "Failed to send reminder.", "error");
+        onSnack?.(
+          body?.message || body?.error || "Failed to send reminder.",
+          "error",
+        );
       }
     } finally {
       setSendingReminder(null);

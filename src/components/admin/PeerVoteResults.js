@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -19,7 +20,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -34,6 +34,21 @@ import * as ga from "../../lib/ga";
 const LOW_EXPOSURE_THRESHOLD = 3;
 
 const pct = (v) => `${Math.round((Number(v) || 0) * 100)}%`;
+
+/**
+ * Whether voting has closed. Prefers the backend's own `results.window`
+ * (`{state, opens_at, closes_at}` from `compute_voting_window`), which
+ * accounts for the backend's end-of-event default when no explicit
+ * `voting_closes` deadline is set. Falls back to the `votingCloses` prop
+ * (`admin.hackathon.deadlines.voting_closes`) only when `window` isn't
+ * present yet (still loading, or an older backend) — that prop is `NaN`
+ * when unset, which used to permanently disable Publish.
+ */
+function computeVotingHasClosed(window, votingCloses) {
+  if (window) return window.state === "closed";
+  const closesAtMs = votingCloses ? Date.parse(votingCloses) : NaN;
+  return Number.isFinite(closesAtMs) && Date.now() > closesAtMs;
+}
 
 /**
  * Admin view of the Hackers' Choice peer vote — the 4th subtab of
@@ -55,74 +70,90 @@ const PeerVoteResults = ({
   const [results, setResults] = useState(null);
   const [summary, setSummary] = useState(null);
 
-  const [voidPropelId, setVoidPropelId] = useState("");
-  const [voidConfirmOpen, setVoidConfirmOpen] = useState(false);
+  const [voidTarget, setVoidTarget] = useState(null); // { voter_propel_id, picks_count }
   const [voiding, setVoiding] = useState(false);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
-  const authHeaders = {
-    Authorization: `Bearer ${accessToken}`,
-    ...(orgId ? { "X-Org-Id": orgId } : {}),
-  };
+  // PropelAuth mints a fresh accessToken on tab refocus. Requests read the
+  // token/orgId through refs so `load` stays identity-stable across token
+  // rotation — otherwise the mount effect refires, `setLoading(true)` flips
+  // the whole table into a spinner, and a background refresh loses the
+  // in-progress table state (same lesson as useHackathonAdmin.js).
+  const accessTokenRef = useRef(accessToken);
+  accessTokenRef.current = accessToken;
+  const orgIdRef = useRef(orgId);
+  orgIdRef.current = orgId;
 
-  const load = useCallback(async () => {
-    if (!eventId || !accessToken) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const [resultsRes, summaryRes] = await Promise.all([
-        axios.get(
-          `${apiBase}/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/results`,
-          {
-            headers: authHeaders,
-          },
-        ),
-        axios
-          .get(
-            `${apiBase}/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/summary`,
-          )
-          .catch(() => ({ data: { published: false } })),
-      ]);
-      setResults(resultsRes.data || null);
-      setSummary(summaryRes.data || { published: false });
-    } catch (err) {
-      const status = err?.response?.status;
-      if (status === 404) {
-        setError(
-          "Hackers' Choice results aren't available on this backend yet.",
-        );
-      } else if (status === 401 || status === 403) {
-        setError("You don't have permission to view Hackers' Choice results.");
-      } else {
-        setError(
-          err?.response?.data?.message ||
-            "Failed to load Hackers' Choice results.",
-        );
+  const authHeaders = useCallback(
+    () => ({
+      Authorization: `Bearer ${accessTokenRef.current}`,
+      ...(orgIdRef.current ? { "X-Org-Id": orgIdRef.current } : {}),
+    }),
+    [],
+  );
+
+  const load = useCallback(
+    async ({ background = false } = {}) => {
+      if (!eventId || !accessTokenRef.current) return;
+      if (!background) setLoading(true);
+      setError(null);
+      try {
+        const [resultsRes, summaryRes] = await Promise.all([
+          axios.get(
+            `${apiBase}/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/results`,
+            { headers: authHeaders() },
+          ),
+          axios
+            .get(
+              `${apiBase}/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/summary`,
+            )
+            .catch(() => ({ data: { published: false } })),
+        ]);
+        setResults(resultsRes.data || null);
+        setSummary(summaryRes.data || { published: false });
+      } catch (err) {
+        const status = err?.response?.status;
+        if (status === 404) {
+          setError(
+            "Hackers' Choice results aren't available on this backend yet.",
+          );
+        } else if (status === 401 || status === 403) {
+          setError(
+            "You don't have permission to view Hackers' Choice results.",
+          );
+        } else {
+          setError(
+            err?.response?.data?.message ||
+              "Failed to load Hackers' Choice results.",
+          );
+        }
+      } finally {
+        if (!background) setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId, accessToken, orgId, apiBase]);
+    },
+    [eventId, apiBase, authHeaders],
+  );
 
+  // Keyed on token *presence*, not value — a rotated token must not reload.
+  const hasToken = !!accessToken;
   useEffect(() => {
+    if (!hasToken) return;
     load();
-  }, [load]);
+  }, [load, hasToken]);
 
-  const openVoidConfirm = () => {
-    if (!voidPropelId.trim()) return;
-    setVoidConfirmOpen(true);
-  };
+  const openVoidConfirm = (ballot) => setVoidTarget(ballot);
 
   const handleVoid = async () => {
+    if (!voidTarget) return;
     setVoiding(true);
     try {
       await axios.post(
         `${apiBase}/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/ballots/${encodeURIComponent(
-          voidPropelId.trim(),
+          voidTarget.voter_propel_id,
         )}/void`,
         {},
-        { headers: authHeaders },
+        { headers: authHeaders() },
       );
       onSnack?.("Ballot voided.", "success");
       ga.trackStructuredEvent(
@@ -130,9 +161,8 @@ const PeerVoteResults = ({
         "admin_peer_vote_void_ballot",
         eventId,
       );
-      setVoidPropelId("");
-      setVoidConfirmOpen(false);
-      load();
+      setVoidTarget(null);
+      load({ background: true });
     } catch (err) {
       onSnack?.(
         err?.response?.data?.message || "Failed to void that ballot.",
@@ -143,9 +173,8 @@ const PeerVoteResults = ({
     }
   };
 
-  const closesAtMs = votingCloses ? Date.parse(votingCloses) : NaN;
-  const votingHasClosed =
-    Number.isFinite(closesAtMs) && Date.now() > closesAtMs;
+  const votingWindow = results?.window;
+  const votingHasClosed = computeVotingHasClosed(votingWindow, votingCloses);
   const alreadyPublished = !!summary?.published;
   const topTeam =
     results?.teams?.find((t) => t.rank === 1) || results?.teams?.[0] || null;
@@ -156,7 +185,7 @@ const PeerVoteResults = ({
       const res = await axios.post(
         `${apiBase}/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/publish`,
         {},
-        { headers: authHeaders },
+        { headers: authHeaders() },
       );
       onSnack?.(
         `Published — Hackers' Choice: ${res.data?.winner_team_name || topTeam?.name || "winner"}`,
@@ -168,7 +197,7 @@ const PeerVoteResults = ({
         eventId,
       );
       setPublishConfirmOpen(false);
-      load();
+      load({ background: true });
     } catch (err) {
       onSnack?.(
         err?.response?.data?.message || "Failed to publish results.",
@@ -192,6 +221,7 @@ const PeerVoteResults = ({
   }
 
   const teams = results?.teams || [];
+  const ballotsDetail = results?.ballots_detail || [];
   const lowExposureCount = teams.filter(
     (t) => (t.shown ?? 0) < LOW_EXPOSURE_THRESHOLD,
   ).length;
@@ -219,7 +249,7 @@ const PeerVoteResults = ({
             {results?.voided ? ` · ${results.voided} voided` : ""}
           </Typography>
         </Box>
-        <Button size="small" startIcon={<RefreshIcon />} onClick={load}>
+        <Button size="small" startIcon={<RefreshIcon />} onClick={() => load()}>
           Refresh
         </Button>
       </Stack>
@@ -333,69 +363,108 @@ const PeerVoteResults = ({
         </TableContainer>
       )}
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={3} sx={{ mb: 1 }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-            Void a ballot
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Removes one voter's picks from the tally (e.g. a duplicate account
-            or abuse report). Cannot be undone from here.
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <TextField
-              size="small"
-              placeholder="Voter propel id"
-              value={voidPropelId}
-              onChange={(e) => setVoidPropelId(e.target.value)}
-              sx={{ flex: 1, maxWidth: 320 }}
-            />
-            <Button
-              variant="outlined"
-              color="error"
-              disabled={!voidPropelId.trim()}
-              onClick={openVoidConfirm}
-            >
-              Void
-            </Button>
-          </Box>
-        </Box>
+      <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+        Ballots
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        Void removes one voter's picks from the tally (e.g. a duplicate account
+        or abuse report). Cannot be undone from here.
+      </Typography>
+      {ballotsDetail.length === 0 ? (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          No ballots cast yet.
+        </Alert>
+      ) : (
+        <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Voter</TableCell>
+                <TableCell>Voted at</TableCell>
+                <TableCell align="right">Picks</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell sx={{ width: 100 }} />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {ballotsDetail.map((b) => (
+                <TableRow key={b.voter_propel_id} hover>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
+                    >
+                      {b.voter_propel_id}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {b.voted_at ? new Date(b.voted_at).toLocaleString() : "—"}
+                  </TableCell>
+                  <TableCell align="right">{b.picks_count ?? 0}</TableCell>
+                  <TableCell>
+                    {b.voided ? (
+                      <Chip label="Voided" size="small" color="default" />
+                    ) : (
+                      <Chip label="Active" size="small" color="success" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      disabled={b.voided}
+                      onClick={() => openVoidConfirm(b)}
+                    >
+                      Void
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-            Publish results
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Appends "Hackers' Choice" to the winning team's awards and makes the
-            winner public.
-            {!votingHasClosed &&
-              !alreadyPublished &&
-              " Disabled until voting closes."}
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!votingHasClosed || alreadyPublished || !topTeam}
-            onClick={() => setPublishConfirmOpen(true)}
-          >
-            {alreadyPublished ? "Already published" : "Publish Hackers' Choice"}
-          </Button>
-        </Box>
-      </Stack>
+      <Box sx={{ mb: 1 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+          Publish results
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          Appends "Hackers' Choice" to the winning team's awards and makes the
+          winner public.
+          {!votingHasClosed &&
+            !alreadyPublished &&
+            " Disabled until voting closes."}
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={!votingHasClosed || alreadyPublished || !topTeam}
+          onClick={() => setPublishConfirmOpen(true)}
+        >
+          {alreadyPublished ? "Already published" : "Publish Hackers' Choice"}
+        </Button>
+      </Box>
 
       <Dialog
-        open={voidConfirmOpen}
-        onClose={() => !voiding && setVoidConfirmOpen(false)}
+        open={!!voidTarget}
+        onClose={() => !voiding && setVoidTarget(null)}
       >
         <DialogTitle>Void this ballot?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            The ballot for voter <strong>{voidPropelId}</strong> will be
-            excluded from all future tallies. This cannot be undone.
+            The ballot for voter{" "}
+            <strong style={{ fontFamily: "monospace" }}>
+              {voidTarget?.voter_propel_id}
+            </strong>{" "}
+            ({voidTarget?.picks_count ?? 0} pick
+            {(voidTarget?.picks_count ?? 0) === 1 ? "" : "s"}) will be excluded
+            from all future tallies. This cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setVoidConfirmOpen(false)} disabled={voiding}>
+          <Button onClick={() => setVoidTarget(null)} disabled={voiding}>
             Cancel
           </Button>
           <Button

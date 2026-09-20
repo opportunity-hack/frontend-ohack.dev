@@ -50,9 +50,16 @@ export function getTimezoneAbbreviation(date, timezone) {
 
 /**
  * ISO formatter that bakes a chosen timezone offset into the saved string
- * (e.g. "2026-10-10T15:00:00-0700"). Used by the Schedule and Deadlines
+ * (e.g. "2026-10-10T15:00:00-07:00"). Used by the Schedule and Deadlines
  * admin sections so times are saved unambiguously regardless of the
  * browser's own timezone.
+ *
+ * The offset is emitted with a colon (`-07:00`, not `-0700`) because the
+ * backend parses these with Python's `datetime.fromisoformat`, which on
+ * Python 3.9/3.10 rejects a colon-less offset (`ValueError: Invalid
+ * isoformat string`) — a save would silently be dropped. Every frontend
+ * consumer (native `Date`, `date-fns.parseISO`) parses both forms
+ * identically, so the colon form is safe everywhere.
  */
 export function toIsoWithTimezone(date, timezone) {
   if (!date) return "";
@@ -77,14 +84,14 @@ export function toIsoWithTimezone(date, timezone) {
   const tzPart = formatter
     .formatToParts(d)
     .find((p) => p.type === "timeZoneName");
-  let offset = "+0000";
+  let offset = "+00:00";
   if (tzPart) {
     const m = tzPart.value.match(/([+-])(\d{2}):?(\d{2})/);
-    if (m) offset = `${m[1]}${m[2]}${m[3]}`;
+    if (m) offset = `${m[1]}${m[2]}:${m[3]}`;
     else {
       const tz = d.getTimezoneOffset();
       const sign = tz <= 0 ? "+" : "-";
-      offset = `${sign}${pad(Math.abs(Math.floor(tz / 60)))}${pad(Math.abs(tz % 60))}`;
+      offset = `${sign}${pad(Math.abs(Math.floor(tz / 60)))}:${pad(Math.abs(tz % 60))}`;
     }
   }
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${offset}`;
