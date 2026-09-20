@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import NextLink from "next/link";
 import { deriveVoteWindow } from "./peerVoteState";
+import { trackEvent } from "../../lib/ga";
 
 /**
  * Discoverability CTA linking to the Hackers' Choice vote
@@ -15,7 +16,13 @@ import { deriveVoteWindow } from "./peerVoteState";
  */
 const OPENING_SOON_MS = 24 * 60 * 60 * 1000;
 
-export default function PeerVoteCTA({ eventId, deadlines, constraints, variant = "event", style }) {
+export default function PeerVoteCTA({
+  eventId,
+  deadlines,
+  constraints,
+  variant = "event",
+  style,
+}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -25,15 +32,21 @@ export default function PeerVoteCTA({ eventId, deadlines, constraints, variant =
   const status = deriveVoteWindow(deadlines, constraints, now);
 
   const opensAtIso =
-    deadlines?.voting_opens || deadlines?.late_submission_until || deadlines?.submission || null;
+    deadlines?.voting_opens ||
+    deadlines?.late_submission_until ||
+    deadlines?.submission ||
+    null;
   const opensSoon =
-    status === "upcoming" && opensAtIso && Date.parse(opensAtIso) - now <= OPENING_SOON_MS;
+    status === "upcoming" &&
+    opensAtIso &&
+    Date.parse(opensAtIso) - now <= OPENING_SOON_MS;
 
   if (status !== "open" && !opensSoon) return null;
 
   const isDashboard = variant === "dashboard";
   const eyebrow = "Hackers' Choice";
-  const heading = status === "open" ? "Vote for Hackers' Choice" : "Voting opens soon";
+  const heading =
+    status === "open" ? "Vote for Hackers' Choice" : "Voting opens soon";
   const sub =
     status === "open"
       ? isDashboard
@@ -82,12 +95,24 @@ export default function PeerVoteCTA({ eventId, deadlines, constraints, variant =
         >
           {heading}
         </div>
-        <div style={{ color: "var(--muted, #5B6270)", fontSize: "0.95rem", marginTop: 4 }}>
+        <div
+          style={{
+            color: "var(--muted, #5B6270)",
+            fontSize: "0.95rem",
+            marginTop: 4,
+          }}
+        >
           {sub}
         </div>
       </div>
       <NextLink
         href={`/hack/${eventId}/vote`}
+        onClick={() =>
+          trackEvent({
+            action: "peer_vote_cta_click",
+            params: { event_label: variant, event_id: eventId },
+          })
+        }
         style={{
           display: "inline-flex",
           alignItems: "center",

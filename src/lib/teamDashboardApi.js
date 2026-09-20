@@ -177,6 +177,18 @@ export function getHackerSelfStatus(eventId, token) {
   );
 }
 
+/**
+ * Existing public single-event endpoint — used where a page only needs
+ * masthead-level metadata (title, timezone, peer-vote constraints) and
+ * doesn't otherwise fetch the full hackathon doc. Routed through this shared
+ * wrapper rather than a bare fetch so callers get the same ApiError contract
+ * as everything else here; still best-effort from the caller's point of
+ * view (e.g. the vote page swallows failures and falls back to defaults).
+ */
+export function getHackathonMeta(eventId) {
+  return request(`/api/messages/hackathon/${encodeURIComponent(eventId)}`);
+}
+
 // --- Hackers' Choice peer vote (Part 3: /api/hackathons/<id>/peer-vote/*) ---
 
 export function getPeerVoteSlate(eventId, token) {
