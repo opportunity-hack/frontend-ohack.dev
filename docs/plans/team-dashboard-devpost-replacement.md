@@ -219,6 +219,7 @@ Funnel stages sourced from `project_submission_status`; image gallery lightbox f
 | 15 | Two frontend components read `devpost_url`/`video_url` while the team doc uses `devpost_link`/`demo_video_url` (judge API naming split) | judge pages / `judgeApi.js` | Document; backend now fills `video_url` so both names work | A (doc) |
 | 16 | `api/messages/tests/test_cache_invalidation.py::test_save_hackathon_clears_cache` patches `validate_hackathon_data`, which was renamed `validate_hackathon_data_partial` — the test has failed since the rename | `api/messages/tests/test_cache_invalidation.py` | Fix the patch target (found by WS-A; pre-existing) | A |
 | 17 | `services/teams_service.py::save_team` (legacy `POST /api/messages/team`) — see #5; left documented-only because a real fix needs a hackathon-event lookup the function doesn't do and the route is superseded by `/api/team/queue` | — | Decide later: delete or repair | — |
+| 18 ★ | Creating a team on a hackathon doc with no `teams` key crashed with `KeyError: 'teams'` AFTER inserting the team doc (orphaned team; seen on test.ohack.dev event `fall-2026`); same pattern in `remove_team` | `api/teams/teams_service.py` `queue_team`/`remove_team` | Fixed via tolerant `_append_team_to_hackathon` helper + tests (Sep 20) | A |
 Each fix is listed in the PR description under "Bugs fixed along the way"; documented-only items go into the relevant `CLAUDE.md` gotchas section.
 
 ## Part 8 — Immediately after approval (this session)
