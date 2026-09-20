@@ -66,7 +66,7 @@ const fronts = await pipeline(
   WS,
   (ws) =>
     agent(
-      `Execute ${ws.key} (${ws.title}) of the plan. You are in an isolated git worktree of ${FRONT}; create and commit on a branch named ws/${ws.key.toLowerCase()} inside it. WS-0 modules already exist on the base branch - import them, never recreate. A backend with the WS-A endpoints is running on http://localhost:6060; every new endpoint must degrade gracefully on 404. Run eslint + prettier on touched files and npm test for any test you add. ${COMMON}`,
+      `Execute ${ws.key} (${ws.title}) of the plan. You are in an isolated git worktree of ${FRONT}; create and commit on a branch named ws/${ws.key.toLowerCase()} inside it. WS-0 modules already exist on the base branch - import them, never recreate. A READ-ONLY production-bound backend runs on http://localhost:6060 (never send writes there) and a sandbox backend bound to the test Firestore runs on http://localhost:6061 for any write-path checks; every new endpoint must degrade gracefully on 404. Run eslint + prettier on touched files and npm test for any test you add. ${COMMON}`,
       { label: ws.key, phase: 'Frontend', model: 'sonnet', isolation: 'worktree', schema: RESULT },
     ),
   (res, ws) =>
@@ -88,7 +88,7 @@ log(`${done.length}/${WS.length} frontend workstreams returned; ${done.filter((f
 
 phase('Integrate')
 const integ = await agent(
-  `Execute WS-F of the plan in ${FRONT}: merge branches ${done.map((f) => f.res.branch).join(', ')} into feat/team-dashboard-devpost-replacement (resolve conflicts preferring the plan's contracts), run npm run build, eslint + prettier on all touched files, run the Part 6 checklist against http://localhost:6060 (report each item pass/fail honestly), update CLAUDE.md, docs/refined-design-system.md and ga-events-reference.md as WS-F specifies, and commit (no push). ${COMMON}`,
+  `Execute WS-F of the plan in ${FRONT}: merge branches ${done.map((f) => f.res.branch).join(', ')} into feat/team-dashboard-devpost-replacement (resolve conflicts preferring the plan's contracts), run npm run build, eslint + prettier on all touched files, run the Part 6 checklist honoring its Verification safety rule (reads may use :6060; every write-path check goes to the :6061 sandbox with NEXT_PUBLIC_API_SERVER_URL=http://localhost:6061; report each item pass/fail honestly), update CLAUDE.md, docs/refined-design-system.md and ga-events-reference.md as WS-F specifies, and commit (no push). ${COMMON}`,
   { label: 'WS-F integrate', schema: RESULT },
 )
 return { fronts: done, integ }
