@@ -5,12 +5,15 @@ import dynamic from "next/dynamic";
 import { useAuthInfo } from "@propelauth/react";
 import {
   Box,
+  Button,
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   IconButton,
   Skeleton,
+  Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -26,6 +29,7 @@ import useCountdown from "../../hooks/use-countdown";
 import {
   getPeerVoteSlate,
   submitPeerVoteBallot,
+  getHackathonMeta,
   isNotFound,
   ApiError,
 } from "../../lib/teamDashboardApi";
@@ -137,6 +141,19 @@ function DisabledState({ eventId }) {
 }
 
 function NotEligibleState({ eventId, eventTitle, reason }) {
+  if (reason === "own_team_not_submitted") {
+    return (
+      <StatusCard
+        eyebrow="Hackers' Choice"
+        title="Submit your project to unlock voting."
+        actions={<BackToEventLink eventId={eventId} />}
+      >
+        You&apos;re registered for {eventTitle}, but your team needs to submit
+        its project before you can vote — it keeps this a vote among people with
+        skin in the game. Submit on your team dashboard, then come back.
+      </StatusCard>
+    );
+  }
   return (
     <StatusCard
       eyebrow="Hackers' Choice"
@@ -145,11 +162,20 @@ function NotEligibleState({ eventId, eventTitle, reason }) {
     >
       Only hackers who registered for {eventTitle} can vote. If you&apos;re on a
       team and see this, ask an organizer in Slack.
-      {reason === "own_team_not_submitted" && (
-        <Box sx={{ mt: 1.5 }}>
-          Submit your team&apos;s project to unlock voting.
-        </Box>
-      )}
+    </StatusCard>
+  );
+}
+
+function VoidedState({ eventId }) {
+  return (
+    <StatusCard
+      eyebrow="Hackers' Choice"
+      title="Your ballot was voided."
+      actions={<BackToEventLink eventId={eventId} />}
+    >
+      An organizer voided this ballot, so it won&apos;t count toward the results
+      and it can&apos;t be edited. If you think this is a mistake, ask an
+      organizer in Slack.
     </StatusCard>
   );
 }
@@ -307,7 +333,7 @@ export default function PeerVotePage() {
 
   const [phase, setPhase] = useState("loading"); // 'loading' | 'loaded' | 'error'
   const [slateData, setSlateData] = useState(null);
-  const [eventMeta, setEventMeta] = useState(null); // { title, timezone }
+  const [eventMeta, setEventMeta] = useState(null); // { title, timezone, slateSize }
   const [mode, setMode] = useState("edit"); // 'view' | 'edit'
   const [picks, setPicks] = useState([]);
   const [watched, setWatched] = useState(() => new Set());
@@ -351,7 +377,9 @@ export default function PeerVotePage() {
       setSlateData(data);
       statusRef.current = data.status;
       setPicks(Array.isArray(data.picks) ? data.picks : []);
-      setMode(data.status === "voted" ? "view" : "edit");
+      setMode(
+        data.status === "voted" || data.status === "voided" ? "view" : "edit",
+      );
       setPhase("loaded");
       trackEvent({
         action: "peer_vote_view",
@@ -396,21 +424,22 @@ export default function PeerVotePage() {
       document.removeEventListener("visibilitychange", handleVisibility);
   }, [loadSlate]);
 
-  // Best-effort event title/timezone for the masthead + deadline copy — the
-  // slate endpoint itself carries neither. Public endpoint, no auth needed;
-  // a failure just falls back to the event_id and the default timezone.
+  // Best-effort event title/timezone/slate-size for the masthead + deadline
+  // copy — the slate endpoint itself carries neither. Public endpoint, no
+  // auth needed; a failure just falls back to the event_id, the default
+  // timezone and the default slate size. Routed through the shared
+  // teamDashboardApi wrapper rather than a bare fetch (best-effort still —
+  // errors are swallowed the same way).
   useEffect(() => {
     if (!eventId) return undefined;
     let cancelled = false;
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${eventId}`,
-    )
-      .then((res) => (res.ok ? res.json() : null))
+    getHackathonMeta(eventId)
       .then((data) => {
         if (!cancelled && data) {
           setEventMeta({
             title: data.title || null,
             timezone: getEventTimezone(data),
+            slateSize: data.constraints?.peer_vote_slate_size || null,
           });
         }
       })
@@ -419,15 +448,6 @@ export default function PeerVotePage() {
       cancelled = true;
     };
   }, [eventId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-    const measure = () =>
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
 
   const handleToggle = useCallback(
     (teamId) => {
@@ -476,7 +496,12 @@ export default function PeerVotePage() {
       const reducedMotion =
         typeof window !== "undefined" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!reducedMotion) {
+      if (!reducedMotion && typeof window !== "undefined") {
+        // Measure once, right when confetti is about to show, instead of
+        // tracking window size on every resize — that state update was
+        // re-rendering the whole page (all slate cards included) on every
+        // resize for the entire session.
+        setWindowSize({ width: window.innerWidth, height: window.innerHeight });
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4000);
       }
@@ -515,7 +540,12 @@ export default function PeerVotePage() {
   const tz = eventMeta?.timezone;
   const status = slateData?.status || null;
   const slateItems = Array.isArray(slateData?.slate) ? slateData.slate : [];
-  const slateSize = slateItems.length || DEFAULT_SLATE_SIZE;
+  // The slate array is only populated in the "open" state (Part 3) — outside
+  // it, fall back to the event's configured peer_vote_slate_size (fetched
+  // alongside the masthead title/timezone) rather than silently reporting
+  // the module default, which would misstate a non-default event setting.
+  const slateSize =
+    slateItems.length || eventMeta?.slateSize || DEFAULT_SLATE_SIZE;
   const maxPicks = slateData?.max_picks || DEFAULT_MAX_PICKS;
   const notEnoughSubmissions =
     status === "open" &&
@@ -562,7 +592,7 @@ export default function PeerVotePage() {
           sx={{
             p: 2,
             mb: 3,
-            borderColor: "#f3d3c7",
+            borderColor: "var(--line, #E7E1D4)",
             background: "var(--accent-soft, #FBE9E2)",
           }}
         >
@@ -593,6 +623,9 @@ export default function PeerVotePage() {
       )}
       {phase === "loaded" && status === "closed" && (
         <ClosedState eventId={eventId} />
+      )}
+      {phase === "loaded" && status === "voided" && (
+        <VoidedState eventId={eventId} />
       )}
       {phase === "loaded" && status === "open" && notEnoughSubmissions && (
         <NotEnoughSubmissionsState eventId={eventId} />
@@ -672,7 +705,7 @@ export default function PeerVotePage() {
               sx={{
                 p: 2,
                 mb: 2,
-                borderColor: "#f3d3c7",
+                borderColor: "var(--line, #E7E1D4)",
                 background: "var(--accent-soft, #FBE9E2)",
               }}
             >
@@ -736,30 +769,26 @@ export default function PeerVotePage() {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
             {picks.map((teamId) => {
               const item = slateItems.find((i) => i.team_id === teamId);
-              return <Box key={teamId}>{item?.name || teamId}</Box>;
+              return (
+                <Typography key={teamId} variant="body2">
+                  {item?.name || teamId}
+                </Typography>
+              );
             })}
           </Box>
-          <Box className="ohx-muted" sx={{ fontSize: "0.9rem" }}>
+          <DialogContentText sx={{ fontSize: "0.9rem" }}>
             You can change them until voting closes.
-          </Box>
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Box
-            component="button"
-            type="button"
-            className="ohx-btn ohx-btn--ghost"
-            onClick={() => setConfirmOpen(false)}
-          >
-            Cancel
-          </Box>
-          <Box
-            component="button"
-            type="button"
-            className="ohx-btn ohx-btn--primary"
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button
             onClick={handleConfirmSubmit}
+            variant="contained"
+            color="primary"
           >
             Submit picks
-          </Box>
+          </Button>
         </DialogActions>
       </Dialog>
 

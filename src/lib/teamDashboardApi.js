@@ -18,7 +18,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_SERVER_URL;
 
 export class ApiError extends Error {
   constructor(status, body) {
-    const message = (body && (body.error || body.message)) || `Request failed (${status})`;
+    const message =
+      (body && (body.error || body.message)) || `Request failed (${status})`;
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -44,7 +45,11 @@ async function request(path, { method = "GET", token, body } = {}) {
     headers["Content-Type"] = "application/json";
     payload = JSON.stringify(body);
   }
-  const res = await fetch(`${API_BASE}${path}`, { method, headers, body: payload });
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: payload,
+  });
   const data = await parseBody(res);
   if (!res.ok) throw new ApiError(res.status, data);
   return data;
@@ -52,7 +57,11 @@ async function request(path, { method = "GET", token, body } = {}) {
 
 /** True when `error` is the 409 the backend returns once a deadline has passed. */
 export function isSubmissionsClosed(error) {
-  return error instanceof ApiError && error.status === 409 && error.body?.error === "submissions_closed";
+  return (
+    error instanceof ApiError &&
+    error.status === 409 &&
+    error.body?.error === "submissions_closed"
+  );
 }
 
 /** True when `error` is a 404 — the standard "feature not on this backend yet" signal. */
@@ -63,7 +72,9 @@ export function isNotFound(error) {
 // --- Submission window + team project (Part 3: /api/team/<id>/project*, /api/hackathons/<id>/submissions/window) ---
 
 export function getSubmissionWindow(eventId) {
-  return request(`/api/hackathons/${encodeURIComponent(eventId)}/submissions/window`);
+  return request(
+    `/api/hackathons/${encodeURIComponent(eventId)}/submissions/window`,
+  );
 }
 
 export function saveTeamProject(teamId, payload, token) {
@@ -99,17 +110,22 @@ export function saveTeamDemoVideo(teamId, demoVideoUrl, token) {
 }
 
 export function setMentorAvailability(teamId, open, token) {
-  return request(`/api/team/${encodeURIComponent(teamId)}/mentor-availability`, {
-    method: "POST",
-    token,
-    body: { open: !!open },
-  });
+  return request(
+    `/api/team/${encodeURIComponent(teamId)}/mentor-availability`,
+    {
+      method: "POST",
+      token,
+      body: { open: !!open },
+    },
+  );
 }
 
 // --- GitHub activity (Part 3: GET /api/github/activity) ---
 
 export function getGithubActivity(org, repo) {
-  return request(`/api/github/activity?org=${encodeURIComponent(org)}&repo=${encodeURIComponent(repo)}`);
+  return request(
+    `/api/github/activity?org=${encodeURIComponent(org)}&repo=${encodeURIComponent(repo)}`,
+  );
 }
 
 // --- Roster + self-check (Part 3: GET /api/messages/team/<id>, GET /api/volunteer/<id>/me) ---
@@ -119,23 +135,46 @@ export function getPublicTeam(teamId) {
 }
 
 export function getHackerSelfStatus(eventId, token) {
-  return request(`/api/volunteer/${encodeURIComponent(eventId)}/me?type=hacker`, { token });
+  return request(
+    `/api/volunteer/${encodeURIComponent(eventId)}/me?type=hacker`,
+    { token },
+  );
+}
+
+/**
+ * Existing public single-event endpoint — used where a page only needs
+ * masthead-level metadata (title, timezone, peer-vote constraints) and
+ * doesn't otherwise fetch the full hackathon doc. Routed through this shared
+ * wrapper rather than a bare fetch so callers get the same ApiError contract
+ * as everything else here; still best-effort from the caller's point of
+ * view (e.g. the vote page swallows failures and falls back to defaults).
+ */
+export function getHackathonMeta(eventId) {
+  return request(`/api/messages/hackathon/${encodeURIComponent(eventId)}`);
 }
 
 // --- Hackers' Choice peer vote (Part 3: /api/hackathons/<id>/peer-vote/*) ---
 
 export function getPeerVoteSlate(eventId, token) {
-  return request(`/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/slate`, { token });
+  return request(
+    `/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/slate`,
+    { token },
+  );
 }
 
 export function submitPeerVoteBallot(eventId, picks, token) {
-  return request(`/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/ballot`, {
-    method: "POST",
-    token,
-    body: { picks },
-  });
+  return request(
+    `/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/ballot`,
+    {
+      method: "POST",
+      token,
+      body: { picks },
+    },
+  );
 }
 
 export function getPeerVoteSummary(eventId) {
-  return request(`/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/summary`);
+  return request(
+    `/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/summary`,
+  );
 }
