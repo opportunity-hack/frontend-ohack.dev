@@ -247,6 +247,56 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
       pages; `NonProfit.js` og:url/twitter:url fixed from bare `ohack.dev` to www. Two
       `console.log` calls removed from `getStaticProps`. `styles/nonprofit/styles.js` is
       now orphaned — left in place.
+- [x] `/hack/[event_id]/manageteam` — **Team Dashboard rewrite (Sep 2026, DevPost
+      replacement).** `TeamStatusPanel.js`/`FormStepper.js` deleted; the page is a
+      thin composition over module-scope `src/components/TeamDashboard/*` sections
+      (`DashboardSection` = `<section id>` + eyebrow + Fraunces `<h2>` + `.ohx-card`
+      body): `TeamMasthead` (the one `<h1>`), IN_REVIEW `TeamStatusHero` (one 220×220
+      waiting video, `--surface-2`), sticky `DeadlineStrip` (hairline card, 3px navy
+      left rule → terracotta under 6h, Fraunces tabular digits `minWidth 9ch`),
+      `DeliverablesChecklist` (`<ol>`, navy `LinearProgress`, ONE `.ohx-btn--primary`
+      "Submit project"), `ProjectWriteupEditor` (`refinedFieldSx` tagline, md-editor,
+      `refinedChipSx` built-with, `.ohx-link`/ghost actions), `DemoVideoEditor` /
+      `DevPostEditor` (DevPost framed "Optional"), `CodeActivityCard` (`Stat` row),
+      `MentorSupportCard` + the green/red `MentorAvailabilityToggle` radiogroup
+      (`--success`/`--danger` tokens added to `refined.js`), `SlackCoachCard`,
+      `TeamRoster`, `PeerVoteCTA` card. Create-team stepper restyled with
+      `refinedStepperSx` + `refinedFormTheme`, honest indeterminate progress. Gating
+      panels → `.ohx-card`s (copy kept, emoji dropped). **Portal gotcha:** Dialog /
+      Snackbar content sits outside `RefinedRoot`, so it uses plain MUI Buttons with
+      literal-fallback sx, not `.ohx-*`. CLS reservations: hub 320, strip 64, editor
+      360, video 320×180, code 140, roster 56.
+- [x] `/hack/[event_id]/vote` — **Hackers' Choice vote page (Sep 2026).** `Shell` +
+      `TeamBreadcrumbs`, `Eyebrow` event title, `<h1 class="ohx-display">Hackers'
+      Choice</h1>`, `.ohx-lead` explainer, module-scope `StatusCard` (`.ohx-card`,
+      eyebrow + Fraunces h2 + `.ohx-muted` body) for every non-open state, slate as an
+      `auto-fill minmax(280px,1fr)` grid of `PeerVoteSlateCard` `<article>`s (16:9
+      media box → thumbnail / `LiteVideoThumbnail` / Fraunces initial placeholder,
+      `.ohx-tag`s, `aria-pressed` pick button, `outline: 2px solid var(--brand)` focus
+      rings), sticky bottom bar (`var(--paper)` + hairline top) with the ONE
+      `.ohx-btn--primary` "Submit picks". Confirm Dialog = plain MUI (Portal). No
+      tallies anywhere. Page shell is `noindex` outside the auth gate.
+- [x] Team page **Project section** (`src/components/Teams/TeamProjectSection.js`,
+      renders first on `/hack/[event_id]/team/[team_id]`): tagline as `.ohx-lead`,
+      16:9 `--surface-2` thumbnail box (`next/image` only for `cdn.ohack.dev`), story
+      via `ProjectStoryMarkdown` (headings demoted one level under the section h2),
+      built-with `.ohx-tag`s, project links as `.ohx-card--hover` tiles, muted
+      submission line; members without content get a calm `--surface-2` "Tell the
+      story of what you built." card. Masthead gains a submission `.ohx-tag`.
+- [x] Event-page **gallery media** (`Hackathon/TeamList.js` `ProjectMedia`): every
+      team card now opens with a reserved 16:9 `--surface-2` media box (thumbnail →
+      lite video thumb → Fraunces navy initial), a 2-line tagline clamp, quiet
+      built-with tags (+N), and a submission tag (navy outline "Submitted" / muted
+      "Submitted late" / faint "In progress"; none for legacy teams). DevPost is a
+      quiet 0.9rem "DevPost ↗" link, not a button. "Submitted only" is a quiet
+      `aria-pressed` text toggle above the grid. `HackathonResults` winner cards add
+      the tagline + `awards[]` pills (`--accent-soft` fill, hairline border) and a
+      Hackers' Choice card (var fallbacks — the component also renders outside
+      `RefinedRoot` on `/results`).
+- [x] Admin: `?section=deadlines` follows the `SectionContainer` frame contract
+      (explicit-save bar; `saveDisabled` on validation errors) and the Hackers'
+      Choice results table is the 4th Judging subtab — both plain MUI (admin surfaces
+      aren't refined).
 - [ ] (later) remaining pages — application forms, `/about/why`, `/about/hearts`,
       `/contact`, etc. Deeper passes wanted on the own `/profile` editor (logged-in)
       and the `/hack/[event_id]` event page (see the dedicated plan below).

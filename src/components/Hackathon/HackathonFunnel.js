@@ -1,16 +1,24 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 import {
-  Paper, Typography, Box, Grid, Chip, Tooltip, Stack, Divider, Alert,
-} from '@mui/material';
-import { styled, alpha, useTheme } from '@mui/material/styles';
-import HowToRegIcon from '@mui/icons-material/HowToReg';
-import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
-import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import StarIcon from '@mui/icons-material/Star';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+  Paper,
+  Typography,
+  Box,
+  Grid,
+  Chip,
+  Tooltip,
+  Stack,
+  Divider,
+  Alert,
+} from "@mui/material";
+import { styled, alpha, useTheme } from "@mui/material/styles";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import GroupAddIcon from "@mui/icons-material/GroupAdd";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import StarIcon from "@mui/icons-material/Star";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 
 const FunnelContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -23,16 +31,25 @@ const FunnelContainer = styled(Paper)(({ theme }) => ({
 
 // Visual funnel "slice" that gets narrower for later stages.
 // Width is a percentage; color is per stage.
-const FunnelSlice = ({ widthPct, color, height = 84, value, pctOfTop, label, sublabel, icon }) => {
+const FunnelSlice = ({
+  widthPct,
+  color,
+  height = 84,
+  value,
+  pctOfTop,
+  label,
+  sublabel,
+  icon,
+}) => {
   const theme = useTheme();
   const bg = `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.7)} 100%)`;
   return (
     <Box
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        position: 'relative',
-        width: '100%',
+        display: "flex",
+        justifyContent: "center",
+        position: "relative",
+        width: "100%",
       }}
     >
       <Box
@@ -46,19 +63,27 @@ const FunnelSlice = ({ widthPct, color, height = 84, value, pctOfTop, label, sub
           borderRadius: 2,
           px: { xs: 2, md: 3 },
           py: 1.5,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           gap: 2,
           boxShadow: theme.shadows[2],
-          transition: 'transform 120ms, box-shadow 120ms',
-          '&:hover': { transform: 'translateY(-2px)', boxShadow: theme.shadows[4] },
+          transition: "transform 120ms, box-shadow 120ms",
+          "&:hover": {
+            transform: "translateY(-2px)",
+            boxShadow: theme.shadows[4],
+          },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}
+        >
           {icon}
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, lineHeight: 1.15 }}
+            >
               {label}
             </Typography>
             {sublabel && (
@@ -68,9 +93,17 @@ const FunnelSlice = ({ widthPct, color, height = 84, value, pctOfTop, label, sub
             )}
           </Box>
         </Box>
-        <Box sx={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+        <Box
+          sx={{
+            textAlign: "right",
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+          }}
+        >
           <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1 }}>
-            {value?.toLocaleString?.() ?? value ?? '—'}
+            {value?.toLocaleString?.() ?? value ?? "—"}
           </Typography>
           {pctOfTop != null && (
             <Tooltip title="Share of the top of the funnel">
@@ -89,8 +122,8 @@ const FunnelSlice = ({ widthPct, color, height = 84, value, pctOfTop, label, sub
 const DropChip = ({ pct, color }) => (
   <Box
     sx={{
-      display: 'flex',
-      justifyContent: 'center',
+      display: "flex",
+      justifyContent: "center",
       my: 0.75,
     }}
   >
@@ -115,18 +148,28 @@ const formatPct = (numerator, denominator) => {
 };
 
 const BreakdownBlock = ({ title, data }) => {
-  if (!data || typeof data !== 'object') return null;
+  if (!data || typeof data !== "object") return null;
   const entries = Object.entries(data)
-    .filter(([k]) => k && k !== 'Unknown')
+    .filter(([k]) => k && k !== "Unknown")
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
   if (entries.length === 0) return null;
   return (
     <Box>
-      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+      >
         {title}
       </Typography>
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ mt: 0.5 }}
+      >
         {entries.map(([k, v]) => (
           <Chip key={k} size="small" label={`${k}: ${v}`} sx={{ mb: 0.5 }} />
         ))}
@@ -157,17 +200,24 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
     // and (b) enforce a monotonic step-down so the bars still TAPER even
     // when two consecutive stages have similar magnitudes. The numeric
     // dropoff is told separately via the drop chips between rows.
-    const candidates = [interested, appliedHacker, formedTeam, started, submitted, wonPrize, founding]
-      .filter((v) => typeof v === 'number');
+    const candidates = [
+      interested,
+      appliedHacker,
+      formedTeam,
+      started,
+      submitted,
+      wonPrize,
+      founding,
+    ].filter((v) => typeof v === "number");
     const top = candidates.length ? Math.max(...candidates, 1) : 1;
 
-    const MIN_WIDTH = 22;        // floor so the narrowest bar is still readable
+    const MIN_WIDTH = 22; // floor so the narrowest bar is still readable
     const MAX_WIDTH = 100;
-    const STEP = 5;              // each stage must be ≥ STEP% narrower than the previous
+    const STEP = 5; // each stage must be ≥ STEP% narrower than the previous
     const logTop = Math.log1p(top);
     const widthForLog = (val) => {
       if (!Number.isFinite(val) || val <= 0 || logTop <= 0) return MIN_WIDTH;
-      const norm = Math.log1p(val) / logTop;   // 0..1
+      const norm = Math.log1p(val) / logTop; // 0..1
       return MIN_WIDTH + norm * (MAX_WIDTH - MIN_WIDTH);
     };
 
@@ -176,57 +226,59 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
     // even when an upstream stage is missing.
     const stageDefs = [
       interested != null && {
-        key: 'registered',
-        label: 'Interested',
-        sublabel: 'People who registered on DevPost',
+        key: "registered",
+        label: "Interested",
+        sublabel: "People who registered for the event",
         value: interested,
         color: theme.palette.info.main,
         icon: <HowToRegIcon fontSize="large" />,
       },
-      appliedHacker != null && appliedHacker > 0 && {
-        key: 'applied_hacker',
-        label: 'Applied as a hacker',
-        sublabel: 'People who filled out the OHack hacker application',
-        value: appliedHacker,
-        color: theme.palette.secondary.main,
-        icon: <AssignmentIndIcon fontSize="large" />,
-      },
-      formedTeam != null && formedTeam > 0 && {
-        key: 'formed_team',
-        label: 'Formed a team',
-        sublabel: 'People on a team in our system',
-        value: formedTeam,
-        color: theme.palette.info.dark,
-        icon: <GroupAddIcon fontSize="large" />,
-      },
+      appliedHacker != null &&
+        appliedHacker > 0 && {
+          key: "applied_hacker",
+          label: "Applied as a hacker",
+          sublabel: "People who filled out the OHack hacker application",
+          value: appliedHacker,
+          color: theme.palette.secondary.main,
+          icon: <AssignmentIndIcon fontSize="large" />,
+        },
+      formedTeam != null &&
+        formedTeam > 0 && {
+          key: "formed_team",
+          label: "Formed a team",
+          sublabel: "People on a team in our system",
+          value: formedTeam,
+          color: theme.palette.info.dark,
+          icon: <GroupAddIcon fontSize="large" />,
+        },
       started != null && {
-        key: 'started',
-        label: 'Started a project',
-        sublabel: 'People on a DevPost project (any state)',
+        key: "started",
+        label: "Started a project",
+        sublabel: "People on a project (any state)",
         value: started,
         color: theme.palette.primary.main,
         icon: <RocketLaunchIcon fontSize="large" />,
       },
       submitted != null && {
-        key: 'submitted',
-        label: 'Submitted a project',
-        sublabel: 'People on a submitted DevPost project',
+        key: "submitted",
+        label: "Submitted a project",
+        sublabel: "People on a submitted project",
         value: submitted,
         color: theme.palette.success.main,
         icon: <CloudUploadIcon fontSize="large" />,
       },
       hasResults && {
-        key: 'won',
-        label: 'Won a prize',
-        sublabel: 'People on a top-placement or category-winning team',
+        key: "won",
+        label: "Won a prize",
+        sublabel: "People on a top-placement or category-winning team",
         value: wonPrize,
         color: theme.palette.warning.main,
         icon: <EmojiEventsIcon fontSize="large" />,
       },
       hasResults && {
-        key: 'founding',
-        label: 'Founding Engineers (1st place)',
-        sublabel: 'People on the 1st-place team',
+        key: "founding",
+        label: "Founding Engineers (1st place)",
+        sublabel: "People on the 1st-place team",
         value: founding,
         color: theme.palette.error.main,
         icon: <StarIcon fontSize="large" />,
@@ -247,7 +299,7 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
         pctOf: prevValue ? formatPct(s.value, prevValue) : null,
         pctOfTop: top ? formatPct(s.value, top) : null,
       };
-      if (typeof s.value === 'number') prevValue = s.value;
+      if (typeof s.value === "number") prevValue = s.value;
       prevWidth = finalWidth;
       return out;
     });
@@ -259,14 +311,23 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
 
   return (
     <FunnelContainer elevation={2} id="funnel">
-      <Box sx={{ textAlign: 'center', mb: 3 }}>
+      <Box sx={{ textAlign: "center", mb: 3 }}>
         <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
           The Hacker Funnel
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 760, mx: 'auto' }}>
-          Every hackathon starts with people curious enough to register and ends with a small group who push all the way through.
-          We track this funnel because the people who reach the bottom tend to share the traits we look for in high-performing
-          engineers: <strong>grit, iteration, leadership, and the drive to land real impact</strong>.
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ maxWidth: 760, mx: "auto" }}
+        >
+          Every hackathon starts with people curious enough to register and ends
+          with a small group who push all the way through. We track this funnel
+          because the people who reach the bottom tend to share the traits we
+          look for in high-performing engineers:{" "}
+          <strong>
+            grit, iteration, leadership, and the drive to land real impact
+          </strong>
+          .
         </Typography>
       </Box>
 
@@ -291,7 +352,7 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ display: 'block', textAlign: 'center', mb: 2 }}
+        sx={{ display: "block", textAlign: "center", mb: 2 }}
       >
         Bar widths use a logarithmic scale so each stage stays readable — the
         chips above each row tell the real dropoff story.
@@ -311,22 +372,39 @@ const HackathonFunnel = ({ funnel, hasResults }) => {
           </Typography>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <BreakdownBlock title="Where they came from" data={summary.country_breakdown} />
+              <BreakdownBlock
+                title="Where they came from"
+                data={summary.country_breakdown}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <BreakdownBlock title="How they heard about us" data={summary.referral_breakdown} />
+              <BreakdownBlock
+                title="How they heard about us"
+                data={summary.referral_breakdown}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <BreakdownBlock title="Team intent at signup" data={summary.teammate_intent_breakdown} />
+              <BreakdownBlock
+                title="Team intent at signup"
+                data={summary.teammate_intent_breakdown}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <BreakdownBlock title="Project status" data={summary.status_breakdown} />
+              <BreakdownBlock
+                title="Project status"
+                data={summary.status_breakdown}
+              />
             </Grid>
           </Grid>
           {summary.last_updated && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-              Funnel data updated {new Date(summary.last_updated).toLocaleDateString()}
-              {summary.source ? ` · source: ${summary.source}` : ''}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 2 }}
+            >
+              Funnel data updated{" "}
+              {new Date(summary.last_updated).toLocaleDateString()}
+              {summary.source ? ` · source: ${summary.source}` : ""}
             </Typography>
           )}
         </>

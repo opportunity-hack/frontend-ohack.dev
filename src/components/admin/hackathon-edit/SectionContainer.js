@@ -16,6 +16,10 @@ const SectionContainer = ({
   onSave,
   onDiscard,
   saveLabel = "Save changes",
+  // Extra condition (beyond `saving`) that disables the Save button, e.g. an
+  // unresolved validation error in the section's own fields. The Discard
+  // button stays enabled so the user can always back out.
+  saveDisabled = false,
   // When true, drops the Paper's internal padding so heavy content
   // (Tabs, workbenches with their own Paper elements) renders flush
   // inside the same outer frame. The border + width contract stay
@@ -58,12 +62,18 @@ const SectionContainer = ({
               justifyContent="space-between"
               sx={{ mb: description ? 1 : 2 }}
             >
-              <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>{title}</Typography>
+              <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+                {title}
+              </Typography>
               {actions && <Box>{actions}</Box>}
             </Stack>
           )}
           {description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mb: disableGutters ? 2 : 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: disableGutters ? 2 : 3 }}
+            >
               {description}
             </Typography>
           )}
@@ -91,11 +101,22 @@ const SectionContainer = ({
           }}
         >
           {onDiscard && (
-            <Button size="small" onClick={onDiscard} disabled={saving} color="inherit">
+            <Button
+              size="small"
+              onClick={onDiscard}
+              disabled={saving}
+              color="inherit"
+            >
               Discard
             </Button>
           )}
-          <Button size="small" variant="contained" onClick={onSave} disabled={saving} color="primary">
+          <Button
+            size="small"
+            variant="contained"
+            onClick={onSave}
+            disabled={saving || saveDisabled}
+            color="primary"
+          >
             {saving ? "Saving…" : saveLabel}
           </Button>
         </Box>

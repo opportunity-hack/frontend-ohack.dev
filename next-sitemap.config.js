@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
   siteUrl: process.env.SITE_URL || "https://www.ohack.dev",
@@ -14,6 +14,7 @@ module.exports = {
     "/hackathon/[hackathon_id]",
     "/project/[project_id]",
     "/hack/[event_id]",
+    "/hack/[event_id]/vote",
     "/jobs/[slug]",
     // Dynamic routes covered by /server-sitemap.xml instead
     "https://api.test.ohack.dev/",
