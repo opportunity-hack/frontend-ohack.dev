@@ -20,7 +20,25 @@ export function normalizeRepoLink(link) {
 /** Extracts `{ org, repo }` from a github.com URL, or null when it isn't one. */
 export function parseGithubRepo(link) {
   const match = /github\.com\/([^/]+)\/([^/#?]+)/i.exec(link || "");
-  return match ? { org: match[1], repo: match[2].replace(/\.git$/i, "") } : null;
+  return match
+    ? { org: match[1], repo: match[2].replace(/\.git$/i, "") }
+    : null;
+}
+
+/**
+ * Normalizes whatever an admin typed into `hackathon.github_org` (a full
+ * URL, an `@handle`, a trailing slash/path) into a bare GitHub org slug so
+ * callers can build a clean `github.com/<org>` link. Copied here (from the
+ * originally admin-only `OverviewSection.js`) so any other surface linking
+ * to the event's org — e.g. the team dashboard's "no repo yet" state —
+ * doesn't 404 on a stored full URL.
+ */
+export function githubOrgSlug(raw) {
+  if (!raw) return "";
+  let s = String(raw).trim();
+  s = s.replace(/^https?:\/\/(www\.)?github\.com\//i, "");
+  s = s.replace(/^@/, "").replace(/\/.*$/, "").trim();
+  return s;
 }
 
 function repoNameFromLink(link) {
@@ -47,7 +65,8 @@ export function repoEntriesFromTeam(team) {
     seen.add(key);
     const gh = parseGithubRepo(link);
     entries.push({
-      name: (typeof entry === "object" && entry?.name) || repoNameFromLink(link),
+      name:
+        (typeof entry === "object" && entry?.name) || repoNameFromLink(link),
       link,
       org: gh?.org || null,
       repo: gh?.repo || null,

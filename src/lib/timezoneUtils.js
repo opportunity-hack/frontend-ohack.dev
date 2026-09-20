@@ -82,3 +82,19 @@ export function formatDualTimezone(dateInput, eventTimezone) {
     userAbbr,
   };
 }
+
+/**
+ * Compact single-string version of `formatDualTimezone` for inline copy
+ * (snackbars, alert banners) that need a deadline moment but don't have
+ * room for the full dual-timezone layout `DeadlineStrip` uses. Always
+ * includes the event timezone abbreviation; appends the viewer's local
+ * time in parens only when it differs, so a viewer in a different
+ * timezone isn't left to guess what "5pm" means for them.
+ */
+export function formatDeadlineMoment(dateInput, eventTimezone) {
+  if (!dateInput) return "";
+  const dual = formatDualTimezone(dateInput, eventTimezone);
+  return dual.isSameTimezone
+    ? `${dual.eventTime} ${dual.eventAbbr}`
+    : `${dual.eventTime} ${dual.eventAbbr} (${dual.userTime} ${dual.userAbbr} your time)`;
+}

@@ -2,6 +2,9 @@ import {
   ApiError,
   isSubmissionsClosed,
   isNotFound,
+  isNotTeamMember,
+  isInvalidProject,
+  formatProjectErrors,
   getSubmissionWindow,
   saveTeamProject,
   submitTeamProject,
@@ -33,7 +36,10 @@ describe("teamDashboardApi", () => {
 
   describe("ApiError", () => {
     it("carries status + body, preferring body.error for the message", () => {
-      const err = new ApiError(409, { error: "submissions_closed", deadline: "x" });
+      const err = new ApiError(409, {
+        error: "submissions_closed",
+        deadline: "x",
+      });
       expect(err).toBeInstanceOf(Error);
       expect(err.name).toBe("ApiError");
       expect(err.status).toBe(409);
@@ -42,7 +48,9 @@ describe("teamDashboardApi", () => {
     });
 
     it("falls back to body.message, then a generic message", () => {
-      expect(new ApiError(400, { message: "bad request" }).message).toBe("bad request");
+      expect(new ApiError(400, { message: "bad request" }).message).toBe(
+        "bad request",
+      );
       expect(new ApiError(500, null).message).toBe("Request failed (500)");
       expect(new ApiError(500, {}).message).toBe("Request failed (500)");
     });
@@ -50,12 +58,18 @@ describe("teamDashboardApi", () => {
 
   describe("isSubmissionsClosed", () => {
     it("is true only for a 409 ApiError with error === 'submissions_closed'", () => {
-      expect(isSubmissionsClosed(new ApiError(409, { error: "submissions_closed" }))).toBe(true);
+      expect(
+        isSubmissionsClosed(new ApiError(409, { error: "submissions_closed" })),
+      ).toBe(true);
     });
 
     it("is false for other statuses, other error codes, or non-ApiError values", () => {
-      expect(isSubmissionsClosed(new ApiError(403, { error: "submissions_closed" }))).toBe(false);
-      expect(isSubmissionsClosed(new ApiError(409, { error: "not_team_member" }))).toBe(false);
+      expect(
+        isSubmissionsClosed(new ApiError(403, { error: "submissions_closed" })),
+      ).toBe(false);
+      expect(
+        isSubmissionsClosed(new ApiError(409, { error: "not_team_member" })),
+      ).toBe(false);
       expect(isSubmissionsClosed(new Error("boom"))).toBe(false);
       expect(isSubmissionsClosed(null)).toBe(false);
     });
@@ -73,13 +87,73 @@ describe("teamDashboardApi", () => {
     });
   });
 
+  describe("isNotTeamMember", () => {
+    it("is true only for a 403 ApiError with error === 'not_team_member'", () => {
+      expect(
+        isNotTeamMember(new ApiError(403, { error: "not_team_member" })),
+      ).toBe(true);
+    });
+
+    it("is false for other statuses, other error codes, or non-ApiError values", () => {
+      expect(
+        isNotTeamMember(new ApiError(409, { error: "not_team_member" })),
+      ).toBe(false);
+      expect(
+        isNotTeamMember(new ApiError(403, { error: "submissions_closed" })),
+      ).toBe(false);
+      expect(isNotTeamMember(new Error("boom"))).toBe(false);
+      expect(isNotTeamMember(null)).toBe(false);
+    });
+  });
+
+  describe("isInvalidProject", () => {
+    it("is true only for a 400 ApiError with error === 'invalid_project'", () => {
+      expect(
+        isInvalidProject(
+          new ApiError(400, { error: "invalid_project", errors: [] }),
+        ),
+      ).toBe(true);
+    });
+
+    it("is false for other statuses, other error codes, or non-ApiError values", () => {
+      expect(
+        isInvalidProject(new ApiError(404, { error: "invalid_project" })),
+      ).toBe(false);
+      expect(isInvalidProject(new ApiError(400, { error: "incomplete" }))).toBe(
+        false,
+      );
+      expect(isInvalidProject(new Error("boom"))).toBe(false);
+      expect(isInvalidProject(undefined)).toBe(false);
+    });
+  });
+
+  describe("formatProjectErrors", () => {
+    it("labels known fields and falls back to the raw field name for unknown ones", () => {
+      expect(
+        formatProjectErrors([
+          { field: "project_thumbnail_url", reason: "must be an own-CDN URL" },
+          { field: "project_weird_field", reason: "nope" },
+        ]),
+      ).toBe("Thumbnail: must be an own-CDN URL · project_weird_field: nope");
+    });
+
+    it("falls back to a generic message for empty/non-array input", () => {
+      expect(formatProjectErrors([])).toBe("Couldn't save those changes.");
+      expect(formatProjectErrors(undefined)).toBe(
+        "Couldn't save those changes.",
+      );
+    });
+  });
+
   describe("request wrappers — happy path", () => {
     it("getSubmissionWindow issues a plain GET to the submissions/window route", async () => {
       const fetchMock = mockFetchOnce({ body: { state: "open" } });
       const result = await getSubmissionWindow("2026_fall");
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const [url, opts] = fetchMock.mock.calls[0];
-      expect(url).toEqual(expect.stringContaining("/api/hackathons/2026_fall/submissions/window"));
+      expect(url).toEqual(
+        expect.stringContaining("/api/hackathons/2026_fall/submissions/window"),
+      );
       expect(opts.method).toBe("GET");
       expect(opts.headers.Authorization).toBeUndefined();
       expect(result).toEqual({ state: "open" });
@@ -100,7 +174,9 @@ describe("teamDashboardApi", () => {
       const fetchMock = mockFetchOnce({ body: { success: true } });
       await submitTeamProject("team1", "tok123");
       const [url, opts] = fetchMock.mock.calls[0];
-      expect(url).toEqual(expect.stringContaining("/api/team/team1/project/submit"));
+      expect(url).toEqual(
+        expect.stringContaining("/api/team/team1/project/submit"),
+      );
       expect(JSON.parse(opts.body)).toEqual({});
     });
 
@@ -121,7 +197,9 @@ describe("teamDashboardApi", () => {
     it("setMentorAvailability coerces its flag to a boolean", async () => {
       const fetchMock = mockFetchOnce({ body: {} });
       await setMentorAvailability("team1", 0, "tok");
-      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ open: false });
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+        open: false,
+      });
     });
 
     it("getGithubActivity encodes org + repo as query params", async () => {
@@ -129,21 +207,23 @@ describe("teamDashboardApi", () => {
       await getGithubActivity("opportunity hack", "repo one");
       expect(fetchMock.mock.calls[0][0]).toEqual(
         expect.stringContaining(
-          "/api/github/activity?org=opportunity%20hack&repo=repo%20one"
-        )
+          "/api/github/activity?org=opportunity%20hack&repo=repo%20one",
+        ),
       );
     });
 
     it("getPublicTeam / getPeerVoteSummary issue unauthenticated GETs", async () => {
       let fetchMock = mockFetchOnce({ body: { team: {} } });
       await getPublicTeam("team1");
-      expect(fetchMock.mock.calls[0][0]).toEqual(expect.stringContaining("/api/messages/team/team1"));
+      expect(fetchMock.mock.calls[0][0]).toEqual(
+        expect.stringContaining("/api/messages/team/team1"),
+      );
       expect(fetchMock.mock.calls[0][1].headers.Authorization).toBeUndefined();
 
       fetchMock = mockFetchOnce({ body: { published: false } });
       await getPeerVoteSummary("2026_fall");
       expect(fetchMock.mock.calls[0][0]).toEqual(
-        expect.stringContaining("/api/hackathons/2026_fall/peer-vote/summary")
+        expect.stringContaining("/api/hackathons/2026_fall/peer-vote/summary"),
       );
     });
 
@@ -151,14 +231,16 @@ describe("teamDashboardApi", () => {
       let fetchMock = mockFetchOnce({ body: { is_hacker: true } });
       await getHackerSelfStatus("2026_fall", "tok");
       expect(fetchMock.mock.calls[0][0]).toEqual(
-        expect.stringContaining("/api/volunteer/2026_fall/me?type=hacker")
+        expect.stringContaining("/api/volunteer/2026_fall/me?type=hacker"),
       );
-      expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer tok");
+      expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe(
+        "Bearer tok",
+      );
 
       fetchMock = mockFetchOnce({ body: { status: "open" } });
       await getPeerVoteSlate("2026_fall", "tok");
       expect(fetchMock.mock.calls[0][0]).toEqual(
-        expect.stringContaining("/api/hackathons/2026_fall/peer-vote/slate")
+        expect.stringContaining("/api/hackathons/2026_fall/peer-vote/slate"),
       );
     });
 
@@ -166,14 +248,20 @@ describe("teamDashboardApi", () => {
       const fetchMock = mockFetchOnce({ body: { status: "voted" } });
       await submitPeerVoteBallot("2026_fall", ["t1", "t2"], "tok");
       const [url, opts] = fetchMock.mock.calls[0];
-      expect(url).toEqual(expect.stringContaining("/api/hackathons/2026_fall/peer-vote/ballot"));
+      expect(url).toEqual(
+        expect.stringContaining("/api/hackathons/2026_fall/peer-vote/ballot"),
+      );
       expect(JSON.parse(opts.body)).toEqual({ picks: ["t1", "t2"] });
     });
   });
 
   describe("request wrappers — error handling", () => {
     it("throws ApiError with the parsed body when the response isn't ok", async () => {
-      mockFetchOnce({ ok: false, status: 409, body: { error: "submissions_closed", deadline: "x" } });
+      mockFetchOnce({
+        ok: false,
+        status: 409,
+        body: { error: "submissions_closed", deadline: "x" },
+      });
       await expect(saveTeamProject("team1", {}, "tok")).rejects.toMatchObject({
         name: "ApiError",
         status: 409,
@@ -183,7 +271,10 @@ describe("teamDashboardApi", () => {
 
     it("treats an empty response body as null rather than throwing a JSON parse error", async () => {
       mockFetchOnce({ ok: false, status: 404, body: null });
-      await expect(getPublicTeam("missing")).rejects.toMatchObject({ status: 404, body: null });
+      await expect(getPublicTeam("missing")).rejects.toMatchObject({
+        status: 404,
+        body: null,
+      });
     });
 
     it("treats a non-JSON error body as null instead of throwing", async () => {
@@ -192,7 +283,10 @@ describe("teamDashboardApi", () => {
         status: 502,
         text: async () => "<html>Bad Gateway</html>",
       });
-      await expect(getPublicTeam("team1")).rejects.toMatchObject({ status: 502, body: null });
+      await expect(getPublicTeam("team1")).rejects.toMatchObject({
+        status: 502,
+        body: null,
+      });
     });
   });
 });

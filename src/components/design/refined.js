@@ -33,6 +33,8 @@ export const RefinedRoot = styled("main")(({ theme }) => ({
   "--brand-ink": "#0E2547", // darker navy for hovers
   "--accent": "#E2552E", // terracotta — the "social good" highlight
   "--accent-soft": "#FBE9E2",
+  "--success": "#2F6E50", // done/positive states (checklists, availability)
+  "--danger": "#B04A36", // closed/negative states (availability toggle)
   "--display": FONT_DISPLAY,
   "--body": FONT_BODY,
 
