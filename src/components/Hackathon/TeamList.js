@@ -1184,13 +1184,19 @@ const ProjectMedia = ({ team, onPlayVideo }) => {
   if (videoUrl) {
     return (
       <Box sx={boxSx}>
-        <LiteVideoThumbnail
-          url={videoUrl}
-          label={`Watch ${team?.name || "team"} demo`}
-          width={480}
-          height={270}
-          onClick={() => onPlayVideo?.(videoUrl, team?.name)}
-        />
+        {/* LiteVideoThumbnail caps itself at `maxWidth: width` — wrap it in
+            a full-bleed absolutely-positioned box (like the thumb branch
+            above) so it fills the 16:9 frame instead of sitting narrower
+            and left-aligned on a wide single-column card (xs). */}
+        <Box sx={{ position: "absolute", inset: 0 }}>
+          <LiteVideoThumbnail
+            url={videoUrl}
+            label={`Watch ${team?.name || "team"} demo`}
+            width={960}
+            height={540}
+            onClick={() => onPlayVideo?.(videoUrl, team?.name)}
+          />
+        </Box>
       </Box>
     );
   }
@@ -1779,16 +1785,25 @@ const TeamList = ({
     [teamData],
   );
   const visibleTeams = useMemo(() => {
-    const rank = (t) => {
+    const isActiveTeam = (t) => t?.active === "True" || t?.active === true;
+    const isSubmittedTeam = (t) => {
       const s = getSubmissionStatus(t);
-      return s === "submitted" || s === "late" ? 0 : 1;
+      return s === "submitted" || s === "late";
     };
+    // Active-first is the caller's primary order (pages/hack/[event_id].js
+    // sorts active teams first before handing `teams` to this component);
+    // submitted-first is only a secondary tiebreaker WITHIN each active
+    // group, so an inactive-but-submitted team never outranks an
+    // active-but-unsubmitted one. Stable sort preserves each bucket's
+    // original relative order.
+    const rank = (t) =>
+      (isActiveTeam(t) ? 0 : 2) + (isSubmittedTeam(t) ? 0 : 1);
     const withRank = (teamData || []).map((t, i) => ({ t, i, r: rank(t) }));
     const sorted = withRank
       .slice()
       .sort((a, b) => a.r - b.r || a.i - b.i)
       .map((x) => x.t);
-    return submittedOnly ? sorted.filter((t) => rank(t) === 0) : sorted;
+    return submittedOnly ? sorted.filter((t) => isSubmittedTeam(t)) : sorted;
   }, [teamData, submittedOnly]);
 
   const handlePlayVideo = useCallback((url, teamName) => {
@@ -2211,9 +2226,15 @@ const TeamList = ({
       )}
 
       {visibleTeams.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-          No submitted projects yet.
-        </Typography>
+        // Only show copy when the admin/visitor explicitly filtered to
+        // "Submitted only" and got zero results. When the event simply has
+        // no teams yet (e.g. an upcoming event), render nothing — this
+        // section previously rendered nothing in that case too.
+        submittedOnly && (
+          <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+            No submitted projects yet.
+          </Typography>
+        )
       ) : (
         <Grid container spacing={2}>
           {visibleTeams.map((team) => (

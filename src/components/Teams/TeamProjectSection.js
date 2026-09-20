@@ -6,6 +6,7 @@ import {
   getSubmissionStatus,
   submissionLabel,
   projectThumbUrl,
+  hasProjectContent,
 } from "./projectMeta";
 
 // next/image is only allowed to load from hosts listed in next.config.js's
@@ -79,14 +80,12 @@ export default function TeamProjectSection({
     eventTimezone,
   );
 
-  const hasAnyProjectData = !!(
-    tagline ||
-    story ||
-    builtWith.length ||
-    links.length ||
-    thumb ||
-    status !== null
-  );
+  // Gated on real project fields, NOT `thumb` — `projectThumbUrl()` falls
+  // back to a YouTube poster derived from `demo_video_url`, so a team with
+  // only a demo video and nothing else would otherwise get a "Project"
+  // section that's just that same static poster again, duplicating the
+  // Demo video section below.
+  const hasAnyProjectData = hasProjectContent(team);
 
   const dashboardHref = `/hack/${eventId}/manageteam#project`;
 

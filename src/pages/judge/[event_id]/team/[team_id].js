@@ -987,28 +987,23 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
                 </Box>
 
                 {/* Demo video embed — judges previously had no way to watch
-                    the team's demo without leaving the page */}
-                {(teamData.demo_video_url || teamData.video_url) && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Demo Video
-                    </Typography>
-                    <VideoDisplay
-                      url={teamData.demo_video_url || teamData.video_url}
-                      title=""
-                    />
-                    <Button
-                      startIcon={<VideoIcon />}
-                      variant="outlined"
-                      size="small"
-                      href={teamData.demo_video_url || teamData.video_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Watch demo
-                    </Button>
-                  </Box>
-                )}
+                    the team's demo without leaving the page. Round 2 keeps
+                    the pre-existing behavior of not surfacing the pitch
+                    video (see the "Watch Pitch Video" button above), so this
+                    is gated the same way — no judge-visible process change,
+                    and no duplicate button/link to the same URL. */}
+                {(teamData.demo_video_url || teamData.video_url) &&
+                  !isRound2 && (
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Demo Video
+                      </Typography>
+                      <VideoDisplay
+                        url={teamData.demo_video_url || teamData.video_url}
+                        title=""
+                      />
+                    </Box>
+                  )}
 
                 {/* Slack Channel */}
                 {teamData.slack_channel && (

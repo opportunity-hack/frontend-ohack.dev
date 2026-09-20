@@ -36,7 +36,7 @@ import {
   getSubmissionStatus,
   submissionLabel,
   isProjectStoryMissing,
-  projectThumbUrl,
+  hasProjectContent,
   buildTeamDescription,
   buildTeamOgImage,
   buildProjectJsonLd,
@@ -345,16 +345,9 @@ export default function TeamDetailPage({
   const nonprofitName = nonprofitData?.name || null;
   const submissionStatus = getSubmissionStatus(team);
   const submissionMasthead = submissionLabel(team, event?.timezone);
-  const projectThumb = projectThumbUrl(team);
-  const hasAnyProjectData = !!(
-    team.project_tagline ||
-    team.project_story ||
-    (Array.isArray(team.project_built_with) &&
-      team.project_built_with.length > 0) ||
-    (Array.isArray(team.project_links) && team.project_links.length > 0) ||
-    projectThumb ||
-    submissionStatus !== null
-  );
+  // Gated on real project fields, NOT the demo-video-derived poster
+  // fallback in `projectThumbUrl()` — see `hasProjectContent`'s docstring.
+  const hasAnyProjectData = hasProjectContent(team);
 
   // Event ended = after 23:59:59 on end_date in local time.
   const eventEnded = (() => {
@@ -375,7 +368,17 @@ export default function TeamDetailPage({
   const missingStory = isOnTeam && isProjectStoryMissing(team);
   const missingDemo = isOnTeam && !team.demo_video_url;
   const notSubmitted = isOnTeam && submissionStatus === "draft";
-  const showMemberNudge = missingStory || missingDemo;
+  const showMemberNudge = missingStory || missingDemo || notSubmitted;
+  const nudgeMissingParts = [
+    missingStory && "a story",
+    missingDemo && "a demo video",
+  ].filter(Boolean);
+  const nudgeMessage =
+    nudgeMissingParts.length > 0
+      ? `Your project page is missing ${nudgeMissingParts.join(" and ")}.${
+          notSubmitted ? " It isn't submitted yet." : ""
+        }`
+      : "Your project isn't submitted yet.";
 
   const hasNonprofitSection = !!(nonprofitName && team.selected_nonprofit_id);
   const showProjectSection =
@@ -577,11 +580,7 @@ export default function TeamDetailPage({
             }}
           >
             <Box sx={{ color: "var(--muted)", fontSize: "0.92rem" }}>
-              Your project page is missing{" "}
-              {[missingStory && "a story", missingDemo && "a demo video"]
-                .filter(Boolean)
-                .join(" and ")}
-              .{notSubmitted ? " It isn't submitted yet." : ""}
+              {nudgeMessage}
             </Box>
             <NextLink
               href={`/hack/${event_id}/manageteam#project`}

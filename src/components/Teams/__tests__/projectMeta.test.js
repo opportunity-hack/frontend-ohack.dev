@@ -8,6 +8,7 @@ import {
   buildProjectJsonLd,
   firstRepoUrl,
   isProjectStoryMissing,
+  hasProjectContent,
 } from "../projectMeta";
 import { OG_IMAGE } from "../teamPageData";
 
@@ -19,20 +20,26 @@ describe("projectMeta", () => {
     });
 
     it("returns the stored status when it's a known value", () => {
-      expect(getSubmissionStatus({ project_submission_status: "draft" })).toBe("draft");
-      expect(getSubmissionStatus({ project_submission_status: "submitted" })).toBe("submitted");
-      expect(getSubmissionStatus({ project_submission_status: "late" })).toBe("late");
+      expect(getSubmissionStatus({ project_submission_status: "draft" })).toBe(
+        "draft",
+      );
+      expect(
+        getSubmissionStatus({ project_submission_status: "submitted" }),
+      ).toBe("submitted");
+      expect(getSubmissionStatus({ project_submission_status: "late" })).toBe(
+        "late",
+      );
     });
 
     it("falls back to submitted/draft off project_submitted_at when the status is unset or unknown", () => {
-      expect(getSubmissionStatus({ project_submitted_at: "2026-09-20T00:00:00Z" })).toBe(
-        "submitted"
-      );
+      expect(
+        getSubmissionStatus({ project_submitted_at: "2026-09-20T00:00:00Z" }),
+      ).toBe("submitted");
       expect(
         getSubmissionStatus({
           project_submission_status: "weird_legacy_value",
           project_submitted_at: "2026-09-20T00:00:00Z",
-        })
+        }),
       ).toBe("submitted");
     });
   });
@@ -72,9 +79,9 @@ describe("projectMeta", () => {
 
   describe("formatDeadline", () => {
     it("formats an ISO instant in the given timezone with a short weekday + abbreviation", () => {
-      expect(formatDeadline("2026-09-20T21:58:00.000Z", "America/Phoenix")).toBe(
-        "Sun 2:58 PM MST"
-      );
+      expect(
+        formatDeadline("2026-09-20T21:58:00.000Z", "America/Phoenix"),
+      ).toBe("Sun 2:58 PM MST");
     });
 
     it("returns null for missing/unparseable input", () => {
@@ -83,7 +90,9 @@ describe("projectMeta", () => {
     });
 
     it("falls back to the default event timezone when none is given", () => {
-      expect(formatDeadline("2026-09-20T21:58:00.000Z")).toBe("Sun 2:58 PM MST");
+      expect(formatDeadline("2026-09-20T21:58:00.000Z")).toBe(
+        "Sun 2:58 PM MST",
+      );
     });
   });
 
@@ -91,20 +100,23 @@ describe("projectMeta", () => {
     it("prefers the uploaded project thumbnail", () => {
       expect(
         projectThumbUrl({
-          project_thumbnail_url: "https://cdn.ohack.dev/teams/1/project/thumb.png",
+          project_thumbnail_url:
+            "https://cdn.ohack.dev/teams/1/project/thumb.png",
           demo_video_url: "https://youtu.be/dQw4w9WgXcQ",
-        })
+        }),
       ).toBe("https://cdn.ohack.dev/teams/1/project/thumb.png");
     });
 
     it("falls back to a YouTube poster derived from the demo video", () => {
-      expect(projectThumbUrl({ demo_video_url: "https://youtu.be/dQw4w9WgXcQ" })).toBe(
-        "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
-      );
+      expect(
+        projectThumbUrl({ demo_video_url: "https://youtu.be/dQw4w9WgXcQ" }),
+      ).toBe("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg");
     });
 
     it("returns null when there's no thumbnail and the demo video isn't YouTube", () => {
-      expect(projectThumbUrl({ demo_video_url: "https://vimeo.com/12345" })).toBeNull();
+      expect(
+        projectThumbUrl({ demo_video_url: "https://vimeo.com/12345" }),
+      ).toBeNull();
       expect(projectThumbUrl({})).toBeNull();
     });
   });
@@ -112,44 +124,60 @@ describe("projectMeta", () => {
   describe("buildTeamOgImage", () => {
     it("uses the project thumbnail as a large-image card", () => {
       expect(
-        buildTeamOgImage({ project_thumbnail_url: "https://cdn.ohack.dev/teams/1/project/t.png" })
-      ).toEqual({ image: "https://cdn.ohack.dev/teams/1/project/t.png", card: "summary_large_image" });
+        buildTeamOgImage({
+          project_thumbnail_url: "https://cdn.ohack.dev/teams/1/project/t.png",
+        }),
+      ).toEqual({
+        image: "https://cdn.ohack.dev/teams/1/project/t.png",
+        card: "summary_large_image",
+      });
     });
 
     it("falls back to the site OG image for a project with no media", () => {
-      expect(buildTeamOgImage({})).toEqual({ image: OG_IMAGE, card: "summary_large_image" });
+      expect(buildTeamOgImage({})).toEqual({
+        image: OG_IMAGE,
+        card: "summary_large_image",
+      });
     });
   });
 
   describe("buildTeamDescription", () => {
     it("prefers the team's own tagline", () => {
-      expect(buildTeamDescription({ name: "Team A", project_tagline: "A tagline" })).toBe(
-        "A tagline"
-      );
+      expect(
+        buildTeamDescription({ name: "Team A", project_tagline: "A tagline" }),
+      ).toBe("A tagline");
     });
 
     it("composes a description from nonprofit/event/member count when there's no tagline", () => {
       expect(
         buildTeamDescription(
           { name: "Team A" },
-          { nonprofitName: "Helpful Org", eventName: "Fall 2026", memberCount: 4 }
-        )
-      ).toBe("Team A's Opportunity Hack project for Helpful Org at Fall 2026 — 4 members.");
+          {
+            nonprofitName: "Helpful Org",
+            eventName: "Fall 2026",
+            memberCount: 4,
+          },
+        ),
+      ).toBe(
+        "Team A's Opportunity Hack project for Helpful Org at Fall 2026 — 4 members.",
+      );
     });
 
     it("handles a singular member count and missing context gracefully", () => {
       expect(buildTeamDescription({ name: "Team A" }, { memberCount: 1 })).toBe(
-        "Team A's Opportunity Hack project — 1 member."
+        "Team A's Opportunity Hack project — 1 member.",
       );
-      expect(buildTeamDescription({})).toBe("This team's Opportunity Hack project.");
+      expect(buildTeamDescription({})).toBe(
+        "This team's Opportunity Hack project.",
+      );
     });
   });
 
   describe("firstRepoUrl", () => {
     it("returns the first linked repo url", () => {
-      expect(firstRepoUrl({ github_links: ["https://github.com/org/repo"] })).toBe(
-        "https://github.com/org/repo"
-      );
+      expect(
+        firstRepoUrl({ github_links: ["https://github.com/org/repo"] }),
+      ).toBe("https://github.com/org/repo");
     });
 
     it("returns null when there are no github links", () => {
@@ -162,7 +190,42 @@ describe("projectMeta", () => {
       expect(isProjectStoryMissing({})).toBe(true);
       expect(isProjectStoryMissing({ project_tagline: "x" })).toBe(true);
       expect(isProjectStoryMissing({ project_story: "x" })).toBe(true);
-      expect(isProjectStoryMissing({ project_tagline: "x", project_story: "y" })).toBe(false);
+      expect(
+        isProjectStoryMissing({ project_tagline: "x", project_story: "y" }),
+      ).toBe(false);
+    });
+  });
+
+  describe("hasProjectContent", () => {
+    it("is false for a team with no project fields at all", () => {
+      expect(hasProjectContent({})).toBe(false);
+      expect(hasProjectContent(null)).toBe(false);
+    });
+
+    it("is false for a team with ONLY a demo video — the derived YouTube poster doesn't count", () => {
+      expect(
+        hasProjectContent({ demo_video_url: "https://youtu.be/dQw4w9WgXcQ" }),
+      ).toBe(false);
+    });
+
+    it("is true when a real uploaded thumbnail is present, even with no other fields", () => {
+      expect(
+        hasProjectContent({
+          project_thumbnail_url: "https://cdn.ohack.dev/teams/1/project/t.png",
+        }),
+      ).toBe(true);
+    });
+
+    it("is true for a tagline, story, built-with tags, links, or a recorded submission status", () => {
+      expect(hasProjectContent({ project_tagline: "x" })).toBe(true);
+      expect(hasProjectContent({ project_story: "x" })).toBe(true);
+      expect(hasProjectContent({ project_built_with: ["React"] })).toBe(true);
+      expect(
+        hasProjectContent({ project_links: [{ url: "https://x.com" }] }),
+      ).toBe(true);
+      expect(hasProjectContent({ project_submission_status: "draft" })).toBe(
+        true,
+      );
     });
   });
 
@@ -170,6 +233,18 @@ describe("projectMeta", () => {
     it("returns null for a team with nothing to describe", () => {
       expect(buildProjectJsonLd({ name: "Team A" })).toBeNull();
       expect(buildProjectJsonLd(null)).toBeNull();
+    });
+
+    it("returns null for a legacy team with ONLY a demo video (no story, no repo, no upload)", () => {
+      // Regression test: projectThumbUrl() falls back to a YouTube poster
+      // derived from demo_video_url, which must NOT by itself justify a
+      // SoftwareSourceCode node describing... a video poster.
+      expect(
+        buildProjectJsonLd({
+          name: "Team A",
+          demo_video_url: "https://youtu.be/dQw4w9WgXcQ",
+        }),
+      ).toBeNull();
     });
 
     it("builds a SoftwareSourceCode node when a story exists", () => {
@@ -182,7 +257,11 @@ describe("projectMeta", () => {
           project_thumbnail_url: "https://cdn.ohack.dev/teams/1/project/t.png",
           project_updated_at: "2026-09-20T00:00:00Z",
         },
-        { canonicalUrl: "https://www.ohack.dev/hack/e/team/1", eventName: "Fall 2026", eventUrl: "https://www.ohack.dev/hack/e" }
+        {
+          canonicalUrl: "https://www.ohack.dev/hack/e/team/1",
+          eventName: "Fall 2026",
+          eventUrl: "https://www.ohack.dev/hack/e",
+        },
       );
       expect(node).toMatchObject({
         "@context": "https://schema.org",
@@ -193,12 +272,19 @@ describe("projectMeta", () => {
         codeRepository: "https://github.com/org/repo",
         image: "https://cdn.ohack.dev/teams/1/project/t.png",
         dateModified: "2026-09-20T00:00:00Z",
-        isPartOf: { "@type": "Event", name: "Fall 2026", url: "https://www.ohack.dev/hack/e" },
+        isPartOf: {
+          "@type": "Event",
+          name: "Fall 2026",
+          url: "https://www.ohack.dev/hack/e",
+        },
       });
     });
 
     it("builds a node from just a repo link when there's no story yet", () => {
-      const node = buildProjectJsonLd({ name: "Team A", github_links: ["https://github.com/org/repo"] });
+      const node = buildProjectJsonLd({
+        name: "Team A",
+        github_links: ["https://github.com/org/repo"],
+      });
       expect(node).not.toBeNull();
       expect(node.codeRepository).toBe("https://github.com/org/repo");
       expect(node.isPartOf).toBeUndefined();
