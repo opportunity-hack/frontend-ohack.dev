@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import dynamic from "next/dynamic";
 import {
   Autocomplete,
@@ -114,6 +120,21 @@ export default function ProjectWriteupEditor({
   const [showConfetti, setShowConfetti] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [closedNotice, setClosedNotice] = useState(null);
+  const savedEventFiredRef = useRef(false);
+
+  // GA: team_project_saved fires once per page load, on the first
+  // successful autosave — not on every 1.5s debounced save.
+  useEffect(() => {
+    if (saveState.status !== "saved" || savedEventFiredRef.current) return;
+    savedEventFiredRef.current = true;
+    trackEvent({
+      action: "team_project_saved",
+      params: {
+        event_category: EventCategory.ENGAGEMENT,
+        event_label: team?.id,
+      },
+    });
+  }, [saveState.status, team?.id]);
 
   const missingSections = useMemo(() => {
     const story = draft.project_story || "";

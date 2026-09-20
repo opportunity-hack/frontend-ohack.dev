@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, TextField } from "@mui/material";
 import DashboardSection from "./DashboardSection";
 import { saveTeamDevpost } from "../../lib/teamDashboardApi";
+import { trackEvent, EventCategory } from "../../lib/ga";
 
 // Verbatim from the retired TeamStatusPanel.js.
 function isValidDevPostUrl(url) {
@@ -40,6 +41,13 @@ export default function DevPostEditor({
       await saveTeamDevpost(team.id, url, accessToken);
       onTeamUpdated?.(team.id, { devpost_link: url });
       onNotify?.("DevPost link saved.", "success");
+      trackEvent({
+        action: "team_devpost_saved",
+        params: {
+          event_category: EventCategory.ENGAGEMENT,
+          event_label: team?.id,
+        },
+      });
     } catch {
       onNotify?.("Failed to update DevPost link. Please try again.", "error");
     } finally {
