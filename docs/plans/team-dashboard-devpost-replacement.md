@@ -1,0 +1,224 @@
+# Plan: Replace DevPost — Team Dashboard, Project Pages, Submission Deadlines, Hackers' Choice
+
+**For execution by Sonnet 5 subagents, orchestrated by Opus 5 (or the planning session) via `docs/plans/devpost-replacement.workflow.js`.** Read this whole document first, then your workstream in Part 4, then the matching appendix in `team-dashboard-devpost-replacement.appendix.md`. Every code reference was verified against the tree on 2026-09-19. **Where an appendix conflicts with Parts 3–4 of this document, Parts 3–4 win** (they carry the reconciled contracts). Judging is out of scope except for surfacing the team's demo video (Part 2.4).
+
+## Context
+
+Opportunity Hack depends on DevPost for three things: the per-team **project write-up** (story, built-with, links, gallery), the **submission deadline** mechanics, and **judging / Popular Choice**. ohack.dev already owns the rest of the lifecycle: team creation (`manageteam` → `POST /api/team/queue` creates the Slack channel + GitHub repo), joining/finding teams, the public team page, demo-video + DevPost-link capture, the mentor console (`MentorTeamPanel`), the Definition-of-Done checklist, an in-house judge scoring tool (`/judge/*`, 4 categories × 2 sub-criteria) and winners display.
+
+Goal: ohack.dev becomes the team's **single dashboard**, DevPost becomes an optional portfolio link, judging runs on our tool, and late submissions drop because the deadline is always visible. `manageteam` must be simple for first-time participants, show what mentors are saying, let a team signal "open to mentors / heads-down", and coach Slack use in context (employers later read the channel).
+
+**Decisions taken with Greg (2026-09-19):** the PR carries the plan **and kicks off implementation**; phase 1 **includes** the Hackers' Choice peer vote; the red "heads-down" toggle is a **signal only**.
+
+Deliverables: frontend branch `feat/team-dashboard-devpost-replacement` + backend branch `feat/submissions-peer-vote` (both off `develop`), the executable plan committed at `docs/plans/team-dashboard-devpost-replacement.md`, a saved `Workflow` script (Sonnet executes, Opus/this session monitors), draft PRs to `develop` in both repos.
+
+---
+
+## Part 1 — Gap review: DevPost / peers vs ohack.dev today
+
+Sources: DevPost help center (submission steps, judging & public voting, late submissions), Devfolio quadratic-voting guide, Gavel/HackMIT judging essays, DoraHacks QV/QF.
+
+| Capability | DevPost / peers | ohack.dev today (verified in source) | Gap |
+|---|---|---|---|
+| Team/project creation | "Project" = team + write-up | 4-step stepper → `POST /api/team/queue` (Slack channel + repo auto-created; admin approves + assigns nonprofit) | ✅ Stronger than DevPost; text-heavy un-refined `TeamStatusPanel` (1,583 lines) |
+| Join a team | Invite by email/link | `findteam` matchmaking + event-page Join (`PATCH /api/messages/team`); `findteam→manageteam` sessionStorage handoff is dead | ⚠️ |
+| Project story | Required markdown story w/ prompted headings, tagline, thumbnail, ≤25 built-with tags, gallery, links | Team doc has **zero** narrative fields (`description` is a never-written phantom read by the judge API) | ❌ **Core gap** |
+| Demo video | Required YT/Vimeo | `demo_video_url` exists; **never surfaced to judges** (`get_team_details` returns phantom `video_url`) | ⚠️ |
+| Code link | Repo URL | `github_links[]` auto-created; `/api/github/issues` proxy; leaderboard reads a scraped mirror | ⚠️ No live "is the repo alive" signal for the team |
+| Submission deadline | Hard stop; edit until deadline; late toggle | None; `countdowns[]` only render on the event page | ❌ **Core gap** (root cause of late videos) |
+| Draft vs submitted | Explicit Submit + proofread | None (`PROJECT_SUBMITTED` status exists but nothing sets it) | ❌ |
+| Judging | 1–5 criteria/scores + comments | Own tool: rounds 1/2, panels, drafts, 8 sub-criteria + accessibility. Judges see the DevPost link but **not** the team's demo video | ✅ keep as-is; only add the demo video to the judge view |
+| Popular Choice | Public window; results hidden; "modest prize, audit fraud" | Nothing (no vote/like primitive anywhere) | ❌ Part 2.5 |
+| Gallery | Filterable thumbnails | `#teams` `TeamList` cards (name, members, video thumb, GitHub stats) | ⚠️ |
+| Mentor visibility to team | n/a | mentor-facing only; dashboard shows nothing | ❌ requested |
+| "Open to mentors" | n/a | none | ❌ requested |
+| Slack coaching | n/a | onboarding `SlackTutorial`; 25 inlined `app_redirect` links, no helper | ⚠️ requested in context |
+| Security | — | `POST /api/team/<id>/devpost` and `/demo-video` have **no membership check** — any logged-in user can overwrite any team | ❌ fix |
+
+---
+
+## Part 2 — Product design
+
+### 2.1 Team Dashboard (`/hack/[event_id]/manageteam`)
+Answers, in order: *status? time left? what do I owe? where do we talk? what do mentors think?* Refined system, one `<h1>`, one primary CTA per section, all section components **module-scope** (remount lesson), mobile-first.
+1. **Masthead** — eyebrow (event link), `<h1>` "Your team" / "Create a team", status `.ohx-tag` via `statusLabel()` (🏆 winning), nonprofit from `event.nonprofits` (no fan-out), `awards[]` accent tags, "View public project page →", hint "Public portfolio — recruiters and judges see this page."
+2. **Deadline strip** (sticky on desktop, `minHeight 64`, tabular digits) — "Submissions close in 1d 04h 12m · Sat 3:00 PM MST (6:00 PM EDT)"; terracotta under 6h; "Late submissions open until …"; "Submissions closed"; "Submitted ✓ 2h ago" (+ "late" tag); fallback "Event ends in …" from `end_date` when no deadline. SR live region ≤1/min.
+3. **"What your team owes"** checklist (`<ol>`): Join your Slack channel (local "Everyone's in" ack) · Push code to your repo (≥1 commit) · Write your project story · Add a demo video · **Submit your project** (the section's one primary CTA; disabled with reason until story+video) · Link your DevPost project (optional, quiet) · Finish the Definition of Done (winning teams). "N of M done" navy `LinearProgress`.
+4. **Project story editor** — tagline (140 counter), `@uiw/react-md-editor` (ssr:false), "Insert section prompts" (`## The nonprofit's problem`, `## What we built`, `## How it works`, `## What we'd do next`, `## What we learned`), built-with chips ≤25, links ≤10, thumbnail upload; autosave 1.5s with "Saved · 2s ago"; **Submit** → confirm dialog → confetti; 409 `submissions_closed` inline.
+5. **Demo video + DevPost editors** — existing validation/`onTeamUpdated` logic ported verbatim; DevPost framed as optional.
+6. **Code activity** — last commit (relative + message + author), commits 24h, contributors, open issues (top 3), PRs; fire-once IntersectionObserver; empty repo → "Push your first commit — judges and recruiters look here first." + git quickstart `<details>`.
+7. **Mentor support (team-facing)** — "What mentors check with you" (6 coverage items ✓), "Judging readiness" consensus dots + criterion meanings, latest 5 non-deleted notes, open flags; **Open-to-mentors segmented toggle** (`radiogroup`; green "Open to mentors" default / red "Heads-down"; optimistic; signal only) with helper copy; "Full mentor view →".
+8. **Where your team talks** (Slack coach) — channel deep link (shared `slackLinks.js`), two-account gotcha, 4 one-click tips (copy standup template, ask in #ask-a-mentor, pin repo+demo, reply in threads), "Employers can read your channel later — it's part of your public portfolio."
+9. **Who's on the team** — `users[]` avatars → `/profile/<id>`, "You" tag, "Invite a teammate" (copies public page link + hint), "Find teammates →".
+10. **Hackers' Choice card** during the voting window (`PeerVoteCTA variant="dashboard"`).
+11. **Create-team flow** — same 4-step logic/endpoints; refined stepper (`refinedStepperSx`, `refinedFormTheme`); reads `sessionStorage['team_members']` from findteam; `FormStepper.js` + `TeamStatusPanel.js` deleted (one small IN_REVIEW waiting video kept).
+12. Gating panels (no application / awaiting confirmation) keep copy + the `isSelected===false` invariant. Multi-team → tabs. IN_REVIEW → hero + strip + Slack + roster only.
+
+### 2.2 Public project page + gallery
+Team page gets a **Project section first** (tagline lead, 16:9 thumbnail, story via `react-markdown` with demoted headings, built-with tags, link tiles, submission line; members see "Edit on your dashboard →"); OG/JSON-LD from pure `projectMeta.js`. `TeamList` cards become a gallery (16:9 media → thumbnail / video poster / initial placeholder, tagline clamp, built-with, "Submitted" tag, submitted-first stable sort, quiet "Submitted only" toggle). `HackathonResults` renders `awards[]` pills + tagline + a Hackers' Choice card from the published summary. Judge pages additionally show the team's demo video (nothing else about judging changes). `HackathonFunnel` labels made source-neutral.
+
+### 2.3 Deadlines + submission state
+Hackathon `deadlines {submission, late_submission_until?, voting_opens?, voting_closes?}` (ISO with offset; naive input localized to event tz). Backend enforces on team-facing writes (409 `submissions_closed`; admin bypass); Submit stamps `project_submitted_at` + `submitted|late`; editing allowed until close after submit (DevPost behaviour). Admin `DeadlinesSection` (explicit save) also upserts a "Submissions close" `countdowns[]` entry. Reminders at T-24h/6h/1h to each team channel, tailored to what's missing, idempotent, admin button + hourly GitHub-Actions cron.
+
+### 2.4 Judging — no process change
+The judging process, rubric, rounds, scoring form and results stay exactly as they are. The only judge-facing change: the judge's team view and team list show the **team's demo video** (`demo_video_url`) next to the existing GitHub and DevPost links, which they currently cannot see. Backend returns `demo_video_url` (and fills the legacy `video_url` key the judge UI already reads). Two backend judging bugs found during discovery are fixed/documented (Part 9) without changing behaviour judges see.
+
+### 2.5 Hackers' Choice — assigned-slate approval vote (anti-popularity)
+Plain "vote for your favourite" rewards big teams, friends and marketing. Ours: **eligible voters** = `isSelected` hackers (server-checked); each gets a **deterministic, exposure-balanced slate of 5 submitted projects, never their own** (seed `sha256(event_id:propel_id)`, least-shown-first); **approval, not ranking**: pick up to 2 — "Which would you be proud to have built?"; **score = Wilson lower bound** (z=1.96) of approvals/shown; **no tallies shown to anyone but admins**, one ballot per user (deterministic doc id), picks changeable until close, admin void, admin **Publish** appends "Hackers' Choice" to `awards[]` + writes a public summary. Rejected: quadratic voting (Devfolio/DoraHacks style "spend vote credits" — confusing for first-timers, still exposure-biased, needs fake-account defences), head-to-head "which of these two is better" comparisons (too many rounds for a busy Sunday), and likes/reactions (pure popularity).
+
+### 2.6 Slack coaching
+`src/lib/slackLinks.js` (`slackChannelUrl`, `SLACK_WORKSPACE_ID`, `KEY_CHANNELS` = #ask-a-mentor C01E5CGDQ74, #introductions C01EY49JV8U, #random C06BRHRS5BQ) + `SlackCoachCard`. Use the helper in touched files only.
+
+---
+
+## Part 3 — Data contracts & API (reconciled; single source for all workstreams)
+
+**`teams/{id}`** new keys (absent ⇒ default): `project_tagline` str≤140 · `project_story` markdown ≤20000 (server strips `script|iframe|object|embed|style|link|meta|form|base` tags, `on*=` attrs, `javascript:`/`data:` targets; generic `<`/`List<String>` preserved; frontend renders via react-markdown **without** rehype-raw) · `project_built_with` [str≤30]≤25 · `project_links` [{label≤40,url https≤2048}]≤10 · `project_thumbnail_url` (must start with `{CDN_SERVER}/teams/{team_id}/`) · `project_images` [own-CDN url]≤8 · `project_updated_at` · `project_submitted_at` ISO|null · `project_submission_status` `draft|submitted|late` (**absent ⇒ legacy: frontend renders no submission tag**) · `mentor_help_wanted` bool (**absent ⇒ true**) + `_updated_at/_by_name`.
+**`hackathons/{doc}`**: `deadlines` (above; update path writes `DELETE_FIELD` for explicit nulls); `constraints.peer_vote_enabled` bool (default false), `peer_vote_slate_size` int 3–10 (default 5), `peer_vote_max_picks` int 1–(slate−1) (default 2), `peer_vote_requires_submission` bool; `reminders_sent { "submission_24h": {sent_at, deadline, teams_notified, by} }`.
+**`peer_votes/{event_id}__{safe_propel_id}`**: `{event_id, voter_propel_id, voter_volunteer_id?, slate:[team_id], shown_at, picks:null|[team_id], voted_at, created_at, updated_at, voided:false, voided_at?, voided_by?}` — full `set()` on every write. `hackathons/{doc}/peer_vote/exposure {counts:{team_id:n}}` (transactional `Increment`); `…/peer_vote/summary {winner_team_id, winner_team_name, published_at, published_by, ballots}`.
+
+**Endpoints** (auth = PropelAuth `@auth.require_user`; admin = `volunteer.admin`; member gate = `user_is_on_team`; admin bypass via `is_admin(auth_user)` from `services/hackathon_planning_service.py`):
+| Route | Auth | Notes |
+|---|---|---|
+| `POST /api/team/<id>/project` | member | partial update of `project_*`; sets `draft` on first save; 400 `invalid_project{errors[]}`, 403 `not_team_member`, 409 `submissions_closed{deadline,late_until,now}`; returns `{success, team, window}` |
+| `POST /api/team/<id>/project/submit` | member | 400 `incomplete{missing}`; idempotent; sets `submitted|late`; Slack to team channel + audit |
+| `POST /api/team/<id>/devpost`, `/demo-video` | member (**was any user**) | same 403/409 semantics via `self_serve_team_edit` |
+| `POST /api/team/<id>/mentor-availability {open:bool}` | member | no deadline gate; audit only; returns `{success, team}` |
+| `GET /api/hackathons/<event_id>/submissions/window` | public | `{state: open|late|closed|no_deadline, submission, late_until, now, timezone}` (server clock) |
+| `GET /api/github/activity?org&repo` | public | `{success, repo{html_url,default_branch,pushed_at,open_issues_count,stargazers_count}, commits{total_recent,last_24h,last_commit_at,last_commit_message,last_author}, contributors[{login,avatar_url,contributions}]≤8, open_prs}`; exactly 3 GitHub calls; TTL 300 success-only; 404 `repo_not_found`, 503 `github_rate_limited` |
+| `GET /api/volunteer/<event_id>/me?type=hacker` | auth | `{is_hacker, volunteer:{name,isSelected}|null}` |
+| `GET /api/hackathons/<event_id>/peer-vote/slate` | auth | `{status: upcoming|open|voted|closed|not_eligible|disabled, opens_at, closes_at, max_picks, slate:[{team_id,name,project_tagline,project_thumbnail_url,demo_video_url,github_links,users_count}], picks, own_team_ids, reason?: not_enough_submissions}`; persists slate on first open GET |
+| `POST …/peer-vote/ballot {picks}` | auth | 403 `not_eligible`/`peer_vote_disabled`, 409 `voting_closed`/`ballot_voided`, 400 `no_slate`/`invalid_picks`; re-vote allowed until close |
+| `GET …/peer-vote/results` · `POST …/peer-vote/ballots/<propel_id>/void` · `POST …/peer-vote/publish` | admin | results: `{ballots, voided, eligible_estimate, window, settings, published, teams:[{team_id,name,shown,exposure_shown,approvals,approval_rate,wilson_lower_bound,rank}]}` |
+| `GET …/peer-vote/summary` | public | `{published:false}` or `{published:true, winner_team_id, winner_team_name, published_at, ballots}` |
+| `POST /api/hackathons/<event_id>/deadlines/remind {kind, hours_before, only_if_due?, force?}` | admin **or** `X-Api-Key` (`BACKEND_CRON_TOKEN`) | 409 `no_deadline`/`already_sent`; `{notified[], skipped[], simulated}` |
+| `POST /api/hackathons/deadlines/remind-due` | API key | hourly cron; iterates current events × {24,6,1} with `only_if_due` |
+| `GET /api/judge/team/<id>` (+ list) | existing | + `demo_video_url` (and legacy `video_url` filled from it); nothing else changes for judges |
+| `PATCH /api/messages/hackathon` | existing admin | now accepts `deadlines` + `constraints.peer_vote_*` |
+| `GET /api/messages/hackathon/<event_id>` | existing public | carries `deadlines`, `constraints.peer_vote_*`, team `project_*` **minus `project_story`** (payload size), `mentor_help_wanted`, `awards` |
+Thumbnail upload uses the **existing** `POST /api/messages/upload-image` (`require_user`; form `file`, `directory=teams/<team_id>/project`, `filename`) → `{success, url}`. No signed-URL mint.
+Every write: `clear_all_caches()` + `hackathons_service.clear_cache()` (mentor-service two-step) + `send_slack_audit`. Voting window defaults when unset: `opens_at = late_submission_until || submission`, `closes_at = end_date 23:59:59 event tz`; no `deadlines` or `peer_vote_enabled=false` ⇒ `disabled`. **Deploy order:** backend first; every frontend call treats 404 as "feature off".
+
+---
+
+## Part 4 — Workstreams (executable; each is one Sonnet agent)
+
+### WS-A Backend (`backend-ohack.dev`, branch `feat/submissions-peer-vote`, Python 3.9 typing, `ENVIRONMENT=test pytest api/<domain>/tests`)
+1. **Validators + save_hackathon** — `common/utils/validators.py`: `normalize_deadline_iso(value, tz)`, `validate_deadlines(d, tz)` (unknown key → error; ordering `submission ≤ late_until`, `voting_opens < voting_closes`), peer-vote constraint ranges, `sanitize_markdown(text, max)`, `validate_https_url(url, max)`; wire into `validate_hackathon_data_partial` (after the `github_org` block; constraints block before `cleaned["constraints"]=c`). `services/hackathons_service.py::save_hackathon` after the passthrough loop (L1216–1218): write `deadlines` (update ⇒ `DELETE_FIELD` for `None`; create ⇒ drop `None`). `get_single_hackathon_event`: `t.pop("project_story", None)` per team after `_enrich_teams_users_batch`. Tests: `test/common/utils/test_validators.py` (+), `api/messages/tests/test_hackathon_deadlines.py` (new).
+2. **`api/submissions/`** (`__init__.py`, `submissions_service.py`, `submissions_views.py` `url_prefix="/api"`, `tests/`, `README.md`): `clear_cache()` (copy mentors L33–49), `compute_submission_window(event, now)`, `_authorize_team_write(propel, team_id, admin, enforce_deadline)` → (error|None, team, event, window), `validate_project_payload`, `save_project`, `submit_project`, `self_serve_team_edit` (Task 3), `set_mentor_help_wanted`, reminders (Task 8), `get_submission_window_for_event`. Views per Part 3. Lazy imports inside functions (surveys style). Tests: window states w/ tz + injected `now`; sanitizer keeps `List<String>`, strips `<script>`, `onerror=`, `javascript:`; payload limits; 403/409/admin bypass; draft→submitted/late; edit-after-submit keeps status; copy views-signature test from `api/volunteers/tests`.
+3. **Auth-gap fix** — `api/teams/teams_views.py` L77–114: `/devpost` + `/demo-video` call `self_serve_team_edit(auth_user.user_id, teamid, {...}, admin=is_admin(auth_user))` (lazy import; `teams_service` never imports submissions).
+4. **Mentor availability** — `POST /api/team/<id>/mentor-availability` (bool validation, member gate, audit, `clear_cache`, returns `get_team`).
+5. **Self-check** — `services/volunteers_service.py::get_volunteer_self_status(propel, event_id, type)` via `find_volunteer_by_caller_identity`; `api/volunteers/volunteers_views.py` L238–243 accepts `type=hacker`.
+6. **GitHub activity** — `common/utils/github.py::get_repo_activity(org, repo)` (3 calls: `get_repo`, first commit page ≤100 w/ 409-empty handling, open PR count; contributors derived from the commit page); `api/github/github_service.py::get_github_activity` with `_ACTIVITY_CACHE = TTLCache(512, 300)` success-only + name regex `^[A-Za-z0-9_.-]{1,100}$`; view mirrors `/issues`. Tests with a fake `Github` asserting exactly 3 calls, `last_24h` math, caching.
+7. **`api/peer_votes/`** — `compute_voting_window`, `_settings(event)` (**must read `peer_vote_enabled`; disabled ⇒ slate `status:"disabled"`, ballot 403**), `_voter_eligibility`, `_submitted_teams_for_event` (single `where hackathon_event_id ==` + Python filter `active != False`, status ∈ {submitted, late}), `_own_team_ids` (via `get_my_teams_by_event_id`), `build_slate(candidates, exposure, event_id, propel_id, n)` (seeded shuffle → stable sort by exposure asc → take n), `_in_transaction(db, body)` (tests monkeypatch to a FakeTx), `get_slate` (persist on first GET; `<2` candidates ⇒ `reason: not_enough_submissions`, no persist), `submit_ballot`, `wilson_lower_bound`, `compute_results` (pure), `get_results`, `void_ballot`, `publish_results` (append award once, summary doc, `clear_cache`), `get_public_summary`. Tests: own-team exclusion, exposure balance, persistence idempotence, ballot matrix, void exclusion, Wilson values `(0,0)=0`, `(5,5)≈0.566`, `(1,1)≈0.207`, publish idempotent.
+8. **Reminders** — `build_reminder_message(team, event, deadline, hours)` (None when done), `send_deadline_reminders(event_id, kind, hours, only_if_due, force, actor)`, `send_due_reminders_for_current_events()` (`get_hackathon_list("current")`); views with `is_admin || check_api_key(request, "BACKEND_CRON_TOKEN")` (`common/utils/api_key.py`); `.github/workflows/deadline-reminders.yml` hourly `curl` with `X-Api-Key`. Tests: due-window math, idempotency 409 then `force`, message tailoring, simulated gate, key gate.
+9. **Judging (video only + bug fixes)** — `api/judging/judging_service.py::get_team_details` (L243–269) + `format_team_for_judge` (L499–518): add `"demo_video_url": team.get("demo_video_url","")` and `"video_url": team.get("demo_video_url") or team.get("video_url","")`; keep `devpost_url`. Bug fixes: L958 `fetch_judge_scores_by_event` → `fetch_judge_scores_by_event_id` (NameError made `get_bulk_judge_details` always return empty); `update_judge_assignment_details` L576–620 always 400s (looks up assignments with an empty judge id) — fix by adding a `fetch_judge_assignment_by_id(assignment_id)` doc-get in `db/` and using it, else document in README + CLAUDE.md. Tests `api/judging/tests/test_format_team.py`. No rubric/scoring/results changes.
+10. **Wire-up + docs** — register both blueprints in `api/__init__.py` after `broadcasts_views`; CLAUDE.md section "Project submissions + Hackers' Choice (Sep 2026)"; env `BACKEND_CRON_TOKEN` (Fly + GH secrets); run all touched test dirs + `pylint -E api/submissions api/peer_votes`.
+**Acceptance (curl on :6060):** project save → `draft`; submit → `submitted`; past deadline → 409; non-member → 403; `/github/activity` second call serves cache; slate excludes own team (5 items); ballot 200; results ranked; publish → `awards` includes "Hackers' Choice"; summary `published:true`; remind → notified list, repeat → 409.
+
+### WS-0 Shared frontend foundations (small, pure; **runs before** WS-B/C/D/E so parallel worktrees don't collide)
+`src/lib/slackLinks.js` · `src/lib/githubLinks.js` (`parseGithubRepo`, `normalizeRepoLink`, `repoEntriesFromTeam` — copied from ProblemStatement's private helpers, which stay untouched) · `src/hooks/use-countdown.js` (`useCountdown(targetIso, {intervalMs})` → `{mounted, ms, days, hours, minutes, seconds, done}`; `mounted:false` until first effect — no hydration mismatch; pauses on `document.hidden`) · `src/components/Teams/projectMeta.js` (`getSubmissionStatus` [null for legacy], `submissionLabel`, `formatDeadline`, `projectThumbUrl`, `buildTeamOgImage`, `buildTeamDescription`, `buildProjectJsonLd`, `firstRepoUrl`, `isProjectStoryMissing`) · `src/components/Teams/ProjectStoryMarkdown.js` (react-markdown `ssr:true`, heading demotion `demoteBy`, lazy imgs, noopener links, no rehype-raw) · `src/components/PeerVote/peerVoteState.js` (`deriveVoteWindow(deadlines, constraints, nowMs)` mirroring backend defaults, `togglePick`, `canSubmit`, `slateLinks`) · `src/components/PeerVote/PeerVoteCTA.js` (SurveyCTA clone; `{eventId, deadlines, constraints, variant: 'event'|'dashboard'}`; visible when open or opening within 24h) · `src/lib/teamDashboardApi.js` (fetch wrappers throwing `ApiError{status, body}`, `isSubmissionsClosed`, `isNotFound`) · tests for each pure module under `__tests__/`.
+
+### WS-B Team Dashboard (frontend)
+Files: `src/components/TeamDashboard/{TeamDashboard, TeamSwitcher, DashboardSection, TeamMasthead, TeamStatusHero, DeadlineStrip, DeliverablesChecklist, ProjectWriteupEditor, DemoVideoEditor, DevPostEditor, CodeActivityCard, MentorSupportCard, MentorAvailabilityToggle, SlackCoachCard, TeamRoster, HackersChoiceCard, CreateTeamFlow, GatingPanels, copy}.js`; `src/lib/teamDeliverables.js` (+test: `deadlineState`, `deriveDeliverables`); hooks `use-github-activity.js` (fire-once IO, `Promise.all`, ONE setState, 404 ⇒ `unavailable`), `use-team-project.js` (draft/committed diff, 1.5s debounced `POST /project` of changed keys, 409 ⇒ `closed`, 404 ⇒ `unavailable`, `submit()` flushes then POSTs; re-seed only on `team.id` change), `use-public-team.js` (roster via `GET /api/messages/team/<id>` because `/me` strips `users[]`; refetch on `visibilitychange`, merges `mentor_*` via `onTeamUpdated`).
+Steps: (1) libs+hooks, (2) leaf cards in the order listed, (3) `TeamDashboard` + `TeamSwitcher`, (4) `CreateTeamFlow` + `GatingPanels` (JSX moved out; handlers stay in the page), (5) rewrite `manageteam.js` composition — **keep verbatim:** auth wrapper + SSR guard, all fetches and lazy gates, `formError`/`teamsError` split, all step handlers/validators, `handleTeamUpdated`, post-submit refetch + `#team-hub` scroll, `noindex`, `SurveyCTA`; **change:** store the whole `GET /api/users/profile` payload as `profile` (own db id), fix `hasApprovedTeam` (tests non-existent `APPROVED`) → `status && status !== 'IN_REVIEW' && status !== 'INACTIVE'`, `activeTeamId` derived from live `myTeams`, mount effect reading `sessionStorage['team_members']` → `teamMembers` objects `{id: slack_user_id, name, real_name}` then remove key, GA `team_dashboard_view` once, (6) delete `TeamStatusPanel.js` + `FormStepper.js` (only importers), remove `TeamMemberManager.js:27` console.log, drop `RefinedFonts` import. Section ids: `deliverables, project, demo, devpost, code, mentors, slack, roster` (**`#project`** is deep-linked from the team page and gallery). Dashboard order: `TeamStatusHero → DeadlineStrip → DeliverablesChecklist → (HackersChoiceCard) → ProjectWriteupEditor → DemoVideoEditor → CodeActivityCard → MentorSupportCard → SlackCoachCard → TeamRoster → DevPostEditor`. Thumbnail via `upload-image`. Styling via `.ohx-*` + `refinedFormTheme`/`refinedFieldSx`/`refinedChipSx`/`primaryButtonSx`/`ghostButtonSx`/`*AlertSx`; control rows `py 2.25 / minHeight 64`; Portal content uses `var(--brand,#1B3A6B)` fallbacks. CLS: hub skeleton 320, strip 64 + `minWidth 9ch` digits, editor 360, video frame 320×180, code card 140, roster row 56, waiting video 220×220. A11y: `radiogroup` toggle w/ arrow keys, `<ol>` checklist, throttled live region, "Copied" announcements. GA (`EventCategory.ENGAGEMENT`): `team_dashboard_view`, `team_deadline_strip_view`, `team_project_saved` (first autosave/page), `team_project_submitted{status}`, `team_demo_video_saved`, `team_devpost_saved`, `team_mentor_availability_toggled{open|heads_down}`, `team_slack_tip_click{tip}`.
+
+### WS-C Project page, gallery, results, judge views, mentor surfaces
+1. `team/[team_id]/index.js`: import shared helpers from `teamPageData.js` (delete local dupes L40–55), drop `RefinedFonts`; new module-scope `src/components/Teams/TeamProjectSection.js` rendered first (`id="project"`, `sections.unshift`), `next/image` only for `cdn.ohack.dev` hosts (remotePatterns), else `<img width height loading=lazy>`, 16:9 `--surface-2` box; submission line public vs member ("Draft — not yet submitted." + "Edit on your dashboard →" `manageteam#project`); masthead submission tag when status non-null; member nudge → missing story/video/not submitted; `<Head>` OG from `buildTeamOgImage`/`buildTeamDescription` + `SoftwareSourceCode` JSON-LD.
+2. `TeamList.js`: module-scope `ProjectMedia` (thumbnail → `LiteVideoThumbnail` → initial placeholder; 16:9 reserved) at the top of `TeamCard`; tagline 2-line clamp; first 3 built-with + `+N`; submission tag; DevPost → quiet link when present, else member-only "Add your project story →" (`isUserInTeam`, `event_id` prop); `submittedOnly` toggle + stable submitted-first sort in `useMemo`; lazy avatar logic untouched.
+3. `HackathonResults.js` (outside RefinedRoot → var fallbacks): tagline, `awards[]` pills, DevPost only when present; module-scope `HackersChoiceCard` fetching `/peer-vote/summary` (minHeight 148; 404 ⇒ "announced at the awards ceremony"); new prop `peerVoteEnabled` passed from event page + `results.js`. `HackathonFunnel.js` sublabels source-neutral. `TeamsShowcaseSection.jsx` imports `WINNING_STATUSES`.
+4. **Judge views — video only, no process change.** `src/pages/judge/[event_id]/team/[team_id].js` (L717–760 link row): when `teamData.demo_video_url || teamData.video_url` exists, render the existing `VideoDisplay` (dynamic ssr:false) inside a `paddingBottom:'56.25%'` box under the links, plus a "Watch demo" button; GitHub and DevPost buttons unchanged. `src/pages/judge/[event_id].js` (L264–269): the Round-1 video button reads `demo_video_url || video_url`. Rubric text, scoring form, `JudgingRound1/2/Results`, `/about/judges`, `/hackathon-judging-criteria`, and `mentorCoverage.js` are **not touched**.
+5. **Heads-down signal on mentor surfaces** (`mentor_help_wanted === false`): `MentorTeamsTable` new "Availability" column (`Open`/`Heads-down` `.ohx-tag`, terracotta for heads-down) + row tooltip; `MentorTeamPanel` header tag "Team asked for heads-down time — check Slack before dropping in"; `TeamMentorSummaryCard` + `TeamList.MentorSupportSummary` quiet line; `mentor-checkin` inherits via the table. Signal only — no behaviour change.
+6. Event page: import `PeerVoteCTA` after `SurveyCTA` with `deadlines`/`constraints`; pass `peerVoteEnabled` to `HackathonResults`.
+
+### WS-D Hackers' Choice vote page
+`src/pages/hack/[event_id]/vote.js` (shell: `noindex`, `RequiredAuthProvider` + SSR-guarded redirect, `dynamic ssr:false` `PeerVotePage`); `src/components/PeerVote/{PeerVotePage, PeerVoteSlateCard}.js`. Page: `Shell` + `TeamBreadcrumbs`; fetch slate (Bearer) on mount + refocus when upcoming; `<h1 class="ohx-display">Hackers' Choice</h1>`; lead = exactly: "You'll see {slate_size} projects picked for you. Pick up to {max_picks} you'd be proud to have built. Every project gets seen roughly equally; you can't see or pick your own." States (module-scope): `disabled`/404 ("Voting isn't set up for this event yet."), `not_eligible`, `upcoming` (countdown), `open` (card grid + sticky bottom bar "{n} of {max} picked" + primary "Submit picks" → confirm Dialog → POST → confetti [skipped under reduced-motion] + "Results are announced at the awards ceremony."), `voted` (picks; "Change picks" while open), `closed`, `not_enough_submissions`. Cards: media (same priority as gallery), name, tagline, built-with, "GitHub ↗", "Project page ↗" (new tab), local "Watched" checkbox, `aria-pressed` pick button disabled at max. ONE page-level `VideoDisplay` dialog. 409 ⇒ refetch slate + inline notice. GA: `peer_vote_view{status}`, `peer_vote_cta_click{variant}`, `peer_vote_submitted{value: picks}`. Sitemap: add `/hack/[event_id]/vote` to `next-sitemap.config.js` exclude.
+
+### WS-E Admin
+1. **`DeadlinesSection.js`** (new `?section=deadlines`, group `config`, after `schedule`): manifest entry (Alarm icon), loader in `pages/admin/hackathons/[event_id].js`, `useHackathonAdmin.js` → `EXPLICIT_SAVE_SECTIONS.add("deadlines")`, `SECTION_LABELS`, `collectKeysForSections` adds `deadlines` + `countdowns`; move `toIsoWithTimezone`/`safeParse` from `ScheduleSection.js` to `src/lib/timezoneUtils.js`; pure `hackathon-edit/deadlinesUtils.js` (`validateDeadlines`, `upsertCountdownByName`, `hoursBeforeLabel`) + tests; four `DateTimePicker`s in event tz with dual-tz helper text and ordering errors (Save disabled on error); "Add to countdown timeline" upsert; Hackers' Choice card (`peer_vote_*` via `setConstraint`, **autosave**); "Send reminder now" 24h/6h/1h (disabled while dirty or no deadline) → `POST …/deadlines/remind` → snack; GA `admin_deadline_reminder_sent`.
+2. **`TeamManagement.js`**: module-scope `SubmissionChip`; "Submission" + "Story" columns after "Demo Video"; filter chips `Missing story`, `Not submitted`, `Late` (DevPost filter demoted to last); edit Dialog: tagline field, submission-status Select (override), read-only story preview (`ProjectStoryMarkdown`) + "Edit story" toggle; pure `teamSubmissionsCsv.js` (+test) → "Export submissions CSV" (`submissions-<event>.csv`); keep ONE-setState / no render-log rules; GA `admin_submissions_csv_export`.
+3. **`PeerVoteResults.js`** as `JudgingSection` 4th subtab `?subtab=peer-vote` (host page already gates `volunteer.admin`, matching the backend): `Promise.all([results, summary])` → ONE setState; stats header; `!enabled` info alert; table Rank/Team/Shown/Approvals/Rate/Wilson LB/bar with `shown < 3` warnings; void ballot (propel id + confirm); Publish (disabled until `voting_closes` passed and not published; confirm) → refetch + banner; GA `admin_peer_vote_publish`, `admin_peer_vote_void_ballot`.
+
+### WS-F Integrate, verify, document
+Merge worktrees → `feat/team-dashboard-devpost-replacement`; `npm run build`; `npx eslint` + `npx prettier --write` on touched files; run Part 6; CLAUDE.md updates (replace the manageteam paragraph + "manageteam.js invariants"; new sections "Project pages & gallery", "Hackers' Choice peer vote", "Hackathon deadlines section"; team-page invariants (9) Project first, (10) OG via `projectMeta`; Admin Teams + Hackathon Admin Edit lists; Funnel sublabels; `mentor_help_wanted` absent ⇒ true; Part 9 documented-only bugs as gotchas); `docs/refined-design-system.md` rollout lines (`/hack/[event_id]/vote`, team Project section, gallery media); `ga-events-reference.md` new events; mark `docs/plans/manageteam-eventpage-improvements.md` Part B as superseded.
+
+---
+
+## Part 5 — Orchestration (Opus/this session monitors, Sonnet executes)
+
+Saved as `docs/plans/devpost-replacement.workflow.js` and run via the `Workflow` tool (`scriptPath`). Backend first, then WS-0, then WS-B/C/D/E in parallel worktrees with adversarial review, then integrate.
+
+```js
+export const meta = {
+  name: 'devpost-replacement',
+  description: 'Team dashboard, project write-ups, deadlines, Hackers Choice — Sonnet executes, reviewers verify',
+  phases: [
+    { title: 'Backend', detail: 'WS-A in backend-ohack.dev', model: 'sonnet' },
+    { title: 'Foundations', detail: 'WS-0 shared frontend modules', model: 'sonnet' },
+    { title: 'Frontend', detail: 'WS-B/C/D/E in parallel worktrees', model: 'sonnet' },
+    { title: 'Review', detail: 'adversarial review + fix loop' },
+    { title: 'Integrate', detail: 'merge, build, verify, docs' },
+  ],
+}
+const PLAN = 'docs/plans/team-dashboard-devpost-replacement.md'
+const RESULT  = { type:'object', properties:{ branch:{type:'string'}, summary:{type:'string'}, files:{type:'array', items:{type:'string'}}, open_questions:{type:'array', items:{type:'string'}} }, required:['branch','summary','files'] }
+const VERDICT = { type:'object', properties:{ ok:{type:'boolean'}, findings:{type:'array', items:{type:'string'}} }, required:['ok','findings'] }
+const run = (ws, extra='') => agent(`Execute ${ws} of ${PLAN} exactly as written (contracts in Part 3, invariants named in Part 4). ${extra} Run the tests/lint the plan names for this workstream. Return branch, summary, files, open_questions.`, { label: ws, model:'sonnet', schema:RESULT })
+
+phase('Backend')
+const backend = await run('WS-A', 'Work in /Users/gregv/dev/fresh_ohack/backend-ohack.dev on branch feat/submissions-peer-vote.')
+log(`backend: ${backend?.summary}`)
+phase('Foundations')
+const found = await run('WS-0', 'Work on branch feat/team-dashboard-devpost-replacement; commit when green.')
+phase('Frontend')
+const WS = ['WS-B','WS-C','WS-D','WS-E']
+const fronts = await pipeline(WS,
+  ws => agent(`Execute ${ws} of ${PLAN}. WS-0 modules already exist on the base branch — import, don't recreate. Backend is running on :6060 from feat/submissions-peer-vote. Degrade gracefully on 404. Return branch, summary, files, open_questions.`, { label: ws, phase:'Frontend', model:'sonnet', isolation:'worktree', schema:RESULT }),
+  (res, ws) => res && agent(`Adversarially review the ${ws} diff: ${JSON.stringify(res)}. Check: module-scope section components, one <h1>, CLS reservations, no eager per-card fetch, 404 fallbacks, no PII logs, refined tokens only, contracts match Part 3 of ${PLAN}. Default ok=false when unsure. Return ok, findings.`, { label:`review ${ws}`, phase:'Review', effort:'high', schema:VERDICT }).then(v => ({ ws, res, verdict:v })),
+  (r) => (!r || r.verdict?.ok) ? r : agent(`Fix these findings in ${r.res.branch} (${r.ws}): ${r.verdict.findings.join('\n')}. Return branch, summary, files, open_questions.`, { label:`fix ${r.ws}`, phase:'Review', model:'sonnet', schema:RESULT }).then(fix => ({ ...r, fix })),
+)
+phase('Integrate')
+const integ = await agent(`Execute WS-F of ${PLAN}: merge ${fronts.filter(Boolean).map(f => f.res.branch).join(', ')} into feat/team-dashboard-devpost-replacement, run npm run build + lint, run the Part 6 checklist against :6060, update CLAUDE.md/docs. Return branch, summary, files, open_questions.`, { label:'WS-F integrate', schema:RESULT })
+return { backend, found, fronts, integ }
+```
+Orchestrator notes: start `flask run -p 6060` on the backend branch before Phase 3; a second failed review escalates to a manual fix (no infinite loop); stamp timestamps after return (`Date.now()` unavailable in scripts); open PRs with `gh pr create --base develop` (draft first, mark ready after WS-F).
+
+---
+
+## Part 6 — Verification (end-to-end)
+1. Backend: touched test dirs green; curl matrix from WS-A acceptance; `pylint -E` clean.
+2. Dashboard (dev, CDP cache disabled — Next 16 stale-chunk gotcha): logged-out → login redirect, no 500; team holder load = hackathon, team/me, hacker/application, users/profile, messages/team/<id> only; no GitHub calls until the code card scrolls near; duplicate teammate name doesn't unmount the dashboard; saving video/story flips checklist rows without reload; Submit → confetti → strip "Submitted ✓"; deadline in the past → 409 inline, autosave stops; toggle heads-down → tag visible in `MentorTeamsTable`; multi-team tabs; IN_REVIEW shows hero + one waiting video; findteam favorites prefill; older-backend 404 fallbacks (editors "not available yet", toggle hidden, code card links-only); mobile 375px single column, targets ≥44px; Lighthouse mobile CLS < 0.05.
+3. Public: team page Project section first, exactly one `<h1>` with a story containing `#` headings, `#project` deep link, OG from tagline/thumbnail (view-source), legacy team renders no Project section/tag; gallery media reserved 16:9, "Submitted only" hidden when zero, join/leave intact, avatars lazy; `/results` awards pills + tagline, summary 404 keeps reserved slot.
+4. Vote: all 7 states forced via mocked responses; own team never in slate; max picks disables cards; 409 refreshes slate; reduced-motion skips confetti; `noindex`; absent from generated sitemap.
+5. Judge: scoring page shows the team's demo video when set; GitHub/DevPost buttons, rubric, scoring and results behave exactly as before (diff of those files is empty except the video block).
+6. Admin: `?section=deadlines` same frame width, dirty dot + Save/Discard, ordering errors block save, countdown entry appears after save, reminder button gating, peer-vote toggles autosave, `?subtab=peer-vote` deep link, publish gated until close; TeamManagement one commit per load, CSV opens in Sheets.
+7. `npm run build`; eslint/prettier; no `RefinedFonts` additions; no hardcoded font families.
+
+## Part 7 — Phase 2 (documented, not built)
+Funnel stages sourced from `project_submission_status`; image gallery lightbox for `project_images`; Slack channel-membership verification (`conversations.members`); signed-URL image mint if `upload-image` proves limiting; per-user GitHub OAuth for private repos; server-window (`/submissions/window`) as the dashboard's authoritative clock; optionally show the project write-up to judges (only if organizers ask — not part of this work).
+
+## Part 9 — Bugs found during discovery (fix + document; "significant" ones are marked ★)
+| # | Bug | Where | Action | WS |
+|---|---|---|---|---|
+| 1 ★ | `POST /api/team/<id>/devpost` and `/demo-video` accept **any logged-in user** — no team-membership check | `api/teams/teams_views.py` L77–114 | Fix via `self_serve_team_edit` (403 non-member) + test | A |
+| 2 ★ | Judges never receive the team's demo video (`get_team_details` returns a phantom `video_url`) | `api/judging/judging_service.py` L243–269, L499–518 | Fix (fill from `demo_video_url`) | A |
+| 3 | `get_bulk_judge_details` always returns empty: `fetch_judge_scores_by_event` is an undefined name | `judging_service.py` L958 | Fix (one-line rename) + test | A |
+| 4 | `PUT /api/judge/assignments/<id>` always 400s (looks up with an empty judge id) | `judging_service.py` L576–620 | Fix with a by-id fetch if ≤20 lines, else document | A |
+| 5 | Legacy `save_team` calls `create_github_repo` with the old positional signature (legacy `POST /api/messages/team` create path broken) | `services/teams_service.py` L282 | Document; align args if trivial | A |
+| 6 | `hackathon.devpost_url` is read (`volunteers_service.py` L1792) but `save_hackathon` can never write it | `services/hackathons_service.py` | Document (DevPost is optional now; `links[]` remains the source) | A |
+| 7 | `/api/github/issues` view allows a missing `org` but the service 400s; log prints dict key count not issue count | `api/github/github_views.py` L176–205 | Fix while adding `/activity` | A |
+| 8 ★ | `manageteam` `hasApprovedTeam` compares against statuses that don't exist (`APPROVED`, `PROJECT_COMPLETE`) | `manageteam.js` L708–711 | Fix | B |
+| 9 | `findteam → manageteam` teammate handoff via `sessionStorage['team_members']` is never read | `manageteam.js` | Fix (prefill) | B |
+| 10 | `TeamMemberManager.js:27` logs the Slack user list to the console on every render | `TeamCreation/TeamMemberManager.js` | Fix | B |
+| 11 | `HackathonResults` never renders `awards[]` (only the status label) | `Hackathon/HackathonResults.js` | Fix | C |
+| 12 | `TeamsShowcaseSection.jsx` keeps a private `WINNING_STATUSES` that drifts from `constants/teamStatus.js` | `Profile/Portfolio/TeamsShowcaseSection.jsx` L30–34 | Fix (import) | C |
+| 13 | Team page duplicates `teamPageData.js` helpers locally | `team/[team_id]/index.js` L40–55 | Fix (import) | C |
+| 14 | Public `GET /api/hacker/applications/<event_id>` exposes `user_id` and `isSelected` for every applicant | `volunteers_views.py` L570–583 | Document only — `findteam.js` matchmaking depends on `user_id`; propose a lean projection in a follow-up | A (doc) |
+| 15 | Two frontend components read `devpost_url`/`video_url` while the team doc uses `devpost_link`/`demo_video_url` (judge API naming split) | judge pages / `judgeApi.js` | Document; backend now fills `video_url` so both names work | A (doc) |
+Each fix is listed in the PR description under "Bugs fixed along the way"; documented-only items go into the relevant `CLAUDE.md` gotchas section.
+
+## Part 8 — Immediately after approval (this session)
+1. Frontend: `git checkout -b feat/team-dashboard-devpost-replacement develop`; write `docs/plans/team-dashboard-devpost-replacement.md` (this plan + the three agents' full detail as appendices) and `docs/plans/devpost-replacement.workflow.js`; commit; push; `gh pr create --base develop --draft`.
+2. Backend: `git checkout -b feat/submissions-peer-vote develop`; commit a pointer `docs/plans/submissions-peer-vote.md` (WS-A + contracts); push; draft PR.
+3. Run the Workflow (Part 5) with `scriptPath`; monitor; start the local backend before the frontend phase; escalate review failures manually.
+4. After WS-F: mark PRs ready, update CLAUDE.md per the after-you-are-done rule, and report outcomes faithfully (tests, lints, anything skipped).
