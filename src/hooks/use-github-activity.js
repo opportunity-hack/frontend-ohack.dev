@@ -24,28 +24,35 @@ async function fetchIssuesFor(org, repo) {
 }
 
 /**
- * Loads GitHub activity for every repo linked to the team, once the
- * `CodeActivityCard` scrolls near — a fire-once `IntersectionObserver`
+ * Loads GitHub activity for every repo linked to the team, once ANY of the
+ * observed elements scrolls near — a fire-once `IntersectionObserver`
  * (`rootMargin: "200px"`) mirrors the "Code & Tasks" pattern on
  * `ProblemStatement.js` (CLAUDE.md's SectionBlock/fire-once lesson).
+ *
+ * `TeamDashboard` observes BOTH the `DeliverablesChecklist` (top of the
+ * dashboard — its "Push code to your repo" row shows this data) and the
+ * `CodeActivityCard` (below the fold). Observing only the card left the
+ * checklist row stuck on "Checking your repo's activity…" until the user
+ * scrolled to the bottom — a promise nothing was keeping.
  *
  * Fetches `/api/github/activity` (commits/contributors/repo stats) and
  * `/api/github/issues` (top open issue titles) for every repo in one
  * `Promise.all`, then commits the whole result with a SINGLE `setState` —
  * never a per-repo `setState` call (the TeamManagement render-storm lesson).
  *
- * `ref` is the element to observe (attach to the card's outer Box).
+ * `refOrRefs` is a ref, or an array of refs, to the element(s) to observe.
  */
-export default function useGithubActivity(team, ref) {
+export default function useGithubActivity(team, refOrRefs) {
   const [state, setState] = useState({ byRepo: {}, status: "loading" });
   const requestedRef = useRef(new Set());
 
   const repos = repoEntriesFromTeam(team).filter((r) => r.org && r.repo);
   const repoKey = repos.map((r) => normalizeRepoLink(r.link)).join(",");
+  const refs = Array.isArray(refOrRefs) ? refOrRefs : [refOrRefs];
 
   useEffect(() => {
-    const el = ref?.current;
-    if (!el || repos.length === 0) {
+    const els = refs.map((r) => r?.current).filter(Boolean);
+    if (els.length === 0 || repos.length === 0) {
       if (repos.length === 0) setState((s) => ({ ...s, status: "ready" }));
       return undefined;
     }
@@ -108,13 +115,15 @@ export default function useGithubActivity(team, ref) {
       },
       { rootMargin: "200px" },
     );
-    observer.observe(el);
+    els.forEach((el) => observer.observe(el));
 
     return () => {
       cancelled = true;
       observer.disconnect();
     };
-  }, [repoKey, ref]);
+    // `refs` is rebuilt every render; the effect only needs to re-run when
+    // the set of repos changes (refs are read at effect time).
+  }, [repoKey]);
 
   return state;
 }

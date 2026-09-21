@@ -38,7 +38,10 @@ export default function TeamDashboard({
   teamFindingEnabled,
 }) {
   const codeCardRef = useRef(null);
-  const activity = useGithubActivity(team, codeCardRef);
+  const checklistRef = useRef(null);
+  // Whichever scrolls near first fires the (fire-once) GitHub fetch — the
+  // checklist's "Push code" row and the Code activity card read the same data.
+  const activity = useGithubActivity(team, [checklistRef, codeCardRef]);
   const projectApi = useTeamProject({ team, accessToken, onTeamUpdated });
   const { users, loading: rosterLoading } = usePublicTeam(team, onTeamUpdated);
 
@@ -120,6 +123,7 @@ export default function TeamDashboard({
             onSlackConfirmChange={handleSlackConfirmChange}
             onSubmit={() => setConfirmOpen(true)}
             submitting={submitting}
+            containerRef={checklistRef}
           />
 
           <HackersChoiceCard
