@@ -1,10 +1,15 @@
-import { normalizeRepoLink, parseGithubRepo, repoEntriesFromTeam } from "../githubLinks";
+import {
+  githubOrgSlug,
+  normalizeRepoLink,
+  parseGithubRepo,
+  repoEntriesFromTeam,
+} from "../githubLinks";
 
 describe("githubLinks", () => {
   describe("normalizeRepoLink", () => {
     it("lowercases and strips trailing slashes", () => {
       expect(normalizeRepoLink("HTTPS://GitHub.com/Org/Repo/")).toBe(
-        "https://github.com/org/repo"
+        "https://github.com/org/repo",
       );
     });
 
@@ -16,21 +21,27 @@ describe("githubLinks", () => {
 
   describe("parseGithubRepo", () => {
     it("extracts org and repo from a github.com URL", () => {
-      expect(parseGithubRepo("https://github.com/opportunity-hack/frontend")).toEqual({
+      expect(
+        parseGithubRepo("https://github.com/opportunity-hack/frontend"),
+      ).toEqual({
         org: "opportunity-hack",
         repo: "frontend",
       });
     });
 
     it("strips a trailing .git", () => {
-      expect(parseGithubRepo("https://github.com/opportunity-hack/frontend.git")).toEqual({
+      expect(
+        parseGithubRepo("https://github.com/opportunity-hack/frontend.git"),
+      ).toEqual({
         org: "opportunity-hack",
         repo: "frontend",
       });
     });
 
     it("ignores query strings and fragments after the repo", () => {
-      expect(parseGithubRepo("https://github.com/org/repo?tab=readme#section")).toEqual({
+      expect(
+        parseGithubRepo("https://github.com/org/repo?tab=readme#section"),
+      ).toEqual({
         org: "org",
         repo: "repo",
       });
@@ -66,10 +77,17 @@ describe("githubLinks", () => {
 
     it("handles the { link, name } object shape and prefers the stored name", () => {
       const entries = repoEntriesFromTeam({
-        github_links: [{ link: "https://github.com/org/repo", name: "Our project" }],
+        github_links: [
+          { link: "https://github.com/org/repo", name: "Our project" },
+        ],
       });
       expect(entries).toEqual([
-        { name: "Our project", link: "https://github.com/org/repo", org: "org", repo: "repo" },
+        {
+          name: "Our project",
+          link: "https://github.com/org/repo",
+          org: "org",
+          repo: "repo",
+        },
       ]);
     });
 
@@ -90,12 +108,19 @@ describe("githubLinks", () => {
         github_links: [{ link: "https://gitlab.com/org/repo", name: "Mirror" }],
       });
       expect(entries).toEqual([
-        { name: "Mirror", link: "https://gitlab.com/org/repo", org: null, repo: null },
+        {
+          name: "Mirror",
+          link: "https://gitlab.com/org/repo",
+          org: null,
+          repo: null,
+        },
       ]);
     });
 
     it("skips entries with no link", () => {
-      const entries = repoEntriesFromTeam({ github_links: [{ name: "No link" }, null, ""] });
+      const entries = repoEntriesFromTeam({
+        github_links: [{ name: "No link" }, null, ""],
+      });
       expect(entries).toEqual([]);
     });
 
@@ -105,5 +130,26 @@ describe("githubLinks", () => {
       });
       expect(entries.map((e) => e.repo)).toEqual(["a", "b"]);
     });
+  });
+});
+
+// The admin Overview field stores this value and the backend hands it straight
+// to GitHub's /orgs/<login> lookup on team approval, so it must be a bare slug.
+describe("githubOrgSlug", () => {
+  it.each([
+    ["Opportunity-Hack-2026", "Opportunity-Hack-2026"],
+    ["  Opportunity-Hack-2026  ", "Opportunity-Hack-2026"],
+    ["https://github.com/Opportunity-Hack-2026", "Opportunity-Hack-2026"],
+    ["https://github.com/Opportunity-Hack-2026/", "Opportunity-Hack-2026"],
+    [
+      "http://www.github.com/Opportunity-Hack-2026/repo",
+      "Opportunity-Hack-2026",
+    ],
+    ["@Opportunity-Hack-2026", "Opportunity-Hack-2026"],
+    ["", ""],
+    [null, ""],
+    [undefined, ""],
+  ])("reduces %p to %p", (raw, expected) => {
+    expect(githubOrgSlug(raw)).toBe(expected);
   });
 });
