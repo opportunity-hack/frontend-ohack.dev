@@ -112,6 +112,10 @@ function Row({
  * "What your team owes" — the dashboard's primary checklist. The Submit
  * button here is the ONE `.ohx-btn--primary` for the whole section
  * (`onSubmit` opens the confirm dialog owned by `ProjectWriteupEditor`).
+ *
+ * `containerRef` is observed by `useGithubActivity` (via `TeamDashboard`)
+ * so the "Push code to your repo" row's GitHub check fires as soon as the
+ * checklist is on screen, not only when the Code activity card is.
  */
 export default function DeliverablesChecklist({
   deliverables,
@@ -119,51 +123,54 @@ export default function DeliverablesChecklist({
   onSlackConfirmChange,
   onSubmit,
   submitting,
+  containerRef,
 }) {
   const { items, done, total } = deliverables;
 
   return (
-    <DashboardSection
-      id="deliverables"
-      eyebrow="Your checklist"
-      title={DELIVERABLES_TITLE}
-    >
-      <Box sx={{ color: "var(--muted)", mb: 2 }}>{DELIVERABLES_LEAD}</Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-        <LinearProgress
-          variant="determinate"
-          value={total ? (done / total) * 100 : 0}
-          sx={{
-            flex: 1,
-            height: 6,
-            borderRadius: 3,
-            bgcolor: "var(--line, #E7E1D4)",
-            "& .MuiLinearProgress-bar": { bgcolor: "var(--brand, #1B3A6B)" },
-          }}
-        />
-        <span
-          style={{
-            fontSize: "0.85rem",
-            color: "var(--muted)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {done} of {total} done
-        </span>
-      </Box>
-      <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
-        {items.map((item) => (
-          <Row
-            key={item.key}
-            item={item}
-            slackConfirmed={slackConfirmed}
-            onSlackConfirmChange={onSlackConfirmChange}
-            isSubmitRow={item.key === "submit"}
-            onSubmitClick={onSubmit}
-            submitting={submitting}
+    <Box ref={containerRef}>
+      <DashboardSection
+        id="deliverables"
+        eyebrow="Your checklist"
+        title={DELIVERABLES_TITLE}
+      >
+        <Box sx={{ color: "var(--muted)", mb: 2 }}>{DELIVERABLES_LEAD}</Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={total ? (done / total) * 100 : 0}
+            sx={{
+              flex: 1,
+              height: 6,
+              borderRadius: 3,
+              bgcolor: "var(--line, #E7E1D4)",
+              "& .MuiLinearProgress-bar": { bgcolor: "var(--brand, #1B3A6B)" },
+            }}
           />
-        ))}
-      </ol>
-    </DashboardSection>
+          <span
+            style={{
+              fontSize: "0.85rem",
+              color: "var(--muted)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {done} of {total} done
+          </span>
+        </Box>
+        <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {items.map((item) => (
+            <Row
+              key={item.key}
+              item={item}
+              slackConfirmed={slackConfirmed}
+              onSlackConfirmChange={onSlackConfirmChange}
+              isSubmitRow={item.key === "submit"}
+              onSubmitClick={onSubmit}
+              submitting={submitting}
+            />
+          ))}
+        </ol>
+      </DashboardSection>
+    </Box>
   );
 }
