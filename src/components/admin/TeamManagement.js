@@ -1060,6 +1060,14 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
 
         // Refresh the teams list
         fetchTeams(selectedHackathon);
+      } else {
+        // The backend answers 200 with { success: false, message } for
+        // handled failures (e.g. the event's GitHub org is missing or isn't a
+        // valid org slug). Surface that message instead of failing silently.
+        enqueueSnackbar(response.data?.message || "Failed to approve team", {
+          variant: "error",
+          autoHideDuration: 8000,
+        });
       }
     } catch (error) {
       console.error("Error approving team:", error);

@@ -140,11 +140,21 @@ const OverviewSection = ({ admin }) => {
           fullWidth
           value={hackathon.github_org || ""}
           onChange={(e) => setField("github_org", e.target.value)}
+          onBlur={() => {
+            // Store the bare slug. A pasted github.com URL or @handle used to
+            // be saved verbatim and then break team approval (the backend
+            // passes this straight to GitHub's /orgs/<login> lookup → 404).
+            // Normalizing on blur rather than on change keeps typing a URL
+            // character by character from being mangled mid-way.
+            const raw = hackathon.github_org || "";
+            const slug = githubOrgSlug(raw);
+            if (slug !== raw) setField("github_org", slug);
+          }}
           placeholder="opportunity-hack"
           helperText={
             githubOrgSlug(hackathon.github_org)
               ? `Links to github.com/${githubOrgSlug(hackathon.github_org)}`
-              : "Org slug used to link teams to GitHub (github.com/<org>) and scope repo lookups. Just the org name, not the full URL."
+              : "Org slug used to link teams to GitHub (github.com/<org>), create team repos on approval, and scope repo lookups. Just the org name — a pasted URL is trimmed to it."
           }
           InputProps={{
             startAdornment: (
