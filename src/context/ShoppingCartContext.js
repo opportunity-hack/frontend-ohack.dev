@@ -2,6 +2,12 @@ import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 const CART_STORAGE_KEY = "ohack_store_cart";
 
+// Must match MAX_ITEM_QUANTITY in pages/api/store/create-checkout-session.js —
+// the checkout route 400s anything above it.
+export const MAX_CART_ITEM_QUANTITY = 50;
+
+const clampQuantity = (q) => Math.min(MAX_CART_ITEM_QUANTITY, q);
+
 const initialState = {
   items: [],
   total: 0,
@@ -29,13 +35,21 @@ function cartReducer(state, action) {
       if (existingIndex >= 0) {
         newItems = state.items.map((item, index) =>
           index === existingIndex
-            ? { ...item, quantity: item.quantity + (action.payload.quantity || 1) }
+            ? {
+                ...item,
+                quantity: clampQuantity(
+                  item.quantity + (action.payload.quantity || 1)
+                ),
+              }
             : item
         );
       } else {
         newItems = [
           ...state.items,
-          { ...action.payload, quantity: action.payload.quantity || 1 },
+          {
+            ...action.payload,
+            quantity: clampQuantity(action.payload.quantity || 1),
+          },
         ];
       }
 
@@ -75,7 +89,7 @@ function cartReducer(state, action) {
         newItems = state.items.map((item) =>
           item.id === id &&
           JSON.stringify(item.selectedVariations || {}) === variationKey
-            ? { ...item, quantity }
+            ? { ...item, quantity: clampQuantity(quantity) }
             : item
         );
       }
