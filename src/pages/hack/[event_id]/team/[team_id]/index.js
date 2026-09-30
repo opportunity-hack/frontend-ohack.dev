@@ -31,6 +31,7 @@ import { serializeJsonLd } from "../../../../../lib/jsonLd";
 import {
   COMPLETION_VISIBLE_STATUSES,
   SCROLL_OFFSET,
+  fetchTeamAndEvent,
   statusLabel,
 } from "../../../../../components/Teams/teamPageData";
 import {
@@ -1141,29 +1142,11 @@ async function fetchProblemStatementDetails(problemStatementIds) {
 export async function getStaticProps({ params }) {
   const { event_id, team_id } = params;
 
-  let teamRes, eventRes;
-  try {
-    [teamRes, eventRes] = await Promise.all([
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${team_id}`,
-      ),
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`,
-      ),
-    ]);
-  } catch (networkErr) {
-    // Network failure — rethrow so ISR keeps serving the last good version.
-    throw networkErr;
-  }
-
-  // Genuine 404 → return notFound so Next.js serves a proper 404 page.
-  if (teamRes.status === 404) return { notFound: true };
-
-  const teamRaw = teamRes.ok ? await teamRes.json() : null;
-  const eventData = eventRes.ok ? await eventRes.json() : null;
-
-  const teamData = teamRaw?.team || teamRaw;
-  if (!teamData) return { notFound: true };
+  // Shared with /mentor + /completion: 404 -> notFound; other team failures
+  // throw so ISR keeps the last good copy; event failure -> eventData null.
+  const result = await fetchTeamAndEvent(event_id, team_id);
+  if (result.notFound) return { notFound: true };
+  const { teamData, eventData } = result;
 
   let problemStatementsData = [];
   if (teamData.problem_statements?.length > 0) {

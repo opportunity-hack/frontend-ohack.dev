@@ -15,23 +15,34 @@ import {
   buildPersonJsonLd,
 } from "./portfolioMeta";
 
+// Returns the profile, or null on a genuine 404. Throws on any other
+// upstream failure (429/5xx/network) — callers decide whether that is fatal.
 async function fetchPortfolio(param) {
   const apiBase = process.env.NEXT_PUBLIC_API_SERVER_URL;
   if (!apiBase || !param) return null;
-  try {
-    const res = await fetch(
-      `${apiBase}/api/users/${encodeURIComponent(param)}/profile/public`,
-      { headers: { "Content-Type": "application/json" } }
-    );
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    return null;
-  }
+  const res = await fetch(
+    `${apiBase}/api/users/${encodeURIComponent(param)}/profile/public`,
+    {
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(15000),
+    }
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Upstream ${res.status} for portfolio ${param}`);
+  return await res.json();
 }
 
 export async function buildPortfolioServerSideProps({ param, res, route }) {
-  const profile = await fetchPortfolio(param);
+  let profile;
+  try {
+    profile = await fetchPortfolio(param);
+  } catch (err) {
+    // /u/<slug>: a backend blip must render the 500 page, never a 404 (a
+    // cached/crawled 404 would drop a live portfolio). /profile/<id> keeps
+    // rendering without SSR data so the client-side fetch can recover.
+    if (route === "u") throw err;
+    profile = null;
+  }
 
   if (res) {
     res.setHeader(
