@@ -5,7 +5,10 @@ module.exports = {
 
   // Optimize bundle size
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
   },
 
   // Modular imports / tree-shaking for heavy dependencies. Many MUI components
@@ -183,11 +186,22 @@ module.exports = {
         ],
       },
       {
-        source: "/:path*",
+        // Pages only: API routes set their own Cache-Control (a public cache
+        // header on e.g. Stripe session lookups would be wrong), and _next
+        // assets carry Next's immutable caching.
+        source: "/:path((?!api/|_next/).*)",
         headers: [
           {
             key: "Cache-Control",
             value: "public, max-age=3600, must-revalidate",
+          },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // camera stays allowed for the check-in QR scanner.
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), microphone=(), geolocation=()",
           },
         ],
       },
