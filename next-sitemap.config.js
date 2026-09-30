@@ -1,30 +1,44 @@
-const fs = require("fs");
-const path = require("path");
-
 module.exports = {
   siteUrl: process.env.SITE_URL || "https://www.ohack.dev",
   generateRobotsTxt: true,
+  // Only `*` is special in next-sitemap's matcher (matches across `/`,
+  // pattern is anchored, case-insensitive). Bracketed dynamic-route paths
+  // (e.g. "/nonprofit/[nonprofit_id]") are dropped by next-sitemap before
+  // exclude runs, so they can never match a real generated path — use
+  // wildcard globs for every dynamic route instead.
   exclude: [
     "/admin",
+    "/admin/*",
     "/profile",
-    "/profile/[userid]",
-    "/u/[slug]",
-    "/cert/[cert_id]",
-    "/nonprofit/[nonprofit_id]",
-    "/hackathon/[hackathon_id]",
-    "/project/[project_id]",
-    "/hack/[event_id]",
-    "/hack/[event_id]/vote",
-    "/jobs/[slug]",
-    // Dynamic routes covered by /server-sitemap.xml instead
-    "https://api.test.ohack.dev/",
-    "https://test.api.ohack.dev/",
+    "/profile/*",
+    "/u/*",
+    "/cert",
+    "/cert/*",
+    "/nonprofit/*",
+    "/project/*",
+    "/hack/*/vote",
+    "/hack/*/survey",
+    "/hack/*/feedback",
+    "/signup2",
+    "/store/cart",
+    "/store/success",
+    "/unsubscribe",
+    "/myfeedback",
+    "/volunteer/track",
+    "/judge",
+    "/judge/*",
+    "/server-sitemap.xml",
   ],
+  // File-mtime-based lastmod is meaningless on Vercel (every mtime ≈ build
+  // time on a fresh clone) and static pages don't have a real per-page
+  // modified date to report — omit lastmod entirely for them. Real lastmod
+  // is only emitted for blog entries in /server-sitemap.xml.
+  autoLastmod: false,
   robotsTxtOptions: {
     policies: [
       {
         userAgent: "*",
-        disallow: process.env.SITE_URL === "https://test.ohack.dev" ? "/" : [],
+        disallow: process.env.SITE_URL === "https://test.ohack.dev" ? "/" : ["/api/"],
       },
     ],
     additionalSitemaps: [
@@ -32,18 +46,6 @@ module.exports = {
     ],
   },
   transform: async (config, path) => {
-    let lastmod = new Date().toISOString();
-    const filePath = `./pages${path}.js`;
-
-    try {
-      if (fs.existsSync(filePath)) {
-        const stat = fs.statSync(filePath);
-        lastmod = new Date(stat.mtime).toISOString();
-      }
-    } catch (error) {
-      console.warn(`Warning: Could not get last modified time for ${filePath}`);
-    }
-
     const currentYear = new Date().getFullYear().toString();
     let priority = 0.5;
     let changefreq = "weekly";
@@ -79,7 +81,6 @@ module.exports = {
       loc: path,
       changefreq: changefreq,
       priority: priority,
-      lastmod: lastmod,
     };
   },
   additionalPaths: async (config) => {
