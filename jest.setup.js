@@ -26,7 +26,8 @@ jest.mock('next/link', () => {
 });
 
 // Mock matchMedia for components that use window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+// (guarded so `@jest-environment node` suites — API routes, config — can run)
+if (typeof window !== 'undefined') Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: jest.fn().mockImplementation(query => ({
     matches: false,
@@ -40,12 +41,21 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock React.useId() for components that use it
+// Mock React.useId() for components that use it. IMPORTANT: this must
+// return a *unique* id per call, not a fixed string — MUI components
+// (TextField, Chip, etc.) use useId() to pair a <label for> with its
+// input's id, and any page rendering more than one such component with
+// a fixed id collide on the same DOM id. That breaks
+// screen.getByLabelText() (it resolves via getElementById, which returns
+// the first match for a duplicate id), silently redirecting
+// interactions to the wrong field. See LeadForm's "detects bot-like
+// names" test for the failure mode this caused.
+let __mockUseIdCounter = 0;
 jest.mock('react', () => {
   const originalReact = jest.requireActual('react');
   return {
     ...originalReact,
-    useId: () => 'test-id',
+    useId: () => `test-id-${++__mockUseIdCounter}`,
   };
 });
 

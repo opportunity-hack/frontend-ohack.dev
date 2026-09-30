@@ -33,6 +33,7 @@ jest.mock('next/router', () => ({
     pathname: '/blog',
     query: {},
     push: jest.fn(),
+    replace: jest.fn(),
     isReady: true
   })
 }));
@@ -212,7 +213,7 @@ describe('BlogPage Component', () => {
     });
     
     // Act - search for "post 1"
-    const searchInput = screen.getByPlaceholderText('Search blog posts...');
+    const searchInput = screen.getByPlaceholderText(/search posts/i);
     fireEvent.change(searchInput, { target: { value: 'post 1' } });
     
     // Assert
@@ -263,7 +264,7 @@ describe('BlogPage Component', () => {
     });
     
     // Act - find and click the GitHub code button
-    const githubButton = screen.getByText('View Blog Code');
+    const githubButton = screen.getByText(/view the blog code/i);
     fireEvent.click(githubButton);
     
     // Assert

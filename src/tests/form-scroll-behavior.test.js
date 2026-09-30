@@ -43,13 +43,32 @@ describe('Form Scroll Behavior', () => {
   test('should contain scroll behavior in sponsor application handleNext', () => {
     const fs = require('fs');
     const path = require('path');
-    
+
     const sponsorAppPath = path.join(__dirname, '../pages/hack/[event_id]/sponsor-application.js');
     const content = fs.readFileSync(sponsorAppPath, 'utf8');
-    
-    // Check that handleNext contains scroll behavior
-    expect(content).toMatch(/handleNext.*scrollIntoView.*behavior.*smooth/s);
-    expect(content).toMatch(/handleBack.*scrollIntoView.*behavior.*smooth/s);
+
+    // Sponsor (like mentor/volunteer/judge) delegates step-to-step scrolling
+    // to the shared scrollToStepContent() helper
+    // (src/components/ApplicationForm/stepScroll.js) instead of inlining
+    // scrollIntoView directly in handleNext/handleBack — see CLAUDE.md's
+    // Application Forms section ("don't hand-roll scrollIntoView/
+    // window.scrollTo in step handlers"). The old assertion checked for a
+    // literal scrollIntoView call appearing anywhere after the string
+    // "handleNext"/"handleBack", which only happened to pass for the other
+    // four forms because their unrelated post-submission success-scroll
+    // block (which still uses scrollIntoView) sits later in the file.
+    expect(content).toMatch(/import\s*\{[^}]*scrollToStepContent[^}]*\}\s*from/);
+
+    const handleNextMatch = content.match(
+      /const handleNext = useCallback\(\(\) => \{[\s\S]*?\n {2}\}, \[/
+    );
+    const handleBackMatch = content.match(
+      /const handleBack = useCallback\(\(\) => \{[\s\S]*?\n {2}\}, \[/
+    );
+    expect(handleNextMatch).not.toBeNull();
+    expect(handleBackMatch).not.toBeNull();
+    expect(handleNextMatch[0]).toMatch(/scrollToStepContent\(stepContentRef\)/);
+    expect(handleBackMatch[0]).toMatch(/scrollToStepContent\(stepContentRef\)/);
   });
 
   test('should contain scroll behavior in judge application handleNext', () => {
