@@ -135,52 +135,6 @@ export default function NavBar() {
   const handleCloseGetInvolvedMenu = () => setAnchorElGetInvolved(null);
   const handleCloseHackathonsMenu = () => setAnchorElHackathons(null);
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Opportunity Hack",
-    url: "https://www.ohack.dev/",
-    logo: "https://cdn.ohack.dev/ohack.dev/ohack_white.webp",
-    description:
-      "Opportunity Hack connects technology with nonprofits to create innovative solutions through hackathons and ongoing projects. Based in Phoenix, Arizona.",
-    sameAs: [
-      "https://www.facebook.com/opportunityhack",
-      "https://twitter.com/opportunityhack",
-      "https://threads.net/opportunityhack",
-      "https://www.linkedin.com/company/opportunity-hack",
-      "https://www.instagram.com/opportunityhack",
-    ],
-    knowsAbout: [
-      "Hackathons",
-      "Nonprofit Technology",
-      "Social Impact",
-      "Volunteer Coding",
-      "Tech for Good",
-      "Arizona Tech",
-    ],
-    event: {
-      "@type": "Event",
-      name: "Opportunity Hack Arizona Hackathon",
-      startDate: "2024-10-12T08:00:00-07:00",
-      endDate: "2024-10-13T18:00:00-07:00",
-      location: {
-        "@type": "Place",
-        name: "ASU Tempe Engineering Center - Generator Labs",
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "501 E Tyler Mall",
-          addressLocality: "Tempe",
-          addressRegion: "AZ",
-          postalCode: "85281",
-          addressCountry: "US",
-        },
-      },
-      description:
-        "Annual hackathon bringing together developers, designers, and nonprofits to create tech solutions for social good.",
-      url: "https://www.ohack.dev/hack",
-    },
-  };
-
   return (
     <AppBar
       position="fixed"
@@ -200,9 +154,6 @@ export default function NavBar() {
           href="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Dark_Blue_Banner.png"
           as="image"
         />
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
       </Head>
       <Container maxWidth="xl">
         <Toolbar disableGutters>

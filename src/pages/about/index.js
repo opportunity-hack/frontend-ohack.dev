@@ -7,7 +7,8 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
 import { cofounders, board_members, pledge } from "../../components/About/about-data";
 import { VideoSection } from "../../components/About/components";
-import { RefinedRoot, RefinedFonts, Eyebrow, Stat, Arrow } from "../../components/design/refined";
+import { RefinedRoot, Eyebrow, Stat, Arrow } from "../../components/design/refined";
+import { serializeJsonLd } from "../../lib/jsonLd";
 
 // ---- Schemas (unchanged) ----
 const organizationSchema = {
@@ -174,9 +175,14 @@ export default function AboutUsPage() {
         <meta name="twitter:creator" content="@opportunityhack" />
         <meta name="twitter:site" content="@opportunityhack" />
         <link rel="preload" as="image" href="https://cdn.ohack.dev/ohack.dev/2024_hackathon_6.webp" />
-        <RefinedFonts />
-        <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
-        <script type="application/ld+json">{JSON.stringify(videoSchema)}</script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(videoSchema) }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
