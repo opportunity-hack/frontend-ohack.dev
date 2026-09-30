@@ -5,7 +5,7 @@ import { useAuthInfo } from '@propelauth/react';
 
 export default function useHackathonEvents( currentOnly ){
 
-    const { user } = useAuthInfo();
+    const { user, orgHelper } = useAuthInfo();
     const { apiServerUrl } = useEnv();
     const [hackathons, setHackathons] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -63,12 +63,14 @@ export default function useHackathonEvents( currentOnly ){
             return null;
 
         console.log("Updating problem statement to event mapping", mapping);
+        const orgId = orgHelper?.getOrgs?.()?.[0]?.orgId;
         const config = {
             url: `${apiServerUrl}/api/problem-statements/events`,
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "X-Org-Id": orgId
             },
             data: {
                 mapping
@@ -76,6 +78,18 @@ export default function useHackathonEvents( currentOnly ){
         };
 
         const data = await makeRequest({ config, authenticated: true });
+
+        const isErrorResponse =
+            (typeof data?.status === "number" && data.status >= 400) ||
+            (data?.text === undefined && !!data?.data?.error);
+
+        if (isErrorResponse) {
+            return {
+                error: data?.data?.error || data?.statusText || "request_failed",
+                status: data?.status
+            };
+        }
+
         onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
         return data;
     };

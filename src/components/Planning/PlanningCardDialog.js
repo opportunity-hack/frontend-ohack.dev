@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Alert,
   Avatar,
@@ -229,12 +230,8 @@ export default function PlanningCardDialog({
     form.append("filename", slugifyFilename(file.name));
 
     try {
-      const res = await fetch(`${API}/api/messages/upload-image`, {
-        method: "POST",
-        body: form,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const { url } = await res.json();
+      const { data } = await axios.post(`${API}/api/messages/upload-image`, form);
+      const { url } = data;
       const newAttachment = {
         id: crypto.randomUUID(),
         url,
