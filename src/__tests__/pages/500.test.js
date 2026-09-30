@@ -1,6 +1,8 @@
 /**
  * pages/500.js must stay a static, self-contained page (no data, no auth,
- * no router) so it can never fail itself, and must be noindex.
+ * no router) so it can never fail itself, and must be noindex. NOTE: this test
+ * lives outside src/pages on purpose — Next builds every file under pages/ as
+ * a route (the first Vercel build failed on /__tests__/500.test).
  */
 import React from "react";
 import { render, screen } from "@testing-library/react";
@@ -10,7 +12,7 @@ jest.mock("next/head", () => ({
   default: ({ children }) => <>{children}</>,
 }));
 
-import Custom500 from "../500";
+import Custom500 from "../../pages/500";
 
 describe("500 page", () => {
   it("renders the heading, both actions and a noindex robots meta", () => {
