@@ -1,0 +1,35 @@
+name: CI
+
+# Lint + unit tests on every PR and on pushes to the long-lived branches.
+# `next build` is deliberately NOT run here: Vercel is the build gate, and a
+# CI build would fire ~550 getStaticProps/getStaticPaths requests at the
+# production backend on every push.
+on:
+  pull_request: {}
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint + Jest
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      # src/context/env.context.js validates these three; .env is untracked.
+      NEXT_PUBLIC_API_SERVER_URL: https://api.example.test
+      NEXT_PUBLIC_REACT_APP_AUTH_URL: https://auth.example.test
+      NEXT_PUBLIC_SITE_URL: https://www.ohack.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # 0 errors / ~23 warnings today — warnings must not fail the job.
+      - run: npx eslint src --max-warnings=1000
+      - run: npm test -- --ci
