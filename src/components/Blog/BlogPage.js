@@ -7,11 +7,11 @@ import { RefinedRoot, Eyebrow, Arrow } from "../design/refined";
 
 const BlogPage = ({ posts }) => {
   const router = useRouter();
-  const [newsData, setNewsData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
+  const [newsData, setNewsData] = useState(posts || []);
+  const [filteredData, setFilteredData] = useState(posts || []);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!(posts && posts.length));
 
   const getAllTags = (data) => {
     if (!data) return [];
