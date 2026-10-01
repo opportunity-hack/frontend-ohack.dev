@@ -5,6 +5,7 @@ import Head from "next/head";
 import Image from "next/image";
 import MenuIcon from "@mui/icons-material/Menu";
 import { trackEvent, initFacebookPixel, set } from "../../lib/ga";
+import { redirectToLoginPageWithLogging } from "../../lib/authRedirectLogging";
 import Button from "@mui/material/Button";
 import {
   useLogoutFunction,
@@ -83,7 +84,7 @@ const auth_settings = [
 
 export default function NavBar() {
   const { isLoggedIn, user } = useAuthInfo();
-  const { redirectToLoginPage } = useRedirectFunctions();
+  const redirectFns = useRedirectFunctions();
   const logout = useLogoutFunction();
   // Hearts tier for the avatar ring/badge + dropdown status. Module-cached
   // fetch shared with ProfileCompletionPrompt — one request per page load,
@@ -610,9 +611,13 @@ export default function NavBar() {
                 variant="contained"
                 disableElevation
                 onClick={() =>
-                  redirectToLoginPage({
-                    postLoginRedirectUrl: window.location.href,
-                  })
+                  redirectToLoginPageWithLogging(
+                    redirectFns,
+                    {
+                      postLoginRedirectUrl: window.location.href,
+                    },
+                    "navbar"
+                  )
                 }
                 className="login-button"
               >
