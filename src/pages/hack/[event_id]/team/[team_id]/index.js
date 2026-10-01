@@ -27,6 +27,7 @@ import SurveyCTA from "../../../../../components/Survey/SurveyCTA";
 import TeamMentorSummaryCard from "../../../../../components/Teams/TeamMentorSummaryCard";
 import TeamCompletionSummaryCard from "../../../../../components/Teams/TeamCompletionSummaryCard";
 import TeamProjectSection from "../../../../../components/Teams/TeamProjectSection";
+import { serializeJsonLd } from "../../../../../lib/jsonLd";
 import {
   COMPLETION_VISIBLE_STATUSES,
   SCROLL_OFFSET,
@@ -438,7 +439,7 @@ export default function TeamDetailPage({
         {projectJsonLd && (
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(projectJsonLd) }}
+            dangerouslySetInnerHTML={{ __html: serializeJsonLd(projectJsonLd) }}
           />
         )}
       </Head>

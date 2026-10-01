@@ -23,7 +23,10 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Link from "next/link";
-import { useShoppingCart } from "../../../context/ShoppingCartContext";
+import {
+  useShoppingCart,
+  MAX_CART_ITEM_QUANTITY,
+} from "../../../context/ShoppingCartContext";
 import { trackEvent, initFacebookPixel } from "../../../lib/ga";
 import FloatingCartButton from "../../../components/Store/FloatingCartButton";
 import products from "../../../data/store-products.json";
@@ -346,7 +349,10 @@ export default function ProductDetailPage() {
                 </Typography>
                 <IconButton
                   size="small"
-                  onClick={() => setQuantity((q) => q + 1)}
+                  onClick={() =>
+                    setQuantity((q) => Math.min(MAX_CART_ITEM_QUANTITY, q + 1))
+                  }
+                  disabled={quantity >= MAX_CART_ITEM_QUANTITY}
                 >
                   <AddIcon />
                 </IconButton>

@@ -1,4 +1,46 @@
 import Stripe from "stripe";
+import products from "../../../data/store-products.json";
+
+export const MAX_ITEM_QUANTITY = 50;
+
+const productsById = new Map(products.map((p) => [p.id, p]));
+
+// Resolve a cart item against the catalog. Name, price and image ALWAYS come
+// from the catalog — the request body is untrusted (a tampered price must
+// never reach Stripe). Returns { error } on any invalid input.
+function resolveItem(item) {
+  const product = item && productsById.get(item.id);
+  if (!product) return { error: "Unknown product" };
+
+  const quantity = item.quantity;
+  if (
+    !Number.isInteger(quantity) ||
+    quantity < 1 ||
+    quantity > MAX_ITEM_QUANTITY
+  ) {
+    return {
+      error: `Quantity must be a whole number between 1 and ${MAX_ITEM_QUANTITY}`,
+    };
+  }
+
+  const selected = item.selectedVariations;
+  if (selected != null) {
+    if (typeof selected !== "object" || Array.isArray(selected)) {
+      return { error: "Invalid product options" };
+    }
+    const allowed = product.variations || {};
+    for (const [key, value] of Object.entries(selected)) {
+      if (
+        !Object.prototype.hasOwnProperty.call(allowed, key) ||
+        !allowed[key].includes(value)
+      ) {
+        return { error: "Invalid product options" };
+      }
+    }
+  }
+
+  return { product, quantity, selectedVariations: selected || null };
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -22,9 +64,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No items provided" });
     }
 
-    const lineItems = items.map((item) => {
-      const variationDesc = item.selectedVariations
-        ? Object.entries(item.selectedVariations)
+    const resolved = items.map(resolveItem);
+    const invalid = resolved.find((r) => r.error);
+    if (invalid) {
+      return res.status(400).json({ error: invalid.error });
+    }
+
+    const lineItems = resolved.map(({ product, quantity, selectedVariations }) => {
+      const variationDesc = selectedVariations
+        ? Object.entries(selectedVariations)
             .map(([key, value]) => `${key}: ${value}`)
             .join(", ")
         : "";
@@ -33,13 +81,13 @@ export default async function handler(req, res) {
         price_data: {
           currency: "usd",
           product_data: {
-            name: item.name,
+            name: product.name,
             description: variationDesc || undefined,
-            images: item.image ? [`${getBaseUrl(req)}${item.image}`] : [],
+            images: product.image ? [`${getBaseUrl(req)}${product.image}`] : [],
           },
-          unit_amount: Math.round(item.price * 100),
+          unit_amount: Math.round(product.price * 100),
         },
-        quantity: item.quantity,
+        quantity,
       };
     });
 

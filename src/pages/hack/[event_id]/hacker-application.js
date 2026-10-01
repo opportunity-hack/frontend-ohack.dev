@@ -1268,11 +1268,14 @@ const HackerApplicationComponent = () => {
     try {
       const defaultCents =
         eventData?.constraints?.hacker_deposit?.default_amount_cents || 500;
-      const amount =
+      const savedCents =
         Number.isInteger(formData.depositAmountCents) &&
         formData.depositAmountCents > 0
           ? formData.depositAmountCents
-          : defaultCents;
+          : 0;
+      // Never below the event default — a saved amount from an earlier
+      // application may predate a raised minimum (checkout 400s below it).
+      const amount = Math.max(defaultCents, savedCents);
       const res = await fetch("/api/applications/hacker-deposit/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

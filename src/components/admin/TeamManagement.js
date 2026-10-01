@@ -95,6 +95,7 @@ import ProjectStoryMarkdown from "../Teams/ProjectStoryMarkdown";
 import { DEFAULT_EVENT_TIMEZONE } from "../../lib/timezoneUtils";
 import { buildSubmissionsCsv } from "./teamSubmissionsCsv";
 import * as ga from "../../lib/ga";
+import { fetchAdminTeamDetail } from "../../lib/adminTeamApi";
 
 // Submission-status chip shown in the table's "Submission" column and the
 // filter chips row. Module-scope per the SectionBlock remount lesson (see
@@ -735,21 +736,17 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   const loadTeamDetails = async (teamId) => {
     setTableLoading(true); // Use the table-specific loading state
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${teamId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "X-Org-Id": orgId,
-          },
-        },
-      );
-      if (response.data && response.data.team) {
+      const data = await fetchAdminTeamDetail(teamId, {
+        apiServerUrl: process.env.NEXT_PUBLIC_API_SERVER_URL,
+        accessToken,
+        orgId,
+      });
+      if (data && data.team) {
         // Ensure team_members is always an array to prevent rendering issues
         const team = {
-          ...response.data.team,
-          team_members: response.data.team.team_members || [],
-          active: response.data.team.active === "True",
+          ...data.team,
+          team_members: data.team.team_members || [],
+          active: data.team.active === "True",
         };
         setSelectedTeam(team);
         setTeamData(team);
