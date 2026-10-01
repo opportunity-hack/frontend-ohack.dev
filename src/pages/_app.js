@@ -10,6 +10,7 @@ import { useRouter } from "next/router";
 import theme from "../assets/theme";
 import { ShoppingCartProvider } from "../context/ShoppingCartContext";
 import { ensureDescriptionMeta } from "../lib/headMeta";
+import ErrorBoundary from "../components/ErrorBoundary";
 // Static import: SSR-safe (only registers axios interceptors in useEffect).
 // IMPORTANT: must NOT be dynamic(ssr:false) — that disables SSR for the entire
 // tree (empty <body>, empty titles, CWV collapse; June 2026 incident).
@@ -134,7 +135,12 @@ export default function MyApp({ Component, pageProps }) {
             <CssBaseline>
               <Box className="page-layout" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                 {!isPrintTimelinePage && <NavBar />}
-                <Component {...pageProps} />
+                {/* Only the page subtree: a render error shows the calm fallback
+                    while NavBar/Footer stay up; resetKey clears it on navigation.
+                    SSR render errors still go to pages/500.js. */}
+                <ErrorBoundary resetKey={router.asPath}>
+                  <Component {...pageProps} />
+                </ErrorBoundary>
                 {!isPrintTimelinePage && <Footer />}
               </Box>
             </CssBaseline>
