@@ -46,6 +46,7 @@ import {
   RestaurantRounded,
   LocalGasStationRounded,
 } from '@mui/icons-material';
+import { serializeJsonLd } from "../../../../lib/jsonLd";
 
 const LOCATIONS = {
   "engineering-center-g-wing": {
@@ -367,8 +368,10 @@ const EventLocationPage = () => {
         <meta name="twitter:creator" content="@opportunityhack" />
         
         {/* JSON-LD Structured Data */}
-        <script type="application/ld+json">
-          {JSON.stringify({
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd({
             "@context": "https://schema.org",
             "@type": "Place",
             "name": `Opportunity Hack at ASU Tempe - ${activeLocation.name}`,
@@ -391,8 +394,9 @@ const EventLocationPage = () => {
               "https://www.asu.edu",
               "https://www.ohack.dev"
             ]
-          })}
-        </script>
+          }),
+          }}
+        />
       </Head>
 
       <Box sx={{ padding: "2rem", fontSize: "1em" }}>

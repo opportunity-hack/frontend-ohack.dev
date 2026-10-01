@@ -4,10 +4,12 @@ import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AuthProvider } from "@propelauth/react";
 import { ThemeProvider } from "@mui/material/styles";
+import React from "react";
 import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import theme from "../assets/theme";
 import { ShoppingCartProvider } from "../context/ShoppingCartContext";
+import { ensureDescriptionMeta } from "../lib/headMeta";
 // Static import: SSR-safe (only registers axios interceptors in useEffect).
 // IMPORTANT: must NOT be dynamic(ssr:false) — that disables SSR for the entire
 // tree (empty <body>, empty titles, CWV collapse; June 2026 incident).
@@ -49,7 +51,7 @@ const ProfileCompletionPrompt = dynamic(() => import('../components/ProfileCompl
 
 // This default export is required in a new `pages/_app.js` file.
 export default function MyApp({ Component, pageProps }) {
-  const { openGraphData = [] } = pageProps;
+  const metaTags = ensureDescriptionMeta(pageProps.openGraphData, pageProps.description);
   const router = useRouter();
   
   // Check if this is the print-timeline page
@@ -62,9 +64,21 @@ export default function MyApp({ Component, pageProps }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* TODO: Better meta tags for SEO: https://developers.google.com/search/docs/crawling-indexing/special-tags */}
 
-        {openGraphData.map((og, index) => (
-          <meta key={index} {...og} />
-        ))}
+        {metaTags.map((og, index) => {
+          const { key, ...rest } = og;
+          // next/head dedupes <meta name=…> by name ONLY for un-keyed elements
+          // (an explicit key — even a numeric index — becomes ".$0" and skips
+          // that dedupe, which is how the injected description used to
+          // duplicate a page's own tag). Entries that declare their own `key`
+          // keep it; the rest are un-keyed inside a keyed Fragment, which
+          // next/head flattens.
+          if (key !== undefined) return <meta key={key} {...rest} />;
+          return (
+            <React.Fragment key={index}>
+              <meta {...rest} />
+            </React.Fragment>
+          );
+        })}
 
         {pageProps.canonical && (
           <link rel="canonical" href={pageProps.canonical} />

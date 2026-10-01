@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import { PROJECT_STATUS_LABELS } from "../../lib/projectStatus";
+import { fetchForStaticProps, NOT_FOUND_REVALIDATE } from "../../lib/ssgFetch";
 
 const Project = dynamic(() => import("../../components/Project/Project"), {
   ssr: false
@@ -11,29 +12,30 @@ export default function ProjectPage() {
   );
 }
 
-export async function getStaticPaths(project_id) {  
-
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statements`
-  );
-  const data = await res.json();
-  const problem_statements = data.problem_statements;
-
-  const paths = problem_statements.map((problem_statement) => ({
-    params: { project_id: problem_statement.id },
-  }))
-
+// No build-time prerender. This page is `noindex` and its body is
+// client-rendered (ssr:false), so prerendering every project had zero SEO
+// value but cost one backend fetch per project (~330 across this page and
+// /nonprofit) on every deploy — and a throw from getStaticProps during
+// `next build` fails the whole Vercel build. "blocking" renders on first
+// request instead.
+export async function getStaticPaths() {
   return {
-    paths: paths,
-    fallback: true
-  }
+    paths: [],
+    fallback: "blocking"
+  };
 }
 
 export async function getStaticProps({ params = {} } = {}) {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${params.project_id}`
+  // Unknown ids come back as 200 {} -> 404 (retried after 60s). Non-404
+  // upstream errors THROW (request-time only, so ISR keeps the last good copy).
+  const result = await fetchForStaticProps(
+    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${params.project_id}`,
+    { isEmpty: (d) => !d || typeof d !== "object" || Object.keys(d).length === 0 }
   );
-  const ps = await res.json();
+  if (result.kind === "not_found") {
+    return { notFound: true, revalidate: NOT_FOUND_REVALIDATE };
+  }
+  const ps = result.data;
 
   // Fetch parent nonprofit(s) for SEO context — a project can belong to multiple nonprofits
   let nonprofitNames = "";
@@ -129,32 +131,32 @@ export async function getStaticProps({ params = {} } = {}) {
         },
         {
           property: "twitter:label1",
-          value: "Project Status",
+          content: "Project Status",
           key: "twitterlabel1",
         },
         {
           property: "twitter:data1",
-          value: statusLabel,
+          content: statusLabel,
           key: "twitterdata1",
         },
         {
           property: "twitter:label2",
-          value: "💻 Hackers",
+          content: "💻 Hackers",
           key: "twitterlabel2",
         },
         {
           property: "twitter:data2",
-          value: countOfhelpingHackers,
+          content: countOfhelpingHackers,
           key: "twitterdata2",
         },
         {
           property: "twitter:label3",
-          value: "🛟 Mentors",
+          content: "🛟 Mentors",
           key: "twitterlabel3",
         },
         {
           property: "twitter:data3",
-          value: countOfhelpingMentors,
+          content: countOfhelpingMentors,
           key: "twitterdata3",
         },
         {
@@ -164,5 +166,6 @@ export async function getStaticProps({ params = {} } = {}) {
         }
       ],
     },
+    revalidate: 3600,
   };
 }

@@ -4,6 +4,7 @@ import Head from 'next/head';
 import { Box, Container, Button, Typography } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import Link from 'next/link';
+import { fetchForStaticProps, NOT_FOUND_REVALIDATE } from '../../lib/ssgFetch';
 
 const PraiseCard = dynamic(() => import('../../components/Praise/PraiseCard'), {
     ssr: true
@@ -68,143 +69,113 @@ export default function PraiseDetailPage({ title, openGraphData, praiseData }) {
     );
 }
 
+// No build-time prerender: a throw from getStaticProps during `next build`
+// fails the whole Vercel build, and enumerating praises cost a backend fetch
+// per id per deploy. "blocking" still serves full SSR HTML on first request.
 export async function getStaticPaths() {
-    try {
-        const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/praises`
-        );
-        const data = await res.json();
-
-        if (!data || !data.text) {
-            return {
-                paths: [],
-                fallback: true
-            };
-        }
-
-        const paths = data.text.map((praise) => ({
-            params: { id: praise.id },
-        }));
-
-        return {
-            paths,
-            fallback: true
-        };
-    } catch (error) {
-        console.error("Failed to fetch praises for static paths:", error);
-        return {
-            paths: [],
-            fallback: true
-        };
-    }
+    return {
+        paths: [],
+        fallback: 'blocking'
+    };
 }
 
 export const getStaticProps = async ({ params = {} } = {}) => {
-    try {
-        const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/praises`
-        );
-
-        if (!res.ok) {
-            throw new Error(`Failed to fetch praises: ${res.status}`);
-        }
-
-        const data = await res.json();
-        const praises = data.text || [];
-        const praise = praises.find((p) => p.id === params.id);
-
-        if (!praise) {
-            return { notFound: true };
-        }
-
-        const senderName = praise.praise_sender_details?.real_name || 'Someone';
-        const receiverName = praise.praise_receiver_details?.real_name || 'a teammate';
-        const title = `${senderName} praised ${receiverName} | Opportunity Hack`;
-
-        const description = praise.praise_message
-            ? (praise.praise_message.length > 160
-                ? praise.praise_message.substring(0, 157) + '...'
-                : praise.praise_message)
-            : 'See this praise on the Opportunity Hack community board.';
-
-        const image = praise.praise_gif || 'https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp';
-
-        return {
-            props: {
-                title,
-                praiseData: praise,
-                openGraphData: [
-                    {
-                        name: 'title',
-                        content: title,
-                        key: 'title',
-                    },
-                    {
-                        property: 'og:title',
-                        content: title,
-                        key: 'ogtitle',
-                    },
-                    {
-                        name: 'description',
-                        content: description,
-                        key: 'desc',
-                    },
-                    {
-                        property: 'og:description',
-                        content: description,
-                        key: 'ogdesc',
-                    },
-                    {
-                        property: 'og:type',
-                        content: 'article',
-                        key: 'ogtype',
-                    },
-                    {
-                        property: 'og:image',
-                        content: image,
-                        key: 'ogimage',
-                    },
-                    {
-                        property: 'og:url',
-                        content: `https://www.ohack.dev/praise/${params.id}`,
-                        key: 'ogurl',
-                    },
-                    {
-                        property: 'og:site_name',
-                        content: 'Opportunity Hack Developer Portal',
-                        key: 'ogsitename',
-                    },
-                    {
-                        property: 'twitter:card',
-                        content: 'summary_large_image',
-                        key: 'twittercard',
-                    },
-                    {
-                        property: 'twitter:domain',
-                        content: 'ohack.dev',
-                        key: 'twitterdomain',
-                    },
-                    {
-                        property: 'twitter:title',
-                        content: title,
-                        key: 'twittertitle',
-                    },
-                    {
-                        property: 'twitter:description',
-                        content: description,
-                        key: 'twitterdesc',
-                    },
-                    {
-                        property: 'twitter:image',
-                        content: image,
-                        key: 'twitterimage',
-                    },
-                ],
-            },
-            revalidate: 3600, // Re-generate at most once per hour
-        };
-    } catch (error) {
-        console.error('Failed to fetch praise:', error);
-        return { notFound: true };
+    // Unknown id -> 404 retried after 60s. Upstream 429/5xx/network errors
+    // THROW so ISR keeps the last good copy instead of caching a 404.
+    const findPraise = (d) => (d?.text || []).find((p) => p.id === params.id);
+    const result = await fetchForStaticProps(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/praises`,
+        { isEmpty: (d) => !findPraise(d) }
+    );
+    if (result.kind === 'not_found') {
+        return { notFound: true, revalidate: NOT_FOUND_REVALIDATE };
     }
+    const praise = findPraise(result.data);
+
+    const senderName = praise.praise_sender_details?.real_name || 'Someone';
+    const receiverName = praise.praise_receiver_details?.real_name || 'a teammate';
+    const title = `${senderName} praised ${receiverName} | Opportunity Hack`;
+
+    const description = praise.praise_message
+        ? (praise.praise_message.length > 160
+            ? praise.praise_message.substring(0, 157) + '...'
+            : praise.praise_message)
+        : 'See this praise on the Opportunity Hack community board.';
+
+    const image = praise.praise_gif || 'https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp';
+
+    return {
+        props: {
+            title,
+            praiseData: praise,
+            openGraphData: [
+                {
+                    name: 'title',
+                    content: title,
+                    key: 'title',
+                },
+                {
+                    property: 'og:title',
+                    content: title,
+                    key: 'ogtitle',
+                },
+                {
+                    name: 'description',
+                    content: description,
+                    key: 'desc',
+                },
+                {
+                    property: 'og:description',
+                    content: description,
+                    key: 'ogdesc',
+                },
+                {
+                    property: 'og:type',
+                    content: 'article',
+                    key: 'ogtype',
+                },
+                {
+                    property: 'og:image',
+                    content: image,
+                    key: 'ogimage',
+                },
+                {
+                    property: 'og:url',
+                    content: `https://www.ohack.dev/praise/${params.id}`,
+                    key: 'ogurl',
+                },
+                {
+                    property: 'og:site_name',
+                    content: 'Opportunity Hack Developer Portal',
+                    key: 'ogsitename',
+                },
+                {
+                    property: 'twitter:card',
+                    content: 'summary_large_image',
+                    key: 'twittercard',
+                },
+                {
+                    property: 'twitter:domain',
+                    content: 'ohack.dev',
+                    key: 'twitterdomain',
+                },
+                {
+                    property: 'twitter:title',
+                    content: title,
+                    key: 'twittertitle',
+                },
+                {
+                    property: 'twitter:description',
+                    content: description,
+                    key: 'twitterdesc',
+                },
+                {
+                    property: 'twitter:image',
+                    content: image,
+                    key: 'twitterimage',
+                },
+            ],
+        },
+        revalidate: 3600, // Re-generate at most once per hour
+    };
 };

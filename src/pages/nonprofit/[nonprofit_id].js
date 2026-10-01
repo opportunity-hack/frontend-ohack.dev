@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 
 
 import ga from '../../lib/ga';
+import { fetchForStaticProps, NOT_FOUND_REVALIDATE } from '../../lib/ssgFetch';
 
 const NonProfit = dynamic(() => import('../../components/NonProfit/NonProfit'), {
     ssr: false
@@ -24,54 +25,57 @@ export default function NonProfitProfile() {
     );
 }
 
-export async function getStaticPaths(nonprofit_id) {    
-
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`
-    );
-    const data = await res.json();
-    const nonprofits = data.nonprofits;
-
-    const paths = nonprofits.map((npo) => ({
-        params: { nonprofit_id: npo.id },
-    }))
-
+// No build-time prerender. This page is `noindex` and its body is
+// client-rendered (ssr:false off router.query), so prerendering every
+// nonprofit had zero SEO value but cost ~one backend fetch per nonprofit plus
+// one per problem statement (~330 across this page and /project) on every
+// deploy — and a throw from getStaticProps during `next build` fails the
+// whole Vercel build. "blocking" renders on first request instead.
+export async function getStaticPaths() {
     return {
-        paths: paths,
-        fallback: true
-    }
+        paths: [],
+        fallback: 'blocking'
+    };
 }
 
+// Unknown ids come back as 200 {"nonprofits": null}. Non-404 upstream errors
+// THROW (request-time only, so ISR keeps the last good copy).
 const fetchNonProfit = async (nonprofit_id) => {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${nonprofit_id}`
+    const result = await fetchForStaticProps(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${nonprofit_id}`,
+        { isEmpty: (d) => !d?.nonprofits }
     );
-    const data = await res.json();
-    const nonprofit = data.nonprofits;
-
-    return nonprofit;
+    return result.kind === 'ok' ? result.data.nonprofits : null;
 }
 
+// Only feeds meta text: a failed problem-statement fetch skips that entry.
 const fetchProblemStatement = async (problem_statement_id) => {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${problem_statement_id}`
-    );
-    const data = await res.json();
-    const problemStatement = data;
-
-    return problemStatement;
+    try {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${problem_statement_id}`,
+            { signal: AbortSignal.timeout(15000) }
+        );
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data && Object.keys(data).length > 0 ? data : null;
+    } catch (e) {
+        return null;
+    }
 }
 
 export const getStaticProps = async ({ params = {} } = {}) => {
     
     const nonprofit = await fetchNonProfit(params.nonprofit_id);
+    if (!nonprofit) {
+        return { notFound: true, revalidate: NOT_FOUND_REVALIDATE };
+    }
 
     // Gather all of the problem statements
     var problemStatements = [];
     if (nonprofit.problem_statements != null) {
         for (const psId of nonprofit.problem_statements) {
             const problemStatement = await fetchProblemStatement(psId);
-            problemStatements.push(problemStatement);
+            if (problemStatement) problemStatements.push(problemStatement);
         }
     }
 
@@ -174,22 +178,22 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                 },
                 {
                     property: 'twitter:label1',
-                    value: 'Projects/Status',
+                    content: 'Projects/Status',
                     key: 'twitterlabel1',
                 },
                 {
                     property: 'twitter:data1',
-                    value: countOfProjects + '/' + statusList,
+                    content: countOfProjects + '/' + statusList,
                     key: 'twitterdata1',
                 },
                 {
                     property: 'twitter:label2',
-                    value: '🙌 Hackers/Mentors',
+                    content: '🙌 Hackers/Mentors',
                     key: 'twitterlabel2',
                 },
                 {
                     property: 'twitter:data2',
-                    value: countOfhelpingHackers + '/' + countOfhelpingMentors,
+                    content: countOfhelpingHackers + '/' + countOfhelpingMentors,
                     key: 'twitterdata2',
                 },
                 {
@@ -199,5 +203,6 @@ export const getStaticProps = async ({ params = {} } = {}) => {
                 },
             ],
         },
+        revalidate: 3600,
     };
 };

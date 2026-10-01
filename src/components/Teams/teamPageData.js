@@ -28,8 +28,11 @@ export function statusLabel(status) {
 }
 
 // Shared server-side fetch of team + event used by every page's getStaticProps.
-// Rethrows network errors so ISR keeps serving the last good version, and
-// returns { notFound: true } only on a genuine 404 / empty team payload.
+// Throws on network errors AND on any non-404 team failure (429/5xx) so ISR
+// keeps serving the last good version (safe: these pages use paths: [] +
+// blocking, so it never runs at build time). Returns { notFound: true } only
+// on a genuine 404 / empty team payload. A failed event fetch is non-fatal
+// (eventData: null).
 export async function fetchTeamAndEvent(event_id, team_id) {
   let teamRes, eventRes;
   try {
@@ -43,8 +46,11 @@ export async function fetchTeamAndEvent(event_id, team_id) {
   }
 
   if (teamRes.status === 404) return { notFound: true };
+  if (!teamRes.ok) {
+    throw new Error(`Upstream ${teamRes.status} for team ${team_id}`);
+  }
 
-  const teamRaw = teamRes.ok ? await teamRes.json() : null;
+  const teamRaw = await teamRes.json();
   const eventData = eventRes.ok ? await eventRes.json() : null;
   const teamData = teamRaw?.team || teamRaw;
   if (!teamData) return { notFound: true };

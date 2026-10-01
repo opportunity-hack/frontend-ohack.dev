@@ -22,6 +22,7 @@ import * as ga from '../../../lib/ga';
 import ScrollTracker from '../../../components/ScrollTracker';
 import JourneyTracker, { JourneyTypes } from '../../../components/JourneyTracker';
 import { RefinedRoot, Eyebrow, Arrow, Stat } from '../../../components/design/refined';
+import { serializeJsonLd } from "../../../lib/jsonLd";
 
 // Debounce utility
 const debounce = (func, delay) => {
@@ -107,6 +108,29 @@ const FAQS = [
   { question: 'What happens after the hackathon?', answer: "We don't just build and leave! You get quarterly check-ins for maintenance, access to our volunteer network for urgent needs, and ongoing support to ensure your solution continues serving your mission." },
   { question: 'Can I see examples of past projects?', answer: "Yes! Check out our success stories page to see real nonprofits we've helped, including Matthews Crossing Food Bank (estimated $150K in savings), Zuri's Circle (improved community engagement), and many more." },
 ];
+
+const APPLY_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Nonprofit and Social Good Project Application - Opportunity Hack",
+  "description": "Submit your nonprofit project or social good idea for free software development support. Opportunity Hack connects innovators with skilled volunteers to create tech solutions for social impact.",
+  "url": "https://www.ohack.dev/nonprofits/apply",
+  "potentialAction": {
+    "@type": "ApplyAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://www.ohack.dev/nonprofits/apply",
+      "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform"
+      ]
+    },
+    "result": {
+      "@type": "CreativeWork",
+      "name": "Nonprofit Project Application"
+    }
+  }
+};
 
 function Apply({ title, description, openGraphData }) {
   const { executeRecaptcha } = useGoogleReCaptcha();
@@ -300,24 +324,10 @@ function Apply({ title, description, openGraphData }) {
           <meta key={og.key} name={og.name} property={og.property} content={og.content} />
         ))}
         <link rel="canonical" href="https://www.ohack.dev/nonprofits/apply" />
-        <script type="application/ld+json">{`
-          {
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            "name": "Nonprofit and Social Good Project Application - Opportunity Hack",
-            "description": "Submit your nonprofit project or social good idea for free software development support. Opportunity Hack connects innovators with skilled volunteers to create tech solutions for social impact.",
-            "url": "https://www.ohack.dev/nonprofits/apply",
-            "potentialAction": {
-              "@type": "ApplyAction",
-              "target": {
-                "@type": "EntryPoint",
-                "urlTemplate": "https://www.ohack.dev/nonprofits/apply",
-                "actionPlatform": ["http://schema.org/DesktopWebPlatform","http://schema.org/MobileWebPlatform"]
-              },
-              "result": { "@type": "CreativeWork", "name": "Nonprofit Project Application" }
-            }
-          }
-        `}</script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(APPLY_JSON_LD) }}
+        />
       </Head>
 
       <JourneyTracker journey={JourneyTypes.NONPROFIT.name} step={JourneyTypes.NONPROFIT.steps.START_APPLICATION} />
