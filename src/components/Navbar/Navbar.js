@@ -26,6 +26,7 @@ import {
   Menu,
   Divider,
   ListSubheader,
+  Skeleton,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 
@@ -83,7 +84,12 @@ const auth_settings = [
 ];
 
 export default function NavBar() {
-  const { isLoggedIn, user } = useAuthInfo();
+  // `loading` is true while the PropelAuth client validates the session.
+  // During that window `isLoggedIn` is undefined (falsy), so the auth slot
+  // must render a neutral placeholder instead of the logged-out "Log In"
+  // button — otherwise signed-in users see a login flash on every
+  // navigation until the client resolves.
+  const { isLoggedIn, user, loading: authLoading } = useAuthInfo();
   const redirectFns = useRedirectFunctions();
   const logout = useLogoutFunction();
   // Hearts tier for the avatar ring/badge + dropdown status. Module-cached
@@ -503,7 +509,19 @@ export default function NavBar() {
               minHeight: "56px",
             }}
           >
-            {isLoggedIn ? (
+            {authLoading ? (
+              // Session still validating: neutral skeleton in the fixed-width
+              // auth slot. Never render the "Log In" button (or the avatar)
+              // until the client has resolved, so no wrong-state flash.
+              <Skeleton
+                variant="circular"
+                width={40}
+                height={40}
+                animation="wave"
+                sx={{ margin: "4px" }}
+                aria-label="Checking sign-in status"
+              />
+            ) : isLoggedIn ? (
               <>
                 <Tooltip title="Open settings">
                   <IconButton
