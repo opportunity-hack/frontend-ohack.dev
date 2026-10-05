@@ -8,6 +8,7 @@ import ProjectWriteupEditor from "./ProjectWriteupEditor";
 import DemoVideoEditor from "./DemoVideoEditor";
 import DevPostEditor from "./DevPostEditor";
 import CodeActivityCard from "./CodeActivityCard";
+import GatewayKeyCard from "./GatewayKeyCard";
 import MentorSupportCard from "./MentorSupportCard";
 import SlackCoachCard from "./SlackCoachCard";
 import TeamRoster from "./TeamRoster";
@@ -117,6 +118,12 @@ export default function TeamDashboard({
         </>
       ) : (
         <>
+          <GatewayKeyCard
+            team={team}
+            accessToken={accessToken}
+            onNotify={notify}
+          />
+
           <DeliverablesChecklist
             deliverables={deliverables}
             slackConfirmed={slackConfirmed}
