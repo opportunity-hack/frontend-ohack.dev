@@ -73,3 +73,54 @@ describe("GatewayKeyCard", () => {
     );
   });
 });
+
+describe("GatewayKeyCard setup snippets", () => {
+  const loaded = {
+    key: "sk-live-abc123def456",
+    models: ["muse-spark", "gpt-oss-120b"],
+    max_budget: 15,
+    spend: 0,
+  };
+
+  beforeEach(() => {
+    fetchGatewayKey.mockReset();
+    fetchGatewayKey.mockResolvedValue(loaded);
+    Object.assign(navigator, {
+      clipboard: { writeText: jest.fn().mockResolvedValue(undefined) },
+    });
+  });
+
+  it("shows the Claude Code block by default with the key masked, and copies it WITH the key", async () => {
+    const { fireEvent } = require("@testing-library/react");
+    const onNotify = jest.fn();
+    render(<GatewayKeyCard team={team} accessToken="tok" onNotify={onNotify} />);
+    const panel = await screen.findByRole("tabpanel", { name: "Claude Code setup" });
+    expect(panel.textContent).toContain('ANTHROPIC_AUTH_TOKEN="sk-••••••••"');
+    expect(panel.textContent).not.toContain("abc123");
+    expect(panel.textContent.trim().endsWith("claude")).toBe(true);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Copy Claude Code setup/ }),
+    );
+    const copied = navigator.clipboard.writeText.mock.calls[0][0];
+    expect(copied).toContain('ANTHROPIC_AUTH_TOKEN="sk-live-abc123def456"');
+    expect(copied).toContain('ANTHROPIC_MODEL="muse-spark"');
+    expect(onNotify).toHaveBeenCalledWith(expect.stringMatching(/includes your team/));
+  });
+
+  it("switches tools and unmasks the snippet when the key is revealed", async () => {
+    const { fireEvent } = require("@testing-library/react");
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    await screen.findByRole("tabpanel", { name: "Claude Code setup" });
+
+    fireEvent.click(screen.getByRole("tab", { name: "Python" }));
+    const py = screen.getByRole("tabpanel", { name: "Python setup" });
+    expect(py.textContent).toContain('base_url="https://ai.ohack.dev/v1"');
+    expect(py.textContent).toContain('api_key="sk-••••••••"');
+
+    fireEvent.click(screen.getByRole("button", { name: "Reveal" }));
+    expect(
+      screen.getByRole("tabpanel", { name: "Python setup" }).textContent,
+    ).toContain('api_key="sk-live-abc123def456"');
+  });
+});
