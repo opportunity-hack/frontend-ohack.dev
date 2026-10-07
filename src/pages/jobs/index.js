@@ -347,17 +347,27 @@ const JobsIndex = ({ listings }) => {
 export default JobsIndex;
 
 export const getStaticProps = async () => {
-  // Rethrow server errors so ISR keeps serving the last good version rather
-  // than publishing an empty page on a backend blip (teamPageData pattern).
+  // Builds at deploy time, so it MUST NEVER THROW (a throw here fails the
+  // whole Vercel build — /blog, /nonprofits, /projects follow the same rule).
   // A 404 means the backend doesn't serve /api/jobs yet (deploy ordering) —
-  // render the empty state instead of failing the whole build.
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/jobs`);
+  // render the empty state. Any other failure (5xx, timeout, bad JSON) also
+  // renders the empty state but revalidates in 60s instead of 5 min.
   let listings = [];
-  if (res.ok) {
-    const data = await res.json();
-    listings = data.listings || [];
-  } else if (res.status !== 404) {
-    throw new Error(`GET /api/jobs failed: ${res.status}`);
+  let revalidate = 300;
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/jobs`,
+      { signal: AbortSignal.timeout(15000) },
+    );
+    if (res.ok) {
+      const data = await res.json();
+      listings = Array.isArray(data?.listings) ? data.listings : [];
+    } else if (res.status !== 404) {
+      throw new Error(`GET /api/jobs failed: ${res.status}`);
+    }
+  } catch (error) {
+    console.error("Failed to fetch job listings:", error);
+    revalidate = 60;
   }
 
   const title = "Volunteer Jobs: Help Run Opportunity Hack | Phoenix & Remote";
@@ -434,6 +444,6 @@ export const getStaticProps = async () => {
         ],
       },
     },
-    revalidate: 300,
+    revalidate,
   };
 };
