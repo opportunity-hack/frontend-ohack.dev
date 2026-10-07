@@ -11,7 +11,10 @@ import { fetchGatewayKey } from "../lib/teamDashboardApi";
  * (`spend` may be null when the backend can't reach LiteLLM right now).
  */
 export default function useGatewayKey({ teamId, accessToken, enabled }) {
-  const [loading, setLoading] = useState(false);
+  // Start as loading whenever the fetch will fire on mount: the first render
+  // happens BEFORE the effect calls load(), and a `false` here let the card
+  // fall through to its data branch with keyData === null (Oct 2026 crash).
+  const [loading, setLoading] = useState(Boolean(enabled));
   const [error, setError] = useState(null);
   const [keyData, setKeyData] = useState(null);
   // Guards against a slow fetch for a previous team overwriting state after
