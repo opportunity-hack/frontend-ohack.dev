@@ -14,6 +14,9 @@
 import { replacePlaceholders } from "./messageTemplates";
 import { normalizeStatus } from "./applicationStatus";
 
+// Audiences that key on the review `status` (the roster audience keys on isSelected).
+const STATUS_AUDIENCES = new Set(["denied", "waitlisted", "pending"]);
+
 // Recipients sourced from Slack carry a Slack ID in user.id, which is NOT a
 // user-doc id — they must go down the email-only path, never /api/admin/{id}/message.
 const EMAIL_ONLY_SOURCES = new Set(["custom", "csv", "slack"]);
@@ -408,16 +411,17 @@ class BatchEmailService {
    *  - "roster"     → isSelected (on the public event page / participant tools)
    *  - "denied"     → application status === "denied"   (review axis)
    *  - "waitlisted" → application status === "waitlisted"
+   *  - "pending"    → application status === "pending" (incl. docs with no
+   *                   status yet — `normalizeStatus` folds blank to pending)
    * All audiences also require an email and a doc id.
    * @param {Array} users
-   * @param {"roster"|"denied"|"waitlisted"} audience
+   * @param {"roster"|"denied"|"waitlisted"|"pending"} audience
    */
   static filterUsersByAudience(users, audience = "roster") {
     const hasContact = (user) => user.email && user.email.trim() !== "" && user.id;
     if (audience === "roster") return BatchEmailService.filterEligibleUsers(users);
-    const wanted = audience === "denied" ? "denied" : audience === "waitlisted" ? "waitlisted" : null;
-    if (!wanted) return [];
-    return users.filter((user) => normalizeStatus(user.status) === wanted && hasContact(user));
+    if (!STATUS_AUDIENCES.has(audience)) return [];
+    return users.filter((user) => normalizeStatus(user.status) === audience && hasContact(user));
   }
 
   /**
